@@ -3,13 +3,20 @@ name: Documentation quality
 on:
   push:
     branches: [main, build/android-v1]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: direkt-docs-quality-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
+    name: Validate and build documentation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
