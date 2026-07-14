@@ -1,10 +1,12 @@
 name: DIREKT Phase 2C Format Once
 
 on:
-  push:
+  pull_request:
     branches:
-      - build/android-v1
+      - main
     paths:
+      - "backend/direkt-api/**"
+      - "admin/direkt-operations-portal/**"
       - ".github/workflows/phase2c-format-once.yml"
 
 permissions:
@@ -16,6 +18,7 @@ concurrency:
 
 jobs:
   format:
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
