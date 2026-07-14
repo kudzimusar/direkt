@@ -19,6 +19,7 @@ This index lists the authoritative planning and operating documents. Agents must
 
 ## Android
 
+- [Phase 2A Android Foundation](android/PHASE_2A_FOUNDATION.md)
 - [Android Module Map](android/ANDROID_MODULE_MAP.md)
 - [Android Product Specification](android/ANDROID_PRODUCT_SPEC.md)
 - [Device Compatibility](android/DEVICE_COMPATIBILITY.md)
@@ -50,6 +51,7 @@ This index lists the authoritative planning and operating documents. Agents must
 
 ## Backend
 
+- [Phase 2B Backend and Data Foundation](backend/PHASE_2B_FOUNDATION.md)
 - [Audit Logging](backend/AUDIT_LOGGING.md)
 - [Authentication and Authorization](backend/AUTHENTICATION_AND_AUTHORIZATION.md)
 - [Backend Functional Specification](backend/BACKEND_FUNCTIONAL_SPEC.md)
@@ -64,6 +66,9 @@ This index lists the authoritative planning and operating documents. Agents must
 
 ## Design
 
+- [Phase 1B Exit Review](design/PHASE_1B_EXIT_REVIEW.md)
+- [Phase 1B Heuristic Review](design/PHASE_1B_HEURISTIC_REVIEW.md)
+- [Phase 1B Prototype Specification](design/PHASE_1B_PROTOTYPE_SPEC.md)
 - [Accessibility](design/ACCESSIBILITY.md)
 - [Android UI Specification](design/ANDROID_UI_SPECIFICATION.md)
 - [Content and Microcopy](design/CONTENT_AND_MICROCOPY.md)
