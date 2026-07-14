@@ -1,9 +1,9 @@
 # DIREKT Project Status
 
-**Updated:** 2026-07-14  
+**Updated:** 2026-07-15  
 **Authoritative branch:** `main` for stable checkpoints  
 **Implementation branch:** `build/android-v1`  
-**Current programme state:** Phase 2A completed with the first tested Android APK; Phase 2B backend and PostgreSQL/PostGIS foundation is active.
+**Current programme state:** Phase 2A native Android foundation is complete; Phase 2B backend/PostGIS foundation is green and ready for automatic checkpoint merge.
 
 ## Current phase
 
@@ -15,8 +15,9 @@
 | Phase 1B synthetic prototype | Complete; Issue #6 closed |
 | Phase 2A native Android foundation | Complete; Issue #10 closed |
 | Android CI | Green; APK and reports retained from run #28 |
+| Phase 2B backend/data foundation | Merge-ready; PR #13 and Issue #12 |
+| Backend CI | Green on immutable-lockfile run #32 |
 | Deferred Zambia pilot validation | Open as non-blocking Issue #5 |
-| Phase 2B backend/data foundation | Active; Issue #12 |
 | Firebase tester distribution | Installed but intentionally deferred |
 | Public pilot | Not authorized |
 
@@ -27,7 +28,7 @@ Open issues represent either the current workstream or a deliberate future gate;
 - **Issue #5 — Phase 10/11 Zambia validation:** remains open and labelled non-blocking. It protects later legal, field, device and pilot obligations but does not stop Phase 2 implementation.
 - **Issue #6 — Phase 1B prototype:** closed as completed.
 - **Issue #10 — Phase 2A Android foundation:** closed as completed after PR #11 merged and APK/report artifacts were verified.
-- **Issue #12 — Phase 2B backend/data foundation:** the only active implementation issue.
+- **Issue #12 — Phase 2B backend/data foundation:** closes automatically after PR #13 is merged and the branch is synchronized.
 
 The active agent closes completed issues automatically. Long-range gate issues remain open until their own acceptance evidence exists.
 
@@ -65,7 +66,70 @@ production: com.kudzimusar.direkt
 debug:      com.kudzimusar.direkt.debug
 ```
 
-The Android manifest requests no Internet, location, camera or notification permission. The build contains synthetic content only and does not implement verification, authentication, payments or production API access.
+## Phase 2B implementation
+
+Implemented under `backend/direkt-api` and `database/`:
+
+- Node.js 24/npm 11 foundation with committed npm lockfile;
+- NestJS 11.1.x modular-monolith shell;
+- TypeScript 5.9 strict mode;
+- `/api/v1/health/live` and PostGIS-backed `/api/v1/health/ready`;
+- validated environment configuration and explicit CORS allowlist;
+- UUID request IDs and structured request-completion logs;
+- global validation and RFC 7807-compatible problem details;
+- deterministic OpenAPI generation and validation;
+- PostgreSQL 18/PostGIS 3.6 local and CI service;
+- checksummed, forward-only, advisory-locked migrations;
+- `postgis` and `pgcrypto` extensions;
+- append-only platform audit events;
+- transactional outbox foundation;
+- hashed idempotency-key foundation;
+- synthetic seed command;
+- unit, HTTP and real PostGIS integration tests.
+
+No account, provider, evidence, verification, payment or production-integration endpoint exists.
+
+## Phase 2B completion evidence
+
+Final verified source head before phase-close documentation:
+
+```text
+c91efa6a8879b383fa9437f17f000ecfcce54876
+```
+
+Backend CI run #32 completed successfully using the committed dependency lock:
+
+```text
+npm ci --ignore-scripts
+npm run format:check
+npm run lint
+npm run typecheck
+npm run migration:check
+npm run test
+npm run build
+npm run openapi:check
+```
+
+The run proved:
+
+- clean locked dependency installation;
+- formatting and strict type-aware lint;
+- TypeScript compilation;
+- clean PostGIS migration application and idempotent second run;
+- PostGIS 3.6 availability;
+- SRID 4326/longitude-latitude coordinate correctness;
+- append-only audit enforcement;
+- unit, HTTP and database tests with coverage;
+- production JavaScript build;
+- valid OpenAPI containing only approved health operations.
+
+Retained artifact:
+
+| Artifact | Evidence |
+|---|---|
+| Coverage, OpenAPI and lockfile | SHA-256 `d624ad7e7537d4d9d9cb06315a7df6f8aeb65b95fb81b87a7b4a190bda8d318b` |
+
+A final exact-head run is required after this phase-close documentation and before merge.
 
 ## Approved product baseline
 
@@ -83,48 +147,28 @@ The Android manifest requests no Internet, location, camera or notification perm
 | Provider subscriptions | Later payment-adapter phase |
 | Android | Native Kotlin/Compose with low-bandwidth, offline-draft and retry requirements |
 
-## Phase 2B approved foundation
+## Exact next workstream after Phase 2B
 
-The backend foundation will use:
+**Phase 2C — identity, authentication-policy and operations-admin foundation**
 
-| Component | Baseline |
-|---|---|
-| Runtime | Node.js 24 Active LTS |
-| Framework | NestJS 11.1.x modular monolith |
-| Language | TypeScript 5.9.x strict mode |
-| Database | PostgreSQL 18 with PostGIS 3.6 |
-| API root | `/api/v1` |
-| Contract | REST/OpenAPI and RFC 7807-style problem details |
-| Migrations | forward-only SQL, checksummed and advisory-locked |
+The bounded next phase must:
 
-Node.js 24 is the current Active LTS line. NestJS 11 remains the approved framework and its current official repository supports Node 20 or newer. The PostGIS project recommends `postgis/postgis:18-3.6` for new users.
+1. create identity/account/session/role database contracts without selecting a real OTP vendor;
+2. establish customer, provider representative, reviewer, field agent and administrator role boundaries;
+3. implement passwordless/phone-email verification interfaces with synthetic development adapters only;
+4. add short-lived access-token and revocable session/refresh-token policy;
+5. add object/provider-scope authorization tests and privileged-action audits;
+6. create the Next.js operations-portal workspace and unauthenticated shell;
+7. preserve a strict prohibition on real evidence upload and verification decisions;
+8. extend OpenAPI and CI without connecting production credentials or vendors.
 
-## Exact Phase 2B workstream
-
-Issue #12 controls the following bounded implementation:
-
-1. create `backend/direkt-api` as a NestJS modular-monolith workspace;
-2. pin runtime and dependency versions;
-3. add strict configuration validation;
-4. implement liveness and PostGIS-backed readiness endpoints;
-5. add request IDs and structured JSON logging;
-6. add global validation and RFC 7807 problem details;
-7. generate and validate OpenAPI;
-8. add local PostgreSQL 18/PostGIS 3.6 Docker Compose infrastructure;
-9. implement checksummed, forward-only, advisory-locked migrations;
-10. create only platform audit, outbox and idempotency foundations;
-11. add synthetic seeds, unit tests and database integration tests;
-12. add CI for format, lint, typecheck, tests, build, migrations and OpenAPI;
-13. retain test/coverage/OpenAPI artifacts;
-14. merge and close Issue #12 only after exact CI evidence exists.
-
-## Phase 2B stop gates
+## Stop gates
 
 - No production Supabase or database connection.
-- No real authentication or token issuance.
+- No real OTP/SMS/email vendor.
 - No real identity, qualification, location or payment evidence.
-- No regulator, map, SMS, Firebase or payment integration.
-- No public provider creation.
+- No regulator, map, Firebase or payment integration.
+- No public provider creation or publication.
 - No trust claim creation.
 - No production deployment.
 
