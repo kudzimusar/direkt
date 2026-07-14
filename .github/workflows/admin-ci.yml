@@ -44,21 +44,17 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "24"
+          cache: npm
+          cache-dependency-path: admin/direkt-operations-portal/package-lock.json
 
-      - name: Verify runtime
+      - name: Verify runtime and committed lockfile
         shell: bash
         run: |
           node --version
           npm --version
           [[ "$(npm --version)" == 11.* ]]
-
-      - name: Generate exact bootstrap lockfile when absent
-        shell: bash
-        run: |
-          if [[ ! -f package-lock.json ]]; then
-            npm install --package-lock-only --ignore-scripts
-          fi
           test -f package-lock.json
+          git diff --exit-code -- package.json package-lock.json
 
       - name: Install exact dependencies
         run: npm ci --ignore-scripts
@@ -73,7 +69,11 @@ jobs:
         run: npm run typecheck
 
       - name: Run tests with coverage
-        run: npm run test
+        shell: bash
+        run: |
+          mkdir -p artifacts/diagnostics
+          set -o pipefail
+          npm run test 2>&1 | tee artifacts/diagnostics/vitest.txt
 
       - name: Build production portal
         run: npm run build
@@ -84,7 +84,7 @@ jobs:
           ! grep -R -E "from ['\"](pg|@supabase|firebase|aws-sdk)" src
           ! find . -maxdepth 2 -type f \( -name '.env' -o -name '.env.*' \) | grep .
           grep -q 'noindex' next.config.ts
-          grep -q 'No direct PostgreSQL' README.md
+          grep -q 'must never import a database client' README.md
 
       - name: Upload portal verification artifacts
         if: always()
@@ -94,6 +94,7 @@ jobs:
           path: |
             admin/direkt-operations-portal/package-lock.json
             admin/direkt-operations-portal/coverage/**
+            admin/direkt-operations-portal/artifacts/diagnostics/**
             admin/direkt-operations-portal/.next/build-manifest.json
             admin/direkt-operations-portal/.next/routes-manifest.json
             admin/direkt-operations-portal/.next/required-server-files.json
