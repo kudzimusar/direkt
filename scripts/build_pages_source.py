@@ -23,9 +23,16 @@ for rel in root_docs:
 shutil.copytree(ROOT / "docs", OUT / "docs")
 
 # Publish the dependency-free Phase 1B prototype as static Pages content.
+# The repository README documents the prototype source, while index.html is
+# the public route. Excluding README.md prevents both files mapping to the
+# same MkDocs destination under strict mode.
 prototype_src = ROOT / "prototype"
 if prototype_src.exists():
-    shutil.copytree(prototype_src, OUT / "prototype")
+    shutil.copytree(
+        prototype_src,
+        OUT / "prototype",
+        ignore=shutil.ignore_patterns("README.md"),
+    )
 
 # Repository-relative index link becomes the Pages home link.
 index_path = OUT / "docs" / "INDEX.md"
