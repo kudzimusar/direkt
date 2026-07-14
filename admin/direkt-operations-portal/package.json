@@ -1,0 +1,39 @@
+{
+  "name": "@direkt/operations-portal",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Internal DIREKT operations portal foundation",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11 <12"
+  },
+  "packageManager": "npm@11.16.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "dependencies": {
+    "next": "16.0.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "@vitest/coverage-v8": "4.1.10",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.0.0",
+    "prettier": "3.9.5",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  }
+}
