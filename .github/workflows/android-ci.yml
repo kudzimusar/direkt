@@ -8,6 +8,12 @@ on:
     paths:
       - "android/direkt-app/**"
       - ".github/workflows/android-ci.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "android/direkt-app/**"
+      - ".github/workflows/android-ci.yml"
   workflow_dispatch:
 
 permissions:
@@ -19,6 +25,7 @@ concurrency:
 
 env:
   ANDROID_PROJECT_DIR: android/direkt-app
+  DIREKT_GRADLE_VERSION: "9.4.0"
 
 jobs:
   preflight:
@@ -35,15 +42,14 @@ jobs:
         shell: bash
         run: |
           if [[ -f "${ANDROID_PROJECT_DIR}/gradlew" ]] && \
-             [[ -f "${ANDROID_PROJECT_DIR}/settings.gradle.kts" || -f "${ANDROID_PROJECT_DIR}/settings.gradle" ]]; then
+             [[ -f "${ANDROID_PROJECT_DIR}/settings.gradle.kts" ]]; then
             echo "project_ready=true" >> "$GITHUB_OUTPUT"
             echo "### Android CI preflight" >> "$GITHUB_STEP_SUMMARY"
             echo "Native Android project detected at \`${ANDROID_PROJECT_DIR}\`." >> "$GITHUB_STEP_SUMMARY"
           else
             echo "project_ready=false" >> "$GITHUB_OUTPUT"
             echo "### Android CI preflight" >> "$GITHUB_STEP_SUMMARY"
-            echo "The workflow is installed, but the native Android project has not yet been scaffolded at \`${ANDROID_PROJECT_DIR}\`." >> "$GITHUB_STEP_SUMMARY"
-            echo "The build job will activate automatically after Phase 2 creates the Gradle wrapper and settings file." >> "$GITHUB_STEP_SUMMARY"
+            echo "The native Android project is incomplete at \`${ANDROID_PROJECT_DIR}\`." >> "$GITHUB_STEP_SUMMARY"
           fi
 
   build:
@@ -51,7 +57,7 @@ jobs:
     needs: preflight
     if: needs.preflight.outputs.project_ready == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     defaults:
       run:
         working-directory: android/direkt-app
@@ -66,14 +72,33 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Configure Gradle
+      - name: Configure pinned Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ env.DIREKT_GRADLE_VERSION }}
 
-      - name: Make Gradle wrapper executable
-        run: chmod +x gradlew
+      - name: Bootstrap standard Gradle wrapper JAR
+        shell: bash
+        run: |
+          if [[ ! -f gradle/wrapper/gradle-wrapper.jar ]]; then
+            gradle wrapper \
+              --gradle-version "${DIREKT_GRADLE_VERSION}" \
+              --distribution-type bin
+          fi
+          chmod +x gradlew
+          ./gradlew --version
 
-      - name: Run unit tests, Android lint and debug build
-        run: ./gradlew --no-daemon --stacktrace testDebugUnitTest lintDebug assembleDebug
+      - name: Verify Android identity and safety boundaries
+        shell: bash
+        run: |
+          grep -F 'namespace = "com.kudzimusar.direkt"' app/build.gradle.kts
+          grep -F 'applicationId = "com.kudzimusar.direkt"' app/build.gradle.kts
+          grep -F 'applicationIdSuffix = ".debug"' app/build.gradle.kts
+          test ! -f app/google-services.json
+          test ! -f google-services.json
+
+      - name: Run unit tests, Android lint and debug builds
+        run: ./gradlew --no-daemon --stacktrace testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
 
       - name: Upload test and lint reports
         if: always()
@@ -90,7 +115,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: direkt-debug-apk-${{ github.run_number }}-${{ github.sha }}
-          path: android/direkt-app/**/build/outputs/apk/debug/*.apk
+          path: android/direkt-app/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload Compose test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-compose-test-apk-${{ github.run_number }}-${{ github.sha }}
+          path: android/direkt-app/app/build/outputs/apk/androidTest/debug/*.apk
           if-no-files-found: error
           retention-days: 14
 
@@ -100,15 +133,18 @@ jobs:
           echo "### DIREKT Android build" >> "$GITHUB_STEP_SUMMARY"
           echo "- Commit: \`${GITHUB_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Branch: \`${GITHUB_REF_NAME}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Result: unit tests, lint and debug APK assembly completed" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Application ID: \`com.kudzimusar.direkt.debug\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Toolchain: Gradle ${DIREKT_GRADLE_VERSION}, AGP 9.0.0, Kotlin 2.3.0, API 36" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Result: unit tests, lint, debug APK and Compose test APK assembled" >> "$GITHUB_STEP_SUMMARY"
           echo "- Distribution: download the \`direkt-debug-apk-*\` artifact from this workflow run" >> "$GITHUB_STEP_SUMMARY"
 
-  awaiting-scaffold:
-    name: Android project not yet scaffolded
+  incomplete-scaffold:
+    name: Android project scaffold incomplete
     needs: preflight
     if: needs.preflight.outputs.project_ready != 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Record dormant build status
+      - name: Fail with actionable guidance
         run: |
-          echo "Android CI is connected and ready. No APK can be built until the Kotlin/Gradle project is created under android/direkt-app/."
+          echo "The required Android Gradle launcher or settings file is missing." >&2
+          exit 1
