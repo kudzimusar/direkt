@@ -112,6 +112,12 @@ Rules:
 - an advisory lock prevents concurrent runners;
 - destructive changes require a separate backup/compatibility plan.
 
+## Phase 2B verification
+
+Backend CI run #32 proved the complete locked-dependency, PostGIS, test, build and OpenAPI gate before phase-close documentation. This README change intentionally triggers the final exact-head run that binds those checks to the complete Phase 2B checkpoint.
+
+The checkpoint may merge only when that final run succeeds and retains coverage, OpenAPI and lockfile artifacts.
+
 ## Security rules
 
 Never commit:
