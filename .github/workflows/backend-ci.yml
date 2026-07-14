@@ -88,7 +88,11 @@ jobs:
           npm run lint 2>&1 | tee artifacts/diagnostics/eslint.txt
 
       - name: Typecheck
-        run: npm run typecheck
+        shell: bash
+        run: |
+          mkdir -p artifacts/diagnostics
+          set -o pipefail
+          npm run typecheck 2>&1 | tee artifacts/diagnostics/typecheck.txt
 
       - name: Apply and verify migrations
         run: npm run migration:check
