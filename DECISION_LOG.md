@@ -18,6 +18,8 @@ This log records product and technical decisions with long-term impact.
 | D-012 | 2026-07-14 | GitHub Pages hosts only static, synthetic, non-sensitive content | Pages is suitable for documentation/testing but not secure backend operations | Accepted |
 | D-013 | 2026-07-14 | Initial implementation uses one sequential branch rather than feature PRs | User requires coherent agent execution from start to finish | Accepted |
 | D-014 | 2026-07-14 | No production code starts before Phase 1A exits | Real Zambia field constraints must shape product and technology choices | Accepted |
+| D-015 | 2026-07-14 | Remote testing is split across Pages, Actions and Firebase App Distribution | Pages supports static review, Actions verifies and packages Android builds, and Firebase provides controlled installation and update delivery to named device testers | Accepted |
+| D-016 | 2026-07-14 | The permanent Android package name must be approved before Firebase registration | Firebase's Android package registration is case-sensitive and effectively permanent for the registered app; premature registration creates avoidable migration risk | Accepted |
 
 ## How to add a decision
 
