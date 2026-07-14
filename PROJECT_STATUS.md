@@ -3,135 +3,168 @@
 **Updated:** 2026-07-14  
 **Authoritative branch:** `main` for stable checkpoints  
 **Implementation branch:** `build/android-v1`  
-**Current programme state:** Phase 1A completed with accepted limitations; Phase 1B interaction design and synthetic prototype authorized.
+**Current programme state:** Phase 1B prototype implementation complete; Phase 2 native Android foundation authorized after checkpoint deployment verification.
 
 ## Current phase
 
 | Item | State |
 |---|---|
-| Repository created | Complete |
-| Public visibility confirmed | Complete |
-| Comprehensive planning pack | Complete |
-| Documentation validation workflow | Complete; successful runs observed |
-| GitHub Pages workflow | Complete; public site live at `https://kudzimusar.github.io/direkt/` |
-| Android CI workflow | Installed and operational; native build path activates after Phase 2 scaffolding |
-| Firebase tester distribution | Installed; blocked until package name, Firebase app and secrets are approved |
-| Sequential build branch | Active: `build/android-v1` |
-| Phase 1A research baseline | Complete with accepted limitations |
-| Active phase | Phase 1B — interaction design and synthetic prototype |
-| Product code | Not started; Phase 2 follows the Phase 1B checkpoint |
+| Repository and planning baseline | Complete |
+| GitHub Pages documentation site | Operational |
+| Phase 1A secondary-research baseline | Complete with accepted limitations |
+| Phase 1B interactive prototype source | Complete |
+| Phase 1B heuristic review | Pass with accepted limitations |
+| Prototype Pages integration | Complete in source; verify after checkpoint merge |
+| Approved Android application ID | `com.kudzimusar.direkt` |
+| Android CI workflow | Installed; first APK follows Phase 2 scaffold |
+| Firebase tester distribution | Installed; Firebase project/secrets still deferred |
+| Active implementation branch | `build/android-v1` |
+| Next phase | Phase 2 — native Android technical foundation |
 | Public pilot | Not authorized |
 
-## Phase 1A decision
+## Phase 1A baseline
 
-Primary interviews are not currently practical for the project owner. The project will not remain blocked indefinitely on manual recruitment.
+The project uses current official and credible secondary research plus explicit provisional assumptions so unavailable manual fieldwork does not block design or scaffolding.
 
-Phase 1A therefore exits using:
+Primary Zambia customer, provider, device, legal and operational validation remains mandatory before controlled public pilot and production claims. It is tracked in GitHub Issue #5.
 
-- current Zambian institutional sources;
-- census and public market evidence;
-- conservative product and safety assumptions;
-- explicit `PROVISIONAL` classification;
-- later mandatory validation gates.
-
-The authoritative baseline is:
+Authoritative research documents:
 
 - `docs/research/SECONDARY_RESEARCH_BASELINE.md`;
 - `docs/research/PHASE_1A_EXIT_REVIEW.md`;
 - `docs/research/ASSUMPTIONS_REGISTER.md`;
 - `docs/research/CATEGORY_EVIDENCE_MATRIX.md`.
 
-This is enough to design and scaffold. It is not evidence that representative customers or providers have approved the product.
-
-## Approved provisional product baseline
+## Approved product baseline
 
 | Area | Decision |
 |---|---|
 | Default market context | Lusaka District |
-| Later pilot boundary | Selected Lusaka neighbourhoods, to be confirmed before pilot |
-| Initial categories | Plumbing, electrical repairs, motor-vehicle mechanics, appliance/electronics repair |
-| Provider types | Fixed premises, mobile and hybrid |
-| Provider pathways | Registered business, qualified individual, or experienced informal provider with transparent missing claims |
-| Trust model | Separate claim cards; no blanket `safe` or `fully verified` badge |
+| Later pilot boundary | Selected Lusaka neighbourhoods, confirmed before pilot |
+| Initial categories | Plumbing, electrical repair, motor-vehicle mechanics, appliance/electronics repair |
+| Provider models | Fixed premises, mobile and hybrid |
+| Provider pathways | Registered business, qualified individual and experienced informal provider |
+| Trust presentation | Separate evidence-backed claims; no blanket safety/verification badge |
 | Location | Area, neighbourhood, landmark, pin and optional Plus Code; private precision minimized |
 | Customer contact | Tracked enquiry, then consent-aware call or WhatsApp handoff |
-| Customer payments | Deferred from first MVP |
-| Provider payments | Subscription adapter later; MTN MoMo and Airtel Money are candidates only |
-| Android | Native Kotlin/Compose, offline drafts, compression, retry and low-bandwidth behaviour |
+| Customer payment/escrow | Deferred from first MVP |
+| Provider subscriptions | Later payment-adapter phase |
+| Android | Native Kotlin/Compose with offline drafts, compression, retry and low-bandwidth behaviour |
 
-## Remote build and testing state
+## Phase 1B deliverables
 
-- `.github/workflows/pages.yml` validates and deploys documentation and synthetic prototypes.
-- `.github/workflows/android-ci.yml` will test, lint and assemble the Android project after Phase 2 scaffolding.
-- `.github/workflows/android-distribute.yml` will distribute controlled APK builds after Firebase setup.
-- GitHub Pages is the Phase 1B review surface, not an Android runtime.
+The dependency-free prototype at `prototype/` includes:
+
+### Customer
+
+- welcome and trust explanation;
+- manual area and category discovery;
+- provider list and synthetic map;
+- fixed, mobile and hybrid provider profiles;
+- separate trust claims, scope, dates and limitations;
+- current, pending, expiring, expired, not supplied and not checked states;
+- tracked enquiry and consent-aware contact handoff.
+
+### Provider
+
+- resumable onboarding checklist;
+- registered, qualified and experienced-informal pathways;
+- operating model and service area;
+- evidence requirements;
+- interrupted upload, local draft and retry;
+- action-required reason and resubmission;
+- verification timeline and enquiry inbox.
+
+### Operations
+
+- dashboard and verification queue;
+- check-specific case review;
+- restricted fictional evidence viewer;
+- approve/action-required/reject form;
+- reason codes, public-effect explanation and audit history.
+
+### Cross-cutting
+
+- phone and wide viewport previews;
+- keyboard-accessible controls and focus styling;
+- slow, offline, loading, empty, denied and recoverable-error states;
+- fictional data only;
+- local-only feedback notes;
+- no API, real submission, phone number, WhatsApp destination or remote tracking.
+
+Source documents:
+
+- `docs/design/PHASE_1B_PROTOTYPE_SPEC.md`;
+- `docs/design/PHASE_1B_HEURISTIC_REVIEW.md`;
+- `docs/design/PHASE_1B_EXIT_REVIEW.md`;
+- `docs/design/SCREEN_INVENTORY.md`.
+
+## Phase 1B result
+
+**PASS WITH ACCEPTED LIMITATIONS**
+
+The prototype establishes sufficient interaction and trust structure for technical scaffolding. Representative usability testing, native Android accessibility, real network/device behaviour and operational evidence remain later obligations.
+
+## Android identity
+
+```text
+namespace = com.kudzimusar.direkt
+applicationId = com.kudzimusar.direkt
+```
+
+Debug and staging variants may use safe suffixes while production retains the exact approved ID.
 
 ## Exact next executable workstream
 
-**Phase 1B: synthetic interactive DIREKT prototype**
+**Phase 2A — scaffold the native Android project and produce the first green debug APK**
 
-The next agent must create and publish a fictional, non-sensitive prototype covering:
+The next agent must:
 
-1. customer onboarding and area selection;
-2. category and nearby-provider discovery;
-3. list/map switching and no-location fallback;
-4. provider profile and separate trust claims;
-5. clear `checked`, `expired`, `pending`, `not supplied` and `not checked` states;
-6. fixed-premises, mobile and hybrid location presentation;
-7. tracked enquiry followed by call/WhatsApp handoff;
-8. provider onboarding and evidence progress;
-9. rejected evidence and resubmission guidance;
-10. operations review and decision flow.
+1. create the Gradle/Kotlin Android project at `android/direkt-app`;
+2. use Jetpack Compose, Material 3 and Kotlin DSL;
+3. set namespace and production application ID to `com.kudzimusar.direkt`;
+4. create a debug-safe application ID suffix;
+5. establish version catalogs and reproducible dependency versions;
+6. create baseline theme tokens from the approved design system;
+7. implement the application shell and navigation boundaries using synthetic data only;
+8. add unit, lint and Compose smoke tests;
+9. make the existing Android CI run tests, lint and `assembleDebug` successfully;
+10. retain the debug APK as a GitHub Actions artifact;
+11. document local bootstrap and known limitations;
+12. avoid Firebase, real authentication, production APIs and real evidence collection.
 
-The prototype must:
+## Phase 2A exit gate
 
-- use only synthetic Zambian names, businesses, places and documents;
-- work on mobile and desktop browsers;
-- be hosted through GitHub Pages;
-- support structured remote feedback;
-- include accessibility, low-bandwidth, offline and error states;
-- make no claim that the backend or verification engine is already implemented.
-
-## Phase 1B exit gate
-
-Phase 1B is complete when:
-
-- the main customer, provider and operations flows are interactive;
-- each trust claim clearly exposes scope and limitations;
-- prototype navigation works on Pages;
-- design documentation and screen inventory match the prototype;
-- feedback findings and design corrections are recorded;
-- documentation checks pass;
-- the Phase 2 Android namespace/package decision is recorded;
-- Phase 2 technical scaffolding is explicitly authorized.
+- clean checkout can run the documented Gradle command;
+- Android unit tests and lint pass;
+- debug APK builds in GitHub Actions;
+- application ID and debug suffix are verified;
+- no secret or production configuration is committed;
+- the app displays a clearly synthetic foundation shell;
+- architecture and module documentation match the scaffold;
+- exact Phase 2B backend-foundation task is authorized.
 
 ## Deferred validation — not current blockers
 
-The following remain mandatory before later gates, but do not stop Phase 1B:
-
-- Zambia customer and provider interviews;
-- real device/connectivity testing;
-- real provider evidence examples in private storage;
-- field-verification cost/capacity measurement;
+- representative Zambia interviews;
+- real Android device/connectivity matrix;
+- real provider evidence in approved private storage;
+- field-verification cost and capacity;
 - qualified Zambia legal review;
 - authority data-access agreements;
-- payment/map/SMS vendor contracts;
-- willingness-to-pay and pricing evidence.
+- map, SMS/OTP and payment contracts;
+- subscription pricing and willingness to pay.
 
-## Stop gates still in force
+## Stop gates
 
 - No public provider onboarding.
 - No real identity documents, certificates or private coordinates.
 - No production regulator integration.
-- No customer payment or escrow implementation.
-- No public pilot or Play Store production release.
+- No customer payment or escrow.
+- No public pilot or production Play release.
 - No payment-derived trust status.
 - No blanket safety or verification claim.
 
 ## GitHub lifecycle
 
-Routine checkpoint PRs, CI verification, safe merges and eligible issue closure are handled by the active repository agent. The owner should not need to perform routine GitHub administration manually.
-
-## Next checkpoint
-
-After Phase 1B, create, verify and automatically merge the Phase 1B checkpoint PR into `main`, confirm Pages deployment, close completed design issues, synchronize `build/android-v1`, and authorize Phase 2.
+Routine checkpoint PRs, verification, safe merging, branch synchronization and eligible issue closure are handled by the active repository agent. The owner is not required to perform routine GitHub administration.
