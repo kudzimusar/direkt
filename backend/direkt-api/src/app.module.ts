@@ -1,6 +1,10 @@
 import { MiddlewareConsumer, Module, type NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './auth/auth.module';
+import { AuthorizationModule } from './authorization/authorization.module';
 import { environmentSchema } from './config/environment';
+import { OperationsModule } from './operations/operations.module';
+import { AuditModule } from './platform/audit/audit.module';
 import { DatabaseModule } from './platform/database/database.module';
 import { HealthModule } from './platform/health/health.module';
 import { CorrelationIdMiddleware } from './platform/http/correlation-id.middleware';
@@ -18,7 +22,11 @@ import { RequestLoggingMiddleware } from './platform/http/request-logging.middle
       },
     }),
     DatabaseModule,
+    AuditModule,
+    AuthModule,
+    AuthorizationModule,
     HealthModule,
+    OperationsModule,
   ],
 })
 export class AppModule implements NestModule {
