@@ -1,0 +1,28 @@
+name: Documentation quality
+
+on:
+  push:
+    branches: [main, build/android-v1]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Install documentation dependencies
+        run: python -m pip install --requirement requirements-docs.txt
+      - name: Validate documentation
+        run: python scripts/validate_docs.py
+      - name: Package downloadable planning archive
+        run: python scripts/package_planning_docs.py
+      - name: Build Pages source
+        run: python scripts/build_pages_source.py
+      - name: Build MkDocs strictly
+        run: mkdocs build --strict

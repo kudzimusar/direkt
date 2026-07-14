@@ -1,0 +1,18 @@
+site_name: DIREKT
+site_description: Android-first verified local service marketplace for Zambia
+site_url: https://kudzimusar.github.io/direkt/
+repo_url: https://github.com/kudzimusar/direkt
+repo_name: kudzimusar/direkt
+docs_dir: _pages_src
+site_dir: site
+use_directory_urls: true
+theme:
+  name: mkdocs
+  locale: en
+markdown_extensions:
+  - tables
+  - fenced_code
+  - attr_list
+  - toc:
+      permalink: true
+strict: true
