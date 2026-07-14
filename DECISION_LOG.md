@@ -25,6 +25,7 @@ This log records product and technical decisions with long-term impact.
 | D-019 | 2026-07-14 | Pilot geography and categories remain open until scorecards link to real evidence | Lusaka and the proposed trades are plausible starting points but must not be approved through assumption alone | Accepted |
 | D-020 | 2026-07-14 | Official registries are candidate evidence sources, not automatic verification integrations | PACRA, NCC and TEVETA confirm relevant systems exist, but access rights, category coverage, accuracy, legal use and operational reliability remain to be validated | Accepted |
 | D-021 | 2026-07-14 | Phase 1A begins with a bounded exploratory wave before full fieldwork | Four customers, four providers across distinct categories and two verification/operations stakeholders will expose instrument and terminology defects before the larger sample | Accepted |
+| D-022 | 2026-07-14 | The active AI agent manages routine PR merging and eligible issue closure | The owner does not want manual GitHub administration. The agent must verify the exact head, checks, reviews and acceptance evidence, then merge checkpoint PRs and close completed issues automatically; external-evidence and owner-decision issues remain open until their evidence exists | Accepted |
 
 ## How to add a decision
 
@@ -33,6 +34,6 @@ Use the next ID and include:
 - context and problem;
 - chosen option;
 - alternatives considered;
-- security/privacy/cost/migration impact;
+- security, privacy, migration and compatibility impact;
 - approval status;
 - reversal conditions.
