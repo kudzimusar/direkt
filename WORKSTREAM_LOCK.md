@@ -8,53 +8,64 @@ This file prevents overlapping writes in the single-lane build process.
 |---|---|
 | Status | UNCLAIMED |
 | Owner/agent | — |
-| Phase | Phase 1B |
-| Task | Build and publish the synthetic interactive DIREKT prototype |
-| Modules/paths | `prototype`, `docs/design`, `docs/product`, `docs/research`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
+| Phase | Phase 2A |
+| Task | Scaffold the native Android project and produce the first green debug APK |
+| Modules/paths | `android/direkt-app`, `.github/workflows/android-ci.yml`, `docs/android`, `docs/architecture`, `docs/testing`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
 | Claimed at | — |
-| Expected handoff | Interactive mobile-responsive prototype published on GitHub Pages; design documents synchronized; feedback findings recorded; Phase 2 authorization decision completed |
-| Last clean commit | Use the current `build/android-v1` head after the Phase 1A secondary-research checkpoint is merged and synchronized |
+| Expected handoff | Reproducible Kotlin/Compose scaffold; tests and lint green; debug APK retained by Actions; architecture documentation synchronized; Phase 2B authorized |
+| Last clean checkpoint | Use the merged Phase 1B checkpoint after Pages deployment verification |
 
-## Phase 1B acceptance criteria
+## Phase 2A acceptance criteria
 
 The active owner must:
 
-1. read `SECONDARY_RESEARCH_BASELINE.md`, `design.md`, the screen inventory and trust documents;
-2. claim this lock before broad writes;
-3. build customer, provider and operations prototype flows using fictional data only;
-4. display separate trust claims and all important states;
-5. include fixed, mobile and hybrid provider examples;
-6. include tracked enquiry and consent-aware call/WhatsApp handoff;
-7. include offline, slow-network, loading, empty, permission-denied and error states;
-8. publish the prototype through GitHub Pages;
-9. record structured review findings and design corrections;
-10. update status, decisions, risks and the Phase 1B exit decision;
-11. create, verify and merge the checkpoint PR automatically when safe;
-12. close completed issues and authorize only the exact next phase.
+1. synchronize `build/android-v1` with the latest `main` checkpoint;
+2. claim this lock before broad implementation;
+3. create the native project at `android/direkt-app`;
+4. use Kotlin, Jetpack Compose, Material 3 and Gradle Kotlin DSL;
+5. use `com.kudzimusar.direkt` as namespace and production application ID;
+6. use a debug-safe application ID suffix;
+7. establish reproducible dependency and tool versions;
+8. implement a synthetic application shell and navigation boundary;
+9. add unit, lint and Compose smoke tests;
+10. make GitHub Android CI run tests, lint and `assembleDebug` successfully;
+11. retain the debug APK artifact;
+12. update architecture, Android, testing and bootstrap documents;
+13. avoid Firebase, real authentication, production API calls and real evidence;
+14. create, verify and merge the checkpoint automatically when safe.
+
+## Active safety boundaries
+
+- Synthetic fixtures only.
+- No real identity documents, certificates, phone numbers or coordinates.
+- No Firebase configuration or service account.
+- No production API endpoint or secret.
+- No customer payment or regulator integration.
+- No claim that the scaffold implements verification.
 
 ## Claim procedure
 
 Before editing:
 
-1. synchronize `build/android-v1` with the latest `main` checkpoint;
-2. verify the working state and existing checks;
+1. verify the latest `main` and build-branch heads;
+2. run existing repository checks where available;
 3. replace `UNCLAIMED` with `CLAIMED`;
-4. record the agent, task, scope and timestamp;
-5. commit the lock claim before broad implementation.
+4. record agent, scope and timestamp;
+5. commit the lock claim.
 
 ## Release procedure
 
 After implementation:
 
-1. run required checks;
-2. inspect for real personal data, secrets and unsupported claims;
-3. update documentation and `PROJECT_STATUS.md`;
-4. create the checkpoint PR with the exact head;
-5. verify CI, mergeability and unresolved comments;
-6. merge automatically when safe;
-7. close only issues whose acceptance evidence is complete;
-8. synchronize the implementation branch;
-9. release or transfer the lock with a precise handoff.
+1. run unit tests, lint and debug assembly;
+2. inspect the diff and generated artifacts;
+3. update status, decisions, risks and handoff;
+4. create and verify the checkpoint PR;
+5. merge automatically only at the verified head;
+6. confirm the Actions artifact;
+7. close only completed issues;
+8. synchronize the implementation branch without force-pushing;
+9. release or transfer the lock.
 
 ## Conflict rule
 

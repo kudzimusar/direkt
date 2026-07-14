@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f5f4f">
+  <meta name="description" content="Synthetic DIREKT interaction prototype for design review. No real submissions.">
+  <title>DIREKT — Interactive prototype</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#app-main">Skip to prototype content</a>
+
+  <header class="prototype-banner" role="banner">
+    <div class="prototype-banner__inner">
+      <div>
+        <strong>Interactive prototype</strong>
+        <span>Fictional data · No real submissions · No backend</span>
+      </div>
+      <a href="../" class="prototype-banner__link">Back to documentation</a>
+    </div>
+  </header>
+
+  <div class="site-shell">
+    <aside class="review-panel" aria-label="Prototype controls">
+      <div class="brand-lockup" aria-label="DIREKT">
+        <span class="brand-mark" aria-hidden="true">D</span>
+        <div>
+          <strong>DIREKT</strong>
+          <small>Proof you can understand.</small>
+        </div>
+      </div>
+
+      <section class="review-section">
+        <h2>Choose experience</h2>
+        <div class="segmented-control" role="group" aria-label="Choose prototype role">
+          <button class="segment is-active" data-role="customer" aria-pressed="true">Customer</button>
+          <button class="segment" data-role="provider" aria-pressed="false">Provider</button>
+          <button class="segment" data-role="operations" aria-pressed="false">Operations</button>
+        </div>
+      </section>
+
+      <section class="review-section">
+        <h2>Jump to screen</h2>
+        <nav id="screen-nav" class="screen-nav" aria-label="Prototype screens"></nav>
+      </section>
+
+      <section class="review-section">
+        <h2>Test a state</h2>
+        <label class="field-label" for="state-simulator">Network and permission state</label>
+        <select id="state-simulator" class="select-control">
+          <option value="normal">Normal</option>
+          <option value="slow">Slow network</option>
+          <option value="offline">Offline</option>
+          <option value="loading">Loading</option>
+          <option value="empty">No results</option>
+          <option value="denied">Location denied</option>
+          <option value="error">Recoverable error</option>
+        </select>
+      </section>
+
+      <section class="review-section review-note">
+        <h2>Review questions</h2>
+        <ul>
+          <li>Can you tell exactly what DIREKT checked?</li>
+          <li>Can you distinguish a mobile provider from a shop?</li>
+          <li>Do the next actions feel obvious?</li>
+        </ul>
+        <button class="text-button" id="open-feedback">Record review notes</button>
+      </section>
+    </aside>
+
+    <main id="app-main" class="prototype-stage" tabindex="-1">
+      <div class="device-toolbar" aria-label="Prototype viewport controls">
+        <div>
+          <strong id="screen-title">Customer welcome</strong>
+          <span id="screen-id">SH-002</span>
+        </div>
+        <div class="viewport-control" role="group" aria-label="Preview width">
+          <button class="icon-button is-active" data-viewport="phone" aria-label="Phone preview" aria-pressed="true">▯</button>
+          <button class="icon-button" data-viewport="wide" aria-label="Wide preview" aria-pressed="false">▭</button>
+        </div>
+      </div>
+
+      <div id="device-frame" class="device-frame" data-viewport="phone">
+        <div class="device-status" aria-hidden="true">
+          <span>09:41</span>
+          <span>● ● ▰</span>
+        </div>
+        <div id="app-root" class="app-root" aria-live="polite"></div>
+      </div>
+
+      <p class="keyboard-hint">Keyboard: use Tab to move, Enter/Space to activate, Esc to close dialogs.</p>
+    </main>
+  </div>
+
+  <dialog id="feedback-dialog" class="dialog-card">
+    <form method="dialog">
+      <div class="dialog-head">
+        <div>
+          <span class="eyebrow">Local notes only</span>
+          <h2>Prototype review</h2>
+        </div>
+        <button class="icon-button" value="cancel" aria-label="Close review dialog">×</button>
+      </div>
+      <p>These notes stay in your browser and are not submitted anywhere.</p>
+      <label class="field-label" for="feedback-understood">What was clear?</label>
+      <textarea id="feedback-understood" rows="3" placeholder="Example: I understood the difference between phone and qualification checks."></textarea>
+      <label class="field-label" for="feedback-confusing">What was confusing?</label>
+      <textarea id="feedback-confusing" rows="3" placeholder="Example: I was unsure whether a location check means the provider has a shop."></textarea>
+      <label class="field-label" for="feedback-action">What would you change first?</label>
+      <textarea id="feedback-action" rows="3"></textarea>
+      <div class="dialog-actions">
+        <button class="button button--secondary" value="cancel">Discard</button>
+        <button class="button button--primary" id="save-feedback" value="default">Save on this device</button>
+      </div>
+      <p class="form-status" id="feedback-status" role="status"></p>
+    </form>
+  </dialog>
+
+  <dialog id="action-dialog" class="dialog-card dialog-card--compact">
+    <form method="dialog">
+      <div id="action-dialog-content"></div>
+      <div class="dialog-actions">
+        <button class="button button--secondary" value="cancel">Go back</button>
+        <button class="button button--primary" id="dialog-confirm" value="default">Continue</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
