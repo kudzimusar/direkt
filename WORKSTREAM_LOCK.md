@@ -6,51 +6,56 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED |
-| Owner/agent | OpenAI GPT-5.6 Thinking — Phase 1A research-planning agent |
-| Phase | Phase 1A |
-| Task | Initialize and execute Zambia discovery and assumptions validation |
-| Modules/paths | `docs/research`, `docs/product`, `docs/trust`, `docs/operations`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
-| Claimed at | 2026-07-14 20:51 JST / 2026-07-14 11:51 UTC |
-| Expected handoff | Phase 1A research system initialized, evidence-gathering instruments committed, desk research recorded, and exact field-research assignment documented; lock remains claimed until the Phase 1A exit review is complete or the owner authorizes an interim handoff. |
-| Last clean commit | `b2c9b87787c0d959ab04614731b4986a02390c77` |
+| Status | UNCLAIMED |
+| Owner/agent | — |
+| Phase | Phase 1B |
+| Task | Build and publish the synthetic interactive DIREKT prototype |
+| Modules/paths | `prototype`, `docs/design`, `docs/product`, `docs/research`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
+| Claimed at | — |
+| Expected handoff | Interactive mobile-responsive prototype published on GitHub Pages; design documents synchronized; feedback findings recorded; Phase 2 authorization decision completed |
+| Last clean commit | Use the current `build/android-v1` head after the Phase 1A secondary-research checkpoint is merged and synchronized |
 
-## Active acceptance criteria
+## Phase 1B acceptance criteria
 
 The active owner must:
 
-1. establish the authoritative `docs/research/` structure;
-2. create customer, provider and field-verification research instruments;
-3. define participant, evidence, privacy and consent rules;
-4. create the assumptions register and category-evidence matrix;
-5. record official desk-research sources separately from field findings;
-6. identify candidate pilot areas and categories without presenting provisional choices as approved decisions;
-7. update `PROJECT_STATUS.md` with progress, evidence gaps and the next executable task;
-8. prevent Android product scaffolding until the Phase 1A exit gate is formally passed.
+1. read `SECONDARY_RESEARCH_BASELINE.md`, `design.md`, the screen inventory and trust documents;
+2. claim this lock before broad writes;
+3. build customer, provider and operations prototype flows using fictional data only;
+4. display separate trust claims and all important states;
+5. include fixed, mobile and hybrid provider examples;
+6. include tracked enquiry and consent-aware call/WhatsApp handoff;
+7. include offline, slow-network, loading, empty, permission-denied and error states;
+8. publish the prototype through GitHub Pages;
+9. record structured review findings and design corrections;
+10. update status, decisions, risks and the Phase 1B exit decision;
+11. create, verify and merge the checkpoint PR automatically when safe;
+12. close completed issues and authorize only the exact next phase.
 
 ## Claim procedure
 
 Before editing:
 
-1. pull the latest authorized branch;
-2. verify the working tree is clean;
-3. run existing checks;
-4. replace `UNCLAIMED` with `CLAIMED`;
-5. record the agent, task, scope and timestamp;
-6. commit the lock claim before broad implementation when multiple agents may access the branch.
+1. synchronize `build/android-v1` with the latest `main` checkpoint;
+2. verify the working state and existing checks;
+3. replace `UNCLAIMED` with `CLAIMED`;
+4. record the agent, task, scope and timestamp;
+5. commit the lock claim before broad implementation.
 
 ## Release procedure
 
 After implementation:
 
-1. run required tests;
-2. update documentation and `PROJECT_STATUS.md`;
-3. create the atomic implementation commit;
-4. write a handoff using the template;
-5. set the lock to `UNCLAIMED`;
-6. commit the handoff/lock release;
-7. report the exact next approved task.
+1. run required checks;
+2. inspect for real personal data, secrets and unsupported claims;
+3. update documentation and `PROJECT_STATUS.md`;
+4. create the checkpoint PR with the exact head;
+5. verify CI, mergeability and unresolved comments;
+6. merge automatically when safe;
+7. close only issues whose acceptance evidence is complete;
+8. synchronize the implementation branch;
+9. release or transfer the lock with a precise handoff.
 
 ## Conflict rule
 
-A second agent must not write to the listed paths while the lock is claimed. Read-only review is allowed. If the lock appears stale, the owner must resolve it; an agent must not overwrite it based on assumption.
+A second agent must not write to the listed paths while the lock is claimed. Read-only review is allowed. A stale lock must be resolved explicitly rather than overwritten by assumption.

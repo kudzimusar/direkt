@@ -2,26 +2,34 @@
 
 **DIREKT is an Android-first, verification-led local service marketplace for Zambia.**
 
-It helps customers discover nearby providers—such as plumbers, electricians, mechanics, builders, cleaners, tailors and technicians—using evidence-backed business, identity, qualification and location information. Providers do not receive a generic “verified” label merely for registering or paying. Each trust claim is tied to a specific check, status, evidence set and validity period.
+It helps customers discover nearby providers—such as plumbers, electricians, mechanics and repair technicians—using evidence-backed business, identity, qualification and location information. Providers do not receive a generic “verified” label merely for registering or paying. Each public trust claim is tied to a specific check, status, evidence scope and validity period.
 
 ## Product position
 
-DIREKT is not intended to be another open business directory. Its differentiator is a controlled trust layer built around:
+DIREKT is not another open business directory. Its differentiator is a controlled trust layer built around:
 
 - identity and contact verification;
 - business or professional evidence;
 - qualification and licence evidence where applicable;
-- public service-area and location information;
+- public service-area and reduced-precision location information;
 - private physical-location evidence;
-- field verification for selected provider categories;
+- field verification for selected categories where approved;
 - certificate expiry and renewal controls;
 - platform-tracked enquiries, complaints and reviews.
 
-The first production client is a **native Android application**. A web administration portal supports verification, moderation, support and operations. iOS is explicitly deferred, while the backend and API contracts must remain portable enough to support it later.
+The first production client is a **native Android application**. A web operations portal supports verification, moderation, support and administration. iOS is deferred, while backend and API boundaries remain portable enough to support it later.
 
 ## Repository status
 
-This repository contains the authoritative product, design, architecture, trust, security, testing and operations documentation for DIREKT. Implementation agents must read the mandatory control documents before writing code.
+The repository contains the authoritative product, design, architecture, trust, security, testing and operations specifications for DIREKT.
+
+- **Phase 0:** complete
+- **Phase 1A:** complete with accepted limitations using an official and credible secondary-research baseline
+- **Phase 1B:** authorized — synthetic interactive prototype
+- **Android product code:** begins in Phase 2 after the Phase 1B design checkpoint
+- **Public pilot:** not authorized
+
+Primary Zambia interviews and real operational validation have been deferred to later prototype, legal-hardening and controlled-pilot gates. They have not been fabricated or treated as completed.
 
 ### Mandatory reading order
 
@@ -31,6 +39,7 @@ This repository contains the authoritative product, design, architecture, trust,
 4. [`WORKSTREAM_LOCK.md`](WORKSTREAM_LOCK.md)
 5. [`DEFINITION_OF_DONE.md`](DEFINITION_OF_DONE.md)
 6. [`docs/INDEX.md`](docs/INDEX.md)
+7. [`docs/research/SECONDARY_RESEARCH_BASELINE.md`](docs/research/SECONDARY_RESEARCH_BASELINE.md)
 
 ## Planned repository layout
 
@@ -39,6 +48,7 @@ android/direkt-app/              Native Kotlin/Jetpack Compose application
 backend/direkt-api/              TypeScript/NestJS modular backend
 admin/direkt-operations-portal/ Internal web operations portal
 database/                        Migrations, seeds and database policies
+prototype/                       Synthetic browser prototype for Pages
 infrastructure/                  Deployment and environment definitions
 docs/                            Authoritative planning and operating documents
 scripts/                         Validation, packaging and maintenance scripts
@@ -47,49 +57,53 @@ scripts/                         Validation, packaging and maintenance scripts
 
 ## Branch and workflow policy
 
-DIREKT uses one controlled implementation stream rather than feature-PR development:
+DIREKT uses one controlled implementation stream:
 
-- `main` is the stable, reviewable source of truth and GitHub Pages source.
+- `main` is the stable checkpoint and GitHub Pages source.
 - `build/android-v1` is the sequential implementation branch.
-- Only one active implementation owner or agent may change a module at a time.
-- Every material task ends with tests, documentation, an atomic commit and a status update.
+- One active owner or agent controls writes to a workstream.
+- Every material task ends with checks, documentation, an atomic commit and a status update.
 - Force-pushing is prohibited.
-- Phase checkpoints are promoted to `main` only after required quality gates pass.
+- The active repository agent creates, verifies and merges routine checkpoint pull requests automatically when safe.
+- Completed linked issues are closed automatically when their acceptance evidence exists.
+- External credentials, legal approval and real-world evidence are never fabricated.
 
 See [`docs/operations/AGENT_WORKFLOW.md`](docs/operations/AGENT_WORKFLOW.md).
 
 ## Build and remote testing
 
-The repository now has three distinct remote collaboration channels:
+The repository has three remote collaboration channels:
 
 - **GitHub Pages** publishes documentation and synthetic browser prototypes.
-- **DIREKT Android CI** tests, lints and builds a debug APK after the native Gradle project is scaffolded.
-- **Firebase App Distribution** can deliver manually approved test builds to named Android tester groups after Firebase credentials are configured as repository secrets.
+- **DIREKT Android CI** tests, lints and builds a debug APK after the Gradle project is scaffolded.
+- **Firebase App Distribution** will deliver approved test builds to named Android testers after Firebase configuration.
 
-GitHub Pages cannot run the native Android app. See [`docs/operations/REMOTE_ANDROID_TESTING.md`](docs/operations/REMOTE_ANDROID_TESTING.md) for the complete testing workflow.
+GitHub Pages cannot execute the native Android application. See [`docs/operations/REMOTE_ANDROID_TESTING.md`](docs/operations/REMOTE_ANDROID_TESTING.md).
 
 ## GitHub Pages
 
-The repository includes a MkDocs-based Pages workflow for:
+The Pages workflow publishes:
 
-- public product and technical documentation;
-- synthetic, non-sensitive HTML prototypes;
+- product and technical documentation;
+- fictional, non-sensitive interactive prototypes;
 - test instructions and pilot material;
-- release notes and published test reports.
+- release notes and approved reports.
 
-GitHub Pages must **not** be used for the production API, authenticated administration, secrets, real verification documents, personal data or private location evidence.
+Pages must not host the production API, authenticated operations, secrets, real verification documents, personal data or private location evidence.
 
-Complete the one-time repository setting described in [`docs/operations/PAGES_USAGE.md`](docs/operations/PAGES_USAGE.md).
+Public site:
+
+`https://kudzimusar.github.io/direkt/`
 
 ## Download the planning pack
-
-A repository-ready archive is published through the documentation site after Pages deployment:
 
 [Download the generated DIREKT planning pack](https://kudzimusar.github.io/direkt/downloads/DIREKT_PLANNING_PACK.zip)
 
 ## Current next workstream
 
-The next approved implementation workstream is **Phase 1A — product assumptions, Zambia field research and interaction-design validation**. Product scaffolding must not begin until the Phase 1A exit criteria in the master plan are met.
+The active next workstream is **Phase 1B — build and publish a synthetic interactive DIREKT prototype through GitHub Pages**.
+
+The prototype will cover customer discovery, provider trust details, provider evidence progress and operations review using fictional Zambia-oriented data. It will not claim that the backend, verification engine or production integrations already exist.
 
 ## Rights and contribution status
 

@@ -1,107 +1,123 @@
 # DIREKT Phase 1A Exit Review
 
-**Current status:** NOT READY  
+**Current status:** PASS WITH ACCEPTED LIMITATIONS  
 **Opened:** 2026-07-14  
+**Approved:** 2026-07-14  
 **Approval owner:** Kudzanai Musarurwa  
-**Next phase if approved:** Phase 1B — interaction design and synthetic prototype
+**Next phase:** Phase 1B — interaction design and synthetic prototype
 
 ## 1. Purpose
 
-This document is the formal gate that prevents assumptions from becoming Android, backend, trust or operations implementation. It must be completed with evidence IDs and owner approval.
+This review decides whether DIREKT has enough evidence to proceed into design without pretending that desk research is equivalent to Zambia field validation.
 
-## 2. Mandatory deliverables
+The owner has confirmed that primary fieldwork is not practical under current circumstances and has authorized the project to build a defensible baseline from current public research. Real-user, provider, device, legal and operational validation is deferred to the prototype, hardening and controlled-pilot gates.
 
-| Deliverable | State | Evidence/link | Blocker |
+## 2. Evidence completed
+
+| Deliverable | State | Evidence/link | Limitation |
 |---|---|---|---|
-| Research plan and ethics protocol | COMPLETE | `RESEARCH_PLAN.md`; `RESEARCH_ETHICS_AND_CONSENT.md` | None |
-| Customer interviews | NOT STARTED | Target: at least 12 | Recruitment and fieldwork |
-| Provider interviews | NOT STARTED | Target: at least 16 across 4+ categories | Recruitment and fieldwork |
-| Verification/field stakeholder interviews | NOT STARTED | Target: at least 5 | Stakeholder access |
-| Institutional-buyer interviews | NOT STARTED | Target: at least 4 | Recruitment |
-| Contextual location/device observations | NOT STARTED | `FIELD_OBSERVATION_GUIDE.md` | Fieldwork |
-| Trust-claim comprehension tests | NOT STARTED | Synthetic cards/prototype needed | Phase 1A test assets |
-| Pilot-area comparison | OPEN | `PILOT_AREA_DECISION.md` | Evidence from at least 2 candidates |
-| Pilot-category selection | OPEN | `PILOT_CATEGORY_DECISION.md` | Demand/evidence/operations scorecards |
-| Category evidence matrix | INITIALIZED | `CATEGORY_EVIDENCE_MATRIX.md` | Real document patterns and authority confirmation |
-| Device/connectivity constraints | OPEN | `TECHNOLOGY_AND_CONNECTIVITY_RESEARCH.md` | Observed device sample |
-| Location/privacy recommendation | OPEN | `LOCATION_AND_ADDRESSING_RESEARCH.md` | Field observation and legal review |
-| Communication/payment recommendation | OPEN | `PAYMENTS_AND_COMMUNICATION_RESEARCH.md` | Interviews and current official research |
-| Legal research register | INITIALIZED | `LEGAL_AND_REGULATORY_RESEARCH.md` | Qualified Zambia review required for legal conclusions |
-| Assumptions resolved | OPEN | `ASSUMPTIONS_REGISTER.md` | Critical assumptions remain untested |
-| Personas/journeys updated | NOT STARTED | Existing product docs | Research synthesis |
-| Risk and decision logs updated | PARTIAL | Initial Phase 1A setup only | Final evidence decisions |
+| Comprehensive product and architecture planning | COMPLETE | Repository planning pack | Based on current product strategy |
+| Research plan and ethics protocol | COMPLETE | `RESEARCH_PLAN.md`; `RESEARCH_ETHICS_AND_CONSENT.md` | Retained for later pilot research |
+| Official and credible desk research | COMPLETE | `DESK_RESEARCH_REGISTER.md`; `SECONDARY_RESEARCH_BASELINE.md` | No claim of representative interviews |
+| Zambia population and pilot-market basis | COMPLETE | Census sources summarized in `SECONDARY_RESEARCH_BASELINE.md` | Exact neighbourhood boundary deferred |
+| Business-registry route | COMPLETE FOR DESIGN | PACRA official source | Integration/access terms unconfirmed |
+| Construction-registry route | COMPLETE FOR DESIGN | NCC official source | Category and matching coverage unconfirmed |
+| Technical-qualification route | COMPLETE FOR DESIGN | TEVETA official source | Credential verification access unconfirmed |
+| Location model | COMPLETE FOR DESIGN | Area, landmark, pin and Plus Code baseline | Must be tested with real pilot users |
+| Device/connectivity constraints | COMPLETE FOR DESIGN | Mobile-first research and conservative offline assumptions | Final device matrix deferred |
+| Communication model | COMPLETE FOR DESIGN | Tracked enquiry then call/WhatsApp handoff | Full chat need deferred |
+| Payment scope | COMPLETE FOR DESIGN | Customer payments deferred; provider-subscription adapter later | Final provider and commercial terms deferred |
+| Pilot area | PROVISIONALLY APPROVED | Lusaka District | Narrow launch boundary deferred |
+| Pilot categories | PROVISIONALLY APPROVED | Plumbing, electrical, mechanics, appliance/electronics repair | Final provider supply and authority checks deferred |
+| Category evidence matrix | INITIALIZED FOR DESIGN | `CATEGORY_EVIDENCE_MATRIX.md` | Real examples remain private pilot work |
+| Privacy baseline | COMPLETE FOR DESIGN | Minimal public precision; private evidence; synthetic public data | Qualified Zambia legal review still required |
+| Risk and decision logs | UPDATED | `RISK_REGISTER.md`; `DECISION_LOG.md` | Later evidence may revise decisions |
 
-## 3. Critical exit tests
+## 3. Accepted limitations
 
-Each item must be `PASS`, `PASS WITH ACCEPTED LIMITATION` or `FAIL`.
+The following work is explicitly incomplete but is no longer a blocker to design or scaffolding:
 
-| Gate | Result | Evidence IDs | Notes |
+- representative customer interviews;
+- provider interviews and real evidence inspection;
+- field-agent workflow observation;
+- real-device and mobile-data testing;
+- formal legal opinion;
+- regulator data-access agreements;
+- map, SMS and payment-provider contracts;
+- willingness-to-pay and subscription pricing;
+- field-verification cost and turnaround data.
+
+These limitations must remain visible in product copy, issue tracking and release gates. They cannot be silently converted into validated facts.
+
+## 4. Critical exit tests
+
+| Gate | Result | Evidence | Notes |
 |---|---|---|---|
-| A real, repeated customer discovery/trust problem is evidenced | PENDING |  |  |
-| Customers can distinguish separate trust claims | PENDING |  |  |
-| Providers accept a feasible evidence and renewal workflow | PENDING |  |  |
-| Informal providers have an honest participation pathway | PENDING |  |  |
-| Pilot area is tightly bounded and operationally feasible | PENDING |  |  |
-| Initial categories are limited and verifiable | PENDING |  |  |
-| Field verification has safe cost/capacity assumptions | PENDING |  |  |
-| Public/private location model is understandable | PENDING |  |  |
-| Device/connectivity constraints are documented | PENDING |  |  |
-| MVP contact model is supported | PENDING |  |  |
-| Payment scope is explicitly approved or deferred | PENDING |  |  |
-| Critical legal questions are identified; no legal guess is implemented | PENDING |  |  |
-| No real sensitive research data is committed publicly | PASS TO DATE | EV-20260714-001 | Re-check at close |
+| A plausible, material customer discovery and trust problem is documented | PASS WITH LIMITATION | Product research and fraud context | Primary demand validation deferred |
+| Check-specific trust language is defined | PASS FOR PROTOTYPE | Trust documents and baseline | Comprehension must be tested in Phase 1B/pilot |
+| Formal and informal provider pathways exist | PASS FOR DESIGN | `SECONDARY_RESEARCH_BASELINE.md` | Provider acceptance deferred |
+| Pilot area is sufficiently bounded for prototype context | PASS | Lusaka District default | Exact neighbourhood boundary deferred |
+| Initial categories are limited | PASS | Four provisional categories | Final supply and legal screening deferred |
+| Public/private location model is defined | PASS FOR DESIGN | Area/landmark/pin/Plus Code rules | Real usability testing deferred |
+| Low-bandwidth and offline constraints are documented | PASS FOR DESIGN | Android and research documents | Device matrix deferred |
+| MVP contact model is defined | PASS | Tracked enquiry then call/WhatsApp | Full chat deferred |
+| Payment scope is explicit | PASS | Customer payment deferred; subscriptions later | No provider selected |
+| Critical legal questions are recorded | PASS WITH LIMITATION | Legal register | No legal conclusion claimed |
+| No sensitive research data is committed publicly | PASS | Repository inspection policy | Must be continuously enforced |
 
-## 4. Decisions required at exit
+## 5. Approved provisional decisions
 
-The owner must approve or defer:
+- **Market context:** Lusaka District.
+- **Launch shape:** later limited to selected neighbourhoods.
+- **Initial categories:** plumbing, electrical repairs, motor-vehicle mechanics, appliance/electronics repair.
+- **Provider operating models:** fixed premises, mobile and hybrid.
+- **Trust model:** separate evidence-backed claims; no blanket verification.
+- **Informal-provider pathway:** allowed with honest missing-claim disclosure.
+- **Location:** area + landmark + pin + optional Plus Code; private precision minimized.
+- **Communication:** tracked enquiry followed by consent-aware call or WhatsApp handoff.
+- **Customer payments:** deferred from first MVP.
+- **Provider subscriptions:** later payment-adapter integration; MTN MoMo and Airtel Money are candidates only.
+- **Android:** native, low-bandwidth, offline-draft and recoverable-upload requirements remain mandatory.
 
-- pilot area and boundary;
-- pilot categories;
-- provisional category evidence requirements;
-- public trust terminology for Phase 1B;
-- public/private location precision;
-- fixed/mobile/hybrid provider model;
-- MVP enquiry/contact approach;
-- customer-payment scope;
-- provider-subscription research direction;
-- Phase 2 Android package-name decision timing;
-- minimum-device research constraints;
-- authority partnerships to pursue;
-- legal questions that block product implementation.
+## 6. Deferred validation gates
 
-## 5. Quality review
+### Phase 1B
 
-Before approval confirm:
+- synthetic trust-language testing;
+- public Pages prototype review;
+- structured remote feedback;
+- design correction before scaffolding.
 
-- [ ] participant targets met or gap explicitly accepted;
-- [ ] samples are not limited to personal contacts or high-end users;
-- [ ] findings separate customer/provider/category/area segments;
-- [ ] contradictions are documented;
-- [ ] official-source dates and access limitations are recorded;
-- [ ] no registration is presented as proof of competence;
-- [ ] no field visit is presented as proof of workmanship;
-- [ ] no payment changes verification status;
-- [ ] public examples are synthetic;
-- [ ] privacy review completed;
-- [ ] relevant product, design, trust, risk and decision documents updated;
-- [ ] documentation checks pass;
-- [ ] next workstream is precise and bounded.
+### Phase 10
 
-## 6. Decision
+- qualified legal and privacy review;
+- regulator-access and integration approval;
+- security verification and provider-contract review.
+
+### Phase 11
+
+- consenting Zambia customer/provider validation;
+- real device and connectivity matrix;
+- real provider-document workflows in private systems;
+- field-verification cost and capacity;
+- price and willingness-to-pay evidence;
+- exact pilot neighbourhood boundary.
+
+## 7. Decision
 
 | Field | Value |
 |---|---|
-| Exit result | NOT READY |
-| Approved by | Pending |
-| Approval date | Pending |
-| Accepted limitations | Pending |
-| Blocking issues | Field research and synthesis not yet completed |
-| Next authorized task | Recruit and conduct the exploratory Phase 1A interview wave: 4 customers, 4 providers across different categories, and 2 verification/field stakeholders |
-| Android scaffolding authorized? | NO |
-| Phase 1B authorized? | NO |
+| Exit result | PASS WITH ACCEPTED LIMITATIONS |
+| Approved by | Kudzanai Musarurwa |
+| Approval date | 2026-07-14 |
+| Accepted limitations | Primary interviews and operational field validation deferred to later gates |
+| Blocking issues | None for Phase 1B design |
+| Next authorized task | Build the Phase 1B synthetic interactive prototype and publish it through GitHub Pages |
+| Phase 1B authorized? | YES |
+| Android scaffolding authorized? | AFTER the Phase 1B design checkpoint; no production integrations or real data |
+| Public pilot authorized? | NO |
+| Production data collection authorized? | NO |
 
-## 7. Approval statement
+## 8. Approval statement
 
-When ready, replace the status only after the owner records:
-
-> I have reviewed the Phase 1A evidence, limitations, pilot decisions, trust model and unresolved legal questions. I authorize Phase 1B interaction design and synthetic prototype work. This approval does not authorize Android product scaffolding, production data collection or external pilot launch unless their later gates are separately satisfied.
+> I have reviewed the limitations of a desk-research baseline and authorize DIREKT to proceed to Phase 1B interaction design and synthetic prototype work. Primary Zambia validation is deferred, not waived, and must be completed before the controlled pilot and production claims. This approval does not authorize real evidence collection, regulator integrations, customer payments, public pilot launch or production release.
