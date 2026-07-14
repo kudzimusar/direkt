@@ -6,52 +6,66 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED |
-| Owner/agent | OpenAI GPT-5.6 Thinking — Phase 1B prototype agent |
-| Phase | Phase 1B |
-| Task | Build, validate and publish the synthetic interactive DIREKT prototype |
-| Modules/paths | `prototype`, `scripts/build_pages_source.py`, `docs/design`, `docs/product`, `docs/research`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
-| Claimed at | 2026-07-14 22:33 JST / 2026-07-14 13:33 UTC |
-| Expected handoff | Interactive mobile-responsive prototype published on GitHub Pages; design specifications synchronized; structured review recorded; Phase 2 namespace and authorization decision completed |
-| Last clean checkpoint | `main` merge `8035e7d16d43dc3e59e91c4a5c5a13630a8fb802`; synchronized into `build/android-v1` through PR #8 |
+| Status | UNCLAIMED |
+| Owner/agent | — |
+| Phase | Phase 2A |
+| Task | Scaffold the native Android project and produce the first green debug APK |
+| Modules/paths | `android/direkt-app`, `.github/workflows/android-ci.yml`, `docs/android`, `docs/architecture`, `docs/testing`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
+| Claimed at | — |
+| Expected handoff | Reproducible Kotlin/Compose scaffold; tests and lint green; debug APK retained by Actions; architecture documentation synchronized; Phase 2B authorized |
+| Last clean checkpoint | Use the merged Phase 1B checkpoint after Pages deployment verification |
 
-## Phase 1B acceptance criteria
+## Phase 2A acceptance criteria
 
 The active owner must:
 
-1. read `SECONDARY_RESEARCH_BASELINE.md`, `design.md`, the screen inventory and trust documents;
-2. build customer, provider and operations prototype flows using fictional data only;
-3. display separate trust claims and all important states;
-4. include fixed, mobile and hybrid provider examples;
-5. include tracked enquiry and consent-aware call/WhatsApp handoff;
-6. include offline, slow-network, loading, empty, permission-denied and error states;
-7. publish the prototype through GitHub Pages;
-8. record structured review findings and design corrections;
-9. update status, decisions, risks and the Phase 1B exit decision;
-10. create, verify and merge the checkpoint PR automatically when safe;
-11. close completed issues and authorize only the exact next phase.
+1. synchronize `build/android-v1` with the latest `main` checkpoint;
+2. claim this lock before broad implementation;
+3. create the native project at `android/direkt-app`;
+4. use Kotlin, Jetpack Compose, Material 3 and Gradle Kotlin DSL;
+5. use `com.kudzimusar.direkt` as namespace and production application ID;
+6. use a debug-safe application ID suffix;
+7. establish reproducible dependency and tool versions;
+8. implement a synthetic application shell and navigation boundary;
+9. add unit, lint and Compose smoke tests;
+10. make GitHub Android CI run tests, lint and `assembleDebug` successfully;
+11. retain the debug APK artifact;
+12. update architecture, Android, testing and bootstrap documents;
+13. avoid Firebase, real authentication, production API calls and real evidence;
+14. create, verify and merge the checkpoint automatically when safe.
 
 ## Active safety boundaries
 
-- Synthetic people, businesses, documents, reviews and coordinates only.
-- No working submission to a backend or third-party form.
-- No real phone number or WhatsApp destination.
-- No claim that verification, payments or regulator integrations are implemented.
-- No public identity documents, certificates, credentials or private locations.
+- Synthetic fixtures only.
+- No real identity documents, certificates, phone numbers or coordinates.
+- No Firebase configuration or service account.
+- No production API endpoint or secret.
+- No customer payment or regulator integration.
+- No claim that the scaffold implements verification.
+
+## Claim procedure
+
+Before editing:
+
+1. verify the latest `main` and build-branch heads;
+2. run existing repository checks where available;
+3. replace `UNCLAIMED` with `CLAIMED`;
+4. record agent, scope and timestamp;
+5. commit the lock claim.
 
 ## Release procedure
 
 After implementation:
 
-1. run required checks;
-2. inspect for real personal data, secrets and unsupported claims;
-3. update documentation and `PROJECT_STATUS.md`;
-4. create the checkpoint PR with the exact head;
-5. verify CI, mergeability and unresolved comments;
-6. merge automatically when safe;
-7. close only issues whose acceptance evidence is complete;
-8. synchronize the implementation branch;
-9. release or transfer the lock with a precise handoff.
+1. run unit tests, lint and debug assembly;
+2. inspect the diff and generated artifacts;
+3. update status, decisions, risks and handoff;
+4. create and verify the checkpoint PR;
+5. merge automatically only at the verified head;
+6. confirm the Actions artifact;
+7. close only completed issues;
+8. synchronize the implementation branch without force-pushing;
+9. release or transfer the lock.
 
 ## Conflict rule
 
