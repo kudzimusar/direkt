@@ -6,68 +6,72 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED |
-| Owner/agent | OpenAI GPT-5.6 Thinking — Phase 2B backend/data foundation agent |
-| Phase | Phase 2B |
-| Task | Create the NestJS and PostgreSQL/PostGIS foundation with migrations, health, OpenAPI and CI |
-| Modules/paths | `backend/direkt-api`, `database`, `.github/workflows/backend-ci.yml`, `docs/backend`, `docs/architecture`, `docs/testing`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
-| Claimed at | 2026-07-14 23:34 JST / 2026-07-14 14:34 UTC |
-| Expected handoff | Reproducible backend workspace; clean PostGIS migration run; health/readiness and problem-details boundaries; OpenAPI artifact; tests/lint/typecheck/build green; Phase 2C authorized |
-| Last clean checkpoint | `c97ea31e79f387f9c3ced3b4f6ac07d75296c1eb` |
+| Status | UNCLAIMED |
+| Owner/agent | — |
+| Phase | Phase 2C next |
+| Task | Identity, authentication-policy and operations-admin foundation |
+| Modules/paths | `backend/direkt-api`, `database`, `admin/direkt-operations-portal`, `docs/backend`, `docs/architecture`, `docs/security`, `docs/testing`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
+| Claimed at | — |
+| Expected handoff | Identity/session/role contracts; synthetic verification adapters; object-scope authorization tests; operations portal shell; extended CI; no real OTP/evidence/vendor integration |
+| Last clean checkpoint | Pending automatic merge of Phase 2B PR #13 after final exact-head checks |
 
-## Phase 2B acceptance criteria
+## Phase 2B release record
 
-The active owner must:
+Phase 2B delivered:
 
-1. preserve Issue #5 as a non-blocking later pilot gate;
-2. create the NestJS workspace at `backend/direkt-api`;
-3. pin Node.js, NestJS and TypeScript versions;
-4. create strict configuration validation and safe development defaults;
-5. implement `/api/v1/health/live` and database/PostGIS-backed `/api/v1/health/ready`;
-6. establish request IDs, structured logging, validation and RFC 7807 problem details;
-7. generate and validate OpenAPI;
-8. create PostgreSQL/PostGIS local and CI infrastructure;
-9. implement forward-only, checksummed, advisory-locked SQL migrations;
-10. limit the first schema to platform audit, outbox and idempotency foundations;
-11. add unit and database integration tests;
-12. add backend CI for format, lint, typecheck, tests, build, migrations and OpenAPI;
-13. retain test/coverage/OpenAPI artifacts;
-14. avoid real authentication, production credentials, external providers and trust-claim creation;
-15. create, verify and merge the checkpoint automatically when safe.
+1. a Node.js 24/NestJS 11/TypeScript 5.9 workspace;
+2. a committed npm lockfile installed with `npm ci`;
+3. validated configuration, request IDs and structured logs;
+4. RFC 7807-compatible problem details and OpenAPI;
+5. PostgreSQL 18/PostGIS 3.6 local and CI infrastructure;
+6. checksummed, advisory-locked, transactional forward migrations;
+7. append-only audit, outbox and hashed idempotency foundations;
+8. unit, HTTP and real PostGIS integration tests;
+9. green format, lint, typecheck, migration, coverage, build and OpenAPI gates;
+10. no real authentication, provider, evidence, trust, payment or production integration.
 
-## Active safety boundaries
+The lock is released for checkpoint promotion. It must be claimed again before Phase 2C implementation begins.
 
-- No production Supabase or database connection.
-- No committed `.env`, API key, password or service account.
-- No real authentication or token issuance.
-- No real provider, identity, credential, location or payment data.
-- No regulator, map, SMS, Firebase or payment integration.
-- No public provider onboarding or trust claim creation.
-- Synthetic seeds only.
+## Phase 2C preliminary acceptance boundary
+
+The next owner must not begin until PR #13 is merged and `build/android-v1` is synchronized with `main`.
+
+The bounded Phase 2C owner must:
+
+1. define identity, contact, consent, session, role and assignment schemas;
+2. implement authentication interfaces with synthetic development adapters only;
+3. define short-lived access and revocable session policy;
+4. enforce customer/provider/reviewer/field-agent/admin role boundaries;
+5. add provider/object-scope authorization tests;
+6. audit authentication and privileged actions;
+7. create the Next.js operations-portal workspace and safe shell;
+8. add CI for backend, admin and database changes;
+9. avoid real OTP, evidence, verification decisions and production credentials;
+10. create, verify and merge the checkpoint automatically when safe.
 
 ## Claim procedure
 
 Before editing:
 
-1. verify `main` and `build/android-v1` are synchronized;
-2. inspect the approved backend/database documents;
-3. replace the previous phase owner with the new owner and scope;
-4. record the exact checkpoint and timestamp;
-5. commit the lock transfer before broad implementation.
+1. verify the latest stable checkpoint is merged;
+2. synchronize `build/android-v1` without force-pushing;
+3. inspect the approved Phase 2C issue and control documents;
+4. replace `UNCLAIMED` with `CLAIMED`;
+5. record owner, scope, timestamp and clean checkpoint;
+6. commit the claim before broad implementation.
 
 ## Release procedure
 
 After implementation:
 
-1. run format, lint, typecheck, unit tests, database tests, build, migration and OpenAPI checks;
-2. inspect the diff, dependency lock and generated artifacts;
+1. run all phase-specific checks;
+2. inspect the diff, migrations, dependency locks and artifacts;
 3. update status, decisions, risks and handoff;
 4. create and verify the checkpoint PR;
 5. merge automatically only at the verified head;
-6. confirm retained artifacts and clean migration evidence;
-7. close only completed issues;
-8. synchronize the implementation branch without force-pushing;
-9. release or transfer the lock.
+6. close only completed issues;
+7. synchronize the implementation branch without force-pushing;
+8. release or transfer the lock.
 
 ## Conflict rule
 
