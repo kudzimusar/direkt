@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { DirektRequest } from '../platform/http/request-context';
 import { AuthorizationService } from './authorization.service';
@@ -30,13 +36,17 @@ export class PermissionGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<DirektRequest>();
-    const providerId = requirement.providerParam
+    const rawProviderId = requirement.providerParam
       ? request.params[requirement.providerParam]
       : undefined;
+    if (Array.isArray(rawProviderId)) {
+      throw new BadRequestException('The provider scope is ambiguous.');
+    }
+
     await this.authorization.assertPermission(
       request.actor,
       requirement.permission,
-      providerId ? { providerId } : {},
+      rawProviderId ? { providerId: rawProviderId } : {},
       request.requestId,
     );
     return true;
