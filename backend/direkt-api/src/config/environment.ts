@@ -19,9 +19,7 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
   DATABASE_URL: databaseUrlSchema.when('NODE_ENV', {
     is: 'production',
     then: databaseUrlSchema.required(),
-    otherwise: databaseUrlSchema.default(
-      'postgresql://direkt:direkt_dev@localhost:5432/direkt',
-    ),
+    otherwise: databaseUrlSchema.default('postgresql://direkt:direkt_dev@localhost:5432/direkt'),
   }),
   CORS_ORIGINS: Joi.string().allow('').default(''),
 });
