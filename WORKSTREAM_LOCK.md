@@ -6,14 +6,14 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | UNCLAIMED |
-| Owner/agent | — |
+| Status | CLAIMED |
+| Owner/agent | OpenAI GPT-5.6 Thinking — Phase 2A Android foundation agent |
 | Phase | Phase 2A |
 | Task | Scaffold the native Android project and produce the first green debug APK |
 | Modules/paths | `android/direkt-app`, `.github/workflows/android-ci.yml`, `docs/android`, `docs/architecture`, `docs/testing`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
-| Claimed at | — |
+| Claimed at | 2026-07-14 23:04 JST / 2026-07-14 14:04 UTC |
 | Expected handoff | Reproducible Kotlin/Compose scaffold; tests and lint green; debug APK retained by Actions; architecture documentation synchronized; Phase 2B authorized |
-| Last clean checkpoint | Use the merged Phase 1B checkpoint after Pages deployment verification |
+| Last clean checkpoint | `7d8f6fb2b8e69ade0e0b5a6872b21531d5bc1447` |
 
 ## Phase 2A acceptance criteria
 

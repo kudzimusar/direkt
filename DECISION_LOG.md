@@ -35,6 +35,10 @@ This log records product and technical decisions with long-term impact.
 | D-029 | 2026-07-14 | Android namespace and production application ID are `com.kudzimusar.direkt` | The identifier is unique, valid, tied to the owner-controlled identity and avoids a temporary `com.example` migration | Accepted |
 | D-030 | 2026-07-14 | Phase 1B passes with accepted limitations and Phase 2 is authorized | Customer, provider and operations structures are coherent enough to scaffold; native and real-user validation remain later obligations | Accepted |
 | D-031 | 2026-07-14 | Development builds may use an application ID suffix while production retains the exact approved ID | Allows parallel debug/staging installs without changing the production identity | Accepted |
+| D-032 | 2026-07-14 | Phase 2A pins Gradle 9.4.0, AGP 9.0.0, Kotlin 2.3.0, Compose BOM 2025.09.01 and API 36 | These values match the current Google Android `nowinandroid` reference inspected for the phase and provide a reproducible modern baseline | Accepted; recheck at release gates |
+| D-033 | 2026-07-14 | Phase 2A begins with a single `:app` module | Empty module proliferation would add complexity before domain and data contracts exist; modules will split only at stable boundaries | Accepted |
+| D-034 | 2026-07-14 | Phase 2A contains no network, Firebase, payment, regulator or real-evidence integration | The first APK must prove native buildability, design tokens, state boundaries and CI without creating premature security or vendor commitments | Accepted |
+| D-035 | 2026-07-14 | The CI runner bootstraps the standard Gradle wrapper JAR from the pinned Gradle distribution | Binary wrapper transfer was unavailable through the initial repository-writing path; the pinned distribution and SHA preserve reproducibility until the generated JAR is committed in a later maintenance step | Accepted with documented limitation |
 
 ## How to add a decision
 

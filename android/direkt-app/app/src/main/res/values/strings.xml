@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DIREKT</string>
+    <string name="prototype_notice">Foundation build — synthetic data only</string>
+</resources>
