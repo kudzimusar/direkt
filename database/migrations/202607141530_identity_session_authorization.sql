@@ -1,5 +1,6 @@
 CREATE SCHEMA IF NOT EXISTS account;
 CREATE SCHEMA IF NOT EXISTS authz;
+CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 CREATE FUNCTION account.touch_updated_at()
 RETURNS trigger
@@ -212,14 +213,16 @@ CREATE TABLE authz.role_assignments (
   CONSTRAINT role_assignments_reason_not_blank CHECK (length(btrim(reason)) >= 8)
 );
 
-CREATE UNIQUE INDEX role_assignments_active_unique_idx
-  ON authz.role_assignments (
-    identity_id,
-    role_id,
-    scope_type,
-    COALESCE(provider_id, '00000000-0000-0000-0000-000000000000'::uuid)
+ALTER TABLE authz.role_assignments
+  ADD CONSTRAINT role_assignments_no_time_overlap
+  EXCLUDE USING gist (
+    identity_id WITH =,
+    role_id WITH =,
+    scope_type WITH =,
+    (COALESCE(provider_id, '00000000-0000-0000-0000-000000000000'::uuid)) WITH =,
+    tstzrange(starts_at, COALESCE(ends_at, 'infinity'::timestamptz), '[)') WITH &&
   )
-  WHERE revoked_at IS NULL;
+  WHERE (revoked_at IS NULL);
 CREATE INDEX role_assignments_identity_idx
   ON authz.role_assignments (identity_id, starts_at DESC);
 CREATE INDEX role_assignments_provider_idx
@@ -310,7 +313,7 @@ RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  IF NEW.verified_at IS NOT NULL AND (OLD.verified_at IS NULL OR NEW.verified_at <> OLD.verified_at) THEN
+  IF NEW.verified_at IS NOT NULL AND (TG_OP = 'INSERT' OR OLD.verified_at IS DISTINCT FROM NEW.verified_at) THEN
     INSERT INTO platform.audit_events (
       actor_type,
       actor_id,
@@ -334,7 +337,7 @@ END;
 $$;
 
 CREATE TRIGGER contacts_audit_verification
-AFTER UPDATE OF verified_at ON account.contacts
+AFTER INSERT OR UPDATE OF verified_at ON account.contacts
 FOR EACH ROW
 EXECUTE FUNCTION account.audit_contact_verification();
 
