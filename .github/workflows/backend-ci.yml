@@ -1,0 +1,128 @@
+name: DIREKT Backend CI
+
+on:
+  push:
+    branches:
+      - main
+      - build/android-v1
+    paths:
+      - "backend/direkt-api/**"
+      - "database/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "backend/direkt-api/**"
+      - "database/**"
+      - ".github/workflows/backend-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_ENV: test
+  DATABASE_URL: postgresql://direkt:direkt_ci@localhost:5432/direkt_test
+
+jobs:
+  verify:
+    name: Format, test, migrate and build API
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgis/postgis:18-3.6
+        env:
+          POSTGRES_DB: direkt_test
+          POSTGRES_USER: direkt
+          POSTGRES_PASSWORD: direkt_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U direkt -d direkt_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    defaults:
+      run:
+        working-directory: backend/direkt-api
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js 24 LTS
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Verify npm major version
+        shell: bash
+        run: |
+          node --version
+          npm --version
+          [[ "$(npm --version)" == 11.* ]]
+
+      - name: Generate exact bootstrap lockfile
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Install from generated lockfile
+        run: npm ci --ignore-scripts
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Apply and verify migrations
+        run: npm run migration:check
+
+      - name: Run tests with coverage
+        run: npm run test
+
+      - name: Build production JavaScript
+        run: npm run build
+
+      - name: Generate and validate OpenAPI
+        run: npm run openapi:check
+
+      - name: Upload npm lockfile bootstrap artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-backend-package-lock-${{ github.run_number }}-${{ github.sha }}
+          path: backend/direkt-api/package-lock.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload backend verification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-backend-reports-${{ github.run_number }}-${{ github.sha }}
+          path: |
+            backend/direkt-api/coverage/**
+            backend/direkt-api/artifacts/openapi.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish backend summary
+        shell: bash
+        run: |
+          echo "### DIREKT backend foundation" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Commit: \`${GITHUB_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Branch: \`${GITHUB_REF_NAME}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Runtime: Node.js 24 / npm 11" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Framework: NestJS 11.1.x / TypeScript 5.9.x" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Database: PostgreSQL 18 / PostGIS 3.6" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Result: format, lint, typecheck, migrations, tests, build and OpenAPI passed" >> "$GITHUB_STEP_SUMMARY"
