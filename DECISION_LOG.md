@@ -47,6 +47,13 @@ This log records product and technical decisions with long-term impact.
 | D-041 | 2026-07-14 | Only hashed idempotency keys may be persisted | Raw retry keys can act as sensitive bearer-like values and are unnecessary for replay protection | Accepted |
 | D-042 | 2026-07-14 | Phase 2B exposes only health and API documentation operations | Authentication, provider, evidence, verification and payment surfaces remain prohibited until their phase-specific controls exist | Accepted |
 | D-043 | 2026-07-14 | Reusable backend logic has coverage thresholds; command wrappers and empty module declarations are verified by CI but excluded from unit coverage targets | Coverage should measure testable logic rather than penalize deterministic launch wrappers already executed by the pipeline | Accepted |
+| D-044 | 2026-07-15 | Contact verification is separate from provider membership and provider trust claims | Possession of a phone or email channel must never be misrepresented as professional, business, location or safety verification | Accepted |
+| D-045 | 2026-07-15 | Access tokens contain only identity/session references; roles and permissions are resolved server-side | Prevents client claim tampering and makes role revocation effective without waiting for a role-bearing token to expire | Accepted |
+| D-046 | 2026-07-15 | Refresh tokens are stored only as hashes, rotate on use and revoke the full family after reuse | Limits replay exposure and provides an explicit compromised-session response | Accepted |
+| D-047 | 2026-07-15 | Phase 2C passwordless delivery is synthetic and automatically disabled in production configuration | Establishes a testable contract without implying that an OTP vendor, legal basis or abuse controls have been approved | Accepted with production stop gate |
+| D-048 | 2026-07-15 | Role grants are global or provider-scoped and may not overlap for the same identity/role/scope interval | Enforces tenant scope while permitting an expired bounded assignment to be granted again | Accepted |
+| D-049 | 2026-07-15 | The operations portal uses Next.js 16/React 19 and consumes only the versioned backend API | Prevents privileged browser code from bypassing domain authorization or private-storage controls | Accepted |
+| D-050 | 2026-07-15 | Phase 2C exposes only synthetic identity/session and operations-policy surfaces | Provider creation, evidence, verification decisions, trust publication and production administration remain later-phase concerns | Accepted |
 
 ## How to add a decision
 
