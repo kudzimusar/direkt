@@ -39,7 +39,7 @@ Not implemented:
 | PostgreSQL | 18 |
 | PostGIS | 3.6 |
 
-Use Node 24. The repository records `npm@11.16.0` as the package-manager baseline.
+Use Node 24. The repository records `npm@11.16.0` as the package-manager baseline and commits an npm lockfile version 3.
 
 ## Local database
 
@@ -57,14 +57,15 @@ It is not a production credential and must not be reused outside local developme
 
 ## Install and verify
 
-Until the first CI-generated lockfile is committed:
+Use the committed dependency graph:
 
 ```bash
-npm install --package-lock-only --ignore-scripts
 npm ci --ignore-scripts
 ```
 
-Then run:
+Do not regenerate or update the lockfile as part of ordinary installation. A dependency change must deliberately update both `package.json` and `package-lock.json`, then pass the complete CI gate.
+
+Run:
 
 ```bash
 npm run format:check
@@ -75,8 +76,6 @@ npm run test
 npm run build
 npm run openapi:check
 ```
-
-After the exact lockfile is committed, all clean checkouts use `npm ci --ignore-scripts` directly.
 
 ## Run locally
 
