@@ -31,9 +31,9 @@ Read, in order:
 
 Do not infer current state from filenames alone. Verify the code, database migrations, automated checks and current documentation.
 
-## 3. Single-lane workflow
+## 3. Single-lane workflow and GitHub lifecycle
 
-The project intentionally does not use normal feature pull requests during the initial build.
+The project uses one coherent implementation lane rather than unrelated feature branches.
 
 - `main`: stable documentation, phase checkpoints, testable prototypes and release baselines.
 - `build/android-v1`: sequential implementation lane.
@@ -42,7 +42,26 @@ The project intentionally does not use normal feature pull requests during the i
 - The previous agent must leave a complete handoff and clean working tree.
 - Parallel read-only investigation is allowed; parallel writes are not.
 
-No agent may create a feature branch, open a pull request, merge, force-push or rewrite history unless the owner explicitly changes this policy.
+The repository owner authorizes the active AI agent to manage the normal GitHub lifecycle without requiring manual owner clicks:
+
+1. push coherent, tested work to `build/android-v1`;
+2. create a checkpoint pull request to `main` when the bounded task or phase gate is ready;
+3. verify the exact PR head, changed files, required checks, unresolved review comments and mergeability;
+4. merge the PR when all mandatory gates pass and no owner-only decision is outstanding;
+5. use the expected head SHA when merging so a moved PR cannot be merged accidentally;
+6. update and close linked issues automatically when their committed acceptance evidence is complete;
+7. leave human-fieldwork, legal, credentials, payment-provider and other external-evidence issues open until the required owner or field evidence exists.
+
+Normal checkpoint PR management is therefore an agent responsibility. The owner should not need to open, run or merge routine PRs manually. Feature-branch proliferation remains prohibited. Force-pushing and history rewriting remain prohibited.
+
+A PR must not be merged automatically when:
+
+- required CI is failing or unavailable;
+- the PR head changed after verification;
+- a critical or high-risk review finding is unresolved;
+- a migration or production action needs explicit approval;
+- the task depends on field evidence, legal advice, secrets or an unmade product decision;
+- the acceptance criteria are not evidenced.
 
 ## 4. Required task sequence
 
@@ -56,8 +75,10 @@ For every task:
 6. **Test** — run all relevant unit, integration, UI, security and documentation checks.
 7. **Inspect** — review the diff for secrets, unrelated edits and policy violations.
 8. **Document** — update specifications, decision log and API/data contracts where applicable.
-9. **Commit** — create an atomic commit with a clear conventional message.
-10. **Handoff** — update `PROJECT_STATUS.md`, release the lock and identify the exact next approved task.
+9. **Commit** — create atomic commits with clear conventional messages.
+10. **Checkpoint** — when the task gate is complete, create, verify and merge the checkpoint PR automatically.
+11. **Resolve tracking** — update or close linked issues only when their acceptance evidence is complete.
+12. **Handoff** — update `PROJECT_STATUS.md`, release the lock and identify the exact next approved task.
 
 ## 5. Change control
 
@@ -134,10 +155,11 @@ Use `.env.example` with placeholders. Assume every committed byte is permanently
 Each handoff must state:
 
 - task and phase;
-- exact commit;
+- exact commit and merged checkpoint PR, when applicable;
 - files/modules changed;
 - migrations added;
 - commands run and results;
+- linked issues updated or closed;
 - known limitations;
 - security/privacy implications;
 - next approved task;
