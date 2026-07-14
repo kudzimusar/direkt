@@ -442,7 +442,7 @@ export class AuthRepository {
   private async insertAudit(
     client: PoolClient,
     input: {
-      requestId?: string;
+      requestId: string | undefined;
       actorId: string;
       action: string;
       resourceId: string;
