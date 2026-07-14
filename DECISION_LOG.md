@@ -20,6 +20,11 @@ This log records product and technical decisions with long-term impact.
 | D-014 | 2026-07-14 | No production code starts before Phase 1A exits | Real Zambia field constraints must shape product and technology choices | Accepted |
 | D-015 | 2026-07-14 | Remote testing is split across Pages, Actions and Firebase App Distribution | Pages supports static review, Actions verifies and packages Android builds, and Firebase provides controlled installation and update delivery to named device testers | Accepted |
 | D-016 | 2026-07-14 | The permanent Android package name must be approved before Firebase registration | Firebase's Android package registration is case-sensitive and effectively permanent for the registered app; premature registration creates avoidable migration risk | Accepted |
+| D-017 | 2026-07-14 | Phase 1A uses explicit evidence classifications and an assumptions register | Separating field observations, participant reports, inspected documents, official sources and provisional assumptions prevents desk research or founder preference from becoming untested product truth | Accepted |
+| D-018 | 2026-07-14 | Raw Phase 1A participant data and real evidence must remain outside the public repository | The repository and Pages are public; only coded, minimized and anonymized findings may be committed | Accepted |
+| D-019 | 2026-07-14 | Pilot geography and categories remain open until scorecards link to real evidence | Lusaka and the proposed trades are plausible starting points but must not be approved through assumption alone | Accepted |
+| D-020 | 2026-07-14 | Official registries are candidate evidence sources, not automatic verification integrations | PACRA, NCC and TEVETA confirm relevant systems exist, but access rights, category coverage, accuracy, legal use and operational reliability remain to be validated | Accepted |
+| D-021 | 2026-07-14 | Phase 1A begins with a bounded exploratory wave before full fieldwork | Four customers, four providers across distinct categories and two verification/operations stakeholders will expose instrument and terminology defects before the larger sample | Accepted |
 
 ## How to add a decision
 

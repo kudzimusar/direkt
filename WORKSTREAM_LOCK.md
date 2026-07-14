@@ -6,14 +6,27 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | UNCLAIMED |
-| Owner/agent | — |
+| Status | CLAIMED |
+| Owner/agent | OpenAI GPT-5.6 Thinking — Phase 1A research-planning agent |
 | Phase | Phase 1A |
-| Task | Zambia discovery and assumptions validation |
-| Modules/paths | `docs/product`, `docs/research`, `docs/trust`, `PROJECT_STATUS.md` |
-| Claimed at | — |
-| Expected handoff | — |
-| Last clean commit | Use current `build/android-v1` HEAD after branch creation |
+| Task | Initialize and execute Zambia discovery and assumptions validation |
+| Modules/paths | `docs/research`, `docs/product`, `docs/trust`, `docs/operations`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
+| Claimed at | 2026-07-14 20:51 JST / 2026-07-14 11:51 UTC |
+| Expected handoff | Phase 1A research system initialized, evidence-gathering instruments committed, desk research recorded, and exact field-research assignment documented; lock remains claimed until the Phase 1A exit review is complete or the owner authorizes an interim handoff. |
+| Last clean commit | `b2c9b87787c0d959ab04614731b4986a02390c77` |
+
+## Active acceptance criteria
+
+The active owner must:
+
+1. establish the authoritative `docs/research/` structure;
+2. create customer, provider and field-verification research instruments;
+3. define participant, evidence, privacy and consent rules;
+4. create the assumptions register and category-evidence matrix;
+5. record official desk-research sources separately from field findings;
+6. identify candidate pilot areas and categories without presenting provisional choices as approved decisions;
+7. update `PROJECT_STATUS.md` with progress, evidence gaps and the next executable task;
+8. prevent Android product scaffolding until the Phase 1A exit gate is formally passed.
 
 ## Claim procedure
 

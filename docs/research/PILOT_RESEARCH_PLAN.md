@@ -1,38 +1,60 @@
 # DIREKT Pilot Research Plan
 
-## Phase 1A sample
+This file is retained as a compatibility entry point for the original planning baseline.
 
-Aim for diversity, not statistical national representation:
+The authoritative Phase 1A research system now begins at:
 
-- 12–20 customers/households;
-- 15–25 providers across at least four candidate categories;
-- 3–6 institutional/property stakeholders;
-- 5–10 potential reviewers/field/support participants;
-- inclusion of women, varied ages, disability/access needs, mobile/fixed and informal/registered providers.
+- [`INDEX.md`](INDEX.md)
+- [`RESEARCH_PLAN.md`](RESEARCH_PLAN.md)
+- [`RESEARCH_ETHICS_AND_CONSENT.md`](RESEARCH_ETHICS_AND_CONSENT.md)
+- [`ASSUMPTIONS_REGISTER.md`](ASSUMPTIONS_REGISTER.md)
+- [`FIELDWORK_EXECUTION_CHECKLIST.md`](FIELDWORK_EXECUTION_CHECKLIST.md)
+- [`PHASE_1A_EXIT_REVIEW.md`](PHASE_1A_EXIT_REVIEW.md)
 
-## Methods
+## Phase 1A minimum sample
 
-Context interviews, service-search walkthrough, map/address exercise, evidence inventory, prototype usability, provider onboarding simulation and operational tabletop.
+Aim for decision-quality diversity rather than statistical national representation:
 
-## Instruments
+- at least 12 customers/households;
+- at least 16 providers across at least four candidate categories;
+- at least 4 institutional/property/facility stakeholders;
+- at least 5 verification, reviewer, field or support participants;
+- representation of women, varied ages, accessibility needs, lower digital confidence, mobile/fixed/hybrid and informal/registered providers.
 
-- consent script;
-- interview guide;
-- provider evidence checklist;
-- location-pin task;
-- trust-language comprehension;
+Increase the sample when critical evidence remains contradictory or a category/area behaves differently.
+
+## Required methods
+
+- contextual interviews;
+- recent-service journey reconstruction;
+- service-search walkthrough;
+- map/address and direction-sharing exercise;
+- private evidence-type walkthrough;
+- synthetic trust-language comprehension tests;
+- provider onboarding simulation;
 - device/connectivity observation;
-- pricing exercise;
-- risk/incident scenarios.
+- pricing trade-off exercise;
+- verification and incident tabletop;
+- pilot-area and category scorecards.
 
 ## Data handling
 
-Use participant codes, minimum contact data, encrypted restricted notes, no real document copies unless separately approved, and public reports only in aggregate/anonymized form.
+Use participant codes, minimum contact data, encrypted restricted notes, no public real-document copies, no exact private coordinates and public reports only in anonymized/minimized form. Follow [`RESEARCH_ETHICS_AND_CONSENT.md`](RESEARCH_ETHICS_AND_CONSENT.md).
 
 ## Decisions produced
 
-Pilot geography, categories, minimum SDK, map/payment/SMS shortlist, evidence requirements, service-area model, subscription hypotheses, support/field model and prototype changes.
+- pilot geography and boundary;
+- pilot categories;
+- provisional category evidence requirements;
+- service-area and public/private location model;
+- minimum-device and connectivity constraints;
+- map/payment/SMS provider decision inputs;
+- MVP enquiry and contact recommendation;
+- subscription hypotheses;
+- support and field-verification operating model;
+- synthetic prototype changes;
+- unresolved legal and authority dependencies.
 
 ## Exit report
 
-Methods, participants, limitations, findings, rejected assumptions, decisions, unresolved risks and Phase 1B authorization.
+Phase 1A is complete only after [`PHASE_1A_EXIT_REVIEW.md`](PHASE_1A_EXIT_REVIEW.md) records methods, sample, limitations, evidence IDs, accepted/rejected assumptions, pilot decisions, unresolved risks and explicit owner authorization for Phase 1B.

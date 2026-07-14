@@ -1,9 +1,9 @@
 # DIREKT Project Status
 
 **Updated:** 2026-07-14  
-**Authoritative branch:** `main`  
+**Authoritative branch:** `main` for stable checkpoints  
 **Implementation branch:** `build/android-v1`  
-**Current programme state:** Phase 0 documentation baseline complete; Android CI and tester-distribution workflows installed; Pages and Firebase require owner-side activation settings.
+**Current programme state:** Phase 0 complete; GitHub Pages and documentation workflows operational; Phase 1A Zambia discovery is active.
 
 ## Current phase
 
@@ -12,74 +12,94 @@
 | Repository created | Complete |
 | Public visibility confirmed | Complete |
 | Comprehensive planning pack | Complete |
-| Documentation validation workflow | Added; first successful run must be observed |
-| GitHub Pages workflow | Added; one-time Source setting still requires owner confirmation |
-| Android CI workflow | Added and dormant until Gradle project scaffolding exists |
-| Firebase tester-distribution workflow | Added; blocked on approved package name, Firebase project and repository secrets |
-| Sequential build branch | Created and fast-forwarded to current `main` baseline |
-| Product code | Not started |
-| Approved next phase | Phase 1A — Zambia discovery and assumptions validation |
+| Documentation validation workflow | Complete; successful runs observed |
+| GitHub Pages workflow | Complete; public site live at `https://kudzimusar.github.io/direkt/` |
+| Android CI workflow | Installed and operational; dormant build path until Gradle project scaffolding exists |
+| Firebase tester-distribution workflow | Installed; blocked on approved package name, Firebase project and repository secrets |
+| Sequential build branch | Active: `build/android-v1` |
+| Product code | Not started; intentionally blocked |
+| Active phase | Phase 1A — Zambia discovery and assumptions validation |
+| Workstream lock | CLAIMED by Phase 1A research-planning agent |
 
 ## Current source of truth
 
-The baseline documentation in this repository controls the build. Earlier presentations and conversations are useful discovery material but do not override the committed specifications.
+The committed repository documentation controls the build. Earlier presentations and conversations are discovery material but do not override approved repository specifications.
+
+Phase 1A evidence is controlled by `docs/research/INDEX.md`, `docs/research/RESEARCH_PLAN.md`, `docs/research/ASSUMPTIONS_REGISTER.md` and `docs/research/PHASE_1A_EXIT_REVIEW.md`.
 
 ## Remote build and testing state
 
 The following workflows are present on `main` and `build/android-v1`:
 
-- `.github/workflows/pages.yml` — builds and deploys the MkDocs documentation site;
+- `.github/workflows/pages.yml` — validates and deploys the MkDocs documentation site;
 - `.github/workflows/android-ci.yml` — preflights the Android directory, then runs unit tests, Android lint and debug APK assembly when the Gradle project exists;
-- `.github/workflows/android-distribute.yml` — manually builds and distributes a tested APK to Firebase App Distribution tester groups.
+- `.github/workflows/android-distribute.yml` — manually builds and distributes a tested APK through Firebase App Distribution after approval and secret setup.
 
-GitHub Pages is not an Android runtime. It is the documentation and synthetic-prototype surface. Native builds are tested on Android devices using GitHub Actions artifacts or Firebase App Distribution.
+GitHub Pages is the documentation and synthetic-prototype surface. It is not an Android runtime or production backend.
 
-See `docs/operations/REMOTE_ANDROID_TESTING.md`.
+## Phase 1A initialization completed
 
-## Immediate owner actions
+The following research controls are committed on `build/android-v1`:
 
-1. In GitHub, open **Settings → Pages**.
-2. Set **Build and deployment → Source** to **GitHub Actions**.
-3. Open **Actions** and manually run **Deploy DIREKT documentation to Pages** on `main` if no run has started.
-4. Confirm both Pages jobs complete and open `https://kudzimusar.github.io/direkt/`.
-5. Do not run the Firebase distribution workflow yet.
-6. Complete Phase 1A and formally approve the permanent Android application ID/package name.
-7. After that decision, create/register the Firebase Android app and add:
-   - `FIREBASE_ANDROID_APP_ID`
-   - `FIREBASE_SERVICE_ACCOUNT_JSON`
-8. Review `docs/product/PRODUCT_REQUIREMENTS.md`, `docs/trust/VERIFICATION_MODEL.md`, `design.md` and `docs/operations/REMOTE_ANDROID_TESTING.md`.
-9. Begin Phase 1A research; do not scaffold product code yet.
+- authoritative research index and plan;
+- ethics, consent and public-repository privacy protocol;
+- critical assumptions register;
+- customer interview guide;
+- provider interview guide;
+- verification-operations interview guide;
+- contextual field-observation guide;
+- anonymized interview-note template;
+- fieldwork execution checklist;
+- official desk-research register;
+- auditable research log;
+- pilot-area decision framework;
+- pilot-category decision framework;
+- category evidence matrix;
+- technology/connectivity research framework;
+- location/addressing research framework;
+- payments/communication research framework;
+- Zambia legal-research register;
+- formal Phase 1A exit gate.
 
-## Exact next approved workstream
+No real participant data, document images or private coordinates have been collected or committed.
 
-**Phase 1A: Zambia discovery and assumptions validation**
+## Exact next executable workstream
 
-The assigned agent must:
+**Phase 1A exploratory fieldwork wave**
 
-- read all control documents;
-- claim `WORKSTREAM_LOCK.md`;
-- create a structured research repository section;
-- identify a pilot area and candidate provider categories;
-- create interview and observation instruments;
-- record findings without unnecessary personal data;
-- update the assumptions, evidence matrix, journeys and pilot plan;
-- produce an explicit Phase 1A exit review.
+Recruit and conduct:
+
+- 4 customers with recent local-provider hiring experience;
+- 4 providers from four different candidate categories;
+- 2 verification, issuing-body, procurement or field-operations stakeholders.
+
+The exploratory wave must:
+
+1. use the committed consent and note protocols;
+2. include at least one fixed-premises provider and one mobile provider;
+3. test natural location/direction language;
+4. privately identify evidence types without copying identifiers into GitHub;
+5. test comprehension of separate synthetic trust claims;
+6. record device, data and communication constraints;
+7. update `RESEARCH_LOG.md` and affected assumptions;
+8. review instruments before the main fieldwork wave.
 
 ## Known decisions
 
 - Native Android Version 1.
-- Internal admin portal may be web-based.
+- Internal operations portal may be web-based.
 - Backend is a modular TypeScript/NestJS API backed by PostgreSQL/PostGIS.
-- One controlled build lane; no feature PR workflow.
+- One controlled build lane; no feature-PR workflow.
 - GitHub Pages is limited to static, synthetic and non-sensitive material.
 - GitHub Actions is the native Android build and test engine.
 - Firebase App Distribution is the preferred early field-tester delivery channel after package-name approval.
 - Verification and payment are separate.
 - Exact private provider locations are not public by default.
+- Phase 1A evidence types must be labelled and desk research cannot replace Zambia field evidence.
 
-## Open decisions requiring Phase 1 evidence
+## Open decisions requiring Phase 1A evidence
 
-- initial pilot city/area;
+- initial pilot city/area and boundary;
 - initial provider categories;
 - permanent Android application ID/package name;
 - approved map/geocoding provider;
@@ -87,24 +107,33 @@ The assigned agent must:
 - phone OTP/SMS vendor;
 - final minimum Android SDK based on device research;
 - formal evidence and issuing-body rules per category;
-- pilot subscription price;
-- whether in-app messaging is needed before public launch.
+- pilot subscription price and payment scope;
+- whether in-app messaging is needed before public launch;
+- field-verification cost, staffing and renewal model;
+- public/private location precision;
+- legal basis and authority agreements for identity and credential verification.
 
-## Blockers
+## Blockers and stop gates
 
-No technical blocker exists for documentation or workflow setup. Native APK assembly is intentionally unavailable until the Android Gradle project is scaffolded. Firebase distribution is intentionally blocked until the permanent package name and Firebase credentials are approved.
+- Android product scaffolding is prohibited until Phase 1A and Phase 1B gates are satisfied.
+- Firebase distribution is blocked until the permanent package name and credentials are approved.
+- Production collection of identity documents, certificates or precise private locations is blocked until legal, privacy, retention and access controls are approved.
+- No public verification claim may be derived from payment, self-declaration alone or unconfirmed desk research.
 
-Product implementation remains blocked until Phase 1A assumptions and field constraints are validated.
+## Phase 1A completion state
+
+`docs/research/PHASE_1A_EXIT_REVIEW.md` currently records `NOT READY`. Field interviews, contextual observations, synthesis, pilot decisions and legal-review inputs remain outstanding.
 
 ## Status update template
 
-Every implementation handoff must update:
+Every handoff must update:
 
 - current phase and task;
 - commit and branch;
 - completed acceptance criteria;
-- tests and results;
+- evidence IDs or tests and results;
 - migrations;
 - blockers and known limitations;
 - security/privacy impact;
-- exact next authorized task.
+- exact next authorized task;
+- workstream-lock status.
