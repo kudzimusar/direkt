@@ -1,0 +1,35 @@
+name: DIREKT Backend Format Diagnostic
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - "backend/direkt-api/**"
+      - ".github/workflows/backend-format-diagnostic.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/direkt-api
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Install quietly
+        run: |
+          npm install --package-lock-only --ignore-scripts --silent
+          npm ci --ignore-scripts --silent
+      - name: Print exact Prettier patch
+        shell: bash
+        run: |
+          npm run format -- --log-level silent
+          git diff --color=never -- .
+          test -z "$(git status --short -- .)"
