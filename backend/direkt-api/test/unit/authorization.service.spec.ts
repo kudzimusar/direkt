@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AuthorizationRepository } from '../../src/authorization/authorization.repository';
+import type { AuthorizationRepository } from '../../src/authorization/authorization.repository';
 import { AuthorizationService } from '../../src/authorization/authorization.service';
 import { PERMISSIONS } from '../../src/authorization/permissions';
-import { AuditService } from '../../src/platform/audit/audit.service';
+import type { AuditService } from '../../src/platform/audit/audit.service';
 
 const actor = {
   identityId: '00000000-0000-4000-8000-000000000301',
