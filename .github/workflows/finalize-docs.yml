@@ -1,0 +1,91 @@
+name: Finalize DIREKT documentation baseline
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/finalize-docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: direkt-documentation-finalizer
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    name: Reconstruct, validate, and publish baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out completed bootstrap branch
+        uses: actions/checkout@v4
+        with:
+          ref: bootstrap-docs
+          fetch-depth: 0
+
+      - name: Integrate current main history
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git merge --no-edit origin/main
+
+      - name: Verify and reconstruct planning baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d bootstrap/chunks
+          chunk_count="$(find bootstrap/chunks -maxdepth 1 -type f -name 'part-*.txt' | wc -l | tr -d ' ')"
+          test "$chunk_count" = "12"
+          find bootstrap/chunks -maxdepth 1 -type f -name 'part-*.txt' -print0 \
+            | sort -z \
+            | xargs -0 cat > /tmp/direkt-baseline.tar.gz.b64
+          echo "49a736d8f70bb1162327c067333ea8faf37c6189c1f2d46eb1e25261337e4c27  /tmp/direkt-baseline.tar.gz.b64" \
+            | sha256sum --check --strict
+          base64 --decode /tmp/direkt-baseline.tar.gz.b64 > /tmp/direkt-baseline.tar.gz
+          echo "d6bca51e0d6c1448383dd325c8b095786b131c502be3fa51bf9d8de938ed3821  /tmp/direkt-baseline.tar.gz" \
+            | sha256sum --check --strict
+          tar -tzf /tmp/direkt-baseline.tar.gz > /tmp/direkt-baseline-files.txt
+          test "$(wc -l < /tmp/direkt-baseline-files.txt | tr -d ' ')" = "150"
+          tar -xzf /tmp/direkt-baseline.tar.gz -C .
+          rm -rf bootstrap
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-docs.txt
+
+      - name: Install documentation dependencies
+        run: python -m pip install --requirement requirements-docs.txt
+
+      - name: Validate planning documents
+        run: python scripts/validate_docs.py
+
+      - name: Package downloadable planning archive
+        run: python scripts/package_planning_docs.py
+
+      - name: Prepare Pages source
+        run: python scripts/build_pages_source.py
+
+      - name: Build documentation site strictly
+        run: python -m mkdocs build --strict
+
+      - name: Commit and publish validated baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "docs: establish comprehensive DIREKT planning baseline"
+          fi
+          git push origin HEAD:bootstrap-docs
+          git push origin HEAD:main
