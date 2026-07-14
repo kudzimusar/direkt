@@ -8,9 +8,17 @@ export interface DirektEnvironment {
   LOG_LEVEL: 'debug' | 'info' | 'warn' | 'error';
   DATABASE_URL: string;
   CORS_ORIGINS: string;
+  AUTH_CHALLENGE_MODE: 'synthetic' | 'disabled';
+  ACCESS_TOKEN_SECRET: string;
+  CONTACT_HASH_PEPPER: string;
+  CHALLENGE_HASH_PEPPER: string;
+  ACCESS_TOKEN_TTL_SECONDS: number;
+  REFRESH_TOKEN_TTL_DAYS: number;
+  CHALLENGE_TTL_SECONDS: number;
 }
 
 const databaseUrlSchema = Joi.string().uri({ scheme: ['postgresql', 'postgres'] });
+const longSecret = Joi.string().min(64).max(512);
 
 export const environmentSchema = Joi.object<DirektEnvironment>({
   NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
@@ -22,6 +30,35 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     otherwise: databaseUrlSchema.default('postgresql://direkt:direkt_dev@localhost:5432/direkt'),
   }),
   CORS_ORIGINS: Joi.string().allow('').default(''),
+  AUTH_CHALLENGE_MODE: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.valid('disabled').default('disabled'),
+    otherwise: Joi.valid('synthetic', 'disabled').default('synthetic'),
+  }),
+  ACCESS_TOKEN_SECRET: longSecret.when('NODE_ENV', {
+    is: 'production',
+    then: longSecret.required(),
+    otherwise: longSecret.default(
+      'direkt-development-access-token-secret-not-for-production-000000000001',
+    ),
+  }),
+  CONTACT_HASH_PEPPER: longSecret.when('NODE_ENV', {
+    is: 'production',
+    then: longSecret.required(),
+    otherwise: longSecret.default(
+      'direkt-development-contact-hash-pepper-not-for-production-000000001',
+    ),
+  }),
+  CHALLENGE_HASH_PEPPER: longSecret.when('NODE_ENV', {
+    is: 'production',
+    then: longSecret.required(),
+    otherwise: longSecret.default(
+      'direkt-development-challenge-hash-pepper-not-for-production-0000001',
+    ),
+  }),
+  ACCESS_TOKEN_TTL_SECONDS: Joi.number().integer().min(60).max(900).default(600),
+  REFRESH_TOKEN_TTL_DAYS: Joi.number().integer().min(1).max(90).default(30),
+  CHALLENGE_TTL_SECONDS: Joi.number().integer().min(60).max(600).default(300),
 });
 
 export function parseCorsOrigins(value: string | undefined): string[] {

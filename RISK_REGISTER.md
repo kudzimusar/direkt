@@ -22,7 +22,7 @@ Scores use probability (P) and impact (I) from 1–5. Priority is `P × I`.
 | R-016 | Single-lane workflow stalls | 3 | 3 | 9 | bounded tasks, automated PR steward, handoffs and explicit lock | Programme / controlled |
 | R-017 | Pages exposes real test data | 2 | 5 | 10 | synthetic-only policy, CI scan, review checklist | Security / controlled |
 | R-018 | Trust score becomes opaque or discriminatory | 3 | 5 | 15 | interpretable inputs, no protected-class proxies, appeals, periodic review | Trust/legal / open |
-| R-019 | Account takeover permits fraudulent profile changes | 3 | 5 | 15 | MFA for privileged roles, session controls, re-verification of sensitive changes | Security / planned |
+| R-019 | Account takeover permits fraudulent profile changes | 3 | 5 | 15 | short access tokens, hashed rotating refresh sessions, reuse-family revocation, MFA before pilot, re-verification of sensitive changes | Security / active |
 | R-020 | Backups exist but cannot be restored | 2 | 5 | 10 | scheduled restore exercises and recovery evidence | Operations / planned |
 | R-021 | Secondary research reflects urban or online bias | 4 | 4 | 16 | mark provisional, design low-bandwidth fallbacks, validate during controlled pilot | Product/research / accepted limitation |
 | R-022 | Official registries cannot legally or economically support verification | 3 | 5 | 15 | no premature integration, manual fallback, written approval before launch | Trust/legal / Phase 10 gate |
@@ -33,26 +33,30 @@ Scores use probability (P) and impact (I) from 1–5. Priority is `P × I`.
 | R-027 | Synthetic prototype is mistaken for implemented functionality | 3 | 4 | 12 | explicit prototype labelling, fictional data, no real submissions | Design/programme / active |
 | R-028 | Call/WhatsApp handoff causes privacy leakage or bypass | 3 | 4 | 12 | consent step, minimum disclosed data, tracked enquiry, warnings and follow-up | Product/privacy / open |
 | R-029 | Informal-provider pathway is perceived as lower quality or misleading | 3 | 4 | 12 | equal layout, explicit evidence states, no hidden ranking penalty | Product/trust / open |
+| R-030 | OTP/challenge endpoint enables enumeration, spam or cost abuse | 4 | 5 | 20 | enumeration-safe response, expiry, attempt limit, hashed fingerprint, synthetic-only adapter; distributed throttling and vendor controls required before production | Security / Phase 10 gate |
+| R-031 | Refresh-token theft allows persistent account access | 3 | 5 | 15 | raw token never stored, short access token, rotation, family reuse detection, device/session revocation, secure client storage later | Security / active |
+| R-032 | Incorrect global/provider role scope causes cross-provider access | 3 | 5 | 15 | database role-scope trigger, non-overlap constraint, provider-aware repository, deny tests, server-side permission resolution | Security/backend / controlled |
+| R-033 | Operations portal leaks privileged data through indexing, browser bundles or direct connectors | 3 | 5 | 15 | noindex/security headers, API-only boundary, CI import scan, synthetic fixtures, no deployment, CSP review before real data | Security/admin / controlled |
+| R-034 | Synthetic authentication is mistakenly enabled in production | 2 | 5 | 10 | production configuration permits only disabled mode and requires external secrets; deployment gate and runtime checks still required | Security/operations / controlled |
 
 ## Current treatment priorities
 
-Before Phase 1B exit:
+Before Phase 3 exit:
 
-- R-002 must be tested through separate claim states and limitation copy;
-- R-006 must appear in offline, retry and upload-error prototype states;
-- R-017 and R-027 must pass a synthetic-data and prototype-labelling review;
-- R-024 must remain visible in design documentation;
-- R-028 must have a consent-aware handoff flow;
-- R-029 must be represented honestly in profile designs.
+- R-019 and R-031 require Android secure-storage and account-recovery designs before real contacts are used;
+- R-032 requires provider-object authorization tests on every Phase 3 mutation;
+- no Phase 3 profile may become publicly discoverable without later evidence-derived claims.
 
 Before the controlled pilot:
 
-- R-004, R-010, R-013, R-015, R-021, R-022, R-023 and R-025 require real operational or legal evidence.
+- R-004, R-010, R-013, R-015, R-021, R-022, R-023 and R-025 require real operational or legal evidence;
+- R-030 requires approved providers, distributed rate limiting and monitored abuse controls;
+- R-033 requires deployment, cookie/session, CSP and private-data review;
+- R-034 requires production configuration and secret-management validation.
 
 ## Review cadence
 
 - Phase review: update affected risks.
-- Phase 1B: review after each prototype checkpoint.
 - Pilot: daily operational review and weekly formal risk review.
 - Production: monthly review plus immediate review after a material incident.
 - Any priority of 15 or more requires a named owner and treatment before public launch.

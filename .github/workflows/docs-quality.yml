@@ -3,13 +3,20 @@ name: Documentation quality
 on:
   push:
     branches: [main, build/android-v1]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: direkt-docs-quality-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
+    name: Validate and build documentation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -25,4 +32,16 @@ jobs:
       - name: Build Pages source
         run: python scripts/build_pages_source.py
       - name: Build MkDocs strictly
-        run: mkdocs build --strict
+        shell: bash
+        run: |
+          mkdir -p artifacts/docs
+          set -o pipefail
+          mkdocs build --strict 2>&1 | tee artifacts/docs/mkdocs.txt
+      - name: Upload documentation diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-docs-reports-${{ github.run_number }}-${{ github.sha }}
+          path: artifacts/docs/**
+          if-no-files-found: warn
+          retention-days: 14

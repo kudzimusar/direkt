@@ -1,0 +1,116 @@
+name: DIREKT Operations Portal CI
+
+on:
+  push:
+    branches:
+      - main
+      - build/android-v1
+    paths:
+      - "admin/direkt-operations-portal/**"
+      - ".github/workflows/admin-ci.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "admin/direkt-operations-portal/**"
+      - ".github/workflows/admin-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-admin-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: "true"
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  verify:
+    name: Lint, test and build operations portal
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: admin/direkt-operations-portal
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js 24 LTS
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: admin/direkt-operations-portal/package-lock.json
+
+      - name: Verify runtime and committed lockfile
+        shell: bash
+        run: |
+          node --version
+          npm --version
+          [[ "$(npm --version)" == 11.* ]]
+          test -f package-lock.json
+          git diff --exit-code -- package.json package-lock.json
+
+      - name: Install exact dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        shell: bash
+        run: |
+          mkdir -p artifacts/diagnostics
+          set -o pipefail
+          npm run typecheck 2>&1 | tee artifacts/diagnostics/typecheck.txt
+
+      - name: Run tests with coverage
+        shell: bash
+        run: |
+          mkdir -p artifacts/diagnostics
+          set -o pipefail
+          npm run test 2>&1 | tee artifacts/diagnostics/vitest.txt
+
+      - name: Build production portal
+        run: npm run build
+
+      - name: Verify portal isolation
+        shell: bash
+        run: |
+          ! grep -R -E "from ['\"](pg|@supabase|firebase|aws-sdk)" src
+          ! find . -maxdepth 2 -type f \( -name '.env' -o -name '.env.*' \) | grep .
+          grep -q 'noindex' next.config.ts
+          grep -q 'must never import a database client' README.md
+
+      - name: Upload portal verification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-admin-reports-${{ github.run_number }}-${{ github.sha }}
+          path: |
+            admin/direkt-operations-portal/package-lock.json
+            admin/direkt-operations-portal/coverage/**
+            admin/direkt-operations-portal/artifacts/diagnostics/**
+            admin/direkt-operations-portal/.next/build-manifest.json
+            admin/direkt-operations-portal/.next/routes-manifest.json
+            admin/direkt-operations-portal/.next/required-server-files.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish portal summary
+        shell: bash
+        run: |
+          echo "### DIREKT operations portal foundation" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Commit: \`${GITHUB_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Runtime: Node.js 24 / npm 11" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Portal: Next.js 16 / React 19" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Data boundary: backend API only; no direct database or storage connector" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Result: format, lint, typecheck, tests, build and isolation checks passed" >> "$GITHUB_STEP_SUMMARY"
