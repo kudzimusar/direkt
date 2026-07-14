@@ -57,7 +57,7 @@ A task is done only when:
 - one H1 title;
 - purpose and intended audience;
 - concrete rules and examples;
-- no unresolved placeholders such as “TBD” for blocking requirements;
+- no unresolved placeholder text for blocking requirements;
 - links resolve in the Pages build;
 - terminology matches `GLOSSARY.md`;
 - decisions are linked to source requirements;
