@@ -23,4 +23,19 @@ jobs:
         with:
           node-version: "24"
       - run: npm ci --ignore-scripts --silent
-      - run: npm run lint
+      - name: Capture ESLint output
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          set +e
+          npm run lint > artifacts/eslint.txt 2>&1
+          code=$?
+          echo "$code" > artifacts/eslint-exit-code.txt
+          cat artifacts/eslint.txt
+          exit 0
+      - name: Upload ESLint diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-eslint-diagnostic-${{ github.run_number }}
+          path: backend/direkt-api/artifacts/eslint*.txt
+          retention-days: 2
