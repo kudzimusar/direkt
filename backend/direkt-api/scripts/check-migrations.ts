@@ -34,12 +34,16 @@ async function main(): Promise<void> {
     }
 
     process.stdout.write(
-      `${JSON.stringify({
-        event: 'migration_check_passed',
-        first,
-        second,
-        database: row,
-      }, null, 2)}\n`,
+      `${JSON.stringify(
+        {
+          event: 'migration_check_passed',
+          first,
+          second,
+          database: row,
+        },
+        null,
+        2,
+      )}\n`,
     );
   } finally {
     await pool.end();

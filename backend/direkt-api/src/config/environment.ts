@@ -11,9 +11,7 @@ export interface DirektEnvironment {
 }
 
 export const environmentSchema = Joi.object<DirektEnvironment>({
-  NODE_ENV: Joi.string()
-    .valid('development', 'test', 'production')
-    .default('development'),
+  NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
   PORT: Joi.number().integer().min(1).max(65535).default(3000),
   LOG_LEVEL: Joi.string().valid('debug', 'info', 'warn', 'error').default('info'),
   DATABASE_URL: Joi.string()

@@ -68,10 +68,7 @@ describe('PostgreSQL/PostGIS foundation', () => {
       const id = inserted.rows[0]?.id;
       expect(id).toBeTruthy();
       await expect(
-        client.query('UPDATE platform.audit_events SET outcome = $1 WHERE id = $2', [
-          'failed',
-          id,
-        ]),
+        client.query('UPDATE platform.audit_events SET outcome = $1 WHERE id = $2', ['failed', id]),
       ).rejects.toThrow(/append-only/);
     } finally {
       await client.query('ROLLBACK');

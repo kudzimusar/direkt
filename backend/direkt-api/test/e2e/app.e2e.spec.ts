@@ -24,9 +24,7 @@ describe('DIREKT API HTTP foundation', () => {
   });
 
   it('serves liveness with a generated request ID', async () => {
-    const response = await request(app.getHttpServer())
-      .get('/api/v1/health/live')
-      .expect(200);
+    const response = await request(app.getHttpServer()).get('/api/v1/health/live').expect(200);
 
     expect(response.headers['x-request-id']).toMatch(/^[0-9a-f-]{36}$/i);
     expect(response.body).toMatchObject({
