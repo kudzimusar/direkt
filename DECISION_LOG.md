@@ -39,6 +39,14 @@ This log records product and technical decisions with long-term impact.
 | D-033 | 2026-07-14 | Phase 2A begins with a single `:app` module | Empty module proliferation would add complexity before domain and data contracts exist; modules will split only at stable boundaries | Accepted |
 | D-034 | 2026-07-14 | Phase 2A contains no network, Firebase, payment, regulator or real-evidence integration | The first APK must prove native buildability, design tokens, state boundaries and CI without creating premature security or vendor commitments | Accepted |
 | D-035 | 2026-07-14 | The CI runner bootstraps the standard Gradle wrapper JAR from the pinned Gradle distribution | Binary wrapper transfer was unavailable through the initial repository-writing path; the pinned distribution and SHA preserve reproducibility until the generated JAR is committed in a later maintenance step | Accepted with documented limitation |
+| D-036 | 2026-07-14 | Phase 2B pins Node.js 24, npm 11, NestJS 11.1.x, TypeScript 5.9.x and PostgreSQL 18/PostGIS 3.6 | Establishes a current LTS runtime and reproducible geospatial backend aligned with the approved architecture | Accepted; recheck at release gates |
+| D-037 | 2026-07-14 | Normal backend CI installs a committed npm lockfile with `npm ci` | Dependency resolution must be reviewable and identical across clean runners rather than regenerated during every build | Accepted |
+| D-038 | 2026-07-14 | Database migrations are forward-only, SHA-256 checksummed, advisory-locked and transactional per file | Prevents concurrent application, silent alteration and partial schema changes | Accepted |
+| D-039 | 2026-07-14 | The first database migration contains only platform audit, outbox and idempotency foundations | Domain tables require an owning module and stable contract; introducing them prematurely would couple future phases | Accepted |
+| D-040 | 2026-07-14 | Audit events are append-only at the database layer | Security and operational history must not be silently rewritten by application code | Accepted |
+| D-041 | 2026-07-14 | Only hashed idempotency keys may be persisted | Raw retry keys can act as sensitive bearer-like values and are unnecessary for replay protection | Accepted |
+| D-042 | 2026-07-14 | Phase 2B exposes only health and API documentation operations | Authentication, provider, evidence, verification and payment surfaces remain prohibited until their phase-specific controls exist | Accepted |
+| D-043 | 2026-07-14 | Reusable backend logic has coverage thresholds; command wrappers and empty module declarations are verified by CI but excluded from unit coverage targets | Coverage should measure testable logic rather than penalize deterministic launch wrappers already executed by the pipeline | Accepted |
 
 ## How to add a decision
 
