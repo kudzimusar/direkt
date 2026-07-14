@@ -1,0 +1,77 @@
+name: Bootstrap DIREKT documentation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/bootstrap-docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: direkt-documentation-bootstrap
+  cancel-in-progress: false
+
+jobs:
+  expand-and-validate:
+    name: Expand and validate planning baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out bootstrap branch
+        uses: actions/checkout@v4
+        with:
+          ref: bootstrap-docs
+          fetch-depth: 0
+
+      - name: Reconstruct planning baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d bootstrap/chunks
+          cat bootstrap/chunks/*.txt > /tmp/direkt-baseline.tar.gz.b64
+          base64 --decode /tmp/direkt-baseline.tar.gz.b64 > /tmp/direkt-baseline.tar.gz
+          tar -tzf /tmp/direkt-baseline.tar.gz > /tmp/direkt-baseline-files.txt
+          test -s /tmp/direkt-baseline-files.txt
+          tar -xzf /tmp/direkt-baseline.tar.gz -C .
+          rm -rf bootstrap/chunks
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-docs.txt
+
+      - name: Install documentation dependencies
+        run: python -m pip install --requirement requirements-docs.txt
+
+      - name: Validate planning documents
+        run: python scripts/validate_docs.py
+
+      - name: Package downloadable planning archive
+        run: python scripts/package_planning_docs.py
+
+      - name: Prepare Pages source
+        run: python scripts/build_pages_source.py
+
+      - name: Build documentation site strictly
+        run: python -m mkdocs build --strict
+
+      - name: Commit validated baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No baseline changes to commit."
+            exit 0
+          fi
+          git commit -m "docs: establish comprehensive DIREKT planning baseline"
+          git push origin HEAD:bootstrap-docs
