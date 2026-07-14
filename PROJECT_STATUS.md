@@ -3,7 +3,7 @@
 **Updated:** 2026-07-15  
 **Authoritative branch:** `main` for stable checkpoints  
 **Implementation branch:** `build/android-v1`  
-**Current programme state:** Phase 2A native Android foundation is complete; Phase 2B backend/PostGIS foundation is green and ready for automatic checkpoint merge.
+**Current programme state:** Phase 2A Android and Phase 2B backend/PostGIS foundations are complete; Phase 2C identity, session-policy, authorization and operations-portal foundation is active.
 
 ## Current phase
 
@@ -15,8 +15,9 @@
 | Phase 1B synthetic prototype | Complete; Issue #6 closed |
 | Phase 2A native Android foundation | Complete; Issue #10 closed |
 | Android CI | Green; APK and reports retained from run #28 |
-| Phase 2B backend/data foundation | Merge-ready; PR #13 and Issue #12 |
-| Backend CI | Green on immutable-lockfile run #32 |
+| Phase 2B backend/data foundation | Complete; PR #13 merged and Issue #12 closed |
+| Backend CI | Green on immutable-lockfile run #37 |
+| Phase 2C identity/auth/admin foundation | Active; Issue #14 |
 | Deferred Zambia pilot validation | Open as non-blocking Issue #5 |
 | Firebase tester distribution | Installed but intentionally deferred |
 | Public pilot | Not authorized |
@@ -27,14 +28,15 @@ Open issues represent either the current workstream or a deliberate future gate;
 
 - **Issue #5 — Phase 10/11 Zambia validation:** remains open and labelled non-blocking. It protects later legal, field, device and pilot obligations but does not stop Phase 2 implementation.
 - **Issue #6 — Phase 1B prototype:** closed as completed.
-- **Issue #10 — Phase 2A Android foundation:** closed as completed after PR #11 merged and APK/report artifacts were verified.
-- **Issue #12 — Phase 2B backend/data foundation:** closes automatically after PR #13 is merged and the branch is synchronized.
+- **Issue #10 — Phase 2A Android foundation:** closed as completed.
+- **Issue #12 — Phase 2B backend/data foundation:** closed as completed.
+- **Issue #14 — Phase 2C identity/session/authorization/admin foundation:** the active implementation issue.
 
 The active agent closes completed issues automatically. Long-range gate issues remain open until their own acceptance evidence exists.
 
-## Phase 2A completion evidence
+## Stable checkpoints
 
-Merged checkpoint:
+### Phase 2A Android
 
 ```text
 PR #11
@@ -66,38 +68,15 @@ production: com.kudzimusar.direkt
 debug:      com.kudzimusar.direkt.debug
 ```
 
-## Phase 2B implementation
-
-Implemented under `backend/direkt-api` and `database/`:
-
-- Node.js 24/npm 11 foundation with committed npm lockfile;
-- NestJS 11.1.x modular-monolith shell;
-- TypeScript 5.9 strict mode;
-- `/api/v1/health/live` and PostGIS-backed `/api/v1/health/ready`;
-- validated environment configuration and explicit CORS allowlist;
-- UUID request IDs and structured request-completion logs;
-- global validation and RFC 7807-compatible problem details;
-- deterministic OpenAPI generation and validation;
-- PostgreSQL 18/PostGIS 3.6 local and CI service;
-- checksummed, forward-only, advisory-locked migrations;
-- `postgis` and `pgcrypto` extensions;
-- append-only platform audit events;
-- transactional outbox foundation;
-- hashed idempotency-key foundation;
-- synthetic seed command;
-- unit, HTTP and real PostGIS integration tests.
-
-No account, provider, evidence, verification, payment or production-integration endpoint exists.
-
-## Phase 2B completion evidence
-
-Final verified source head before phase-close documentation:
+### Phase 2B backend and data
 
 ```text
-c91efa6a8879b383fa9437f17f000ecfcce54876
+PR #13
+merge commit: 3873b378787390ea757e44b6bd5af3a2daac080f
+verified PR head: f80af09fdff9f3f3993bd63d67756a59f4593aa3
 ```
 
-Backend CI run #32 completed successfully using the committed dependency lock:
+Backend CI run #37 proved:
 
 ```text
 npm ci --ignore-scripts
@@ -110,26 +89,27 @@ npm run build
 npm run openapi:check
 ```
 
-The run proved:
-
-- clean locked dependency installation;
-- formatting and strict type-aware lint;
-- TypeScript compilation;
-- clean PostGIS migration application and idempotent second run;
-- PostGIS 3.6 availability;
-- SRID 4326/longitude-latitude coordinate correctness;
-- append-only audit enforcement;
-- unit, HTTP and database tests with coverage;
-- production JavaScript build;
-- valid OpenAPI containing only approved health operations.
-
 Retained artifact:
 
 | Artifact | Evidence |
 |---|---|
-| Coverage, OpenAPI and lockfile | SHA-256 `d624ad7e7537d4d9d9cb06315a7df6f8aeb65b95fb81b87a7b4a190bda8d318b` |
+| Coverage, validated OpenAPI and exact npm lockfile | SHA-256 `4c78aa58547502abbac97bb8b6606f6739a160b1548dd44a1cf6b99fc0906d5b` |
 
-A final exact-head run is required after this phase-close documentation and before merge.
+Phase 2B implemented:
+
+- Node.js 24/npm 11 with committed lockfile;
+- NestJS 11.1.x and TypeScript 5.9 strict mode;
+- liveness and PostGIS-backed readiness;
+- validated configuration and explicit CORS allowlist;
+- request IDs and structured completion logs;
+- RFC 7807-compatible problem details;
+- deterministic OpenAPI;
+- PostgreSQL 18/PostGIS 3.6;
+- checksummed, advisory-locked forward migrations;
+- append-only audit, outbox and hashed idempotency foundations;
+- unit, HTTP and real PostGIS integration tests.
+
+No account, provider, evidence, verification, payment or production-integration endpoint exists yet.
 
 ## Approved product baseline
 
@@ -147,30 +127,32 @@ A final exact-head run is required after this phase-close documentation and befo
 | Provider subscriptions | Later payment-adapter phase |
 | Android | Native Kotlin/Compose with low-bandwidth, offline-draft and retry requirements |
 
-## Exact next workstream after Phase 2B
+## Active Phase 2C workstream
 
-**Phase 2C — identity, authentication-policy and operations-admin foundation**
+Issue #14 controls the bounded implementation of:
 
-The bounded next phase must:
+1. identity, contact, consent, session, role, permission and scoped-assignment database contracts;
+2. hashed challenge/session/refresh secret storage;
+3. session expiry, rotation, revocation and reuse detection;
+4. passwordless phone/email interfaces with synthetic local adapters only;
+5. enumeration-safe challenge responses and abuse-control boundaries;
+6. deny-by-default permission and provider/object-scope authorization;
+7. customer, provider, field-agent, reviewer, support, supervisor, finance, auditor and admin roles;
+8. privileged-action audit requirements;
+9. Next.js/TypeScript operations-portal workspace and accessible safe shell;
+10. backend/database/admin CI and retained artifacts.
 
-1. create identity/account/session/role database contracts without selecting a real OTP vendor;
-2. establish customer, provider representative, reviewer, field agent and administrator role boundaries;
-3. implement passwordless/phone-email verification interfaces with synthetic development adapters only;
-4. add short-lived access-token and revocable session/refresh-token policy;
-5. add object/provider-scope authorization tests and privileged-action audits;
-6. create the Next.js operations-portal workspace and unauthenticated shell;
-7. preserve a strict prohibition on real evidence upload and verification decisions;
-8. extend OpenAPI and CI without connecting production credentials or vendors.
+## Phase 2C stop gates
 
-## Stop gates
-
-- No production Supabase or database connection.
-- No real OTP/SMS/email vendor.
-- No real identity, qualification, location or payment evidence.
-- No regulator, map, Firebase or payment integration.
-- No public provider creation or publication.
-- No trust claim creation.
-- No production deployment.
+- No real SMS/email/OTP vendor.
+- No production JWT/private signing key.
+- No real user, provider, phone number or email address.
+- No Firebase/Supabase Auth production connection.
+- No evidence upload/viewer or verification decision.
+- No public provider/trust-claim creation.
+- No direct portal database or object-storage connection.
+- No production admin deployment.
+- No map, regulator or payment integration.
 
 ## Deferred validation — not current blockers
 
