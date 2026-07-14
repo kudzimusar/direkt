@@ -10,13 +10,19 @@ export interface DirektEnvironment {
   CORS_ORIGINS: string;
 }
 
+const databaseUrlSchema = Joi.string().uri({ scheme: ['postgresql', 'postgres'] });
+
 export const environmentSchema = Joi.object<DirektEnvironment>({
   NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
   PORT: Joi.number().integer().min(1).max(65535).default(3000),
   LOG_LEVEL: Joi.string().valid('debug', 'info', 'warn', 'error').default('info'),
-  DATABASE_URL: Joi.string()
-    .uri({ scheme: ['postgresql', 'postgres'] })
-    .default('postgresql://direkt:direkt_dev@localhost:5432/direkt'),
+  DATABASE_URL: databaseUrlSchema.when('NODE_ENV', {
+    is: 'production',
+    then: databaseUrlSchema.required(),
+    otherwise: databaseUrlSchema.default(
+      'postgresql://direkt:direkt_dev@localhost:5432/direkt',
+    ),
+  }),
   CORS_ORIGINS: Joi.string().allow('').default(''),
 });
 
