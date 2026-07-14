@@ -6,14 +6,14 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | UNCLAIMED |
-| Owner/agent | — |
-| Phase | Phase 2C next |
-| Task | Identity, authentication-policy and operations-admin foundation |
-| Modules/paths | `backend/direkt-api`, `database`, `admin/direkt-operations-portal`, `docs/backend`, `docs/architecture`, `docs/security`, `docs/testing`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
-| Claimed at | — |
-| Expected handoff | Identity/session/role contracts; synthetic verification adapters; object-scope authorization tests; operations portal shell; extended CI; no real OTP/evidence/vendor integration |
-| Last clean checkpoint | Pending automatic merge of Phase 2B PR #13 after final exact-head checks |
+| Status | CLAIMED |
+| Owner/agent | OpenAI GPT-5.6 Thinking — Phase 2C identity/auth/admin foundation agent |
+| Phase | Phase 2C |
+| Task | Identity, session policy, authorization and operations-portal foundation |
+| Modules/paths | `backend/direkt-api`, `database`, `admin/direkt-operations-portal`, `.github/workflows`, `docs/backend`, `docs/architecture`, `docs/security`, `docs/testing`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
+| Claimed at | 2026-07-15 00:24 JST / 2026-07-14 15:24 UTC |
+| Expected handoff | Identity/contact/session/role contracts; synthetic challenge adapters; deny-by-default provider/object authorization; operations portal shell; backend/admin/database CI green; no real OTP/evidence/vendor integration |
+| Last clean checkpoint | `3873b378787390ea757e44b6bd5af3a2daac080f` |
 
 ## Phase 2B release record
 
@@ -30,41 +30,55 @@ Phase 2B delivered:
 9. green format, lint, typecheck, migration, coverage, build and OpenAPI gates;
 10. no real authentication, provider, evidence, trust, payment or production integration.
 
-The lock is released for checkpoint promotion. It must be claimed again before Phase 2C implementation begins.
+PR #13 merged at `3873b378787390ea757e44b6bd5af3a2daac080f`; Issue #12 is closed.
 
-## Phase 2C preliminary acceptance boundary
+## Phase 2C acceptance criteria
 
-The next owner must not begin until PR #13 is merged and `build/android-v1` is synchronized with `main`.
+The active owner must:
 
-The bounded Phase 2C owner must:
+1. implement identity, contact, policy consent, session, role, permission and scoped-assignment schemas;
+2. store only strong hashes of refresh/session secrets and authentication challenges;
+3. model session expiry, rotation, revocation and reuse detection;
+4. separate contact verification from provider/trust verification;
+5. implement passwordless phone/email interfaces with synthetic local adapters only;
+6. make challenge responses enumeration-safe and rate-limit ready;
+7. implement deny-by-default permission policy and provider/object scope;
+8. cover customer, provider owner/member/responder, field agent, reviewer, support, trust supervisor, finance, auditor and admin roles;
+9. test wrong-provider, revoked-role, expired-session and client-tampered-role denial;
+10. audit authentication, role changes and privileged actions;
+11. create the Next.js/TypeScript operations-portal workspace and accessible safe shell;
+12. prohibit direct portal database/storage access;
+13. add backend, database and portal CI with retained artifacts;
+14. avoid real OTP, evidence, verification decisions, production credentials and external vendors;
+15. create, verify and merge the checkpoint automatically when safe.
 
-1. define identity, contact, consent, session, role and assignment schemas;
-2. implement authentication interfaces with synthetic development adapters only;
-3. define short-lived access and revocable session policy;
-4. enforce customer/provider/reviewer/field-agent/admin role boundaries;
-5. add provider/object-scope authorization tests;
-6. audit authentication and privileged actions;
-7. create the Next.js operations-portal workspace and safe shell;
-8. add CI for backend, admin and database changes;
-9. avoid real OTP, evidence, verification decisions and production credentials;
-10. create, verify and merge the checkpoint automatically when safe.
+## Active safety boundaries
+
+- No real phone number, email address, account or provider identity.
+- No production JWT/private signing key or identity-provider credential.
+- No real SMS/email/OTP service.
+- No Firebase/Supabase Auth production connection.
+- No evidence upload/viewer or verification decision.
+- No public provider/trust-claim creation.
+- No direct portal database or object-storage connection.
+- No production admin deployment.
+- Synthetic fixtures only.
 
 ## Claim procedure
 
 Before editing:
 
-1. verify the latest stable checkpoint is merged;
-2. synchronize `build/android-v1` without force-pushing;
-3. inspect the approved Phase 2C issue and control documents;
-4. replace `UNCLAIMED` with `CLAIMED`;
-5. record owner, scope, timestamp and clean checkpoint;
-6. commit the claim before broad implementation.
+1. verify the latest checkpoint is merged and synchronized;
+2. inspect Issue #14 and the authentication, role and portal architecture documents;
+3. replace `UNCLAIMED` with `CLAIMED`;
+4. record owner, scope, timestamp and clean checkpoint;
+5. commit the claim before broad implementation.
 
 ## Release procedure
 
 After implementation:
 
-1. run all phase-specific checks;
+1. run all backend, migration, authorization and portal checks;
 2. inspect the diff, migrations, dependency locks and artifacts;
 3. update status, decisions, risks and handoff;
 4. create and verify the checkpoint PR;
