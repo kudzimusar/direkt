@@ -5,10 +5,19 @@ export function createOpenApiDocument(app: INestApplication): OpenAPIObject {
   const config = new DocumentBuilder()
     .setTitle('DIREKT API')
     .setDescription(
-      'Foundation contract for the DIREKT verification-led local service marketplace. No public provider or trust mutation endpoints exist in Phase 2B.',
+      'Phase 2C foundation for synthetic passwordless identity, revocable sessions and deny-by-default operations authorization. No provider, evidence, verification-decision or payment mutation is exposed.',
     )
-    .setVersion('0.1.0')
+    .setVersion('0.2.0')
     .addServer('/', 'API root')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'DIREKT short-lived access token',
+        description: 'Roles and permissions are always resolved server-side from the active session.',
+      },
+      'bearer',
+    )
     .build();
 
   return SwaggerModule.createDocument(app, config, {
