@@ -42,7 +42,7 @@ database/                        Migrations, seeds and database policies
 infrastructure/                  Deployment and environment definitions
 docs/                            Authoritative planning and operating documents
 scripts/                         Validation, packaging and maintenance scripts
-.github/workflows/               Documentation, Pages and later product CI
+.github/workflows/               Documentation, Pages and product CI
 ```
 
 ## Branch and workflow policy
@@ -58,6 +58,16 @@ DIREKT uses one controlled implementation stream rather than feature-PR developm
 
 See [`docs/operations/AGENT_WORKFLOW.md`](docs/operations/AGENT_WORKFLOW.md).
 
+## Build and remote testing
+
+The repository now has three distinct remote collaboration channels:
+
+- **GitHub Pages** publishes documentation and synthetic browser prototypes.
+- **DIREKT Android CI** tests, lints and builds a debug APK after the native Gradle project is scaffolded.
+- **Firebase App Distribution** can deliver manually approved test builds to named Android tester groups after Firebase credentials are configured as repository secrets.
+
+GitHub Pages cannot run the native Android app. See [`docs/operations/REMOTE_ANDROID_TESTING.md`](docs/operations/REMOTE_ANDROID_TESTING.md) for the complete testing workflow.
+
 ## GitHub Pages
 
 The repository includes a MkDocs-based Pages workflow for:
@@ -69,11 +79,11 @@ The repository includes a MkDocs-based Pages workflow for:
 
 GitHub Pages must **not** be used for the production API, authenticated administration, secrets, real verification documents, personal data or private location evidence.
 
-After the first workflow is committed, the repository owner must perform the one-time GitHub setting described in [`docs/operations/PAGES_USAGE.md`](docs/operations/PAGES_USAGE.md).
+Complete the one-time repository setting described in [`docs/operations/PAGES_USAGE.md`](docs/operations/PAGES_USAGE.md).
 
 ## Download the planning pack
 
-A repository-ready archive is stored at:
+A repository-ready archive is published through the documentation site after Pages deployment:
 
 [Download the generated DIREKT planning pack](https://kudzimusar.github.io/direkt/downloads/DIREKT_PLANNING_PACK.zip)
 
