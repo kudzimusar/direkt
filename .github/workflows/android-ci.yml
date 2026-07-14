@@ -1,0 +1,114 @@
+name: DIREKT Android CI
+
+on:
+  push:
+    branches:
+      - main
+      - build/android-v1
+    paths:
+      - "android/direkt-app/**"
+      - ".github/workflows/android-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-android-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ANDROID_PROJECT_DIR: android/direkt-app
+
+jobs:
+  preflight:
+    name: Android project preflight
+    runs-on: ubuntu-latest
+    outputs:
+      project_ready: ${{ steps.detect.outputs.project_ready }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Detect Android project
+        id: detect
+        shell: bash
+        run: |
+          if [[ -f "${ANDROID_PROJECT_DIR}/gradlew" ]] && \
+             [[ -f "${ANDROID_PROJECT_DIR}/settings.gradle.kts" || -f "${ANDROID_PROJECT_DIR}/settings.gradle" ]]; then
+            echo "project_ready=true" >> "$GITHUB_OUTPUT"
+            echo "### Android CI preflight" >> "$GITHUB_STEP_SUMMARY"
+            echo "Native Android project detected at \`${ANDROID_PROJECT_DIR}\`." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "project_ready=false" >> "$GITHUB_OUTPUT"
+            echo "### Android CI preflight" >> "$GITHUB_STEP_SUMMARY"
+            echo "The workflow is installed, but the native Android project has not yet been scaffolded at \`${ANDROID_PROJECT_DIR}\`." >> "$GITHUB_STEP_SUMMARY"
+            echo "The build job will activate automatically after Phase 2 creates the Gradle wrapper and settings file." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  build:
+    name: Test, lint and assemble debug APK
+    needs: preflight
+    if: needs.preflight.outputs.project_ready == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: android/direkt-app
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Configure Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Run unit tests, Android lint and debug build
+        run: ./gradlew --no-daemon --stacktrace testDebugUnitTest lintDebug assembleDebug
+
+      - name: Upload test and lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-android-reports-${{ github.run_number }}
+          path: |
+            android/direkt-app/**/build/reports/**
+            android/direkt-app/**/build/test-results/**
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-debug-apk-${{ github.run_number }}-${{ github.sha }}
+          path: android/direkt-app/**/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish build summary
+        shell: bash
+        run: |
+          echo "### DIREKT Android build" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Commit: \`${GITHUB_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Branch: \`${GITHUB_REF_NAME}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Result: unit tests, lint and debug APK assembly completed" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Distribution: download the \`direkt-debug-apk-*\` artifact from this workflow run" >> "$GITHUB_STEP_SUMMARY"
+
+  awaiting-scaffold:
+    name: Android project not yet scaffolded
+    needs: preflight
+    if: needs.preflight.outputs.project_ready != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record dormant build status
+        run: |
+          echo "Android CI is connected and ready. No APK can be built until the Kotlin/Gradle project is created under android/direkt-app/."
