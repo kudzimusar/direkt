@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Param,
-  ParseUUIDPipe,
-  Post,
-  Req,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common';
 import {
   ApiAcceptedResponse,
   ApiBearerAuth,
@@ -98,12 +89,7 @@ export class AuthController {
     @Body() dto: RevokeSessionDto,
     @Req() request: DirektRequest,
   ): ReturnType<AuthService['revokeSession']> {
-    return this.authService.revokeSession(
-      request.actor,
-      sessionId,
-      dto,
-      request.requestId,
-    );
+    return this.authService.revokeSession(request.actor, sessionId, dto, request.requestId);
   }
 
   private securityContext(request: DirektRequest): RequestSecurityContext {

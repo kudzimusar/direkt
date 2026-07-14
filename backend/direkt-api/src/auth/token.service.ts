@@ -1,9 +1,4 @@
-import {
-  createHash,
-  createHmac,
-  randomBytes,
-  timingSafeEqual,
-} from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -124,8 +119,6 @@ export class TokenService {
   }
 
   private sign(payload: string): string {
-    return createHmac('sha256', this.accessTokenSecret)
-      .update(payload, 'utf8')
-      .digest('base64url');
+    return createHmac('sha256', this.accessTokenSecret).update(payload, 'utf8').digest('base64url');
   }
 }

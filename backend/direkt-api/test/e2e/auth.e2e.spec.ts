@@ -75,9 +75,7 @@ describe('Phase 2C authentication and authorization HTTP contracts', () => {
     const sessions = response.body as Array<{ id: string; current: boolean }>;
 
     expect(sessions).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: initial.sessionId, current: true }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ id: initial.sessionId, current: true })]),
     );
   });
 

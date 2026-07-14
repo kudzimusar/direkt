@@ -38,11 +38,7 @@ describe('AuthorizationService', () => {
     const { service, snapshot } = subject([PERMISSIONS.PROVIDER_PROFILE_MANAGE]);
     const providerId = '00000000-0000-4000-8000-000000000303';
 
-    await service.assertPermission(
-      actor,
-      PERMISSIONS.PROVIDER_PROFILE_MANAGE,
-      { providerId },
-    );
+    await service.assertPermission(actor, PERMISSIONS.PROVIDER_PROFILE_MANAGE, { providerId });
     expect(snapshot).toHaveBeenCalledWith(actor.identityId, providerId);
   });
 
@@ -80,9 +76,7 @@ describe('AuthorizationService', () => {
   it('requires a specific reason for emergency administration', async () => {
     const { service } = subject([PERMISSIONS.ADMIN_EMERGENCY_ACTION]);
 
-    await expect(service.assertEmergencyAction(actor, 'short')).rejects.toThrow(
-      /specific reason/i,
-    );
+    await expect(service.assertEmergencyAction(actor, 'short')).rejects.toThrow(/specific reason/i);
     await expect(
       service.assertEmergencyAction(actor, 'Synthetic incident-response exercise'),
     ).resolves.toBeUndefined();

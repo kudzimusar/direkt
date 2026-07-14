@@ -10,8 +10,8 @@ export default function SessionExpiredPage() {
         <p className="eyebrow">Session security</p>
         <h1 id="session-expired-heading">Your session has expired</h1>
         <p>
-          DIREKT operations sessions are revocable and time limited. Unsaved sensitive work must
-          not be restored from browser storage.
+          DIREKT operations sessions are revocable and time limited. Unsaved sensitive work must not
+          be restored from browser storage.
         </p>
         <Link href="/sign-in">Return to sign in</Link>
       </section>

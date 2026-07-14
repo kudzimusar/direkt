@@ -5,12 +5,9 @@ import { TokenService } from '../../src/auth/token.service';
 function service(): TokenService {
   return new TokenService(
     new ConfigService({
-      ACCESS_TOKEN_SECRET:
-        'test-access-token-secret-long-enough-for-phase-two-c-000000000000001',
-      CONTACT_HASH_PEPPER:
-        'test-contact-hash-pepper-long-enough-for-phase-two-c-0000000000001',
-      CHALLENGE_HASH_PEPPER:
-        'test-challenge-hash-pepper-long-enough-for-phase-two-c-00000000001',
+      ACCESS_TOKEN_SECRET: 'test-access-token-secret-long-enough-for-phase-two-c-000000000000001',
+      CONTACT_HASH_PEPPER: 'test-contact-hash-pepper-long-enough-for-phase-two-c-0000000000001',
+      CHALLENGE_HASH_PEPPER: 'test-challenge-hash-pepper-long-enough-for-phase-two-c-00000000001',
       ACCESS_TOKEN_TTL_SECONDS: 600,
     }),
   );

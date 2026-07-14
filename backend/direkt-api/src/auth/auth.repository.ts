@@ -4,11 +4,7 @@ import type { PoolClient } from 'pg';
 import { DatabaseService } from '../platform/database/database.service';
 import type { AuthenticatedActor } from '../authorization/authenticated-actor';
 import type { ContactChannel } from './contact-normalizer';
-import type {
-  ChallengeVerificationResult,
-  SessionRotationResult,
-  SessionView,
-} from './auth.types';
+import type { ChallengeVerificationResult, SessionRotationResult, SessionView } from './auth.types';
 
 interface ChallengeRow {
   id: string;

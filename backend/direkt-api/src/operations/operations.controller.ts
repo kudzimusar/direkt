@@ -46,11 +46,7 @@ export class OperationsController {
     @Body() dto: EmergencyActionDto,
     @Req() request: DirektRequest,
   ): Promise<{ recorded: true; appliedDomainChange: false }> {
-    await this.authorization.assertEmergencyAction(
-      request.actor,
-      dto.reason,
-      request.requestId,
-    );
+    await this.authorization.assertEmergencyAction(request.actor, dto.reason, request.requestId);
     await this.audit.record({
       actorType: 'identity',
       actorId: request.actor.identityId,

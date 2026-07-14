@@ -1,9 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { AuthenticatedActor } from '../authorization/authenticated-actor';
 import { normalizeContact } from './contact-normalizer';

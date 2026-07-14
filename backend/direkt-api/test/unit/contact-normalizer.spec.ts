@@ -19,8 +19,6 @@ describe('normalizeContact', () => {
   });
 
   it('rejects ambiguous local phone numbers', () => {
-    expect(() => normalizeContact('phone', '0971234567')).toThrow(
-      /international format/i,
-    );
+    expect(() => normalizeContact('phone', '0971234567')).toThrow(/international format/i);
   });
 });

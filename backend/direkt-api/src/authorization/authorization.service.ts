@@ -1,10 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { AuditService } from '../platform/audit/audit.service';
 import type { AuthenticatedActor, AuthorizationScope } from './authenticated-actor';
-import {
-  AuthorizationRepository,
-  type AuthorizationSnapshot,
-} from './authorization.repository';
+import { AuthorizationRepository, type AuthorizationSnapshot } from './authorization.repository';
 import { PERMISSIONS, type Permission } from './permissions';
 
 @Injectable()
@@ -14,7 +11,10 @@ export class AuthorizationService {
     private readonly audit: AuditService,
   ) {}
 
-  snapshot(actor: AuthenticatedActor, scope: AuthorizationScope = {}): Promise<AuthorizationSnapshot> {
+  snapshot(
+    actor: AuthenticatedActor,
+    scope: AuthorizationScope = {},
+  ): Promise<AuthorizationSnapshot> {
     return this.repository.snapshot(actor.identityId, scope.providerId);
   }
 
@@ -36,7 +36,9 @@ export class AuthorizationService {
         outcome: 'denied',
         metadata: { permission },
       });
-      throw new ForbiddenException('The authenticated identity is not permitted to perform this action.');
+      throw new ForbiddenException(
+        'The authenticated identity is not permitted to perform this action.',
+      );
     }
     return snapshot;
   }
@@ -76,11 +78,6 @@ export class AuthorizationService {
     if (reason.trim().length < 12) {
       throw new BadRequestException('Emergency actions require a specific reason.');
     }
-    await this.assertPermission(
-      actor,
-      PERMISSIONS.ADMIN_EMERGENCY_ACTION,
-      {},
-      requestId,
-    );
+    await this.assertPermission(actor, PERMISSIONS.ADMIN_EMERGENCY_ACTION, {}, requestId);
   }
 }

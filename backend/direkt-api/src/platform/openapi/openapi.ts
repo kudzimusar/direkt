@@ -14,7 +14,8 @@ export function createOpenApiDocument(app: INestApplication): OpenAPIObject {
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'DIREKT short-lived access token',
-        description: 'Roles and permissions are always resolved server-side from the active session.',
+        description:
+          'Roles and permissions are always resolved server-side from the active session.',
       },
       'bearer',
     )
