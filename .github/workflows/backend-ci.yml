@@ -81,7 +81,11 @@ jobs:
         run: npm run format:check
 
       - name: Lint
-        run: npm run lint
+        shell: bash
+        run: |
+          mkdir -p artifacts/diagnostics
+          set -o pipefail
+          npm run lint 2>&1 | tee artifacts/diagnostics/eslint.txt
 
       - name: Typecheck
         run: npm run typecheck
@@ -90,7 +94,11 @@ jobs:
         run: npm run migration:check
 
       - name: Run tests with coverage
-        run: npm run test
+        shell: bash
+        run: |
+          mkdir -p artifacts/diagnostics
+          set -o pipefail
+          npm run test 2>&1 | tee artifacts/diagnostics/vitest.txt
 
       - name: Build production JavaScript
         run: npm run build
@@ -106,6 +114,7 @@ jobs:
           path: |
             backend/direkt-api/coverage/**
             backend/direkt-api/artifacts/openapi.json
+            backend/direkt-api/artifacts/diagnostics/**
             backend/direkt-api/package-lock.json
           if-no-files-found: warn
           retention-days: 14
