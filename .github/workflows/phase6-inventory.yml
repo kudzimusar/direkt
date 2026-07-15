@@ -1,0 +1,57 @@
+name: Phase 6 implementation inventory
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - ".github/workflows/phase6-inventory.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out Phase 6 branch
+        uses: actions/checkout@v6
+
+      - name: Build exact repository inventory
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          {
+            echo '# Backend source files'
+            find backend/direkt-api/src -type f | sort
+            echo
+            echo '# Backend tests'
+            find backend/direkt-api/test -type f | sort
+            echo
+            echo '# Database migrations'
+            find database -type f | sort
+            echo
+            echo '# Android source and tests'
+            find android/direkt-app -type f \
+              \( -name '*.kt' -o -name '*.kts' -o -name '*.xml' \) | sort
+            echo
+            echo '# Operations portal source and tests'
+            find admin/direkt-operations-portal -type f \
+              \( -name '*.ts' -o -name '*.tsx' -o -name '*.json' \) | sort
+            echo
+            echo '# Provider/workspace-related symbols'
+            grep -RInE \
+              'provider|workspace|evidence|verification|availability|service.area|category.selection|idempot|upload' \
+              backend/direkt-api/src backend/direkt-api/test android/direkt-app/app/src admin/direkt-operations-portal/src \
+              --include='*.ts' --include='*.tsx' --include='*.kt' \
+              | head -n 3000 || true
+          } > artifacts/phase6-inventory.txt
+
+      - name: Upload inventory
+        uses: actions/upload-artifact@v6
+        with:
+          name: phase6-implementation-inventory
+          path: artifacts/phase6-inventory.txt
+          if-no-files-found: error
+          retention-days: 2
