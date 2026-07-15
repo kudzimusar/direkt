@@ -3,7 +3,7 @@
 **Updated:** 2026-07-15  
 **Authoritative branch:** `main` for stable checkpoints  
 **Implementation branch:** `build/android-v1`  
-**Current programme state:** Phase 2 technical foundation is complete. Phase 3 identity, provider and category core is active under Issue #16.
+**Current programme state:** Phase 2 technical foundation is complete. Phase 3 identity, provider and category core is in final verification under Issue #16 and PR #17.
 
 ## Current phase
 
@@ -16,7 +16,7 @@
 | Phase 2A native Android foundation | Complete; PR #11 merged and Issue #10 closed |
 | Phase 2B backend/PostGIS foundation | Complete; PR #13 merged and Issue #12 closed |
 | Phase 2C identity/auth/admin foundation | Complete; PR #15 merged and Issue #14 closed |
-| Phase 3 identity/provider/category core | Active; Issue #16 and claimed workstream |
+| Phase 3 identity/provider/category core | Final verification; Issue #16 and PR #17 |
 | Deferred Zambia pilot validation | Open as non-blocking Issue #5 |
 | Firebase tester distribution | Installed but intentionally deferred |
 | Public pilot | Not authorized |
