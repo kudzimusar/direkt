@@ -84,6 +84,19 @@ describe('Phase 3 provider and category HTTP contracts', () => {
       .expect(401);
   });
 
+  it('rejects pathway and operating-model combinations that lack required fields', async () => {
+    await request(httpServer())
+      .post('/api/v1/providers')
+      .set('authorization', `Bearer ${owner.accessToken}`)
+      .send({
+        pathway: 'qualified_individual',
+        displayName: 'Invalid synthetic electrician',
+        operatingModel: 'fixed_premises',
+        serviceAreaSummary: 'Lusaka District',
+      })
+      .expect(400);
+  });
+
   it('creates a customer profile and a non-public provider draft', async () => {
     await request(httpServer())
       .put('/api/v1/account/profile')
@@ -212,6 +225,40 @@ describe('Phase 3 provider and category HTTP contracts', () => {
         reason: 'Invalid transition must remain blocked by the database',
       })
       .expect(400);
+  });
+
+  it('exposes provider drafts only to an authorized internal operations role', async () => {
+    await request(httpServer())
+      .get('/api/v1/operations/providers')
+      .set('authorization', `Bearer ${owner.accessToken}`)
+      .expect(403);
+
+    await pool.query(
+      `INSERT INTO authz.role_assignments (
+         identity_id,
+         role_id,
+         scope_type,
+         reason
+       )
+       SELECT $1, id, 'global', 'Synthetic Phase 3 operations listing test'
+       FROM authz.roles
+       WHERE role_key = 'admin'`,
+      [owner.identityId],
+    );
+
+    const response = await request(httpServer())
+      .get('/api/v1/operations/providers')
+      .set('authorization', `Bearer ${owner.accessToken}`)
+      .expect(200);
+    expect(response.body).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          providerId: provider.id,
+          discoverable: false,
+          synthetic: true,
+        }),
+      ]),
+    );
   });
 
   it('returns no discoverable provider and records actor-attributed audit events', async () => {
