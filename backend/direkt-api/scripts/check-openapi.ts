@@ -35,6 +35,7 @@ async function main(): Promise<void> {
     ['/api/v1/providers/{providerId}/representatives', 'post'],
     ['/api/v1/providers/{providerId}/categories/{categoryKey}', 'put'],
     ['/api/v1/categories', 'get'],
+    ['/api/v1/provider-workspace/me', 'get'],
     ['/api/v1/providers/{providerId}/evidence/upload-sessions', 'post'],
     ['/api/v1/providers/{providerId}/evidence', 'post'],
     ['/api/v1/providers/{providerId}/evidence', 'get'],
@@ -114,11 +115,11 @@ async function main(): Promise<void> {
     /(payments|subscriptions|public-directory|discoverable)/i.test(pathName),
   );
   if (prohibited.length > 0) {
-    throw new Error(`Phase 5 exposed prohibited domain paths: ${prohibited.join(', ')}`);
+    throw new Error(`Phase 6 exposed prohibited domain paths: ${prohibited.join(', ')}`);
   }
 
   process.stdout.write(
-    `${JSON.stringify({ event: 'openapi_check_passed', pathCount: Object.keys(paths).length, phase: 5 })}\n`,
+    `${JSON.stringify({ event: 'openapi_check_passed', pathCount: Object.keys(paths).length, phase: 6 })}\n`,
   );
 }
 
