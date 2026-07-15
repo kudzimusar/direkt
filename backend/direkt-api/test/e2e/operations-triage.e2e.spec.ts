@@ -65,11 +65,14 @@ describe('Phase 7 operations verification triage', () => {
   let supervisor: SessionResponse;
   let support: SessionResponse;
   let fieldAgent: SessionResponse;
+  let providerId: string;
   let unassignedCaseId: string;
   let reviewerACaseId: string;
   let reviewerBCaseId: string;
 
   const httpServer = (): Server => app.getHttpServer() as Server;
+  const queuePath = (query?: string): string =>
+    `/api/v1/operations/verification-queue?providerId=${providerId}${query ? `&${query}` : ''}`;
 
   async function signIn(contact: string): Promise<SessionResponse> {
     const challenge = await request(httpServer())
@@ -101,12 +104,12 @@ describe('Phase 7 operations verification triage', () => {
   }
 
   async function createCase(
-    providerId: string,
+    targetProviderId: string,
     checkKey: string,
     highRisk: boolean,
   ): Promise<string> {
     const response = await request(httpServer())
-      .post(`/api/v1/providers/${providerId}/verification-cases`)
+      .post(`/api/v1/providers/${targetProviderId}/verification-cases`)
       .set('authorization', `Bearer ${owner.accessToken}`)
       .send({
         categoryKey: 'plumbing',
@@ -153,14 +156,14 @@ describe('Phase 7 operations verification triage', () => {
         registeredBusinessName: 'Synthetic Phase 7 Triage Provider Limited',
       })
       .expect(201);
-    const provider = providerResponse.body as ProviderResponse;
+    providerId = (providerResponse.body as ProviderResponse).id;
 
     await request(httpServer())
-      .put(`/api/v1/providers/${provider.id}/categories/plumbing`)
+      .put(`/api/v1/providers/${providerId}/categories/plumbing`)
       .set('authorization', `Bearer ${owner.accessToken}`)
       .expect(200);
     await request(httpServer())
-      .post(`/api/v1/providers/${provider.id}/state-transitions`)
+      .post(`/api/v1/providers/${providerId}/state-transitions`)
       .set('authorization', `Bearer ${owner.accessToken}`)
       .send({
         targetStatus: 'ready_for_verification',
@@ -168,9 +171,9 @@ describe('Phase 7 operations verification triage', () => {
       })
       .expect(201);
 
-    unassignedCaseId = await createCase(provider.id, 'phase7_triage_unassigned', false);
-    reviewerACaseId = await createCase(provider.id, 'phase7_triage_reviewer_a', false);
-    reviewerBCaseId = await createCase(provider.id, 'phase7_triage_reviewer_b', false);
+    unassignedCaseId = await createCase(providerId, 'phase7_triage_unassigned', false);
+    reviewerACaseId = await createCase(providerId, 'phase7_triage_reviewer_a', false);
+    reviewerBCaseId = await createCase(providerId, 'phase7_triage_reviewer_b', false);
     const caseIds = [unassignedCaseId, reviewerACaseId, reviewerBCaseId];
 
     await pool.query(
@@ -229,7 +232,7 @@ describe('Phase 7 operations verification triage', () => {
 
   it('limits reviewers to unassigned cases and their own active assignments', async () => {
     const response = await request(httpServer())
-      .get('/api/v1/operations/verification-queue')
+      .get(queuePath())
       .set('authorization', `Bearer ${reviewerA.accessToken}`)
       .expect(200);
     const queue = response.body as TriageQueueResponse;
@@ -248,7 +251,7 @@ describe('Phase 7 operations verification triage', () => {
 
   it('allows trust supervisors to see the complete deterministic queue', async () => {
     const response = await request(httpServer())
-      .get('/api/v1/operations/verification-queue')
+      .get(queuePath())
       .set('authorization', `Bearer ${supervisor.accessToken}`)
       .expect(200);
     const queue = response.body as TriageQueueResponse;
@@ -277,16 +280,14 @@ describe('Phase 7 operations verification triage', () => {
 
   it('supports ownership, SLA and escalation filters without widening scope', async () => {
     const mineResponse = await request(httpServer())
-      .get('/api/v1/operations/verification-queue?ownership=mine')
+      .get(queuePath('ownership=mine'))
       .set('authorization', `Bearer ${reviewerA.accessToken}`)
       .expect(200);
     const mineQueue = mineResponse.body as TriageQueueResponse;
     expect(mineQueue.items.map((item) => item.caseId)).toEqual([reviewerACaseId]);
 
     const breachedResponse = await request(httpServer())
-      .get(
-        '/api/v1/operations/verification-queue?slaState=breached&highRisk=false&escalationRequired=true',
-      )
+      .get(queuePath('slaState=breached&highRisk=false&escalationRequired=true'))
       .set('authorization', `Bearer ${supervisor.accessToken}`)
       .expect(200);
     const breachedQueue = breachedResponse.body as TriageQueueResponse;
@@ -295,18 +296,18 @@ describe('Phase 7 operations verification triage', () => {
 
   it('denies support and field-agent roles from the reviewer triage queue', async () => {
     await request(httpServer())
-      .get('/api/v1/operations/verification-queue')
+      .get(queuePath())
       .set('authorization', `Bearer ${support.accessToken}`)
       .expect(403);
     await request(httpServer())
-      .get('/api/v1/operations/verification-queue')
+      .get(queuePath())
       .set('authorization', `Bearer ${fieldAgent.accessToken}`)
       .expect(403);
   });
 
   it('returns only privacy-safe queue metadata', async () => {
     const response = await request(httpServer())
-      .get('/api/v1/operations/verification-queue')
+      .get(queuePath())
       .set('authorization', `Bearer ${supervisor.accessToken}`)
       .expect(200);
     const queue = response.body as TriageQueueResponse;
