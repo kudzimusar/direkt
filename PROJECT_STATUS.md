@@ -3,7 +3,7 @@
 **Updated:** 2026-07-15  
 **Authoritative branch:** `main` for stable checkpoints  
 **Implementation branch:** `build/android-v1`  
-**Current programme state:** Phase 4 verification and private evidence engine is complete and stable. Phase 5 Android customer discovery is active under Issue #23.
+**Current programme state:** Phase 4 verification and private evidence engine is complete and stable. Phase 5 Android customer discovery is review-complete on an exact green implementation head and is awaiting final record validation and merge through PR #24.
 
 ## Current phase
 
@@ -19,12 +19,12 @@
 | Phase 3 identity/provider/category core | Complete; PR #17 merged and Issue #16 closed |
 | API/integration planning checkpoint | Complete; PR #19 merged |
 | Phase 4 verification and private evidence engine | Complete; PR #21 merged and Issue #20 closed |
-| Phase 5 Android customer discovery | Active; Issue #23 |
+| Phase 5 Android customer discovery | Review complete; PR #24 final record validation pending |
 | Deferred Zambia pilot validation | Open as non-blocking Issue #5 |
 | Firebase tester distribution | Installed but intentionally deferred |
 | Public pilot | Not authorized |
 
-Issue #23 is the sole active implementation tracker. Issue #5 remains a deliberate later validation obligation and is not a current implementation blocker.
+Issue #23 remains the sole active implementation tracker until PR #24 merges. Issue #5 remains a deliberate later validation obligation and is not a current implementation blocker.
 
 ## Stable checkpoint record
 
@@ -144,7 +144,34 @@ Retained Android artifacts:
 
 Phase 4 delivered provider/category/check-specific cases, private evidence metadata and immutable versions, assignment-bound review, immutable decisions, scoped claim cards, automatic expiry degradation, synthetic Android/admin states and regression-tested trust controls.
 
-## Active Phase 5 scope
+### Phase 5 — Android customer discovery
+
+```text
+PR #24
+reviewed implementation head: 4107aff54b098d299fd41dd60f63256150aab573
+merge commit: pending final record validation
+Issue #23: pending automatic closure on merge
+```
+
+Exact reviewed-head evidence:
+
+| Gate | Run | Result | Artifact SHA-256 |
+|---|---:|---|---|
+| Backend/PostGIS | #358 | Passed | `3e2a0ed7e7fcb69f8f6e48d57477c478b587cbf1cbcb71dd818d0ba05e666afb` |
+| Android reports | #221 | Passed | `074e99ea0a56ed0961db938f60daa2391fa9b53b129cdca4b9f33b8ce80131bc` |
+| Operations portal | #222 | Passed | `8b09068672e8011fc1d51dfb588aca809e0c65ef8568ee22594d6495b9a8a892` |
+| Documentation quality | #670 | Passed | `343c734aebec30755cf620c57f1d1a5309d930e6d82784bba56ce0c53e0fdc80` |
+
+Retained Android artifacts:
+
+| Artifact | SHA-256 |
+|---|---|
+| Debug APK | `adc9dc7d64793b66dea88d10dac9ff8d221cd9a9cd75a05eb367eba368315f63` |
+| Compose test APK | `fd6955fa8fd2d54ce65cab3456498f64df67213fc48b2dcc3441068860325cd9` |
+
+Phase 5 delivers policy-controlled provider/category publication, distinct private/public/service-area location models, live provider/category/claim eligibility, public-safe PostGIS search and profiles, deterministic filters and opaque pagination, saves and sharing, Android list/map/profile and low-bandwidth states, operations eligibility visibility, and regression-tested exclusion of removed categories, suspended providers and stale claims.
+
+## Phase 5 delivered scope
 
 Phase 5 implements:
 
@@ -158,7 +185,7 @@ Phase 5 implements:
 - operations visibility into publication eligibility without private evidence or coordinates;
 - OpenAPI, privacy, testing, architecture, decision and risk updates.
 
-## Phase 5 stop gates
+## Phase 5 stop gates retained
 
 No real provider/customer data, production map/location service, precise private coordinate, production credential, public indexing, public traffic, enquiry/contact handoff, review system, production deployment or public pilot is authorized.
 
