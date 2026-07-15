@@ -31,7 +31,12 @@ export default function ProviderDraftsPage() {
         pinned category versions. It cannot publish a provider or display private evidence.
       </p>
 
-      <div className="provider-table" role="region" aria-label="Synthetic provider drafts" tabIndex={0}>
+      <div
+        className="provider-table"
+        role="region"
+        aria-label="Synthetic provider drafts"
+        tabIndex={0}
+      >
         <table>
           <thead>
             <tr>

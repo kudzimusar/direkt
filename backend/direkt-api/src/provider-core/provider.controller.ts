@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  ParseUUIDPipe,
-  Patch,
-  Post,
-  Put,
-  Req,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Put, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PERMISSIONS } from '../authorization/permissions';
 import { RequirePermission } from '../authorization/require-permission.decorator';
@@ -36,7 +26,9 @@ export class ProviderController {
 
   @Put('account/profile')
   @RequirePermission(PERMISSIONS.ACCOUNT_PROFILE_MANAGE)
-  @ApiOkResponse({ description: 'Creates or updates the authenticated synthetic customer profile.' })
+  @ApiOkResponse({
+    description: 'Creates or updates the authenticated synthetic customer profile.',
+  })
   upsertCustomerProfile(
     @Body() dto: UpsertCustomerProfileDto,
     @Req() request: DirektRequest,
@@ -59,9 +51,7 @@ export class ProviderController {
   @Get('providers/:providerId')
   @RequirePermission(PERMISSIONS.PROVIDER_PROFILE_READ, { providerParam: 'providerId' })
   @ApiOkResponse({ description: 'Reads a non-public provider draft within server-owned scope.' })
-  provider(
-    @Param('providerId', ParseUUIDPipe) providerId: string,
-  ): Promise<ProviderView> {
+  provider(@Param('providerId', ParseUUIDPipe) providerId: string): Promise<ProviderView> {
     return this.providerService.provider(providerId);
   }
 
@@ -73,12 +63,7 @@ export class ProviderController {
     @Body() dto: UpdateProviderProfileDto,
     @Req() request: DirektRequest,
   ): Promise<ProviderView> {
-    return this.providerService.updateProvider(
-      request.actor,
-      providerId,
-      dto,
-      request.requestId,
-    );
+    return this.providerService.updateProvider(request.actor, providerId, dto, request.requestId);
   }
 
   @Post('providers/:providerId/state-transitions')
@@ -119,7 +104,9 @@ export class ProviderController {
 
   @Put('providers/:providerId/categories/:categoryKey')
   @RequirePermission(PERMISSIONS.PROVIDER_PROFILE_MANAGE, { providerParam: 'providerId' })
-  @ApiOkResponse({ description: 'Pins the provider draft to the active category requirement version.' })
+  @ApiOkResponse({
+    description: 'Pins the provider draft to the active category requirement version.',
+  })
   selectCategory(
     @Param('providerId', ParseUUIDPipe) providerId: string,
     @Param('categoryKey') categoryKey: string,

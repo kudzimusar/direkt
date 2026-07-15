@@ -1,7 +1,5 @@
 export type ProviderPathway =
-  | 'registered_business'
-  | 'qualified_individual'
-  | 'experienced_informal';
+  'registered_business' | 'qualified_individual' | 'experienced_informal';
 
 export type OperatingModel = 'fixed_premises' | 'mobile' | 'hybrid';
 export type ProviderStatus = 'draft' | 'ready_for_verification' | 'suspended' | 'archived';
