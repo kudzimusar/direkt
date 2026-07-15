@@ -19,7 +19,7 @@ export function OperationsShell({ session, children }: OperationsShellProps) {
       <header className="topbar">
         <div>
           <strong>DIREKT Operations</strong>
-          <span className="environment-chip">Synthetic Phase 2C</span>
+          <span className="environment-chip">Synthetic Phase 3</span>
         </div>
         <div className="session-summary" aria-label="Current synthetic session">
           <span>{session.displayName}</span>
@@ -53,7 +53,8 @@ export function OperationsShell({ session, children }: OperationsShellProps) {
         </aside>
         <main id="main-content" tabIndex={-1}>
           <div className="synthetic-banner" role="status">
-            Synthetic interface only. No real accounts, evidence, decisions or production systems.
+            Synthetic interface only. No real accounts, provider data, evidence, decisions or
+            production systems.
           </div>
           {children}
         </main>
