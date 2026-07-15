@@ -26,18 +26,26 @@ export class AuthorizationService {
   ): Promise<AuthorizationSnapshot> {
     const snapshot = await this.snapshot(actor, scope);
     if (!snapshot.permissions.includes(permission)) {
-      await this.audit.record({
-        actorType: 'identity',
-        actorId: actor.identityId,
-        ...(scope.providerId ? { providerId: scope.providerId } : {}),
-        ...(requestId ? { requestId } : {}),
-        action: 'authorization_denied',
-        resourceType: 'permission',
-        outcome: 'denied',
-        metadata: { permission },
-      });
+      await this.recordDenial(actor, permission, scope, requestId);
       throw new ForbiddenException(
         'The authenticated identity is not permitted to perform this action.',
+      );
+    }
+    return snapshot;
+  }
+
+  async assertAnyProviderPermission(
+    actor: AuthenticatedActor,
+    permission: Permission,
+    requestId?: string,
+  ): Promise<AuthorizationSnapshot> {
+    const snapshot = await this.repository.anyProviderSnapshot(actor.identityId);
+    if (!snapshot.permissions.includes(permission)) {
+      await this.recordDenial(actor, permission, {}, requestId, {
+        providerScope: 'actor_resolved',
+      });
+      throw new ForbiddenException(
+        'The authenticated identity has no permitted provider workspace.',
       );
     }
     return snapshot;
@@ -79,5 +87,24 @@ export class AuthorizationService {
       throw new BadRequestException('Emergency actions require a specific reason.');
     }
     await this.assertPermission(actor, PERMISSIONS.ADMIN_EMERGENCY_ACTION, {}, requestId);
+  }
+
+  private async recordDenial(
+    actor: AuthenticatedActor,
+    permission: Permission,
+    scope: AuthorizationScope,
+    requestId?: string,
+    metadata: Record<string, unknown> = {},
+  ): Promise<void> {
+    await this.audit.record({
+      actorType: 'identity',
+      actorId: actor.identityId,
+      ...(scope.providerId ? { providerId: scope.providerId } : {}),
+      ...(requestId ? { requestId } : {}),
+      action: 'authorization_denied',
+      resourceType: 'permission',
+      outcome: 'denied',
+      metadata: { permission, ...metadata },
+    });
   }
 }
