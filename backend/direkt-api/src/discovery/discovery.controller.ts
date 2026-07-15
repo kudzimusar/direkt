@@ -20,11 +20,7 @@ import { PERMISSIONS } from '../authorization/permissions';
 import { PublicRoute } from '../authorization/public.decorator';
 import { RequirePermission } from '../authorization/require-permission.decorator';
 import type { DirektRequest } from '../platform/http/request-context';
-import {
-  DiscoverySearchDto,
-  HidePublicationDto,
-  RefreshPublicationDto,
-} from './discovery.dto';
+import { DiscoverySearchDto, HidePublicationDto, RefreshPublicationDto } from './discovery.dto';
 import { DiscoveryService } from './discovery.service';
 
 @ApiTags('customer discovery')

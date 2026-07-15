@@ -188,7 +188,9 @@ export class DiscoveryService {
       return 0;
     }
     try {
-      const parsed = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as Partial<CursorPayload>;
+      const parsed = JSON.parse(
+        Buffer.from(cursor, 'base64url').toString('utf8'),
+      ) as Partial<CursorPayload>;
       if (parsed.version !== 1 || !Number.isInteger(parsed.offset) || Number(parsed.offset) < 0) {
         throw new Error('Invalid cursor payload.');
       }

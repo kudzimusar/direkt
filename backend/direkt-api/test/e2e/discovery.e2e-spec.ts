@@ -202,7 +202,8 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
        WHERE requirement_version_id = '00000000-0000-4000-8000-000000003101'
        ORDER BY requirement_key`,
     );
-    const claimRequirements = input.completeClaims === false ? requirements.rows.slice(0, 1) : requirements.rows;
+    const claimRequirements =
+      input.completeClaims === false ? requirements.rows.slice(0, 1) : requirements.rows;
     for (const requirement of claimRequirements) {
       const caseId = randomUUID();
       await pool.query(
@@ -318,7 +319,8 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
       locality: 'Woodlands, Lusaka',
       publicPoint: { longitude: 28.335, latitude: -15.421 },
       privatePoint: { longitude: 27.101, latitude: -14.101 },
-      serviceAreaWkt: 'POLYGON((28.25 -15.50, 28.45 -15.50, 28.45 -15.30, 28.25 -15.30, 28.25 -15.50))',
+      serviceAreaWkt:
+        'POLYGON((28.25 -15.50, 28.45 -15.50, 28.45 -15.30, 28.25 -15.30, 28.25 -15.50))',
       availability: 'available',
       claimValidUntil: '2028-01-01T00:00:00.000Z',
       withImage: true,
@@ -328,7 +330,8 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
       operatingModel: 'mobile',
       locality: 'Lusaka Central service area',
       privatePoint: { longitude: 26.202, latitude: -13.202 },
-      serviceAreaWkt: 'POLYGON((28.20 -15.55, 28.50 -15.55, 28.50 -15.25, 28.20 -15.25, 28.20 -15.55))',
+      serviceAreaWkt:
+        'POLYGON((28.20 -15.55, 28.50 -15.55, 28.50 -15.25, 28.20 -15.25, 28.20 -15.55))',
       availability: 'limited',
       claimValidUntil: '2028-01-01T00:00:00.000Z',
     });
@@ -338,7 +341,8 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
       locality: 'Kabulonga, Lusaka',
       publicPoint: { longitude: 28.36, latitude: -15.42 },
       privatePoint: { longitude: 25.303, latitude: -12.303 },
-      serviceAreaWkt: 'POLYGON((28.28 -15.50, 28.48 -15.50, 28.48 -15.30, 28.28 -15.30, 28.28 -15.50))',
+      serviceAreaWkt:
+        'POLYGON((28.28 -15.50, 28.48 -15.50, 28.48 -15.30, 28.28 -15.30, 28.28 -15.50))',
       availability: 'available',
       claimValidUntil: '2028-01-01T00:00:00.000Z',
     });
@@ -347,7 +351,8 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
       operatingModel: 'mobile',
       locality: 'Lusaka Central service area',
       privatePoint: { longitude: 24.404, latitude: -11.404 },
-      serviceAreaWkt: 'POLYGON((28.20 -15.55, 28.50 -15.55, 28.50 -15.25, 28.20 -15.25, 28.20 -15.55))',
+      serviceAreaWkt:
+        'POLYGON((28.20 -15.55, 28.50 -15.55, 28.50 -15.25, 28.20 -15.25, 28.20 -15.55))',
       availability: 'unknown',
       claimValidUntil: '2026-07-16T00:00:00.000Z',
     });
@@ -392,7 +397,8 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
         operatingModel: 'mobile',
         locality: 'Lusaka',
         privatePoint: { longitude: 23.5, latitude: -10.5 },
-        serviceAreaWkt: 'POLYGON((28.20 -15.55, 28.50 -15.55, 28.50 -15.25, 28.20 -15.25, 28.20 -15.55))',
+        serviceAreaWkt:
+          'POLYGON((28.20 -15.55, 28.50 -15.55, 28.50 -15.25, 28.20 -15.25, 28.20 -15.55))',
         availability: 'available',
         claimValidUntil: '2028-01-01T00:00:00.000Z',
         completeClaims: false,
@@ -527,7 +533,9 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
       .set('authorization', `Bearer ${customer.accessToken}`)
       .expect(200);
     expect(list.body).toEqual(
-      expect.arrayContaining([expect.objectContaining({ publicProviderId: fixed.publicProviderId })]),
+      expect.arrayContaining([
+        expect.objectContaining({ publicProviderId: fixed.publicProviderId }),
+      ]),
     );
 
     await request(httpServer())
