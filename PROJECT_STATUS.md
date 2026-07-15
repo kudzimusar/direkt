@@ -3,7 +3,7 @@
 **Updated:** 2026-07-15  
 **Authoritative branch:** `main` for stable checkpoints  
 **Implementation branch:** `build/android-v1`  
-**Current programme state:** Phase 4 verification and private evidence engine is complete and stable. Phase 5 Android customer discovery is not yet claimed.
+**Current programme state:** Phase 4 verification and private evidence engine is complete and stable. Phase 5 Android customer discovery is active under Issue #23.
 
 ## Current phase
 
@@ -19,12 +19,12 @@
 | Phase 3 identity/provider/category core | Complete; PR #17 merged and Issue #16 closed |
 | API/integration planning checkpoint | Complete; PR #19 merged |
 | Phase 4 verification and private evidence engine | Complete; PR #21 merged and Issue #20 closed |
-| Phase 5 Android customer discovery | Not claimed |
+| Phase 5 Android customer discovery | Active; Issue #23 |
 | Deferred Zambia pilot validation | Open as non-blocking Issue #5 |
 | Firebase tester distribution | Installed but intentionally deferred |
 | Public pilot | Not authorized |
 
-Open issues represent either a deliberate future gate or a later validation obligation. Issue #5 is not a current implementation blocker.
+Issue #23 is the sole active implementation tracker. Issue #5 remains a deliberate later validation obligation and is not a current implementation blocker.
 
 ## Stable checkpoint record
 
@@ -142,26 +142,27 @@ Retained Android artifacts:
 | Debug APK | `4940d82fecb05ab1f407cdb86e0776fdfb026b56c4200f04a360b279103f32ba` |
 | Compose test APK | `680b5f05fd9c01bb293a963492ec8c6dd835599b3c72aae4b45eae5bdb0ed561` |
 
-Phase 4 delivered:
+Phase 4 delivered provider/category/check-specific cases, private evidence metadata and immutable versions, assignment-bound review, immutable decisions, scoped claim cards, automatic expiry degradation, synthetic Android/admin states and regression-tested trust controls.
 
-- provider/category/check-specific verification cases;
-- private upload sessions and immutable evidence versions behind a storage adapter;
-- evidence validity, expiry, correction, replacement, renewal and revocation modelling;
-- assigned reviewer, supervisor and field workflows with separation of duties;
-- immutable recommendations, final decisions and field-visit records;
-- scoped evidence-derived claim cards with explicit limitations and policy versions;
-- deterministic evidence/claim expiry degradation;
-- provider-scoped and assigned-reviewer authorization with audited private access;
-- synthetic Android verification timelines and an internal operations queue;
-- an OpenAPI contract that exposes no public evidence or private-storage object references.
+## Active Phase 5 scope
 
-Automated review regressions prove that shared requirement keys are category-scoped, completed lifecycle steps reject repeat final decisions, and reason-code outcomes cannot contradict recommendation or decision results.
+Phase 5 implements:
 
-## Phase 5 gate
+- customer onboarding and location-permission education;
+- manual area selection plus an explicit one-time current-location path;
+- public-safe provider publication and location/service-area projections;
+- category, text, distance, operating-model, availability and claim filters;
+- deterministic PostGIS eligibility, ranking explanations and cursor pagination;
+- Android list/map, provider profile, trust details, saves and sharing;
+- low-bandwidth/image-free, empty, sparse and no-location states;
+- operations visibility into publication eligibility without private evidence or coordinates;
+- OpenAPI, privacy, testing, architecture, decision and risk updates.
 
-Phase 5 is not active. It may be claimed only through a new governing issue and workstream lock after the customer-discovery, location-privacy, publication, query, caching and no-location-fallback boundaries are defined.
+## Phase 5 stop gates
 
-Public discoverability remains blocked until Phase 5 builds customer discovery exclusively from current safe claim cards, public-safe provider identity/media and non-private service-area data. Profile completion, payment, administrator action, direct database editing or client input still cannot publish or improve a trust claim.
+No real provider/customer data, production map/location service, precise private coordinate, production credential, public indexing, public traffic, enquiry/contact handoff, review system, production deployment or public pilot is authorized.
+
+Discovery may use only current safe claim cards, approved public-safe provider identity/media, consented public premises data and non-private service areas. Mobile-provider distance may never be inferred from a private base. Manual area selection must always work, and no-results recovery must never fabricate providers.
 
 ## Deferred validation — not a current blocker
 
