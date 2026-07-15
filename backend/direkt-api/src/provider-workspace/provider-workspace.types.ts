@@ -10,10 +10,7 @@ import type {
   VerificationCaseStatus,
 } from '../verification-evidence/verification-evidence.types';
 
-export type ProviderWorkspaceRole =
-  | 'provider_owner'
-  | 'provider_member'
-  | 'provider_responder';
+export type ProviderWorkspaceRole = 'provider_owner' | 'provider_member' | 'provider_responder';
 
 export type WorkspaceTaskState = 'complete' | 'action_required' | 'blocked' | 'not_started';
 export type WorkspaceUploadState =

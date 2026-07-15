@@ -120,7 +120,9 @@ export class ProviderWorkspaceUploadRepository {
       const providerId = await this.resolveProvider(client, actor.identityId);
       const row = await this.intentForUpdate(client, providerId, actor.identityId, uploadIntentId);
       if (!['interrupted', 'retryable'].includes(row.state)) {
-        throw new ConflictException('Only interrupted or retryable uploads can start a new attempt.');
+        throw new ConflictException(
+          'Only interrupted or retryable uploads can start a new attempt.',
+        );
       }
       return this.prepareLockedIntent(client, row);
     });
@@ -366,12 +368,20 @@ export class ProviderWorkspaceUploadRepository {
        RETURNING *`,
       [row.upload_intent_id],
     );
-    const refreshed = await this.intentById(client, row.provider_id, row.created_by_identity_id, row.upload_intent_id);
+    const refreshed = await this.intentById(
+      client,
+      row.provider_id,
+      row.created_by_identity_id,
+      row.upload_intent_id,
+    );
     void updated;
     return this.prepared(refreshed, true);
   }
 
-  private prepared(row: UploadIntentRow, shouldCreateSession: boolean): PreparedWorkspaceUploadAttempt {
+  private prepared(
+    row: UploadIntentRow,
+    shouldCreateSession: boolean,
+  ): PreparedWorkspaceUploadAttempt {
     return {
       intent: this.mapIntent(row),
       providerId: row.provider_id,

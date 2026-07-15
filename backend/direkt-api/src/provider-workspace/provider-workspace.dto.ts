@@ -40,7 +40,8 @@ export class UpdateWorkspaceLocationDto {
   publicPremisesLongitude?: number;
 
   @ApiProperty({
-    description: 'Explicit consent is required before a premises point can be copied into public discovery.',
+    description:
+      'Explicit consent is required before a premises point can be copied into public discovery.',
     default: false,
   })
   @IsBoolean()
@@ -53,9 +54,9 @@ export class UpdateWorkspaceLocationDto {
   publicLocality!: string;
 
   @ApiProperty({
-    example:
-      'POLYGON((28.25 -15.50, 28.45 -15.50, 28.45 -15.30, 28.25 -15.30, 28.25 -15.50))',
-    description: 'Synthetic WGS84 service-area polygon. It is distinct from the private base and public premises.',
+    example: 'POLYGON((28.25 -15.50, 28.45 -15.50, 28.45 -15.30, 28.25 -15.30, 28.25 -15.50))',
+    description:
+      'Synthetic WGS84 service-area polygon. It is distinct from the private base and public premises.',
   })
   @IsString()
   @Matches(/^POLYGON\(\(.+\)\)$/i, { message: 'serviceAreaWkt must be a POLYGON WKT value.' })

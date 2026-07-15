@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Put,
-  Req,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PERMISSIONS } from '../authorization/permissions';
 import { RequirePermission } from '../authorization/require-permission.decorator';
@@ -65,7 +55,9 @@ export class ProviderWorkspaceController {
 
   @Patch('me/profile')
   @RequirePermission(PERMISSIONS.PROVIDER_PROFILE_MANAGE, { providerFromActor: true })
-  @ApiOkResponse({ description: 'Updates the actor-resolved provider profile without publishing it.' })
+  @ApiOkResponse({
+    description: 'Updates the actor-resolved provider profile without publishing it.',
+  })
   updateProfile(
     @Req() request: DirektRequest,
     @Body() body: UpdateProviderProfileDto,
@@ -161,7 +153,9 @@ export class ProviderWorkspaceController {
 
   @Post('me/upload-intents/:uploadIntentId/retry')
   @RequirePermission(PERMISSIONS.PROVIDER_EVIDENCE_MANAGE, { providerFromActor: true })
-  @ApiCreatedResponse({ description: 'Creates a fresh private upload session for a retryable intent.' })
+  @ApiCreatedResponse({
+    description: 'Creates a fresh private upload session for a retryable intent.',
+  })
   retryUploadIntent(
     @Req() request: DirektRequest,
     @Param('uploadIntentId') uploadIntentId: string,
@@ -172,7 +166,8 @@ export class ProviderWorkspaceController {
   @Put('me/upload-intents/:uploadIntentId/interrupted')
   @RequirePermission(PERMISSIONS.PROVIDER_EVIDENCE_MANAGE, { providerFromActor: true })
   @ApiOkResponse({
-    description: 'Marks the active attempt interrupted and makes the logical intent safely retryable.',
+    description:
+      'Marks the active attempt interrupted and makes the logical intent safely retryable.',
   })
   interruptUploadIntent(
     @Req() request: DirektRequest,

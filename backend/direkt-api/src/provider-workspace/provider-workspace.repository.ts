@@ -149,13 +149,15 @@ export class ProviderWorkspaceRepository {
             state: 'empty',
             phaseOwner: 'phase8',
             mutationAllowed: false,
-            message: 'Real enquiry creation, response transitions and contact handoff begin in Phase 8.',
+            message:
+              'Real enquiry creation, response transitions and contact handoff begin in Phase 8.',
           },
           reviewResponses: {
             state: 'empty',
             phaseOwner: 'phase8',
             mutationAllowed: false,
-            message: 'Tracked reviews, moderation, appeals and provider responses begin in Phase 8.',
+            message:
+              'Tracked reviews, moderation, appeals and provider responses begin in Phase 8.',
           },
           subscription: {
             state: 'synthetic_only',
@@ -404,8 +406,7 @@ export class ProviderWorkspaceRepository {
         Boolean(provider.registered_business_name?.trim())) ||
       (provider.pathway === 'qualified_individual' &&
         Boolean(provider.qualification_summary?.trim())) ||
-      (provider.pathway === 'experienced_informal' &&
-        Boolean(provider.experience_summary?.trim()));
+      (provider.pathway === 'experienced_informal' && Boolean(provider.experience_summary?.trim()));
     return (
       Boolean(provider.display_name.trim()) &&
       Boolean(provider.service_area_summary.trim()) &&
@@ -486,7 +487,8 @@ export class ProviderWorkspaceRepository {
       {
         key: 'resolve_corrections',
         title: 'Resolve verification corrections',
-        detail: 'Correction requirements are scoped to a case and do not imply a provider-wide verdict.',
+        detail:
+          'Correction requirements are scoped to a case and do not imply a provider-wide verdict.',
         state: input.correctionRequired > 0 ? 'action_required' : 'complete',
         priority: 50,
         action: input.correctionRequired > 0 ? 'open_verification_timeline' : null,
