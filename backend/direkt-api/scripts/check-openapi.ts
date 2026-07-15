@@ -146,7 +146,8 @@ async function main(): Promise<void> {
   const prohibited = Object.keys(paths).filter(
     (pathName) =>
       /(payments|invoices|entitlements|webhooks|public-directory|discoverable)/i.test(pathName) ||
-      (/subscriptions/i.test(pathName) && pathName !== '/api/v1/provider-workspace/me/subscription-status'),
+      (/subscriptions/i.test(pathName) &&
+        pathName !== '/api/v1/provider-workspace/me/subscription-status'),
   );
   if (prohibited.length > 0) {
     throw new Error(`Phase 6 exposed prohibited domain paths: ${prohibited.join(', ')}`);
