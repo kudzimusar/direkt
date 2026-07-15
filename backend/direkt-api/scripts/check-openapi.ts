@@ -62,10 +62,19 @@ async function main(): Promise<void> {
     }
   }
 
+  const bodyAuthenticatedOperations = new Set([
+    'POST /api/v1/auth/challenges',
+    'POST /api/v1/auth/challenges/verify',
+    'POST /api/v1/auth/sessions/rotate',
+  ]);
   for (const [protectedPath, method] of requiredOperations.filter(
-    ([pathName]) => !pathName.includes('/health/') && !pathName.includes('/auth/challenges'),
+    ([pathName]) => !pathName.includes('/health/'),
   )) {
-    if (!paths[protectedPath]?.[method]?.security?.length) {
+    const operationKey = `${method.toUpperCase()} ${protectedPath}`;
+    if (
+      !bodyAuthenticatedOperations.has(operationKey) &&
+      !paths[protectedPath]?.[method]?.security?.length
+    ) {
       throw new Error(`Protected operation is missing bearer security: ${method} ${protectedPath}`);
     }
   }
