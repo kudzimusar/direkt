@@ -71,6 +71,11 @@ This log records product and technical decisions with long-term impact.
 | D-065 | 2026-07-15 | Every public search, profile, claim and save read re-evaluates provider status, selected category/version and current mandatory claims | Prevents stale publication rows and saved entries from bypassing live enforcement or category removal | Accepted |
 | D-066 | 2026-07-15 | Discovery ordering is deterministic and uses allowlisted evidence-backed explanations; payment cannot improve publication or ranking | Keeps customer-facing reasons interpretable and preserves commercial independence from trust | Accepted |
 | D-067 | 2026-07-15 | Phase 5 retains a synthetic map/list abstraction and manual area fallback instead of activating production maps or location credentials | Allows product and privacy contracts to mature before vendor, cost and consent approval | Accepted with production stop gate |
+| D-068 | 2026-07-16 | Provider workspace ownership is resolved from active server-side assignments and ambiguous multi-provider identities are rejected | Prevents client-selected tenant scope and avoids silently choosing a provider when one identity represents several organizations | Accepted |
+| D-069 | 2026-07-16 | Recoverable evidence uploads use one logical intent with fresh private sessions per retry | Preserves idempotency across interruption and process recreation while keeping immutable evidence versions bound to one upload session | Accepted |
+| D-070 | 2026-07-16 | Provider timeline and operations readiness use dedicated safe aggregate projections | Providers and operators need progress visibility without reviewer identities, private rationale, evidence identifiers, object keys or coordinates | Accepted |
+| D-071 | 2026-07-16 | Availability is independently editable but cannot alter claims, publication or ranking | Operational capacity is useful to customers but must not be interpreted as trust or commercial preference | Accepted |
+| D-072 | 2026-07-16 | Enquiry, review-response and subscription surfaces remain explicit read-only boundaries in Phase 6 | Makes Phase 8 and Phase 9 ownership testable and prevents accidental early coupling to messaging, moderation or payment logic | Accepted |
 
 ## How to add a decision
 

@@ -1,9 +1,9 @@
 # DIREKT Project Status
 
-**Updated:** 2026-07-15  
+**Updated:** 2026-07-16  
 **Authoritative branch:** `main` for stable checkpoints  
 **Implementation branch:** `build/android-v1`  
-**Current programme state:** Phase 5 Android customer discovery is complete and stable. Phase 6 provider onboarding/workspace is not claimed.
+**Current programme state:** Phase 5 Android customer discovery is complete and stable. Phase 6 Android provider workspace is review-complete on an exact green implementation head and is awaiting final record validation and merge through PR #26.
 
 ## Current phase
 
@@ -20,12 +20,12 @@
 | API/integration planning checkpoint | Complete; PR #19 merged |
 | Phase 4 verification and private evidence engine | Complete; PR #21 merged and Issue #20 closed |
 | Phase 5 Android customer discovery | Complete; PR #24 merged and Issue #23 closed |
-| Phase 6 provider onboarding/workspace | Not claimed |
+| Phase 6 Android provider workspace | Review complete; PR #26 final record validation pending |
 | Deferred Zambia pilot validation | Open as non-blocking Issue #5 |
 | Firebase tester distribution | Installed but intentionally deferred |
 | Public pilot | Not authorized |
 
-No implementation issue is currently active. Issue #5 remains a deliberate later validation obligation and is not a current implementation blocker.
+Issue #25 remains the sole active implementation tracker until PR #26 merges. Issue #5 remains a deliberate later validation obligation and is not a current implementation blocker.
 
 ## Stable checkpoint record
 
@@ -150,7 +150,7 @@ Phase 4 delivered provider/category/check-specific cases, private evidence metad
 ```text
 PR #24
 reviewed implementation head: 4107aff54b098d299fd41dd60f63256150aab573
-final validation head: 28f03c196f0c6dc47c77c61cbe70d6448d179755
+verified final head: 28f03c196f0c6dc47c77c61cbe70d6448d179755
 merge commit: 11541db4d5ea856404f8fee03c0ca55cf6bab36c
 Issue #23: closed as completed
 ```
@@ -173,30 +173,54 @@ Retained Android artifacts:
 
 Phase 5 delivered policy-controlled provider/category publication, distinct private/public/service-area location models, live provider/category/claim eligibility, public-safe PostGIS search and profiles, deterministic filters and opaque pagination, saves and sharing, Android list/map/profile and low-bandwidth states, operations eligibility visibility, and regression-tested exclusion of removed categories, suspended providers and stale claims.
 
-## Phase 5 delivered scope
+### Phase 6 — Android provider workspace
 
-Phase 5 implements:
+```text
+PR #26
+reviewed implementation head: aa10d727091c4e742f0a26c41b00daa07c5000ad
+merge commit: pending final record validation
+Issue #25: pending automatic closure on merge
+```
 
-- customer onboarding and location-permission education;
-- manual area selection plus an explicit one-time current-location path;
-- public-safe provider publication and location/service-area projections;
-- category, text, distance, operating-model, availability and claim filters;
-- deterministic PostGIS eligibility, ranking explanations and cursor pagination;
-- Android list/map, provider profile, trust details, saves and sharing;
-- low-bandwidth/image-free, empty, sparse and no-location states;
-- operations visibility into publication eligibility without private evidence or coordinates;
-- OpenAPI, privacy, testing, architecture, decision and risk updates.
+Exact reviewed-head evidence:
 
-## Phase 5 stop gates retained
+| Gate | Run | Result | Artifact SHA-256 |
+|---|---:|---|---|
+| Backend/PostGIS | #484 | Passed | `03f3997a885482443f74e0a5ce7c2a349c8068d00572d9aae4dcb97f0ab8462c` |
+| Android reports | #274 | Passed | `17937634afd4030b039d1de8b1155d483042892af51c053887e0e534027ffe0e` |
+| Operations portal | #259 | Passed | `a24e51790fcfda7d28398be71dffd033a84287497b71e30e8929021bc0fc6790` |
+| Documentation quality | #850 | Passed | `8b274470105372b1ed9c8e5b255d5693dec7350e3caa636ae22a06c25564e6d6` |
 
-No real provider/customer data, production map/location service, precise private coordinate, production credential, public indexing, public traffic, enquiry/contact handoff, review system, production deployment or public pilot is authorized.
+Retained Android artifacts:
 
-Discovery may use only current safe claim cards, approved public-safe provider identity/media, consented public premises data and non-private service areas. Mobile-provider distance may never be inferred from a private base. Manual area selection must always work, and no-results recovery must never fabricate providers.
+| Artifact | SHA-256 |
+|---|---|
+| Debug APK | `bc5ea200789d66554fbd6ec213ee827c4012743c622fbc1fd07c68814a4c8952` |
+| Compose test APK | `c4ec8ce2d659527a55a1b4ba9414dc65846993ae2f257b7a3aff684c0b1f199c` |
+
+Phase 6 delivers actor-resolved provider scope, profile/services/location and availability management, private case/check-specific evidence capture, idempotent interrupted-upload recovery, provider-safe verification timeline, explicit Phase 8/9 read-only boundaries, native Android provider states, aggregate operations visibility and regression-tested confirmation/publication/privacy controls.
+
+## Phase 6 delivered scope
+
+Phase 6 implements:
+
+- authenticated provider workspace summary and server-resolved provider scope;
+- provider registration/profile, services and lawful service-area editing;
+- case/check-specific private evidence capture;
+- provider-safe verification timeline and correction/renewal states;
+- availability management independent of claims and publication;
+- recoverable interrupted uploads with persistent idempotent retry/cancel;
+- Android provider dashboard, task prioritization and accessibility states;
+- bounded synthetic/empty enquiry, review-response and subscription-status surfaces only, with Phase 8 and Phase 9 retaining their business logic;
+- operations readiness/upload visibility without unauthorized evidence access;
+- OpenAPI, authorization, privacy, testing, architecture, decision and risk updates.
+
+## Phase 6 stop gates
+
+No real provider/customer/evidence/enquiry/payment data, production storage/upload endpoint, map/location provider, messaging/payment integration, production credential, deployment or public pilot is authorized.
+
+Provider ownership and permissions must be resolved server-side. Cross-provider access is forbidden. Evidence remains private and versioned. Profile completion, availability, uploads, subscription placeholders or administrator edits cannot create claims, publish a provider or improve trust/ranking. Phase 8 retains real enquiry/review workflows; Phase 9 retains products, entitlements and payments.
 
 ## Deferred validation — not a current blocker
 
 Issue #5 retains representative Zambia interviews, real-device/connectivity testing, private inspection of real evidence, field-verification economics, qualified legal/privacy review, authority access, approved map/OTP/payment contracts and willingness-to-pay evidence.
-
-## Next planned checkpoint
-
-Phase 6 provider onboarding/workspace is the next planned phase. It remains unclaimed until a new governing issue and workstream lock are created. Production integrations remain gated by the integration and secrets plan.

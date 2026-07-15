@@ -19,7 +19,7 @@ function session(
 }
 
 describe('visibleNavigation', () => {
-  it('shows verification and discovery queues only to an authorized reviewer', () => {
+  it('shows verification, discovery and workspace queues only to an authorized reviewer', () => {
     const items = visibleNavigation(
       session('reviewer', [
         'operations.portal.access',
@@ -33,9 +33,11 @@ describe('visibleNavigation', () => {
     expect(items.map((item) => item.label)).toEqual([
       'Mission control',
       'Provider drafts',
+      'Provider workspaces',
       'Verification queue',
       'Discovery eligibility',
     ]);
+    expect(items.find((item) => item.label === 'Provider workspaces')?.status).toBe('available');
     expect(items.find((item) => item.label === 'Verification queue')?.status).toBe('available');
     expect(items.find((item) => item.label === 'Discovery eligibility')?.status).toBe('available');
     expect(items.map((item) => item.label)).not.toContain('Finance');
@@ -48,6 +50,7 @@ describe('visibleNavigation', () => {
 
     expect(labels).toEqual(['Mission control', 'Finance']);
     expect(labels).not.toContain('Provider drafts');
+    expect(labels).not.toContain('Provider workspaces');
     expect(labels).not.toContain('Verification queue');
     expect(labels).not.toContain('Discovery eligibility');
   });
