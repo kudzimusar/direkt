@@ -54,6 +54,12 @@ This log records product and technical decisions with long-term impact.
 | D-048 | 2026-07-15 | Role grants are global or provider-scoped and may not overlap for the same identity/role/scope interval | Enforces tenant scope while permitting an expired bounded assignment to be granted again | Accepted |
 | D-049 | 2026-07-15 | The operations portal uses Next.js 16/React 19 and consumes only the versioned backend API | Prevents privileged browser code from bypassing domain authorization or private-storage controls | Accepted |
 | D-050 | 2026-07-15 | Phase 2C exposes only synthetic identity/session and operations-policy surfaces | Provider creation, evidence, verification decisions, trust publication and production administration remain later-phase concerns | Accepted |
+| D-051 | 2026-07-15 | Human account identities and provider organizations are separate aggregates | One person may represent multiple providers, and a provider may have multiple representatives without conflating people and businesses | Accepted |
+| D-052 | 2026-07-15 | Provider pathways are explicit values: registered business, qualified individual or experienced informal provider | Missing registration or qualification evidence must not silently classify a provider; each pathway has a distinct later evidence burden | Accepted; pilot validation remains required |
+| D-053 | 2026-07-15 | Fixed-premises, mobile and hybrid operating models are first-class fields with public-safe locality summaries | Supports Zambia's varied service delivery patterns without exposing precise private coordinates | Accepted |
+| D-054 | 2026-07-15 | Provider category selections pin an immutable activated requirement version | Historical evidence and decisions must remain interpretable after category requirements evolve | Accepted |
+| D-055 | 2026-07-15 | Phase 3 provider states are draft, ready for verification, suspended and archived; none is publicly discoverable | Profile completeness and operator action cannot substitute for evidence-derived publication | Accepted |
+| D-056 | 2026-07-15 | The Phase 3 public-directory view is structurally empty and no public provider API exists | Makes the publication stop gate testable at database, API, Android and portal layers | Accepted |
 
 ## How to add a decision
 
