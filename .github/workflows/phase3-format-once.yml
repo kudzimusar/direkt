@@ -41,14 +41,15 @@ jobs:
         run: |
           npm ci --ignore-scripts
           npx prettier --write \
-            "src/**/*.{ts,tsx,css}" \
-            "test/**/*.{ts,tsx}" \
+            src \
+            test \
+            package.json \
+            tsconfig.json \
             next.config.ts \
             vitest.config.ts \
             eslint.config.mjs \
-            package.json \
-            tsconfig.json \
-            README.md
+            README.md \
+            --ignore-unknown
       - name: Commit deterministic formatting
         shell: bash
         run: |
