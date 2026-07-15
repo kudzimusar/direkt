@@ -9,6 +9,7 @@ import { DatabaseModule } from './platform/database/database.module';
 import { HealthModule } from './platform/health/health.module';
 import { CorrelationIdMiddleware } from './platform/http/correlation-id.middleware';
 import { RequestLoggingMiddleware } from './platform/http/request-logging.middleware';
+import { ProviderModule } from './provider-core/provider.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { RequestLoggingMiddleware } from './platform/http/request-logging.middle
     AuthorizationModule,
     HealthModule,
     OperationsModule,
+    ProviderModule,
   ],
 })
 export class AppModule implements NestModule {
