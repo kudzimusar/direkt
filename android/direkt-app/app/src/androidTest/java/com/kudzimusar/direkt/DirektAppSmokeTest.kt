@@ -12,10 +12,12 @@ class DirektAppSmokeTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun phase4ShellIsVisibleAndDiscoveryIsBlocked() {
+    fun phase5CustomerDiscoveryShellIsVisible() {
         composeRule.onNodeWithTag("foundation-root").assertIsDisplayed()
         composeRule.onNodeWithText("DIREKT").assertIsDisplayed()
-        composeRule.onNodeWithText("Phase 4 — synthetic private verification").assertIsDisplayed()
-        composeRule.onNodeWithText("Provider discovery is intentionally unavailable").assertIsDisplayed()
+        composeRule.onNodeWithText("Phase 5 — synthetic customer discovery").assertIsDisplayed()
+        composeRule.onNodeWithText("Find a provider").assertIsDisplayed()
+        composeRule.onNodeWithText("Search area").assertIsDisplayed()
+        composeRule.onNodeWithText("Background location: Off").assertIsDisplayed()
     }
 }

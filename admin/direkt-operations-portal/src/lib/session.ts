@@ -27,6 +27,7 @@ export const syntheticReviewerSession: OperationsSession = {
     'verification.case.review',
     'verification.final_decision',
     'verification.claim.read',
+    'discovery.publication.read',
   ],
   expiresAt: '2026-07-15T23:00:00.000Z',
   stepUpRequired: true,

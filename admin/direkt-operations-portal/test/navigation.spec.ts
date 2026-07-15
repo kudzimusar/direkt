@@ -19,13 +19,14 @@ function session(
 }
 
 describe('visibleNavigation', () => {
-  it('shows the available verification queue to an authorized reviewer but not finance', () => {
+  it('shows verification and discovery queues only to an authorized reviewer', () => {
     const items = visibleNavigation(
       session('reviewer', [
         'operations.portal.access',
         'operations.providers.read',
         'verification.case.review',
         'verification.final_decision',
+        'discovery.publication.read',
       ]),
     );
 
@@ -33,12 +34,14 @@ describe('visibleNavigation', () => {
       'Mission control',
       'Provider drafts',
       'Verification queue',
+      'Discovery eligibility',
     ]);
     expect(items.find((item) => item.label === 'Verification queue')?.status).toBe('available');
+    expect(items.find((item) => item.label === 'Discovery eligibility')?.status).toBe('available');
     expect(items.map((item) => item.label)).not.toContain('Finance');
   });
 
-  it('keeps finance out of provider and verification controls', () => {
+  it('keeps finance out of provider verification and discovery controls', () => {
     const labels = visibleNavigation(
       session('finance', ['operations.portal.access', 'finance.ledger.read']),
     ).map((item) => item.label);
@@ -46,6 +49,7 @@ describe('visibleNavigation', () => {
     expect(labels).toEqual(['Mission control', 'Finance']);
     expect(labels).not.toContain('Provider drafts');
     expect(labels).not.toContain('Verification queue');
+    expect(labels).not.toContain('Discovery eligibility');
   });
 
   it('uses server permissions rather than the displayed role label', () => {

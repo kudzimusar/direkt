@@ -52,6 +52,18 @@ async function main(): Promise<void> {
     ['/api/v1/verification-cases/{caseId}/field-visits', 'post'],
     ['/api/v1/operations/verification/expire-claims', 'post'],
     ['/api/v1/operations/providers/{providerId}/claims', 'get'],
+    ['/api/v1/public/categories', 'get'],
+    ['/api/v1/public/providers/search', 'get'],
+    ['/api/v1/public/providers/{publicProviderId}', 'get'],
+    ['/api/v1/public/providers/{publicProviderId}/claims', 'get'],
+    ['/api/v1/public/providers/{publicProviderId}/availability', 'get'],
+    ['/api/v1/public/providers/{publicProviderId}/share', 'get'],
+    ['/api/v1/account/saved-providers/{publicProviderId}', 'post'],
+    ['/api/v1/account/saved-providers/{publicProviderId}', 'delete'],
+    ['/api/v1/account/saved-providers', 'get'],
+    ['/api/v1/operations/discovery/publication-eligibility', 'get'],
+    ['/api/v1/operations/providers/{providerId}/discovery/publication', 'post'],
+    ['/api/v1/operations/discovery/publications/{publicProviderId}/hide', 'post'],
     ['/api/v1/operations/session', 'get'],
     ['/api/v1/operations/providers', 'get'],
     ['/api/v1/operations/emergency-actions', 'post'],
@@ -67,12 +79,21 @@ async function main(): Promise<void> {
     'POST /api/v1/auth/challenges/verify',
     'POST /api/v1/auth/sessions/rotate',
   ]);
+  const publicOperations = new Set([
+    'GET /api/v1/public/categories',
+    'GET /api/v1/public/providers/search',
+    'GET /api/v1/public/providers/{publicProviderId}',
+    'GET /api/v1/public/providers/{publicProviderId}/claims',
+    'GET /api/v1/public/providers/{publicProviderId}/availability',
+    'GET /api/v1/public/providers/{publicProviderId}/share',
+  ]);
   for (const [protectedPath, method] of requiredOperations.filter(
     ([pathName]) => !pathName.includes('/health/'),
   )) {
     const operationKey = `${method.toUpperCase()} ${protectedPath}`;
     if (
       !bodyAuthenticatedOperations.has(operationKey) &&
+      !publicOperations.has(operationKey) &&
       !paths[protectedPath]?.[method]?.security?.length
     ) {
       throw new Error(`Protected operation is missing bearer security: ${method} ${protectedPath}`);
@@ -93,11 +114,11 @@ async function main(): Promise<void> {
     /(payments|subscriptions|public-directory|discoverable)/i.test(pathName),
   );
   if (prohibited.length > 0) {
-    throw new Error(`Phase 4 exposed prohibited domain paths: ${prohibited.join(', ')}`);
+    throw new Error(`Phase 5 exposed prohibited domain paths: ${prohibited.join(', ')}`);
   }
 
   process.stdout.write(
-    `${JSON.stringify({ event: 'openapi_check_passed', pathCount: Object.keys(paths).length, phase: 4 })}\n`,
+    `${JSON.stringify({ event: 'openapi_check_passed', pathCount: Object.keys(paths).length, phase: 5 })}\n`,
   );
 }
 

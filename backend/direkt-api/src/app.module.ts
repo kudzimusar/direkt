@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { AuthorizationModule } from './authorization/authorization.module';
 import { environmentSchema } from './config/environment';
+import { DiscoveryModule } from './discovery/discovery.module';
 import { OperationsModule } from './operations/operations.module';
 import { AuditModule } from './platform/audit/audit.module';
 import { DatabaseModule } from './platform/database/database.module';
@@ -31,6 +32,7 @@ import { VerificationEvidenceModule } from './verification-evidence/verification
     OperationsModule,
     ProviderModule,
     VerificationEvidenceModule,
+    DiscoveryModule,
   ],
 })
 export class AppModule implements NestModule {
