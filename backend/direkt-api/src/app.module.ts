@@ -11,6 +11,7 @@ import { HealthModule } from './platform/health/health.module';
 import { CorrelationIdMiddleware } from './platform/http/correlation-id.middleware';
 import { RequestLoggingMiddleware } from './platform/http/request-logging.middleware';
 import { ProviderModule } from './provider-core/provider.module';
+import { ProviderWorkspaceModule } from './provider-workspace/provider-workspace.module';
 import { VerificationEvidenceModule } from './verification-evidence/verification-evidence.module';
 
 @Module({
@@ -31,6 +32,7 @@ import { VerificationEvidenceModule } from './verification-evidence/verification
     HealthModule,
     OperationsModule,
     ProviderModule,
+    ProviderWorkspaceModule,
     VerificationEvidenceModule,
     DiscoveryModule,
   ],
