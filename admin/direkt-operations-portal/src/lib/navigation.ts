@@ -27,6 +27,12 @@ const navigation: readonly NavigationItem[] = [
     status: 'available',
   },
   {
+    label: 'Discovery eligibility',
+    href: '/operations/discovery',
+    permission: 'discovery.publication.read',
+    status: 'available',
+  },
+  {
     label: 'Field visits',
     href: '/operations/field-visits',
     permission: 'verification.field_visit.record',
