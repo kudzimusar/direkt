@@ -7,6 +7,8 @@ export const PERMISSIONS = {
   PROVIDER_PROFILE_READ: 'provider.profile.read',
   PROVIDER_PROFILE_MANAGE: 'provider.profile.manage',
   PROVIDER_REPRESENTATIVES_MANAGE: 'provider.representatives.manage',
+  PROVIDER_EVIDENCE_MANAGE: 'provider.evidence.manage',
+  PROVIDER_AVAILABILITY_MANAGE: 'provider.availability.manage',
   PROVIDER_ENQUIRIES_RESPOND: 'provider.enquiries.respond',
   CATALOG_CATEGORIES_READ: 'catalog.categories.read',
   EVIDENCE_UPLOAD_CREATE: 'evidence.upload.create',
