@@ -30,5 +30,10 @@ export interface PrivateReadGrant {
 export interface EvidenceStoragePort {
   createUploadGrant(input: CreatePrivateUploadInput): PrivateUploadGrant;
   confirmUpload(input: CompletePrivateUploadInput): void;
-  createReadGrant(objectKey: string, actorIdentityId: string, purpose: string): PrivateReadGrant;
+  createReadGrant(
+    objectKey: string,
+    actorIdentityId: string,
+    purpose: string,
+    notAfter?: Date,
+  ): PrivateReadGrant;
 }
