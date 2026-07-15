@@ -1,0 +1,38 @@
+name: Phase 5 collect discovery tests
+
+on:
+  push:
+    branches: [build/android-v1]
+    paths:
+      - ".github/workflows/phase5-collect-discovery-tests.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: direkt-phase5-collect-discovery-tests
+  cancel-in-progress: true
+
+jobs:
+  rename:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+      - name: Move discovery suite into Vitest collection convention
+        shell: bash
+        run: |
+          test -f backend/direkt-api/test/e2e/discovery.e2e-spec.ts
+          test ! -e backend/direkt-api/test/e2e/discovery.e2e.spec.ts
+          git mv \
+            backend/direkt-api/test/e2e/discovery.e2e-spec.ts \
+            backend/direkt-api/test/e2e/discovery.e2e.spec.ts
+      - name: Commit exact rename
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "test(discovery): collect Phase 5 end-to-end suite"
+          git push origin HEAD:build/android-v1
