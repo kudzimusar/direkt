@@ -53,13 +53,9 @@ interface OperationsTriageListInput {
 export class OperationsTriageRepository {
   constructor(private readonly database: DatabaseService) {}
 
-  async list(
-    input: OperationsTriageListInput,
-  ): Promise<OperationsTriageItem[]> {
+  async list(input: OperationsTriageListInput): Promise<OperationsTriageItem[]> {
     const highRisk = this.optionalBoolean(input.query.highRisk);
-    const escalationRequired = this.optionalBoolean(
-      input.query.escalationRequired,
-    );
+    const escalationRequired = this.optionalBoolean(input.query.escalationRequired);
     const result = await this.database.query<OperationsTriageRow>(
       `SELECT
          queue.case_id,
@@ -171,9 +167,7 @@ export class OperationsTriageRepository {
     });
   }
 
-  private optionalBoolean(
-    value: 'true' | 'false' | undefined,
-  ): boolean | null {
+  private optionalBoolean(value: 'true' | 'false' | undefined): boolean | null {
     if (value === undefined) {
       return null;
     }

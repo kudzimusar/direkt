@@ -4,10 +4,7 @@ import { AuthorizationService } from '../authorization/authorization.service';
 import type { RoleKey } from '../authorization/permissions';
 import type { OperationsTriageQueryDto } from './operations-triage.dto';
 import { OperationsTriageRepository } from './operations-triage.repository';
-import type {
-  OperationsTriageQueue,
-  OperationsTriageScope,
-} from './operations-triage.types';
+import type { OperationsTriageQueue, OperationsTriageScope } from './operations-triage.types';
 
 const FULL_QUEUE_ROLES: RoleKey[] = ['trust_supervisor', 'auditor', 'admin'];
 
@@ -35,16 +32,13 @@ export class OperationsTriageService {
       generatedAt: new Date().toISOString(),
       summary: {
         total: items.length,
-        critical: items.filter((item) => item.priorityBand === 'critical')
-          .length,
+        critical: items.filter((item) => item.priorityBand === 'critical').length,
         breached: items.filter((item) => item.slaState === 'breached').length,
         overdue: items.filter((item) => item.slaState === 'overdue').length,
         dueSoon: items.filter((item) => item.slaState === 'due_soon').length,
-        unassigned: items.filter((item) => item.ownership === 'unassigned')
-          .length,
+        unassigned: items.filter((item) => item.ownership === 'unassigned').length,
         highRisk: items.filter((item) => item.highRisk).length,
-        escalationRequired: items.filter((item) => item.escalationRequired)
-          .length,
+        escalationRequired: items.filter((item) => item.escalationRequired).length,
       },
       items,
       synthetic: true,
@@ -58,8 +52,6 @@ export class OperationsTriageService {
     if (roles.includes('reviewer')) {
       return 'assigned_and_unassigned';
     }
-    throw new ForbiddenException(
-      'The authenticated identity has no verification triage scope.',
-    );
+    throw new ForbiddenException('The authenticated identity has no verification triage scope.');
   }
 }
