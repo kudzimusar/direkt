@@ -20,25 +20,27 @@ interface SessionResponse {
   accessToken: string;
 }
 
-interface SeededPublication {
+interface SeededProvider {
   providerId: string;
-  publicProviderId: string;
+  publicProviderId: string | null;
   privateLongitude: number;
   privateLatitude: number;
 }
 
+interface PublicSearchItem {
+  publicProviderId: string;
+  displayName: string;
+  operatingModel: string;
+  publicPremises: { latitude: number; longitude: number } | null;
+  distanceKm: number | null;
+  claims: Array<{ claimKey: string; limitation: string }>;
+  reasons: string[];
+  image: { lowBandwidthUrl: string | null; standardUrl: string | null };
+  synthetic: true;
+}
+
 interface SearchResponse {
-  items: Array<{
-    publicProviderId: string;
-    displayName: string;
-    operatingModel: string;
-    publicPremises: { latitude: number; longitude: number } | null;
-    distanceKm: number | null;
-    claims: Array<{ claimKey: string; limitation: string }>;
-    reasons: string[];
-    image: { lowBandwidthUrl: string | null; standardUrl: string | null };
-    synthetic: true;
-  }>;
+  items: PublicSearchItem[];
   nextCursor: string | null;
   searchContext: {
     manualArea: string | null;
@@ -49,16 +51,35 @@ interface SearchResponse {
   };
 }
 
+interface PublicProfileResponse extends PublicSearchItem {
+  imagePolicy: string;
+  locationExplanation: string;
+  trustSummary: string;
+}
+
+interface ShareResponse {
+  publicProviderId: string;
+  path: string;
+  containsPrivateLocation: false;
+}
+
+interface SavedProviderResponse {
+  publicProviderId: string;
+  displayName: string;
+  synthetic: true;
+}
+
 describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
   const url = databaseUrl();
   const pool = new Pool({ connectionString: url, max: 4 });
   let app: INestApplication;
   let customer: SessionResponse;
   let reviewerId: string;
-  let fixed: SeededPublication;
-  let mobile: SeededPublication;
-  let hybrid: SeededPublication;
-  let stale: SeededPublication;
+  let fixed: SeededProvider;
+  let mobile: SeededProvider;
+  let hybrid: SeededProvider;
+  let stale: SeededProvider;
+  let incomplete: SeededProvider;
 
   const httpServer = (): Server => app.getHttpServer() as Server;
 
@@ -90,9 +111,11 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
     claimValidUntil: string;
     withImage?: boolean;
     completeClaims?: boolean;
-  }): Promise<SeededPublication> {
+    publish?: boolean;
+  }): Promise<SeededProvider> {
     const ownerId = randomUUID();
     const providerId = randomUUID();
+
     await pool.query('INSERT INTO account.identities (id) VALUES ($1)', [ownerId]);
     await pool.query(
       `INSERT INTO provider.organizations (
@@ -174,6 +197,7 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
        )`,
       [providerId, input.availability],
     );
+
     if (input.withImage) {
       await pool.query(
         `INSERT INTO discovery.public_media (
@@ -202,9 +226,10 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
        WHERE requirement_version_id = '00000000-0000-4000-8000-000000003101'
        ORDER BY requirement_key`,
     );
-    const claimRequirements =
+    const selectedRequirements =
       input.completeClaims === false ? requirements.rows.slice(0, 1) : requirements.rows;
-    for (const requirement of claimRequirements) {
+
+    for (const requirement of selectedRequirements) {
       const caseId = randomUUID();
       await pool.query(
         `INSERT INTO verification.cases (
@@ -276,14 +301,18 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
       );
     }
 
-    const publication = await pool.query<{ publication_id: string }>(
-      `SELECT discovery.refresh_publication($1, 'plumbing', 'phase5-v1', now()) AS publication_id`,
-      [providerId],
-    );
-    const publicProviderId = publication.rows[0]?.publication_id;
-    if (!publicProviderId) {
-      throw new Error('Synthetic publication fixture was not created.');
+    let publicProviderId: string | null = null;
+    if (input.publish !== false) {
+      const publication = await pool.query<{ publication_id: string }>(
+        `SELECT discovery.refresh_publication($1, 'plumbing', 'phase5-v1', now()) AS publication_id`,
+        [providerId],
+      );
+      publicProviderId = publication.rows[0]?.publication_id ?? null;
+      if (!publicProviderId) {
+        throw new Error('Synthetic publication fixture was not created.');
+      }
     }
+
     return {
       providerId,
       publicProviderId,
@@ -356,6 +385,18 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
       availability: 'unknown',
       claimValidUntil: '2026-07-16T00:00:00.000Z',
     });
+    incomplete = await seedProvider({
+      displayName: 'Synthetic Incomplete Claims',
+      operatingModel: 'mobile',
+      locality: 'Lusaka',
+      privatePoint: { longitude: 23.5, latitude: -10.5 },
+      serviceAreaWkt:
+        'POLYGON((28.20 -15.55, 28.50 -15.55, 28.50 -15.25, 28.20 -15.25, 28.20 -15.55))',
+      availability: 'available',
+      claimValidUntil: '2028-01-01T00:00:00.000Z',
+      completeClaims: false,
+      publish: false,
+    });
   });
 
   afterAll(async () => {
@@ -376,8 +417,7 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
            public_premises,
            service_area,
            policy_version
-         )
-         SELECT
+         ) VALUES (
            $1,
            '00000000-0000-4000-8000-000000003001',
            '00000000-0000-4000-8000-000000003101',
@@ -386,27 +426,20 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
            'Lusaka',
            NULL,
            ST_GeogFromText('POLYGON((28.20 -15.55, 28.50 -15.55, 28.50 -15.25, 28.20 -15.25, 28.20 -15.55))'),
-           'forbidden-v1'`,
-        [randomUUID()],
+           'forbidden-v1'
+         )`,
+        [incomplete.providerId],
       ),
     ).rejects.toThrow(/publication policy function/);
 
     await expect(
-      seedProvider({
-        displayName: 'Synthetic Incomplete Claims',
-        operatingModel: 'mobile',
-        locality: 'Lusaka',
-        privatePoint: { longitude: 23.5, latitude: -10.5 },
-        serviceAreaWkt:
-          'POLYGON((28.20 -15.55, 28.50 -15.55, 28.50 -15.25, 28.20 -15.25, 28.20 -15.55))',
-        availability: 'available',
-        claimValidUntil: '2028-01-01T00:00:00.000Z',
-        completeClaims: false,
-      }),
+      pool.query(`SELECT discovery.refresh_publication($1, 'plumbing', 'phase5-v1', now())`, [
+        incomplete.providerId,
+      ]),
     ).rejects.toThrow(/current mandatory scoped claims/);
   });
 
-  it('supports manual area search and never returns private coordinates', async () => {
+  it('supports manual area search without private coordinates or internal identifiers', async () => {
     const response = await request(httpServer())
       .get('/api/v1/public/providers/search')
       .query({ category: 'plumbing', area: 'Woodlands', limit: 10 })
@@ -440,12 +473,12 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
       })
       .expect(200);
     const body = response.body as SearchResponse;
-    expect(body.searchContext.usedOneTimeLocation).toBe(true);
 
     const fixedCard = body.items.find((item) => item.publicProviderId === fixed.publicProviderId);
     const mobileCard = body.items.find((item) => item.publicProviderId === mobile.publicProviderId);
     const hybridCard = body.items.find((item) => item.publicProviderId === hybrid.publicProviderId);
 
+    expect(body.searchContext.usedOneTimeLocation).toBe(true);
     expect(fixedCard?.publicPremises).not.toBeNull();
     expect(fixedCard?.distanceKm).not.toBeNull();
     expect(fixedCard?.reasons).toContain('Public premises within selected distance');
@@ -456,7 +489,7 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
     expect(hybridCard?.reasons).toContain('Serves your selected area');
   });
 
-  it('applies filters and deterministic cursor pagination', async () => {
+  it('applies claim and availability filters with stable cursor pagination', async () => {
     const first = await request(httpServer())
       .get('/api/v1/public/providers/search')
       .query({
@@ -469,6 +502,7 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
       })
       .expect(200);
     const firstBody = first.body as SearchResponse;
+
     expect(firstBody.items).toHaveLength(1);
     expect(firstBody.nextCursor).not.toBeNull();
 
@@ -485,32 +519,39 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
       })
       .expect(200);
     const secondBody = second.body as SearchResponse;
+
     expect(secondBody.items).toHaveLength(1);
     expect(secondBody.items[0]?.publicProviderId).not.toBe(firstBody.items[0]?.publicProviderId);
   });
 
-  it('returns a safe profile, claim limitations, image fallback and share metadata', async () => {
-    const profile = await request(httpServer())
+  it('returns safe profiles, image fallback, claim limitations and share metadata', async () => {
+    const fixedResponse = await request(httpServer())
       .get(`/api/v1/public/providers/${fixed.publicProviderId}`)
       .expect(200);
-    const serialized = JSON.stringify(profile.body);
-    expect(serialized).toContain('blanket provider guarantee');
-    expect(serialized).toContain('does not guarantee safety');
-    expect(serialized).toContain('/low.webp');
-    expect(serialized).not.toContain('private_base');
-    expect(serialized).not.toContain('storage');
+    const fixedProfile = fixedResponse.body as PublicProfileResponse;
+    const fixedSerialized = JSON.stringify(fixedProfile);
 
-    const mobileProfile = await request(httpServer())
+    expect(fixedProfile.trustSummary).toContain('blanket provider guarantee');
+    expect(fixedSerialized).toContain('does not guarantee safety');
+    expect(fixedSerialized).toContain('/low.webp');
+    expect(fixedSerialized).not.toContain('private_base');
+    expect(fixedSerialized).not.toContain('storage');
+
+    const mobileResponse = await request(httpServer())
       .get(`/api/v1/public/providers/${mobile.publicProviderId}`)
       .expect(200);
-    expect(mobileProfile.body.imagePolicy).toContain('No public image is required');
-    expect(mobileProfile.body.locationExplanation).toContain('private base');
-    expect(JSON.stringify(mobileProfile.body)).not.toContain(String(mobile.privateLongitude));
+    const mobileProfile = mobileResponse.body as PublicProfileResponse;
 
-    const share = await request(httpServer())
+    expect(mobileProfile.imagePolicy).toContain('No public image is required');
+    expect(mobileProfile.locationExplanation).toContain('private base');
+    expect(JSON.stringify(mobileProfile)).not.toContain(String(mobile.privateLongitude));
+
+    const shareResponse = await request(httpServer())
       .get(`/api/v1/public/providers/${fixed.publicProviderId}/share`)
       .expect(200);
-    expect(share.body).toMatchObject({
+    const share = shareResponse.body as ShareResponse;
+
+    expect(share).toMatchObject({
       publicProviderId: fixed.publicProviderId,
       path: `/providers/${fixed.publicProviderId}`,
       containsPrivateLocation: false,
@@ -518,24 +559,26 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
   });
 
   it('saves and removes only eligible public identifiers', async () => {
-    const saved = await request(httpServer())
+    const savedResponse = await request(httpServer())
       .post(`/api/v1/account/saved-providers/${fixed.publicProviderId}`)
       .set('authorization', `Bearer ${customer.accessToken}`)
       .expect(201);
-    expect(saved.body).toMatchObject({
+    const saved = savedResponse.body as SavedProviderResponse;
+
+    expect(saved).toMatchObject({
       publicProviderId: fixed.publicProviderId,
       synthetic: true,
     });
-    expect(JSON.stringify(saved.body)).not.toContain(fixed.providerId);
+    expect(JSON.stringify(saved)).not.toContain(fixed.providerId);
 
-    const list = await request(httpServer())
+    const listResponse = await request(httpServer())
       .get('/api/v1/account/saved-providers')
       .set('authorization', `Bearer ${customer.accessToken}`)
       .expect(200);
-    expect(list.body).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ publicProviderId: fixed.publicProviderId }),
-      ]),
+    const list = listResponse.body as SavedProviderResponse[];
+
+    expect(list).toEqual(
+      expect.arrayContaining([expect.objectContaining({ publicProviderId: fixed.publicProviderId })]),
     );
 
     await request(httpServer())
@@ -544,13 +587,10 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
       .expect(200);
   });
 
-  it('excludes suspended and expired mandatory-claim providers dynamically', async () => {
-    await pool.query(
-      `UPDATE provider.organizations
-       SET status = 'suspended'
-       WHERE id = $1`,
-      [hybrid.providerId],
-    );
+  it('dynamically excludes suspended and expired mandatory-claim providers', async () => {
+    await pool.query(`UPDATE provider.organizations SET status = 'suspended' WHERE id = $1`, [
+      hybrid.providerId,
+    ]);
     await pool.query(`SELECT verification.degrade_expired_claims('2026-07-17T00:00:00.000Z')`);
 
     const response = await request(httpServer())
@@ -559,6 +599,7 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
       .expect(200);
     const body = response.body as SearchResponse;
     const ids = body.items.map((item) => item.publicProviderId);
+
     expect(ids).not.toContain(hybrid.publicProviderId);
     expect(ids).not.toContain(stale.publicProviderId);
   });
@@ -569,8 +610,9 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
       .query({ category: 'plumbing', area: 'Area That Does Not Exist', limit: 10 })
       .expect(200);
     const body = response.body as SearchResponse;
+
     expect(body.items).toEqual([]);
     expect(body.searchContext.noResultsSuggestions.length).toBeGreaterThan(0);
-    expect(JSON.stringify(body)).not.toContain('fabricated');
+    expect(JSON.stringify(body)).not.toContain('fabricated provider');
   });
 });
