@@ -36,11 +36,19 @@ jobs:
         run: |
           npm ci --ignore-scripts
           npm run format
-      - name: Format operations portal
+      - name: Format operations portal source
         working-directory: admin/direkt-operations-portal
         run: |
           npm ci --ignore-scripts
-          npm run format
+          npx prettier --write \
+            "src/**/*.{ts,tsx,css}" \
+            "test/**/*.{ts,tsx}" \
+            next.config.ts \
+            vitest.config.ts \
+            eslint.config.mjs \
+            package.json \
+            tsconfig.json \
+            README.md
       - name: Commit deterministic formatting
         shell: bash
         run: |
