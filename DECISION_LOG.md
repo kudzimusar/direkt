@@ -60,6 +60,11 @@ This log records product and technical decisions with long-term impact.
 | D-054 | 2026-07-15 | Provider category selections pin an immutable activated requirement version | Historical evidence and decisions must remain interpretable after category requirements evolve | Accepted |
 | D-055 | 2026-07-15 | Phase 3 provider states are draft, ready for verification, suspended and archived; none is publicly discoverable | Profile completeness and operator action cannot substitute for evidence-derived publication | Accepted |
 | D-056 | 2026-07-15 | The Phase 3 public-directory view is structurally empty and no public provider API exists | Makes the publication stop gate testable at database, API, Android and portal layers | Accepted |
+| D-057 | 2026-07-15 | Evidence bytes remain in adapter-backed private object storage while PostgreSQL stores opaque references and review-safe metadata | Limits database exposure and allows the synthetic adapter to be replaced by managed private storage without changing verification-domain contracts | Accepted; production adapter remains gated |
+| D-058 | 2026-07-15 | Verification decisions are immutable and may be recorded only while a case is actively in review | Prevents repeat decisions from rewriting a completed lifecycle; appeals and renewals must explicitly re-enter an auditable review step | Accepted |
+| D-059 | 2026-07-15 | Shared requirement keys require category scope whenever a provider has multiple matching selected categories | Preserves deterministic evidence-to-requirement meaning without duplicating provider evidence or silently choosing a category | Accepted |
+| D-060 | 2026-07-15 | Recommendation and decision results must match the immutable reason-code outcome at the database boundary | Prevents contradictory audit history and unsafe claim derivation from semantically invalid decisions | Accepted |
+| D-061 | 2026-07-15 | Public trust output consists only of safe scoped claim cards derived by validated decision and expiry functions | Original evidence, blanket verified flags, payment state, direct row edits and client assertions cannot create or strengthen public trust claims | Accepted |
 
 ## How to add a decision
 
