@@ -119,6 +119,86 @@ export interface VerificationQueueItem {
   synthetic: true;
 }
 
+export interface ReviewWorkspaceEvidenceView {
+  evidenceId: string;
+  evidenceVersionId: string;
+  requirementKey: string;
+  requirementLabel: string;
+  status: EvidenceStatus;
+  version: number;
+  evidenceClass: EvidenceClass;
+  documentType: string;
+  contentType: string;
+  sizeBytes: number;
+  issuingAuthority: string | null;
+  issuedAt: string | null;
+  validFrom: string | null;
+  expiresAt: string | null;
+  processingStatus: EvidenceVersionView['processingStatus'];
+  createdAt: string;
+  accessGrantRequired: true;
+  checksumIncluded: false;
+  submitterIdentityIncluded: false;
+  storageReferenceIncluded: false;
+}
+
+export interface ReviewWorkspaceView {
+  caseId: string;
+  providerId: string;
+  providerDisplayName: string;
+  categoryKey: string;
+  requirementKey: string;
+  requirementLabel: string;
+  checkKey: string;
+  checkFamily: VerificationCheckFamily;
+  status: 'assigned' | 'in_review';
+  highRisk: boolean;
+  policyVersion: string;
+  assignment: {
+    id: string;
+    kind: 'reviewer' | 'supervisor';
+    assignedAt: string;
+  };
+  evidence: ReviewWorkspaceEvidenceView[];
+  accessPolicy: {
+    lifetimeSeconds: 300;
+    freshGrantRequired: true;
+    assignmentRecheckedOnRedemption: true;
+  };
+  reviewerNotesIncluded: false;
+  privateCoordinatesIncluded: false;
+  synthetic: true;
+}
+
+export interface PrivateEvidenceAccessGrant {
+  grantId: string;
+  assignmentId: string;
+  evidenceId: string;
+  evidenceVersionId: string;
+  status: 'active';
+  accessUrl: string;
+  expiresAt: string;
+  watermark: string;
+  synthetic: true;
+}
+
+export interface PrivateEvidenceAccessResolution {
+  grantId: string;
+  status: 'active';
+  accessUrl: string;
+  expiresAt: string;
+  watermark: string;
+  synthetic: true;
+}
+
+export interface EvidenceAccessGrantState {
+  grantId: string;
+  status: 'active' | 'revoked' | 'expired';
+  expiresAt: string;
+  endedAt: string | null;
+  synthetic: true;
+}
+
 export interface SafeClaimCard {
   providerId: string;
   claimKey: string;
@@ -129,11 +209,4 @@ export interface SafeClaimCard {
   validUntil: string;
   status: 'active' | 'degraded' | 'revoked' | 'expired';
   policyVersion: string;
-}
-
-export interface PrivateEvidenceAccessGrant {
-  accessUrl: string;
-  expiresAt: string;
-  watermark: string;
-  synthetic: true;
 }
