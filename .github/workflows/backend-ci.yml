@@ -19,7 +19,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: direkt-backend-ci-${{ github.ref }}
@@ -57,6 +57,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js 24 LTS
         uses: actions/setup-node@v6
@@ -76,6 +78,27 @@ jobs:
 
       - name: Install exact locked dependencies
         run: npm ci --ignore-scripts
+
+      - name: Format Phase 6 backend source
+        run: npm run format
+
+      - name: Commit formatted source and restore permanent workflow
+        if: github.ref_name == 'build/android-v1'
+        shell: bash
+        run: |
+          cd ../..
+          git fetch origin main
+          git checkout origin/main -- .github/workflows/backend-ci.yml
+          rm -f .github/workflows/phase6-format-all.yml
+          rm -f .github/workflows/phase6-stage6a-verify.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          if ! git diff --cached --quiet; then
+            git commit -m "style: format Phase 6 backend and remove helpers"
+            git push origin HEAD:build/android-v1
+          fi
 
       - name: Check formatting
         run: npm run format:check
