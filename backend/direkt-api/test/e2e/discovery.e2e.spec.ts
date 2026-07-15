@@ -80,6 +80,9 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
   let hybrid: SeededProvider;
   let stale: SeededProvider;
   let incomplete: SeededProvider;
+  const dayInMilliseconds = 24 * 60 * 60 * 1000;
+  const staleClaimValidUntil = new Date(Date.now() + dayInMilliseconds).toISOString();
+  const staleDegradationAsOf = new Date(Date.now() + 2 * dayInMilliseconds).toISOString();
 
   const httpServer = (): Server => app.getHttpServer() as Server;
 
@@ -383,7 +386,7 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
       serviceAreaWkt:
         'POLYGON((28.20 -15.55, 28.50 -15.55, 28.50 -15.25, 28.20 -15.25, 28.20 -15.55))',
       availability: 'unknown',
-      claimValidUntil: '2026-07-16T00:00:00.000Z',
+      claimValidUntil: staleClaimValidUntil,
     });
     incomplete = await seedProvider({
       displayName: 'Synthetic Incomplete Claims',
@@ -589,11 +592,58 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
       .expect(200);
   });
 
+  it('live-excludes removed category selections from public profiles, search and saves', async () => {
+    await request(httpServer())
+      .post(`/api/v1/account/saved-providers/${fixed.publicProviderId}`)
+      .set('authorization', `Bearer ${customer.accessToken}`)
+      .expect(201);
+
+    await pool.query(
+      `UPDATE provider.category_selections
+       SET status = 'removed'
+       WHERE provider_id = $1
+         AND category_id = '00000000-0000-4000-8000-000000003001'`,
+      [fixed.providerId],
+    );
+
+    const searchResponse = await request(httpServer())
+      .get('/api/v1/public/providers/search')
+      .query({ category: 'plumbing', area: 'Woodlands', limit: 20 })
+      .expect(200);
+    const searchBody = searchResponse.body as SearchResponse;
+    expect(searchBody.items.map((item) => item.publicProviderId)).not.toContain(
+      fixed.publicProviderId,
+    );
+
+    await request(httpServer())
+      .get(`/api/v1/public/providers/${fixed.publicProviderId}`)
+      .expect(404);
+
+    const claimsResponse = await request(httpServer())
+      .get(`/api/v1/public/providers/${fixed.publicProviderId}/claims`)
+      .expect(200);
+    expect(claimsResponse.body).toEqual([]);
+
+    const savedResponse = await request(httpServer())
+      .get('/api/v1/account/saved-providers')
+      .set('authorization', `Bearer ${customer.accessToken}`)
+      .expect(200);
+    const saved = savedResponse.body as SavedProviderResponse[];
+    expect(saved.map((item) => item.publicProviderId)).not.toContain(fixed.publicProviderId);
+
+    await request(httpServer())
+      .post(`/api/v1/account/saved-providers/${fixed.publicProviderId}`)
+      .set('authorization', `Bearer ${customer.accessToken}`)
+      .expect(404);
+  });
+
   it('dynamically excludes suspended and expired mandatory-claim providers', async () => {
     await pool.query(`UPDATE provider.organizations SET status = 'suspended' WHERE id = $1`, [
       hybrid.providerId,
     ]);
-    await pool.query(`SELECT verification.degrade_expired_claims('2026-07-17T00:00:00.000Z')`);
+    await pool.query(`SELECT verification.degrade_expired_claims($1::timestamptz)`, [
+      staleDegradationAsOf,
+    ]);
 
     const response = await request(httpServer())
       .get('/api/v1/public/providers/search')
