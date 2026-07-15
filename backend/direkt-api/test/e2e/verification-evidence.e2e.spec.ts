@@ -46,6 +46,23 @@ interface EvidenceResponse {
   synthetic: true;
 }
 
+interface PrivateAccessResponse {
+  accessUrl: string;
+  synthetic: true;
+}
+
+interface DecisionResponse {
+  claims: Array<{
+    claimKey: string;
+    statement: string;
+    status: string;
+  }>;
+}
+
+interface RevokeResponse {
+  affectedClaims: number;
+}
+
 describe('Phase 4 verification and private evidence HTTP contracts', () => {
   const url = databaseUrl();
   const pool = new Pool({ connectionString: url, max: 3 });
@@ -246,8 +263,9 @@ describe('Phase 4 verification and private evidence HTTP contracts', () => {
       .post(`/api/v1/verification-cases/${verificationCase.id}/evidence/${evidence.id}/access`)
       .set('authorization', `Bearer ${reviewer.accessToken}`)
       .expect(201);
-    expect(access.body).toMatchObject({ synthetic: true });
-    expect(access.body.accessUrl).toMatch(/^https:\/\/storage\.invalid\/private-review\//);
+    const accessBody = access.body as PrivateAccessResponse;
+    expect(accessBody).toMatchObject({ synthetic: true });
+    expect(accessBody.accessUrl).toMatch(/^https:\/\/storage\.invalid\/private-review\//);
     expect(access.body).not.toHaveProperty('objectKey');
 
     const audit = await pool.query<{ count: string }>(
@@ -307,7 +325,8 @@ describe('Phase 4 verification and private evidence HTTP contracts', () => {
         policyVersion: 'phase4-v1',
       })
       .expect(201);
-    expect(decision.body.claims).toEqual(
+    const decisionBody = decision.body as DecisionResponse;
+    expect(decisionBody.claims).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           claimKey: 'representative_identity_checked',
@@ -334,7 +353,8 @@ describe('Phase 4 verification and private evidence HTTP contracts', () => {
       .set('authorization', `Bearer ${owner.accessToken}`)
       .send({ reason: 'Provider withdrew this synthetic evidence record from verification use.' })
       .expect(201);
-    expect(revoked.body.affectedClaims).toBe(1);
+    const revokedBody = revoked.body as RevokeResponse;
+    expect(revokedBody.affectedClaims).toBe(1);
 
     const claims = await request(httpServer())
       .get(`/api/v1/providers/${provider.id}/claims`)
