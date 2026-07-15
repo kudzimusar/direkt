@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
+import { ProviderModule } from '../provider-core/provider.module';
 import { ProviderWorkspaceController } from './provider-workspace.controller';
 import { ProviderWorkspaceRepository } from './provider-workspace.repository';
 import { ProviderWorkspaceService } from './provider-workspace.service';
 
 @Module({
+  imports: [ProviderModule],
   controllers: [ProviderWorkspaceController],
   providers: [ProviderWorkspaceRepository, ProviderWorkspaceService],
 })
