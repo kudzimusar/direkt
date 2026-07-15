@@ -17,4 +17,4 @@ describe('VerificationQueuePage', () => {
     expect(markup).not.toContain('document number');
     expect(markup).not.toContain('private address');
   });
-}
+});
