@@ -99,6 +99,7 @@ describe('Phase 3 provider and category schema', () => {
         [providerId],
       );
 
+      await client.query('SAVEPOINT invalid_transition');
       await expect(
         client.query(
           `UPDATE provider.organizations
@@ -107,6 +108,10 @@ describe('Phase 3 provider and category schema', () => {
           [providerId],
         ),
       ).rejects.toThrow(/invalid provider status transition/i);
+      await client.query('ROLLBACK TO SAVEPOINT invalid_transition');
+      await client.query('RELEASE SAVEPOINT invalid_transition');
+
+      await client.query('SAVEPOINT public_discovery');
       await expect(
         client.query(
           `UPDATE provider.organizations
@@ -115,6 +120,8 @@ describe('Phase 3 provider and category schema', () => {
           [providerId],
         ),
       ).rejects.toThrow(/phase 3 cannot make a provider discoverable|not_discoverable/i);
+      await client.query('ROLLBACK TO SAVEPOINT public_discovery');
+      await client.query('RELEASE SAVEPOINT public_discovery');
     } finally {
       await client.query('ROLLBACK');
       client.release();
