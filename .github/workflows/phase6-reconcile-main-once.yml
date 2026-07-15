@@ -1,4 +1,4 @@
-name: Phase 6 reconcile main once
+name: Phase 6 backend format once
 
 on:
   push:
@@ -10,11 +10,11 @@ permissions:
   contents: write
 
 concurrency:
-  group: direkt-phase6-reconcile-main-once
+  group: direkt-phase6-backend-format-once
   cancel-in-progress: false
 
 jobs:
-  reconcile:
+  format:
     runs-on: ubuntu-latest
     steps:
       - name: Check out active Phase 6 branch
@@ -23,36 +23,30 @@ jobs:
           ref: build/android-v1
           fetch-depth: 0
 
-      - name: Merge stable main without overwriting Phase 6 records
+      - name: Set up Node.js 24 LTS
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+
+      - name: Apply pinned backend formatter
+        working-directory: backend/direkt-api
+        run: |
+          npm ci --ignore-scripts
+          npm run format
+          npm run format:check
+
+      - name: Commit deterministic formatting
         shell: bash
         run: |
+          if [ -z "$(git status --porcelain -- backend/direkt-api)" ]; then
+            echo "No formatting changes required."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main build/android-v1
-          set +e
-          git merge --no-ff --no-commit origin/main
-          merge_status=$?
-          set -e
-
-          conflicts="$(git diff --name-only --diff-filter=U | sort)"
-          if [ -n "$conflicts" ]; then
-            unexpected="$(printf '%s\n' "$conflicts" | grep -Ev '^(PROJECT_STATUS\.md|WORKSTREAM_LOCK\.md)$' || true)"
-            if [ -n "$unexpected" ]; then
-              echo "Unexpected merge conflicts:" >&2
-              printf '%s\n' "$unexpected" >&2
-              git merge --abort
-              exit 1
-            fi
-            git checkout --ours PROJECT_STATUS.md WORKSTREAM_LOCK.md
-            git add PROJECT_STATUS.md WORKSTREAM_LOCK.md
-          fi
-
-          if [ "$merge_status" -ne 0 ] && [ -z "$conflicts" ]; then
-            echo "Merge failed without a resolvable conflict set." >&2
-            git merge --abort || true
-            exit 1
-          fi
-
+          git add backend/direkt-api
           git diff --cached --check
-          git commit -m "chore: merge Phase 5 stable record into Phase 6 branch"
+          git commit -m "style: apply Phase 6 backend formatting"
           git push origin HEAD:build/android-v1
