@@ -1,6 +1,7 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import type { AuthenticatedActor } from '../authorization/authenticated-actor';
 import { VerificationEvidenceService } from '../verification-evidence/verification-evidence.service';
+import { ProviderWorkspaceCommandRepository } from './provider-workspace-command.repository';
 import type {
   CancelWorkspaceUploadDto,
   ConfirmWorkspaceUploadDto,
@@ -17,6 +18,7 @@ import type {
 export class ProviderWorkspaceUploadService {
   constructor(
     private readonly repository: ProviderWorkspaceUploadRepository,
+    private readonly commands: ProviderWorkspaceCommandRepository,
     private readonly evidence: VerificationEvidenceService,
   ) {}
 
@@ -75,20 +77,21 @@ export class ProviderWorkspaceUploadService {
     input: ConfirmWorkspaceUploadDto,
     requestId?: string,
   ): Promise<ProviderWorkspaceUploadIntentView> {
-    const context = await this.repository.confirmationContext(actor, uploadIntentId);
-    if (context.intent.state === 'submitted') {
-      return context.intent;
+    const intent = await this.repository.detail(actor, uploadIntentId);
+    if (intent.state === 'submitted') {
+      return intent;
     }
-    if (context.intent.state !== 'uploading' || !context.uploadSessionId) {
+    if (intent.state !== 'uploading' || !intent.activeUploadSessionId) {
       throw new ConflictException('The provider upload intent has no active session to confirm.');
     }
+    const context = await this.commands.context(actor.identityId);
 
     const evidence = await this.evidence.confirmEvidence(
       actor,
       context.providerId,
       {
-        uploadSessionId: context.uploadSessionId,
-        caseId: context.intent.caseId,
+        uploadSessionId: intent.activeUploadSessionId,
+        caseId: intent.caseId,
         sha256: input.sha256,
         sizeBytes: input.sizeBytes,
         ...(input.issuingAuthority ? { issuingAuthority: input.issuingAuthority } : {}),
