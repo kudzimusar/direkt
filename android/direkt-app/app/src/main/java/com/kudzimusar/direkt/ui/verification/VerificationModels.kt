@@ -1,7 +1,5 @@
 package com.kudzimusar.direkt.ui.verification
 
-import java.time.Instant
-
 enum class EvidenceState(val label: String) {
     Processing("Processing privately"),
     ReadyForReview("Ready for review"),
@@ -28,7 +26,7 @@ data class EvidenceVersionSummary(
     val version: Int,
     val documentType: String,
     val evidenceClass: String,
-    val expiresAt: Instant?,
+    val expiresAtEpochMillis: Long?,
     val state: EvidenceState,
 )
 
@@ -36,21 +34,21 @@ data class VerificationTimelineItem(
     val title: String,
     val detail: String,
     val state: CaseState,
-    val recordedAt: Instant,
+    val recordedAtEpochMillis: Long,
 )
 
 data class ScopedClaimCard(
     val claimKey: String,
     val statement: String,
     val limitation: String,
-    val checkedAt: Instant,
-    val validUntil: Instant,
+    val checkedAtEpochMillis: Long,
+    val validUntilEpochMillis: Long,
     val state: String = "active",
 ) {
-    fun effectiveState(at: Instant): String = when {
+    fun effectiveState(atEpochMillis: Long): String = when {
         state == "revoked" -> "revoked"
         state == "degraded" -> "degraded"
-        !validUntil.isAfter(at) -> "expired"
+        validUntilEpochMillis <= atEpochMillis -> "expired"
         else -> "active"
     }
 }
@@ -76,14 +74,14 @@ val syntheticVerificationCase = SyntheticVerificationCase(
             version = 1,
             documentType = "Synthetic identity document metadata",
             evidenceClass = "Identity",
-            expiresAt = Instant.parse("2026-11-30T00:00:00Z"),
+            expiresAtEpochMillis = 1_795_996_800_000,
             state = EvidenceState.CorrectionRequired,
         ),
         EvidenceVersionSummary(
             version = 2,
             documentType = "Synthetic corrected identity document metadata",
             evidenceClass = "Identity",
-            expiresAt = Instant.parse("2027-07-15T00:00:00Z"),
+            expiresAtEpochMillis = 1_815_609_600_000,
             state = EvidenceState.Approved,
         ),
     ),
@@ -92,26 +90,26 @@ val syntheticVerificationCase = SyntheticVerificationCase(
             title = "Evidence submitted privately",
             detail = "Only metadata is shown in this synthetic build. The original file would remain private.",
             state = CaseState.AwaitingEvidence,
-            recordedAt = Instant.parse("2026-07-15T09:00:00Z"),
+            recordedAtEpochMillis = 1_784_106_000_000,
         ),
         VerificationTimelineItem(
             title = "Correction requested",
             detail = "Version 1 was unreadable. The original decision history remains append-only.",
             state = CaseState.CorrectionRequired,
-            recordedAt = Instant.parse("2026-07-15T10:00:00Z"),
+            recordedAtEpochMillis = 1_784_109_600_000,
         ),
         VerificationTimelineItem(
             title = "Independent review completed",
             detail = "The scoped representative identity check passed. No qualification or safety claim was made.",
             state = CaseState.Approved,
-            recordedAt = Instant.parse("2026-07-15T11:00:00Z"),
+            recordedAtEpochMillis = 1_784_113_200_000,
         ),
     ),
     claim = ScopedClaimCard(
         claimKey = "representative_identity_checked",
         statement = "Representative identity checked",
         limitation = "This does not verify qualifications, safety or future workmanship.",
-        checkedAt = Instant.parse("2026-07-15T11:00:00Z"),
-        validUntil = Instant.parse("2027-07-15T00:00:00Z"),
+        checkedAtEpochMillis = 1_784_113_200_000,
+        validUntilEpochMillis = 1_815_609_600_000,
     ),
 )
