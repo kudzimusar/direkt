@@ -8,7 +8,11 @@ on:
       - ".github/workflows/phase6-inventory.yml"
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: phase6-implementation-inventory
+  cancel-in-progress: false
 
 jobs:
   inventory:
@@ -17,11 +21,14 @@ jobs:
     steps:
       - name: Check out Phase 6 branch
         uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
 
       - name: Build exact repository inventory
         shell: bash
         run: |
-          mkdir -p artifacts
+          mkdir -p docs/internal
           {
             echo '# Backend source files'
             find backend/direkt-api/src -type f | sort
@@ -46,12 +53,15 @@ jobs:
               backend/direkt-api/src backend/direkt-api/test android/direkt-app/app/src admin/direkt-operations-portal/src \
               --include='*.ts' --include='*.tsx' --include='*.kt' \
               | head -n 3000 || true
-          } > artifacts/phase6-inventory.txt
+          } > docs/internal/PHASE6_IMPLEMENTATION_INVENTORY.txt
 
-      - name: Upload inventory
-        uses: actions/upload-artifact@v6
-        with:
-          name: phase6-implementation-inventory
-          path: artifacts/phase6-inventory.txt
-          if-no-files-found: error
-          retention-days: 2
+      - name: Commit inventory and remove helper
+        shell: bash
+        run: |
+          rm .github/workflows/phase6-inventory.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/internal/PHASE6_IMPLEMENTATION_INVENTORY.txt .github/workflows/phase6-inventory.yml
+          git diff --cached --check
+          git commit -m "chore: capture Phase 6 implementation inventory"
+          git push origin HEAD:build/android-v1
