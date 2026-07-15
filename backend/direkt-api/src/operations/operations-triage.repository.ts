@@ -159,11 +159,7 @@ export class OperationsTriageRepository {
         readyEvidenceCount: Number(row.ready_evidence_count),
         correctionEvidenceCount: Number(row.correction_evidence_count),
         priorityScore: Number(row.priority_score),
-        priorityBand: this.priorityBand(
-          Number(row.priority_score),
-          row.sla_state,
-          row.high_risk,
-        ),
+        priorityBand: this.priorityBand(Number(row.priority_score), row.sla_state, row.high_risk),
         escalationRequired: row.escalation_required,
         privateEvidenceIncluded: false,
         reviewerNotesIncluded: false,
