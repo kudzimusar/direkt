@@ -3,6 +3,7 @@ export const PERMISSIONS = {
   ACCOUNT_PROFILE_MANAGE: 'account.profile.manage',
   OPERATIONS_PORTAL_ACCESS: 'operations.portal.access',
   OPERATIONS_PROVIDERS_READ: 'operations.providers.read',
+  OPERATIONS_TRIAGE_READ: 'operations.triage.read',
   PROVIDER_PROFILE_CREATE: 'provider.profile.create',
   PROVIDER_PROFILE_READ: 'provider.profile.read',
   PROVIDER_PROFILE_MANAGE: 'provider.profile.manage',
