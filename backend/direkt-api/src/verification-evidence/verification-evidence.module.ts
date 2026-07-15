@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { OperationsModule } from '../operations/operations.module';
+import { EvidenceReviewRepository } from './evidence-review.repository';
+import { EvidenceReviewService } from './evidence-review.service';
 import { EVIDENCE_STORAGE } from './evidence-storage.port';
 import { SyntheticPrivateStorageAdapter } from './synthetic-private-storage.adapter';
 import { VerificationEvidenceController } from './verification-evidence.controller';
@@ -10,6 +12,8 @@ import { VerificationEvidenceService } from './verification-evidence.service';
   imports: [OperationsModule],
   controllers: [VerificationEvidenceController],
   providers: [
+    EvidenceReviewRepository,
+    EvidenceReviewService,
     VerificationEvidenceRepository,
     VerificationEvidenceService,
     SyntheticPrivateStorageAdapter,
@@ -18,6 +22,6 @@ import { VerificationEvidenceService } from './verification-evidence.service';
       useExisting: SyntheticPrivateStorageAdapter,
     },
   ],
-  exports: [VerificationEvidenceService],
+  exports: [EvidenceReviewService, VerificationEvidenceService],
 })
 export class VerificationEvidenceModule {}
