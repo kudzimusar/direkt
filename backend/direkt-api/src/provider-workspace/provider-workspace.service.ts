@@ -38,7 +38,7 @@ export class ProviderWorkspaceService {
     input: UpdateProviderProfileDto,
   ): Promise<ProviderWorkspaceSummary> {
     const context = await this.commands.context(actor.identityId);
-    await this.providers.updateProfile(actor, context.providerId, input);
+    await this.providers.updateProvider(actor, context.providerId, input);
     return this.workspace(actor);
   }
 
