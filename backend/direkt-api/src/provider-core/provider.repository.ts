@@ -490,7 +490,7 @@ export class ProviderRepository {
     client: PoolClient,
     input: {
       actor: AuthenticatedActor;
-      requestId?: string;
+      requestId?: string | undefined;
       providerId?: string;
       action: string;
       resourceType: string;
