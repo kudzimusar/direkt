@@ -53,6 +53,9 @@ jobs:
           cache: npm
           cache-dependency-path: backend/direkt-api/package-lock.json
 
+      - name: Repair controlled patch matcher
+        run: python3 .github/scripts/repair-phase5-review-runner.py
+
       - name: Apply reviewed source and regression patch
         run: python3 .github/scripts/apply-phase5-review-fixes.py
 
@@ -82,6 +85,7 @@ jobs:
         shell: bash
         run: |
           rm .github/scripts/apply-phase5-review-fixes.py
+          rm .github/scripts/repair-phase5-review-runner.py
           rm .github/workflows/phase5-review-fix-runner.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
