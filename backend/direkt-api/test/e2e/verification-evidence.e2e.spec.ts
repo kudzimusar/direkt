@@ -285,7 +285,8 @@ describe('Phase 4 verification and private evidence HTTP contracts', () => {
       .send({
         result: 'approve',
         reasonCode: 'CHECK_PASSED',
-        rationale: 'The synthetic private evidence satisfies the representative identity review checklist.',
+        rationale:
+          'The synthetic private evidence satisfies the representative identity review checklist.',
         limitation: 'This does not verify qualifications, safety or future workmanship.',
         recommendedValidUntil: '2027-01-01T00:00:00.000Z',
       })
@@ -297,7 +298,8 @@ describe('Phase 4 verification and private evidence HTTP contracts', () => {
       .send({
         result: 'approved',
         reasonCode: 'CHECK_PASSED',
-        rationale: 'The scoped synthetic representative identity check passed after assigned review.',
+        rationale:
+          'The scoped synthetic representative identity check passed after assigned review.',
         claimKey: 'representative_identity_checked',
         claimStatement: 'Representative identity checked',
         limitation: 'This does not verify qualifications, safety or future workmanship.',

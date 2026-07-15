@@ -33,7 +33,12 @@ export default function VerificationQueuePage() {
         immutable review history and expiring claim output. It contains no real provider evidence.
       </p>
 
-      <div className="provider-table" role="region" aria-label="Synthetic verification cases" tabIndex={0}>
+      <div
+        className="provider-table"
+        role="region"
+        aria-label="Synthetic verification cases"
+        tabIndex={0}
+      >
         <table>
           <thead>
             <tr>
@@ -83,7 +88,10 @@ export default function VerificationQueuePage() {
           </div>
           <div>
             <dt>Private-object access</dt>
-            <dd>Unavailable in this static portal fixture; production access is short-lived and audited</dd>
+            <dd>
+              Unavailable in this static portal fixture; production access is short-lived and
+              audited
+            </dd>
           </div>
         </dl>
         <h3>Reasoned recommendation</h3>
@@ -101,7 +109,9 @@ export default function VerificationQueuePage() {
           <li>Finance and commercial state cannot create or improve a verification claim.</li>
           <li>Evidence replacements append a new version instead of rewriting earlier records.</li>
           <li>Public output contains only a scoped claim, limitation, check date and expiry.</li>
-          <li>Original files, identifiers, signatures, private addresses and notes remain private.</li>
+          <li>
+            Original files, identifiers, signatures, private addresses and notes remain private.
+          </li>
         </ul>
       </section>
     </section>

@@ -116,7 +116,9 @@ export class VerificationEvidenceRepository {
       throw new NotFoundException('Selected provider requirement was not found.');
     }
     if (result.rows.length > 1) {
-      throw new ConflictException('Requirement key is ambiguous across selected provider categories.');
+      throw new ConflictException(
+        'Requirement key is ambiguous across selected provider categories.',
+      );
     }
     return result.rows[0] as RequirementRow;
   }
@@ -390,9 +392,10 @@ export class VerificationEvidenceRepository {
   }
 
   async listEvidence(providerId: string): Promise<EvidenceView[]> {
-    const result = await this.database.query<EvidenceRow>(this.evidenceQuery('items.provider_id = $1'), [
-      providerId,
-    ]);
+    const result = await this.database.query<EvidenceRow>(
+      this.evidenceQuery('items.provider_id = $1'),
+      [providerId],
+    );
     return result.rows.map((row) => this.mapEvidence(row));
   }
 
@@ -932,7 +935,9 @@ export class VerificationEvidenceRepository {
   }
 
   private async loadEvidence(client: PoolClient, evidenceId: string): Promise<EvidenceView> {
-    const result = await client.query<EvidenceRow>(this.evidenceQuery('items.id = $1'), [evidenceId]);
+    const result = await client.query<EvidenceRow>(this.evidenceQuery('items.id = $1'), [
+      evidenceId,
+    ]);
     const row = result.rows[0];
     if (!row) {
       throw new NotFoundException('Private evidence metadata was not found.');
@@ -981,10 +986,7 @@ export class VerificationEvidenceRepository {
     return this.loadCaseByRow(row, client);
   }
 
-  private async loadCaseByRow(
-    row: CaseRow,
-    client?: PoolClient,
-  ): Promise<VerificationCaseView> {
+  private async loadCaseByRow(row: CaseRow, client?: PoolClient): Promise<VerificationCaseView> {
     const query = client
       ? client.query<EvidenceRow>(
           `${this.evidenceQuery(

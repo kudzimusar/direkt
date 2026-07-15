@@ -1,18 +1,5 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  ParseUUIDPipe,
-  Post,
-  Req,
-} from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PERMISSIONS } from '../authorization/permissions';
 import { RequirePermission } from '../authorization/require-permission.decorator';
 import type { DirektRequest } from '../platform/http/request-context';
@@ -46,7 +33,8 @@ export class VerificationEvidenceController {
   @Post('providers/:providerId/evidence/upload-sessions')
   @RequirePermission(PERMISSIONS.EVIDENCE_UPLOAD_CREATE, { providerParam: 'providerId' })
   @ApiCreatedResponse({
-    description: 'Creates a short-lived synthetic private upload grant after provider-scope checks.',
+    description:
+      'Creates a short-lived synthetic private upload grant after provider-scope checks.',
   })
   createUploadSession(
     @Param('providerId', ParseUUIDPipe) providerId: string,
@@ -59,7 +47,8 @@ export class VerificationEvidenceController {
   @Post('providers/:providerId/evidence')
   @RequirePermission(PERMISSIONS.EVIDENCE_MANAGE, { providerParam: 'providerId' })
   @ApiCreatedResponse({
-    description: 'Confirms synthetic private upload metadata and creates an immutable evidence version.',
+    description:
+      'Confirms synthetic private upload metadata and creates an immutable evidence version.',
   })
   confirmEvidence(
     @Param('providerId', ParseUUIDPipe) providerId: string,
@@ -71,16 +60,18 @@ export class VerificationEvidenceController {
 
   @Get('providers/:providerId/evidence')
   @RequirePermission(PERMISSIONS.EVIDENCE_READ_OWN, { providerParam: 'providerId' })
-  @ApiOkResponse({ description: 'Lists private evidence metadata without storage object references.' })
-  evidence(
-    @Param('providerId', ParseUUIDPipe) providerId: string,
-  ): Promise<EvidenceView[]> {
+  @ApiOkResponse({
+    description: 'Lists private evidence metadata without storage object references.',
+  })
+  evidence(@Param('providerId', ParseUUIDPipe) providerId: string): Promise<EvidenceView[]> {
     return this.service.evidence(providerId);
   }
 
   @Get('providers/:providerId/evidence/:evidenceId')
   @RequirePermission(PERMISSIONS.EVIDENCE_READ_OWN, { providerParam: 'providerId' })
-  @ApiOkResponse({ description: 'Reads one private evidence metadata record without evidence bytes.' })
+  @ApiOkResponse({
+    description: 'Reads one private evidence metadata record without evidence bytes.',
+  })
   evidenceItem(
     @Param('providerId', ParseUUIDPipe) providerId: string,
     @Param('evidenceId', ParseUUIDPipe) evidenceId: string,
@@ -121,25 +112,25 @@ export class VerificationEvidenceController {
 
   @Get('providers/:providerId/verification-cases')
   @RequirePermission(PERMISSIONS.VERIFICATION_CASE_READ, { providerParam: 'providerId' })
-  @ApiOkResponse({ description: 'Lists provider-scoped verification cases and safe evidence metadata.' })
-  cases(
-    @Param('providerId', ParseUUIDPipe) providerId: string,
-  ): Promise<VerificationCaseView[]> {
+  @ApiOkResponse({
+    description: 'Lists provider-scoped verification cases and safe evidence metadata.',
+  })
+  cases(@Param('providerId', ParseUUIDPipe) providerId: string): Promise<VerificationCaseView[]> {
     return this.service.cases(providerId);
   }
 
   @Get('providers/:providerId/claims')
   @RequirePermission(PERMISSIONS.VERIFICATION_CLAIM_READ, { providerParam: 'providerId' })
   @ApiOkResponse({ description: 'Lists safe scoped claim cards without original evidence.' })
-  providerClaims(
-    @Param('providerId', ParseUUIDPipe) providerId: string,
-  ): Promise<SafeClaimCard[]> {
+  providerClaims(@Param('providerId', ParseUUIDPipe) providerId: string): Promise<SafeClaimCard[]> {
     return this.service.claims(providerId);
   }
 
   @Get('operations/verification-queue')
   @RequirePermission(PERMISSIONS.VERIFICATION_CASE_REVIEW)
-  @ApiOkResponse({ description: 'Lists synthetic verification queue items for authorized operators.' })
+  @ApiOkResponse({
+    description: 'Lists synthetic verification queue items for authorized operators.',
+  })
   queue(): Promise<VerificationQueueItem[]> {
     return this.service.queue();
   }
@@ -175,12 +166,7 @@ export class VerificationEvidenceController {
     @Param('evidenceId', ParseUUIDPipe) evidenceId: string,
     @Req() request: DirektRequest,
   ): Promise<PrivateEvidenceAccessGrant> {
-    return this.service.privateEvidenceAccess(
-      request.actor,
-      caseId,
-      evidenceId,
-      request.requestId,
-    );
+    return this.service.privateEvidenceAccess(request.actor, caseId, evidenceId, request.requestId);
   }
 
   @Post('verification-cases/:caseId/recommendations')

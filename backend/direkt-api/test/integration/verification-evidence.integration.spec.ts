@@ -36,7 +36,10 @@ async function createFixture(client: PoolClient): Promise<Fixture> {
     throw new Error('Synthetic identity requirement is missing.');
   }
 
-  await client.query('INSERT INTO account.identities (id) VALUES ($1), ($2)', [ownerId, reviewerId]);
+  await client.query('INSERT INTO account.identities (id) VALUES ($1), ($2)', [
+    ownerId,
+    reviewerId,
+  ]);
   await client.query(
     `INSERT INTO provider.organizations (
        id, pathway, created_by_identity_id, status
@@ -95,10 +98,9 @@ async function createFixture(client: PoolClient): Promise<Fixture> {
      )`,
     [caseId, providerId, categoryId, requirementVersionId, requirementId, ownerId],
   );
-  await client.query(
-    `UPDATE verification.cases SET status = 'awaiting_evidence' WHERE id = $1`,
-    [caseId],
-  );
+  await client.query(`UPDATE verification.cases SET status = 'awaiting_evidence' WHERE id = $1`, [
+    caseId,
+  ]);
   await client.query(
     `INSERT INTO evidence.items (
        id, provider_id, requirement_id, submitted_by_identity_id, status, retention_class
@@ -176,10 +178,9 @@ async function createFixture(client: PoolClient): Promise<Fixture> {
      VALUES ($1, $2, $3)`,
     [caseId, evidenceId, ownerId],
   );
-  await client.query(
-    `UPDATE verification.cases SET status = 'ready_for_review' WHERE id = $1`,
-    [caseId],
-  );
+  await client.query(`UPDATE verification.cases SET status = 'ready_for_review' WHERE id = $1`, [
+    caseId,
+  ]);
   await client.query(
     `INSERT INTO verification.assignments (
        case_id,

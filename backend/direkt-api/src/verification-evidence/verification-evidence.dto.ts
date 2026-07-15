@@ -198,7 +198,9 @@ export class CreateRecommendationDto {
   @Matches(/^[A-Z][A-Z0-9_]{2,63}$/)
   reasonCode!: string;
 
-  @ApiProperty({ example: 'The synthetic evidence matches the scoped requirement and review checklist.' })
+  @ApiProperty({
+    example: 'The synthetic evidence matches the scoped requirement and review checklist.',
+  })
   @IsString()
   @Length(20, 1000)
   rationale!: string;
@@ -224,7 +226,9 @@ export class CreateDecisionDto {
   @Matches(/^[A-Z][A-Z0-9_]{2,63}$/)
   reasonCode!: string;
 
-  @ApiProperty({ example: 'The scoped check passed after review of the synthetic private evidence record.' })
+  @ApiProperty({
+    example: 'The scoped check passed after review of the synthetic private evidence record.',
+  })
   @IsString()
   @Length(20, 1000)
   rationale!: string;
@@ -240,7 +244,9 @@ export class CreateDecisionDto {
   @Length(8, 240)
   claimStatement?: string;
 
-  @ApiPropertyOptional({ example: 'This does not verify qualifications, safety or future workmanship.' })
+  @ApiPropertyOptional({
+    example: 'This does not verify qualifications, safety or future workmanship.',
+  })
   @IsOptional()
   @IsString()
   @Length(8, 500)
@@ -273,7 +279,9 @@ export class CreateFieldVisitDto {
   @Length(3, 80)
   checklistVersion!: string;
 
-  @ApiProperty({ example: 'Synthetic visit recorded without private coordinates or identifying imagery.' })
+  @ApiProperty({
+    example: 'Synthetic visit recorded without private coordinates or identifying imagery.',
+  })
   @IsString()
   @Length(12, 500)
   publicSafeSummary!: string;

@@ -71,10 +71,13 @@ async function main(): Promise<void> {
   }
 
   const publicEvidencePaths = Object.keys(paths).filter(
-    (pathName) => pathName.startsWith('/api/v1/public/') && /evidence|verification-cases/i.test(pathName),
+    (pathName) =>
+      pathName.startsWith('/api/v1/public/') && /evidence|verification-cases/i.test(pathName),
   );
   if (publicEvidencePaths.length > 0) {
-    throw new Error(`Private evidence or case routes were exposed publicly: ${publicEvidencePaths.join(', ')}`);
+    throw new Error(
+      `Private evidence or case routes were exposed publicly: ${publicEvidencePaths.join(', ')}`,
+    );
   }
 
   const prohibited = Object.keys(paths).filter((pathName) =>

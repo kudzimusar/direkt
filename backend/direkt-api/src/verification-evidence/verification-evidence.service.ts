@@ -1,15 +1,7 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import type { AuthenticatedActor } from '../authorization/authenticated-actor';
-import {
-  EVIDENCE_STORAGE,
-  type EvidenceStoragePort,
-} from './evidence-storage.port';
+import { EVIDENCE_STORAGE, type EvidenceStoragePort } from './evidence-storage.port';
 import type {
   AssignVerificationCaseDto,
   ConfirmEvidenceDto,
@@ -250,10 +242,7 @@ export class VerificationEvidenceService {
   }
 
   private throwDomainError(error: unknown): never {
-    if (
-      error instanceof BadRequestException ||
-      error instanceof ConflictException
-    ) {
+    if (error instanceof BadRequestException || error instanceof ConflictException) {
       throw error;
     }
     const databaseError = error as PostgresErrorLike;
