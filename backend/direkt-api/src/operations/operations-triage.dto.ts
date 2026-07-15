@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
 import type {
   VerificationCaseStatus,
   VerificationCheckFamily,
@@ -31,6 +31,10 @@ const TRIAGE_CHECK_FAMILIES: VerificationCheckFamily[] = [
 ];
 
 export class OperationsTriageQueryDto {
+  @IsOptional()
+  @IsUUID()
+  providerId?: string;
+
   @IsOptional()
   @IsIn(TRIAGE_STATUSES)
   status?: VerificationCaseStatus;
