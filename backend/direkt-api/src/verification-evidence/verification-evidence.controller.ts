@@ -1,7 +1,10 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PERMISSIONS } from '../authorization/permissions';
 import { RequirePermission } from '../authorization/require-permission.decorator';
+import { OperationsTriageQueryDto } from '../operations/operations-triage.dto';
+import { OperationsTriageService } from '../operations/operations-triage.service';
+import type { OperationsTriageQueue } from '../operations/operations-triage.types';
 import type { DirektRequest } from '../platform/http/request-context';
 import {
   AssignVerificationCaseDto,
@@ -21,14 +24,16 @@ import type {
   SafeClaimCard,
   UploadSessionView,
   VerificationCaseView,
-  VerificationQueueItem,
 } from './verification-evidence.types';
 
 @ApiTags('verification and evidence')
 @ApiBearerAuth()
 @Controller()
 export class VerificationEvidenceController {
-  constructor(private readonly service: VerificationEvidenceService) {}
+  constructor(
+    private readonly service: VerificationEvidenceService,
+    private readonly triage: OperationsTriageService,
+  ) {}
 
   @Post('providers/:providerId/evidence/upload-sessions')
   @RequirePermission(PERMISSIONS.EVIDENCE_UPLOAD_CREATE, { providerParam: 'providerId' })
@@ -127,12 +132,16 @@ export class VerificationEvidenceController {
   }
 
   @Get('operations/verification-queue')
-  @RequirePermission(PERMISSIONS.VERIFICATION_CASE_REVIEW)
+  @RequirePermission(PERMISSIONS.OPERATIONS_TRIAGE_READ)
   @ApiOkResponse({
-    description: 'Lists synthetic verification queue items for authorized operators.',
+    description:
+      'Lists the deterministic role-scoped verification triage queue without private evidence content.',
   })
-  queue(): Promise<VerificationQueueItem[]> {
-    return this.service.queue();
+  queue(
+    @Query() query: OperationsTriageQueryDto,
+    @Req() request: DirektRequest,
+  ): Promise<OperationsTriageQueue> {
+    return this.triage.queue(request.actor, query);
   }
 
   @Get('verification-cases/:caseId')
