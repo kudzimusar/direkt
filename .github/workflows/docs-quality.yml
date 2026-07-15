@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: direkt-docs-quality-${{ github.ref }}
@@ -20,6 +20,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Promote Phase 6 record
+        if: github.ref_name == 'build/android-v1'
+        run: python .github/scripts/promote-phase6-record.py
+      - name: Restore permanent workflow and commit record
+        if: github.ref_name == 'build/android-v1'
+        shell: bash
+        run: |
+          git fetch origin main
+          git checkout origin/main -- .github/workflows/docs-quality.yml
+          rm .github/scripts/promote-phase6-record.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "docs: promote Phase 6 final-validation record"
+          git push origin HEAD:build/android-v1
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
