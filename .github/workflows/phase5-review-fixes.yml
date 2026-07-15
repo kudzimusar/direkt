@@ -1,0 +1,164 @@
+name: Phase 5 review fixes
+
+on:
+  push:
+    branches: [build/android-v1]
+    paths:
+      - ".github/workflows/phase5-review-fixes.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: direkt-phase5-review-fixes
+  cancel-in-progress: true
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+
+      - name: Apply reviewed discovery fixes
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          repository_path = Path('backend/direkt-api/src/discovery/discovery.repository.ts')
+          repository = repository_path.read_text()
+
+          public_join = """       FROM discovery.publications AS publications
+       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+       JOIN catalog.service_categories AS categories ON categories.id = publications.category_id"""
+          public_join_fixed = """       FROM discovery.publications AS publications
+       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+       JOIN provider.category_selections AS selections
+         ON selections.provider_id = publications.provider_id
+        AND selections.category_id = publications.category_id
+        AND selections.requirement_version_id = publications.requirement_version_id
+        AND selections.status = 'selected'
+       JOIN catalog.service_categories AS categories ON categories.id = publications.category_id"""
+          if repository.count(public_join) < 2:
+              raise SystemExit('Public search/profile join markers not found')
+          repository = repository.replace(public_join, public_join_fixed)
+
+          claims_join = """       FROM discovery.publications AS publications
+       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+       JOIN verification.cases AS cases"""
+          claims_join_fixed = """       FROM discovery.publications AS publications
+       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+       JOIN provider.category_selections AS selections
+         ON selections.provider_id = publications.provider_id
+        AND selections.category_id = publications.category_id
+        AND selections.requirement_version_id = publications.requirement_version_id
+        AND selections.status = 'selected'
+       JOIN verification.cases AS cases"""
+          if claims_join not in repository:
+              raise SystemExit('Claims join marker not found')
+          repository = repository.replace(claims_join, claims_join_fixed, 1)
+
+          save_eligibility = """       FROM discovery.publications AS publications
+       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+       WHERE publications.id = $1"""
+          save_eligibility_fixed = """       FROM discovery.publications AS publications
+       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+       JOIN provider.category_selections AS selections
+         ON selections.provider_id = publications.provider_id
+        AND selections.category_id = publications.category_id
+        AND selections.requirement_version_id = publications.requirement_version_id
+        AND selections.status = 'selected'
+       WHERE publications.id = $1"""
+          if save_eligibility not in repository:
+              raise SystemExit('Save eligibility marker not found')
+          repository = repository.replace(save_eligibility, save_eligibility_fixed, 1)
+
+          saved_join = """       FROM account.saved_public_providers AS saved
+       JOIN discovery.publications AS publications ON publications.id = saved.publication_id
+       JOIN catalog.service_categories AS categories ON categories.id = publications.category_id
+       WHERE saved.identity_id = $1
+          AND publications.status = 'published'
+          AND organizations.status = 'ready_for_verification'"""
+          saved_join_fixed = """       FROM account.saved_public_providers AS saved
+       JOIN discovery.publications AS publications ON publications.id = saved.publication_id
+       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+       JOIN provider.category_selections AS selections
+         ON selections.provider_id = publications.provider_id
+        AND selections.category_id = publications.category_id
+        AND selections.requirement_version_id = publications.requirement_version_id
+        AND selections.status = 'selected'
+       JOIN catalog.service_categories AS categories ON categories.id = publications.category_id
+       WHERE saved.identity_id = $1
+          AND publications.status = 'published'
+          AND organizations.status = 'ready_for_verification'"""
+          if saved_join not in repository:
+              raise SystemExit('Saved provider join marker not found')
+          repository = repository.replace(saved_join, saved_join_fixed, 1)
+          repository_path.write_text(repository)
+
+          test_path = Path('backend/direkt-api/test/e2e/discovery.e2e.spec.ts')
+          test = test_path.read_text()
+          absolute_expiry = "claimValidUntil: '2026-07-16T00:00:00.000Z',"
+          relative_expiry = "claimValidUntil: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),"
+          if absolute_expiry not in test:
+              raise SystemExit('Absolute stale-claim fixture marker not found')
+          test = test.replace(absolute_expiry, relative_expiry, 1)
+
+          old_degrade = "await pool.query(`SELECT verification.degrade_expired_claims('2026-07-17T00:00:00.000Z')`);"
+          new_degrade = """await pool.query('SELECT verification.degrade_expired_claims($1)', [
+      new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+    ]);"""
+          if old_degrade not in test:
+              raise SystemExit('Fixed expiry-processing marker not found')
+          test = test.replace(old_degrade, new_degrade, 1)
+
+          suspension = """    await pool.query(`UPDATE provider.organizations SET status = 'suspended' WHERE id = $1`, [
+      hybrid.providerId,
+    ]);"""
+          suspension_with_removal = suspension + """
+    await pool.query(
+      `UPDATE provider.category_selections
+       SET status = 'removed'
+       WHERE provider_id = $1
+         AND category_id = '00000000-0000-4000-8000-000000003001'`,
+      [fixed.providerId],
+    );"""
+          if suspension not in test:
+              raise SystemExit('Dynamic exclusion marker not found')
+          test = test.replace(suspension, suspension_with_removal, 1)
+
+          stale_expectation = """    expect(ids).not.toContain(hybrid.publicProviderId);
+    expect(ids).not.toContain(stale.publicProviderId);"""
+          expanded_expectation = """    expect(ids).not.toContain(fixed.publicProviderId);
+    expect(ids).not.toContain(hybrid.publicProviderId);
+    expect(ids).not.toContain(stale.publicProviderId);"""
+          if stale_expectation not in test:
+              raise SystemExit('Dynamic exclusion assertion marker not found')
+          test = test.replace(stale_expectation, expanded_expectation, 1)
+          test_path.write_text(test)
+          PY
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+
+      - name: Format reviewed backend changes
+        working-directory: backend/direkt-api
+        run: |
+          npm ci --ignore-scripts
+          npm run format
+
+      - name: Commit reviewed implementation
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/direkt-api/src/discovery/discovery.repository.ts \
+                  backend/direkt-api/test/e2e/discovery.e2e.spec.ts
+          git commit -m "fix(discovery): enforce live publication eligibility"
+          git push origin HEAD:build/android-v1
