@@ -5,6 +5,9 @@ import { databaseUrl } from './runtime-config';
 const SYNTHETIC_IDENTITY_ID = '00000000-0000-4000-8000-000000000101';
 const SYNTHETIC_CONTACT_ID = '00000000-0000-4000-8000-000000000102';
 const SYNTHETIC_POLICY_ID = '00000000-0000-4000-8000-000000000103';
+const SYNTHETIC_PROVIDER_ID = '00000000-0000-4000-8000-000000000201';
+const PLUMBING_CATEGORY_ID = '00000000-0000-4000-8000-000000003001';
+const PLUMBING_REQUIREMENT_VERSION_ID = '00000000-0000-4000-8000-000000003101';
 
 async function main(): Promise<void> {
   const url = databaseUrl();
@@ -31,6 +34,14 @@ async function main(): Promise<void> {
        ) VALUES ($1, $2, 'email', $3, 'o***@example.invalid', now())
        ON CONFLICT (channel, value_hash) DO NOTHING`,
       [SYNTHETIC_CONTACT_ID, SYNTHETIC_IDENTITY_ID, '1'.repeat(64)],
+    );
+    await client.query(
+      `INSERT INTO account.customer_profiles (identity_id, display_name)
+       VALUES ($1, 'Synthetic provider owner')
+       ON CONFLICT (identity_id) DO UPDATE
+         SET display_name = EXCLUDED.display_name,
+             updated_at = now()`,
+      [SYNTHETIC_IDENTITY_ID],
     );
     await client.query(
       `INSERT INTO account.policy_versions (
@@ -72,34 +83,90 @@ async function main(): Promise<void> {
       [SYNTHETIC_IDENTITY_ID],
     );
     await client.query(
+      `INSERT INTO provider.organizations (
+         id,
+         pathway,
+         created_by_identity_id
+       ) VALUES ($1, 'registered_business', $2)
+       ON CONFLICT (id) DO NOTHING`,
+      [SYNTHETIC_PROVIDER_ID, SYNTHETIC_IDENTITY_ID],
+    );
+    await client.query(
+      `INSERT INTO provider.profiles (
+         provider_id,
+         display_name,
+         operating_model,
+         locality_summary,
+         service_area_summary,
+         registered_business_name
+       ) VALUES (
+         $1,
+         'Synthetic Copperbelt Repairs',
+         'fixed_premises',
+         'Woodlands, Lusaka',
+         'Woodlands and nearby Lusaka neighbourhoods',
+         'Synthetic Copperbelt Repairs Limited'
+       )
+       ON CONFLICT (provider_id) DO NOTHING`,
+      [SYNTHETIC_PROVIDER_ID],
+    );
+    await client.query(
+      `INSERT INTO authz.role_assignments (
+         identity_id,
+         role_id,
+         scope_type,
+         provider_id,
+         assigned_by_identity_id,
+         reason
+       )
+       SELECT $1, id, 'provider', $2, $1, 'Synthetic provider owner fixture'
+       FROM authz.roles
+       WHERE role_key = 'provider_owner'
+       ON CONFLICT DO NOTHING`,
+      [SYNTHETIC_IDENTITY_ID, SYNTHETIC_PROVIDER_ID],
+    );
+    await client.query(
+      `INSERT INTO provider.category_selections (
+         provider_id,
+         category_id,
+         requirement_version_id,
+         status
+       ) VALUES ($1, $2, $3, 'selected')
+       ON CONFLICT (provider_id, category_id) DO NOTHING`,
+      [SYNTHETIC_PROVIDER_ID, PLUMBING_CATEGORY_ID, PLUMBING_REQUIREMENT_VERSION_ID],
+    );
+    await client.query(
       `INSERT INTO platform.audit_events (
          actor_type,
          actor_id,
+         provider_id,
          action,
          resource_type,
          resource_id,
          outcome,
          metadata
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)`,
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)`,
       [
         'system',
         SYNTHETIC_IDENTITY_ID,
+        SYNTHETIC_PROVIDER_ID,
         'synthetic_seed_created',
-        'identity_foundation',
-        SYNTHETIC_IDENTITY_ID,
+        'phase_3_provider_foundation',
+        SYNTHETIC_PROVIDER_ID,
         'success',
         JSON.stringify({
           synthetic: true,
           purpose: 'local development only',
           containsPersonalData: false,
           rawContactStored: false,
+          discoverable: false,
         }),
       ],
     );
     await client.query('COMMIT');
 
     process.stdout.write(
-      `${JSON.stringify({ event: 'synthetic_seed_completed', personalData: false })}\n`,
+      `${JSON.stringify({ event: 'synthetic_seed_completed', personalData: false, providerDiscoverable: false })}\n`,
     );
   } catch (error) {
     await client.query('ROLLBACK');
