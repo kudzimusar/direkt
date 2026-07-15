@@ -3,7 +3,7 @@
 **Updated:** 2026-07-15  
 **Authoritative branch:** `main` for stable checkpoints  
 **Implementation branch:** `build/android-v1`  
-**Current programme state:** Phase 2 technical foundation is complete. Phase 3 identity, provider and category core is in exact-head CI verification under Issue #16 and PR #17.
+**Current programme state:** Phase 3 identity, provider and category core is complete and stable. Phase 4 is not yet claimed.
 
 ## Current phase
 
@@ -16,12 +16,13 @@
 | Phase 2A native Android foundation | Complete; PR #11 merged and Issue #10 closed |
 | Phase 2B backend/PostGIS foundation | Complete; PR #13 merged and Issue #12 closed |
 | Phase 2C identity/auth/admin foundation | Complete; PR #15 merged and Issue #14 closed |
-| Phase 3 identity/provider/category core | Exact-head CI verification; Issue #16 and PR #17 |
+| Phase 3 identity/provider/category core | Complete; PR #17 merged and Issue #16 closed |
+| Phase 4 verification and publication policy | Not claimed |
 | Deferred Zambia pilot validation | Open as non-blocking Issue #5 |
 | Firebase tester distribution | Installed but intentionally deferred |
 | Public pilot | Not authorized |
 
-Open issues represent either the active workstream or a deliberate future gate. Issue #5 is not a current implementation blocker.
+Open issues represent either a deliberate future gate or a later validation obligation. Issue #5 is not a current implementation blocker.
 
 ## Stable checkpoint record
 
@@ -76,54 +77,52 @@ Exact-head evidence:
 | Operations portal | #38 | Passed | `3111922097ec7fda582c7f649687bd738a8f0eec5df37262ab584c6d888ff1b7` |
 | Documentation quality | #272 | Passed | `f9989fda65d229dbf1d4907d63d0c871d515ac7b0daeb53ef6dff4732a19343b` |
 
-Phase 2C delivered:
+Phase 2C delivered identity/contact/consent contracts, synthetic passwordless authentication, rotating refresh sessions, server-resolved roles and permissions, provider scope, append-only privileged audit, and the isolated Next.js operations portal.
 
-- identity, contact-hash, policy-version and consent contracts;
-- synthetic passwordless challenge interfaces;
-- short-lived access tokens containing identity/session references only;
-- hashed rotating refresh sessions, revocation and family reuse detection;
-- global and provider-scoped roles and permissions;
-- deny-by-default controller authorization;
-- provider-scope and separation-of-duties controls;
-- append-only contact/session/role/privileged-action audit events;
-- Next.js operations portal with locked dependencies;
-- accessible sign-in, access-denied, session-expired and mission-control states;
-- no-index/security headers and API-only isolation enforcement.
+### Phase 3 — identity, provider and category core
 
-Two automated review findings were corrected and regression-tested before merge:
+```text
+PR #17
+verified head: dab29ac118c3b695ab84f4fcd2ac96091e16052c
+merge commit: 149f3b3aa24163ebb6a0b023283cf4a39badb5d6
+Issue #16: closed as completed
+```
 
-1. expired bounded role assignments can be granted again without permitting overlapping grants;
-2. first-time verified-contact insertion creates an immutable audit event.
+Exact-head evidence:
 
-## Active Phase 3 workstream
+| Gate | Run | Result | Artifact SHA-256 |
+|---|---:|---|---|
+| Backend/PostGIS | #235 | Passed | `cc730fb7a2c0fd590baeb810b8adc9de7c2413a3cf5dbdef0e6fb9a6aab2e554` |
+| Android reports | #122 | Passed | `129ed6bfc0eba8f277580abbb8f499c4ff36445d2b1dd480ee8d297dd6ea71d6` |
+| Operations portal | #132 | Passed | `45ea34f050952da493bd2df09d6acafc98e045819cd83b55e7b55d1c452fd6e7` |
+| Documentation quality | #450 | Passed | `360dd3e56d2e97d988f056db0f039b0dbc6c7a6e3bf217be07f03fc5945a27ee` |
 
-Issue #16 and `WORKSTREAM_LOCK.md` authorize the first bounded business-domain vertical slice.
+Retained Android artifacts:
 
-Required scope:
+| Artifact | SHA-256 |
+|---|---|
+| Debug APK | `f999086fb6fbc19b0af5c03d53907f49dc82e9db4606eff8c00a26ba2cff78f1` |
+| Compose test APK | `fb0c4d7742e248ea1f748b82c4b89228007466a0e222ca3f144a8864ed9859d5` |
 
-1. customer/provider account application services using the Phase 2C identity foundation;
-2. non-public provider profiles and authorized representatives;
-3. registered-business, qualified-individual and experienced-informal-provider pathways;
-4. fixed-premises, mobile and hybrid operating models;
-5. versioned service categories and category requirements;
-6. profile drafts and validated state transitions;
-7. server-enforced provider/object scope;
-8. immutable audit coverage;
-9. synthetic Android and operations-portal states;
-10. backend, Android, portal and documentation CI evidence.
+Phase 3 delivered:
 
-### Phase 3 trust boundary
+- separate human identities and provider organizations;
+- registered-business, qualified-individual and experienced-informal pathways;
+- fixed-premises, mobile and hybrid operating models;
+- non-public provider drafts and validated lifecycle transitions;
+- provider-scoped representatives resolved server-side;
+- immutable active and retired category requirement versions;
+- actor-attributed append-only audit events;
+- synthetic Android and operations-portal states;
+- a structurally empty public-directory boundary.
 
-No provider may become publicly discoverable through self-assertion, profile completion, commercial status, an administrator action or a client request. Public discoverability remains blocked until Phase 4 creates approved evidence-derived claims and an explicit publication policy.
+Review regressions prove that activated requirement versions reject inserts, updates and deletes, and that customer-profile domain constraint failures return HTTP 400 rather than an internal error.
 
-### Phase 3 exclusions
+## Phase 4 gate
 
-- no real identity, customer or provider data;
-- no evidence upload, viewer or verification decision;
-- no public trust claims or provider discoverability;
-- no production OTP/Auth credentials;
-- no payment, map, regulator or field-agent integration;
-- no production deployment.
+Phase 4 is not active. It may be claimed only through a new governing issue and workstream lock after its evidence, verification, publication, privacy and authorization boundaries are explicitly defined.
+
+Public discoverability remains blocked. No provider may become discoverable through self-assertion, profile completion, payment, an administrator action, a direct database edit or a client request.
 
 ## Deferred validation — not a current blocker
 
@@ -131,4 +130,4 @@ Issue #5 retains representative Zambia interviews, real-device/connectivity test
 
 ## GitHub lifecycle
 
-Routine checkpoint PR creation, CI inspection, repair, merge, branch synchronization and eligible issue closure are handled by the active repository agent. The owner is not required to perform routine GitHub administration.
+PR #17 was merged only after all permanent workflows passed on the same reviewed head, both review findings were regression-tested and resolved, Issue #16 closed automatically, and `build/android-v1` was fast-forwarded to the Phase 3 merge checkpoint without force-pushing.
