@@ -83,7 +83,7 @@ SELECT
   END,
   families.normal_priority + CASE WHEN risk.high_risk THEN 200 ELSE 0 END,
   'phase7-v1',
-  timestamptz '2026-07-16 00:00:00+00'
+  now()
 FROM families
 CROSS JOIN risk;
 
