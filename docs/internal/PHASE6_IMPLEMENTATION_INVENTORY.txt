@@ -1,0 +1,1437 @@
+# Backend source files
+backend/direkt-api/src/app.module.ts
+backend/direkt-api/src/auth/auth.controller.ts
+backend/direkt-api/src/auth/auth.dto.ts
+backend/direkt-api/src/auth/auth.module.ts
+backend/direkt-api/src/auth/auth.repository.ts
+backend/direkt-api/src/auth/auth.service.ts
+backend/direkt-api/src/auth/auth.types.ts
+backend/direkt-api/src/auth/contact-normalizer.ts
+backend/direkt-api/src/auth/synthetic-challenge.service.ts
+backend/direkt-api/src/auth/token.service.ts
+backend/direkt-api/src/authorization/access-token.guard.ts
+backend/direkt-api/src/authorization/authenticated-actor.ts
+backend/direkt-api/src/authorization/authorization.module.ts
+backend/direkt-api/src/authorization/authorization.repository.ts
+backend/direkt-api/src/authorization/authorization.service.ts
+backend/direkt-api/src/authorization/permission.guard.ts
+backend/direkt-api/src/authorization/permissions.ts
+backend/direkt-api/src/authorization/public.decorator.ts
+backend/direkt-api/src/authorization/require-permission.decorator.ts
+backend/direkt-api/src/config/environment.ts
+backend/direkt-api/src/configure-application.ts
+backend/direkt-api/src/discovery/discovery.controller.ts
+backend/direkt-api/src/discovery/discovery.dto.ts
+backend/direkt-api/src/discovery/discovery.module.ts
+backend/direkt-api/src/discovery/discovery.repository.ts
+backend/direkt-api/src/discovery/discovery.service.ts
+backend/direkt-api/src/discovery/discovery.types.ts
+backend/direkt-api/src/main.ts
+backend/direkt-api/src/operations/operations.controller.ts
+backend/direkt-api/src/operations/operations.dto.ts
+backend/direkt-api/src/operations/operations.module.ts
+backend/direkt-api/src/platform/audit/audit.module.ts
+backend/direkt-api/src/platform/audit/audit.service.ts
+backend/direkt-api/src/platform/database/database.module.ts
+backend/direkt-api/src/platform/database/database.service.ts
+backend/direkt-api/src/platform/health/health.controller.ts
+backend/direkt-api/src/platform/health/health.module.ts
+backend/direkt-api/src/platform/health/health.service.ts
+backend/direkt-api/src/platform/http/correlation-id.middleware.ts
+backend/direkt-api/src/platform/http/problem-details.filter.ts
+backend/direkt-api/src/platform/http/request-context.ts
+backend/direkt-api/src/platform/http/request-logging.middleware.ts
+backend/direkt-api/src/platform/openapi/openapi.ts
+backend/direkt-api/src/provider-core/provider.controller.ts
+backend/direkt-api/src/provider-core/provider.dto.ts
+backend/direkt-api/src/provider-core/provider.module.ts
+backend/direkt-api/src/provider-core/provider.repository.ts
+backend/direkt-api/src/provider-core/provider.service.ts
+backend/direkt-api/src/provider-core/provider.types.ts
+backend/direkt-api/src/verification-evidence/evidence-storage.port.ts
+backend/direkt-api/src/verification-evidence/synthetic-private-storage.adapter.ts
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts
+backend/direkt-api/src/verification-evidence/verification-evidence.dto.ts
+backend/direkt-api/src/verification-evidence/verification-evidence.module.ts
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts
+backend/direkt-api/src/verification-evidence/verification-evidence.types.ts
+
+# Backend tests
+backend/direkt-api/test/e2e/app.e2e.spec.ts
+backend/direkt-api/test/e2e/auth.e2e.spec.ts
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts
+backend/direkt-api/test/e2e/provider-review-regressions.e2e.spec.ts
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts
+backend/direkt-api/test/integration/database.integration.spec.ts
+backend/direkt-api/test/integration/identity-authorization.integration.spec.ts
+backend/direkt-api/test/integration/provider-category.integration.spec.ts
+backend/direkt-api/test/integration/provider-review-regressions.integration.spec.ts
+backend/direkt-api/test/integration/role-contact-audit.integration.spec.ts
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts
+backend/direkt-api/test/unit/authorization.service.spec.ts
+backend/direkt-api/test/unit/contact-normalizer.spec.ts
+backend/direkt-api/test/unit/discovery.repository.spec.ts
+backend/direkt-api/test/unit/discovery.service.spec.ts
+backend/direkt-api/test/unit/health.service.spec.ts
+backend/direkt-api/test/unit/token.service.spec.ts
+
+# Database migrations
+database/README.md
+database/migrations/.gitkeep
+database/migrations/202607141430_platform_foundation.sql
+database/migrations/202607141530_identity_session_authorization.sql
+database/migrations/202607142330_provider_category_core.sql
+database/migrations/202607150540_enforce_requirement_version_immutability.sql
+database/migrations/202607151100_verification_evidence_engine.sql
+database/migrations/202607151210_phase4_review_controls.sql
+database/migrations/202607151330_customer_discovery.sql
+database/migrations/202607151340_discovery_provider_state.sql
+database/policies/.gitkeep
+database/seeds/.gitkeep
+
+# Android source and tests
+android/direkt-app/app/build.gradle.kts
+android/direkt-app/app/src/androidTest/java/com/kudzimusar/direkt/DirektAppSmokeTest.kt
+android/direkt-app/app/src/main/AndroidManifest.xml
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/MainActivity.kt
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/DirektApp.kt
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/DirektAppState.kt
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/provider/ProviderDraft.kt
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/theme/DirektTheme.kt
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/verification/VerificationCards.kt
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/verification/VerificationModels.kt
+android/direkt-app/app/src/main/res/drawable/ic_direkt.xml
+android/direkt-app/app/src/main/res/values-night/styles.xml
+android/direkt-app/app/src/main/res/values/colors.xml
+android/direkt-app/app/src/main/res/values/strings.xml
+android/direkt-app/app/src/main/res/values/styles.xml
+android/direkt-app/app/src/main/res/xml/data_extraction_rules.xml
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/DirektAppStateTest.kt
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModelsTest.kt
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/provider/ProviderDraftTest.kt
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/verification/VerificationModelsTest.kt
+android/direkt-app/build.gradle.kts
+android/direkt-app/settings.gradle.kts
+
+# Operations portal source and tests
+admin/direkt-operations-portal/.prettierrc.json
+admin/direkt-operations-portal/next-env.d.ts
+admin/direkt-operations-portal/next.config.ts
+admin/direkt-operations-portal/package-lock.json
+admin/direkt-operations-portal/package.json
+admin/direkt-operations-portal/src/app/access-denied/page.tsx
+admin/direkt-operations-portal/src/app/layout.tsx
+admin/direkt-operations-portal/src/app/operations/discovery/page.tsx
+admin/direkt-operations-portal/src/app/operations/layout.tsx
+admin/direkt-operations-portal/src/app/operations/page.tsx
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx
+admin/direkt-operations-portal/src/app/page.tsx
+admin/direkt-operations-portal/src/app/session-expired/page.tsx
+admin/direkt-operations-portal/src/app/sign-in/page.tsx
+admin/direkt-operations-portal/src/components/operations-shell.tsx
+admin/direkt-operations-portal/src/lib/navigation.ts
+admin/direkt-operations-portal/src/lib/session.ts
+admin/direkt-operations-portal/test/accessibility.spec.tsx
+admin/direkt-operations-portal/test/discovery-eligibility.spec.tsx
+admin/direkt-operations-portal/test/navigation.spec.ts
+admin/direkt-operations-portal/test/provider-drafts.spec.tsx
+admin/direkt-operations-portal/test/verification-queue.spec.tsx
+admin/direkt-operations-portal/tsconfig.json
+admin/direkt-operations-portal/vitest.config.ts
+
+# Provider/workspace-related symbols
+backend/direkt-api/src/operations/operations.dto.ts:10:  @ApiProperty({ example: 'Synthetic Phase 2C audit-path verification only' })
+backend/direkt-api/src/auth/auth.module.ts:10:  providers: [AuthRepository, AuthService, SyntheticChallengeService, TokenService],
+backend/direkt-api/src/auth/auth.controller.ts:42:  @ApiOkResponse({ description: 'Creates an identity and rotating session after verification.' })
+backend/direkt-api/src/discovery/discovery.dto.ts:56:  availability?: 'available' | 'limited' | 'unavailable' | 'unknown';
+backend/direkt-api/src/discovery/discovery.repository.ts:15:  public_provider_id: string;
+backend/direkt-api/src/discovery/discovery.repository.ts:16:  provider_id: string;
+backend/direkt-api/src/discovery/discovery.repository.ts:25:  service_area_geojson: Record<string, unknown>;
+backend/direkt-api/src/discovery/discovery.repository.ts:26:  availability_state: PublicAvailability;
+backend/direkt-api/src/discovery/discovery.repository.ts:40:  evidence_class: string;
+backend/direkt-api/src/discovery/discovery.repository.ts:47:  provider_id: string;
+backend/direkt-api/src/discovery/discovery.repository.ts:51:  provider_status: string;
+backend/direkt-api/src/discovery/discovery.repository.ts:55:  has_service_area: boolean;
+backend/direkt-api/src/discovery/discovery.repository.ts:57:  public_provider_id: string | null;
+backend/direkt-api/src/discovery/discovery.repository.ts:94:      `organizations.status = 'ready_for_verification'`,
+backend/direkt-api/src/discovery/discovery.repository.ts:95:      `category_selections.status = 'selected'`,
+backend/direkt-api/src/discovery/discovery.repository.ts:97:         publications.provider_id,
+backend/direkt-api/src/discovery/discovery.repository.ts:126:    if (dto.availability) {
+backend/direkt-api/src/discovery/discovery.repository.ts:127:      conditions.push(`COALESCE(availability.state, 'unknown') = ${parameter(dto.availability)}`);
+backend/direkt-api/src/discovery/discovery.repository.ts:134:           FROM verification.cases AS claim_cases
+backend/direkt-api/src/discovery/discovery.repository.ts:135:           JOIN verification.claims AS claims ON claims.case_id = claim_cases.id
+backend/direkt-api/src/discovery/discovery.repository.ts:136:           WHERE claim_cases.provider_id = publications.provider_id
+backend/direkt-api/src/discovery/discovery.repository.ts:156:      areaMatchExpression = `ST_Covers(publications.service_area::geometry, ${originExpression}::geometry)`;
+backend/direkt-api/src/discovery/discovery.repository.ts:186:         publications.id AS public_provider_id,
+backend/direkt-api/src/discovery/discovery.repository.ts:187:         publications.provider_id,
+backend/direkt-api/src/discovery/discovery.repository.ts:202:         ST_AsGeoJSON(publications.service_area::geometry)::jsonb AS service_area_geojson,
+backend/direkt-api/src/discovery/discovery.repository.ts:203:         COALESCE(availability.state, 'unknown') AS availability_state,
+backend/direkt-api/src/discovery/discovery.repository.ts:204:         availability.next_available_at,
+backend/direkt-api/src/discovery/discovery.repository.ts:212:       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+backend/direkt-api/src/discovery/discovery.repository.ts:213:       JOIN provider.category_selections AS category_selections
+backend/direkt-api/src/discovery/discovery.repository.ts:214:         ON category_selections.provider_id = publications.provider_id
+backend/direkt-api/src/discovery/discovery.repository.ts:215:        AND category_selections.category_id = publications.category_id
+backend/direkt-api/src/discovery/discovery.repository.ts:216:        AND category_selections.requirement_version_id = publications.requirement_version_id
+backend/direkt-api/src/discovery/discovery.repository.ts:218:       LEFT JOIN discovery.provider_availability AS availability
+backend/direkt-api/src/discovery/discovery.repository.ts:219:         ON availability.provider_id = publications.provider_id
+backend/direkt-api/src/discovery/discovery.repository.ts:220:        AND availability.category_id = publications.category_id
+backend/direkt-api/src/discovery/discovery.repository.ts:227:         WHERE public_media.provider_id = publications.provider_id
+backend/direkt-api/src/discovery/discovery.repository.ts:253:         publications.id AS public_provider_id,
+backend/direkt-api/src/discovery/discovery.repository.ts:254:         publications.provider_id,
+backend/direkt-api/src/discovery/discovery.repository.ts:269:         ST_AsGeoJSON(publications.service_area::geometry)::jsonb AS service_area_geojson,
+backend/direkt-api/src/discovery/discovery.repository.ts:270:         COALESCE(availability.state, 'unknown') AS availability_state,
+backend/direkt-api/src/discovery/discovery.repository.ts:271:         availability.next_available_at,
+backend/direkt-api/src/discovery/discovery.repository.ts:279:       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+backend/direkt-api/src/discovery/discovery.repository.ts:280:       JOIN provider.category_selections AS category_selections
+backend/direkt-api/src/discovery/discovery.repository.ts:281:         ON category_selections.provider_id = publications.provider_id
+backend/direkt-api/src/discovery/discovery.repository.ts:282:        AND category_selections.category_id = publications.category_id
+backend/direkt-api/src/discovery/discovery.repository.ts:283:        AND category_selections.requirement_version_id = publications.requirement_version_id
+backend/direkt-api/src/discovery/discovery.repository.ts:285:       LEFT JOIN discovery.provider_availability AS availability
+backend/direkt-api/src/discovery/discovery.repository.ts:286:         ON availability.provider_id = publications.provider_id
+backend/direkt-api/src/discovery/discovery.repository.ts:287:        AND availability.category_id = publications.category_id
+backend/direkt-api/src/discovery/discovery.repository.ts:294:         WHERE public_media.provider_id = publications.provider_id
+backend/direkt-api/src/discovery/discovery.repository.ts:302:         AND organizations.status = 'ready_for_verification'
+backend/direkt-api/src/discovery/discovery.repository.ts:303:         AND category_selections.status = 'selected'
+backend/direkt-api/src/discovery/discovery.repository.ts:305:           publications.provider_id,
+backend/direkt-api/src/discovery/discovery.repository.ts:314:      throw new NotFoundException('Public provider profile was not found.');
+backend/direkt-api/src/discovery/discovery.repository.ts:325:         claims.evidence_class,
+backend/direkt-api/src/discovery/discovery.repository.ts:330:       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+backend/direkt-api/src/discovery/discovery.repository.ts:331:       JOIN provider.category_selections AS category_selections
+backend/direkt-api/src/discovery/discovery.repository.ts:332:         ON category_selections.provider_id = publications.provider_id
+backend/direkt-api/src/discovery/discovery.repository.ts:333:        AND category_selections.category_id = publications.category_id
+backend/direkt-api/src/discovery/discovery.repository.ts:334:        AND category_selections.requirement_version_id = publications.requirement_version_id
+backend/direkt-api/src/discovery/discovery.repository.ts:335:       JOIN verification.cases AS cases
+backend/direkt-api/src/discovery/discovery.repository.ts:336:         ON cases.provider_id = publications.provider_id
+backend/direkt-api/src/discovery/discovery.repository.ts:338:       JOIN verification.claims AS claims ON claims.case_id = cases.id
+backend/direkt-api/src/discovery/discovery.repository.ts:341:         AND organizations.status = 'ready_for_verification'
+backend/direkt-api/src/discovery/discovery.repository.ts:342:         AND category_selections.status = 'selected'
+backend/direkt-api/src/discovery/discovery.repository.ts:344:           publications.provider_id,
+backend/direkt-api/src/discovery/discovery.repository.ts:359:      evidenceClass: row.evidence_class,
+backend/direkt-api/src/discovery/discovery.repository.ts:367:    providerId: string,
+backend/direkt-api/src/discovery/discovery.repository.ts:373:      [providerId, categoryKey, policyVersion],
+backend/direkt-api/src/discovery/discovery.repository.ts:377:      throw new Error('Publication policy returned no public provider identifier.');
+backend/direkt-api/src/discovery/discovery.repository.ts:393:       ORDER BY display_name, category_key, provider_id`,
+backend/direkt-api/src/discovery/discovery.repository.ts:398:        row.has_service_area && (row.operating_model === 'mobile' || row.has_public_premises);
+backend/direkt-api/src/discovery/discovery.repository.ts:400:        providerId: row.provider_id,
+backend/direkt-api/src/discovery/discovery.repository.ts:404:        providerStatus: row.provider_status,
+backend/direkt-api/src/discovery/discovery.repository.ts:408:        hasServiceArea: row.has_service_area,
+backend/direkt-api/src/discovery/discovery.repository.ts:410:        publicProviderId: row.public_provider_id,
+backend/direkt-api/src/discovery/discovery.repository.ts:414:          row.provider_status === 'ready_for_verification' &&
+backend/direkt-api/src/discovery/discovery.repository.ts:426:       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+backend/direkt-api/src/discovery/discovery.repository.ts:427:       JOIN provider.category_selections AS category_selections
+backend/direkt-api/src/discovery/discovery.repository.ts:428:         ON category_selections.provider_id = publications.provider_id
+backend/direkt-api/src/discovery/discovery.repository.ts:429:        AND category_selections.category_id = publications.category_id
+backend/direkt-api/src/discovery/discovery.repository.ts:430:        AND category_selections.requirement_version_id = publications.requirement_version_id
+backend/direkt-api/src/discovery/discovery.repository.ts:433:         AND organizations.status = 'ready_for_verification'
+backend/direkt-api/src/discovery/discovery.repository.ts:434:         AND category_selections.status = 'selected'
+backend/direkt-api/src/discovery/discovery.repository.ts:436:           publications.provider_id,
+backend/direkt-api/src/discovery/discovery.repository.ts:444:      throw new NotFoundException('Eligible public provider profile was not found.');
+backend/direkt-api/src/discovery/discovery.repository.ts:448:      `INSERT INTO account.saved_public_providers (identity_id, publication_id)
+backend/direkt-api/src/discovery/discovery.repository.ts:455:      public_provider_id: string;
+backend/direkt-api/src/discovery/discovery.repository.ts:462:         publications.id AS public_provider_id,
+backend/direkt-api/src/discovery/discovery.repository.ts:467:       FROM account.saved_public_providers AS saved
+backend/direkt-api/src/discovery/discovery.repository.ts:469:       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+backend/direkt-api/src/discovery/discovery.repository.ts:470:       JOIN provider.category_selections AS category_selections
+backend/direkt-api/src/discovery/discovery.repository.ts:471:         ON category_selections.provider_id = publications.provider_id
+backend/direkt-api/src/discovery/discovery.repository.ts:472:        AND category_selections.category_id = publications.category_id
+backend/direkt-api/src/discovery/discovery.repository.ts:473:        AND category_selections.requirement_version_id = publications.requirement_version_id
+backend/direkt-api/src/discovery/discovery.repository.ts:478:         AND organizations.status = 'ready_for_verification'
+backend/direkt-api/src/discovery/discovery.repository.ts:479:         AND category_selections.status = 'selected'
+backend/direkt-api/src/discovery/discovery.repository.ts:481:           publications.provider_id,
+backend/direkt-api/src/discovery/discovery.repository.ts:490:      throw new NotFoundException('Saved public provider was not found.');
+backend/direkt-api/src/discovery/discovery.repository.ts:497:      `DELETE FROM account.saved_public_providers
+backend/direkt-api/src/discovery/discovery.repository.ts:505:      public_provider_id: string;
+backend/direkt-api/src/discovery/discovery.repository.ts:512:         publications.id AS public_provider_id,
+backend/direkt-api/src/discovery/discovery.repository.ts:517:       FROM account.saved_public_providers AS saved
+backend/direkt-api/src/discovery/discovery.repository.ts:519:       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+backend/direkt-api/src/discovery/discovery.repository.ts:520:       JOIN provider.category_selections AS category_selections
+backend/direkt-api/src/discovery/discovery.repository.ts:521:         ON category_selections.provider_id = publications.provider_id
+backend/direkt-api/src/discovery/discovery.repository.ts:522:        AND category_selections.category_id = publications.category_id
+backend/direkt-api/src/discovery/discovery.repository.ts:523:        AND category_selections.requirement_version_id = publications.requirement_version_id
+backend/direkt-api/src/discovery/discovery.repository.ts:527:         AND organizations.status = 'ready_for_verification'
+backend/direkt-api/src/discovery/discovery.repository.ts:528:         AND category_selections.status = 'selected'
+backend/direkt-api/src/discovery/discovery.repository.ts:530:           publications.provider_id,
+backend/direkt-api/src/discovery/discovery.repository.ts:542:    public_provider_id: string;
+backend/direkt-api/src/discovery/discovery.repository.ts:549:      publicProviderId: row.public_provider_id,
+backend/direkt-api/src/discovery/discovery.repository.ts:554:      sharePath: `/providers/${row.public_provider_id}`,
+backend/direkt-api/src/discovery/discovery.controller.ts:38:  @Get('public/providers/search')
+backend/direkt-api/src/discovery/discovery.controller.ts:41:    summary: 'Searches eligible synthetic provider publications without private coordinates.',
+backend/direkt-api/src/discovery/discovery.controller.ts:48:  @Get('public/providers/:publicProviderId')
+backend/direkt-api/src/discovery/discovery.controller.ts:50:  @ApiOkResponse({ description: 'Returns one eligible public-safe provider profile.' })
+backend/direkt-api/src/discovery/discovery.controller.ts:55:  @Get('public/providers/:publicProviderId/claims')
+backend/direkt-api/src/discovery/discovery.controller.ts:62:  @Get('public/providers/:publicProviderId/availability')
+backend/direkt-api/src/discovery/discovery.controller.ts:64:  @ApiOkResponse({ description: 'Returns minimal public availability from the safe profile.' })
+backend/direkt-api/src/discovery/discovery.controller.ts:65:  async availability(@Param('publicProviderId', ParseUUIDPipe) publicProviderId: string) {
+backend/direkt-api/src/discovery/discovery.controller.ts:69:      state: profile.availability,
+backend/direkt-api/src/discovery/discovery.controller.ts:75:  @Get('public/providers/:publicProviderId/share')
+backend/direkt-api/src/discovery/discovery.controller.ts:82:  @Post('account/saved-providers/:publicProviderId')
+backend/direkt-api/src/discovery/discovery.controller.ts:85:  @ApiCreatedResponse({ description: 'Saves an eligible public provider for this identity.' })
+backend/direkt-api/src/discovery/discovery.controller.ts:93:  @Delete('account/saved-providers/:publicProviderId')
+backend/direkt-api/src/discovery/discovery.controller.ts:96:  @ApiOkResponse({ description: 'Removes a saved public provider for this identity.' })
+backend/direkt-api/src/discovery/discovery.controller.ts:104:  @Get('account/saved-providers')
+backend/direkt-api/src/discovery/discovery.controller.ts:107:  @ApiOkResponse({ description: 'Lists the authenticated identity’s eligible saved providers.' })
+backend/direkt-api/src/discovery/discovery.controller.ts:116:    description: 'Lists publication eligibility without private coordinates or evidence details.',
+backend/direkt-api/src/discovery/discovery.controller.ts:122:  @Post('operations/providers/:providerId/discovery/publication')
+backend/direkt-api/src/discovery/discovery.controller.ts:129:    @Param('providerId', ParseUUIDPipe) providerId: string,
+backend/direkt-api/src/discovery/discovery.controller.ts:132:    return this.discovery.refreshPublication(providerId, body.categoryKey, body.policyVersion);
+backend/direkt-api/src/discovery/discovery.module.ts:8:  providers: [DiscoveryRepository, DiscoveryService],
+backend/direkt-api/src/discovery/discovery.types.ts:19:  evidenceClass: string;
+backend/direkt-api/src/discovery/discovery.types.ts:34:  availability: PublicAvailability;
+backend/direkt-api/src/discovery/discovery.types.ts:79:  providerId: string;
+backend/direkt-api/src/discovery/discovery.types.ts:83:  providerStatus: string;
+backend/direkt-api/src/discovery/discovery.service.ts:64:        'Every claim below names a scoped check, limitation and expiry. DIREKT does not provide a blanket provider guarantee.',
+backend/direkt-api/src/discovery/discovery.service.ts:77:  async refreshPublication(providerId: string, categoryKey: string, policyVersion: string) {
+backend/direkt-api/src/discovery/discovery.service.ts:79:      providerId,
+backend/direkt-api/src/discovery/discovery.service.ts:125:    const claims = await this.repository.claims(row.public_provider_id);
+backend/direkt-api/src/discovery/discovery.service.ts:133:    if (row.availability_state === 'available') {
+backend/direkt-api/src/discovery/discovery.service.ts:138:      publicProviderId: row.public_provider_id,
+backend/direkt-api/src/discovery/discovery.service.ts:148:      serviceAreaGeoJson: row.service_area_geojson,
+backend/direkt-api/src/discovery/discovery.service.ts:149:      availability: row.availability_state,
+backend/direkt-api/src/discovery/discovery.service.ts:159:      sharePath: `/providers/${row.public_provider_id}`,
+backend/direkt-api/src/discovery/discovery.service.ts:166:      return 'This mobile provider is matched by its public service area. DIREKT does not show or measure distance from a private base.';
+backend/direkt-api/src/discovery/discovery.service.ts:169:      return 'This hybrid provider has a consented public premises point and a separate public service area. No private base is exposed.';
+backend/direkt-api/src/discovery/discovery.service.ts:171:    return 'Distance is calculated only from the provider’s consented public premises point.';
+backend/direkt-api/src/provider-core/provider.repository.ts:9:} from './provider.dto';
+backend/direkt-api/src/provider-core/provider.repository.ts:17:} from './provider.types';
+backend/direkt-api/src/provider-core/provider.repository.ts:33:  service_area_summary: string;
+backend/direkt-api/src/provider-core/provider.repository.ts:105:        `INSERT INTO provider.organizations (pathway, created_by_identity_id)
+backend/direkt-api/src/provider-core/provider.repository.ts:116:        `INSERT INTO provider.profiles (
+backend/direkt-api/src/provider-core/provider.repository.ts:117:           provider_id,
+backend/direkt-api/src/provider-core/provider.repository.ts:121:           service_area_summary,
+backend/direkt-api/src/provider-core/provider.repository.ts:143:           provider_id,
+backend/direkt-api/src/provider-core/provider.repository.ts:147:         SELECT $1, id, 'provider', $2, $1, 'Provider draft creator assigned as owner'
+backend/direkt-api/src/provider-core/provider.repository.ts:149:         WHERE role_key = 'provider_owner'`,
+backend/direkt-api/src/provider-core/provider.repository.ts:156:        providerId: organization.id,
+backend/direkt-api/src/provider-core/provider.repository.ts:157:        action: 'provider_draft_created',
+backend/direkt-api/src/provider-core/provider.repository.ts:158:        resourceType: 'provider_organization',
+backend/direkt-api/src/provider-core/provider.repository.ts:167:  findProvider(providerId: string): Promise<ProviderView | null> {
+backend/direkt-api/src/provider-core/provider.repository.ts:170:        'SELECT id FROM provider.organizations WHERE id = $1',
+backend/direkt-api/src/provider-core/provider.repository.ts:171:        [providerId],
+backend/direkt-api/src/provider-core/provider.repository.ts:173:      return exists.rows[0] ? this.loadProvider(client, providerId) : null;
+backend/direkt-api/src/provider-core/provider.repository.ts:179:    providerId: string,
+backend/direkt-api/src/provider-core/provider.repository.ts:184:      const result = await client.query<{ provider_id: string }>(
+backend/direkt-api/src/provider-core/provider.repository.ts:185:        `UPDATE provider.profiles
+backend/direkt-api/src/provider-core/provider.repository.ts:189:             service_area_summary = COALESCE($5, service_area_summary),
+backend/direkt-api/src/provider-core/provider.repository.ts:195:         WHERE provider_id = $1
+backend/direkt-api/src/provider-core/provider.repository.ts:196:         RETURNING provider_id`,
+backend/direkt-api/src/provider-core/provider.repository.ts:198:          providerId,
+backend/direkt-api/src/provider-core/provider.repository.ts:214:        providerId,
+backend/direkt-api/src/provider-core/provider.repository.ts:215:        action: 'provider_profile_updated',
+backend/direkt-api/src/provider-core/provider.repository.ts:216:        resourceType: 'provider_profile',
+backend/direkt-api/src/provider-core/provider.repository.ts:217:        resourceId: providerId,
+backend/direkt-api/src/provider-core/provider.repository.ts:219:      return this.loadProvider(client, providerId);
+backend/direkt-api/src/provider-core/provider.repository.ts:225:    providerId: string,
+backend/direkt-api/src/provider-core/provider.repository.ts:232:        `UPDATE provider.organizations
+backend/direkt-api/src/provider-core/provider.repository.ts:236:        [providerId, targetStatus],
+backend/direkt-api/src/provider-core/provider.repository.ts:244:        providerId,
+backend/direkt-api/src/provider-core/provider.repository.ts:245:        action: 'provider_status_transitioned',
+backend/direkt-api/src/provider-core/provider.repository.ts:246:        resourceType: 'provider_organization',
+backend/direkt-api/src/provider-core/provider.repository.ts:247:        resourceId: providerId,
+backend/direkt-api/src/provider-core/provider.repository.ts:250:      return this.loadProvider(client, providerId);
+backend/direkt-api/src/provider-core/provider.repository.ts:256:    providerId: string,
+backend/direkt-api/src/provider-core/provider.repository.ts:259:  ): Promise<{ assignmentId: string; providerId: string; identityId: string; role: string }> {
+backend/direkt-api/src/provider-core/provider.repository.ts:266:           provider_id,
+backend/direkt-api/src/provider-core/provider.repository.ts:270:         SELECT $1, id, 'provider', $2, $3, $4
+backend/direkt-api/src/provider-core/provider.repository.ts:274:        [input.identityId, providerId, actor.identityId, input.reason, input.role],
+backend/direkt-api/src/provider-core/provider.repository.ts:283:        providerId,
+backend/direkt-api/src/provider-core/provider.repository.ts:284:        action: 'provider_representative_assigned',
+backend/direkt-api/src/provider-core/provider.repository.ts:291:        providerId,
+backend/direkt-api/src/provider-core/provider.repository.ts:300:    providerId: string,
+backend/direkt-api/src/provider-core/provider.repository.ts:322:        `INSERT INTO provider.category_selections (
+backend/direkt-api/src/provider-core/provider.repository.ts:323:           provider_id,
+backend/direkt-api/src/provider-core/provider.repository.ts:328:         ON CONFLICT (provider_id, category_id) DO UPDATE
+backend/direkt-api/src/provider-core/provider.repository.ts:332:        [providerId, category.category_id, category.requirement_version_id],
+backend/direkt-api/src/provider-core/provider.repository.ts:337:        providerId,
+backend/direkt-api/src/provider-core/provider.repository.ts:338:        action: 'provider_category_selected',
+backend/direkt-api/src/provider-core/provider.repository.ts:339:        resourceType: 'provider_category_selection',
+backend/direkt-api/src/provider-core/provider.repository.ts:340:        resourceId: providerId,
+backend/direkt-api/src/provider-core/provider.repository.ts:343:      return this.loadProvider(client, providerId);
+backend/direkt-api/src/provider-core/provider.repository.ts:395:      provider_id: string;
+backend/direkt-api/src/provider-core/provider.repository.ts:403:         organizations.id AS provider_id,
+backend/direkt-api/src/provider-core/provider.repository.ts:409:       FROM provider.organizations AS organizations
+backend/direkt-api/src/provider-core/provider.repository.ts:410:       JOIN provider.profiles AS profiles ON profiles.provider_id = organizations.id
+backend/direkt-api/src/provider-core/provider.repository.ts:415:      providerId: row.provider_id,
+backend/direkt-api/src/provider-core/provider.repository.ts:425:  private async loadProvider(client: PoolClient, providerId: string): Promise<ProviderView> {
+backend/direkt-api/src/provider-core/provider.repository.ts:426:    const providerResult = await client.query<ProviderRow>(
+backend/direkt-api/src/provider-core/provider.repository.ts:435:         profiles.service_area_summary,
+backend/direkt-api/src/provider-core/provider.repository.ts:440:       FROM provider.organizations AS organizations
+backend/direkt-api/src/provider-core/provider.repository.ts:441:       JOIN provider.profiles AS profiles ON profiles.provider_id = organizations.id
+backend/direkt-api/src/provider-core/provider.repository.ts:443:      [providerId],
+backend/direkt-api/src/provider-core/provider.repository.ts:445:    const row = providerResult.rows[0];
+backend/direkt-api/src/provider-core/provider.repository.ts:456:       FROM provider.category_selections AS selections
+backend/direkt-api/src/provider-core/provider.repository.ts:460:       WHERE selections.provider_id = $1
+backend/direkt-api/src/provider-core/provider.repository.ts:462:      [providerId],
+backend/direkt-api/src/provider-core/provider.repository.ts:479:      serviceAreaSummary: row.service_area_summary,
+backend/direkt-api/src/provider-core/provider.repository.ts:494:      providerId?: string;
+backend/direkt-api/src/provider-core/provider.repository.ts:506:         provider_id,
+backend/direkt-api/src/provider-core/provider.repository.ts:516:        input.providerId ?? null,
+backend/direkt-api/src/provider-core/provider.module.ts:2:import { ProviderController } from './provider.controller';
+backend/direkt-api/src/provider-core/provider.module.ts:3:import { ProviderRepository } from './provider.repository';
+backend/direkt-api/src/provider-core/provider.module.ts:4:import { ProviderService } from './provider.service';
+backend/direkt-api/src/provider-core/provider.module.ts:8:  providers: [ProviderRepository, ProviderService],
+backend/direkt-api/src/provider-core/provider.types.ts:5:export type ProviderStatus = 'draft' | 'ready_for_verification' | 'suspended' | 'archived';
+backend/direkt-api/src/provider-core/provider.types.ts:6:export type ProviderRepresentativeRole = 'provider_member' | 'provider_responder';
+backend/direkt-api/src/provider-core/provider.types.ts:56:  providerId: string;
+backend/direkt-api/src/provider-core/provider.dto.ts:8:} from './provider.types';
+backend/direkt-api/src/provider-core/provider.dto.ts:111:  @ApiProperty({ enum: ['draft', 'ready_for_verification', 'suspended', 'archived'] })
+backend/direkt-api/src/provider-core/provider.dto.ts:112:  @IsIn(['draft', 'ready_for_verification', 'suspended', 'archived'])
+backend/direkt-api/src/provider-core/provider.dto.ts:126:  @ApiProperty({ enum: ['provider_member', 'provider_responder'] })
+backend/direkt-api/src/provider-core/provider.dto.ts:127:  @IsIn(['provider_member', 'provider_responder'])
+backend/direkt-api/src/provider-core/provider.controller.ts:12:} from './provider.dto';
+backend/direkt-api/src/provider-core/provider.controller.ts:13:import { ProviderService } from './provider.service';
+backend/direkt-api/src/provider-core/provider.controller.ts:19:} from './provider.types';
+backend/direkt-api/src/provider-core/provider.controller.ts:21:@ApiTags('provider core')
+backend/direkt-api/src/provider-core/provider.controller.ts:25:  constructor(private readonly providerService: ProviderService) {}
+backend/direkt-api/src/provider-core/provider.controller.ts:36:    return this.providerService.upsertCustomerProfile(request.actor, dto, request.requestId);
+backend/direkt-api/src/provider-core/provider.controller.ts:39:  @Post('providers')
+backend/direkt-api/src/provider-core/provider.controller.ts:42:    description: 'Creates a non-public provider draft and assigns the creator as provider owner.',
+backend/direkt-api/src/provider-core/provider.controller.ts:48:    return this.providerService.createProvider(request.actor, dto, request.requestId);
+backend/direkt-api/src/provider-core/provider.controller.ts:51:  @Get('providers/:providerId')
+backend/direkt-api/src/provider-core/provider.controller.ts:52:  @RequirePermission(PERMISSIONS.PROVIDER_PROFILE_READ, { providerParam: 'providerId' })
+backend/direkt-api/src/provider-core/provider.controller.ts:53:  @ApiOkResponse({ description: 'Reads a non-public provider draft within server-owned scope.' })
+backend/direkt-api/src/provider-core/provider.controller.ts:54:  provider(@Param('providerId', ParseUUIDPipe) providerId: string): Promise<ProviderView> {
+backend/direkt-api/src/provider-core/provider.controller.ts:55:    return this.providerService.provider(providerId);
+backend/direkt-api/src/provider-core/provider.controller.ts:58:  @Patch('providers/:providerId/profile')
+backend/direkt-api/src/provider-core/provider.controller.ts:59:  @RequirePermission(PERMISSIONS.PROVIDER_PROFILE_MANAGE, { providerParam: 'providerId' })
+backend/direkt-api/src/provider-core/provider.controller.ts:60:  @ApiOkResponse({ description: 'Updates a non-public provider profile draft.' })
+backend/direkt-api/src/provider-core/provider.controller.ts:62:    @Param('providerId', ParseUUIDPipe) providerId: string,
+backend/direkt-api/src/provider-core/provider.controller.ts:66:    return this.providerService.updateProvider(request.actor, providerId, dto, request.requestId);
+backend/direkt-api/src/provider-core/provider.controller.ts:69:  @Post('providers/:providerId/state-transitions')
+backend/direkt-api/src/provider-core/provider.controller.ts:70:  @RequirePermission(PERMISSIONS.PROVIDER_PROFILE_MANAGE, { providerParam: 'providerId' })
+backend/direkt-api/src/provider-core/provider.controller.ts:72:    description: 'Performs a validated internal provider-state transition without publication.',
+backend/direkt-api/src/provider-core/provider.controller.ts:75:    @Param('providerId', ParseUUIDPipe) providerId: string,
+backend/direkt-api/src/provider-core/provider.controller.ts:79:    return this.providerService.transitionProvider(
+backend/direkt-api/src/provider-core/provider.controller.ts:81:      providerId,
+backend/direkt-api/src/provider-core/provider.controller.ts:87:  @Post('providers/:providerId/representatives')
+backend/direkt-api/src/provider-core/provider.controller.ts:89:    providerParam: 'providerId',
+backend/direkt-api/src/provider-core/provider.controller.ts:91:  @ApiCreatedResponse({ description: 'Assigns a provider-scoped synthetic representative.' })
+backend/direkt-api/src/provider-core/provider.controller.ts:93:    @Param('providerId', ParseUUIDPipe) providerId: string,
+backend/direkt-api/src/provider-core/provider.controller.ts:97:    return this.providerService.addRepresentative(
+backend/direkt-api/src/provider-core/provider.controller.ts:99:      providerId,
+backend/direkt-api/src/provider-core/provider.controller.ts:105:  @Put('providers/:providerId/categories/:categoryKey')
+backend/direkt-api/src/provider-core/provider.controller.ts:106:  @RequirePermission(PERMISSIONS.PROVIDER_PROFILE_MANAGE, { providerParam: 'providerId' })
+backend/direkt-api/src/provider-core/provider.controller.ts:108:    description: 'Pins the provider draft to the active category requirement version.',
+backend/direkt-api/src/provider-core/provider.controller.ts:111:    @Param('providerId', ParseUUIDPipe) providerId: string,
+backend/direkt-api/src/provider-core/provider.controller.ts:115:    return this.providerService.selectCategory(
+backend/direkt-api/src/provider-core/provider.controller.ts:117:      providerId,
+backend/direkt-api/src/provider-core/provider.controller.ts:127:    return this.providerService.categories();
+backend/direkt-api/src/provider-core/provider.controller.ts:130:  @Get('operations/providers')
+backend/direkt-api/src/provider-core/provider.controller.ts:133:    description: 'Lists internal non-public provider drafts for the synthetic operations portal.',
+backend/direkt-api/src/provider-core/provider.controller.ts:136:    return this.providerService.operationsProviders();
+backend/direkt-api/src/provider-core/provider.service.ts:14:} from './provider.dto';
+backend/direkt-api/src/provider-core/provider.service.ts:15:import { ProviderRepository } from './provider.repository';
+backend/direkt-api/src/provider-core/provider.service.ts:21:} from './provider.types';
+backend/direkt-api/src/provider-core/provider.service.ts:57:  async provider(providerId: string): Promise<ProviderView> {
+backend/direkt-api/src/provider-core/provider.service.ts:58:    const provider = await this.repository.findProvider(providerId);
+backend/direkt-api/src/provider-core/provider.service.ts:59:    if (!provider) {
+backend/direkt-api/src/provider-core/provider.service.ts:62:    return provider;
+backend/direkt-api/src/provider-core/provider.service.ts:67:    providerId: string,
+backend/direkt-api/src/provider-core/provider.service.ts:72:      const provider = await this.repository.updateProviderProfile(
+backend/direkt-api/src/provider-core/provider.service.ts:74:        providerId,
+backend/direkt-api/src/provider-core/provider.service.ts:78:      if (!provider) {
+backend/direkt-api/src/provider-core/provider.service.ts:81:      return provider;
+backend/direkt-api/src/provider-core/provider.service.ts:92:    providerId: string,
+backend/direkt-api/src/provider-core/provider.service.ts:97:      const provider = await this.repository.transitionProvider(
+backend/direkt-api/src/provider-core/provider.service.ts:99:        providerId,
+backend/direkt-api/src/provider-core/provider.service.ts:104:      if (!provider) {
+backend/direkt-api/src/provider-core/provider.service.ts:107:      return provider;
+backend/direkt-api/src/provider-core/provider.service.ts:118:    providerId: string,
+backend/direkt-api/src/provider-core/provider.service.ts:121:  ): Promise<{ assignmentId: string; providerId: string; identityId: string; role: string }> {
+backend/direkt-api/src/provider-core/provider.service.ts:123:      return await this.repository.addRepresentative(actor, providerId, dto, requestId);
+backend/direkt-api/src/provider-core/provider.service.ts:131:    providerId: string,
+backend/direkt-api/src/provider-core/provider.service.ts:136:      const provider = await this.repository.selectCategory(
+backend/direkt-api/src/provider-core/provider.service.ts:138:        providerId,
+backend/direkt-api/src/provider-core/provider.service.ts:142:      if (!provider) {
+backend/direkt-api/src/provider-core/provider.service.ts:145:      return provider;
+backend/direkt-api/src/provider-core/provider.service.ts:165:      throw new ConflictException('The requested provider assignment or record already exists.');
+backend/direkt-api/src/provider-core/provider.service.ts:173:        databaseError.message ?? 'The provider request violates a domain rule.',
+backend/direkt-api/src/configure-application.ts:28:      allowedHeaders: ['content-type', 'authorization', 'x-request-id', 'idempotency-key'],
+backend/direkt-api/src/platform/openapi/openapi.ts:8:      'Phase 2C foundation for synthetic passwordless identity, revocable sessions and deny-by-default operations authorization. No provider, evidence, verification-decision or payment mutation is exposed.',
+backend/direkt-api/src/platform/database/database.module.ts:6:  providers: [DatabaseService],
+backend/direkt-api/src/platform/audit/audit.module.ts:6:  providers: [AuditService],
+backend/direkt-api/src/platform/audit/audit.service.ts:7:  providerId?: string;
+backend/direkt-api/src/platform/audit/audit.service.ts:26:         provider_id,
+backend/direkt-api/src/platform/audit/audit.service.ts:37:        input.providerId ?? null,
+backend/direkt-api/src/platform/health/health.module.ts:7:  providers: [HealthService],
+backend/direkt-api/src/authorization/permissions.ts:5:  OPERATIONS_PROVIDERS_READ: 'operations.providers.read',
+backend/direkt-api/src/authorization/permissions.ts:6:  PROVIDER_PROFILE_CREATE: 'provider.profile.create',
+backend/direkt-api/src/authorization/permissions.ts:7:  PROVIDER_PROFILE_READ: 'provider.profile.read',
+backend/direkt-api/src/authorization/permissions.ts:8:  PROVIDER_PROFILE_MANAGE: 'provider.profile.manage',
+backend/direkt-api/src/authorization/permissions.ts:9:  PROVIDER_REPRESENTATIVES_MANAGE: 'provider.representatives.manage',
+backend/direkt-api/src/authorization/permissions.ts:10:  PROVIDER_ENQUIRIES_RESPOND: 'provider.enquiries.respond',
+backend/direkt-api/src/authorization/permissions.ts:12:  EVIDENCE_UPLOAD_CREATE: 'evidence.upload.create',
+backend/direkt-api/src/authorization/permissions.ts:13:  EVIDENCE_READ_OWN: 'evidence.read.own',
+backend/direkt-api/src/authorization/permissions.ts:14:  EVIDENCE_READ_PRIVATE: 'evidence.read.private',
+backend/direkt-api/src/authorization/permissions.ts:15:  EVIDENCE_MANAGE: 'evidence.manage',
+backend/direkt-api/src/authorization/permissions.ts:16:  VERIFICATION_CASE_CREATE: 'verification.case.create',
+backend/direkt-api/src/authorization/permissions.ts:17:  VERIFICATION_CASE_READ: 'verification.case.read',
+backend/direkt-api/src/authorization/permissions.ts:18:  VERIFICATION_CASE_ASSIGN: 'verification.case.assign',
+backend/direkt-api/src/authorization/permissions.ts:19:  VERIFICATION_FIELD_VISIT_RECORD: 'verification.field_visit.record',
+backend/direkt-api/src/authorization/permissions.ts:20:  VERIFICATION_CASE_REVIEW: 'verification.case.review',
+backend/direkt-api/src/authorization/permissions.ts:21:  VERIFICATION_FINAL_DECISION: 'verification.final_decision',
+backend/direkt-api/src/authorization/permissions.ts:22:  VERIFICATION_CLAIM_READ: 'verification.claim.read',
+backend/direkt-api/src/authorization/permissions.ts:23:  VERIFICATION_CLAIM_EXPIRE: 'verification.claim.expire',
+backend/direkt-api/src/authorization/permissions.ts:28:  TRUST_PROVIDER_SUSPEND: 'trust.provider.suspend',
+backend/direkt-api/src/authorization/permissions.ts:39:  | 'provider_owner'
+backend/direkt-api/src/authorization/permissions.ts:40:  | 'provider_member'
+backend/direkt-api/src/authorization/permissions.ts:41:  | 'provider_responder'
+backend/direkt-api/src/authorization/permission.guard.ts:39:    const rawProviderId = requirement.providerParam
+backend/direkt-api/src/authorization/permission.guard.ts:40:      ? request.params[requirement.providerParam]
+backend/direkt-api/src/authorization/permission.guard.ts:43:      throw new BadRequestException('The provider scope is ambiguous.');
+backend/direkt-api/src/authorization/permission.guard.ts:49:      rawProviderId ? { providerId: rawProviderId } : {},
+backend/direkt-api/src/authorization/authenticated-actor.ts:7:  providerId?: string;
+backend/direkt-api/src/authorization/authorization.module.ts:12:  providers: [
+backend/direkt-api/src/authorization/require-permission.decorator.ts:8:  providerParam?: string;
+backend/direkt-api/src/authorization/require-permission.decorator.ts:13:  options: { providerParam?: string } = {},
+backend/direkt-api/src/authorization/require-permission.decorator.ts:17:    ...(options.providerParam ? { providerParam: options.providerParam } : {}),
+backend/direkt-api/src/authorization/authorization.service.ts:18:    return this.repository.snapshot(actor.identityId, scope.providerId);
+backend/direkt-api/src/authorization/authorization.service.ts:32:        ...(scope.providerId ? { providerId: scope.providerId } : {}),
+backend/direkt-api/src/authorization/authorization.service.ts:49:    providerId: string,
+backend/direkt-api/src/authorization/authorization.service.ts:56:        providerId,
+backend/direkt-api/src/authorization/authorization.service.ts:59:        resourceType: 'verification_policy',
+backend/direkt-api/src/authorization/authorization.service.ts:63:      throw new ForbiddenException('An actor cannot approve evidence they submitted.');
+backend/direkt-api/src/authorization/authorization.service.ts:68:      { providerId },
+backend/direkt-api/src/authorization/authorization.repository.ts:14:  async snapshot(identityId: string, providerId?: string): Promise<AuthorizationSnapshot> {
+backend/direkt-api/src/authorization/authorization.repository.ts:32:           OR ($2::uuid IS NOT NULL AND assignments.provider_id = $2::uuid)
+backend/direkt-api/src/authorization/authorization.repository.ts:35:      [identityId, providerId ?? null],
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:16:} from './verification-evidence.dto';
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:17:import { VerificationEvidenceService } from './verification-evidence.service';
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:25:} from './verification-evidence.types';
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:27:@ApiTags('verification and evidence')
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:33:  @Post('providers/:providerId/evidence/upload-sessions')
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:34:  @RequirePermission(PERMISSIONS.EVIDENCE_UPLOAD_CREATE, { providerParam: 'providerId' })
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:37:      'Creates a short-lived synthetic private upload grant after provider-scope checks.',
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:40:    @Param('providerId', ParseUUIDPipe) providerId: string,
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:44:    return this.service.createUploadSession(request.actor, providerId, dto, request.requestId);
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:47:  @Post('providers/:providerId/evidence')
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:48:  @RequirePermission(PERMISSIONS.EVIDENCE_MANAGE, { providerParam: 'providerId' })
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:51:      'Confirms synthetic private upload metadata and creates an immutable evidence version.',
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:54:    @Param('providerId', ParseUUIDPipe) providerId: string,
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:58:    return this.service.confirmEvidence(request.actor, providerId, dto, request.requestId);
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:61:  @Get('providers/:providerId/evidence')
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:62:  @RequirePermission(PERMISSIONS.EVIDENCE_READ_OWN, { providerParam: 'providerId' })
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:64:    description: 'Lists private evidence metadata without storage object references.',
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:66:  evidence(@Param('providerId', ParseUUIDPipe) providerId: string): Promise<EvidenceView[]> {
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:67:    return this.service.evidence(providerId);
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:70:  @Get('providers/:providerId/evidence/:evidenceId')
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:71:  @RequirePermission(PERMISSIONS.EVIDENCE_READ_OWN, { providerParam: 'providerId' })
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:73:    description: 'Reads one private evidence metadata record without evidence bytes.',
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:75:  evidenceItem(
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:76:    @Param('providerId', ParseUUIDPipe) providerId: string,
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:77:    @Param('evidenceId', ParseUUIDPipe) evidenceId: string,
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:79:    return this.service.evidenceItem(providerId, evidenceId);
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:82:  @Post('providers/:providerId/evidence/:evidenceId/revoke')
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:83:  @RequirePermission(PERMISSIONS.EVIDENCE_MANAGE, { providerParam: 'providerId' })
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:85:    description: 'Revokes provider evidence and deterministically degrades dependent claims.',
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:88:    @Param('providerId', ParseUUIDPipe) providerId: string,
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:89:    @Param('evidenceId', ParseUUIDPipe) evidenceId: string,
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:92:  ): Promise<{ evidence: EvidenceView; affectedClaims: number }> {
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:95:      providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:96:      evidenceId,
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:102:  @Post('providers/:providerId/verification-cases')
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:103:  @RequirePermission(PERMISSIONS.VERIFICATION_CASE_CREATE, { providerParam: 'providerId' })
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:104:  @ApiCreatedResponse({ description: 'Creates a separate scoped verification case.' })
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:106:    @Param('providerId', ParseUUIDPipe) providerId: string,
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:110:    return this.service.createCase(request.actor, providerId, dto, request.requestId);
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:113:  @Get('providers/:providerId/verification-cases')
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:114:  @RequirePermission(PERMISSIONS.VERIFICATION_CASE_READ, { providerParam: 'providerId' })
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:116:    description: 'Lists provider-scoped verification cases and safe evidence metadata.',
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:118:  cases(@Param('providerId', ParseUUIDPipe) providerId: string): Promise<VerificationCaseView[]> {
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:119:    return this.service.cases(providerId);
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:122:  @Get('providers/:providerId/claims')
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:123:  @RequirePermission(PERMISSIONS.VERIFICATION_CLAIM_READ, { providerParam: 'providerId' })
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:124:  @ApiOkResponse({ description: 'Lists safe scoped claim cards without original evidence.' })
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:125:  providerClaims(@Param('providerId', ParseUUIDPipe) providerId: string): Promise<SafeClaimCard[]> {
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:126:    return this.service.claims(providerId);
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:129:  @Get('operations/verification-queue')
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:132:    description: 'Lists synthetic verification queue items for authorized operators.',
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:138:  @Get('verification-cases/:caseId')
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:140:  @ApiOkResponse({ description: 'Reads a verification case only for an active assigned operator.' })
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:148:  @Post('verification-cases/:caseId/assignments')
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:159:  @Post('verification-cases/:caseId/evidence/:evidenceId/access')
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:166:    @Param('evidenceId', ParseUUIDPipe) evidenceId: string,
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:169:    return this.service.privateEvidenceAccess(request.actor, caseId, evidenceId, request.requestId);
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:172:  @Post('verification-cases/:caseId/recommendations')
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:183:  @Post('verification-cases/:caseId/decisions')
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:196:  @Post('verification-cases/:caseId/field-visits')
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:207:  @Post('operations/verification/expire-claims')
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:209:  @ApiOkResponse({ description: 'Runs deterministic evidence and claim expiry processing.' })
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:214:  @Get('operations/providers/:providerId/claims')
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:218:    @Param('providerId', ParseUUIDPipe) providerId: string,
+backend/direkt-api/src/verification-evidence/verification-evidence.controller.ts:220:    return this.service.claims(providerId);
+backend/direkt-api/src/verification-evidence/verification-evidence.module.ts:2:import { EVIDENCE_STORAGE } from './evidence-storage.port';
+backend/direkt-api/src/verification-evidence/verification-evidence.module.ts:4:import { VerificationEvidenceController } from './verification-evidence.controller';
+backend/direkt-api/src/verification-evidence/verification-evidence.module.ts:5:import { VerificationEvidenceRepository } from './verification-evidence.repository';
+backend/direkt-api/src/verification-evidence/verification-evidence.module.ts:6:import { VerificationEvidenceService } from './verification-evidence.service';
+backend/direkt-api/src/verification-evidence/verification-evidence.module.ts:10:  providers: [
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:13:} from './verification-evidence.dto';
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:23:} from './verification-evidence.types';
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:36:  provider_id: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:39:  replacement_for_evidence_id: string | null;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:40:  evidence_class: EvidenceVersionView['evidenceClass'];
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:51:  provider_id: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:60:  evidence_class: EvidenceVersionView['evidenceClass'] | null;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:75:  provider_id: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:93:  async resolveRequirement(providerId: string, requirementKey: string): Promise<RequirementRow>;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:95:    providerId: string,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:100:    providerId: string,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:107:      throw new NotFoundException('Selected provider requirement was not found.');
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:118:       FROM provider.category_selections AS selections
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:124:       WHERE selections.provider_id = $1
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:130:      [providerId, categoryKey ?? null, requirementKey],
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:133:      throw new NotFoundException('Selected provider requirement was not found.');
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:145:    providerId: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:148:    uploadSessionId: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:155:        `INSERT INTO evidence.upload_sessions (
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:157:           provider_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:160:           replacement_for_evidence_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:161:           evidence_class,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:170:          input.uploadSessionId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:171:          input.providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:175:          input.dto.evidenceClass,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:186:        providerId: input.providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:188:        action: 'evidence_upload_session_created',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:189:        resourceType: 'evidence_upload_session',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:190:        resourceId: input.uploadSessionId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:193:          evidenceClass: input.dto.evidenceClass,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:202:  async uploadSession(providerId: string, uploadSessionId: string): Promise<UploadSessionRow> {
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:206:         provider_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:209:         replacement_for_evidence_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:210:         evidence_class,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:217:       FROM evidence.upload_sessions
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:218:       WHERE id = $1 AND provider_id = $2`,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:219:      [uploadSessionId, providerId],
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:223:      throw new NotFoundException('Private evidence upload session was not found.');
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:230:    providerId: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:238:           provider_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:241:           replacement_for_evidence_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:242:           evidence_class,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:249:         FROM evidence.upload_sessions
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:250:         WHERE id = $1 AND provider_id = $2
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:252:        [input.dto.uploadSessionId, input.providerId],
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:256:        throw new NotFoundException('Private evidence upload session was not found.');
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:259:        throw new ConflictException('Private evidence upload session is not completable.');
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:262:        throw new ConflictException('Only the upload-session creator may confirm this evidence.');
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:265:        throw new ConflictException('Confirmed evidence exceeds the authorized size.');
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:268:      let evidenceId = session.replacement_for_evidence_id;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:269:      if (evidenceId) {
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:271:          `UPDATE evidence.items
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:273:           WHERE id = $1 AND provider_id = $3`,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:274:          [evidenceId, input.dto.retentionClass, input.providerId],
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:277:        const evidenceResult = await client.query<{ id: string }>(
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:278:          `INSERT INTO evidence.items (
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:279:             provider_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:287:            input.providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:293:        evidenceId = evidenceResult.rows[0]?.id ?? null;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:295:      if (!evidenceId) {
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:306:         FROM evidence.items AS items
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:307:         LEFT JOIN evidence.versions AS versions ON versions.evidence_id = items.id
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:310:        [evidenceId],
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:318:        `INSERT INTO evidence.versions (
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:319:           evidence_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:321:           upload_session_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:324:           evidence_class,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:340:          evidenceId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:345:          session.evidence_class,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:363:        `UPDATE evidence.items
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:366:        [evidenceId, versionId],
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:369:        `UPDATE evidence.upload_sessions
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:377:          `INSERT INTO verification.case_evidence (
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:379:             evidence_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:383:          [input.dto.caseId, evidenceId, input.actor.identityId],
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:386:          `UPDATE verification.cases
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:389:             AND status IN ('awaiting_evidence', 'correction_required')`,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:396:        providerId: input.providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:398:        action: previous.current_version_number === 0 ? 'evidence_confirmed' : 'evidence_replaced',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:399:        resourceType: 'evidence_item',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:400:        resourceId: evidenceId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:404:          evidenceBytesStoredInDatabase: false,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:408:      return this.loadEvidence(client, evidenceId);
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:412:  async listEvidence(providerId: string): Promise<EvidenceView[]> {
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:414:      this.evidenceQuery('items.provider_id = $1'),
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:415:      [providerId],
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:420:  async evidence(providerId: string, evidenceId: string): Promise<EvidenceView> {
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:422:      this.evidenceQuery('items.provider_id = $1 AND items.id = $2'),
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:423:      [providerId, evidenceId],
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:427:      throw new NotFoundException('Private evidence metadata was not found.');
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:432:  async evidenceObjectForAssignedCase(
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:434:    evidenceId: string,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:436:  ): Promise<{ objectKey: string; providerId: string }> {
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:437:    const result = await this.database.query<{ object_key: string; provider_id: string }>(
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:438:      `SELECT versions.object_key, cases.provider_id
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:439:       FROM verification.cases AS cases
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:440:       JOIN verification.assignments AS assignments
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:445:       JOIN verification.case_evidence AS links ON links.case_id = cases.id
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:446:       JOIN evidence.items AS items ON items.id = links.evidence_id
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:447:       JOIN evidence.versions AS versions ON versions.id = items.current_version_id
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:449:      [caseId, evidenceId, actorIdentityId],
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:453:      throw new NotFoundException('Assigned private evidence access was not found.');
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:455:    return { objectKey: row.object_key, providerId: row.provider_id };
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:460:    providerId: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:473:         FROM provider.category_selections AS selections
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:477:         WHERE selections.provider_id = $1
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:481:        [input.providerId, input.dto.categoryKey, input.dto.requirementKey],
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:489:        `INSERT INTO verification.cases (
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:490:           provider_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:502:          input.providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:518:        `UPDATE verification.cases SET status = 'awaiting_evidence' WHERE id = $1`,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:523:        providerId: input.providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:525:        action: 'verification_case_created',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:526:        resourceType: 'verification_case',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:539:  async listCases(providerId: string): Promise<VerificationCaseView[]> {
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:540:    const result = await this.database.query<CaseRow>(this.caseQuery('cases.provider_id = $1'), [
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:541:      providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:554:           SELECT 1 FROM verification.assignments
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:564:      throw new NotFoundException('Assigned verification case was not found.');
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:576:      const providerResult = await client.query<{ provider_id: string }>(
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:577:        'SELECT provider_id FROM verification.cases WHERE id = $1 FOR UPDATE',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:580:      const providerId = providerResult.rows[0]?.provider_id;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:581:      if (!providerId) {
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:585:        `INSERT INTO verification.assignments (
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:602:          `UPDATE verification.cases
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:610:        providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:612:        action: 'verification_case_assigned',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:613:        resourceType: 'verification_case',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:631:      const providerResult = await client.query<{ provider_id: string }>(
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:632:        'SELECT provider_id FROM verification.cases WHERE id = $1 FOR UPDATE',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:635:      const providerId = providerResult.rows[0]?.provider_id;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:636:      if (!providerId) {
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:640:        `UPDATE verification.cases
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:646:        `INSERT INTO verification.recommendations (
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:672:        providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:674:        action: 'verification_recommendation_recorded',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:675:        resourceType: 'verification_recommendation',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:691:        `SELECT verification.record_decision(
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:711:      const verificationCase = await this.loadCase(client, input.caseId);
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:712:      const claims = await this.claimsWithClient(client, verificationCase.providerId);
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:713:      return { decisionId, case: verificationCase, claims };
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:724:      const providerResult = await client.query<{ provider_id: string }>(
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:725:        'SELECT provider_id FROM verification.cases WHERE id = $1',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:728:      const providerId = providerResult.rows[0]?.provider_id;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:729:      if (!providerId) {
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:733:        `INSERT INTO verification.field_visits (
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:761:        providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:763:        action: 'verification_field_visit_recorded',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:764:        resourceType: 'verification_field_visit',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:774:    providerId: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:775:    evidenceId: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:778:  }): Promise<{ evidence: EvidenceView; affectedClaims: number }> {
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:781:        `UPDATE evidence.items
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:783:         WHERE id = $1 AND provider_id = $2
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:785:        [input.evidenceId, input.providerId, input.reason],
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:788:        throw new NotFoundException('Private evidence metadata was not found.');
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:791:        'SELECT verification.degrade_expired_claims(now()) AS affected',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:795:        providerId: input.providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:797:        action: 'evidence_revoked',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:798:        resourceType: 'evidence_item',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:799:        resourceId: input.evidenceId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:803:        evidence: await this.loadEvidence(client, input.evidenceId),
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:811:      'SELECT verification.degrade_expired_claims($1) AS affected',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:820:      provider_id: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:821:      provider_display_name: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:831:         cases.provider_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:832:         profiles.display_name AS provider_display_name,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:839:       FROM verification.cases AS cases
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:840:       JOIN provider.profiles AS profiles ON profiles.provider_id = cases.provider_id
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:843:         FROM verification.assignments
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:858:      providerId: row.provider_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:859:      providerDisplayName: row.provider_display_name,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:870:  async claims(providerId: string): Promise<SafeClaimCard[]> {
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:871:    return this.database.transaction((client) => this.claimsWithClient(client, providerId));
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:876:    providerId: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:877:    evidenceId: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:884:        providerId: input.providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:886:        action: 'private_evidence_access_granted',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:887:        resourceType: 'evidence_item',
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:888:        resourceId: input.evidenceId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:889:        metadata: { caseId: input.caseId, accessUrlStored: false, evidenceBytesLogged: false },
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:894:  private evidenceQuery(where: string): string {
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:897:       items.provider_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:906:       versions.evidence_class,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:917:     FROM evidence.items AS items
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:919:     LEFT JOIN evidence.versions AS versions ON versions.id = items.current_version_id
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:927:       cases.provider_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:939:     FROM verification.cases AS cases
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:944:       FROM verification.assignments
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:955:  private async loadEvidence(client: PoolClient, evidenceId: string): Promise<EvidenceView> {
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:956:    const result = await client.query<EvidenceRow>(this.evidenceQuery('items.id = $1'), [
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:957:      evidenceId,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:961:      throw new NotFoundException('Private evidence metadata was not found.');
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:971:          evidenceClass: row.evidence_class as EvidenceVersionView['evidenceClass'],
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:986:      providerId: row.provider_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1010:          `${this.evidenceQuery(
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1012:               SELECT 1 FROM verification.case_evidence
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1013:               WHERE case_evidence.case_id = $1 AND case_evidence.evidence_id = items.id
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1019:          `${this.evidenceQuery(
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1021:               SELECT 1 FROM verification.case_evidence
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1022:               WHERE case_evidence.case_id = $1 AND case_evidence.evidence_id = items.id
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1027:    const evidenceResult = await query;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1030:      providerId: row.provider_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1040:      evidence: evidenceResult.rows.map((evidence) => this.mapEvidence(evidence)),
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1047:  private async claimsWithClient(client: PoolClient, providerId: string): Promise<SafeClaimCard[]> {
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1049:      provider_id: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1053:      evidence_class: VerificationCheckFamily;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1060:         provider_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1064:         evidence_class,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1069:       FROM verification.safe_claim_cards
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1070:       WHERE provider_id = $1
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1072:      [providerId],
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1075:      providerId: row.provider_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1079:      evidenceClass: row.evidence_class,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1091:      providerId: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1104:         provider_id,
+backend/direkt-api/src/verification-evidence/verification-evidence.repository.ts:1114:        input.providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.dto.ts:21:} from './verification-evidence.types';
+backend/direkt-api/src/verification-evidence/verification-evidence.dto.ts:57:  evidenceClass!: EvidenceClass;
+backend/direkt-api/src/verification-evidence/verification-evidence.dto.ts:88:  uploadSessionId!: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.dto.ts:207:    example: 'The synthetic evidence matches the scoped requirement and review checklist.',
+backend/direkt-api/src/verification-evidence/verification-evidence.dto.ts:235:    example: 'The scoped check passed after review of the synthetic private evidence record.',
+backend/direkt-api/src/verification-evidence/verification-evidence.dto.ts:294:  @ApiPropertyOptional({ example: 'Synthetic private note. No real address or evidence.' })
+backend/direkt-api/src/verification-evidence/verification-evidence.dto.ts:306:  @ApiProperty({ example: 'Provider withdrew this synthetic evidence record.' })
+backend/direkt-api/src/verification-evidence/synthetic-private-storage.adapter.ts:9:} from './evidence-storage.port';
+backend/direkt-api/src/verification-evidence/synthetic-private-storage.adapter.ts:23:    const objectKey = `private/${input.providerId}/${input.uploadSessionId}/${randomUUID()}`;
+backend/direkt-api/src/verification-evidence/synthetic-private-storage.adapter.ts:34:      uploadUrl: `https://storage.invalid/private-upload/${input.uploadSessionId}?token=${randomUUID()}`,
+backend/direkt-api/src/verification-evidence/synthetic-private-storage.adapter.ts:38:        'x-direkt-private-upload': 'synthetic',
+backend/direkt-api/src/verification-evidence/synthetic-private-storage.adapter.ts:46:      throw new NotFoundException('Synthetic private upload object was not found.');
+backend/direkt-api/src/verification-evidence/synthetic-private-storage.adapter.ts:49:      throw new BadRequestException('Synthetic private upload grant has expired.');
+backend/direkt-api/src/verification-evidence/synthetic-private-storage.adapter.ts:66:      throw new NotFoundException('Private evidence object is not available for review.');
+backend/direkt-api/src/verification-evidence/verification-evidence.types.ts:36:  | 'awaiting_evidence'
+backend/direkt-api/src/verification-evidence/verification-evidence.types.ts:55:  uploadSessionId: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.types.ts:56:  uploadUrl: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.types.ts:65:  evidenceClass: EvidenceClass;
+backend/direkt-api/src/verification-evidence/verification-evidence.types.ts:80:  providerId: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.types.ts:93:  providerId: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.types.ts:103:  evidence: EvidenceView[];
+backend/direkt-api/src/verification-evidence/verification-evidence.types.ts:111:  providerId: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.types.ts:112:  providerDisplayName: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.types.ts:123:  providerId: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.types.ts:127:  evidenceClass: VerificationCheckFamily;
+backend/direkt-api/src/verification-evidence/evidence-storage.port.ts:4:  providerId: string;
+backend/direkt-api/src/verification-evidence/evidence-storage.port.ts:5:  uploadSessionId: string;
+backend/direkt-api/src/verification-evidence/evidence-storage.port.ts:12:  uploadUrl: string;
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:4:import { EVIDENCE_STORAGE, type EvidenceStoragePort } from './evidence-storage.port';
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:15:} from './verification-evidence.dto';
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:16:import { VerificationEvidenceRepository } from './verification-evidence.repository';
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:24:} from './verification-evidence.types';
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:41:    providerId: string,
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:47:        providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:52:        await this.repository.evidence(providerId, dto.replacementForEvidenceId);
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:54:      const uploadSessionId = randomUUID();
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:56:        providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:57:        uploadSessionId,
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:63:        providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:66:        uploadSessionId,
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:72:        uploadSessionId,
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:73:        uploadUrl: grant.uploadUrl,
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:85:    providerId: string,
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:90:      const session = await this.repository.uploadSession(providerId, dto.uploadSessionId);
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:97:      return await this.repository.confirmEvidence({ actor, providerId, dto, requestId });
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:103:  evidence(providerId: string): Promise<EvidenceView[]> {
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:104:    return this.repository.listEvidence(providerId);
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:107:  evidenceItem(providerId: string, evidenceId: string): Promise<EvidenceView> {
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:108:    return this.repository.evidence(providerId, evidenceId);
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:114:    evidenceId: string,
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:118:      const object = await this.repository.evidenceObjectForAssignedCase(
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:120:        evidenceId,
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:130:        providerId: object.providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:131:        evidenceId,
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:148:    providerId: string,
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:153:      .createCase({ actor, providerId, dto, requestId })
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:157:  cases(providerId: string): Promise<VerificationCaseView[]> {
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:158:    return this.repository.listCases(providerId);
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:211:    providerId: string,
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:212:    evidenceId: string,
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:215:  ): Promise<{ evidence: EvidenceView; affectedClaims: number }> {
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:219:        providerId,
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:220:        evidenceId,
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:231:  claims(providerId: string): Promise<SafeClaimCard[]> {
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:232:    return this.repository.claims(providerId);
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:255:        databaseError.message ?? 'The verification record conflicts with an active record.',
+backend/direkt-api/src/verification-evidence/verification-evidence.service.ts:264:        databaseError.message ?? 'The verification request violates a domain rule.',
+backend/direkt-api/src/app.module.ts:13:import { ProviderModule } from './provider-core/provider.module';
+backend/direkt-api/src/app.module.ts:14:import { VerificationEvidenceModule } from './verification-evidence/verification-evidence.module';
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:30:  providerId: string;
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:32:  evidence: Array<{ id: string; currentVersion: { sha256: string } | null }>;
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:36:  uploadSessionId: string;
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:37:  uploadUrl: string;
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:66:describe('Phase 4 verification and private evidence HTTP contracts', () => {
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:75:  let provider: ProviderResponse;
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:76:  let verificationCase: VerificationCaseResponse;
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:77:  let evidence: EvidenceResponse;
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:133:    const providerResponse = await request(httpServer())
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:134:      .post('/api/v1/providers')
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:141:        serviceAreaSummary: 'Lusaka District synthetic service area',
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:145:    provider = providerResponse.body as ProviderResponse;
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:148:      .put(`/api/v1/providers/${provider.id}/categories/plumbing`)
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:153:      .post(`/api/v1/providers/${provider.id}/state-transitions`)
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:156:        targetStatus: 'ready_for_verification',
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:157:        reason: 'Synthetic Phase 4 profile is ready for private verification testing',
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:162:      .post(`/api/v1/providers/${provider.id}/verification-cases`)
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:173:    verificationCase = caseResponse.body as VerificationCaseResponse;
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:175:    const uploadResponse = await request(httpServer())
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:176:      .post(`/api/v1/providers/${provider.id}/evidence/upload-sessions`)
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:180:        evidenceClass: 'identity',
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:187:    const upload = uploadResponse.body as UploadSessionResponse;
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:188:    expect(upload.synthetic).toBe(true);
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:189:    expect(upload.uploadUrl).toMatch(/^https:\/\/storage\.invalid\/private-upload\//);
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:190:    expect(uploadResponse.body).not.toHaveProperty('objectKey');
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:192:    const evidenceResponse = await request(httpServer())
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:193:      .post(`/api/v1/providers/${provider.id}/evidence`)
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:196:        uploadSessionId: upload.uploadSessionId,
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:197:        caseId: verificationCase.id,
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:207:    evidence = evidenceResponse.body as EvidenceResponse;
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:215:  it('keeps evidence metadata provider-scoped and excludes storage references', async () => {
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:217:      .get(`/api/v1/providers/${provider.id}/evidence/${evidence.id}`)
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:222:      id: evidence.id,
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:232:      .post(`/api/v1/verification-cases/${verificationCase.id}/evidence/${evidence.id}/access`)
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:237:  it('denies assigning the provider owner to review their own provider', async () => {
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:239:      .post(`/api/v1/verification-cases/${verificationCase.id}/assignments`)
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:244:        reason: 'The provider owner must not review their own provider evidence',
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:251:      .post(`/api/v1/verification-cases/${verificationCase.id}/assignments`)
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:256:        reason: 'Independent synthetic reviewer assigned for Phase 4 verification',
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:259:    verificationCase = assigned.body as VerificationCaseResponse;
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:260:    expect(verificationCase.status).toBe('assigned');
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:263:      .post(`/api/v1/verification-cases/${verificationCase.id}/evidence/${evidence.id}/access`)
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:274:       WHERE action = 'private_evidence_access_granted'
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:277:      [reviewer.identityId, evidence.id],
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:282:  it('denies finance from submitting a verification decision', async () => {
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:284:      .post(`/api/v1/verification-cases/${verificationCase.id}/decisions`)
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:289:        rationale: 'Finance must not be allowed to decide verification under any commercial state.',
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:301:      .post(`/api/v1/verification-cases/${verificationCase.id}/recommendations`)
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:307:          'The synthetic private evidence satisfies the representative identity review checklist.',
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:314:      .post(`/api/v1/verification-cases/${verificationCase.id}/decisions`)
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:340:      .get(`/api/v1/providers/${provider.id}/claims`)
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:350:  it('degrades the dependent claim when provider evidence is revoked', async () => {
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:352:      .post(`/api/v1/providers/${provider.id}/evidence/${evidence.id}/revoke`)
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:354:      .send({ reason: 'Provider withdrew this synthetic evidence record from verification use.' })
+backend/direkt-api/test/e2e/verification-evidence.e2e.spec.ts:360:      .get(`/api/v1/providers/${provider.id}/claims`)
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:24:  providerId: string;
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:113:    availability: 'available' | 'limited' | 'unavailable' | 'unknown';
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:120:    const providerId = randomUUID();
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:124:      `INSERT INTO provider.organizations (
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:126:       ) VALUES ($1, 'registered_business', $2, 'ready_for_verification')`,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:127:      [providerId, ownerId],
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:130:      `INSERT INTO provider.profiles (
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:131:         provider_id,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:135:         service_area_summary,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:139:        providerId,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:143:        `${input.locality} synthetic service area`,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:148:      `INSERT INTO provider.category_selections (
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:149:         provider_id, category_id, requirement_version_id
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:155:      [providerId],
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:158:      `INSERT INTO discovery.provider_locations (
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:159:         provider_id,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:164:         service_area,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:183:        providerId,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:193:      `INSERT INTO discovery.provider_availability (
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:194:         provider_id, category_id, state, next_available_at
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:201:      [providerId, input.availability],
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:207:           provider_id,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:214:          providerId,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:215:          `https://images.invalid/${providerId}/low.webp`,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:216:          `https://images.invalid/${providerId}/standard.webp`,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:238:        `INSERT INTO verification.cases (
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:240:           provider_id,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:263:          providerId,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:273:        `INSERT INTO verification.assignments (
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:283:        `SELECT verification.record_decision(
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:311:        [providerId],
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:320:      providerId,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:356:      availability: 'available',
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:363:      locality: 'Lusaka Central service area',
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:367:      availability: 'limited',
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:378:      availability: 'available',
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:384:      locality: 'Lusaka Central service area',
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:388:      availability: 'unknown',
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:398:      availability: 'available',
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:414:           provider_id,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:421:           service_area,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:434:        [incomplete.providerId],
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:440:        incomplete.providerId,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:447:      .get('/api/v1/public/providers/search')
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:462:    expect(serialized).not.toContain('providerId');
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:464:    expect(serialized).not.toContain('evidenceId');
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:467:  it('uses public premises for fixed providers and service areas for mobile providers', async () => {
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:469:      .get('/api/v1/public/providers/search')
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:495:  it('applies claim and availability filters with stable cursor pagination', async () => {
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:497:      .get('/api/v1/public/providers/search')
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:502:        availability: 'available',
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:513:      .get('/api/v1/public/providers/search')
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:518:        availability: 'available',
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:532:      .get(`/api/v1/public/providers/${fixed.publicProviderId}`)
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:537:    expect(fixedProfile.trustSummary).toContain('blanket provider guarantee');
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:544:      .get(`/api/v1/public/providers/${mobile.publicProviderId}`)
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:553:      .get(`/api/v1/public/providers/${fixed.publicProviderId}/share`)
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:559:      path: `/providers/${fixed.publicProviderId}`,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:566:      .post(`/api/v1/account/saved-providers/${fixed.publicProviderId}`)
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:575:    expect(JSON.stringify(saved)).not.toContain(fixed.providerId);
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:578:      .get('/api/v1/account/saved-providers')
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:590:      .delete(`/api/v1/account/saved-providers/${fixed.publicProviderId}`)
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:595:  it('live-excludes removed category selections from public profiles, search and saves', async () => {
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:597:      .post(`/api/v1/account/saved-providers/${fixed.publicProviderId}`)
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:602:      `UPDATE provider.category_selections
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:604:       WHERE provider_id = $1
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:606:      [fixed.providerId],
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:610:      .get('/api/v1/public/providers/search')
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:619:      .get(`/api/v1/public/providers/${fixed.publicProviderId}`)
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:623:      .get(`/api/v1/public/providers/${fixed.publicProviderId}/claims`)
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:628:      .get('/api/v1/account/saved-providers')
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:635:      .post(`/api/v1/account/saved-providers/${fixed.publicProviderId}`)
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:640:  it('dynamically excludes suspended and expired mandatory-claim providers', async () => {
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:641:    await pool.query(`UPDATE provider.organizations SET status = 'suspended' WHERE id = $1`, [
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:642:      hybrid.providerId,
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:644:    await pool.query(`SELECT verification.degrade_expired_claims($1::timestamptz)`, [
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:649:      .get('/api/v1/public/providers/search')
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:659:  it('returns useful no-results recovery without fabricated providers', async () => {
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:661:      .get('/api/v1/public/providers/search')
+backend/direkt-api/test/e2e/discovery.e2e.spec.ts:668:    expect(JSON.stringify(body)).not.toContain('fabricated provider');
+backend/direkt-api/test/e2e/provider-review-regressions.e2e.spec.ts:20:describe('Phase 3 provider HTTP review regressions', () => {
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:30:describe('Phase 3 provider and category HTTP contracts', () => {
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:36:  let provider: ProviderResponse;
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:73:  it('denies unauthenticated provider creation', async () => {
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:75:      .post('/api/v1/providers')
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:78:        displayName: 'Unauthorized synthetic provider',
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:89:      .post('/api/v1/providers')
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:100:  it('creates a customer profile and a non-public provider draft', async () => {
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:104:      .send({ displayName: 'Synthetic provider owner' })
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:108:      .post('/api/v1/providers')
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:119:    provider = response.body as ProviderResponse;
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:121:    expect(provider.status).toBe('draft');
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:122:    expect(provider.discoverable).toBe(false);
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:123:    expect(provider.displayName).toBe('Synthetic Copperbelt Repairs');
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:126:  it('lists versioned categories and pins the provider to an active version', async () => {
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:139:      .put(`/api/v1/providers/${provider.id}/categories/plumbing`)
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:142:    provider = selected.body as ProviderResponse;
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:143:    expect(provider.categories).toContainEqual(
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:148:  it('denies a different customer despite tampered client role and provider headers', async () => {
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:150:      .get(`/api/v1/providers/${provider.id}`)
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:152:      .set('x-direkt-role', 'provider_owner')
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:153:      .set('x-direkt-provider-id', provider.id)
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:157:  it('allows an owner to assign a provider-scoped representative', async () => {
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:159:      .post(`/api/v1/providers/${provider.id}/representatives`)
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:163:        role: 'provider_member',
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:169:      .get(`/api/v1/providers/${provider.id}`)
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:181:         AND assignments.provider_id = $2
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:182:         AND roles.role_key = 'provider_member'
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:184:      [representative.identityId, provider.id],
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:188:      .get(`/api/v1/providers/${provider.id}`)
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:193:  it('updates and transitions the provider only through valid internal states', async () => {
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:195:      .patch(`/api/v1/providers/${provider.id}/profile`)
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:202:      .post(`/api/v1/providers/${provider.id}/state-transitions`)
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:205:        targetStatus: 'ready_for_verification',
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:209:    expect((ready.body as ProviderResponse).status).toBe('ready_for_verification');
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:212:      .post(`/api/v1/providers/${provider.id}/state-transitions`)
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:221:      .post(`/api/v1/providers/${provider.id}/state-transitions`)
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:230:  it('exposes provider drafts only to an authorized internal operations role', async () => {
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:232:      .get('/api/v1/operations/providers')
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:250:      .get('/api/v1/operations/providers')
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:256:          providerId: provider.id,
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:264:  it('returns no discoverable provider and records actor-attributed audit events', async () => {
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:266:      'SELECT count(*)::text AS count FROM provider.public_directory',
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:273:       WHERE provider_id = $1
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:275:         AND action IN ('provider_draft_created', 'provider_profile_updated', 'provider_status_transitioned')`,
+backend/direkt-api/test/e2e/provider-core.e2e.spec.ts:276:      [provider.id, owner.identityId],
+backend/direkt-api/test/integration/identity-authorization.integration.spec.ts:50:  it('rejects a provider-scoped role assigned globally', async () => {
+backend/direkt-api/test/integration/identity-authorization.integration.spec.ts:66:           WHERE role_key = 'provider_owner'`,
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:7:describe('Phase 3 provider and category schema', () => {
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:19:  it('creates provider, category and non-public directory contracts', async () => {
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:28:        to_regclass('provider.organizations')::text AS organizations,
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:29:        to_regclass('provider.profiles')::text AS profiles,
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:32:        to_regclass('provider.public_directory')::text AS public_directory
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:36:      organizations: 'provider.organizations',
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:37:      profiles: 'provider.profiles',
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:40:      public_directory: 'provider.public_directory',
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:43:      'SELECT count(*)::text AS count FROM provider.public_directory',
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:53:      const providerId = randomUUID();
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:56:        `INSERT INTO provider.organizations (id, pathway, created_by_identity_id)
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:58:        [providerId, identityId],
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:63:          `INSERT INTO provider.profiles (
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:64:             provider_id,
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:67:             service_area_summary
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:69:          [providerId],
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:78:  it('rejects public discovery and invalid provider state transitions', async () => {
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:83:      const providerId = randomUUID();
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:86:        `INSERT INTO provider.organizations (id, pathway, created_by_identity_id)
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:88:        [providerId, identityId],
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:91:        `INSERT INTO provider.profiles (
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:92:           provider_id,
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:95:           service_area_summary,
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:99:        [providerId],
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:105:          `UPDATE provider.organizations
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:108:          [providerId],
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:110:      ).rejects.toThrow(/invalid provider status transition/i);
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:117:          `UPDATE provider.organizations
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:120:          [providerId],
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:122:      ).rejects.toThrow(/phase 3 cannot make a provider discoverable|not_discoverable/i);
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:152:  it('writes immutable provider audit events', async () => {
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:157:      const providerId = randomUUID();
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:160:        `INSERT INTO provider.organizations (id, pathway, created_by_identity_id)
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:162:        [providerId, identityId],
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:164:      const audit = await client.query<{ action: string; provider_id: string }>(
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:165:        `SELECT action, provider_id
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:167:         WHERE resource_type = 'provider_organization' AND resource_id = $1`,
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:168:        [providerId],
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:171:        action: 'provider_organization_created',
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:172:        provider_id: providerId,
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:178:           WHERE resource_type = 'provider_organization' AND resource_id = $1`,
+backend/direkt-api/test/integration/provider-category.integration.spec.ts:179:          [providerId],
+backend/direkt-api/test/integration/database.integration.spec.ts:23:      idempotency_table: string | null;
+backend/direkt-api/test/integration/database.integration.spec.ts:29:        to_regclass('platform.idempotency_keys')::text AS idempotency_table
+backend/direkt-api/test/integration/database.integration.spec.ts:35:      idempotency_table: 'platform.idempotency_keys',
+backend/direkt-api/test/integration/role-contact-audit.integration.spec.ts:67:  it('records contact verification when a verified contact is first inserted', async () => {
+backend/direkt-api/test/integration/provider-review-regressions.integration.spec.ts:6:describe('Phase 3 provider review regressions', () => {
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:8:  providerId: string;
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:14:  evidenceId: string;
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:20:  const providerId = randomUUID();
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:23:  const uploadSessionId = randomUUID();
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:24:  const evidenceId = randomUUID();
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:44:    `INSERT INTO provider.organizations (
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:46:     ) VALUES ($1, 'registered_business', $2, 'ready_for_verification')`,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:47:    [providerId, ownerId],
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:50:    `INSERT INTO provider.profiles (
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:51:       provider_id,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:55:       service_area_summary,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:65:    [providerId],
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:68:    `INSERT INTO provider.category_selections (
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:69:       provider_id, category_id, requirement_version_id, status
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:71:    [providerId, categoryId, requirementVersionId],
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:82:    `INSERT INTO verification.cases (
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:84:       provider_id,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:99:    [caseId, providerId, categoryId, requirementVersionId, requirementId, ownerId],
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:101:  await client.query(`UPDATE verification.cases SET status = 'awaiting_evidence' WHERE id = $1`, [
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:105:    `INSERT INTO evidence.items (
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:106:       id, provider_id, requirement_id, submitted_by_identity_id, status, retention_class
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:108:    [evidenceId, providerId, requirementId, ownerId],
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:110:  const objectKey = `private/${providerId}/${uploadSessionId}/${randomUUID()}`;
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:112:    `INSERT INTO evidence.upload_sessions (
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:114:       provider_id,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:117:       evidence_class,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:138:    [uploadSessionId, providerId, requirementId, ownerId, objectKey],
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:141:    `INSERT INTO evidence.versions (
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:143:       evidence_id,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:145:       upload_session_id,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:147:       evidence_class,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:168:    [versionId, evidenceId, uploadSessionId, objectKey, 'a'.repeat(64), ownerId],
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:171:    `UPDATE evidence.items
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:174:    [evidenceId, versionId],
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:177:    `INSERT INTO verification.case_evidence (case_id, evidence_id, linked_by_identity_id)
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:179:    [caseId, evidenceId, ownerId],
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:181:  await client.query(`UPDATE verification.cases SET status = 'ready_for_review' WHERE id = $1`, [
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:185:    `INSERT INTO verification.assignments (
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:194:  await client.query(`UPDATE verification.cases SET status = 'assigned' WHERE id = $1`, [caseId]);
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:195:  await client.query(`UPDATE verification.cases SET status = 'in_review' WHERE id = $1`, [caseId]);
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:198:    providerId,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:204:    evidenceId,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:210:describe('Phase 4 verification and evidence schema', () => {
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:222:  it('creates private evidence, verification and safe claim-card boundaries', async () => {
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:224:      evidence_items: string | null;
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:225:      evidence_versions: string | null;
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:231:        to_regclass('evidence.items')::text AS evidence_items,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:232:        to_regclass('evidence.versions')::text AS evidence_versions,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:233:        to_regclass('verification.cases')::text AS cases,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:234:        to_regclass('verification.claims')::text AS claims,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:235:        to_regclass('verification.safe_claim_cards')::text AS safe_claim_cards
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:238:      evidence_items: 'evidence.items',
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:239:      evidence_versions: 'evidence.versions',
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:240:      cases: 'verification.cases',
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:241:      claims: 'verification.claims',
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:242:      safe_claim_cards: 'verification.safe_claim_cards',
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:248:       WHERE table_schema = 'verification' AND table_name = 'safe_claim_cards'`,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:257:  it('keeps evidence versions and decisions append-only and blocks direct claims', async () => {
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:265:        client.query(`UPDATE evidence.versions SET size_bytes = 4096 WHERE id = $1`, [
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:274:          `INSERT INTO verification.claims (
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:275:             provider_id,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:281:             evidence_class,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:295:          [fixture.providerId, fixture.caseId, randomUUID()],
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:305:  it('rejects provider self-review and finance-only assignments', async () => {
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:324:          `INSERT INTO verification.assignments (
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:326:           ) VALUES ($1, $2, 'reviewer', $2, 'Owner must not review their own provider evidence')`,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:329:      ).rejects.toThrow(/own provider/i);
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:335:          `INSERT INTO verification.assignments (
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:337:           ) VALUES ($1, $2, 'reviewer', $2, 'Finance must not receive verification decision scope')`,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:340:      ).rejects.toThrow(/required active verification role/i);
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:354:        `INSERT INTO verification.recommendations (
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:367:           'The synthetic private evidence satisfies the scoped identity checklist.',
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:374:        `SELECT verification.record_decision(
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:395:         FROM verification.safe_claim_cards
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:396:         WHERE provider_id = $1`,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:397:        [fixture.providerId],
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:405:        `SELECT verification.degrade_expired_claims(now() + interval '2 days') AS affected`,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:410:        `SELECT status FROM verification.safe_claim_cards WHERE provider_id = $1`,
+backend/direkt-api/test/integration/verification-evidence.integration.spec.ts:411:        [fixture.providerId],
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:8:import { VerificationEvidenceRepository } from '../../src/verification-evidence/verification-evidence.repository';
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:31:    const providerId = randomUUID();
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:39:      `INSERT INTO provider.organizations (
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:41:       ) VALUES ($1, 'registered_business', $2, 'ready_for_verification')`,
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:42:      [providerId, ownerId],
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:45:      `INSERT INTO provider.profiles (
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:46:         provider_id,
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:50:         service_area_summary,
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:54:        providerId,
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:62:      `INSERT INTO provider.category_selections (
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:63:         provider_id, category_id, requirement_version_id
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:67:      [providerId],
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:70:    await expect(repository.resolveRequirement(providerId, undefined, 'identity')).rejects.toThrow(
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:74:      providerId,
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:102:      `INSERT INTO verification.cases (
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:104:         provider_id,
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:117:        providerId,
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:134:      `INSERT INTO verification.assignments (
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:146:        `INSERT INTO verification.recommendations (
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:155:        `SELECT verification.record_decision(
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:166:      `SELECT verification.record_decision(
+backend/direkt-api/test/integration/verification-review-regressions.integration.spec.ts:177:        `SELECT verification.record_decision(
+backend/direkt-api/test/unit/discovery.service.spec.ts:20:  evidenceClass: 'representative_identity',
+backend/direkt-api/test/unit/discovery.service.spec.ts:28:    public_provider_id: '00000000-0000-4000-8000-000000000801',
+backend/direkt-api/test/unit/discovery.service.spec.ts:29:    provider_id: '00000000-0000-4000-8000-000000000802',
+backend/direkt-api/test/unit/discovery.service.spec.ts:38:    service_area_geojson: { type: 'Polygon', coordinates: [] },
+backend/direkt-api/test/unit/discovery.service.spec.ts:39:    availability_state: 'available',
+backend/direkt-api/test/unit/discovery.service.spec.ts:43:    alt_text: 'Synthetic provider image',
+backend/direkt-api/test/unit/discovery.service.spec.ts:141:        availability_state: 'limited',
+backend/direkt-api/test/unit/discovery.service.spec.ts:157:    expect(hybrid.locationExplanation).toContain('separate public service area');
+backend/direkt-api/test/unit/discovery.service.spec.ts:163:    repository.searchRow.mockResolvedValue(discoveryRow({ public_provider_id: 'public-id' }));
+backend/direkt-api/test/unit/discovery.service.spec.ts:165:    repository.eligibility.mockResolvedValue([{ providerId: 'provider-id', eligible: true }]);
+backend/direkt-api/test/unit/discovery.service.spec.ts:172:      service.refreshPublication('provider-id', 'plumbing', 'phase5-v1'),
+backend/direkt-api/test/unit/discovery.service.spec.ts:178:      { providerId: 'provider-id', eligible: true },
+backend/direkt-api/test/unit/discovery.service.spec.ts:198:      path: '/providers/00000000-0000-4000-8000-000000000801',
+backend/direkt-api/test/unit/discovery.repository.spec.ts:8:    public_provider_id: '00000000-0000-4000-8000-000000000801',
+backend/direkt-api/test/unit/discovery.repository.spec.ts:9:    provider_id: '00000000-0000-4000-8000-000000000802',
+backend/direkt-api/test/unit/discovery.repository.spec.ts:18:    service_area_geojson: { type: 'Polygon', coordinates: [] },
+backend/direkt-api/test/unit/discovery.repository.spec.ts:19:    availability_state: 'available',
+backend/direkt-api/test/unit/discovery.repository.spec.ts:50:    query.mockResolvedValue({ rows: [searchRow(), searchRow({ public_provider_id: 'second' })] });
+backend/direkt-api/test/unit/discovery.repository.spec.ts:58:        availability: 'available',
+backend/direkt-api/test/unit/discovery.repository.spec.ts:72:    expect(sql).toContain('JOIN provider.organizations AS organizations');
+backend/direkt-api/test/unit/discovery.repository.spec.ts:95:      public_provider_id: '00000000-0000-4000-8000-000000000801',
+backend/direkt-api/test/unit/discovery.repository.spec.ts:109:          evidence_class: 'representative_identity',
+backend/direkt-api/test/unit/discovery.repository.spec.ts:122:        evidenceClass: 'representative_identity',
+backend/direkt-api/test/unit/discovery.repository.spec.ts:133:      repository.refreshPublication('provider-id', 'plumbing', 'phase5-v1'),
+backend/direkt-api/test/unit/discovery.repository.spec.ts:138:      repository.refreshPublication('provider-id', 'plumbing', 'phase5-v1'),
+backend/direkt-api/test/unit/discovery.repository.spec.ts:139:    ).rejects.toThrow('Publication policy returned no public provider identifier.');
+backend/direkt-api/test/unit/discovery.repository.spec.ts:149:          provider_id: 'mobile-provider',
+backend/direkt-api/test/unit/discovery.repository.spec.ts:153:          provider_status: 'ready_for_verification',
+backend/direkt-api/test/unit/discovery.repository.spec.ts:157:          has_service_area: true,
+backend/direkt-api/test/unit/discovery.repository.spec.ts:159:          public_provider_id: 'mobile-public',
+backend/direkt-api/test/unit/discovery.repository.spec.ts:164:          provider_id: 'fixed-provider',
+backend/direkt-api/test/unit/discovery.repository.spec.ts:168:          provider_status: 'draft',
+backend/direkt-api/test/unit/discovery.repository.spec.ts:172:          has_service_area: true,
+backend/direkt-api/test/unit/discovery.repository.spec.ts:174:          public_provider_id: null,
+backend/direkt-api/test/unit/discovery.repository.spec.ts:198:            public_provider_id: 'public-id',
+backend/direkt-api/test/unit/discovery.repository.spec.ts:213:      sharePath: '/providers/public-id',
+backend/direkt-api/test/unit/discovery.repository.spec.ts:217:      'INSERT INTO account.saved_public_providers',
+backend/direkt-api/test/unit/discovery.repository.spec.ts:232:  it('lists and removes saved providers', async () => {
+backend/direkt-api/test/unit/discovery.repository.spec.ts:239:          public_provider_id: 'public-id',
+backend/direkt-api/test/unit/authorization.service.spec.ts:37:  it('passes provider scope to the repository instead of trusting a client role', async () => {
+backend/direkt-api/test/unit/authorization.service.spec.ts:39:    const providerId = '00000000-0000-4000-8000-000000000303';
+backend/direkt-api/test/unit/authorization.service.spec.ts:41:    await service.assertPermission(actor, PERMISSIONS.PROVIDER_PROFILE_MANAGE, { providerId });
+backend/direkt-api/test/unit/authorization.service.spec.ts:42:    expect(snapshot).toHaveBeenCalledWith(actor.identityId, providerId);
+backend/direkt-api/test/unit/authorization.service.spec.ts:45:  it('denies evidence self-approval even when a role has final-decision permission', async () => {
+backend/direkt-api/test/unit/authorization.service.spec.ts:60:  it('keeps field-agent and finance roles from final verification decisions', async () => {
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/provider/ProviderDraftTest.kt:1:package com.kudzimusar.direkt.ui.provider
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/provider/ProviderDraftTest.kt:9:    fun `provider drafts are never discoverable in Phase 3`() {
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/provider/ProviderDraftTest.kt:33:    fun `draft may move to ready for verification but not suspended`() {
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/DirektAppStateTest.kt:16:    fun `switching to provider mode resets to account foundation`() {
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModelsTest.kt:30:    fun `mobile provider is matched by service area and has no distance or public point`() {
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModelsTest.kt:31:        val provider = syntheticDiscoveryProviders.first {
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModelsTest.kt:35:        assertNull(provider.publicPremises)
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModelsTest.kt:36:        assertNull(provider.distanceKm)
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModelsTest.kt:37:        assertEquals("Matched by service area", provider.distanceLabel())
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModelsTest.kt:38:        assertFalse(provider.containsPrivateCoordinates)
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModelsTest.kt:39:        assertFalse(provider.containsRealProviderData)
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModelsTest.kt:43:    fun `fixed and hybrid providers expose only synthetic public premises`() {
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModelsTest.kt:58:                availabilityOnly = true,
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModelsTest.kt:80:        assertTrue(noImageProvider.sharePath.startsWith("/providers/"))
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModelsTest.kt:84:    fun `empty filters return no fabricated provider`() {
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModelsTest.kt:98:        assertTrue(claims.none { it.statement.equals("Verified provider", ignoreCase = true) })
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/verification/VerificationModelsTest.kt:1:package com.kudzimusar.direkt.ui.verification
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/verification/VerificationModelsTest.kt:10:    fun `synthetic case contains no real evidence and is not discoverable`() {
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/verification/VerificationModelsTest.kt:16:    fun `replacement history preserves two evidence versions`() {
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/verification/VerificationModelsTest.kt:17:        assertEquals(listOf(1, 2), syntheticVerificationCase.evidenceVersions.map { it.version })
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/verification/VerificationModelsTest.kt:20:            syntheticVerificationCase.evidenceVersions.first().state,
+android/direkt-app/app/src/test/java/com/kudzimusar/direkt/ui/verification/VerificationModelsTest.kt:22:        assertEquals(EvidenceState.Approved, syntheticVerificationCase.evidenceVersions.last().state)
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/provider/ProviderDraft.kt:1:package com.kudzimusar.direkt.ui.provider
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/provider/ProviderDraft.kt:6:    ExperiencedInformal("Experienced informal provider"),
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/provider/ProviderDraft.kt:17:    ReadyForVerification("Ready for verification"),
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:34:    val providers = filteredSyntheticProviders(state)
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:49:    if (providers.isEmpty()) {
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:58:            providers.forEach { provider ->
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:59:                PublicProviderResultCard(provider = provider, imageMode = state.imageMode)
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:63:        SyntheticMapCard(providers = providers)
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:77:        Text("2. Filter by service, availability and specific claim cards.")
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:90:        Text("Saved providers", style = MaterialTheme.typography.titleLarge)
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:91:        val saved = syntheticDiscoveryProviders.filter { provider -> provider.saved }
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:93:            Text("No saved providers yet. Saving is optional and uses only a public provider ID.")
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:95:            saved.forEach { provider ->
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:96:                Text(provider.displayName, fontWeight = FontWeight.Bold)
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:97:                Text("${provider.category} · ${provider.locality}")
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:98:                Text("Share-safe path: ${provider.sharePath}")
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:100:                    "No private address or evidence is included.",
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:159:                Text("Synthetic availability only", style = MaterialTheme.typography.bodySmall)
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:162:                checked = state.availabilityOnly,
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:163:                onCheckedChange = { checked -> onStateChange(state.copy(availabilityOnly = checked)) },
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:210:    provider: SyntheticPublicProvider,
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:218:                    "${provider.displayName}, ${provider.category}, ${provider.operatingModel.label}, ${provider.distanceLabel()}"
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:220:            .testTag("provider-${provider.publicId}"),
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:227:            Text(provider.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:228:            Text("${provider.category} · ${provider.operatingModel.label}")
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:229:            Text(provider.locality)
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:230:            Text(provider.distanceLabel(), fontWeight = FontWeight.SemiBold)
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:231:            Text("Availability: ${provider.availability}")
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:234:                DiscoveryImageMode.LowBandwidth -> provider.image.lowBandwidthLabel
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:235:                DiscoveryImageMode.Standard -> provider.image.standardLabel ?: provider.image.lowBandwidthLabel
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:240:                provider.image.altText?.let { altText ->
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:250:            provider.reasons.forEach { reason ->
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:253:            provider.claims.forEach { claim ->
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:257:                Button(onClick = {}) { Text(if (provider.saved) "Saved" else "Save") }
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:261:                "Public ID only: ${provider.publicId}",
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:280:private fun SyntheticMapCard(providers: List<SyntheticPublicProvider>) {
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:284:            "No map SDK or production coordinates are connected. Markers use consented public premises only; mobile providers show service areas.",
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:287:        providers.forEach { provider ->
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:288:            val marker = if (provider.publicPremises == null) {
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:289:                "Service area: ${provider.serviceAreaLabel}"
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:291:                "Public premises marker in ${provider.locality}"
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:293:            Text("• ${provider.displayName} — $marker")
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:301:        Text("No matching providers", style = MaterialTheme.typography.titleMedium)
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:306:            "DIREKT does not invent providers to fill empty results.",
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt:318:            "All providers, coordinates, images and availability states in this build are fictional. No real maps, customer location, public indexing or provider traffic is connected.",
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:52:    val availability: String,
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:58:    val sharePath: String = "/providers/$publicId"
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:63:        operatingModel == PublicOperatingModel.Mobile -> "Matched by service area"
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:75:    val availabilityOnly: Boolean = false,
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:94:        availability = "Available",
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:105:                limitation = "This does not guarantee price, availability or the outcome of future work.",
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:126:        locality = "Lusaka Central service area",
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:130:        availability = "Limited",
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:151:        availability = "Available",
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:171:    providers: List<SyntheticPublicProvider> = syntheticDiscoveryProviders,
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:172:): List<SyntheticPublicProvider> = providers
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:173:    .filter { provider -> provider.category == state.category }
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:174:    .filter { provider ->
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:176:            provider.displayName.contains(state.query, ignoreCase = true) ||
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:177:            provider.locality.contains(state.query, ignoreCase = true)
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:179:    .filter { provider -> !state.availabilityOnly || provider.availability == "Available" }
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:180:    .filter { provider ->
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:181:        state.claimFilter == null || provider.claims.any { claim -> claim.key == state.claimFilter }
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:184:        compareBy<SyntheticPublicProvider> { provider -> provider.distanceKm == null }
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:185:            .thenBy { provider -> provider.distanceKm ?: Double.MAX_VALUE }
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:186:            .thenBy { provider -> provider.displayName }
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt:187:            .thenBy { provider -> provider.publicId },
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/DirektApp.kt:33:import com.kudzimusar.direkt.ui.provider.ProviderDraft
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/DirektApp.kt:34:import com.kudzimusar.direkt.ui.provider.syntheticProviderDraft
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/DirektApp.kt:35:import com.kudzimusar.direkt.ui.verification.ScopedClaimCardView
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/DirektApp.kt:36:import com.kudzimusar.direkt.ui.verification.VerificationTimelineCard
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/DirektApp.kt:112:                            body = "Phase 5 supports discovery, saves and share-safe metadata only. No provider contact is exposed.",
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/DirektApp.kt:147:            text = "Mode is a presentation context only. Backend identity, role, provider, case and publication policy remain authoritative.",
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/DirektApp.kt:183:            text = "A provider draft, payment or client action cannot create a discovery listing. Phase 5 search consumes only eligible safe projections.",
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/DirektApp.kt:195:        Text("Identity evidence · private review")
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/DirektApp.kt:217:                "No real evidence, private address, production storage, map credential, payment, regulator or public traffic is connected.",
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/DirektApp.kt:250:        DirektDestination.Discover -> "Find a provider"
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/DirektApp.kt:251:        DirektDestination.Saved -> "Saved providers"
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/DirektApp.kt:257:        DirektDestination.Saved -> "Private evidence"
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/DirektApp.kt:259:        DirektDestination.Account -> "Provider verification"
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/DirektApp.kt:265:        "Search fictional, policy-eligible providers using manual area or a one-time location model."
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/DirektApp.kt:267:        "Review the existing fictional private-evidence timeline and scoped, expiring claim cards."
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/verification/VerificationCards.kt:1:package com.kudzimusar.direkt.ui.verification
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/verification/VerificationCards.kt:22:    verificationCase: SyntheticVerificationCase = syntheticVerificationCase,
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/verification/VerificationCards.kt:36:                    text = verificationCase.checkName,
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/verification/VerificationCards.kt:41:                    text = verificationCase.requirementVersion,
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/verification/VerificationCards.kt:48:                label = { Text(verificationCase.caseState.label) },
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/verification/VerificationCards.kt:50:            verificationCase.evidenceVersions.forEach { version ->
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/verification/VerificationCards.kt:63:            verificationCase.timeline.forEach { item ->
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/verification/VerificationCards.kt:83:                text = "Original evidence is private and is never shown in this synthetic build.",
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/verification/VerificationCards.kt:116:                text = "A claim is derived from a specific decision and expires automatically. It is not a blanket provider guarantee.",
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/verification/VerificationModels.kt:1:package com.kudzimusar.direkt.ui.verification
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/verification/VerificationModels.kt:14:    AwaitingEvidence("Awaiting evidence"),
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/verification/VerificationModels.kt:28:    val evidenceClass: String,
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/verification/VerificationModels.kt:60:    val evidenceVersions: List<EvidenceVersionSummary>,
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/verification/VerificationModels.kt:72:    evidenceVersions = listOf(
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/verification/VerificationModels.kt:76:            evidenceClass = "Identity",
+android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/verification/VerificationModels.kt:83:            evidenceClass = "Identity",
+android/direkt-app/app/src/androidTest/java/com/kudzimusar/direkt/DirektAppSmokeTest.kt:19:        composeRule.onNodeWithText("Find a provider").assertIsDisplayed()
+admin/direkt-operations-portal/src/lib/session.ts:24:    'operations.providers.read',
+admin/direkt-operations-portal/src/lib/session.ts:25:    'evidence.read.private',
+admin/direkt-operations-portal/src/lib/session.ts:26:    'verification.case.read',
+admin/direkt-operations-portal/src/lib/session.ts:27:    'verification.case.review',
+admin/direkt-operations-portal/src/lib/session.ts:28:    'verification.final_decision',
+admin/direkt-operations-portal/src/lib/session.ts:29:    'verification.claim.read',
+admin/direkt-operations-portal/src/lib/navigation.ts:19:    href: '/operations/providers',
+admin/direkt-operations-portal/src/lib/navigation.ts:20:    permission: 'operations.providers.read',
+admin/direkt-operations-portal/src/lib/navigation.ts:25:    href: '/operations/verification',
+admin/direkt-operations-portal/src/lib/navigation.ts:26:    permission: 'verification.case.review',
+admin/direkt-operations-portal/src/lib/navigation.ts:38:    permission: 'verification.field_visit.record',
+admin/direkt-operations-portal/src/lib/navigation.ts:50:    permission: 'trust.provider.suspend',
+admin/direkt-operations-portal/src/components/operations-shell.tsx:56:            Synthetic interface only. No real accounts, provider data, evidence, decisions or
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:16:    pathway: 'Experienced informal provider',
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:18:    locality: 'Lusaka District service area',
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:20:    status: 'Ready for verification',
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:26:    <section aria-labelledby="provider-drafts-heading">
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:27:      <p className="eyebrow">Phase 3 internal workspace</p>
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:28:      <h1 id="provider-drafts-heading">Provider drafts</h1>
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:30:        This synthetic queue demonstrates private provider profiles, pathways, operating models and
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:31:        pinned category versions. It cannot publish a provider or display private evidence.
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:35:        className="provider-table"
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:37:        aria-label="Synthetic provider drafts"
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:53:            {syntheticProviders.map((provider) => (
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:54:              <tr key={provider.name}>
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:55:                <th scope="row">{provider.name}</th>
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:56:                <td>{provider.pathway}</td>
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:57:                <td>{provider.operatingModel}</td>
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:58:                <td>{provider.locality}</td>
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:59:                <td>{provider.category}</td>
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:60:                <td>{provider.status}</td>
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:70:      <section className="control-panel" aria-labelledby="provider-controls-heading">
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:71:        <h2 id="provider-controls-heading">Enforced boundaries</h2>
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:74:          <li>Representatives receive server-owned provider-scoped assignments.</li>
+admin/direkt-operations-portal/src/app/operations/providers/page.tsx:77:          <li>Evidence and verification decisions begin in Phase 4.</li>
+admin/direkt-operations-portal/src/app/operations/page.tsx:14:    note: 'Separate fictional checks with assignment, evidence-version and reason-code history.',
+admin/direkt-operations-portal/src/app/operations/page.tsx:29:        This checkpoint adds a bounded private verification queue while preserving server-owned
+admin/direkt-operations-portal/src/app/operations/page.tsx:30:        sessions, provider scope, case assignments and deny-by-default authorization.
+admin/direkt-operations-portal/src/app/operations/page.tsx:48:          <li>Recommendations, decisions and evidence versions are append-only.</li>
+admin/direkt-operations-portal/src/app/operations/page.tsx:50:          <li>Expired or revoked evidence degrades dependent claims deterministically.</li>
+admin/direkt-operations-portal/src/app/operations/discovery/page.tsx:7:    provider: 'Synthetic Woodlands Plumbing',
+admin/direkt-operations-portal/src/app/operations/discovery/page.tsx:11:    locationState: 'Consented public premises and public service area',
+admin/direkt-operations-portal/src/app/operations/discovery/page.tsx:17:    provider: 'Synthetic Mobile Plumber',
+admin/direkt-operations-portal/src/app/operations/discovery/page.tsx:20:    locality: 'Lusaka Central service area',
+admin/direkt-operations-portal/src/app/operations/discovery/page.tsx:21:    locationState: 'Public service area only; private base excluded',
+admin/direkt-operations-portal/src/app/operations/discovery/page.tsx:27:    provider: 'Synthetic Expired Repairs',
+admin/direkt-operations-portal/src/app/operations/discovery/page.tsx:31:    locationState: 'Consented public premises and public service area',
+admin/direkt-operations-portal/src/app/operations/discovery/page.tsx:44:        Inspect whether fictional provider/category projections satisfy current publication policy.
+admin/direkt-operations-portal/src/app/operations/discovery/page.tsx:45:        This page contains no private coordinates, original evidence, storage references or customer
+admin/direkt-operations-portal/src/app/operations/discovery/page.tsx:51:          <article className="queue-card" key={`${item.provider}-${item.category}`}>
+admin/direkt-operations-portal/src/app/operations/discovery/page.tsx:55:                <h2>{item.provider}</h2>
+admin/direkt-operations-portal/src/app/operations/discovery/page.tsx:87:          <li>Direct row edits, payment and profile completion cannot publish a provider.</li>
+admin/direkt-operations-portal/src/app/operations/discovery/page.tsx:88:          <li>Stale or revoked mandatory claims remove the provider from public search.</li>
+admin/direkt-operations-portal/src/app/operations/discovery/page.tsx:89:          <li>Mobile providers expose service areas, never distance from a private base.</li>
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:8:    provider: 'Synthetic Phase 4 Repairs',
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:13:    evidence: '2 immutable metadata versions',
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:17:    provider: 'Synthetic Mobile Mechanic',
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:22:    evidence: '1 private metadata version',
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:28:    <section aria-labelledby="verification-queue-heading">
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:29:      <p className="eyebrow">Phase 4 internal workspace</p>
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:30:      <h1 id="verification-queue-heading">Verification queue</h1>
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:32:        This synthetic queue demonstrates separate evidence-backed checks, assignment boundaries,
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:33:        immutable review history and expiring claim output. It contains no real provider evidence.
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:37:        className="provider-table"
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:39:        aria-label="Synthetic verification cases"
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:55:            {syntheticCases.map((verificationCase) => (
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:56:              <tr key={verificationCase.caseId}>
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:57:                <th scope="row">{verificationCase.caseId}</th>
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:58:                <td>{verificationCase.provider}</td>
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:59:                <td>{verificationCase.check}</td>
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:60:                <td>{verificationCase.requirement}</td>
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:61:                <td>{verificationCase.evidence}</td>
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:62:                <td>{verificationCase.risk}</td>
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:63:                <td>{verificationCase.status}</td>
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:78:            <dt>Current evidence version</dt>
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:104:      <section className="control-panel" aria-labelledby="verification-controls-heading">
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:105:        <h2 id="verification-controls-heading">Enforced controls</h2>
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:107:          <li>A reviewer must be actively assigned before private evidence access is granted.</li>
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:108:          <li>A provider owner cannot review their own provider or evidence submission.</li>
+admin/direkt-operations-portal/src/app/operations/verification/page.tsx:109:          <li>Finance and commercial state cannot create or improve a verification claim.</li>
+admin/direkt-operations-portal/src/app/sign-in/page.tsx:13:          Synthetic Phase 2C screen. No SMS, email or identity provider is connected.
+admin/direkt-operations-portal/src/app/sign-in/page.tsx:26:            Production privileged access will require an approved passwordless provider and MFA.
