@@ -9,7 +9,7 @@ Scores use probability (P) and impact (I) from 1–5. Priority is `P × I`.
 | R-003 | Exact home location exposes provider safety risk | 3 | 5 | 15 | service areas, reduced public precision, consent, private evidence | Security / controlled |
 | R-004 | Field-agent collusion or bribery | 3 | 5 | 15 | assignment controls, structured evidence, audit, random rechecks, four-eyes approval | Operations / pilot gate |
 | R-005 | Stale business pins and expired evidence | 4 | 4 | 16 | renewal, customer reports, periodic checks, automatic claim degradation | Trust / open |
-| R-006 | Low bandwidth causes failed onboarding/uploads | 4 | 4 | 16 | compression, recoverable uploads, local drafts, WorkManager | Android / planned |
+| R-006 | Low bandwidth causes failed onboarding/uploads | 3 | 4 | 12 | persistent logical upload intent, fresh retry sessions, safe local recovery state, text-first Android UI; WorkManager and real-device validation before pilot | Android / controlled for synthetic phase |
 | R-007 | Provider documents leak from public repository or storage | 2 | 5 | 10 | private buckets, signed access, secret scan, synthetic fixtures | Security / controlled |
 | R-008 | Contact moves off-platform and reduces accountability | 4 | 3 | 12 | tracked enquiry before handoff, follow-up and review eligibility | Product / open |
 | R-009 | Mobile-money integration creates reconciliation errors | 3 | 5 | 15 | adapter, idempotent webhooks, ledger, reconciliation, exception queue | Finance / Phase 9 gate |
@@ -53,22 +53,29 @@ Scores use probability (P) and impact (I) from 1–5. Priority is `P × I`.
 | R-047 | Saved-provider lists retain ineligible or withdrawn providers | 3 | 4 | 12 | re-evaluate publication, organization, category/version and claim eligibility on save and every saved-list read | Product/backend / controlled |
 | R-048 | Map/vendor outage, cost or permission denial makes discovery unusable | 3 | 4 | 12 | manual area path, list mode, adapter boundary, no background location and production vendor gate | Android/architecture / open |
 | R-049 | Sparse supply or aggressive filters produce empty results that mislead customers | 4 | 3 | 12 | bounded no-results recovery, transparent filters, sparse/empty synthetic states and no fabricated providers | Product/growth / open |
+| R-050 | Client-selected or ambiguous provider context causes cross-provider workspace access | 2 | 5 | 10 | actor-resolved assignment, double authorization lookup, zero/multiple-assignment rejection and revocation regressions | Security/backend / controlled |
+| R-051 | Interrupted retries create duplicate evidence or link to the wrong case | 2 | 5 | 10 | logical intent key, attempt/session linkage triggers, one version per session, case/provider/requirement lifecycle validation and rollback tests | Trust/backend / controlled |
+| R-052 | Provider timeline or operations readiness leaks reviewer or evidence data | 2 | 5 | 10 | dedicated allowlisted projections, aggregate counts, explicit non-exposure flags and serialization tests | Privacy/operations / controlled |
+| R-053 | Android recovery persistence stores sensitive evidence or bearer-like data | 3 | 5 | 15 | metadata-only synthetic snapshot, no bytes/URI/hash/object key/token, corruption-safe fallback; encrypted storage required before real evidence | Android/security / production gate |
+| R-054 | Phase 6 accidentally implements enquiry, review or payment mutations | 2 | 4 | 8 | explicit read-only endpoints, absent mutation routes, Phase 8/9 ownership copy and HTTP regressions | Product/architecture / controlled |
 
 ## Current treatment priorities
 
-Phase 5 exit controls are complete:
+Phase 6 exit controls are implemented for the synthetic checkpoint:
 
-- R-003 and R-046 are controlled by separate private/public/service-area geometry and public serialization regressions;
-- R-005, R-042 and R-045 are controlled by current-claim and live eligibility checks;
-- R-011 and R-049 have explicit empty/sparse/no-results states without fabricated supply;
-- R-027 remains controlled through synthetic fixtures and build labelling;
-- R-035, R-044 and R-047 have database/API/Android tests for safe publication and saves.
+- R-006 is reduced through persistent logical upload state, retry sessions, process-recreation tests and text-first UI;
+- R-038 and R-050 are controlled by actor-resolved provider scope, revocation checks and cross-provider tests;
+- R-051 is controlled by database linkage triggers, transactional rollback and idempotent recovery tests;
+- R-052 is controlled by provider-safe timeline and aggregate operations projections;
+- R-054 is controlled by explicit read-only Phase 8/9 boundaries and missing mutation routes;
+- R-003, R-035 and R-046 remain protected by separate location models and publication-policy independence.
 
-Before Phase 6 or production integration:
+Before production integration:
 
-- R-006 requires durable local drafts, retry and upload recovery in the provider workspace;
+- R-006 still requires WorkManager/network implementation and representative low-connectivity device validation;
 - R-014 and R-048 require an approved map/location provider, quotas, cost controls and manual fallback validation;
 - R-039, R-042 and R-043 require production storage, scheduler, scanning, alerting and recovery validation;
+- R-053 requires approved encrypted Android storage, secure file handling and deletion tests;
 - R-045 requires production monitoring for stale or policy-invalid publication rows.
 
 Before the controlled pilot:
