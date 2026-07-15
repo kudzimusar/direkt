@@ -27,6 +27,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.kudzimusar.direkt.ui.discovery.CustomerDiscoveryExperience
+import com.kudzimusar.direkt.ui.discovery.CustomerOnboardingExperience
+import com.kudzimusar.direkt.ui.discovery.SavedProvidersExperience
 import com.kudzimusar.direkt.ui.provider.ProviderDraft
 import com.kudzimusar.direkt.ui.provider.syntheticProviderDraft
 import com.kudzimusar.direkt.ui.verification.ScopedClaimCardView
@@ -47,7 +50,7 @@ fun DirektApp(
                     Column {
                         Text("DIREKT", fontWeight = FontWeight.Bold)
                         Text(
-                            text = "Phase 4 — synthetic private verification",
+                            text = "Phase 5 — synthetic customer discovery",
                             style = MaterialTheme.typography.labelSmall,
                         )
                     }
@@ -98,17 +101,24 @@ fun DirektApp(
                 )
             }
 
-            if (appState.mode == DirektMode.Customer && appState.destination == DirektDestination.Discover) {
-                item { NoPublicDirectoryCard() }
-                item { TrustBoundaryCard() }
-            } else if (appState.mode == DirektMode.Provider) {
+            if (appState.mode == DirektMode.Customer) {
+                when (appState.destination) {
+                    DirektDestination.Discover -> item { CustomerDiscoveryExperience() }
+                    DirektDestination.Saved -> item { SavedProvidersExperience() }
+                    DirektDestination.Account -> item { CustomerOnboardingExperience() }
+                    DirektDestination.Enquiries -> item {
+                        PlaceholderCard(
+                            title = "Enquiries begin in Phase 8",
+                            body = "Phase 5 supports discovery, saves and share-safe metadata only. No provider contact is exposed.",
+                        )
+                    }
+                }
+            } else {
                 item { ProviderDraftCard(syntheticProviderDraft) }
                 item { CategoryRequirementsCard() }
                 item { VerificationTimelineCard() }
                 item { ScopedClaimCardView() }
-                item { TrustBoundaryCard() }
-            } else {
-                item { PlaceholderCard(appState.destination.label) }
+                item { ProviderBoundaryCard() }
             }
         }
     }
@@ -134,22 +144,7 @@ private fun ModeSelector(
             }
         }
         Text(
-            text = "Production access is resolved by backend identity, session, role, provider and case assignment. This switch grants no permission.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun NoPublicDirectoryCard() {
-    FoundationCard {
-        Text("Provider discovery is intentionally unavailable", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        Text("Phase 4 can derive scoped claim cards from private evidence decisions, but it does not publish providers.")
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = "Customer discovery begins in Phase 5 only after an explicit publication policy consumes current approved claims.",
+            text = "Mode is a presentation context only. Backend identity, role, provider, case and publication policy remain authoritative.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -180,12 +175,12 @@ private fun ProviderDraftCard(draft: ProviderDraft) {
         }
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "Publicly discoverable: No",
+            text = "Public publication is policy-controlled",
             color = MaterialTheme.colorScheme.tertiary,
             fontWeight = FontWeight.Bold,
         )
         Text(
-            text = "Profile fields are self-asserted draft data. Only separate evidence-derived claim cards can report a completed check.",
+            text = "A provider draft, payment or client action cannot create a discovery listing. Phase 5 search consumes only eligible safe projections.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -198,10 +193,10 @@ private fun CategoryRequirementsCard() {
         Text("Plumbing requirement version 1", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
         Text("Identity evidence · private review")
-        Text("Experience or qualification · separate future check")
+        Text("Experience or qualification · separate scoped check")
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "Activated category versions are immutable. Evidence replacements create new versions rather than rewriting history.",
+            text = "Every mandatory requirement needs a current claim before publication remains eligible.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -209,28 +204,31 @@ private fun CategoryRequirementsCard() {
 }
 
 @Composable
-private fun TrustBoundaryCard() {
+private fun ProviderBoundaryCard() {
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
         ),
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text("Phase 4 trust boundary", fontWeight = FontWeight.Bold)
+            Text("Provider trust boundary", fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(6.dp))
             Text(
-                "No real evidence, private address, document identifier, storage credential, public listing, payment, map, regulator or production system is connected.",
+                "No real evidence, private address, production storage, map credential, payment, regulator or public traffic is connected.",
             )
         }
     }
 }
 
 @Composable
-private fun PlaceholderCard(destination: String) {
+private fun PlaceholderCard(
+    title: String,
+    body: String,
+) {
     FoundationCard {
-        Text("$destination foundation", style = MaterialTheme.typography.titleMedium)
+        Text(title, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
-        Text("This destination remains outside the bounded Phase 4 verification and evidence vertical slice.")
+        Text(body)
     }
 }
 
@@ -248,7 +246,12 @@ private fun FoundationCard(content: @Composable () -> Unit) {
 }
 
 private fun screenTitle(appState: DirektAppState): String = when (appState.mode) {
-    DirektMode.Customer -> appState.destination.label
+    DirektMode.Customer -> when (appState.destination) {
+        DirektDestination.Discover -> "Find a provider"
+        DirektDestination.Saved -> "Saved providers"
+        DirektDestination.Enquiries -> "Enquiries"
+        DirektDestination.Account -> "Customer onboarding"
+    }
     DirektMode.Provider -> when (appState.destination) {
         DirektDestination.Discover -> "Provider overview"
         DirektDestination.Saved -> "Private evidence"
@@ -258,6 +261,8 @@ private fun screenTitle(appState: DirektAppState): String = when (appState.mode)
 }
 
 private fun screenSummary(appState: DirektAppState): String = when (appState.mode) {
-    DirektMode.Customer -> "Customer discovery remains blocked until the later publication and discovery phase."
-    DirektMode.Provider -> "Review a fictional private evidence timeline and scoped, expiring claim card."
+    DirektMode.Customer ->
+        "Search fictional, policy-eligible providers using manual area or a one-time location model."
+    DirektMode.Provider ->
+        "Review the existing fictional private-evidence timeline and scoped, expiring claim cards."
 }
