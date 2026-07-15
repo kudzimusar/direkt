@@ -1,0 +1,75 @@
+name: Phase 6A provider workspace verification
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - ".github/workflows/phase6-stage6a-verify.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: phase6-stage6a-verification
+  cancel-in-progress: false
+
+env:
+  NODE_ENV: test
+  DATABASE_URL: postgresql://direkt:direkt_ci@localhost:5432/direkt_test
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgis/postgis:18-3.6
+        env:
+          POSTGRES_DB: direkt_test
+          POSTGRES_USER: direkt
+          POSTGRES_PASSWORD: direkt_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U direkt -d direkt_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Check out Phase 6 branch
+        uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+
+      - name: Set up Node.js 24 LTS
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+
+      - name: Install, format and verify backend
+        working-directory: backend/direkt-api
+        run: |
+          npm ci --ignore-scripts
+          npm run format
+          npm run lint
+          npm run typecheck
+          npm run migration:check
+          npm run test
+          npm run build
+          npm run openapi:check
+
+      - name: Commit formatted Stage 6A source and remove helper
+        shell: bash
+        run: |
+          rm .github/workflows/phase6-stage6a-verify.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "feat: complete Phase 6A provider workspace contracts"
+          git push origin HEAD:build/android-v1
