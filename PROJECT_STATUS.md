@@ -1,9 +1,9 @@
 # DIREKT Project Status
 
-**Updated:** 2026-07-15  
+**Updated:** 2026-07-16  
 **Authoritative branch:** `main` for stable checkpoints  
 **Implementation branch:** `build/android-v1`  
-**Current programme state:** Phase 5 Android customer discovery is complete and stable. Phase 6 Android provider workspace is active under Issue #25.
+**Current programme state:** Phase 5 Android customer discovery is complete and stable. Phase 6 Android provider workspace is review-complete on an exact green implementation head and is awaiting final record validation and merge through PR #26.
 
 ## Current phase
 
@@ -20,12 +20,12 @@
 | API/integration planning checkpoint | Complete; PR #19 merged |
 | Phase 4 verification and private evidence engine | Complete; PR #21 merged and Issue #20 closed |
 | Phase 5 Android customer discovery | Complete; PR #24 merged and Issue #23 closed |
-| Phase 6 Android provider workspace | Active; Issue #25 |
+| Phase 6 Android provider workspace | Review complete; PR #26 final record validation pending |
 | Deferred Zambia pilot validation | Open as non-blocking Issue #5 |
 | Firebase tester distribution | Installed but intentionally deferred |
 | Public pilot | Not authorized |
 
-Issue #25 is the sole active implementation tracker. Issue #5 remains a deliberate later validation obligation and is not a current implementation blocker.
+Issue #25 remains the sole active implementation tracker until PR #26 merges. Issue #5 remains a deliberate later validation obligation and is not a current implementation blocker.
 
 ## Stable checkpoint record
 
@@ -173,7 +173,34 @@ Retained Android artifacts:
 
 Phase 5 delivered policy-controlled provider/category publication, distinct private/public/service-area location models, live provider/category/claim eligibility, public-safe PostGIS search and profiles, deterministic filters and opaque pagination, saves and sharing, Android list/map/profile and low-bandwidth states, operations eligibility visibility, and regression-tested exclusion of removed categories, suspended providers and stale claims.
 
-## Active Phase 6 scope
+### Phase 6 — Android provider workspace
+
+```text
+PR #26
+reviewed implementation head: aa10d727091c4e742f0a26c41b00daa07c5000ad
+merge commit: pending final record validation
+Issue #25: pending automatic closure on merge
+```
+
+Exact reviewed-head evidence:
+
+| Gate | Run | Result | Artifact SHA-256 |
+|---|---:|---|---|
+| Backend/PostGIS | #484 | Passed | `03f3997a885482443f74e0a5ce7c2a349c8068d00572d9aae4dcb97f0ab8462c` |
+| Android reports | #274 | Passed | `17937634afd4030b039d1de8b1155d483042892af51c053887e0e534027ffe0e` |
+| Operations portal | #259 | Passed | `a24e51790fcfda7d28398be71dffd033a84287497b71e30e8929021bc0fc6790` |
+| Documentation quality | #850 | Passed | `8b274470105372b1ed9c8e5b255d5693dec7350e3caa636ae22a06c25564e6d6` |
+
+Retained Android artifacts:
+
+| Artifact | SHA-256 |
+|---|---|
+| Debug APK | `bc5ea200789d66554fbd6ec213ee827c4012743c622fbc1fd07c68814a4c8952` |
+| Compose test APK | `c4ec8ce2d659527a55a1b4ba9414dc65846993ae2f257b7a3aff684c0b1f199c` |
+
+Phase 6 delivers actor-resolved provider scope, profile/services/location and availability management, private case/check-specific evidence capture, idempotent interrupted-upload recovery, provider-safe verification timeline, explicit Phase 8/9 read-only boundaries, native Android provider states, aggregate operations visibility and regression-tested confirmation/publication/privacy controls.
+
+## Phase 6 delivered scope
 
 Phase 6 implements:
 
