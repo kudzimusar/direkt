@@ -1,0 +1,58 @@
+name: Phase 5 review patch commit
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - ".github/workflows/phase5-review-fix-commit.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: phase5-review-patch-commit
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out current implementation branch
+        uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+
+      - name: Set up Node.js 24 LTS
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+
+      - name: Repair and apply reviewed patch
+        run: |
+          python3 .github/scripts/repair-phase5-review-runner.py
+          python3 .github/scripts/apply-phase5-review-fixes.py
+
+      - name: Install exact dependencies and format
+        working-directory: backend/direkt-api
+        run: |
+          npm ci --ignore-scripts
+          npm run format
+
+      - name: Commit reviewed source only
+        shell: bash
+        run: |
+          rm -f .github/scripts/apply-phase5-review-fixes.py
+          rm -f .github/scripts/repair-phase5-review-runner.py
+          rm -f .github/workflows/phase5-review-fix-runner.yml
+          rm -f .github/workflows/phase5-review-fix-commit.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "fix: close Phase 5 review regressions"
+          git push origin HEAD:build/android-v1
