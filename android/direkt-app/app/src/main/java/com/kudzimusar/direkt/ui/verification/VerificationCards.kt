@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -25,7 +26,9 @@ fun VerificationTimelineCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Column(Modifier.fillMaxWidth()) {
@@ -94,7 +97,10 @@ fun ScopedClaimCardView(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             Text("Scoped claim card", style = MaterialTheme.typography.labelLarge)
             Text(
                 claim.statement,
@@ -103,7 +109,7 @@ fun ScopedClaimCardView(
             )
             Text(claim.limitation, style = MaterialTheme.typography.bodyMedium)
             Text(
-                text = "Current state: ${claim.effectiveState(java.time.Instant.now())}",
+                text = "Current state: ${claim.effectiveState(System.currentTimeMillis())}",
                 style = MaterialTheme.typography.bodySmall,
             )
             Text(
