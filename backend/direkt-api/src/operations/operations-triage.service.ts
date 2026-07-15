@@ -35,13 +35,16 @@ export class OperationsTriageService {
       generatedAt: new Date().toISOString(),
       summary: {
         total: items.length,
-        critical: items.filter((item) => item.priorityBand === 'critical').length,
+        critical: items.filter((item) => item.priorityBand === 'critical')
+          .length,
         breached: items.filter((item) => item.slaState === 'breached').length,
         overdue: items.filter((item) => item.slaState === 'overdue').length,
         dueSoon: items.filter((item) => item.slaState === 'due_soon').length,
-        unassigned: items.filter((item) => item.ownership === 'unassigned').length,
+        unassigned: items.filter((item) => item.ownership === 'unassigned')
+          .length,
         highRisk: items.filter((item) => item.highRisk).length,
-        escalationRequired: items.filter((item) => item.escalationRequired).length,
+        escalationRequired: items.filter((item) => item.escalationRequired)
+          .length,
       },
       items,
       synthetic: true,
