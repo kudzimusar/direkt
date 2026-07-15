@@ -1,0 +1,38 @@
+name: DIREKT Phase 3 Format Once
+
+on:
+  push:
+    branches: [build/android-v1]
+    paths: [.github/workflows/phase3-format-once.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Format backend and portal
+        shell: bash
+        run: |
+          cd backend/direkt-api
+          npm ci --ignore-scripts --silent
+          npm run format -- --log-level silent
+          cd ../../admin/direkt-operations-portal
+          npm ci --ignore-scripts --silent
+          npm run format -- --log-level silent
+      - name: Commit formatting and remove this workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/phase3-format-once.yml
+          git add backend/direkt-api admin/direkt-operations-portal
+          git commit -m "style(phase3): normalize backend and portal source"
+          git push origin HEAD:build/android-v1
