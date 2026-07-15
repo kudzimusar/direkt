@@ -27,6 +27,7 @@ import { ProviderWorkspaceService } from './provider-workspace.service';
 import { ProviderWorkspaceUploadService } from './provider-workspace-upload.service';
 import type {
   ProviderWorkspaceSummary,
+  ProviderWorkspaceTimelineEventView,
   ProviderWorkspaceUploadGrantView,
   ProviderWorkspaceUploadIntentView,
 } from './provider-workspace.types';
@@ -48,6 +49,18 @@ export class ProviderWorkspaceController {
   })
   workspace(@Req() request: DirektRequest): Promise<ProviderWorkspaceSummary> {
     return this.service.workspace(request.actor);
+  }
+
+  @Get('me/verification-timeline')
+  @RequirePermission(PERMISSIONS.PROVIDER_PROFILE_READ, { providerFromActor: true })
+  @ApiOkResponse({
+    description:
+      'Returns provider-safe case, evidence, decision and claim events without reviewer identities, private rationale or storage references.',
+  })
+  verificationTimeline(
+    @Req() request: DirektRequest,
+  ): Promise<ProviderWorkspaceTimelineEventView[]> {
+    return this.service.timeline(request.actor);
   }
 
   @Patch('me/profile')
