@@ -72,9 +72,7 @@ describe('DiscoveryService', () => {
     repository.search.mockResolvedValue({ rows: [discoveryRow()], hasMore: true });
     repository.claims.mockResolvedValue([claim]);
 
-    await expect(service.categories()).resolves.toEqual([
-      { key: 'plumbing', name: 'Plumbing' },
-    ]);
+    await expect(service.categories()).resolves.toEqual([{ key: 'plumbing', name: 'Plumbing' }]);
     const response = await service.search({
       category: 'plumbing',
       area: ' Woodlands ',
@@ -116,9 +114,9 @@ describe('DiscoveryService', () => {
     await expect(service.search({ latitude: -15.42, limit: 20 })).rejects.toBeInstanceOf(
       BadRequestException,
     );
-    await expect(service.search({ cursor: 'not-a-valid-cursor', limit: 20 })).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(
+      service.search({ cursor: 'not-a-valid-cursor', limit: 20 }),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('describes fixed, mobile and hybrid public location boundaries and image fallbacks', async () => {
