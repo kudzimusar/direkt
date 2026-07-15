@@ -67,16 +67,17 @@ export class ProviderWorkspaceTimelineRepository {
            END AS event_type,
            cases.status AS case_status,
            items.status AS evidence_status,
-           items.evidence_class,
+           versions.evidence_class,
            NULL::text AS reason_code,
            NULL::text AS decision_result,
            NULL::text AS claim_status,
            NULL::text AS limitation,
-           items.expires_at AS valid_until,
-           items.created_at AS occurred_at
+           versions.expires_at AS valid_until,
+           versions.created_at AS occurred_at
          FROM provider_cases AS cases
          JOIN verification.case_evidence AS links ON links.case_id = cases.id
          JOIN evidence.items AS items ON items.id = links.evidence_id
+         JOIN evidence.versions AS versions ON versions.id = items.current_version_id
 
          UNION ALL
 
@@ -176,7 +177,7 @@ export class ProviderWorkspaceTimelineRepository {
         correction_required: 'Evidence correction required.',
         expired: 'Evidence expired and requires renewal.',
         revoked: 'Evidence was withdrawn from verification use.',
-        accepted: 'Evidence accepted for the scoped verification check.',
+        approved: 'Evidence accepted for the scoped verification check.',
       };
       return messages[row.evidence_status ?? ''] ?? 'Evidence status updated.';
     }
