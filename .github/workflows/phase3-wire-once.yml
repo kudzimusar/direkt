@@ -1,0 +1,85 @@
+name: DIREKT Phase 3 Wire Once
+
+on:
+  push:
+    branches: [build/android-v1]
+    paths: [.github/workflows/phase3-wire-once.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+      - name: Wire Phase 3 module, permissions and Android activity
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          app = Path('backend/direkt-api/src/app.module.ts')
+          text = app.read_text()
+          phase_import = "import { Phase3Module } from './phase3/phase3.module';\n"
+          if phase_import not in text:
+              imports = list(re.finditer(r'^import .*?;\n', text, re.M))
+              if not imports:
+                  raise SystemExit('No import statements found in app.module.ts')
+              text = text[:imports[-1].end()] + phase_import + text[imports[-1].end():]
+          match = re.search(r'imports\s*:\s*\[(.*?)\]', text, re.S)
+          if not match:
+              raise SystemExit('Nest module imports array not found')
+          if 'Phase3Module' not in match.group(1):
+              text = re.sub(r'(imports\s*:\s*\[)', r'\1\n    Phase3Module,', text, count=1)
+          app.write_text(text)
+
+          permissions = Path('backend/direkt-api/src/authorization/permissions.ts')
+          text = permissions.read_text()
+          if 'ACCOUNT_PROFILE_READ' not in text:
+              entries = """
+            ACCOUNT_PROFILE_READ: 'account.profile.read',
+            ACCOUNT_PROFILE_MANAGE: 'account.profile.manage',
+            PROVIDER_PROFILE_CREATE: 'provider.profile.create',
+            PROVIDER_PROFILE_READ: 'provider.profile.read',
+            PROVIDER_PROFILE_MANAGE: 'provider.profile.manage',
+            PROVIDER_REPRESENTATIVES_MANAGE: 'provider.representatives.manage',
+            PROVIDER_CATEGORIES_MANAGE: 'provider.categories.manage',
+            PROVIDER_PROFILE_TRANSITION: 'provider.profile.transition',
+            CATALOG_CATEGORIES_READ: 'catalog.categories.read',
+            CATALOG_CATEGORIES_MANAGE: 'catalog.categories.manage',
+          """
+              text = text.replace('export const PERMISSIONS = {', 'export const PERMISSIONS = {\n' + entries, 1)
+          permissions.write_text(text)
+
+          manifest = Path('android/direkt-app/app/src/main/AndroidManifest.xml')
+          text = manifest.read_text()
+          activity = '''
+                  <activity
+                      android:name=".phase3.ProviderCoreActivity"
+                      android:exported="false"
+                      android:label="DIREKT Provider Core" />
+          '''
+          if '.phase3.ProviderCoreActivity' not in text:
+              text = text.replace('</application>', activity + '    </application>', 1)
+          manifest.write_text(text)
+          PY
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Format backend source
+        working-directory: backend/direkt-api
+        run: |
+          npm ci --ignore-scripts --silent
+          npm run format -- --log-level silent
+      - name: Commit deterministic wiring
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/direkt-api/src/app.module.ts backend/direkt-api/src/authorization/permissions.ts android/direkt-app/app/src/main/AndroidManifest.xml backend/direkt-api/src/phase3
+          git commit -m "feat(phase3): wire provider core into authenticated runtimes"
+          git push origin HEAD:build/android-v1
