@@ -16,6 +16,6 @@ describe('OperationsShell accessibility contract', () => {
     expect(markup).toContain('id="main-content"');
     expect(markup).toContain('role="status"');
     expect(markup).toContain('Synthetic interface only');
-    expect(markup).toContain('aria-disabled="true"');
+    expect(markup).toContain('href="/operations/verification"');
   });
 });
