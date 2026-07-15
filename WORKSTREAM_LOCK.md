@@ -6,14 +6,15 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED |
+| Status | FINAL_VALIDATION |
 | Owner/agent | OpenAI GPT-5.6 Thinking — Phase 5 customer-discovery agent |
 | Phase | Phase 5 — Android customer discovery |
-| Task | Implement public-safe publication/search, privacy-preserving location and service-area models, deterministic discovery filters/ranking, and Android customer discovery states |
-| Modules/paths | `database`, `backend/direkt-api`, `android/direkt-app`, `admin/direkt-operations-portal`, `.github/workflows`, `docs/backend`, `docs/api`, `docs/android`, `docs/architecture`, `docs/security`, `docs/testing`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
+| Task | Validate the promoted Phase 5 programme record, merge reviewed PR #24, close Issue #23 and synchronize the implementation branch |
+| Modules/paths | `database`, `backend/direkt-api`, `android/direkt-app`, `admin/direkt-operations-portal`, `docs/backend`, `docs/testing`, `PROJECT_STATUS.md`, `WORKSTREAM_LOCK.md` |
 | Claimed at | 2026-07-15 after Phase 4 checkpoint promotion |
-| Expected handoff | Tested synthetic customer-discovery vertical slice with public-safe publication and location boundaries; deterministic PostGIS filters/pagination; Android list/map/profile/saves/share/no-location states; green permanent CI; reviewed checkpoint merged automatically |
+| Expected handoff | Merged and recorded synthetic customer-discovery vertical slice with public-safe publication/location boundaries, deterministic PostGIS search, Android discovery states, green permanent CI and resolved review findings |
 | Last clean checkpoint | `6317a48a35367e79a97bec5184a25af14dfac707` |
+| Reviewed implementation head | `4107aff54b098d299fd41dd60f63256150aab573` |
 | Governing issue | Issue #23 |
 
 ## Stable predecessor
@@ -33,6 +34,19 @@ Issue #20:                closed as completed
 
 Create a bounded, synthetic Android customer-discovery vertical slice that searches only eligible public-safe provider projections and current scoped claims while preserving provider/customer location privacy and functioning without device location or images.
 
+## Reviewed checkpoint evidence
+
+The Phase 5 implementation was reviewed and verified on exact source head `4107aff54b098d299fd41dd60f63256150aab573`.
+
+| Gate | Run | Result | Artifact SHA-256 |
+|---|---:|---|---|
+| Backend/PostGIS | #358 | Passed | `3e2a0ed7e7fcb69f8f6e48d57477c478b587cbf1cbcb71dd818d0ba05e666afb` |
+| Android reports | #221 | Passed | `074e99ea0a56ed0961db938f60daa2391fa9b53b129cdca4b9f33b8ce80131bc` |
+| Operations portal | #222 | Passed | `8b09068672e8011fc1d51dfb588aca809e0c65ef8568ee22594d6495b9a8a892` |
+| Documentation quality | #670 | Passed | `343c734aebec30755cf620c57f1d1a5309d930e6d82784bba56ce0c53e0fdc80` |
+
+All three automated review findings were repaired with permanent database/application regressions and their review threads are resolved. The current mutation promotes only the programme record and lock state; permanent CI must pass again on the resulting exact head before merge.
+
 ## Acceptance criteria
 
 The active owner must:
@@ -47,13 +61,15 @@ The active owner must:
 8. implement category, normalized text, distance where lawful, operating-model, availability and claim filters;
 9. handle fixed, mobile and hybrid providers without exposing or measuring from a private base;
 10. provide deterministic ordering, explainable allowlisted reason labels and opaque cursor pagination;
-11. exclude unpublished, hidden, suspended, stale, degraded, revoked or expired mandatory-claim providers;
+11. exclude unpublished, hidden, suspended, stale, degraded, revoked, expired or removed-category providers;
 12. provide safe provider profile/trust details, saves, sharing and low-bandwidth/image-free states;
 13. provide empty/sparse/populated/no-location/stale-claim Android states and no-results recovery without fabricated providers;
 14. add synthetic operations visibility into publication eligibility without private location/evidence;
 15. update OpenAPI, architecture, privacy, testing, decisions, risks and project status;
 16. obtain green backend/PostGIS, Android, portal and documentation workflows on one reviewed exact head;
 17. repair valid review findings with regressions, merge automatically, close Issue #23 and synchronize the build branch.
+
+Criteria 1–16 are satisfied on the reviewed implementation head. Criterion 17 remains active until the final record-validation head passes and PR #24 merges.
 
 ## Non-negotiable stop gates
 
@@ -69,14 +85,14 @@ The active owner must:
 
 ## Required regression evidence
 
-At minimum, prove:
+Phase 5 proves:
 
-- a public search/profile response cannot serialize private coordinates, evidence identifiers or reviewer notes;
+- public search/profile responses do not serialize private coordinates, evidence identifiers or reviewer notes;
 - fixed providers use only consented public premises for point distance;
 - mobile providers match by service area without a private-origin distance;
 - hybrid providers support both safe paths without leaking their private base;
 - manual/no-location search returns bounded deterministic results;
-- unpublished, suspended, hidden and stale-claim providers are excluded;
+- unpublished, suspended, hidden, removed-category and stale-claim providers are excluded;
 - direct row insertion cannot bypass publication eligibility;
 - multi-filter ordering and cursor pagination are stable;
 - search reasons are allowlisted and supported by data;
@@ -93,4 +109,4 @@ Original evidence, storage keys, identity numbers, signatures, private addresses
 
 ## Conflict rule
 
-A second agent must not modify the listed Phase 5 paths while this lock is claimed. Read-only review is allowed. A stale or ambiguous lock must be resolved explicitly rather than overwritten by assumption.
+A second agent must not modify the listed Phase 5 paths while this lock is in final validation. Read-only review is allowed. The lock is released only after PR #24 merges, Issue #23 closes and the implementation branch is synchronized.
