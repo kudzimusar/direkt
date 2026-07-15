@@ -13,24 +13,29 @@ function session(
     displayName: 'Synthetic operator',
     role,
     permissions,
-    expiresAt: '2026-07-15T01:00:00.000Z',
+    expiresAt: '2026-07-15T23:00:00.000Z',
     stepUpRequired: true,
   };
 }
 
 describe('visibleNavigation', () => {
-  it('shows reviewer provider drafts and planned verification work but not finance', () => {
-    const labels = visibleNavigation(
+  it('shows the available verification queue to an authorized reviewer but not finance', () => {
+    const items = visibleNavigation(
       session('reviewer', [
         'operations.portal.access',
         'operations.providers.read',
         'verification.case.review',
         'verification.final_decision',
       ]),
-    ).map((item) => item.label);
+    );
 
-    expect(labels).toEqual(['Mission control', 'Provider drafts', 'Verification queue']);
-    expect(labels).not.toContain('Finance');
+    expect(items.map((item) => item.label)).toEqual([
+      'Mission control',
+      'Provider drafts',
+      'Verification queue',
+    ]);
+    expect(items.find((item) => item.label === 'Verification queue')?.status).toBe('available');
+    expect(items.map((item) => item.label)).not.toContain('Finance');
   });
 
   it('keeps finance out of provider and verification controls', () => {

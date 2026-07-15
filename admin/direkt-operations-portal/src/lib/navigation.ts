@@ -24,7 +24,7 @@ const navigation: readonly NavigationItem[] = [
     label: 'Verification queue',
     href: '/operations/verification',
     permission: 'verification.case.review',
-    status: 'planned',
+    status: 'available',
   },
   {
     label: 'Field visits',

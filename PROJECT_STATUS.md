@@ -3,7 +3,7 @@
 **Updated:** 2026-07-15  
 **Authoritative branch:** `main` for stable checkpoints  
 **Implementation branch:** `build/android-v1`  
-**Current programme state:** Phase 3 identity, provider and category core is complete and stable. Phase 4 is not yet claimed.
+**Current programme state:** Phase 3 is complete and stable. Phase 4 verification and private evidence engine is active under Issue #20.
 
 ## Current phase
 
@@ -17,12 +17,13 @@
 | Phase 2B backend/PostGIS foundation | Complete; PR #13 merged and Issue #12 closed |
 | Phase 2C identity/auth/admin foundation | Complete; PR #15 merged and Issue #14 closed |
 | Phase 3 identity/provider/category core | Complete; PR #17 merged and Issue #16 closed |
-| Phase 4 verification and publication policy | Not claimed |
+| API/integration planning checkpoint | Complete; PR #19 merged |
+| Phase 4 verification and private evidence engine | Active; Issue #20 |
 | Deferred Zambia pilot validation | Open as non-blocking Issue #5 |
 | Firebase tester distribution | Installed but intentionally deferred |
 | Public pilot | Not authorized |
 
-Open issues represent either a deliberate future gate or a later validation obligation. Issue #5 is not a current implementation blocker.
+Issue #20 is the sole active implementation tracker. Issue #5 remains a deliberate later validation obligation and is not a current implementation blocker.
 
 ## Stable checkpoint record
 
@@ -104,30 +105,40 @@ Retained Android artifacts:
 | Debug APK | `f999086fb6fbc19b0af5c03d53907f49dc82e9db4606eff8c00a26ba2cff78f1` |
 | Compose test APK | `fb0c4d7742e248ea1f748b82c4b89228007466a0e222ca3f144a8864ed9859d5` |
 
-Phase 3 delivered:
+Phase 3 delivered separate human identities/provider organizations, provider pathways and operating models, non-public drafts, provider-scoped representatives, immutable category requirement versions, actor-attributed audit and a structurally empty public-directory boundary.
 
-- separate human identities and provider organizations;
-- registered-business, qualified-individual and experienced-informal pathways;
-- fixed-premises, mobile and hybrid operating models;
-- non-public provider drafts and validated lifecycle transitions;
-- provider-scoped representatives resolved server-side;
-- immutable active and retired category requirement versions;
-- actor-attributed append-only audit events;
-- synthetic Android and operations-portal states;
-- a structurally empty public-directory boundary.
+### API/integration planning checkpoint
 
-Review regressions prove that activated requirement versions reject inserts, updates and deletes, and that customer-profile domain constraint failures return HTTP 400 rather than an internal error.
+```text
+PR #19
+merge commit: 7736c0909130a3bfbbe993f26ecf28056a699315
+```
 
-## Phase 4 gate
+The repository now contains authoritative infrastructure/secrets and backend/frontend API plans. No production integration was activated.
 
-Phase 4 is not active. It may be claimed only through a new governing issue and workstream lock after its evidence, verification, publication, privacy and authorization boundaries are explicitly defined.
+## Active Phase 4 scope
 
-Public discoverability remains blocked. No provider may become discoverable through self-assertion, profile completion, payment, an administrator action, a direct database edit or a client request.
+Phase 4 will implement:
+
+- separate verification cases per provider/check/requirement version;
+- immutable private evidence versions and opaque storage references;
+- synthetic private-storage adapter behind a production interface;
+- authorized upload-session/completion flows;
+- reviewer queues, assignments and reason codes;
+- correction, rejection, replacement and resubmission;
+- renewal, revocation and optional field visits;
+- immutable recommendations and final decisions;
+- evidence-derived scoped claims with limitations and expiry;
+- deterministic expiry degradation;
+- synthetic Android and operations-portal verification states;
+- OpenAPI, database, audit, authorization and documentation updates.
+
+## Phase 4 stop gates
+
+No real evidence, real personal data, production storage credentials, public search, production OTP/maps/payments/regulator integrations, public pilot or production deployment is authorized.
+
+No provider may become publicly discoverable through self-assertion, profile completion, payment, administrator action, direct database editing or client request. Original evidence files, identity numbers, signatures, private addresses and reviewer notes must never enter public claim output.
 
 ## Deferred validation — not a current blocker
 
 Issue #5 retains representative Zambia interviews, real-device/connectivity testing, private inspection of real evidence, field-verification economics, qualified legal/privacy review, authority access, approved map/OTP/payment contracts and willingness-to-pay evidence.
-
-## GitHub lifecycle
-
-PR #17 was merged only after all permanent workflows passed on the same reviewed head, both review findings were regression-tested and resolved, Issue #16 closed automatically, and `build/android-v1` was fast-forwarded to the Phase 3 merge checkpoint without force-pushing.

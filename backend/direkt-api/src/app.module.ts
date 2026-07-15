@@ -10,6 +10,7 @@ import { HealthModule } from './platform/health/health.module';
 import { CorrelationIdMiddleware } from './platform/http/correlation-id.middleware';
 import { RequestLoggingMiddleware } from './platform/http/request-logging.middleware';
 import { ProviderModule } from './provider-core/provider.module';
+import { VerificationEvidenceModule } from './verification-evidence/verification-evidence.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ProviderModule } from './provider-core/provider.module';
     HealthModule,
     OperationsModule,
     ProviderModule,
+    VerificationEvidenceModule,
   ],
 })
 export class AppModule implements NestModule {

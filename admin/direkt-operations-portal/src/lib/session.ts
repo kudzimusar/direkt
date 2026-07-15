@@ -22,10 +22,13 @@ export const syntheticReviewerSession: OperationsSession = {
     'account.sessions.manage',
     'operations.portal.access',
     'operations.providers.read',
+    'evidence.read.private',
+    'verification.case.read',
     'verification.case.review',
     'verification.final_decision',
+    'verification.claim.read',
   ],
-  expiresAt: '2026-07-15T01:00:00.000Z',
+  expiresAt: '2026-07-15T23:00:00.000Z',
   stepUpRequired: true,
 };
 

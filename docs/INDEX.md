@@ -32,6 +32,10 @@ This index lists the authoritative planning and operating documents. Agents must
 - [Play Store Release](android/PLAY_STORE_RELEASE.md)
 - [State Management](android/STATE_MANAGEMENT.md)
 
+## API
+
+- [Backend/Frontend API Plan](api/BACKEND_FRONTEND_API_PLAN.md)
+
 ## Architecture
 
 - [Admin Portal Architecture](architecture/ADMIN_PORTAL_ARCHITECTURE.md)
@@ -52,6 +56,7 @@ This index lists the authoritative planning and operating documents. Agents must
 ## Backend
 
 - [Phase 2B Backend and Data Foundation](backend/PHASE_2B_FOUNDATION.md)
+- [Phase 4 Verification and Private Evidence Engine](backend/PHASE_4_VERIFICATION_EVIDENCE_ENGINE.md)
 - [Audit Logging](backend/AUDIT_LOGGING.md)
 - [Authentication and Authorization](backend/AUTHENTICATION_AND_AUTHORIZATION.md)
 - [Backend Functional Specification](backend/BACKEND_FUNCTIONAL_SPEC.md)
@@ -82,6 +87,10 @@ This index lists the authoritative planning and operating documents. Agents must
 ## General
 
 - [References](REFERENCES.md)
+
+## Integrations
+
+- [Integration and Secrets Plan](integrations/INTEGRATION_AND_SECRETS_PLAN.md)
 
 ## Legal
 

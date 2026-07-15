@@ -11,8 +11,8 @@ android {
         applicationId = "com.kudzimusar.direkt"
         minSdk = 23
         targetSdk = 36
-        versionCode = 3
-        versionName = "0.3.0-phase3"
+        versionCode = 4
+        versionName = "0.4.0-phase4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true

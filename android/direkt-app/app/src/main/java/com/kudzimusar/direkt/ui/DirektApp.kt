@@ -29,6 +29,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kudzimusar.direkt.ui.provider.ProviderDraft
 import com.kudzimusar.direkt.ui.provider.syntheticProviderDraft
+import com.kudzimusar.direkt.ui.verification.ScopedClaimCardView
+import com.kudzimusar.direkt.ui.verification.VerificationTimelineCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,7 +47,7 @@ fun DirektApp(
                     Column {
                         Text("DIREKT", fontWeight = FontWeight.Bold)
                         Text(
-                            text = "Phase 3 — synthetic provider drafts only",
+                            text = "Phase 4 — synthetic private verification",
                             style = MaterialTheme.typography.labelSmall,
                         )
                     }
@@ -102,6 +104,8 @@ fun DirektApp(
             } else if (appState.mode == DirektMode.Provider) {
                 item { ProviderDraftCard(syntheticProviderDraft) }
                 item { CategoryRequirementsCard() }
+                item { VerificationTimelineCard() }
+                item { ScopedClaimCardView() }
                 item { TrustBoundaryCard() }
             } else {
                 item { PlaceholderCard(appState.destination.label) }
@@ -130,7 +134,7 @@ private fun ModeSelector(
             }
         }
         Text(
-            text = "Production access is resolved by backend identity, session, role and provider scope. This switch grants no permission.",
+            text = "Production access is resolved by backend identity, session, role, provider and case assignment. This switch grants no permission.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -142,10 +146,10 @@ private fun NoPublicDirectoryCard() {
     FoundationCard {
         Text("Provider discovery is intentionally unavailable", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
-        Text("Phase 3 creates private provider drafts and category contracts. It cannot publish a provider.")
+        Text("Phase 4 can derive scoped claim cards from private evidence decisions, but it does not publish providers.")
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "Customer discovery begins only after Phase 4 derives approved claims from privately reviewed evidence.",
+            text = "Customer discovery begins in Phase 5 only after an explicit publication policy consumes current approved claims.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -181,7 +185,7 @@ private fun ProviderDraftCard(draft: ProviderDraft) {
             fontWeight = FontWeight.Bold,
         )
         Text(
-            text = "Profile fields are self-asserted draft data, not DIREKT verification or a workmanship guarantee.",
+            text = "Profile fields are self-asserted draft data. Only separate evidence-derived claim cards can report a completed check.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -193,11 +197,11 @@ private fun CategoryRequirementsCard() {
     FoundationCard {
         Text("Plumbing requirement version 1", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
-        Text("Identity evidence · required later")
-        Text("Experience or qualification · required later")
+        Text("Identity evidence · private review")
+        Text("Experience or qualification · separate future check")
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "Activated category versions are immutable. Evidence upload and review start in Phase 4.",
+            text = "Activated category versions are immutable. Evidence replacements create new versions rather than rewriting history.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -212,10 +216,10 @@ private fun TrustBoundaryCard() {
         ),
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text("Phase 3 trust boundary", fontWeight = FontWeight.Bold)
+            Text("Phase 4 trust boundary", fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(6.dp))
             Text(
-                "No real provider data, evidence, verification decision, public listing, payment, map, regulator or production credential is connected.",
+                "No real evidence, private address, document identifier, storage credential, public listing, payment, map, regulator or production system is connected.",
             )
         }
     }
@@ -226,7 +230,7 @@ private fun PlaceholderCard(destination: String) {
     FoundationCard {
         Text("$destination foundation", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
-        Text("This destination remains outside the bounded Phase 3 provider and category vertical slice.")
+        Text("This destination remains outside the bounded Phase 4 verification and evidence vertical slice.")
     }
 }
 
@@ -247,13 +251,13 @@ private fun screenTitle(appState: DirektAppState): String = when (appState.mode)
     DirektMode.Customer -> appState.destination.label
     DirektMode.Provider -> when (appState.destination) {
         DirektDestination.Discover -> "Provider overview"
-        DirektDestination.Saved -> "Provider profile"
-        DirektDestination.Enquiries -> "Provider representatives"
-        DirektDestination.Account -> "Provider draft"
+        DirektDestination.Saved -> "Private evidence"
+        DirektDestination.Enquiries -> "Verification timeline"
+        DirektDestination.Account -> "Provider verification"
     }
 }
 
 private fun screenSummary(appState: DirektAppState): String = when (appState.mode) {
-    DirektMode.Customer -> "Customer discovery remains blocked until evidence-derived publication exists."
-    DirektMode.Provider -> "Prepare a private provider draft, operating model and versioned category selection."
+    DirektMode.Customer -> "Customer discovery remains blocked until the later publication and discovery phase."
+    DirektMode.Provider -> "Review a fictional private evidence timeline and scoped, expiring claim card."
 }
