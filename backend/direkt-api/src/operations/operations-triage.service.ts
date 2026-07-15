@@ -4,7 +4,10 @@ import { AuthorizationService } from '../authorization/authorization.service';
 import type { RoleKey } from '../authorization/permissions';
 import type { OperationsTriageQueryDto } from './operations-triage.dto';
 import { OperationsTriageRepository } from './operations-triage.repository';
-import type { OperationsTriageQueue, OperationsTriageScope } from './operations-triage.types';
+import type {
+  OperationsTriageQueue,
+  OperationsTriageScope,
+} from './operations-triage.types';
 
 const FULL_QUEUE_ROLES: RoleKey[] = ['trust_supervisor', 'auditor', 'admin'];
 
@@ -52,6 +55,8 @@ export class OperationsTriageService {
     if (roles.includes('reviewer')) {
       return 'assigned_and_unassigned';
     }
-    throw new ForbiddenException('The authenticated identity has no verification triage scope.');
+    throw new ForbiddenException(
+      'The authenticated identity has no verification triage scope.',
+    );
   }
 }
