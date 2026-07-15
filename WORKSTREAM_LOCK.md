@@ -6,14 +6,15 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED |
+| Status | FINAL_VALIDATION |
 | Owner/agent | OpenAI GPT-5.6 Thinking — Phase 6 provider-workspace agent |
 | Phase | Phase 6 — Android provider workspace |
-| Task | Implement provider-scoped workspace contracts, profile/services/service areas, evidence capture, verification timeline, availability, recoverable uploads and bounded future-feature surfaces |
+| Task | Validate the promoted Phase 6 programme record, merge reviewed PR #26, close Issue #25 and synchronize the implementation branch |
 | Modules/paths | `database`, `backend/direkt-api`, `android/direkt-app`, `admin/direkt-operations-portal`, `docs/backend`, `docs/api`, `docs/android`, `docs/architecture`, `docs/security`, `docs/testing`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
 | Claimed at | 2026-07-15 after Phase 5 checkpoint merge and branch synchronization |
-| Expected handoff | Reviewed synthetic provider workspace with server-resolved scope, private case/check evidence capture, safe verification timeline, independent availability, idempotent upload recovery, bounded Phase 8/9 placeholders and green permanent CI |
+| Expected handoff | Merged and recorded provider workspace with server-resolved scope, private evidence recovery, safe timeline, independent availability, bounded Phase 8/9 surfaces and synchronized branches |
 | Last clean checkpoint | `11541db4d5ea856404f8fee03c0ca55cf6bab36c` |
+| Reviewed implementation head | `aa10d727091c4e742f0a26c41b00daa07c5000ad` |
 | Governing issue | Issue #25 |
 
 ## Stable predecessor
@@ -88,6 +89,19 @@ Create a bounded, synthetic Android provider workspace that lets an authenticate
 - obtain green backend/PostGIS, Android, portal and documentation workflows on one reviewed exact head;
 - repair valid review findings with regressions;
 - merge automatically, close Issue #25 and synchronize the build branch.
+
+## Reviewed checkpoint evidence
+
+The Phase 6 implementation was reviewed and verified on exact source head `aa10d727091c4e742f0a26c41b00daa07c5000ad`.
+
+| Gate | Run | Result | Artifact SHA-256 |
+|---|---:|---|---|
+| Backend/PostGIS | #484 | Passed | `03f3997a885482443f74e0a5ce7c2a349c8068d00572d9aae4dcb97f0ab8462c` |
+| Android reports | #274 | Passed | `17937634afd4030b039d1de8b1155d483042892af51c053887e0e534027ffe0e` |
+| Operations portal | #259 | Passed | `a24e51790fcfda7d28398be71dffd033a84287497b71e30e8929021bc0fc6790` |
+| Documentation quality | #850 | Passed | `8b274470105372b1ed9c8e5b255d5693dec7350e3caa636ae22a06c25564e6d6` |
+
+Review findings are recorded in `docs/testing/PHASE_6_REVIEW_REGRESSIONS.md`. The current mutation promotes only the programme record and lock state; permanent CI must pass again on the resulting exact head before merge.
 
 ## Acceptance criteria
 
