@@ -11,12 +11,13 @@ const actor = {
 
 function subject(permissions: string[]) {
   const snapshot = vi.fn().mockResolvedValue({ roles: [], permissions });
+  const anyProviderSnapshot = vi.fn().mockResolvedValue({ roles: [], permissions });
   const record = vi.fn().mockResolvedValue(undefined);
   const service = new AuthorizationService(
-    { snapshot } as unknown as AuthorizationRepository,
+    { snapshot, anyProviderSnapshot } as unknown as AuthorizationRepository,
     { record } as unknown as AuditService,
   );
-  return { service, snapshot, record };
+  return { service, snapshot, anyProviderSnapshot, record };
 }
 
 describe('AuthorizationService', () => {
@@ -40,6 +41,29 @@ describe('AuthorizationService', () => {
 
     await service.assertPermission(actor, PERMISSIONS.PROVIDER_PROFILE_MANAGE, { providerId });
     expect(snapshot).toHaveBeenCalledWith(actor.identityId, providerId);
+  });
+
+  it('authorizes actor-resolved provider routes from active provider assignments', async () => {
+    const { service, anyProviderSnapshot } = subject([PERMISSIONS.PROVIDER_PROFILE_READ]);
+
+    await expect(
+      service.assertAnyProviderPermission(actor, PERMISSIONS.PROVIDER_PROFILE_READ),
+    ).resolves.toMatchObject({ permissions: [PERMISSIONS.PROVIDER_PROFILE_READ] });
+    expect(anyProviderSnapshot).toHaveBeenCalledWith(actor.identityId);
+  });
+
+  it('audits denial when the actor has no provider workspace permission', async () => {
+    const { service, record } = subject([PERMISSIONS.ACCOUNT_PROFILE_MANAGE]);
+
+    await expect(
+      service.assertAnyProviderPermission(actor, PERMISSIONS.PROVIDER_PROFILE_READ),
+    ).rejects.toThrow(/provider workspace/i);
+    expect(record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'authorization_denied',
+        metadata: expect.objectContaining({ providerScope: 'actor_resolved' }),
+      }),
+    );
   });
 
   it('denies evidence self-approval even when a role has final-decision permission', async () => {
