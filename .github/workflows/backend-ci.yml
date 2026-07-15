@@ -1,4 +1,5 @@
 name: DIREKT Backend CI
+# Phase 6A validation trigger; remove after the exact-head result is recorded.
 
 on:
   push:
@@ -81,56 +82,31 @@ jobs:
         run: npm run format:check
 
       - name: Lint
-        shell: bash
-        run: |
-          mkdir -p artifacts/diagnostics
-          set -o pipefail
-          npm run lint 2>&1 | tee artifacts/diagnostics/eslint.txt
+        run: npm run lint
 
-      - name: Typecheck
-        shell: bash
-        run: |
-          mkdir -p artifacts/diagnostics
-          set -o pipefail
-          npm run typecheck 2>&1 | tee artifacts/diagnostics/typecheck.txt
+      - name: Type check
+        run: npm run typecheck
 
-      - name: Apply and verify migrations
+      - name: Verify and apply migrations
         run: npm run migration:check
 
-      - name: Run tests with coverage
-        shell: bash
-        run: |
-          mkdir -p artifacts/diagnostics
-          set -o pipefail
-          npm run test 2>&1 | tee artifacts/diagnostics/vitest.txt
+      - name: Run tests with coverage thresholds
+        run: npm run test
 
-      - name: Build production JavaScript
+      - name: Build API
         run: npm run build
 
-      - name: Generate and validate OpenAPI
+      - name: Verify OpenAPI contract
         run: npm run openapi:check
 
-      - name: Upload backend verification artifacts
+      - name: Upload backend reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: direkt-backend-reports-${{ github.run_number }}-${{ github.sha }}
+          name: backend-reports-${{ github.run_number }}
           path: |
-            backend/direkt-api/coverage/**
-            backend/direkt-api/artifacts/openapi.json
-            backend/direkt-api/artifacts/diagnostics/**
-            backend/direkt-api/package-lock.json
+            backend/direkt-api/coverage
+            backend/direkt-api/dist/openapi.json
+            backend/direkt-api/.migration-check
           if-no-files-found: warn
           retention-days: 14
-
-      - name: Publish backend summary
-        shell: bash
-        run: |
-          echo "### DIREKT backend foundation" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Commit: \`${GITHUB_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Branch: \`${GITHUB_REF_NAME}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Runtime: Node.js 24 / npm 11" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Framework: NestJS 11.1.x / TypeScript 5.9.x" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Database: PostgreSQL 18 / PostGIS 3.6" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Dependencies: committed npm lockfile installed with \`npm ci\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Result: format, lint, typecheck, migrations, tests, build and OpenAPI passed" >> "$GITHUB_STEP_SUMMARY"
