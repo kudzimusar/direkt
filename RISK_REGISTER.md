@@ -42,15 +42,23 @@ Scores use probability (P) and impact (I) from 1–5. Priority is `P × I`.
 | R-036 | Category requirements change and invalidate historical evidence meaning | 3 | 5 | 15 | immutable activated versions, provider selections pin a version, new versions required for changes | Trust/data / controlled |
 | R-037 | Provider pathways become a proxy for quality or unfair ranking | 3 | 4 | 12 | pathways describe evidence context only, equal presentation, no pathway-derived trust score, pilot fairness review | Product/trust / open |
 | R-038 | A provider representative gains access to another provider or retains access after revocation | 3 | 5 | 15 | provider-scoped role assignments, active-time checks, immediate server resolution, cross-provider and revocation tests | Security/backend / controlled |
+| R-039 | Private-storage adapter or bucket policy exposes original evidence | 3 | 5 | 15 | adapter-only backend access, opaque object keys, private buckets, short-lived signed access, access audit, no public URL, infrastructure review before real data | Security/storage / production gate |
+| R-040 | A shared requirement key is linked to the wrong provider category | 2 | 5 | 10 | category-scoped resolution, pinned requirement versions, ambiguity rejection and regression tests | Trust/backend / controlled |
+| R-041 | Repeat or contradictory verification decisions create misleading claims | 2 | 5 | 10 | in-review lifecycle gate, immutable decisions, reason/result semantics trigger and regression tests | Trust/data / controlled |
+| R-042 | Expiry processing is not scheduled or fails silently in production | 3 | 5 | 15 | deterministic database function, audited batch result, monitored scheduler, retry and stale-claim alert before public discovery | Trust/operations / Phase 5–deployment gate |
+| R-043 | Synthetic private storage is mistaken for production-ready document handling | 3 | 4 | 12 | synthetic labelling, production adapter contract, malware/MIME/checksum controls required before real evidence, deployment checklist | Programme/security / active |
+| R-044 | Safe claim projection accidentally includes private evidence or reviewer data | 2 | 5 | 10 | dedicated safe view/types, allowlisted fields, OpenAPI/public-route tests and no object references in clients | Trust/privacy / controlled |
 
 ## Current treatment priorities
 
-Before Phase 3 exit:
+Before Phase 5 exit:
 
-- R-019 and R-031 require Android secure-storage and account-recovery designs before real contacts are used;
-- R-032 and R-038 require provider-object authorization and revocation tests on every Phase 3 mutation;
-- R-035 requires database, API, Android and portal evidence that no Phase 3 profile can become publicly discoverable;
-- R-036 requires immutable activated category-version tests.
+- R-003 and R-014 require separate public-safe and private location models plus manual/no-location fallbacks;
+- R-005 and R-042 require customer discovery to exclude stale claims and prove deterministic freshness filtering;
+- R-011 requires synthetic empty, sparse and populated discovery states without inventing market supply;
+- R-027 requires every customer-discovery fixture and build to remain explicitly synthetic;
+- R-035 and R-044 require database, API and Android tests proving discovery consumes only eligible safe projections;
+- R-039 and R-043 remain production stop gates until dedicated private storage, scanning and secrets are connected.
 
 Before the controlled pilot:
 
@@ -58,7 +66,8 @@ Before the controlled pilot:
 - R-030 requires approved providers, distributed rate limiting and monitored abuse controls;
 - R-033 requires deployment, cookie/session, CSP and private-data review;
 - R-034 requires production configuration and secret-management validation;
-- R-037 requires representative provider and customer fairness testing.
+- R-037 requires representative provider and customer fairness testing;
+- R-039, R-042 and R-043 require production storage, scheduler, scanning, alerting and recovery validation.
 
 ## Review cadence
 
