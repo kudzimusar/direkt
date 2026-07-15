@@ -92,6 +92,7 @@ export class DiscoveryRepository {
     const conditions = [
       `publications.status = 'published'`,
       `organizations.status = 'ready_for_verification'`,
+      `category_selections.status = 'selected'`,
       `discovery.required_claims_current(
          publications.provider_id,
          publications.category_id,
@@ -209,6 +210,10 @@ export class DiscoveryRepository {
          ${areaMatchExpression} AS area_match
        FROM discovery.publications AS publications
        JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+       JOIN provider.category_selections AS category_selections
+         ON category_selections.provider_id = publications.provider_id
+        AND category_selections.category_id = publications.category_id
+        AND category_selections.requirement_version_id = publications.requirement_version_id
        JOIN catalog.service_categories AS categories ON categories.id = publications.category_id
        LEFT JOIN discovery.provider_availability AS availability
          ON availability.provider_id = publications.provider_id
@@ -272,6 +277,10 @@ export class DiscoveryRepository {
          false AS area_match
        FROM discovery.publications AS publications
        JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+       JOIN provider.category_selections AS category_selections
+         ON category_selections.provider_id = publications.provider_id
+        AND category_selections.category_id = publications.category_id
+        AND category_selections.requirement_version_id = publications.requirement_version_id
        JOIN catalog.service_categories AS categories ON categories.id = publications.category_id
        LEFT JOIN discovery.provider_availability AS availability
          ON availability.provider_id = publications.provider_id
@@ -291,6 +300,7 @@ export class DiscoveryRepository {
        WHERE publications.id = $1
          AND publications.status = 'published'
          AND organizations.status = 'ready_for_verification'
+         AND category_selections.status = 'selected'
          AND discovery.required_claims_current(
            publications.provider_id,
            publications.category_id,
@@ -318,6 +328,10 @@ export class DiscoveryRepository {
          claims.policy_version
        FROM discovery.publications AS publications
        JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+       JOIN provider.category_selections AS category_selections
+         ON category_selections.provider_id = publications.provider_id
+        AND category_selections.category_id = publications.category_id
+        AND category_selections.requirement_version_id = publications.requirement_version_id
        JOIN verification.cases AS cases
          ON cases.provider_id = publications.provider_id
         AND cases.category_id = publications.category_id
@@ -325,6 +339,7 @@ export class DiscoveryRepository {
        WHERE publications.id = $1
          AND publications.status = 'published'
          AND organizations.status = 'ready_for_verification'
+         AND category_selections.status = 'selected'
          AND discovery.required_claims_current(
            publications.provider_id,
            publications.category_id,
@@ -409,9 +424,14 @@ export class DiscoveryRepository {
       `SELECT publications.id
        FROM discovery.publications AS publications
        JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+       JOIN provider.category_selections AS category_selections
+         ON category_selections.provider_id = publications.provider_id
+        AND category_selections.category_id = publications.category_id
+        AND category_selections.requirement_version_id = publications.requirement_version_id
        WHERE publications.id = $1
          AND publications.status = 'published'
          AND organizations.status = 'ready_for_verification'
+         AND category_selections.status = 'selected'
          AND discovery.required_claims_current(
            publications.provider_id,
            publications.category_id,
@@ -447,9 +467,22 @@ export class DiscoveryRepository {
        FROM account.saved_public_providers AS saved
        JOIN discovery.publications AS publications ON publications.id = saved.publication_id
        JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+       JOIN provider.category_selections AS category_selections
+         ON category_selections.provider_id = publications.provider_id
+        AND category_selections.category_id = publications.category_id
+        AND category_selections.requirement_version_id = publications.requirement_version_id
        JOIN catalog.service_categories AS categories ON categories.id = publications.category_id
        WHERE saved.identity_id = $1
-         AND saved.publication_id = $2`,
+         AND saved.publication_id = $2
+         AND publications.status = 'published'
+         AND organizations.status = 'ready_for_verification'
+         AND category_selections.status = 'selected'
+         AND discovery.required_claims_current(
+           publications.provider_id,
+           publications.category_id,
+           publications.requirement_version_id,
+           now()
+         )`,
       [identityId, publicProviderId],
     );
     const row = result.rows[0];
@@ -483,10 +516,16 @@ export class DiscoveryRepository {
          saved.saved_at
        FROM account.saved_public_providers AS saved
        JOIN discovery.publications AS publications ON publications.id = saved.publication_id
+       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+       JOIN provider.category_selections AS category_selections
+         ON category_selections.provider_id = publications.provider_id
+        AND category_selections.category_id = publications.category_id
+        AND category_selections.requirement_version_id = publications.requirement_version_id
        JOIN catalog.service_categories AS categories ON categories.id = publications.category_id
        WHERE saved.identity_id = $1
          AND publications.status = 'published'
          AND organizations.status = 'ready_for_verification'
+         AND category_selections.status = 'selected'
          AND discovery.required_claims_current(
            publications.provider_id,
            publications.category_id,
