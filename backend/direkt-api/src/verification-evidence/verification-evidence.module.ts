@@ -16,5 +16,6 @@ import { VerificationEvidenceService } from './verification-evidence.service';
       useExisting: SyntheticPrivateStorageAdapter,
     },
   ],
+  exports: [VerificationEvidenceService],
 })
 export class VerificationEvidenceModule {}
