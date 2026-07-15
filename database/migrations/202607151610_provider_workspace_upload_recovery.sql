@@ -7,6 +7,12 @@ CREATE TABLE provider_workspace.upload_intents (
   case_id uuid NOT NULL REFERENCES verification.cases(id) ON DELETE RESTRICT,
   requirement_id uuid NOT NULL REFERENCES catalog.requirements(id) ON DELETE RESTRICT,
   client_intent_key text NOT NULL,
+  evidence_class text NOT NULL,
+  document_type text NOT NULL,
+  content_type text NOT NULL,
+  max_bytes bigint NOT NULL,
+  consent_confirmed boolean NOT NULL,
+  replacement_for_evidence_id uuid REFERENCES evidence.items(id) ON DELETE RESTRICT,
   state text NOT NULL DEFAULT 'queued',
   attempt_count integer NOT NULL DEFAULT 0,
   active_upload_session_id uuid REFERENCES evidence.upload_sessions(id) ON DELETE RESTRICT,
@@ -19,6 +25,27 @@ CREATE TABLE provider_workspace.upload_intents (
   CONSTRAINT provider_workspace_upload_intent_key_format CHECK (
     client_intent_key ~ '^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$'
   ),
+  CONSTRAINT provider_workspace_upload_evidence_class_allowed CHECK (
+    evidence_class IN (
+      'contact',
+      'identity',
+      'business',
+      'qualification',
+      'licence',
+      'experience',
+      'location',
+      'premises',
+      'field'
+    )
+  ),
+  CONSTRAINT provider_workspace_upload_document_type_format CHECK (
+    document_type ~ '^[a-z][a-z0-9_]{2,63}$'
+  ),
+  CONSTRAINT provider_workspace_upload_content_type_allowed CHECK (
+    content_type IN ('application/pdf', 'image/jpeg', 'image/png', 'image/webp')
+  ),
+  CONSTRAINT provider_workspace_upload_size_valid CHECK (max_bytes BETWEEN 1024 AND 20971520),
+  CONSTRAINT provider_workspace_upload_consent_required CHECK (consent_confirmed = true),
   CONSTRAINT provider_workspace_upload_state_allowed CHECK (
     state IN (
       'queued',
@@ -99,6 +126,7 @@ DECLARE
   session_provider_id uuid;
   session_requirement_id uuid;
   session_creator_id uuid;
+  replacement_provider_id uuid;
 BEGIN
   SELECT provider_id, requirement_id, status
   INTO case_provider_id, case_requirement_id, case_status
@@ -113,6 +141,18 @@ BEGIN
 
   IF case_status IN ('approved', 'rejected', 'revoked', 'expired', 'cancelled', 'closed') THEN
     RAISE EXCEPTION 'Terminal verification cases cannot accept provider upload intents';
+  END IF;
+
+  IF NEW.replacement_for_evidence_id IS NOT NULL THEN
+    SELECT provider_id
+    INTO replacement_provider_id
+    FROM evidence.items
+    WHERE id = NEW.replacement_for_evidence_id
+      AND requirement_id = NEW.requirement_id;
+
+    IF replacement_provider_id IS NULL OR replacement_provider_id IS DISTINCT FROM NEW.provider_id THEN
+      RAISE EXCEPTION 'Replacement evidence does not match the provider upload intent';
+    END IF;
   END IF;
 
   IF NEW.active_upload_session_id IS NOT NULL THEN
@@ -140,6 +180,7 @@ BEFORE INSERT OR UPDATE OF
   created_by_identity_id,
   case_id,
   requirement_id,
+  replacement_for_evidence_id,
   active_upload_session_id,
   state,
   submitted_evidence_id
@@ -209,6 +250,6 @@ JOIN authz.permissions AS permissions USING (permission_key);
 COMMENT ON SCHEMA provider_workspace IS
   'Authenticated provider-workspace recovery metadata. It stores no evidence bytes, private object keys, reviewer notes, enquiry workflow or commercial state.';
 COMMENT ON TABLE provider_workspace.upload_intents IS
-  'Idempotent logical provider upload intents linked to one provider case and requirement. Retry attempts cannot create duplicate versions because each evidence upload session remains unique in evidence.versions.';
+  'Idempotent logical provider upload intents linked to one provider case and requirement. Retry metadata is safe and excludes private object keys. Attempts cannot create duplicate versions because each evidence upload session remains unique in evidence.versions.';
 COMMENT ON TABLE provider_workspace.upload_attempts IS
   'Append-like upload attempt history for process-recreation and interrupted-upload recovery. Private storage object keys remain in evidence.upload_sessions only.';
