@@ -34,8 +34,20 @@ export class PermissionGuard implements CanActivate {
     if (!requirement) {
       throw new ForbiddenException('This route has no authorization policy.');
     }
+    if (requirement.providerParam && requirement.providerFromActor) {
+      throw new BadRequestException('The provider authorization policy is ambiguous.');
+    }
 
     const request = context.switchToHttp().getRequest<DirektRequest>();
+    if (requirement.providerFromActor) {
+      await this.authorization.assertAnyProviderPermission(
+        request.actor,
+        requirement.permission,
+        request.requestId,
+      );
+      return true;
+    }
+
     const rawProviderId = requirement.providerParam
       ? request.params[requirement.providerParam]
       : undefined;
