@@ -18,11 +18,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-    
-        <activity
-            android:name=".phase3.ProviderCoreActivity"
-            android:exported="false"
-            android:label="DIREKT Provider Core" />
     </application>
 
 </manifest>
