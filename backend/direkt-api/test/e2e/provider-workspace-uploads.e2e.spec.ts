@@ -117,6 +117,15 @@ describe('Phase 6 recoverable provider evidence uploads', () => {
     provider = await createProvider(owner, 'Synthetic Recoverable Uploads');
     otherProvider = await createProvider(otherOwner, 'Synthetic Other Upload Workspace');
 
+    await request(httpServer())
+      .post(`/api/v1/providers/${provider.id}/state-transitions`)
+      .set('authorization', `Bearer ${owner.accessToken}`)
+      .send({
+        targetStatus: 'ready_for_verification',
+        reason: 'Synthetic provider is ready for recoverable upload verification',
+      })
+      .expect(201);
+
     const contract = await pool.query<{
       category_id: string;
       requirement_version_id: string;

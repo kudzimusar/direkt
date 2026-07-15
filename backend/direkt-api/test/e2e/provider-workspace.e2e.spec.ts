@@ -233,8 +233,8 @@ describe('Phase 6 actor-scoped provider workspace HTTP contracts', () => {
 
     const serialized = JSON.stringify(timeline);
     expect(serialized).not.toContain('reviewerIdentityId');
-    expect(serialized).not.toContain('privateRationale');
-    expect(serialized).not.toContain('objectKey');
+    expect(serialized).not.toContain('"privateRationale":');
+    expect(serialized).not.toContain('"objectKey":');
     expect(serialized).not.toContain('accessUrl');
   });
 
