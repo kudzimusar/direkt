@@ -6,28 +6,28 @@ const summaryCards = [
   {
     label: 'Provider drafts',
     value: '2',
-    note: 'Synthetic private profiles only; public discoverability is structurally blocked.',
-  },
-  {
-    label: 'Active category versions',
-    value: '4',
-    note: 'Planning requirements are versioned and immutable after activation.',
+    note: 'Synthetic private profiles only; public discoverability remains structurally blocked.',
   },
   {
     label: 'Verification cases',
-    value: '0',
-    note: 'No evidence engine or verification decision exists before Phase 4.',
+    value: '2',
+    note: 'Separate fictional checks with assignment, evidence-version and reason-code history.',
+  },
+  {
+    label: 'Active scoped claims',
+    value: '1',
+    note: 'Derived from one synthetic decision, with an explicit limitation and expiry.',
   },
 ] as const;
 
 export default function OperationsPage() {
   return (
     <section aria-labelledby="mission-control-heading">
-      <p className="eyebrow">Phase 3 operations foundation</p>
+      <p className="eyebrow">Phase 4 operations foundation</p>
       <h1 id="mission-control-heading">Mission control</h1>
       <p className="lede">
-        This checkpoint adds a bounded internal provider-draft view while preserving the Phase 2C
-        session, provider-scope and deny-by-default authorization boundaries.
+        This checkpoint adds a bounded private verification queue while preserving server-owned
+        sessions, provider scope, case assignments and deny-by-default authorization.
       </p>
 
       <div className="summary-grid" aria-label="Synthetic operations summary">
@@ -41,14 +41,15 @@ export default function OperationsPage() {
       </div>
 
       <section className="control-panel" aria-labelledby="controls-heading">
-        <h2 id="controls-heading">Phase 3 controls</h2>
+        <h2 id="controls-heading">Phase 4 controls</h2>
         <ul>
-          <li>Human identities and provider organizations are separate aggregates.</li>
-          <li>Provider reads and mutations require a server-owned provider scope.</li>
-          <li>Provider pathways and operating models are validated at the database boundary.</li>
-          <li>Category selections pin the active immutable requirement version.</li>
-          <li>All provider drafts remain non-public until Phase 4 evidence-derived publication.</li>
+          <li>Evidence metadata and original private objects have separate access boundaries.</li>
+          <li>Only an actively assigned reviewer or supervisor may request private access.</li>
+          <li>Recommendations, decisions and evidence versions are append-only.</li>
+          <li>Reason codes, limitations, policy version and expiry accompany each scoped claim.</li>
+          <li>Expired or revoked evidence degrades dependent claims deterministically.</li>
           <li>The portal has no direct database or object-storage connector.</li>
+          <li>Provider discovery and production integrations remain disabled.</li>
         </ul>
       </section>
     </section>
