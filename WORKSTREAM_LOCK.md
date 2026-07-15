@@ -6,107 +6,142 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | FINAL_VALIDATION |
-| Owner/agent | OpenAI GPT-5.6 Thinking — Phase 5 customer-discovery agent |
-| Phase | Phase 5 — Android customer discovery |
-| Task | Validate the promoted Phase 5 programme record, merge reviewed PR #24, close Issue #23 and synchronize the implementation branch |
-| Modules/paths | `database`, `backend/direkt-api`, `android/direkt-app`, `admin/direkt-operations-portal`, `docs/backend`, `docs/testing`, `PROJECT_STATUS.md`, `WORKSTREAM_LOCK.md` |
-| Claimed at | 2026-07-15 after Phase 4 checkpoint promotion |
-| Expected handoff | Merged and recorded synthetic customer-discovery vertical slice with public-safe publication/location boundaries, deterministic PostGIS search, Android discovery states, green permanent CI and resolved review findings |
-| Last clean checkpoint | `6317a48a35367e79a97bec5184a25af14dfac707` |
-| Reviewed implementation head | `4107aff54b098d299fd41dd60f63256150aab573` |
-| Governing issue | Issue #23 |
+| Status | CLAIMED |
+| Owner/agent | OpenAI GPT-5.6 Thinking — Phase 6 provider-workspace agent |
+| Phase | Phase 6 — Android provider workspace |
+| Task | Implement provider-scoped workspace contracts, profile/services/service areas, evidence capture, verification timeline, availability, recoverable uploads and bounded future-feature surfaces |
+| Modules/paths | `database`, `backend/direkt-api`, `android/direkt-app`, `admin/direkt-operations-portal`, `docs/backend`, `docs/api`, `docs/android`, `docs/architecture`, `docs/security`, `docs/testing`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
+| Claimed at | 2026-07-15 after Phase 5 checkpoint merge and branch synchronization |
+| Expected handoff | Reviewed synthetic provider workspace with server-resolved scope, private case/check evidence capture, safe verification timeline, independent availability, idempotent upload recovery, bounded Phase 8/9 placeholders and green permanent CI |
+| Last clean checkpoint | `11541db4d5ea856404f8fee03c0ca55cf6bab36c` |
+| Governing issue | Issue #25 |
 
 ## Stable predecessor
 
-Phase 4 completed through PR #21 and its stable programme record was promoted through PR #22.
+Phase 5 completed through PR #24 and Issue #23.
 
 ```text
-Phase 4 verified PR head: 10c21f076ba27a7e0e38ac1819a4489e063eb6ec
-Phase 4 merge commit:     d9078a78d3677a94a720de2d16483487594b261e
-Phase 4 record checkpoint: 6317a48a35367e79a97bec5184a25af14dfac707
-Issue #20:                closed as completed
+Phase 5 reviewed source head: 4107aff54b098d299fd41dd60f63256150aab573
+Phase 5 verified final head:  28f03c196f0c6dc47c77c61cbe70d6448d179755
+Phase 5 merge commit:         11541db4d5ea856404f8fee03c0ca55cf6bab36c
+Issue #23:                    closed as completed
 ```
 
-`main` and `build/android-v1` were identical before this Phase 5 claim.
+Final exact-head workflows passed: Backend/PostGIS #360, Android #223, Operations Portal #224 and Documentation #674. `main` and `build/android-v1` were synchronized before this Phase 6 claim.
 
-## Phase 5 objective
+## Phase 6 objective
 
-Create a bounded, synthetic Android customer-discovery vertical slice that searches only eligible public-safe provider projections and current scoped claims while preserving provider/customer location privacy and functioning without device location or images.
+Create a bounded, synthetic Android provider workspace that lets an authenticated provider representative manage only their own organization, services, lawful location models, evidence submissions, verification progress, availability and interrupted uploads without weakening identity, authorization, evidence, claim, publication or location-privacy boundaries.
 
-## Reviewed checkpoint evidence
+## Delivery stages
 
-The Phase 5 implementation was reviewed and verified on exact source head `4107aff54b098d299fd41dd60f63256150aab573`.
+### Stage 6A — workspace contracts and authorization
 
-| Gate | Run | Result | Artifact SHA-256 |
-|---|---:|---|---|
-| Backend/PostGIS | #358 | Passed | `3e2a0ed7e7fcb69f8f6e48d57477c478b587cbf1cbcb71dd818d0ba05e666afb` |
-| Android reports | #221 | Passed | `074e99ea0a56ed0961db938f60daa2391fa9b53b129cdca4b9f33b8ce80131bc` |
-| Operations portal | #222 | Passed | `8b09068672e8011fc1d51dfb588aca809e0c65ef8568ee22594d6495b9a8a892` |
-| Documentation quality | #670 | Passed | `343c734aebec30755cf620c57f1d1a5309d930e6d82784bba56ce0c53e0fdc80` |
+- resolve provider organization from the authenticated actor/session;
+- expose provider workspace summary and readiness contracts;
+- enforce provider representative scope on every path;
+- provide empty, partial, blocked and ready synthetic states;
+- define OpenAPI and database/application authorization regressions.
 
-All three automated review findings were repaired with permanent database/application regressions and their review threads are resolved. The current mutation promotes only the programme record and lock state; permanent CI must pass again on the resulting exact head before merge.
+### Stage 6B — registration, profile, services and service areas
+
+- complete provider registration/profile editing on existing Phase 3 models;
+- manage category selections through immutable requirement versions;
+- edit operating model, locality summary and lawful service areas;
+- preserve distinct private base, consented public premises and service-area models;
+- prove profile completion and service selection cannot publish or create claims.
+
+### Stage 6C — evidence capture and recoverable uploads
+
+- submit provider-owned evidence metadata only against a specific case/check;
+- keep storage references and original evidence private;
+- model queued, uploading, interrupted, retryable, submitted and terminal states;
+- persist idempotency and resumable intent locally;
+- support retry/cancel without duplicate evidence versions.
+
+### Stage 6D — verification timeline and availability
+
+- derive a provider-safe timeline from evidence versions and immutable decisions;
+- exclude reviewer notes, internal risk data and other providers' records;
+- show correction, renewal, validity and safe reason-code messages;
+- update availability independently of trust, claims, ranking and publication.
+
+### Stage 6E — bounded later-phase surfaces
+
+- enquiry inbox: synthetic/empty workspace boundary only; Phase 8 owns real enquiries and responses;
+- review response: synthetic/empty boundary only; Phase 8 owns review eligibility, moderation and appeals;
+- subscription status: read-only synthetic boundary only; Phase 9 owns products, entitlements and payments;
+- tests must prove Phase 6 exposes no Phase 8/9 business mutation.
+
+### Stage 6F — Android and operations surfaces
+
+- provider dashboard and prioritized work queue;
+- profile/services/service-area editing;
+- evidence capture and upload recovery;
+- verification timeline and availability;
+- TalkBack, focus, data-saver and preview-free operation;
+- operations readiness/upload visibility without unauthorized evidence disclosure.
+
+### Stage 6G — checkpoint promotion
+
+- update architecture, authorization, evidence, privacy, API, Android, testing, decisions and risks;
+- obtain green backend/PostGIS, Android, portal and documentation workflows on one reviewed exact head;
+- repair valid review findings with regressions;
+- merge automatically, close Issue #25 and synchronize the build branch.
 
 ## Acceptance criteria
 
 The active owner must:
 
-1. preserve Phase 4 claim, evidence, verification and privacy boundaries;
-2. create forward-only checksummed migrations for publication eligibility, public-safe provider identity/media, public premises, service areas, minimal availability and saved providers;
-3. represent private base, consented public premises and service-area geometry as distinct database/API types;
-4. prevent private coordinates, evidence, reviewer data and storage references from entering public DTOs, logs or fixtures;
-5. publish only through a policy-controlled function requiring current mandatory claims and eligible provider/category state;
-6. prove payment, profile completion, administrator row edits and client input cannot publish or rank a provider as more trusted;
-7. support manual area search without location permission and one-time location education without background tracking;
-8. implement category, normalized text, distance where lawful, operating-model, availability and claim filters;
-9. handle fixed, mobile and hybrid providers without exposing or measuring from a private base;
-10. provide deterministic ordering, explainable allowlisted reason labels and opaque cursor pagination;
-11. exclude unpublished, hidden, suspended, stale, degraded, revoked, expired or removed-category providers;
-12. provide safe provider profile/trust details, saves, sharing and low-bandwidth/image-free states;
-13. provide empty/sparse/populated/no-location/stale-claim Android states and no-results recovery without fabricated providers;
-14. add synthetic operations visibility into publication eligibility without private location/evidence;
-15. update OpenAPI, architecture, privacy, testing, decisions, risks and project status;
-16. obtain green backend/PostGIS, Android, portal and documentation workflows on one reviewed exact head;
-17. repair valid review findings with regressions, merge automatically, close Issue #23 and synchronize the build branch.
-
-Criteria 1–16 are satisfied on the reviewed implementation head. Criterion 17 remains active until the final record-validation head passes and PR #24 merges.
+1. preserve all Phase 3–5 identity, authorization, evidence, claim, publication and location boundaries;
+2. resolve provider scope server-side and reject cross-provider access;
+3. keep human identities, provider organizations, categories, cases, checks and evidence versions distinct;
+4. support provider profile, service/category and lawful service-area editing;
+5. keep private base, public premises and service area as separate typed models;
+6. prevent profile completion, service selection, availability, uploads, subscription placeholders or admin edits from creating claims or publication;
+7. create evidence only for an authorized provider case/check and retain immutable versions;
+8. prevent Android/public DTOs, logs and fixtures from exposing original evidence, storage keys or reviewer notes;
+9. make upload retry/cancel persistent and idempotent without duplicate evidence versions;
+10. present a provider-safe verification timeline with scoped claims, limitations, validity and correction/renewal states;
+11. allow availability updates independently of trust and discovery eligibility;
+12. provide bounded enquiry/review/subscription placeholders with no Phase 8/9 business mutations;
+13. implement accessible low-bandwidth Android provider states;
+14. provide operations visibility without bypassing evidence authorization;
+15. add database, HTTP, service, Android and portal regression evidence;
+16. update OpenAPI, architecture, privacy, testing, decisions, risks and project status;
+17. obtain green permanent workflows on one reviewed exact head;
+18. repair valid review findings, merge, close Issue #25 and synchronize the branch.
 
 ## Non-negotiable stop gates
 
-- No real provider/customer records or production search traffic.
-- No production maps, places, geocoding or device-location integration.
-- No background customer location.
-- Manual area selection is always available.
-- No precise private provider base in public DTOs, logs, analytics, Android fixtures or map presentation.
-- Mobile providers use service-area compatibility, not distance from a private base.
-- No blanket verified-provider flag or claim inference in Android.
-- No public publication from payment, profile completion, direct database edits, administrator action or client request.
-- No public indexing, production deployment, enquiry/contact handoff, reviews or public pilot.
+- No real provider, customer, evidence, enquiry, review, subscription or payment records.
+- No production storage/upload endpoint, maps/geocoding service, messaging/payment integration, credential, deployment or public pilot.
+- Provider ownership and permissions are never accepted from client input.
+- A representative cannot read or mutate another provider's profile, locations, evidence, timeline, availability or uploads.
+- Evidence remains private, case/check-specific, versioned and authorization-tested.
+- Original evidence, storage keys, identity numbers, signatures, private addresses, precise private bases and reviewer notes remain outside public/provider-safe output.
+- Public premises require explicit consent; private base coordinates never enter public DTOs, analytics or Android presentation.
+- Interrupted upload recovery cannot create duplicate evidence versions.
+- Availability and commercial placeholders cannot influence claims, publication or trust ranking.
+- Phase 8 retains real enquiry/review/contact workflows.
+- Phase 9 retains products, entitlements, invoices, payments and webhooks.
 
 ## Required regression evidence
 
-Phase 5 proves:
+At minimum, prove:
 
-- public search/profile responses do not serialize private coordinates, evidence identifiers or reviewer notes;
-- fixed providers use only consented public premises for point distance;
-- mobile providers match by service area without a private-origin distance;
-- hybrid providers support both safe paths without leaking their private base;
-- manual/no-location search returns bounded deterministic results;
-- unpublished, suspended, hidden, removed-category and stale-claim providers are excluded;
-- direct row insertion cannot bypass publication eligibility;
-- multi-filter ordering and cursor pagination are stable;
-- search reasons are allowlisted and supported by data;
-- saves and sharing contain only public IDs and safe metadata;
-- low-bandwidth and image-free Android states remain usable;
-- empty results suggest adjustments rather than invented providers;
-- Android/customer fixtures remain fictional and contain no production map or location values.
-
-## Retained Phase 4 trust and privacy boundary
-
-No provider becomes publicly discoverable because an account exists, a profile is complete, a provider pays, an administrator edits a row, a client requests publication or private evidence is uploaded.
-
-Original evidence, storage keys, identity numbers, signatures, private addresses, precise private locations and reviewer notes remain outside public output. Phase 5 consumes only approved safe claim cards and public-safe provider/location/media projections.
+- authenticated actor scope resolves the correct provider and denies cross-provider access;
+- profile/category/location changes do not create claims or publication;
+- private base, public premises and service-area data remain separated;
+- evidence submissions require the provider's own open case/check;
+- evidence retry with the same idempotency key does not duplicate a version;
+- provider timeline excludes reviewer notes and internal-only fields;
+- availability updates do not change claim or publication state;
+- deferred enquiry/review/subscription endpoints are read-only bounded placeholders;
+- Android upload recovery survives process recreation in synthetic tests;
+- empty, partial, correction-required, expired, offline and access-denied states are usable;
+- fixtures contain no real people, providers, evidence, credentials or production endpoints.
 
 ## Conflict rule
 
-A second agent must not modify the listed Phase 5 paths while this lock is in final validation. Read-only review is allowed. The lock is released only after PR #24 merges, Issue #23 closes and the implementation branch is synchronized.
+A second agent must not modify the listed Phase 6 paths while this lock is claimed. Read-only review is allowed. A stale or ambiguous lock must be resolved explicitly rather than overwritten by assumption.
