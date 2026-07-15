@@ -27,10 +27,7 @@ export class EvidenceReviewService {
     @Inject(EVIDENCE_STORAGE) private readonly storage: EvidenceStoragePort,
   ) {}
 
-  reviewWorkspace(
-    actor: AuthenticatedActor,
-    caseId: string,
-  ): Promise<ReviewWorkspaceView> {
+  reviewWorkspace(actor: AuthenticatedActor, caseId: string): Promise<ReviewWorkspaceView> {
     return this.repository.reviewWorkspace(caseId, actor.identityId);
   }
 

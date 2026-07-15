@@ -474,14 +474,7 @@ describe('Phase 7 secure assigned evidence review', () => {
          now() - interval '2 minutes',
          now() - interval '1 minute'
        )`,
-      [
-        expiredGrantId,
-        caseId,
-        evidenceId,
-        evidenceVersionId,
-        assignmentId,
-        reviewer.identityId,
-      ],
+      [expiredGrantId, caseId, evidenceId, evidenceVersionId, assignmentId, reviewer.identityId],
     );
 
     await request(httpServer())

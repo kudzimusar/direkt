@@ -1,4 +1,9 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { PoolClient } from 'pg';
 import type { AuthenticatedActor } from '../authorization/authenticated-actor';
 import { DatabaseService } from '../platform/database/database.service';
@@ -288,8 +293,9 @@ export class OperationsReviewRepository {
   }
 
   redemption(actorIdentityId: string, tokenHash: string): Promise<GrantRedemptionRow> {
-    return this.database.query<GrantRedemptionRow>(
-      `SELECT
+    return this.database
+      .query<GrantRedemptionRow>(
+        `SELECT
          grants.id AS grant_id,
          grants.case_id,
          grants.evidence_id,
@@ -320,14 +326,15 @@ export class OperationsReviewRepository {
          AND grants.grantee_identity_id = $2
          AND grants.status = 'active'
          AND grants.expires_at > now()`,
-      [tokenHash, actorIdentityId],
-    ).then((result) => {
-      const row = result.rows[0];
-      if (!row) {
-        throw new NotFoundException('Active private evidence review grant was not found.');
-      }
-      return row;
-    });
+        [tokenHash, actorIdentityId],
+      )
+      .then((result) => {
+        const row = result.rows[0];
+        if (!row) {
+          throw new NotFoundException('Active private evidence review grant was not found.');
+        }
+        return row;
+      });
   }
 
   revokeGrant(input: {
@@ -503,7 +510,9 @@ export class OperationsReviewRepository {
       throw new NotFoundException('Active assigned review context was not found.');
     }
     if (result.rows.length > 1) {
-      throw new ConflictException('The actor has more than one active review context for this case.');
+      throw new ConflictException(
+        'The actor has more than one active review context for this case.',
+      );
     }
     return result.rows[0] as AssignmentContextRow;
   }

@@ -72,10 +72,7 @@ interface EvidenceGrantStateRow {
 export class EvidenceReviewRepository {
   constructor(private readonly database: DatabaseService) {}
 
-  async reviewWorkspace(
-    caseId: string,
-    actorIdentityId: string,
-  ): Promise<ReviewWorkspaceView> {
+  async reviewWorkspace(caseId: string, actorIdentityId: string): Promise<ReviewWorkspaceView> {
     const contextResult = await this.database.query<ReviewContextRow>(
       `SELECT
          cases.id AS case_id,
@@ -409,10 +406,7 @@ export class EvidenceReviewRepository {
         [input.grantId, input.actor.identityId],
       );
       const grant = grantResult.rows[0];
-      if (
-        !grant ||
-        (grant.grantee_identity_id !== input.actor.identityId && !grant.can_override)
-      ) {
+      if (!grant || (grant.grantee_identity_id !== input.actor.identityId && !grant.can_override)) {
         throw new NotFoundException('Private evidence authorization was not found.');
       }
       if (grant.status !== 'active') {
