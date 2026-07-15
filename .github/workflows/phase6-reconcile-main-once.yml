@@ -1,4 +1,5 @@
 name: Phase 6 reconcile and format once
+# Final formatter pass after the owner-authored Phase 6 OpenAPI contract expansion.
 
 on:
   push:
