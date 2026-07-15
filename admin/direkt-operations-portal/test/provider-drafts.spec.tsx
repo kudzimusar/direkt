@@ -14,4 +14,4 @@ describe('ProviderDraftsPage', () => {
     expect(markup).not.toContain('Approve evidence');
     expect(markup).not.toContain('Publish provider');
   });
-}
+});
