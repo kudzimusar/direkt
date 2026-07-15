@@ -13,7 +13,6 @@ export class AuthorizationRepository {
 
   snapshot(identityId: string, providerId?: string): Promise<AuthorizationSnapshot> {
     return this.permissionSnapshot(
-      identityId,
       `assignments.scope_type = 'global'
        OR ($2::uuid IS NOT NULL AND assignments.provider_id = $2::uuid)`,
       [identityId, providerId ?? null],
@@ -22,7 +21,6 @@ export class AuthorizationRepository {
 
   anyProviderSnapshot(identityId: string): Promise<AuthorizationSnapshot> {
     return this.permissionSnapshot(
-      identityId,
       `assignments.scope_type = 'global'
        OR (assignments.scope_type = 'provider' AND assignments.provider_id IS NOT NULL)`,
       [identityId],
@@ -30,7 +28,6 @@ export class AuthorizationRepository {
   }
 
   private async permissionSnapshot(
-    identityId: string,
     scopeCondition: string,
     values: unknown[],
   ): Promise<AuthorizationSnapshot> {
@@ -54,7 +51,6 @@ export class AuthorizationRepository {
       values,
     );
 
-    void identityId;
     return {
       roles: [...new Set(result.rows.map((row) => row.role_key))],
       permissions: [...new Set(result.rows.map((row) => row.permission_key))],
