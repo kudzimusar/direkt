@@ -98,12 +98,16 @@ describe('DiscoveryService', () => {
       backgroundLocationUsed: false,
       resultCount: 1,
     });
-    expect(response.nextCursor).not.toBeNull();
+    const nextCursor = response.nextCursor;
+    expect(nextCursor).not.toBeNull();
+    if (!nextCursor) {
+      throw new Error('Expected an opaque cursor for the next discovery page.');
+    }
 
     repository.search.mockResolvedValueOnce({ rows: [], hasMore: false });
-    const next = await service.search({ limit: 1, cursor: response.nextCursor ?? undefined });
+    const next = await service.search({ limit: 1, cursor: nextCursor });
     expect(repository.search).toHaveBeenLastCalledWith(
-      expect.objectContaining({ cursor: response.nextCursor }),
+      expect.objectContaining({ cursor: nextCursor }),
       1,
     );
     expect(next.nextCursor).toBeNull();
