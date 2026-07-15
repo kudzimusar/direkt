@@ -1,7 +1,13 @@
 import { Type } from 'class-transformer';
 import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
-import type { VerificationCaseStatus, VerificationCheckFamily } from '../verification-evidence/verification-evidence.types';
-import type { OperationsTriageOwnership, OperationsTriageSlaState } from './operations-triage.types';
+import type {
+  VerificationCaseStatus,
+  VerificationCheckFamily,
+} from '../verification-evidence/verification-evidence.types';
+import type {
+  OperationsTriageOwnership,
+  OperationsTriageSlaState,
+} from './operations-triage.types';
 
 const TRIAGE_STATUSES: VerificationCaseStatus[] = [
   'ready_for_review',
