@@ -1,6 +1,5 @@
 package com.kudzimusar.direkt.ui.verification
 
-import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -27,8 +26,8 @@ class VerificationModelsTest {
     fun `scoped claim expires deterministically`() {
         val claim = requireNotNull(syntheticVerificationCase.claim)
 
-        assertEquals("active", claim.effectiveState(Instant.parse("2027-07-14T23:59:59Z")))
-        assertEquals("expired", claim.effectiveState(Instant.parse("2027-07-15T00:00:00Z")))
+        assertEquals("active", claim.effectiveState(1_815_609_599_000))
+        assertEquals("expired", claim.effectiveState(1_815_609_600_000))
     }
 
     @Test
