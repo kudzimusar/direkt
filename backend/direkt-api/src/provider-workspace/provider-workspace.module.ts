@@ -5,6 +5,7 @@ import { ProviderWorkspaceCommandRepository } from './provider-workspace-command
 import { ProviderWorkspaceController } from './provider-workspace.controller';
 import { ProviderWorkspaceRepository } from './provider-workspace.repository';
 import { ProviderWorkspaceService } from './provider-workspace.service';
+import { ProviderWorkspaceTimelineRepository } from './provider-workspace-timeline.repository';
 import { ProviderWorkspaceUploadRepository } from './provider-workspace-upload.repository';
 import { ProviderWorkspaceUploadService } from './provider-workspace-upload.service';
 
@@ -15,6 +16,7 @@ import { ProviderWorkspaceUploadService } from './provider-workspace-upload.serv
     ProviderWorkspaceCommandRepository,
     ProviderWorkspaceRepository,
     ProviderWorkspaceService,
+    ProviderWorkspaceTimelineRepository,
     ProviderWorkspaceUploadRepository,
     ProviderWorkspaceUploadService,
   ],
