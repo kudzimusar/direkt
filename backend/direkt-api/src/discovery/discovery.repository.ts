@@ -91,6 +91,7 @@ export class DiscoveryRepository {
     const values: unknown[] = [];
     const conditions = [
       `publications.status = 'published'`,
+      `organizations.status = 'ready_for_verification'`,
       `discovery.required_claims_current(
          publications.provider_id,
          publications.category_id,
@@ -146,15 +147,12 @@ export class DiscoveryRepository {
     if (dto.latitude !== undefined && dto.longitude !== undefined) {
       const longitudeParameter = parameter(dto.longitude);
       const latitudeParameter = parameter(dto.latitude);
-      originExpression =
-        `ST_SetSRID(ST_MakePoint(${longitudeParameter}, ${latitudeParameter}), 4326)::geography`;
-      distanceExpression =
-        `CASE
+      originExpression = `ST_SetSRID(ST_MakePoint(${longitudeParameter}, ${latitudeParameter}), 4326)::geography`;
+      distanceExpression = `CASE
            WHEN publications.public_premises IS NULL THEN NULL
            ELSE ST_Distance(publications.public_premises, ${originExpression}) / 1000.0
          END`;
-      areaMatchExpression =
-        `ST_Covers(publications.service_area::geometry, ${originExpression}::geometry)`;
+      areaMatchExpression = `ST_Covers(publications.service_area::geometry, ${originExpression}::geometry)`;
 
       const radiusKm = dto.radiusKm ?? 25;
       const radiusParameter = parameter(radiusKm * 1000);
@@ -210,6 +208,7 @@ export class DiscoveryRepository {
          ${distanceExpression} AS distance_km,
          ${areaMatchExpression} AS area_match
        FROM discovery.publications AS publications
+       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
        JOIN catalog.service_categories AS categories ON categories.id = publications.category_id
        LEFT JOIN discovery.provider_availability AS availability
          ON availability.provider_id = publications.provider_id
@@ -272,6 +271,7 @@ export class DiscoveryRepository {
          NULL::double precision AS distance_km,
          false AS area_match
        FROM discovery.publications AS publications
+       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
        JOIN catalog.service_categories AS categories ON categories.id = publications.category_id
        LEFT JOIN discovery.provider_availability AS availability
          ON availability.provider_id = publications.provider_id
@@ -290,6 +290,7 @@ export class DiscoveryRepository {
        ) AS media ON true
        WHERE publications.id = $1
          AND publications.status = 'published'
+         AND organizations.status = 'ready_for_verification'
          AND discovery.required_claims_current(
            publications.provider_id,
            publications.category_id,
@@ -316,12 +317,20 @@ export class DiscoveryRepository {
          claims.valid_until,
          claims.policy_version
        FROM discovery.publications AS publications
+       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
        JOIN verification.cases AS cases
          ON cases.provider_id = publications.provider_id
         AND cases.category_id = publications.category_id
        JOIN verification.claims AS claims ON claims.case_id = cases.id
        WHERE publications.id = $1
          AND publications.status = 'published'
+         AND organizations.status = 'ready_for_verification'
+         AND discovery.required_claims_current(
+           publications.provider_id,
+           publications.category_id,
+           publications.requirement_version_id,
+           now()
+         )
          AND claims.status = 'active'
          AND claims.valid_until > now()
        ORDER BY claims.claim_key, claims.valid_until DESC, claims.id`,
@@ -371,8 +380,7 @@ export class DiscoveryRepository {
 
     return result.rows.map((row) => {
       const locationEligible =
-        row.has_service_area &&
-        (row.operating_model === 'mobile' || row.has_public_premises);
+        row.has_service_area && (row.operating_model === 'mobile' || row.has_public_premises);
       return {
         providerId: row.provider_id,
         categoryKey: row.category_key,
@@ -397,6 +405,32 @@ export class DiscoveryRepository {
   }
 
   async save(identityId: string, publicProviderId: string): Promise<SavedProviderView> {
+    const eligible = await this.database.query<{ id: string }>(
+      `SELECT publications.id
+       FROM discovery.publications AS publications
+       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+       WHERE publications.id = $1
+         AND publications.status = 'published'
+         AND organizations.status = 'ready_for_verification'
+         AND discovery.required_claims_current(
+           publications.provider_id,
+           publications.category_id,
+           publications.requirement_version_id,
+           now()
+         )`,
+      [publicProviderId],
+    );
+    if (!eligible.rows[0]) {
+      throw new NotFoundException('Eligible public provider profile was not found.');
+    }
+
+    await this.database.query(
+      `INSERT INTO account.saved_public_providers (identity_id, publication_id)
+       VALUES ($1, $2)
+       ON CONFLICT (identity_id, publication_id) DO NOTHING`,
+      [identityId, publicProviderId],
+    );
+
     const result = await this.database.query<{
       public_provider_id: string;
       public_display_name: string;
@@ -404,33 +438,23 @@ export class DiscoveryRepository {
       public_locality: string;
       saved_at: Date;
     }>(
-      `INSERT INTO account.saved_public_providers (identity_id, publication_id)
-       SELECT $1, publications.id
-       FROM discovery.publications
-       WHERE publications.id = $2
-         AND publications.status = 'published'
-         AND discovery.required_claims_current(
-           publications.provider_id,
-           publications.category_id,
-           publications.requirement_version_id,
-           now()
-         )
-       ON CONFLICT (identity_id, publication_id) DO UPDATE
-       SET saved_at = account.saved_public_providers.saved_at
-       RETURNING
-         publication_id AS public_provider_id,
-         (SELECT public_display_name FROM discovery.publications WHERE id = publication_id),
-         (SELECT categories.name
-          FROM discovery.publications AS publications
-          JOIN catalog.service_categories AS categories ON categories.id = publications.category_id
-          WHERE publications.id = publication_id) AS category_name,
-         (SELECT public_locality FROM discovery.publications WHERE id = publication_id),
-         saved_at`,
+      `SELECT
+         publications.id AS public_provider_id,
+         publications.public_display_name,
+         categories.name AS category_name,
+         publications.public_locality,
+         saved.saved_at
+       FROM account.saved_public_providers AS saved
+       JOIN discovery.publications AS publications ON publications.id = saved.publication_id
+       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+       JOIN catalog.service_categories AS categories ON categories.id = publications.category_id
+       WHERE saved.identity_id = $1
+         AND saved.publication_id = $2`,
       [identityId, publicProviderId],
     );
     const row = result.rows[0];
     if (!row) {
-      throw new NotFoundException('Eligible public provider profile was not found.');
+      throw new NotFoundException('Saved public provider was not found.');
     }
     return this.savedView(row);
   }
@@ -462,6 +486,7 @@ export class DiscoveryRepository {
        JOIN catalog.service_categories AS categories ON categories.id = publications.category_id
        WHERE saved.identity_id = $1
          AND publications.status = 'published'
+         AND organizations.status = 'ready_for_verification'
          AND discovery.required_claims_current(
            publications.provider_id,
            publications.category_id,
