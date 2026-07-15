@@ -1,5 +1,11 @@
 export type OperationsRole =
-  'field_agent' | 'reviewer' | 'support' | 'trust_supervisor' | 'finance' | 'auditor' | 'admin';
+  | 'field_agent'
+  | 'reviewer'
+  | 'support'
+  | 'trust_supervisor'
+  | 'finance'
+  | 'auditor'
+  | 'admin';
 
 export interface OperationsSession {
   synthetic: true;
@@ -21,6 +27,7 @@ export const syntheticReviewerSession: OperationsSession = {
   permissions: [
     'account.sessions.manage',
     'operations.portal.access',
+    'operations.providers.read',
     'verification.case.review',
     'verification.final_decision',
   ],
