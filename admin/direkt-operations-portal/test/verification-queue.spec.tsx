@@ -10,11 +10,12 @@ describe('VerificationQueuePage', () => {
     expect(markup).toContain('Representative identity check');
     expect(markup).toContain('2 immutable metadata versions');
     expect(markup).toContain('This does not verify qualifications, safety or future workmanship');
+    expect(markup).toContain('private addresses and notes remain private');
     expect(markup).not.toContain('objectKey');
     expect(markup).not.toContain('private/');
     expect(markup).not.toContain('Download evidence');
     expect(markup).not.toContain('Publish provider');
     expect(markup).not.toContain('document number');
-    expect(markup).not.toContain('private address');
+    expect(markup).not.toContain('123 Main Street');
   });
 });
