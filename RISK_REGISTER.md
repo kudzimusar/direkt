@@ -38,27 +38,38 @@ Scores use probability (P) and impact (I) from 1–5. Priority is `P × I`.
 | R-032 | Incorrect global/provider role scope causes cross-provider access | 3 | 5 | 15 | database role-scope trigger, non-overlap constraint, provider-aware repository, deny tests, server-side permission resolution | Security/backend / controlled |
 | R-033 | Operations portal leaks privileged data through indexing, browser bundles or direct connectors | 3 | 5 | 15 | noindex/security headers, API-only boundary, CI import scan, synthetic fixtures, no deployment, CSP review before real data | Security/admin / controlled |
 | R-034 | Synthetic authentication is mistakenly enabled in production | 2 | 5 | 10 | production configuration permits only disabled mode and requires external secrets; deployment gate and runtime checks still required | Security/operations / controlled |
-| R-035 | Profile completion or an operator action accidentally publishes an unverified provider | 3 | 5 | 15 | `discoverable=false` database constraint, empty public-directory view, no public provider API, Android/admin stop-gate copy and regression tests | Trust/backend / controlled |
+| R-035 | Profile completion or an operator action accidentally publishes an unverified provider | 3 | 5 | 15 | policy-controlled publication function, live provider/category/claim eligibility and public-route regressions | Trust/backend / controlled |
 | R-036 | Category requirements change and invalidate historical evidence meaning | 3 | 5 | 15 | immutable activated versions, provider selections pin a version, new versions required for changes | Trust/data / controlled |
 | R-037 | Provider pathways become a proxy for quality or unfair ranking | 3 | 4 | 12 | pathways describe evidence context only, equal presentation, no pathway-derived trust score, pilot fairness review | Product/trust / open |
 | R-038 | A provider representative gains access to another provider or retains access after revocation | 3 | 5 | 15 | provider-scoped role assignments, active-time checks, immediate server resolution, cross-provider and revocation tests | Security/backend / controlled |
 | R-039 | Private-storage adapter or bucket policy exposes original evidence | 3 | 5 | 15 | adapter-only backend access, opaque object keys, private buckets, short-lived signed access, access audit, no public URL, infrastructure review before real data | Security/storage / production gate |
 | R-040 | A shared requirement key is linked to the wrong provider category | 2 | 5 | 10 | category-scoped resolution, pinned requirement versions, ambiguity rejection and regression tests | Trust/backend / controlled |
 | R-041 | Repeat or contradictory verification decisions create misleading claims | 2 | 5 | 10 | in-review lifecycle gate, immutable decisions, reason/result semantics trigger and regression tests | Trust/data / controlled |
-| R-042 | Expiry processing is not scheduled or fails silently in production | 3 | 5 | 15 | deterministic database function, audited batch result, monitored scheduler, retry and stale-claim alert before public discovery | Trust/operations / Phase 5–deployment gate |
+| R-042 | Expiry processing is not scheduled or fails silently in production | 3 | 5 | 15 | deterministic database function, audited batch result, monitored scheduler, retry and stale-claim alert before public discovery | Trust/operations / deployment gate |
 | R-043 | Synthetic private storage is mistaken for production-ready document handling | 3 | 4 | 12 | synthetic labelling, production adapter contract, malware/MIME/checksum controls required before real evidence, deployment checklist | Programme/security / active |
 | R-044 | Safe claim projection accidentally includes private evidence or reviewer data | 2 | 5 | 10 | dedicated safe view/types, allowlisted fields, OpenAPI/public-route tests and no object references in clients | Trust/privacy / controlled |
+| R-045 | A stale published row remains visible after provider suspension or category removal | 3 | 5 | 15 | live provider/category/version joins on every public read, current-claim checks and removal regressions | Trust/backend / controlled |
+| R-046 | Search distance or map output reveals a mobile provider private base | 2 | 5 | 10 | separate private/public geometry, service-area matching for mobile providers, public DTO allowlists and privacy regressions | Privacy/location / controlled |
+| R-047 | Saved-provider lists retain ineligible or withdrawn providers | 3 | 4 | 12 | re-evaluate publication, organization, category/version and claim eligibility on save and every saved-list read | Product/backend / controlled |
+| R-048 | Map/vendor outage, cost or permission denial makes discovery unusable | 3 | 4 | 12 | manual area path, list mode, adapter boundary, no background location and production vendor gate | Android/architecture / open |
+| R-049 | Sparse supply or aggressive filters produce empty results that mislead customers | 4 | 3 | 12 | bounded no-results recovery, transparent filters, sparse/empty synthetic states and no fabricated providers | Product/growth / open |
 
 ## Current treatment priorities
 
-Before Phase 5 exit:
+Phase 5 exit controls are complete:
 
-- R-003 and R-014 require separate public-safe and private location models plus manual/no-location fallbacks;
-- R-005 and R-042 require customer discovery to exclude stale claims and prove deterministic freshness filtering;
-- R-011 requires synthetic empty, sparse and populated discovery states without inventing market supply;
-- R-027 requires every customer-discovery fixture and build to remain explicitly synthetic;
-- R-035 and R-044 require database, API and Android tests proving discovery consumes only eligible safe projections;
-- R-039 and R-043 remain production stop gates until dedicated private storage, scanning and secrets are connected.
+- R-003 and R-046 are controlled by separate private/public/service-area geometry and public serialization regressions;
+- R-005, R-042 and R-045 are controlled by current-claim and live eligibility checks;
+- R-011 and R-049 have explicit empty/sparse/no-results states without fabricated supply;
+- R-027 remains controlled through synthetic fixtures and build labelling;
+- R-035, R-044 and R-047 have database/API/Android tests for safe publication and saves.
+
+Before Phase 6 or production integration:
+
+- R-006 requires durable local drafts, retry and upload recovery in the provider workspace;
+- R-014 and R-048 require an approved map/location provider, quotas, cost controls and manual fallback validation;
+- R-039, R-042 and R-043 require production storage, scheduler, scanning, alerting and recovery validation;
+- R-045 requires production monitoring for stale or policy-invalid publication rows.
 
 Before the controlled pilot:
 
@@ -66,8 +77,7 @@ Before the controlled pilot:
 - R-030 requires approved providers, distributed rate limiting and monitored abuse controls;
 - R-033 requires deployment, cookie/session, CSP and private-data review;
 - R-034 requires production configuration and secret-management validation;
-- R-037 requires representative provider and customer fairness testing;
-- R-039, R-042 and R-043 require production storage, scheduler, scanning, alerting and recovery validation.
+- R-037 requires representative provider and customer fairness testing.
 
 ## Review cadence
 
