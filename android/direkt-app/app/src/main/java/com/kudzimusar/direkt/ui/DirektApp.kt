@@ -23,11 +23,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.kudzimusar.direkt.ui.provider.ProviderDraft
+import com.kudzimusar.direkt.ui.provider.syntheticProviderDraft
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +45,7 @@ fun DirektApp(
                     Column {
                         Text("DIREKT", fontWeight = FontWeight.Bold)
                         Text(
-                            text = "Foundation build — synthetic data only",
+                            text = "Phase 3 — synthetic provider drafts only",
                             style = MaterialTheme.typography.labelSmall,
                         )
                     }
@@ -80,7 +81,6 @@ fun DirektApp(
                     onModeSelected = appState::switchMode,
                 )
             }
-
             item {
                 Text(
                     text = screenTitle(appState),
@@ -88,7 +88,6 @@ fun DirektApp(
                     fontWeight = FontWeight.Bold,
                 )
             }
-
             item {
                 Text(
                     text = screenSummary(appState),
@@ -98,12 +97,12 @@ fun DirektApp(
             }
 
             if (appState.mode == DirektMode.Customer && appState.destination == DirektDestination.Discover) {
-                item { DiscoveryCard() }
-                item { ProviderCard() }
+                item { NoPublicDirectoryCard() }
                 item { TrustBoundaryCard() }
             } else if (appState.mode == DirektMode.Provider) {
-                item { ProviderFoundationCard() }
-                item { VerificationProgressCard() }
+                item { ProviderDraftCard(syntheticProviderDraft) }
+                item { CategoryRequirementsCard() }
+                item { TrustBoundaryCard() }
             } else {
                 item { PlaceholderCard(appState.destination.label) }
             }
@@ -117,10 +116,7 @@ private fun ModeSelector(
     onModeSelected: (DirektMode) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = "Preview mode",
-            style = MaterialTheme.typography.labelLarge,
-        )
+        Text(text = "Synthetic preview mode", style = MaterialTheme.typography.labelLarge)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -134,7 +130,7 @@ private fun ModeSelector(
             }
         }
         Text(
-            text = "Mode switching is a visual foundation only. Authorization is not implemented.",
+            text = "Production access is resolved by backend identity, session, role and provider scope. This switch grants no permission.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -142,45 +138,66 @@ private fun ModeSelector(
 }
 
 @Composable
-private fun DiscoveryCard() {
+private fun NoPublicDirectoryCard() {
     FoundationCard {
-        Text("Find trusted local services", style = MaterialTheme.typography.titleMedium)
+        Text("Provider discovery is intentionally unavailable", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
-        Text("Lusaka District · Woodlands selected")
-        Spacer(Modifier.height(12.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            AssistChip(onClick = {}, label = { Text("Plumbing") })
-            AssistChip(onClick = {}, label = { Text("Electrical") })
-        }
+        Text("Phase 3 creates private provider drafts and category contracts. It cannot publish a provider.")
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "The production app will support area, landmark, pin and optional Plus Code search without requiring precise location permission.",
+            text = "Customer discovery begins only after Phase 4 derives approved claims from privately reviewed evidence.",
             style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
 
 @Composable
-private fun ProviderCard() {
+private fun ProviderDraftCard(draft: ProviderDraft) {
     FoundationCard {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column {
-                Text("Mwamba Water Works", style = MaterialTheme.typography.titleMedium)
-                Text("Mobile plumber · synthetic profile")
+                Text(draft.displayName, style = MaterialTheme.typography.titleMedium)
+                Text("${draft.pathway.label} · ${draft.operatingModel.label}")
             }
-            Text("2.4 km", fontWeight = FontWeight.SemiBold)
+            Text(draft.status.label, fontWeight = FontWeight.SemiBold)
         }
         Spacer(Modifier.height(12.dp))
-        Text("Phone confirmed", color = MaterialTheme.colorScheme.primary)
-        Text("Identity reviewed", color = MaterialTheme.colorScheme.primary)
-        Text("Qualification not supplied", color = MaterialTheme.colorScheme.tertiary)
+        Text("Locality: ${draft.localitySummary ?: "Mobile service only"}")
+        Text("Service area: ${draft.serviceAreaSummary}")
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            draft.categoryNames.forEach { category ->
+                AssistChip(onClick = {}, label = { Text("$category · v1") })
+            }
+        }
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "DIREKT does not guarantee workmanship, safety or the outcome of a future service.",
+            text = "Publicly discoverable: No",
+            color = MaterialTheme.colorScheme.tertiary,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            text = "Profile fields are self-asserted draft data, not DIREKT verification or a workmanship guarantee.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun CategoryRequirementsCard() {
+    FoundationCard {
+        Text("Plumbing requirement version 1", style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
+        Text("Identity evidence · required later")
+        Text("Experience or qualification · required later")
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = "Activated category versions are immutable. Evidence upload and review start in Phase 4.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -195,39 +212,12 @@ private fun TrustBoundaryCard() {
         ),
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text("Trust boundary", fontWeight = FontWeight.Bold)
+            Text("Phase 3 trust boundary", fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(6.dp))
             Text(
-                "This build contains no backend, real provider, document upload, verification decision, payment or regulator connection.",
+                "No real provider data, evidence, verification decision, public listing, payment, map, regulator or production credential is connected.",
             )
         }
-    }
-}
-
-@Composable
-private fun ProviderFoundationCard() {
-    FoundationCard {
-        Text("Provider workspace foundation", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        Text("Create a profile, choose a fixed/mobile/hybrid operating model and review category-specific evidence requirements.")
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "All content is synthetic. Account identity and role authorization will be implemented in a later phase.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun VerificationProgressCard() {
-    FoundationCard {
-        Text("Verification progress", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        Text("Contact details · Not started")
-        Text("Identity evidence · Not started")
-        Text("Operating location · Not started")
-        Text("Category evidence · Not started")
     }
 }
 
@@ -236,7 +226,7 @@ private fun PlaceholderCard(destination: String) {
     FoundationCard {
         Text("$destination foundation", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
-        Text("The navigation boundary is present, but this feature is intentionally not implemented in Phase 2A.")
+        Text("This destination remains outside the bounded Phase 3 provider and category vertical slice.")
     }
 }
 
@@ -244,9 +234,7 @@ private fun PlaceholderCard(destination: String) {
 private fun FoundationCard(content: @Composable () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -260,12 +248,12 @@ private fun screenTitle(appState: DirektAppState): String = when (appState.mode)
     DirektMode.Provider -> when (appState.destination) {
         DirektDestination.Discover -> "Provider overview"
         DirektDestination.Saved -> "Provider profile"
-        DirektDestination.Enquiries -> "Provider enquiries"
-        DirektDestination.Account -> "Provider account"
+        DirektDestination.Enquiries -> "Provider representatives"
+        DirektDestination.Account -> "Provider draft"
     }
 }
 
 private fun screenSummary(appState: DirektAppState): String = when (appState.mode) {
-    DirektMode.Customer -> "Customer-facing navigation and trust presentation foundation."
-    DirektMode.Provider -> "Provider-facing onboarding and verification-state foundation."
+    DirektMode.Customer -> "Customer discovery remains blocked until evidence-derived publication exists."
+    DirektMode.Provider -> "Prepare a private provider draft, operating model and versioned category selection."
 }
