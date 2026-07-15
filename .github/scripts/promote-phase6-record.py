@@ -1,46 +1,38 @@
 from pathlib import Path
+import re
 
 
-def replace_once(text: str, old: str, new: str, label: str) -> str:
-    count = text.count(old)
-    if count != 1:
-        raise RuntimeError(f"{label}: expected one match, found {count}")
-    return text.replace(old, new, 1)
+REVIEWED_HEAD = "aa10d727091c4e742f0a26c41b00daa07c5000ad"
 
 
 status_path = Path("PROJECT_STATUS.md")
 status = status_path.read_text()
-status = replace_once(
-    status,
-    "**Updated:** 2026-07-15  ",
-    "**Updated:** 2026-07-16  ",
-    "project status date",
-)
-status = replace_once(
-    status,
-    "**Current programme state:** Phase 5 Android customer discovery is complete and stable. Phase 6 Android provider workspace is active under Issue #25.",
+status = re.sub(r"\*\*Updated:\*\* \d{4}-\d{2}-\d{2}  ", "**Updated:** 2026-07-16  ", status, count=1)
+status = re.sub(
+    r"\*\*Current programme state:\*\*.*",
     "**Current programme state:** Phase 5 Android customer discovery is complete and stable. Phase 6 Android provider workspace is review-complete on an exact green implementation head and is awaiting final record validation and merge through PR #26.",
-    "project programme state",
-)
-status = replace_once(
     status,
-    "| Phase 6 Android provider workspace | Active; Issue #25 |",
+    count=1,
+)
+status = re.sub(
+    r"\| Phase 6 Android provider workspace \|.*\|",
     "| Phase 6 Android provider workspace | Review complete; PR #26 final record validation pending |",
-    "phase 6 status row",
-)
-status = replace_once(
     status,
-    "Issue #25 is the sole active implementation tracker. Issue #5 remains a deliberate later validation obligation and is not a current implementation blocker.",
-    "Issue #25 remains the sole active implementation tracker until PR #26 merges. Issue #5 remains a deliberate later validation obligation and is not a current implementation blocker.",
-    "active issue line",
+    count=1,
 )
-phase6_record = r'''
+status = re.sub(
+    r"Issue #25 .*?Issue #5 remains a deliberate later validation obligation and is not a current implementation blocker\.",
+    "Issue #25 remains the sole active implementation tracker until PR #26 merges. Issue #5 remains a deliberate later validation obligation and is not a current implementation blocker.",
+    status,
+    count=1,
+)
+phase6_record = f'''
 
 ### Phase 6 — Android provider workspace
 
 ```text
 PR #26
-reviewed implementation head: aa10d727091c4e742f0a26c41b00daa07c5000ad
+reviewed implementation head: {REVIEWED_HEAD}
 merge commit: pending final record validation
 Issue #25: pending automatic closure on merge
 ```
@@ -63,40 +55,42 @@ Retained Android artifacts:
 
 Phase 6 delivers actor-resolved provider scope, profile/services/location and availability management, private case/check-specific evidence capture, idempotent interrupted-upload recovery, provider-safe verification timeline, explicit Phase 8/9 read-only boundaries, native Android provider states, aggregate operations visibility and regression-tested confirmation/publication/privacy controls.
 '''
-status = replace_once(
-    status,
-    "\n## Active Phase 6 scope\n",
-    phase6_record + "\n## Phase 6 delivered scope\n",
-    "phase 6 checkpoint insertion",
-)
+if "### Phase 6 — Android provider workspace" not in status:
+    marker = "\n## Active Phase 6 scope\n"
+    if marker not in status:
+        raise RuntimeError("Phase 6 scope marker was not found in PROJECT_STATUS.md")
+    status = status.replace(marker, phase6_record + "\n## Phase 6 delivered scope\n", 1)
+else:
+    status = status.replace("\n## Active Phase 6 scope\n", "\n## Phase 6 delivered scope\n", 1)
 status_path.write_text(status)
 
 lock_path = Path("WORKSTREAM_LOCK.md")
 lock = lock_path.read_text()
-lock = replace_once(lock, "| Status | CLAIMED |", "| Status | FINAL_VALIDATION |", "lock status")
-lock = replace_once(
-    lock,
-    "| Task | Implement provider-scoped workspace contracts, profile/services/service areas, evidence capture, verification timeline, availability, recoverable uploads and bounded future-feature surfaces |",
+lock = re.sub(r"\| Status \| .*? \|", "| Status | FINAL_VALIDATION |", lock, count=1)
+lock = re.sub(
+    r"\| Task \| .*? \|",
     "| Task | Validate the promoted Phase 6 programme record, merge reviewed PR #26, close Issue #25 and synchronize the implementation branch |",
-    "lock task",
-)
-lock = replace_once(
     lock,
-    "| Expected handoff | Reviewed synthetic provider workspace with server-resolved scope, private case/check evidence capture, safe verification timeline, independent availability, idempotent upload recovery, bounded Phase 8/9 placeholders and green permanent CI |",
+    count=1,
+)
+lock = re.sub(
+    r"\| Expected handoff \| .*? \|",
     "| Expected handoff | Merged and recorded provider workspace with server-resolved scope, private evidence recovery, safe timeline, independent availability, bounded Phase 8/9 surfaces and synchronized branches |",
-    "lock handoff",
-)
-lock = replace_once(
     lock,
-    "| Last clean checkpoint | `11541db4d5ea856404f8fee03c0ca55cf6bab36c` |\n| Governing issue | Issue #25 |",
-    "| Last clean checkpoint | `11541db4d5ea856404f8fee03c0ca55cf6bab36c` |\n| Reviewed implementation head | `aa10d727091c4e742f0a26c41b00daa07c5000ad` |\n| Governing issue | Issue #25 |",
-    "lock reviewed head",
+    count=1,
 )
-review_evidence = r'''
+if "| Reviewed implementation head |" not in lock:
+    lock = re.sub(
+        r"(\| Last clean checkpoint \| `[^`]+` \|\n)",
+        rf"\1| Reviewed implementation head | `{REVIEWED_HEAD}` |\n",
+        lock,
+        count=1,
+    )
+review_evidence = f'''
 
 ## Reviewed checkpoint evidence
 
-The Phase 6 implementation was reviewed and verified on exact source head `aa10d727091c4e742f0a26c41b00daa07c5000ad`.
+The Phase 6 implementation was reviewed and verified on exact source head `{REVIEWED_HEAD}`.
 
 | Gate | Run | Result | Artifact SHA-256 |
 |---|---:|---|---|
@@ -107,10 +101,9 @@ The Phase 6 implementation was reviewed and verified on exact source head `aa10d
 
 Review findings are recorded in `docs/testing/PHASE_6_REVIEW_REGRESSIONS.md`. The current mutation promotes only the programme record and lock state; permanent CI must pass again on the resulting exact head before merge.
 '''
-lock = replace_once(
-    lock,
-    "\n## Acceptance criteria\n",
-    review_evidence + "\n## Acceptance criteria\n",
-    "lock evidence insertion",
-)
+if "## Reviewed checkpoint evidence" not in lock:
+    marker = "\n## Acceptance criteria\n"
+    if marker not in lock:
+        raise RuntimeError("Acceptance criteria marker was not found in WORKSTREAM_LOCK.md")
+    lock = lock.replace(marker, review_evidence + marker, 1)
 lock_path.write_text(lock)
