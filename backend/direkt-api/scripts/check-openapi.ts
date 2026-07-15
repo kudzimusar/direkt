@@ -27,7 +27,16 @@ async function main(): Promise<void> {
     ['/api/v1/auth/sessions/rotate', 'post'],
     ['/api/v1/auth/sessions', 'get'],
     ['/api/v1/auth/sessions/revoke-others', 'post'],
+    ['/api/v1/account/profile', 'put'],
+    ['/api/v1/providers', 'post'],
+    ['/api/v1/providers/{providerId}', 'get'],
+    ['/api/v1/providers/{providerId}/profile', 'patch'],
+    ['/api/v1/providers/{providerId}/state-transitions', 'post'],
+    ['/api/v1/providers/{providerId}/representatives', 'post'],
+    ['/api/v1/providers/{providerId}/categories/{categoryKey}', 'put'],
+    ['/api/v1/categories', 'get'],
     ['/api/v1/operations/session', 'get'],
+    ['/api/v1/operations/providers', 'get'],
     ['/api/v1/operations/emergency-actions', 'post'],
   ];
   for (const [requiredPath, method] of requiredOperations) {
@@ -38,7 +47,16 @@ async function main(): Promise<void> {
 
   for (const [protectedPath, method] of [
     ['/api/v1/auth/sessions', 'get'],
+    ['/api/v1/account/profile', 'put'],
+    ['/api/v1/providers', 'post'],
+    ['/api/v1/providers/{providerId}', 'get'],
+    ['/api/v1/providers/{providerId}/profile', 'patch'],
+    ['/api/v1/providers/{providerId}/state-transitions', 'post'],
+    ['/api/v1/providers/{providerId}/representatives', 'post'],
+    ['/api/v1/providers/{providerId}/categories/{categoryKey}', 'put'],
+    ['/api/v1/categories', 'get'],
     ['/api/v1/operations/session', 'get'],
+    ['/api/v1/operations/providers', 'get'],
     ['/api/v1/operations/emergency-actions', 'post'],
   ] as const) {
     if (!paths[protectedPath]?.[method]?.security?.length) {
@@ -47,14 +65,14 @@ async function main(): Promise<void> {
   }
 
   const prohibited = Object.keys(paths).filter((pathName) =>
-    /(providers|verification|evidence|payments|subscriptions)/i.test(pathName),
+    /(verification|evidence|payments|subscriptions|public-directory|discoverable)/i.test(pathName),
   );
   if (prohibited.length > 0) {
-    throw new Error(`Phase 2C exposed prohibited domain paths: ${prohibited.join(', ')}`);
+    throw new Error(`Phase 3 exposed prohibited domain paths: ${prohibited.join(', ')}`);
   }
 
   process.stdout.write(
-    `${JSON.stringify({ event: 'openapi_check_passed', pathCount: Object.keys(paths).length })}\n`,
+    `${JSON.stringify({ event: 'openapi_check_passed', pathCount: Object.keys(paths).length, phase: 3 })}\n`,
   );
 }
 

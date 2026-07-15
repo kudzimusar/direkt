@@ -38,21 +38,27 @@ Scores use probability (P) and impact (I) from 1–5. Priority is `P × I`.
 | R-032 | Incorrect global/provider role scope causes cross-provider access | 3 | 5 | 15 | database role-scope trigger, non-overlap constraint, provider-aware repository, deny tests, server-side permission resolution | Security/backend / controlled |
 | R-033 | Operations portal leaks privileged data through indexing, browser bundles or direct connectors | 3 | 5 | 15 | noindex/security headers, API-only boundary, CI import scan, synthetic fixtures, no deployment, CSP review before real data | Security/admin / controlled |
 | R-034 | Synthetic authentication is mistakenly enabled in production | 2 | 5 | 10 | production configuration permits only disabled mode and requires external secrets; deployment gate and runtime checks still required | Security/operations / controlled |
+| R-035 | Profile completion or an operator action accidentally publishes an unverified provider | 3 | 5 | 15 | `discoverable=false` database constraint, empty public-directory view, no public provider API, Android/admin stop-gate copy and regression tests | Trust/backend / controlled |
+| R-036 | Category requirements change and invalidate historical evidence meaning | 3 | 5 | 15 | immutable activated versions, provider selections pin a version, new versions required for changes | Trust/data / controlled |
+| R-037 | Provider pathways become a proxy for quality or unfair ranking | 3 | 4 | 12 | pathways describe evidence context only, equal presentation, no pathway-derived trust score, pilot fairness review | Product/trust / open |
+| R-038 | A provider representative gains access to another provider or retains access after revocation | 3 | 5 | 15 | provider-scoped role assignments, active-time checks, immediate server resolution, cross-provider and revocation tests | Security/backend / controlled |
 
 ## Current treatment priorities
 
 Before Phase 3 exit:
 
 - R-019 and R-031 require Android secure-storage and account-recovery designs before real contacts are used;
-- R-032 requires provider-object authorization tests on every Phase 3 mutation;
-- no Phase 3 profile may become publicly discoverable without later evidence-derived claims.
+- R-032 and R-038 require provider-object authorization and revocation tests on every Phase 3 mutation;
+- R-035 requires database, API, Android and portal evidence that no Phase 3 profile can become publicly discoverable;
+- R-036 requires immutable activated category-version tests.
 
 Before the controlled pilot:
 
 - R-004, R-010, R-013, R-015, R-021, R-022, R-023 and R-025 require real operational or legal evidence;
 - R-030 requires approved providers, distributed rate limiting and monitored abuse controls;
 - R-033 requires deployment, cookie/session, CSP and private-data review;
-- R-034 requires production configuration and secret-management validation.
+- R-034 requires production configuration and secret-management validation;
+- R-037 requires representative provider and customer fairness testing.
 
 ## Review cadence
 
