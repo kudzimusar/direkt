@@ -6,15 +6,16 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED |
-| Owner/agent | OpenAI GPT-5.6 Thinking — Phase 3 identity/provider/category core agent |
-| Phase | Phase 3 |
-| Task | Implement customer/provider account services, provider profiles, authorized representatives, operating models, category taxonomy and controlled drafts |
-| Modules/paths | `backend/direkt-api`, `database`, `android/direkt-app`, `admin/direkt-operations-portal`, `.github/workflows`, `docs/product`, `docs/backend`, `docs/architecture`, `docs/android`, `docs/testing`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
-| Claimed at | 2026-07-15 08:05 JST / 2026-07-14 23:05 UTC |
-| Expected handoff | Tested synthetic identity/provider/category vertical slice; server-enforced provider scope; drafts and state transitions; no public discoverability or evidence-derived claims; green Android/backend/admin/docs CI; checkpoint promoted automatically |
-| Last clean checkpoint | `bd8e937bf234cd894e04cc05935c7994e62c42be` |
-| Governing issue | Issue #16 |
+| Status | RELEASED |
+| Owner/agent | None |
+| Phase | Phase 3 complete; Phase 4 not claimed |
+| Task | No active implementation workstream |
+| Modules/paths | None reserved by this lock |
+| Released at | 2026-07-15 after stable checkpoint promotion |
+| Last clean checkpoint | `149f3b3aa24163ebb6a0b023283cf4a39badb5d6` |
+| Governing issue | Issue #16 — closed as completed |
+
+A new phase must create or confirm its governing issue, define its scope and stop gates, and claim this lock before modifying shared implementation paths.
 
 ## Phase 2C stable release record
 
@@ -38,90 +39,70 @@ Documentation quality #272 — passed
 artifact sha256: f9989fda65d229dbf1d4907d63d0c871d515ac7b0daeb53ef6dff4732a19343b
 ```
 
-Issue #14 is closed. `build/android-v1` was fast-forwarded to the merge checkpoint before this Phase 3 claim.
+## Phase 3 stable release record
 
-## Phase 3 objective
+Phase 3 completed through PR #17:
 
-Create the first bounded business-domain vertical slice on top of the Phase 2C identity and authorization foundation.
+```text
+verified PR head: dab29ac118c3b695ab84f4fcd2ac96091e16052c
+merge commit:     149f3b3aa24163ebb6a0b023283cf4a39badb5d6
+Issue #16:        closed as completed
+```
 
-The vertical slice must support:
+Final exact-head evidence:
 
-1. customer account application services built on authenticated identities;
-2. provider profile creation as a non-public draft;
-3. authorized provider representatives and provider-scoped assignments;
-4. registered-business, qualified-individual and experienced-informal-provider pathways;
+```text
+Backend/PostGIS CI #235 — passed
+artifact sha256: cc730fb7a2c0fd590baeb810b8adc9de7c2413a3cf5dbdef0e6fb9a6aab2e554
+
+Android CI #122 — passed
+reports sha256: fb0c4d7742e248ea1f748b82c4b89228007466a0e222ca3f144a8864ed9859d5
+
+Operations Portal CI #132 — passed
+artifact sha256: 45ea34f050952da493bd2df09d6acafc98e045819cd83b55e7b55d1c452fd6e7
+
+Documentation quality #450 — passed
+artifact sha256: 360dd3e56d2e97d988f056db0f039b0dbc6c7a6e3bf217be07f03fc5945a27ee
+```
+
+Phase 3 delivered the first authenticated business-domain vertical slice:
+
+1. customer profiles built on Phase 2C identities and sessions;
+2. provider organizations separated from human identities;
+3. provider-scoped representatives;
+4. registered-business, qualified-individual and experienced-informal pathways;
 5. fixed-premises, mobile and hybrid operating models;
-6. service-category taxonomy and versioned category requirements;
-7. profile drafts with explicit, validated state transitions;
-8. server-enforced provider/object scope on every mutation and query;
-9. append-only audit events for profile, representative, category and state changes;
-10. synthetic Android and operations-portal surfaces sufficient to exercise the bounded core;
-11. migrations, OpenAPI, tests, documentation and exact-head CI evidence.
+6. versioned service categories and immutable activated requirements;
+7. non-public provider drafts and validated internal state transitions;
+8. server-enforced provider/object scope;
+9. actor-attributed append-only audit coverage;
+10. synthetic Android and operations-portal states;
+11. an empty public-directory boundary that cannot publish a provider in Phase 3.
 
-## Phase 3 acceptance criteria
+Two automated review findings were resolved and regression-tested before merge:
 
-The active owner must:
+- activated or retired requirement versions now reject inserts, updates and deletes;
+- customer-profile domain constraint failures return HTTP 400 rather than HTTP 500.
 
-- preserve the Phase 2C authentication, session and deny-by-default authorization contracts;
-- create provider-domain tables through forward-only checksummed migrations;
-- keep provider organization identity separate from the human account identity;
-- model one primary provider pathway explicitly rather than inferring it from missing evidence;
-- model fixed, mobile and hybrid operations without exposing private location precision;
-- version category and requirement definitions so later evidence cases retain historical meaning;
-- prevent drafts, self-asserted profile fields or commercial state from becoming publicly discoverable;
-- ensure provider-scoped roles cannot access another provider;
-- reject invalid profile-state transitions at both application and database boundaries;
-- write immutable audit events for sensitive changes;
-- expose only bounded synthetic API contracts;
-- add Android and portal states using fictional data only;
-- retain backend, Android, portal and documentation artifacts;
-- create, verify and merge the Phase 3 checkpoint automatically when every gate is green.
+`build/android-v1` was fast-forwarded to the Phase 3 merge checkpoint without force-pushing and has zero divergence from `main`.
 
-## Non-negotiable trust boundary
+## Retained trust boundary
 
-A provider profile may not become publicly discoverable because an account exists, a profile is complete, a provider pays, an administrator edits a database row, or the client requests publication.
+No provider profile may become publicly discoverable because an account exists, a profile is complete, a provider pays, an administrator edits a database row, or a client requests publication.
 
-Public discoverability remains blocked until Phase 4 creates approved evidence-derived claims and an explicit publication policy. Phase 3 may model a future publication state only as an unreachable or blocked state with tests proving the restriction.
+Public discoverability remains blocked until a later phase creates approved evidence-derived claims and an explicit publication policy. Phase 4 must not be inferred as active from the completion of Phase 3.
 
-## Explicit exclusions
+## Next claim procedure
 
-- No real identity, contact, provider or customer data.
-- No real evidence upload or evidence viewer.
-- No verification case, approval, rejection or public trust claim.
-- No production OTP, Firebase/Supabase Auth or privileged credentials.
-- No payment, subscription, map, regulator or field-agent integration.
-- No production backend, portal or Android deployment.
-- No public provider discoverability.
+Before Phase 4 or any other shared implementation work starts:
 
-## Required test evidence
-
-At minimum, prove:
-
-- unauthenticated account/provider operations are denied;
-- a customer cannot mutate a provider without an assignment;
-- a representative for provider A cannot read or mutate provider B;
-- expired/revoked provider assignments are denied;
-- client-tampered roles and provider IDs are ignored or rejected;
-- invalid provider pathway and operating-model combinations fail;
-- invalid profile state transitions fail;
-- category requirement versions are immutable after activation;
-- provider/profile changes create audit events;
-- no endpoint or query returns a discoverable provider in Phase 3;
-- all synthetic Android/admin states are clearly labelled and contain no real data.
-
-## Release procedure
-
-1. implement the bounded Issue #16 acceptance criteria;
-2. run backend migrations, authorization tests, OpenAPI, Android, portal and documentation checks;
-3. inspect migrations, dependency locks, artifacts and security boundaries;
-4. update project status, decisions, risks and the phase handoff;
-5. create the checkpoint PR;
-6. repair all CI and review findings on the same branch;
-7. merge automatically only at the verified exact head;
-8. synchronize `build/android-v1` without force-pushing;
-9. close Issue #16 only after all evidence is recorded;
-10. activate Phase 4 only after Phase 3 is stable.
+1. create or approve a governing issue;
+2. define the exact scope, exclusions, security controls and exit gates;
+3. confirm the stable `main` checkpoint;
+4. synchronize the implementation branch;
+5. change the current lock from `RELEASED` to `CLAIMED` with an owner, paths and expected handoff;
+6. do not introduce real data, production credentials or public trust claims without their explicit gates.
 
 ## Conflict rule
 
-A second agent must not modify the listed Phase 3 paths while this lock is claimed. Read-only review is allowed. A stale lock must be resolved explicitly rather than overwritten by assumption.
+A second agent must not modify paths reserved by a claimed lock. Read-only review is allowed. A stale or ambiguous lock must be resolved explicitly rather than overwritten by assumption.
