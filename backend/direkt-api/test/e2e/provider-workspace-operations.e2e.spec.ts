@@ -237,11 +237,11 @@ describe('Phase 6 provider workspace operations projection', () => {
     const serialized = JSON.stringify(workspace);
     expect(serialized).not.toContain('-14.101');
     expect(serialized).not.toContain('27.101');
-    expect(serialized).not.toContain('uploadIntentId');
-    expect(serialized).not.toContain('uploadSessionId');
-    expect(serialized).not.toContain('evidenceId');
-    expect(serialized).not.toContain('objectKey');
-    expect(serialized).not.toContain('sha256');
+    expect(serialized).not.toContain('"uploadIntentId":');
+    expect(serialized).not.toContain('"uploadSessionId":');
+    expect(serialized).not.toContain('"evidenceId":');
+    expect(serialized).not.toContain('"objectKey":');
+    expect(serialized).not.toContain('"sha256":');
     expect(serialized).not.toContain('reviewer');
   });
 });

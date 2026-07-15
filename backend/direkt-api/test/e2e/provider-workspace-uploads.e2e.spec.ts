@@ -132,7 +132,7 @@ describe('Phase 6 recoverable provider evidence uploads', () => {
          ON requirements.requirement_version_id = selections.requirement_version_id
        WHERE selections.provider_id = $1
          AND categories.category_key = 'plumbing'
-         AND requirements.requirement_key = 'representative_identity'`,
+         AND requirements.requirement_key = 'identity'`,
       [provider.id],
     );
     const row = contract.rows[0];
