@@ -131,6 +131,13 @@ export class ProviderWorkspaceOperationsRepository {
            FROM provider.category_selections AS selections
            WHERE selections.provider_id = organizations.id
              AND selections.status = 'selected'
+             AND organizations.status = 'ready_for_verification'
+             AND locations.provider_id IS NOT NULL
+             AND locations.service_area IS NOT NULL
+             AND (
+               profiles.operating_model = 'mobile'
+               OR locations.public_premises IS NOT NULL
+             )
              AND discovery.required_claims_current(
                selections.provider_id,
                selections.category_id,
@@ -160,6 +167,7 @@ export class ProviderWorkspaceOperationsRepository {
          profiles.registered_business_name,
          profiles.qualification_summary,
          profiles.experience_summary,
+         locations.provider_id,
          locations.private_base,
          locations.public_premises,
          locations.public_premises_consent,
