@@ -1,9 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthenticatedActor } from '../../src/authorization/authenticated-actor';
-import {
+import type {
   DiscoveryRepository,
-  type DiscoverySearchRow,
+  DiscoverySearchRow,
 } from '../../src/discovery/discovery.repository';
 import { DiscoveryService } from '../../src/discovery/discovery.service';
 import type { PublicClaimCard } from '../../src/discovery/discovery.types';
