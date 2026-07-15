@@ -20,16 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-        with:
-          ref: build/android-v1
-          fetch-depth: 0
-      - name: Materialize staged Phase 6 record
-        shell: bash
-        run: |
-          mkdir -p artifacts/docs/phase6-record
-          python .github/scripts/promote-phase6-record.py
-          cp PROJECT_STATUS.md artifacts/docs/phase6-record/PROJECT_STATUS.md
-          cp WORKSTREAM_LOCK.md artifacts/docs/phase6-record/WORKSTREAM_LOCK.md
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
