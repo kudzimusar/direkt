@@ -1,18 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthorizationRepository } from '../../src/authorization/authorization.repository';
 import { AuthorizationService } from '../../src/authorization/authorization.service';
-import { PERMISSIONS } from '../../src/authorization/permissions';
-import type { AuditService } from '../../src/platform/audit/audit.service';
+import { PERMISSIONS, type Permission } from '../../src/authorization/permissions';
+import type { AuditEventInput, AuditService } from '../../src/platform/audit/audit.service';
 
 const actor = {
   identityId: '00000000-0000-4000-8000-000000000301',
   sessionId: '00000000-0000-4000-8000-000000000302',
 };
 
-function subject(permissions: string[]) {
+function subject(permissions: Permission[]) {
   const snapshot = vi.fn().mockResolvedValue({ roles: [], permissions });
   const anyProviderSnapshot = vi.fn().mockResolvedValue({ roles: [], permissions });
-  const record = vi.fn().mockResolvedValue(undefined);
+  const record = vi.fn<(input: AuditEventInput) => Promise<void>>().mockResolvedValue(undefined);
   const service = new AuthorizationService(
     { snapshot, anyProviderSnapshot } as unknown as AuthorizationRepository,
     { record } as unknown as AuditService,
@@ -27,12 +27,10 @@ describe('AuthorizationService', () => {
     await expect(
       service.assertPermission(actor, PERMISSIONS.OPERATIONS_PORTAL_ACCESS),
     ).rejects.toThrow(/not permitted/i);
-    expect(record).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: 'authorization_denied',
-        outcome: 'denied',
-      }),
-    );
+    expect(record).toHaveBeenCalledTimes(1);
+    const event = record.mock.calls[0]?.[0];
+    expect(event?.action).toBe('authorization_denied');
+    expect(event?.outcome).toBe('denied');
   });
 
   it('passes provider scope to the repository instead of trusting a client role', async () => {
@@ -58,12 +56,13 @@ describe('AuthorizationService', () => {
     await expect(
       service.assertAnyProviderPermission(actor, PERMISSIONS.PROVIDER_PROFILE_READ),
     ).rejects.toThrow(/provider workspace/i);
-    expect(record).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: 'authorization_denied',
-        metadata: expect.objectContaining({ providerScope: 'actor_resolved' }),
-      }),
-    );
+    expect(record).toHaveBeenCalledTimes(1);
+    const event = record.mock.calls[0]?.[0];
+    expect(event?.action).toBe('authorization_denied');
+    expect(event?.metadata).toEqual({
+      permission: PERMISSIONS.PROVIDER_PROFILE_READ,
+      providerScope: 'actor_resolved',
+    });
   });
 
   it('denies evidence self-approval even when a role has final-decision permission', async () => {
@@ -76,9 +75,8 @@ describe('AuthorizationService', () => {
         '00000000-0000-4000-8000-000000000304',
       ),
     ).rejects.toThrow(/cannot approve/i);
-    expect(record).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'self_approval_denied' }),
-    );
+    expect(record).toHaveBeenCalledTimes(1);
+    expect(record.mock.calls[0]?.[0]?.action).toBe('self_approval_denied');
   });
 
   it('keeps field-agent and finance roles from final verification decisions', async () => {
