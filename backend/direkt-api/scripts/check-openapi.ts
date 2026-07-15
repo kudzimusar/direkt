@@ -116,7 +116,8 @@ async function main(): Promise<void> {
 
   const publicEvidencePaths = Object.keys(paths).filter(
     (pathName) =>
-      pathName.startsWith('/api/v1/public/') && /evidence|verification-cases|upload-intents/i.test(pathName),
+      pathName.startsWith('/api/v1/public/') &&
+      /evidence|verification-cases|upload-intents/i.test(pathName),
   );
   if (publicEvidencePaths.length > 0) {
     throw new Error(
