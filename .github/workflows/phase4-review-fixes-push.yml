@@ -43,7 +43,7 @@ jobs:
       - name: Commit reviewed implementation
         shell: bash
         run: |
-          if git diff --quiet && git status --short | grep -q '^$'; then
+          if [ -z "$(git status --porcelain -- backend/direkt-api database/migrations)" ]; then
             echo "Review fixes are already applied."
             exit 0
           fi
