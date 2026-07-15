@@ -6,94 +6,91 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | RELEASED |
-| Owner/agent | None |
-| Phase | Phase 4 complete; Phase 5 not claimed |
-| Task | No active implementation workstream |
-| Modules/paths | None reserved by this lock |
-| Released at | 2026-07-15 after Phase 4 stable checkpoint promotion |
-| Last clean checkpoint | `d9078a78d3677a94a720de2d16483487594b261e` |
-| Governing issue | Issue #20 — closed as completed |
-
-A new phase must create or confirm its governing issue, define its scope and stop gates, and claim this lock before modifying shared implementation paths.
+| Status | CLAIMED |
+| Owner/agent | OpenAI GPT-5.6 Thinking — Phase 5 customer-discovery agent |
+| Phase | Phase 5 — Android customer discovery |
+| Task | Implement public-safe publication/search, privacy-preserving location and service-area models, deterministic discovery filters/ranking, and Android customer discovery states |
+| Modules/paths | `database`, `backend/direkt-api`, `android/direkt-app`, `admin/direkt-operations-portal`, `.github/workflows`, `docs/backend`, `docs/api`, `docs/android`, `docs/architecture`, `docs/security`, `docs/testing`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
+| Claimed at | 2026-07-15 after Phase 4 checkpoint promotion |
+| Expected handoff | Tested synthetic customer-discovery vertical slice with public-safe publication and location boundaries; deterministic PostGIS filters/pagination; Android list/map/profile/saves/share/no-location states; green permanent CI; reviewed checkpoint merged automatically |
+| Last clean checkpoint | `6317a48a35367e79a97bec5184a25af14dfac707` |
+| Governing issue | Issue #23 |
 
 ## Stable predecessor
 
-Phase 3 completed through PR #17, its programme record was updated through PR #18, and the API/integration planning checkpoint was merged through PR #19.
+Phase 4 completed through PR #21 and its stable programme record was promoted through PR #22.
 
 ```text
-Phase 3 verified head: dab29ac118c3b695ab84f4fcd2ac96091e16052c
-Phase 3 merge commit: 149f3b3aa24163ebb6a0b023283cf4a39badb5d6
-Integration planning checkpoint: 7736c0909130a3bfbbe993f26ecf28056a699315
+Phase 4 verified PR head: 10c21f076ba27a7e0e38ac1819a4489e063eb6ec
+Phase 4 merge commit:     d9078a78d3677a94a720de2d16483487594b261e
+Phase 4 record checkpoint: 6317a48a35367e79a97bec5184a25af14dfac707
+Issue #20:                closed as completed
 ```
 
-## Phase 4 stable release record
+`main` and `build/android-v1` were identical before this Phase 5 claim.
 
-Phase 4 completed through PR #21:
+## Phase 5 objective
 
-```text
-verified PR head: 10c21f076ba27a7e0e38ac1819a4489e063eb6ec
-merge commit:     d9078a78d3677a94a720de2d16483487594b261e
-Issue #20:        closed as completed
-```
+Create a bounded, synthetic Android customer-discovery vertical slice that searches only eligible public-safe provider projections and current scoped claims while preserving provider/customer location privacy and functioning without device location or images.
 
-Final exact-head evidence:
+## Acceptance criteria
 
-```text
-Backend/PostGIS CI #296 — passed
-artifact sha256: af68f4556085b0ec92f8b774697a1c76980f647aa731ce29ad788ba0ced2f7b5
+The active owner must:
 
-Android CI #173 — passed
-reports sha256: 9802c03b45a7599840f4b14a469dd12f4751cd50f95c802a712908b34f22ab79
-debug APK sha256: 4940d82fecb05ab1f407cdb86e0776fdfb026b56c4200f04a360b279103f32ba
-Compose test APK sha256: 680b5f05fd9c01bb293a963492ec8c6dd835599b3c72aae4b45eae5bdb0ed561
+1. preserve Phase 4 claim, evidence, verification and privacy boundaries;
+2. create forward-only checksummed migrations for publication eligibility, public-safe provider identity/media, public premises, service areas, minimal availability and saved providers;
+3. represent private base, consented public premises and service-area geometry as distinct database/API types;
+4. prevent private coordinates, evidence, reviewer data and storage references from entering public DTOs, logs or fixtures;
+5. publish only through a policy-controlled function requiring current mandatory claims and eligible provider/category state;
+6. prove payment, profile completion, administrator row edits and client input cannot publish or rank a provider as more trusted;
+7. support manual area search without location permission and one-time location education without background tracking;
+8. implement category, normalized text, distance where lawful, operating-model, availability and claim filters;
+9. handle fixed, mobile and hybrid providers without exposing or measuring from a private base;
+10. provide deterministic ordering, explainable allowlisted reason labels and opaque cursor pagination;
+11. exclude unpublished, hidden, suspended, stale, degraded, revoked or expired mandatory-claim providers;
+12. provide safe provider profile/trust details, saves, sharing and low-bandwidth/image-free states;
+13. provide empty/sparse/populated/no-location/stale-claim Android states and no-results recovery without fabricated providers;
+14. add synthetic operations visibility into publication eligibility without private location/evidence;
+15. update OpenAPI, architecture, privacy, testing, decisions, risks and project status;
+16. obtain green backend/PostGIS, Android, portal and documentation workflows on one reviewed exact head;
+17. repair valid review findings with regressions, merge automatically, close Issue #23 and synchronize the build branch.
 
-Operations Portal CI #175 — passed
-artifact sha256: 6724c536c93bb8eea793f28977e556594843e809ac595fe5e9ab33c32a6fb6a3
+## Non-negotiable stop gates
 
-Documentation quality #556 — passed
-artifact sha256: 1e0937dc76f18f77fcb9ccd1c1ff3fafc4283da468ce86c0b1e3c320aaa93db6
-```
+- No real provider/customer records or production search traffic.
+- No production maps, places, geocoding or device-location integration.
+- No background customer location.
+- Manual area selection is always available.
+- No precise private provider base in public DTOs, logs, analytics, Android fixtures or map presentation.
+- Mobile providers use service-area compatibility, not distance from a private base.
+- No blanket verified-provider flag or claim inference in Android.
+- No public publication from payment, profile completion, direct database edits, administrator action or client request.
+- No public indexing, production deployment, enquiry/contact handoff, reviews or public pilot.
 
-Phase 4 delivered:
+## Required regression evidence
 
-1. verification cases bound to provider, category, requirement version and scoped check;
-2. private upload sessions and opaque object references behind an adapter boundary;
-3. immutable evidence versions, recommendations, decisions and field-visit history;
-4. evidence validity, expiry, correction, replacement, renewal and revocation lifecycles;
-5. assignment-bound reviewer, supervisor and field workflows;
-6. separation of duties for provider owners, evidence submitters, finance and high-risk decisions;
-7. safe scoped claim cards with limitations, freshness and policy version;
-8. deterministic claim degradation after expiry or evidence revocation;
-9. provider-scoped submission and assigned-reviewer private access with audit coverage;
-10. synthetic Android verification timelines and operations-portal review states;
-11. OpenAPI and database gates preventing public evidence exposure or direct claim creation.
+At minimum, prove:
 
-Three automated review findings were resolved and regression-tested before merge:
+- a public search/profile response cannot serialize private coordinates, evidence identifiers or reviewer notes;
+- fixed providers use only consented public premises for point distance;
+- mobile providers match by service area without a private-origin distance;
+- hybrid providers support both safe paths without leaking their private base;
+- manual/no-location search returns bounded deterministic results;
+- unpublished, suspended, hidden and stale-claim providers are excluded;
+- direct row insertion cannot bypass publication eligibility;
+- multi-filter ordering and cursor pagination are stable;
+- search reasons are allowlisted and supported by data;
+- saves and sharing contain only public IDs and safe metadata;
+- low-bandwidth and image-free Android states remain usable;
+- empty results suggest adjustments rather than invented providers;
+- Android/customer fixtures remain fictional and contain no production map or location values.
 
-- shared requirement keys now support deterministic category scope;
-- completed case lifecycle steps reject repeat final decisions;
-- recommendation and decision results must match their immutable reason-code outcome.
-
-`build/android-v1` was fast-forwarded to the Phase 4 merge checkpoint without force-pushing.
-
-## Retained trust and privacy boundary
+## Retained Phase 4 trust and privacy boundary
 
 No provider becomes publicly discoverable because an account exists, a profile is complete, a provider pays, an administrator edits a row, a client requests publication or private evidence is uploaded.
 
-Original evidence, storage keys, identity numbers, signatures, private addresses, precise private locations and reviewer notes remain outside public output. Phase 5 may consume only approved safe claim cards and public-safe provider/location/media projections.
-
-## Next claim procedure
-
-Before Phase 5 or any other shared implementation work starts:
-
-1. create or approve a governing issue;
-2. define the exact customer-discovery, publication, location-privacy, caching and no-location-fallback boundaries;
-3. confirm the stable `main` checkpoint;
-4. synchronize the implementation branch;
-5. change the current lock from `RELEASED` to `CLAIMED` with an owner, paths and expected handoff;
-6. do not introduce real provider data, production credentials, public indexing or production discovery without their explicit gates.
+Original evidence, storage keys, identity numbers, signatures, private addresses, precise private locations and reviewer notes remain outside public output. Phase 5 consumes only approved safe claim cards and public-safe provider/location/media projections.
 
 ## Conflict rule
 
-A second agent must not modify paths reserved by a claimed lock. Read-only review is allowed. A stale or ambiguous lock must be resolved explicitly rather than overwritten by assumption.
+A second agent must not modify the listed Phase 5 paths while this lock is claimed. Read-only review is allowed. A stale or ambiguous lock must be resolved explicitly rather than overwritten by assumption.
