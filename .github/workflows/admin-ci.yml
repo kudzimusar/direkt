@@ -60,7 +60,11 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Check formatting
-        run: npm run format:check
+        shell: bash
+        run: |
+          mkdir -p artifacts/diagnostics
+          set -o pipefail
+          npm run format:check 2>&1 | tee artifacts/diagnostics/prettier.txt
 
       - name: Lint
         run: npm run lint
