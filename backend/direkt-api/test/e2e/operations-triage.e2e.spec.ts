@@ -214,7 +214,8 @@ describe('Phase 7 operations verification triage', () => {
        SET updated_at = CASE id
          WHEN $1::uuid THEN now() - interval '3 days'
          WHEN $2::uuid THEN now() - interval '13 hours'
-         ELSE now() - interval '1 hour'
+         WHEN $3::uuid THEN now() - interval '1 hour'
+         ELSE now()
        END
        WHERE id = ANY($4::uuid[])`,
       [unassignedCaseId, reviewerACaseId, reviewerBCaseId, caseIds],
