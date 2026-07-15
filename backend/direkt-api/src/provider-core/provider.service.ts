@@ -30,12 +30,16 @@ interface PostgresErrorLike {
 export class ProviderService {
   constructor(private readonly repository: ProviderRepository) {}
 
-  upsertCustomerProfile(
+  async upsertCustomerProfile(
     actor: AuthenticatedActor,
     dto: UpsertCustomerProfileDto,
     requestId?: string,
   ): Promise<CustomerProfileView> {
-    return this.repository.upsertCustomerProfile(actor, dto.displayName, requestId);
+    try {
+      return await this.repository.upsertCustomerProfile(actor, dto.displayName, requestId);
+    } catch (error) {
+      this.throwDomainError(error);
+    }
   }
 
   async createProvider(
