@@ -1,8 +1,8 @@
 name: Phase 5 checkpoint record
 
 on:
-  push:
-    branches: [docs/phase5-checkpoint-record]
+  pull_request:
+    branches: [main]
     paths:
       - ".github/workflows/phase5-checkpoint-record.yml"
 
@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   record:
+    if: github.event.pull_request.head.ref == 'docs/phase5-checkpoint-record'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -55,7 +56,8 @@ jobs:
               '| Debug APK | `adc9dc7d64793b66dea88d10dac9ff8d221cd9a9cd75a05eb367eba368315f63` |\n| Compose test APK | `fd6955fa8fd2d54ce65cab3456498f64df67213fc48b2dcc3441068860325cd9` |',
               '| Debug APK | `03c05a83b402da9e9edb020a7fe10da7792304d9f152b72ac05715b527517658` |\n| Compose test APK | `673675dad7b431d5953340c636d804dd231b200a48282d890be1f45a9697c6ec` |'
           )
-          status += '\n\n## Next planned checkpoint\n\nPhase 6 provider onboarding/workspace is the next planned phase. It remains unclaimed until a new governing issue and workstream lock are created. Production integrations remain gated by the integration and secrets plan.\n'
+          if '## Next planned checkpoint' not in status:
+              status += '\n\n## Next planned checkpoint\n\nPhase 6 provider onboarding/workspace is the next planned phase. It remains unclaimed until a new governing issue and workstream lock are created. Production integrations remain gated by the integration and secrets plan.\n'
           required = [
               'Phase 5 Android customer discovery is complete and stable',
               'merge commit: 11541db4d5ea856404f8fee03c0ca55cf6bab36c',
@@ -67,8 +69,7 @@ jobs:
                   raise SystemExit(f'Missing Phase 5 status marker: {marker}')
           status_path.write_text(status)
 
-          lock_path = Path('WORKSTREAM_LOCK.md')
-          lock_path.write_text('''# DIREKT Workstream Lock
+          Path('WORKSTREAM_LOCK.md').write_text('''# DIREKT Workstream Lock
 
 This file prevents overlapping writes in the single-lane build process.
 
@@ -113,8 +114,8 @@ No active write lock exists. The first agent starting the next documented phase 
 
           decisions_path = Path('DECISION_LOG.md')
           decisions = decisions_path.read_text()
-          marker = '\n## How to add a decision\n'
-          additions = '''| D-062 | 2026-07-15 | Public discovery uses an explicit policy-controlled provider/category publication record rather than profile completeness or a blanket discoverable flag | Makes publication auditable, reversible and dependent on current mandatory scoped claims | Accepted |
+          decision_marker = '\n## How to add a decision\n'
+          decision_additions = '''| D-062 | 2026-07-15 | Public discovery uses an explicit policy-controlled provider/category publication record rather than profile completeness or a blanket discoverable flag | Makes publication auditable, reversible and dependent on current mandatory scoped claims | Accepted |
 | D-063 | 2026-07-15 | Private base, consented public premises and non-private service area are separate location concepts | Prevents home/mobile-provider location leakage while supporting lawful point distance and service-area matching | Accepted |
 | D-064 | 2026-07-15 | Mobile providers are never ranked by distance from a private base, and manual area selection remains a first-class customer path | Protects provider privacy and preserves access when device location is unavailable or declined | Accepted |
 | D-065 | 2026-07-15 | Every public search, profile, claim and save read re-evaluates provider status, selected category/version and current mandatory claims | Prevents stale publication rows and saved entries from bypassing live enforcement or category removal | Accepted |
@@ -122,9 +123,9 @@ No active write lock exists. The first agent starting the next documented phase 
 | D-067 | 2026-07-15 | Phase 5 retains a synthetic map/list abstraction and manual area fallback instead of activating production maps or location credentials | Allows product and privacy contracts to mature before vendor, cost and consent approval | Accepted with production stop gate |
 '''
           if '| D-062 |' not in decisions:
-              if marker not in decisions:
+              if decision_marker not in decisions:
                   raise SystemExit('Decision-log insertion marker not found')
-              decisions = decisions.replace(marker, additions + marker, 1)
+              decisions = decisions.replace(decision_marker, decision_additions + decision_marker, 1)
           decisions_path.write_text(decisions)
 
           risks_path = Path('RISK_REGISTER.md')
