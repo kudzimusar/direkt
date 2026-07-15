@@ -7,3 +7,5 @@ The pre-merge Phase 5 review identified and closed three discovery regressions:
 3. The stale-claim end-to-end fixture derives expiry and degradation timestamps from the test clock, so the regression remains reproducible after July 2026.
 
 Database-backed HTTP regressions cover category removal across search, profile, claims and saved-provider endpoints. Discovery repository and service unit suites provide permanent branch coverage without weakening the project-wide coverage thresholds.
+
+The detailed release-gate evidence is recorded in `docs/testing/PHASE_5_REVIEW_REGRESSIONS.md`.
