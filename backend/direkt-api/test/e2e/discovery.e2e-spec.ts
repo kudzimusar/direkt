@@ -578,7 +578,9 @@ describe('Phase 5 public-safe customer discovery HTTP contracts', () => {
     const list = listResponse.body as SavedProviderResponse[];
 
     expect(list).toEqual(
-      expect.arrayContaining([expect.objectContaining({ publicProviderId: fixed.publicProviderId })]),
+      expect.arrayContaining([
+        expect.objectContaining({ publicProviderId: fixed.publicProviderId }),
+      ]),
     );
 
     await request(httpServer())
