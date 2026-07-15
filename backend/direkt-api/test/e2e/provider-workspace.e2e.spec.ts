@@ -48,6 +48,16 @@ interface WorkspaceResponse {
   synthetic: true;
 }
 
+interface TimelineEventResponse {
+  eventType: string;
+  categoryKey: string;
+  requirementKey: string;
+  message: string;
+  reviewerIdentityExposed: false;
+  privateRationaleExposed: false;
+  privateObjectKeyExposed: false;
+}
+
 describe('Phase 6 actor-scoped provider workspace HTTP contracts', () => {
   const url = databaseUrl();
   const pool = new Pool({ connectionString: url, max: 2 });
@@ -176,6 +186,56 @@ describe('Phase 6 actor-scoped provider workspace HTTP contracts', () => {
     expect(serialized).not.toContain('private_base');
     expect(serialized).not.toContain('latitude');
     expect(serialized).not.toContain('longitude');
+  });
+
+  it('returns a provider-safe verification timeline without private review or storage data', async () => {
+    await request(httpServer())
+      .post(`/api/v1/providers/${provider.id}/state-transitions`)
+      .set('authorization', `Bearer ${owner.accessToken}`)
+      .send({
+        targetStatus: 'ready_for_verification',
+        reason: 'Synthetic Phase 6 provider is ready for scoped verification testing.',
+      })
+      .expect(201);
+
+    await request(httpServer())
+      .post(`/api/v1/providers/${provider.id}/verification-cases`)
+      .set('authorization', `Bearer ${owner.accessToken}`)
+      .send({
+        categoryKey: 'plumbing',
+        requirementKey: 'identity',
+        checkKey: 'representative_identity_check',
+        checkFamily: 'representative_identity',
+        highRisk: false,
+        policyVersion: 'phase6-v1',
+      })
+      .expect(201);
+
+    const response = await request(httpServer())
+      .get('/api/v1/provider-workspace/me/verification-timeline')
+      .set('authorization', `Bearer ${owner.accessToken}`)
+      .expect(200);
+    const timeline = response.body as TimelineEventResponse[];
+
+    expect(timeline).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          eventType: 'case_created',
+          categoryKey: 'plumbing',
+          requirementKey: 'identity',
+          message: 'Verification check created.',
+          reviewerIdentityExposed: false,
+          privateRationaleExposed: false,
+          privateObjectKeyExposed: false,
+        }),
+      ]),
+    );
+
+    const serialized = JSON.stringify(timeline);
+    expect(serialized).not.toContain('reviewerIdentityId');
+    expect(serialized).not.toContain('privateRationale');
+    expect(serialized).not.toContain('objectKey');
+    expect(serialized).not.toContain('accessUrl');
   });
 
   it('allows an assigned member and denies access after server-side revocation', async () => {
