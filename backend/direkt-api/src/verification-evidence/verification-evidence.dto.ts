@@ -21,6 +21,11 @@ import type {
 } from './verification-evidence.types';
 
 export class CreateUploadSessionDto {
+  @ApiPropertyOptional({ example: 'plumbing' })
+  @IsOptional()
+  @Matches(/^[a-z][a-z0-9_]{2,63}$/)
+  categoryKey?: string;
+
   @ApiProperty({ example: 'identity' })
   @Matches(/^[a-z][a-z0-9_]{2,63}$/)
   requirementKey!: string;

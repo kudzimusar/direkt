@@ -43,7 +43,11 @@ export class VerificationEvidenceService {
     requestId?: string,
   ): Promise<UploadSessionView> {
     try {
-      const requirement = await this.repository.resolveRequirement(providerId, dto.requirementKey);
+      const requirement = await this.repository.resolveRequirement(
+        providerId,
+        dto.categoryKey,
+        dto.requirementKey,
+      );
       if (dto.replacementForEvidenceId) {
         await this.repository.evidence(providerId, dto.replacementForEvidenceId);
       }

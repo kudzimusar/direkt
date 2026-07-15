@@ -90,7 +90,23 @@ interface CaseRow {
 export class VerificationEvidenceRepository {
   constructor(private readonly database: DatabaseService) {}
 
-  async resolveRequirement(providerId: string, requirementKey: string): Promise<RequirementRow> {
+  async resolveRequirement(providerId: string, requirementKey: string): Promise<RequirementRow>;
+  async resolveRequirement(
+    providerId: string,
+    categoryKey: string | undefined,
+    requirementKey: string,
+  ): Promise<RequirementRow>;
+  async resolveRequirement(
+    providerId: string,
+    categoryKeyOrRequirementKey: string | undefined,
+    maybeRequirementKey?: string,
+  ): Promise<RequirementRow> {
+    const categoryKey = maybeRequirementKey ? categoryKeyOrRequirementKey : undefined;
+    const requirementKey = maybeRequirementKey ?? categoryKeyOrRequirementKey;
+    if (!requirementKey) {
+      throw new NotFoundException('Selected provider requirement was not found.');
+    }
+
     const result = await this.database.query<RequirementRow>(
       `SELECT
          requirements.id AS requirement_id,
@@ -107,17 +123,18 @@ export class VerificationEvidenceRepository {
          ON requirements.requirement_version_id = versions.id
        WHERE selections.provider_id = $1
          AND selections.status = 'selected'
-         AND requirements.requirement_key = $2
+         AND ($2::text IS NULL OR categories.category_key = $2)
+         AND requirements.requirement_key = $3
        ORDER BY categories.category_key
        LIMIT 2`,
-      [providerId, requirementKey],
+      [providerId, categoryKey ?? null, requirementKey],
     );
     if (result.rows.length === 0) {
       throw new NotFoundException('Selected provider requirement was not found.');
     }
     if (result.rows.length > 1) {
       throw new ConflictException(
-        'Requirement key is ambiguous across selected provider categories.',
+        'Category key is required when a requirement exists in more than one selected category.',
       );
     }
     return result.rows[0] as RequirementRow;
@@ -172,6 +189,7 @@ export class VerificationEvidenceRepository {
         resourceType: 'evidence_upload_session',
         resourceId: input.uploadSessionId,
         metadata: {
+          categoryKey: input.requirement.category_key,
           evidenceClass: input.dto.evidenceClass,
           documentType: input.dto.documentType,
           replacement: Boolean(input.dto.replacementForEvidenceId),
