@@ -15,6 +15,12 @@ const navigation: readonly NavigationItem[] = [
     status: 'available',
   },
   {
+    label: 'Provider drafts',
+    href: '/operations/providers',
+    permission: 'operations.providers.read',
+    status: 'available',
+  },
+  {
     label: 'Verification queue',
     href: '/operations/verification',
     permission: 'verification.case.review',
