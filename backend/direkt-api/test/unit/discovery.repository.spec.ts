@@ -85,7 +85,7 @@ describe('DiscoveryRepository', () => {
       hasMore: false,
     });
     const sql = String(query.mock.calls[0]?.[0]);
-    expect(sql).toContain('NULL::geography');
+    expect(sql).toContain('NULL::double precision AS distance_km');
     expect(sql).toContain('false AS area_match');
   });
 
@@ -213,7 +213,7 @@ describe('DiscoveryRepository', () => {
       sharePath: '/providers/public-id',
       synthetic: true,
     });
-    expect(String(query.mock.calls[1]?.[0])).toContain(
+    expect(String(query.mock.calls[2]?.[0])).toContain(
       'INSERT INTO account.saved_public_providers',
     );
   });
