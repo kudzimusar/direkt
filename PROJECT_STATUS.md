@@ -3,7 +3,7 @@
 **Updated:** 2026-07-15  
 **Authoritative branch:** `main` for stable checkpoints  
 **Implementation branch:** `build/android-v1`  
-**Current programme state:** Phase 3 is complete and stable. Phase 4 verification and private evidence engine is active under Issue #20.
+**Current programme state:** Phase 4 verification and private evidence engine is complete and stable. Phase 5 Android customer discovery is not yet claimed.
 
 ## Current phase
 
@@ -18,12 +18,13 @@
 | Phase 2C identity/auth/admin foundation | Complete; PR #15 merged and Issue #14 closed |
 | Phase 3 identity/provider/category core | Complete; PR #17 merged and Issue #16 closed |
 | API/integration planning checkpoint | Complete; PR #19 merged |
-| Phase 4 verification and private evidence engine | Active; Issue #20 |
+| Phase 4 verification and private evidence engine | Complete; PR #21 merged and Issue #20 closed |
+| Phase 5 Android customer discovery | Not claimed |
 | Deferred Zambia pilot validation | Open as non-blocking Issue #5 |
 | Firebase tester distribution | Installed but intentionally deferred |
 | Public pilot | Not authorized |
 
-Issue #20 is the sole active implementation tracker. Issue #5 remains a deliberate later validation obligation and is not a current implementation blocker.
+Open issues represent either a deliberate future gate or a later validation obligation. Issue #5 is not a current implementation blocker.
 
 ## Stable checkpoint record
 
@@ -114,30 +115,53 @@ PR #19
 merge commit: 7736c0909130a3bfbbe993f26ecf28056a699315
 ```
 
-The repository now contains authoritative infrastructure/secrets and backend/frontend API plans. No production integration was activated.
+The repository contains authoritative infrastructure/secrets and backend/frontend API plans. No production integration was activated.
 
-## Active Phase 4 scope
+### Phase 4 — verification and private evidence engine
 
-Phase 4 will implement:
+```text
+PR #21
+verified head: 10c21f076ba27a7e0e38ac1819a4489e063eb6ec
+merge commit: d9078a78d3677a94a720de2d16483487594b261e
+Issue #20: closed as completed
+```
 
-- separate verification cases per provider/check/requirement version;
-- immutable private evidence versions and opaque storage references;
-- synthetic private-storage adapter behind a production interface;
-- authorized upload-session/completion flows;
-- reviewer queues, assignments and reason codes;
-- correction, rejection, replacement and resubmission;
-- renewal, revocation and optional field visits;
-- immutable recommendations and final decisions;
-- evidence-derived scoped claims with limitations and expiry;
-- deterministic expiry degradation;
-- synthetic Android and operations-portal verification states;
-- OpenAPI, database, audit, authorization and documentation updates.
+Exact-head evidence:
 
-## Phase 4 stop gates
+| Gate | Run | Result | Artifact SHA-256 |
+|---|---:|---|---|
+| Backend/PostGIS | #296 | Passed | `af68f4556085b0ec92f8b774697a1c76980f647aa731ce29ad788ba0ced2f7b5` |
+| Android reports | #173 | Passed | `9802c03b45a7599840f4b14a469dd12f4751cd50f95c802a712908b34f22ab79` |
+| Operations portal | #175 | Passed | `6724c536c93bb8eea793f28977e556594843e809ac595fe5e9ab33c32a6fb6a3` |
+| Documentation quality | #556 | Passed | `1e0937dc76f18f77fcb9ccd1c1ff3fafc4283da468ce86c0b1e3c320aaa93db6` |
 
-No real evidence, real personal data, production storage credentials, public search, production OTP/maps/payments/regulator integrations, public pilot or production deployment is authorized.
+Retained Android artifacts:
 
-No provider may become publicly discoverable through self-assertion, profile completion, payment, administrator action, direct database editing or client request. Original evidence files, identity numbers, signatures, private addresses and reviewer notes must never enter public claim output.
+| Artifact | SHA-256 |
+|---|---|
+| Debug APK | `4940d82fecb05ab1f407cdb86e0776fdfb026b56c4200f04a360b279103f32ba` |
+| Compose test APK | `680b5f05fd9c01bb293a963492ec8c6dd835599b3c72aae4b45eae5bdb0ed561` |
+
+Phase 4 delivered:
+
+- provider/category/check-specific verification cases;
+- private upload sessions and immutable evidence versions behind a storage adapter;
+- evidence validity, expiry, correction, replacement, renewal and revocation modelling;
+- assigned reviewer, supervisor and field workflows with separation of duties;
+- immutable recommendations, final decisions and field-visit records;
+- scoped evidence-derived claim cards with explicit limitations and policy versions;
+- deterministic evidence/claim expiry degradation;
+- provider-scoped and assigned-reviewer authorization with audited private access;
+- synthetic Android verification timelines and an internal operations queue;
+- an OpenAPI contract that exposes no public evidence or private-storage object references.
+
+Automated review regressions prove that shared requirement keys are category-scoped, completed lifecycle steps reject repeat final decisions, and reason-code outcomes cannot contradict recommendation or decision results.
+
+## Phase 5 gate
+
+Phase 5 is not active. It may be claimed only through a new governing issue and workstream lock after the customer-discovery, location-privacy, publication, query, caching and no-location-fallback boundaries are defined.
+
+Public discoverability remains blocked until Phase 5 builds customer discovery exclusively from current safe claim cards, public-safe provider identity/media and non-private service-area data. Profile completion, payment, administrator action, direct database editing or client input still cannot publish or improve a trust claim.
 
 ## Deferred validation — not a current blocker
 
