@@ -1,4 +1,15 @@
 export const PERMISSIONS = {
+  ACCOUNT_PROFILE_READ: 'account.profile.read',
+  ACCOUNT_PROFILE_MANAGE: 'account.profile.manage',
+  PROVIDER_PROFILE_CREATE: 'provider.profile.create',
+  PROVIDER_PROFILE_READ: 'provider.profile.read',
+  PROVIDER_PROFILE_MANAGE: 'provider.profile.manage',
+  PROVIDER_REPRESENTATIVES_MANAGE: 'provider.representatives.manage',
+  PROVIDER_CATEGORIES_MANAGE: 'provider.categories.manage',
+  PROVIDER_PROFILE_TRANSITION: 'provider.profile.transition',
+  CATALOG_CATEGORIES_READ: 'catalog.categories.read',
+  CATALOG_CATEGORIES_MANAGE: 'catalog.categories.manage',
+
   ACCOUNT_SESSIONS_MANAGE: 'account.sessions.manage',
   ACCOUNT_PROFILE_MANAGE: 'account.profile.manage',
   OPERATIONS_PORTAL_ACCESS: 'operations.portal.access',

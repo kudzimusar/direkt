@@ -10,9 +10,11 @@ import { HealthModule } from './platform/health/health.module';
 import { CorrelationIdMiddleware } from './platform/http/correlation-id.middleware';
 import { RequestLoggingMiddleware } from './platform/http/request-logging.middleware';
 import { ProviderModule } from './provider-core/provider.module';
+import { Phase3Module } from './phase3/phase3.module';
 
 @Module({
   imports: [
+    Phase3Module,
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,

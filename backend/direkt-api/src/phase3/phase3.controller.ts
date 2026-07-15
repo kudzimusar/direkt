@@ -27,10 +27,7 @@ export class Phase3Controller {
 
   @Put('account/profile')
   @RequirePermission(PERMISSIONS.ACCOUNT_PROFILE_MANAGE)
-  upsertCustomerProfile(
-    @Req() request: DirektRequest,
-    @Body() input: UpsertCustomerProfileDto,
-  ) {
+  upsertCustomerProfile(@Req() request: DirektRequest, @Body() input: UpsertCustomerProfileDto) {
     return this.phase3.upsertCustomerProfile(request.actor.identityId, input);
   }
 

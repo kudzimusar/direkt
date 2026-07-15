@@ -106,7 +106,9 @@ export class Phase3Repository {
   }
 
   async getProviderProfile(providerId: string): Promise<ProviderProfileRecord> {
-    return this.database.transaction((client) => this.getProviderProfileWithClient(client, providerId));
+    return this.database.transaction((client) =>
+      this.getProviderProfileWithClient(client, providerId),
+    );
   }
 
   async updateProviderProfile(
@@ -125,7 +127,8 @@ export class Phase3Repository {
             : input.serviceAreaLabel.trim(),
         premisesLabel:
           input.premisesLabel === undefined ? current.premisesLabel : input.premisesLabel.trim(),
-        description: input.description === undefined ? current.description : input.description.trim(),
+        description:
+          input.description === undefined ? current.description : input.description.trim(),
       };
 
       await client.query(
