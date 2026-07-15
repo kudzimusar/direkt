@@ -31,9 +31,9 @@ import com.kudzimusar.direkt.ui.discovery.CustomerDiscoveryExperience
 import com.kudzimusar.direkt.ui.discovery.CustomerOnboardingExperience
 import com.kudzimusar.direkt.ui.discovery.SavedProvidersExperience
 import com.kudzimusar.direkt.ui.provider.ProviderDraft
+import com.kudzimusar.direkt.ui.provider.ProviderWorkspaceExperience
+import com.kudzimusar.direkt.ui.provider.ProviderWorkspaceSection
 import com.kudzimusar.direkt.ui.provider.syntheticProviderDraft
-import com.kudzimusar.direkt.ui.verification.ScopedClaimCardView
-import com.kudzimusar.direkt.ui.verification.VerificationTimelineCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,7 +50,7 @@ fun DirektApp(
                     Column {
                         Text("DIREKT", fontWeight = FontWeight.Bold)
                         Text(
-                            text = "Phase 5 — synthetic customer discovery",
+                            text = "Phase 6 — synthetic provider workspace",
                             style = MaterialTheme.typography.labelSmall,
                         )
                     }
@@ -109,16 +109,25 @@ fun DirektApp(
                     DirektDestination.Enquiries -> item {
                         PlaceholderCard(
                             title = "Enquiries begin in Phase 8",
-                            body = "Phase 5 supports discovery, saves and share-safe metadata only. No provider contact is exposed.",
+                            body = "Phase 6 retains discovery, saves and share-safe metadata only. No provider contact is exposed.",
                         )
                     }
                 }
             } else {
-                item { ProviderDraftCard(syntheticProviderDraft) }
-                item { CategoryRequirementsCard() }
-                item { VerificationTimelineCard() }
-                item { ScopedClaimCardView() }
-                item { ProviderBoundaryCard() }
+                when (appState.destination) {
+                    DirektDestination.Discover -> item {
+                        ProviderWorkspaceExperience(ProviderWorkspaceSection.Dashboard)
+                    }
+                    DirektDestination.Saved -> item {
+                        ProviderWorkspaceExperience(ProviderWorkspaceSection.Evidence)
+                    }
+                    DirektDestination.Enquiries -> item {
+                        ProviderWorkspaceExperience(ProviderWorkspaceSection.Timeline)
+                    }
+                    DirektDestination.Account -> item {
+                        ProviderWorkspaceExperience(ProviderWorkspaceSection.Profile)
+                    }
+                }
             }
         }
     }
@@ -180,23 +189,7 @@ private fun ProviderDraftCard(draft: ProviderDraft) {
             fontWeight = FontWeight.Bold,
         )
         Text(
-            text = "A provider draft, payment or client action cannot create a discovery listing. Phase 5 search consumes only eligible safe projections.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun CategoryRequirementsCard() {
-    FoundationCard {
-        Text("Plumbing requirement version 1", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        Text("Identity evidence · private review")
-        Text("Experience or qualification · separate scoped check")
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = "Every mandatory requirement needs a current claim before publication remains eligible.",
+            text = "A provider draft, payment or client action cannot create a discovery listing. Search consumes only eligible safe projections.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -253,10 +246,10 @@ private fun screenTitle(appState: DirektAppState): String = when (appState.mode)
         DirektDestination.Account -> "Customer onboarding"
     }
     DirektMode.Provider -> when (appState.destination) {
-        DirektDestination.Discover -> "Provider overview"
-        DirektDestination.Saved -> "Private evidence"
+        DirektDestination.Discover -> "Provider workspace"
+        DirektDestination.Saved -> "Private evidence uploads"
         DirektDestination.Enquiries -> "Verification timeline"
-        DirektDestination.Account -> "Provider verification"
+        DirektDestination.Account -> "Profile, services and availability"
     }
 }
 
@@ -264,5 +257,5 @@ private fun screenSummary(appState: DirektAppState): String = when (appState.mod
     DirektMode.Customer ->
         "Search fictional, policy-eligible providers using manual area or a one-time location model."
     DirektMode.Provider ->
-        "Review the existing fictional private-evidence timeline and scoped, expiring claim cards."
+        "Manage a fictional actor-scoped workspace with private evidence recovery, safe verification progress and independent availability."
 }
