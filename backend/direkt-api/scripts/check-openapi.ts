@@ -36,6 +36,19 @@ async function main(): Promise<void> {
     ['/api/v1/providers/{providerId}/categories/{categoryKey}', 'put'],
     ['/api/v1/categories', 'get'],
     ['/api/v1/provider-workspace/me', 'get'],
+    ['/api/v1/provider-workspace/me/verification-timeline', 'get'],
+    ['/api/v1/provider-workspace/me/profile', 'patch'],
+    ['/api/v1/provider-workspace/me/services/{categoryKey}', 'put'],
+    ['/api/v1/provider-workspace/me/services/{categoryKey}', 'delete'],
+    ['/api/v1/provider-workspace/me/location', 'put'],
+    ['/api/v1/provider-workspace/me/availability/{categoryKey}', 'put'],
+    ['/api/v1/provider-workspace/me/upload-intents', 'post'],
+    ['/api/v1/provider-workspace/me/upload-intents', 'get'],
+    ['/api/v1/provider-workspace/me/upload-intents/{uploadIntentId}', 'get'],
+    ['/api/v1/provider-workspace/me/upload-intents/{uploadIntentId}/retry', 'post'],
+    ['/api/v1/provider-workspace/me/upload-intents/{uploadIntentId}/interrupted', 'put'],
+    ['/api/v1/provider-workspace/me/upload-intents/{uploadIntentId}/confirm', 'post'],
+    ['/api/v1/provider-workspace/me/upload-intents/{uploadIntentId}', 'delete'],
     ['/api/v1/providers/{providerId}/evidence/upload-sessions', 'post'],
     ['/api/v1/providers/{providerId}/evidence', 'post'],
     ['/api/v1/providers/{providerId}/evidence', 'get'],
@@ -103,11 +116,11 @@ async function main(): Promise<void> {
 
   const publicEvidencePaths = Object.keys(paths).filter(
     (pathName) =>
-      pathName.startsWith('/api/v1/public/') && /evidence|verification-cases/i.test(pathName),
+      pathName.startsWith('/api/v1/public/') && /evidence|verification-cases|upload-intents/i.test(pathName),
   );
   if (publicEvidencePaths.length > 0) {
     throw new Error(
-      `Private evidence or case routes were exposed publicly: ${publicEvidencePaths.join(', ')}`,
+      `Private evidence, case or upload routes were exposed publicly: ${publicEvidencePaths.join(', ')}`,
     );
   }
 
