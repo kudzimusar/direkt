@@ -1,0 +1,48 @@
+name: Phase 5 repository hardening
+
+on:
+  push:
+    branches: [build/android-v1]
+    paths:
+      - "scripts/phase5-repository-hardening.py"
+      - ".github/workflows/phase5-repository-hardening.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: direkt-phase5-repository-hardening
+  cancel-in-progress: true
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+      - name: Apply repository hardening
+        run: python3 scripts/phase5-repository-hardening.py
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - name: Format backend
+        working-directory: backend/direkt-api
+        run: |
+          npm ci --ignore-scripts
+          npm run format
+      - name: Commit hardened discovery repository
+        shell: bash
+        run: |
+          if [ -z "$(git status --porcelain -- backend/direkt-api/src/discovery/discovery.repository.ts)" ]; then
+            echo "No repository changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/direkt-api/src/discovery/discovery.repository.ts
+          git commit -m "fix(discovery): enforce live provider eligibility"
+          git push origin HEAD:build/android-v1
