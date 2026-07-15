@@ -91,27 +91,29 @@ export class OperationsTriageRepository {
            OR queue.assignee_identity_id IS NULL
            OR queue.assignee_identity_id = $1::uuid
          )
-         AND ($3::text IS NULL OR queue.status = $3)
-         AND ($4::text IS NULL OR queue.sla_state = $4)
+         AND ($3::uuid IS NULL OR queue.provider_id = $3)
+         AND ($4::text IS NULL OR queue.status = $4)
+         AND ($5::text IS NULL OR queue.sla_state = $5)
          AND (
-           $5::text IS NULL
+           $6::text IS NULL
            OR CASE
              WHEN queue.assignee_identity_id = $1::uuid THEN 'mine'
              WHEN queue.assignee_identity_id IS NULL THEN 'unassigned'
              ELSE 'other'
-           END = $5
+           END = $6
          )
-         AND ($6::text IS NULL OR queue.check_family = $6)
-         AND ($7::boolean IS NULL OR queue.high_risk = $7)
-         AND ($8::boolean IS NULL OR queue.escalation_required = $8)
+         AND ($7::text IS NULL OR queue.check_family = $7)
+         AND ($8::boolean IS NULL OR queue.high_risk = $8)
+         AND ($9::boolean IS NULL OR queue.escalation_required = $9)
        ORDER BY
          queue.priority_score DESC,
          queue.review_due_at,
          queue.case_id
-       LIMIT $9`,
+       LIMIT $10`,
       [
         input.actorIdentityId,
         input.scope,
+        input.query.providerId ?? null,
         input.query.status ?? null,
         input.query.slaState ?? null,
         input.query.ownership ?? null,
@@ -157,7 +159,11 @@ export class OperationsTriageRepository {
         readyEvidenceCount: Number(row.ready_evidence_count),
         correctionEvidenceCount: Number(row.correction_evidence_count),
         priorityScore: Number(row.priority_score),
-        priorityBand: this.priorityBand(Number(row.priority_score)),
+        priorityBand: this.priorityBand(
+          Number(row.priority_score),
+          row.sla_state,
+          row.high_risk,
+        ),
         escalationRequired: row.escalation_required,
         privateEvidenceIncluded: false,
         reviewerNotesIncluded: false,
@@ -174,8 +180,12 @@ export class OperationsTriageRepository {
     return value === 'true';
   }
 
-  private priorityBand(score: number): OperationsTriageItem['priorityBand'] {
-    if (score >= 900) {
+  private priorityBand(
+    score: number,
+    slaState: OperationsTriageSlaState,
+    highRisk: boolean,
+  ): OperationsTriageItem['priorityBand'] {
+    if (slaState === 'breached' || (highRisk && slaState === 'overdue')) {
       return 'critical';
     }
     if (score >= 700) {
