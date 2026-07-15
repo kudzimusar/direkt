@@ -49,6 +49,9 @@ async function main(): Promise<void> {
     ['/api/v1/provider-workspace/me/upload-intents/{uploadIntentId}/interrupted', 'put'],
     ['/api/v1/provider-workspace/me/upload-intents/{uploadIntentId}/confirm', 'post'],
     ['/api/v1/provider-workspace/me/upload-intents/{uploadIntentId}', 'delete'],
+    ['/api/v1/provider-workspace/me/enquiries', 'get'],
+    ['/api/v1/provider-workspace/me/review-responses', 'get'],
+    ['/api/v1/provider-workspace/me/subscription-status', 'get'],
     ['/api/v1/providers/{providerId}/evidence/upload-sessions', 'post'],
     ['/api/v1/providers/{providerId}/evidence', 'post'],
     ['/api/v1/providers/{providerId}/evidence', 'get'],
@@ -80,6 +83,7 @@ async function main(): Promise<void> {
     ['/api/v1/operations/discovery/publications/{publicProviderId}/hide', 'post'],
     ['/api/v1/operations/session', 'get'],
     ['/api/v1/operations/providers', 'get'],
+    ['/api/v1/operations/provider-workspaces', 'get'],
     ['/api/v1/operations/emergency-actions', 'post'],
   ];
   for (const [requiredPath, method] of requiredOperations) {
@@ -125,8 +129,24 @@ async function main(): Promise<void> {
     );
   }
 
-  const prohibited = Object.keys(paths).filter((pathName) =>
-    /(payments|subscriptions|public-directory|discoverable)/i.test(pathName),
+  const deferredReadOnlyPaths = new Set([
+    '/api/v1/provider-workspace/me/enquiries',
+    '/api/v1/provider-workspace/me/review-responses',
+    '/api/v1/provider-workspace/me/subscription-status',
+  ]);
+  for (const deferredPath of deferredReadOnlyPaths) {
+    const methods = Object.keys(paths[deferredPath] ?? {}).filter((method) =>
+      ['get', 'post', 'put', 'patch', 'delete'].includes(method),
+    );
+    if (methods.length !== 1 || methods[0] !== 'get') {
+      throw new Error(`Deferred Phase 8/9 boundary is not read-only: ${deferredPath}`);
+    }
+  }
+
+  const prohibited = Object.keys(paths).filter(
+    (pathName) =>
+      /(payments|invoices|entitlements|webhooks|public-directory|discoverable)/i.test(pathName) ||
+      (/subscriptions/i.test(pathName) && pathName !== '/api/v1/provider-workspace/me/subscription-status'),
   );
   if (prohibited.length > 0) {
     throw new Error(`Phase 6 exposed prohibited domain paths: ${prohibited.join(', ')}`);
