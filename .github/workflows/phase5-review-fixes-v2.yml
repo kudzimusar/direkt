@@ -1,0 +1,167 @@
+name: Phase 5 review fixes v2
+
+on:
+  push:
+    branches: [build/android-v1]
+    paths:
+      - ".github/workflows/phase5-review-fixes-v2.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: direkt-phase5-review-fixes-v2
+  cancel-in-progress: true
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+
+      - name: Apply reviewed discovery fixes idempotently
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          repository_path = Path('backend/direkt-api/src/discovery/discovery.repository.ts')
+          repository = repository_path.read_text()
+          selection_join = """       JOIN provider.category_selections AS selections
+         ON selections.provider_id = publications.provider_id
+        AND selections.category_id = publications.category_id
+        AND selections.requirement_version_id = publications.requirement_version_id
+        AND selections.status = 'selected'
+"""
+
+          if 'JOIN provider.category_selections AS selections' not in repository:
+              org_categories = """       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+       JOIN catalog.service_categories AS categories ON categories.id = publications.category_id"""
+              repository = repository.replace(
+                  org_categories,
+                  "       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id\n" +
+                  selection_join +
+                  "       JOIN catalog.service_categories AS categories ON categories.id = publications.category_id",
+              )
+
+              org_cases = """       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+       JOIN verification.cases AS cases"""
+              repository = repository.replace(
+                  org_cases,
+                  "       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id\n" +
+                  selection_join +
+                  "       JOIN verification.cases AS cases",
+              )
+
+              org_where = """       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id
+       WHERE publications.id = $1"""
+              repository = repository.replace(
+                  org_where,
+                  "       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id\n" +
+                  selection_join +
+                  "       WHERE publications.id = $1",
+              )
+
+              saved_categories = """       FROM account.saved_public_providers AS saved
+       JOIN discovery.publications AS publications ON publications.id = saved.publication_id
+       JOIN catalog.service_categories AS categories ON categories.id = publications.category_id"""
+              repository = repository.replace(
+                  saved_categories,
+                  "       FROM account.saved_public_providers AS saved\n" +
+                  "       JOIN discovery.publications AS publications ON publications.id = saved.publication_id\n" +
+                  "       JOIN provider.organizations AS organizations ON organizations.id = publications.provider_id\n" +
+                  selection_join +
+                  "       JOIN catalog.service_categories AS categories ON categories.id = publications.category_id",
+              )
+
+          required_fragments = [
+              "JOIN provider.category_selections AS selections",
+              "selections.requirement_version_id = publications.requirement_version_id",
+              "selections.status = 'selected'",
+              "FROM account.saved_public_providers AS saved\n       JOIN discovery.publications AS publications ON publications.id = saved.publication_id\n       JOIN provider.organizations AS organizations",
+          ]
+          for fragment in required_fragments:
+              if fragment not in repository:
+                  raise SystemExit(f'Missing reviewed repository control: {fragment}')
+          repository_path.write_text(repository)
+
+          test_path = Path('backend/direkt-api/test/e2e/discovery.e2e.spec.ts')
+          test = test_path.read_text()
+          test = test.replace(
+              "claimValidUntil: '2026-07-16T00:00:00.000Z',",
+              "claimValidUntil: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),",
+          )
+          test = test.replace(
+              "await pool.query(`SELECT verification.degrade_expired_claims('2026-07-17T00:00:00.000Z')`);",
+              """await pool.query('SELECT verification.degrade_expired_claims($1)', [
+      new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+    ]);""",
+          )
+
+          removal = """    await pool.query(
+      `UPDATE provider.category_selections
+       SET status = 'removed'
+       WHERE provider_id = $1
+         AND category_id = '00000000-0000-4000-8000-000000003001'`,
+      [fixed.providerId],
+    );
+"""
+          if "SET status = 'removed'" not in test:
+              suspension = """    await pool.query(`UPDATE provider.organizations SET status = 'suspended' WHERE id = $1`, [
+      hybrid.providerId,
+    ]);
+"""
+              if suspension not in test:
+                  raise SystemExit('Suspension regression marker not found')
+              test = test.replace(suspension, suspension + removal, 1)
+
+          if 'expect(ids).not.toContain(fixed.publicProviderId);' not in test:
+              expectation = "    expect(ids).not.toContain(hybrid.publicProviderId);"
+              if expectation not in test:
+                  raise SystemExit('Dynamic exclusion assertion marker not found')
+              test = test.replace(
+                  expectation,
+                  "    expect(ids).not.toContain(fixed.publicProviderId);\n" + expectation,
+                  1,
+              )
+
+          required_test_fragments = [
+              'Date.now() + 24 * 60 * 60 * 1000',
+              'Date.now() + 48 * 60 * 60 * 1000',
+              "SET status = 'removed'",
+              'expect(ids).not.toContain(fixed.publicProviderId);',
+          ]
+          for fragment in required_test_fragments:
+              if fragment not in test:
+                  raise SystemExit(f'Missing reviewed test control: {fragment}')
+          test_path.write_text(test)
+          PY
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+
+      - name: Format reviewed backend changes
+        working-directory: backend/direkt-api
+        run: |
+          npm ci --ignore-scripts
+          npm run format
+
+      - name: Commit reviewed implementation
+        shell: bash
+        run: |
+          if [ -z "$(git status --porcelain -- backend/direkt-api)" ]; then
+            echo "Reviewed fixes are already present."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/direkt-api/src/discovery/discovery.repository.ts \
+                  backend/direkt-api/test/e2e/discovery.e2e.spec.ts
+          git commit -m "fix(discovery): enforce live publication eligibility"
+          git push origin HEAD:build/android-v1
