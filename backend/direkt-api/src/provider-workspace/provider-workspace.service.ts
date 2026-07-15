@@ -9,18 +9,28 @@ import type {
   UpdateWorkspaceLocationDto,
 } from './provider-workspace.dto';
 import { ProviderWorkspaceRepository } from './provider-workspace.repository';
-import type { ProviderWorkspaceSummary } from './provider-workspace.types';
+import { ProviderWorkspaceTimelineRepository } from './provider-workspace-timeline.repository';
+import type {
+  ProviderWorkspaceSummary,
+  ProviderWorkspaceTimelineEventView,
+} from './provider-workspace.types';
 
 @Injectable()
 export class ProviderWorkspaceService {
   constructor(
     private readonly repository: ProviderWorkspaceRepository,
     private readonly commands: ProviderWorkspaceCommandRepository,
+    private readonly timelineRepository: ProviderWorkspaceTimelineRepository,
     private readonly providers: ProviderService,
   ) {}
 
   workspace(actor: AuthenticatedActor): Promise<ProviderWorkspaceSummary> {
     return this.repository.workspace(actor.identityId);
+  }
+
+  async timeline(actor: AuthenticatedActor): Promise<ProviderWorkspaceTimelineEventView[]> {
+    const context = await this.commands.context(actor.identityId);
+    return this.timelineRepository.timeline(context.providerId);
   }
 
   async updateProfile(
