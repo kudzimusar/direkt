@@ -65,6 +65,12 @@ This log records product and technical decisions with long-term impact.
 | D-059 | 2026-07-15 | Shared requirement keys require category scope whenever a provider has multiple matching selected categories | Preserves deterministic evidence-to-requirement meaning without duplicating provider evidence or silently choosing a category | Accepted |
 | D-060 | 2026-07-15 | Recommendation and decision results must match the immutable reason-code outcome at the database boundary | Prevents contradictory audit history and unsafe claim derivation from semantically invalid decisions | Accepted |
 | D-061 | 2026-07-15 | Public trust output consists only of safe scoped claim cards derived by validated decision and expiry functions | Original evidence, blanket verified flags, payment state, direct row edits and client assertions cannot create or strengthen public trust claims | Accepted |
+| D-062 | 2026-07-15 | Public discovery uses an explicit policy-controlled provider/category publication record rather than profile completeness or a blanket discoverable flag | Makes publication auditable, reversible and dependent on current mandatory scoped claims | Accepted |
+| D-063 | 2026-07-15 | Private base, consented public premises and non-private service area are separate location concepts | Prevents home/mobile-provider location leakage while supporting lawful point distance and service-area matching | Accepted |
+| D-064 | 2026-07-15 | Mobile providers are never ranked by distance from a private base, and manual area selection remains a first-class customer path | Protects provider privacy and preserves access when device location is unavailable or declined | Accepted |
+| D-065 | 2026-07-15 | Every public search, profile, claim and save read re-evaluates provider status, selected category/version and current mandatory claims | Prevents stale publication rows and saved entries from bypassing live enforcement or category removal | Accepted |
+| D-066 | 2026-07-15 | Discovery ordering is deterministic and uses allowlisted evidence-backed explanations; payment cannot improve publication or ranking | Keeps customer-facing reasons interpretable and preserves commercial independence from trust | Accepted |
+| D-067 | 2026-07-15 | Phase 5 retains a synthetic map/list abstraction and manual area fallback instead of activating production maps or location credentials | Allows product and privacy contracts to mature before vendor, cost and consent approval | Accepted with production stop gate |
 
 ## How to add a decision
 
