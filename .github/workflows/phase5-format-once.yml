@@ -1,0 +1,63 @@
+name: Phase 5 deterministic formatting
+
+on:
+  push:
+    branches: [build/android-v1]
+    paths:
+      - ".github/workflows/phase5-format-once.yml"
+      - "backend/direkt-api/**"
+      - "admin/direkt-operations-portal/**"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: direkt-phase5-format-once
+  cancel-in-progress: true
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            backend/direkt-api/package-lock.json
+            admin/direkt-operations-portal/package-lock.json
+      - name: Format backend
+        working-directory: backend/direkt-api
+        run: |
+          npm ci --ignore-scripts
+          npm run format
+      - name: Format operations portal
+        working-directory: admin/direkt-operations-portal
+        run: |
+          npm ci --ignore-scripts
+          npm exec -- prettier --write \
+            src \
+            test \
+            package.json \
+            tsconfig.json \
+            next.config.ts \
+            vitest.config.ts \
+            eslint.config.mjs \
+            README.md \
+            --ignore-unknown
+      - name: Commit formatting
+        shell: bash
+        run: |
+          if [ -z "$(git status --porcelain -- backend/direkt-api admin/direkt-operations-portal)" ]; then
+            echo "No formatting changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/direkt-api admin/direkt-operations-portal
+          git commit -m "style: apply Phase 5 deterministic formatting"
+          git push origin HEAD:build/android-v1
