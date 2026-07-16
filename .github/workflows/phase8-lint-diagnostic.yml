@@ -49,7 +49,19 @@ jobs:
         run: npm run format
       - name: Lint reviewed source
         working-directory: backend/direkt-api
-        run: npm run lint
+        shell: bash
+        run: |
+          mkdir -p ../../artifacts/phase8-lint
+          set -o pipefail
+          npm run lint 2>&1 | tee ../../artifacts/phase8-lint/lint.txt
+      - name: Upload residual lint diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-phase8-residual-lint-${{ github.run_number }}-${{ github.sha }}
+          path: artifacts/phase8-lint/lint.txt
+          if-no-files-found: warn
+          retention-days: 2
       - name: Typecheck reviewed source
         working-directory: backend/direkt-api
         run: npm run typecheck
