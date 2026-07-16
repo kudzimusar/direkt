@@ -1,0 +1,51 @@
+name: Stage 7C lint diagnostics
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - ".github/workflows/stage7c-lint-diagnostics.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage7c-lint-diagnostics
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - name: Capture lint output
+        working-directory: backend/direkt-api
+        shell: bash
+        run: |
+          npm ci --ignore-scripts
+          mkdir -p ../../docs/internal
+          set +e
+          npm run lint > ../../docs/internal/STAGE7C_LINT.txt 2>&1
+          code=$?
+          set -e
+          printf '\nexit_code=%s\n' "$code" >> ../../docs/internal/STAGE7C_LINT.txt
+      - name: Commit diagnostics and remove helper
+        shell: bash
+        run: |
+          rm .github/workflows/stage7c-lint-diagnostics.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/internal/STAGE7C_LINT.txt .github/workflows/stage7c-lint-diagnostics.yml
+          git diff --cached --check
+          git commit -m "chore: capture Stage 7C lint diagnostics"
+          git push origin HEAD:build/android-v1
