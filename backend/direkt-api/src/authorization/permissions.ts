@@ -5,6 +5,8 @@ export const PERMISSIONS = {
   OPERATIONS_PROVIDERS_READ: 'operations.providers.read',
   OPERATIONS_TRIAGE_READ: 'operations.triage.read',
   OPERATIONS_EVIDENCE_ACCESS_REVOKE: 'operations.evidence_access.revoke',
+  OPERATIONS_FIELD_WORK_READ: 'operations.field_work.read',
+  OPERATIONS_FIELD_WORK_MANAGE: 'operations.field_work.manage',
   PROVIDER_PROFILE_CREATE: 'provider.profile.create',
   PROVIDER_PROFILE_READ: 'provider.profile.read',
   PROVIDER_PROFILE_MANAGE: 'provider.profile.manage',
