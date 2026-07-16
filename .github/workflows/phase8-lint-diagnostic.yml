@@ -1,0 +1,56 @@
+name: Phase 8 lint diagnostic once
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/phase8-lint-diagnostic.yml"
+      - ".github/phase8-backend-bundle.tgz"
+      - ".github/phase8-interaction-handoff.service.ts"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - name: Extract reviewed source
+        shell: bash
+        run: |
+          python - <<'PY'
+          import tarfile
+          with tarfile.open('.github/phase8-backend-bundle.tgz', 'r:gz') as archive:
+              archive.extractall('.')
+          PY
+          cp .github/phase8-interaction-handoff.service.ts backend/direkt-api/src/interaction/interaction-handoff.service.ts
+      - name: Install and format
+        working-directory: backend/direkt-api
+        run: |
+          npm ci --ignore-scripts
+          npm run format
+      - name: Capture lint result
+        working-directory: backend/direkt-api
+        shell: bash
+        continue-on-error: true
+        run: |
+          mkdir -p ../../artifacts/phase8-lint
+          set -o pipefail
+          npm run lint 2>&1 | tee ../../artifacts/phase8-lint/lint.txt
+      - name: Upload lint diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-phase8-lint-${{ github.run_number }}-${{ github.sha }}
+          path: artifacts/phase8-lint/lint.txt
+          if-no-files-found: error
+          retention-days: 2
