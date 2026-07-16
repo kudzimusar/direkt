@@ -34,54 +34,48 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
 
           override = Path('backend/direkt-api/test/e2e/operations-escalations-overrides.e2e.spec.ts')
           text = override.read_text()
-          pattern = re.compile(
-              r"\n      if \(requirement\.requirement_id === requirement\.case_requirement_id\) \{\n"
-              r"        await pool\.query\(\n"
-              r"          `INSERT INTO verification\.case_evidence \(case_id, evidence_id, linked_by_identity_id\)\n"
-              r"           VALUES \(\$1, \$2, \$3\)`,\n"
-              r"          \[caseId, evidenceId, owner\.identityId\],\n"
-              r"        \);\n"
-              r"      \}",
-          )
-          text, count = pattern.subn('', text, count=1)
-          if count != 1:
-              raise SystemExit(f'override case-evidence fixture block count={count}')
-          override.write_text(text)
+          start_marker = '      if (requirement.requirement_id === requirement.case_requirement_id) {'
+          start = text.index(start_marker)
+          end = text.index('\n      }', start) + len('\n      }')
+          override.write_text(text[:start] + text[end:])
 
           reporting = Path('backend/direkt-api/test/e2e/operations-reporting.e2e.spec.ts')
           text = reporting.read_text()
-          text = text.replace(
+          replacements = [
+            (
               '  let support: SessionResponse;\n  let admin: SessionResponse;',
               '  let support: SessionResponse;\n  let secondSupport: SessionResponse;\n  let admin: SessionResponse;',
-              1,
-          )
-          text = text.replace(
+            ),
+            (
               "    support = await signIn('phase7-reporting-support@example.invalid');\n    admin = await signIn",
               "    support = await signIn('phase7-reporting-support@example.invalid');\n    secondSupport = await signIn('phase7-reporting-second-support@example.invalid');\n    admin = await signIn",
-              1,
-          )
-          text = text.replace(
+            ),
+            (
               "    await grantRole(support, 'support');\n    await grantRole(admin, 'admin');",
               "    await grantRole(support, 'support');\n    await grantRole(secondSupport, 'support');\n    await grantRole(admin, 'admin');",
-              1,
-          )
-          resolution_marker = """    await request(httpServer())
-              .post(`/api/v1/operations/incidents/${incident.incidentId}/start`)
-              .set('authorization', `Bearer ${support.accessToken}`)
-              .send({ reason: 'Assigned support operator started the synthetic internal investigation.' })
+            ),
+          ]
+          for old, new in replacements:
+              if old not in text:
+                  raise SystemExit(f'missing reporting token: {old[:36]}')
+              text = text.replace(old, new, 1)
+
+          resolution_marker = """      .send({ reason: 'Assigned support operator started the synthetic internal investigation.' })
               .expect(200);
             const resolvedResponse = await request(httpServer())
           """
-          resolution_replacement = """    await request(httpServer())
-              .post(`/api/v1/operations/incidents/${incident.incidentId}/start`)
-              .set('authorization', `Bearer ${support.accessToken}`)
-              .send({ reason: 'Assigned support operator started the synthetic internal investigation.' })
+          if resolution_marker not in text:
+              compact_marker = """      .send({ reason: 'Assigned support operator started the synthetic internal investigation.' })
               .expect(200);
-            await request(httpServer())
+            const resolvedResponse = await request(httpServer())
+          """
+              resolution_marker = compact_marker
+          resolution_replacement = resolution_marker.replace(
+              '    const resolvedResponse = await request(httpServer())',
+              """    await request(httpServer())
               .post(`/api/v1/operations/incidents/${incident.incidentId}/resolve`)
               .set('authorization', `Bearer ${secondSupport.accessToken}`)
               .send({
@@ -91,29 +85,28 @@ jobs:
                   'An unrelated support operator must not resolve another operator owned incident.',
               })
               .expect(400);
-            const resolvedResponse = await request(httpServer())
-          """
-          if text.count(resolution_marker) != 1:
-              raise SystemExit(f'incident resolution marker count={text.count(resolution_marker)}')
+            const resolvedResponse = await request(httpServer())""",
+          )
+          if resolution_marker not in text:
+              raise SystemExit('missing incident resolution insertion point')
           text = text.replace(resolution_marker, resolution_replacement, 1)
-          leak_marker = """    expect(serialized).not.toContain('private/');
-            expect(serialized).not.toContain('sha256');
-            expect(serialized).not.toContain('objectKey');
-          """
-          leak_replacement = """    expect(serialized).not.toContain('private/');
-            expect(serialized).not.toContain('sha256');
-            expect(serialized).not.toContain('"objectKey":');
-            expect(serialized).not.toContain('https://storage');
-          """
-          if text.count(leak_marker) != 1:
-              raise SystemExit(f'reporting leak assertion marker count={text.count(leak_marker)}')
-          reporting.write_text(text.replace(leak_marker, leak_replacement, 1))
+
+          old_leak = "    expect(serialized).not.toContain('objectKey');"
+          if old_leak not in text:
+              raise SystemExit('missing objectKey leak assertion')
+          text = text.replace(
+              old_leak,
+              "    expect(serialized).not.toContain('\\\"objectKey\\\":');\n    expect(serialized).not.toContain('https://storage');",
+              1,
+          )
+          reporting.write_text(text)
 
           field = Path('backend/direkt-api/test/e2e/operations-field-workflow.e2e.spec.ts')
           text = field.read_text()
-          marker = """  it('persists idempotent offline submissions without creating trust state', async () => {
-          """
-          replacement = """  it('rejects precise coordinates and private storage references from public field text', async () => {
+          marker = "  it('persists idempotent offline submissions without creating trust state', async () => {"
+          if marker not in text:
+              raise SystemExit('missing field idempotency insertion point')
+          privacy_test = """  it('rejects precise coordinates and private storage references from public field text', async () => {
             const caseId = await createCase('public_safe_text');
             const work = await createWork(caseId, fieldAgentA.identityId, 2);
             await acceptAndStart(work.workItemId, fieldAgentA);
@@ -150,11 +143,8 @@ jobs:
               .expect(400);
           });
 
-          it('persists idempotent offline submissions without creating trust state', async () => {
           """
-          if text.count(marker) != 1:
-              raise SystemExit(f'field public-safe test marker count={text.count(marker)}')
-          field.write_text(text.replace(marker, replacement, 1))
+          field.write_text(text.replace(marker, privacy_test + marker, 1))
           PY
       - name: Format, commit and remove helper
         shell: bash
@@ -171,4 +161,4 @@ jobs:
           git commit -m "test: align Stage 7 trust-boundary regressions"
           git push origin HEAD:build/android-v1
 
-# second-commit activation marker
+# robust third-commit activation marker
