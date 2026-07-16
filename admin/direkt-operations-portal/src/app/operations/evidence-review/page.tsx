@@ -57,12 +57,32 @@ export default function EvidenceReviewPage() {
         <section className="workspace-panel" aria-labelledby="review-context-heading">
           <h2 id="review-context-heading">Assigned review context</h2>
           <dl className="definition-grid">
-            <div><dt>Case</dt><dd>CASE-S7-001</dd></div>
-            <div><dt>Assignment</dt><dd><StatusPill tone="success">Active</StatusPill></dd></div>
-            <div><dt>Provider</dt><dd>Synthetic Copperbelt Repairs</dd></div>
-            <div><dt>Check</dt><dd>Representative identity</dd></div>
-            <div><dt>Policy</dt><dd>phase7-evidence-v1</dd></div>
-            <div><dt>Current recommendation</dt><dd>Not submitted</dd></div>
+            <div>
+              <dt>Case</dt>
+              <dd>CASE-S7-001</dd>
+            </div>
+            <div>
+              <dt>Assignment</dt>
+              <dd>
+                <StatusPill tone="success">Active</StatusPill>
+              </dd>
+            </div>
+            <div>
+              <dt>Provider</dt>
+              <dd>Synthetic Copperbelt Repairs</dd>
+            </div>
+            <div>
+              <dt>Check</dt>
+              <dd>Representative identity</dd>
+            </div>
+            <div>
+              <dt>Policy</dt>
+              <dd>phase7-evidence-v1</dd>
+            </div>
+            <div>
+              <dt>Current recommendation</dt>
+              <dd>Not submitted</dd>
+            </div>
           </dl>
         </section>
 
@@ -96,7 +116,9 @@ export default function EvidenceReviewPage() {
                 <th scope="row">{item.evidenceId}</th>
                 <td>{item.requirement}</td>
                 <td>{item.version}</td>
-                <td><StatusPill tone="success">{item.processing}</StatusPill></td>
+                <td>
+                  <StatusPill tone="success">{item.processing}</StatusPill>
+                </td>
                 <td>{item.access}</td>
                 <td>{item.expires}</td>
               </tr>
@@ -106,14 +128,35 @@ export default function EvidenceReviewPage() {
       </DenseTableRegion>
 
       <div className="workflow-state-grid" aria-label="Evidence review critical states">
-        <WorkflowStateCard state="loading" title="Workspace loading" description="The shell remains safe while assignment and evidence metadata load." tone="info" />
-        <WorkflowStateCard state="revoked_assignment" title="Assignment revoked" description="Private access fails immediately and action controls become unavailable." tone="danger" />
-        <WorkflowStateCard state="expired_grant" title="Grant expired" description="The persisted authorization cannot redeem after its five-minute lifetime." tone="warning" />
-        <WorkflowStateCard state="conflicting_action" title="Version changed" description="A replacement evidence version invalidates the earlier authorization context." tone="warning" />
+        <WorkflowStateCard
+          state="loading"
+          title="Workspace loading"
+          description="The shell remains safe while assignment and evidence metadata load."
+          tone="info"
+        />
+        <WorkflowStateCard
+          state="revoked_assignment"
+          title="Assignment revoked"
+          description="Private access fails immediately and action controls become unavailable."
+          tone="danger"
+        />
+        <WorkflowStateCard
+          state="expired_grant"
+          title="Grant expired"
+          description="The persisted authorization cannot redeem after its five-minute lifetime."
+          tone="warning"
+        />
+        <WorkflowStateCard
+          state="conflicting_action"
+          title="Version changed"
+          description="A replacement evidence version invalidates the earlier authorization context."
+          tone="warning"
+        />
       </div>
 
       <p className="api-boundary-note">
-        API boundaries: <code>GET /api/v1/verification-cases/:caseId/review-workspace</code> and short-lived access grant routes only.
+        API boundaries: <code>GET /api/v1/verification-cases/:caseId/review-workspace</code> and
+        short-lived access grant routes only.
       </p>
     </section>
   );

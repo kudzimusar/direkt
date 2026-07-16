@@ -63,10 +63,30 @@ export default function FieldWorkPage() {
       </WorkspaceIntro>
 
       <div className="metric-grid" aria-label="Field workflow summary">
-        <MetricCard label="Scheduled" value="1" note="Future assignment with an active field-agent identity." tone="info" />
-        <MetricCard label="In progress" value="1" note="Accepted and started through valid state transitions." tone="info" />
-        <MetricCard label="Missed" value="1" note="Terminal advisory state; no verification result is created." tone="danger" />
-        <MetricCard label="Offline replays" value="0" note="Duplicate client keys return the original submission." tone="success" />
+        <MetricCard
+          label="Scheduled"
+          value="1"
+          note="Future assignment with an active field-agent identity."
+          tone="info"
+        />
+        <MetricCard
+          label="In progress"
+          value="1"
+          note="Accepted and started through valid state transitions."
+          tone="info"
+        />
+        <MetricCard
+          label="Missed"
+          value="1"
+          note="Terminal advisory state; no verification result is created."
+          tone="danger"
+        />
+        <MetricCard
+          label="Offline replays"
+          value="0"
+          note="Duplicate client keys return the original submission."
+          tone="success"
+        />
       </div>
 
       <DenseTableRegion label="Synthetic field assignments">
@@ -92,7 +112,9 @@ export default function FieldWorkPage() {
                 <td>{assignment.agent}</td>
                 <td>{assignment.schedule}</td>
                 <td>{assignment.due}</td>
-                <td><StatusPill tone={assignment.tone}>{assignment.state}</StatusPill></td>
+                <td>
+                  <StatusPill tone={assignment.tone}>{assignment.state}</StatusPill>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -103,12 +125,30 @@ export default function FieldWorkPage() {
         <section className="workspace-panel" aria-labelledby="inspection-heading">
           <h2 id="inspection-heading">Structured inspection preview</h2>
           <dl className="definition-grid">
-            <div><dt>Template</dt><dd>standard_field_inspection · v1</dd></div>
-            <div><dt>Checklist</dt><dd>standard-field-checklist-v1</dd></div>
-            <div><dt>Provider presence</dt><dd>Confirmed</dd></div>
-            <div><dt>Evidence consistency</dt><dd>Not observed</dd></div>
-            <div><dt>Outcome</dt><dd>Inconclusive</dd></div>
-            <div><dt>Trust effect</dt><dd>Advisory only</dd></div>
+            <div>
+              <dt>Template</dt>
+              <dd>standard_field_inspection · v1</dd>
+            </div>
+            <div>
+              <dt>Checklist</dt>
+              <dd>standard-field-checklist-v1</dd>
+            </div>
+            <div>
+              <dt>Provider presence</dt>
+              <dd>Confirmed</dd>
+            </div>
+            <div>
+              <dt>Evidence consistency</dt>
+              <dd>Not observed</dd>
+            </div>
+            <div>
+              <dt>Outcome</dt>
+              <dd>Inconclusive</dd>
+            </div>
+            <div>
+              <dt>Trust effect</dt>
+              <dd>Advisory only</dd>
+            </div>
           </dl>
         </section>
         <aside className="workspace-panel" aria-labelledby="field-safety-heading">
@@ -123,14 +163,35 @@ export default function FieldWorkPage() {
       </div>
 
       <div className="workflow-state-grid" aria-label="Field workflow critical states">
-        <WorkflowStateCard state="loading" title="Assignments loading" description="The queue announces progress without rendering stale assignment data." tone="info" />
-        <WorkflowStateCard state="empty" title="No assigned visits" description="A field agent sees only their active and historical scoped work." tone="neutral" />
-        <WorkflowStateCard state="conflicting_action" title="Offline conflict" description="A reused client key with a different payload is rejected." tone="warning" />
-        <WorkflowStateCard state="access_denied" title="Wrong field agent" description="Another field agent receives a not-found response for the work item." tone="danger" />
+        <WorkflowStateCard
+          state="loading"
+          title="Assignments loading"
+          description="The queue announces progress without rendering stale assignment data."
+          tone="info"
+        />
+        <WorkflowStateCard
+          state="empty"
+          title="No assigned visits"
+          description="A field agent sees only their active and historical scoped work."
+          tone="neutral"
+        />
+        <WorkflowStateCard
+          state="conflicting_action"
+          title="Offline conflict"
+          description="A reused client key with a different payload is rejected."
+          tone="warning"
+        />
+        <WorkflowStateCard
+          state="access_denied"
+          title="Wrong field agent"
+          description="Another field agent receives a not-found response for the work item."
+          tone="danger"
+        />
       </div>
 
       <p className="api-boundary-note">
-        API boundary: <code>/api/v1/operations/field-work-items</code>. The portal does not activate a production mobile field application.
+        API boundary: <code>/api/v1/operations/field-work-items</code>. The portal does not activate
+        a production mobile field application.
       </p>
     </section>
   );

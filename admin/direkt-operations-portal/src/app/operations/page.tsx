@@ -5,12 +5,36 @@ import { MetricCard, WorkflowStateCard, WorkspaceIntro } from '@/components/oper
 export const metadata: Metadata = { title: 'Mission control' };
 
 const workspaces = [
-  { label: 'Triage queue', href: '/operations/triage', note: 'Priority, ownership, age and SLA state.' },
-  { label: 'Evidence review', href: '/operations/evidence-review', note: 'Assigned revocable private access.' },
-  { label: 'Field workflow', href: '/operations/field-work', note: 'Structured advisory inspections.' },
-  { label: 'Escalations and overrides', href: '/operations/escalations', note: 'Owned escalation and four-eyes control.' },
-  { label: 'Incidents and complaints', href: '/operations/incidents', note: 'Bounded internal operations records.' },
-  { label: 'Expiry and reporting', href: '/operations/reporting', note: 'Privacy-safe renewal and aggregate metrics.' },
+  {
+    label: 'Triage queue',
+    href: '/operations/triage',
+    note: 'Priority, ownership, age and SLA state.',
+  },
+  {
+    label: 'Evidence review',
+    href: '/operations/evidence-review',
+    note: 'Assigned revocable private access.',
+  },
+  {
+    label: 'Field workflow',
+    href: '/operations/field-work',
+    note: 'Structured advisory inspections.',
+  },
+  {
+    label: 'Escalations and overrides',
+    href: '/operations/escalations',
+    note: 'Owned escalation and four-eyes control.',
+  },
+  {
+    label: 'Incidents and complaints',
+    href: '/operations/incidents',
+    note: 'Bounded internal operations records.',
+  },
+  {
+    label: 'Expiry and reporting',
+    href: '/operations/reporting',
+    note: 'Privacy-safe renewal and aggregate metrics.',
+  },
 ] as const;
 
 export default function OperationsPage() {
@@ -24,10 +48,30 @@ export default function OperationsPage() {
       />
 
       <div className="metric-grid" aria-label="Synthetic operations summary">
-        <MetricCard label="Triage visible" value="3" note="One breached case and one unassigned case." tone="danger" />
-        <MetricCard label="Field work active" value="1" note="Advisory only; no decision or claim mutation." tone="info" />
-        <MetricCard label="Escalations active" value="2" note="Explicit owner, severity, due date and policy." tone="warning" />
-        <MetricCard label="Evidence due" value="2" note="Document contents and storage metadata excluded." tone="warning" />
+        <MetricCard
+          label="Triage visible"
+          value="3"
+          note="One breached case and one unassigned case."
+          tone="danger"
+        />
+        <MetricCard
+          label="Field work active"
+          value="1"
+          note="Advisory only; no decision or claim mutation."
+          tone="info"
+        />
+        <MetricCard
+          label="Escalations active"
+          value="2"
+          note="Explicit owner, severity, due date and policy."
+          tone="warning"
+        />
+        <MetricCard
+          label="Evidence due"
+          value="2"
+          note="Document contents and storage metadata excluded."
+          tone="warning"
+        />
       </div>
 
       <section className="workspace-panel" aria-labelledby="workspace-links-heading">
@@ -35,7 +79,9 @@ export default function OperationsPage() {
         <div className="summary-grid">
           {workspaces.map((workspace) => (
             <article className="summary-card" key={workspace.href}>
-              <h3><Link href={workspace.href}>{workspace.label}</Link></h3>
+              <h3>
+                <Link href={workspace.href}>{workspace.label}</Link>
+              </h3>
               <p>{workspace.note}</p>
             </article>
           ))}
@@ -43,10 +89,30 @@ export default function OperationsPage() {
       </section>
 
       <div className="workflow-state-grid" aria-label="Portal-wide critical states">
-        <WorkflowStateCard state="loading" title="Loading" description="Safe skeletons contain no copied private records." tone="info" />
-        <WorkflowStateCard state="access_denied" title="Access denied" description="Navigation and controls derive from server permission keys." tone="danger" />
-        <WorkflowStateCard state="revoked_assignment" title="Assignment revoked" description="Private evidence access stops immediately." tone="warning" />
-        <WorkflowStateCard state="conflicting_action" title="Conflicting action" description="Stale or duplicate workflow mutations are rejected." tone="warning" />
+        <WorkflowStateCard
+          state="loading"
+          title="Loading"
+          description="Safe skeletons contain no copied private records."
+          tone="info"
+        />
+        <WorkflowStateCard
+          state="access_denied"
+          title="Access denied"
+          description="Navigation and controls derive from server permission keys."
+          tone="danger"
+        />
+        <WorkflowStateCard
+          state="revoked_assignment"
+          title="Assignment revoked"
+          description="Private evidence access stops immediately."
+          tone="warning"
+        />
+        <WorkflowStateCard
+          state="conflicting_action"
+          title="Conflicting action"
+          description="Stale or duplicate workflow mutations are rejected."
+          tone="warning"
+        />
       </div>
 
       <section className="control-panel" aria-labelledby="controls-heading">
@@ -57,7 +123,9 @@ export default function OperationsPage() {
           <li>Private evidence access is assigned, short-lived, audited and revocable.</li>
           <li>Field observations remain advisory and cannot create claims or final decisions.</li>
           <li>High-risk authorization requires two distinct eligible approvers.</li>
-          <li>Reports exclude document contents, object keys, private coordinates and private notes.</li>
+          <li>
+            Reports exclude document contents, object keys, private coordinates and private notes.
+          </li>
           <li>Phase 8 customer workflows and Phase 9 commercial workflows remain unavailable.</li>
         </ul>
       </section>

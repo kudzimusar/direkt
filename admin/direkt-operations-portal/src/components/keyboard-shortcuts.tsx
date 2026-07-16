@@ -38,7 +38,8 @@ export function KeyboardShortcuts() {
       if (rows.length === 0) return;
       const activeIndex = rows.indexOf(document.activeElement as HTMLElement);
       const direction = event.key.toLowerCase() === 'j' ? 1 : -1;
-      const nextIndex = activeIndex < 0 ? 0 : Math.min(rows.length - 1, Math.max(0, activeIndex + direction));
+      const nextIndex =
+        activeIndex < 0 ? 0 : Math.min(rows.length - 1, Math.max(0, activeIndex + direction));
       event.preventDefault();
       rows[nextIndex]?.focus();
     };
@@ -59,23 +60,35 @@ export function KeyboardShortcuts() {
         Keyboard help <kbd>?</kbd>
       </button>
       {helpOpen ? (
-        <section id="keyboard-shortcut-help" className="shortcut-popover" aria-label="Keyboard shortcuts">
+        <section
+          id="keyboard-shortcut-help"
+          className="shortcut-popover"
+          aria-label="Keyboard shortcuts"
+        >
           <h2>Keyboard shortcuts</h2>
           <dl>
             <div>
-              <dt><kbd>/</kbd></dt>
+              <dt>
+                <kbd>/</kbd>
+              </dt>
               <dd>Focus the current workspace filter</dd>
             </div>
             <div>
-              <dt><kbd>J</kbd> / <kbd>K</kbd></dt>
+              <dt>
+                <kbd>J</kbd> / <kbd>K</kbd>
+              </dt>
               <dd>Move through focusable queue rows</dd>
             </div>
             <div>
-              <dt><kbd>?</kbd></dt>
+              <dt>
+                <kbd>?</kbd>
+              </dt>
               <dd>Open or close this help</dd>
             </div>
             <div>
-              <dt><kbd>Esc</kbd></dt>
+              <dt>
+                <kbd>Esc</kbd>
+              </dt>
               <dd>Close keyboard help</dd>
             </div>
           </dl>

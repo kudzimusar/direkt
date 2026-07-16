@@ -63,7 +63,10 @@ export class OperationsApiClient {
     });
 
     if (!response.ok) {
-      throw new OperationsApiError(`Operations API request failed with ${response.status}.`, response.status);
+      throw new OperationsApiError(
+        `Operations API request failed with ${response.status}.`,
+        response.status,
+      );
     }
 
     return (await response.json()) as T;

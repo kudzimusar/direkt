@@ -103,13 +103,7 @@ export function WorkflowStateCard({
   );
 }
 
-export function DenseTableRegion({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
+export function DenseTableRegion({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="dense-table-region" role="region" aria-label={label} tabIndex={0}>
       {children}

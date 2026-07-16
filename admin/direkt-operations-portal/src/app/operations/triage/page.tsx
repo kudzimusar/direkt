@@ -66,10 +66,30 @@ export default function TriagePage() {
       </WorkspaceIntro>
 
       <div className="metric-grid" aria-label="Triage summary">
-        <MetricCard label="Visible cases" value="3" note="Scoped to the active synthetic permission snapshot." tone="info" />
-        <MetricCard label="Breached" value="1" note="Critical because the active SLA state is breached." tone="danger" />
-        <MetricCard label="Unassigned" value="1" note="Available only to roles with queue-wide visibility." tone="warning" />
-        <MetricCard label="Blocked" value="0" note="No mandatory-evidence block in this fixture." tone="success" />
+        <MetricCard
+          label="Visible cases"
+          value="3"
+          note="Scoped to the active synthetic permission snapshot."
+          tone="info"
+        />
+        <MetricCard
+          label="Breached"
+          value="1"
+          note="Critical because the active SLA state is breached."
+          tone="danger"
+        />
+        <MetricCard
+          label="Unassigned"
+          value="1"
+          note="Available only to roles with queue-wide visibility."
+          tone="warning"
+        />
+        <MetricCard
+          label="Blocked"
+          value="0"
+          note="No mandatory-evidence block in this fixture."
+          tone="success"
+        />
       </div>
 
       <DenseTableRegion label="Synthetic verification triage queue">
@@ -94,8 +114,12 @@ export default function TriagePage() {
                 <td>{item.check}</td>
                 <td>{item.owner}</td>
                 <td>{item.age}</td>
-                <td><StatusPill tone={item.priorityTone}>{item.priority}</StatusPill></td>
-                <td><StatusPill tone={item.slaTone}>{item.sla}</StatusPill></td>
+                <td>
+                  <StatusPill tone={item.priorityTone}>{item.priority}</StatusPill>
+                </td>
+                <td>
+                  <StatusPill tone={item.slaTone}>{item.sla}</StatusPill>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -103,14 +127,35 @@ export default function TriagePage() {
       </DenseTableRegion>
 
       <div className="workflow-state-grid" aria-label="Triage critical states">
-        <WorkflowStateCard state="loading" title="Loading" description="Keep the queue shell and announce progress without flashing private data." tone="info" />
-        <WorkflowStateCard state="empty" title="No visible work" description="An empty queue is distinct from an authorization failure." tone="neutral" />
-        <WorkflowStateCard state="overdue" title="Overdue work" description="Age and SLA state remain visible without evidence contents." tone="danger" />
-        <WorkflowStateCard state="access_denied" title="Access denied" description="Support, finance, provider and field-agent roles cannot acquire reviewer scope." tone="warning" />
+        <WorkflowStateCard
+          state="loading"
+          title="Loading"
+          description="Keep the queue shell and announce progress without flashing private data."
+          tone="info"
+        />
+        <WorkflowStateCard
+          state="empty"
+          title="No visible work"
+          description="An empty queue is distinct from an authorization failure."
+          tone="neutral"
+        />
+        <WorkflowStateCard
+          state="overdue"
+          title="Overdue work"
+          description="Age and SLA state remain visible without evidence contents."
+          tone="danger"
+        />
+        <WorkflowStateCard
+          state="access_denied"
+          title="Access denied"
+          description="Support, finance, provider and field-agent roles cannot acquire reviewer scope."
+          tone="warning"
+        />
       </div>
 
       <p className="api-boundary-note">
-        API boundary: <code>GET /api/v1/operations/verification-queue</code>. No portal module imports a database, object store or backend repository.
+        API boundary: <code>GET /api/v1/operations/verification-queue</code>. No portal module
+        imports a database, object store or backend repository.
       </p>
     </section>
   );

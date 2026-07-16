@@ -72,7 +72,9 @@ export default function EscalationsPage() {
               <tr key={item.id} data-queue-row tabIndex={0}>
                 <th scope="row">{item.id}</th>
                 <td>{item.caseId}</td>
-                <td><StatusPill tone={item.tone}>{item.severity}</StatusPill></td>
+                <td>
+                  <StatusPill tone={item.tone}>{item.severity}</StatusPill>
+                </td>
                 <td>{item.owner}</td>
                 <td>{item.due}</td>
                 <td>{item.status}</td>
@@ -86,21 +88,50 @@ export default function EscalationsPage() {
         <section className="workspace-panel" aria-labelledby="override-heading">
           <h2 id="override-heading">High-risk authorization request</h2>
           <dl className="definition-grid">
-            <div><dt>Request</dt><dd>OVERRIDE-S7-001</dd></div>
-            <div><dt>Case</dt><dd>CASE-S7-008</dd></div>
-            <div><dt>Requested result</dt><dd>Approved</dd></div>
-            <div><dt>Mandatory evidence</dt><dd><StatusPill tone="success">Complete</StatusPill></dd></div>
-            <div><dt>Evidence snapshot</dt><dd>2 current clean versions</dd></div>
-            <div><dt>Trust-state effect</dt><dd>None until a separate decision</dd></div>
+            <div>
+              <dt>Request</dt>
+              <dd>OVERRIDE-S7-001</dd>
+            </div>
+            <div>
+              <dt>Case</dt>
+              <dd>CASE-S7-008</dd>
+            </div>
+            <div>
+              <dt>Requested result</dt>
+              <dd>Approved</dd>
+            </div>
+            <div>
+              <dt>Mandatory evidence</dt>
+              <dd>
+                <StatusPill tone="success">Complete</StatusPill>
+              </dd>
+            </div>
+            <div>
+              <dt>Evidence snapshot</dt>
+              <dd>2 current clean versions</dd>
+            </div>
+            <div>
+              <dt>Trust-state effect</dt>
+              <dd>None until a separate decision</dd>
+            </div>
           </dl>
         </section>
 
         <aside className="workspace-panel" aria-labelledby="approval-heading">
           <h2 id="approval-heading">Four-eyes approval</h2>
           <ol className="approval-track">
-            <li><span>Requester</span><strong>Synthetic reviewer</strong></li>
-            <li><span>Approver 1</span><StatusPill tone="success">Approved</StatusPill></li>
-            <li><span>Approver 2</span><StatusPill tone="warning">Pending</StatusPill></li>
+            <li>
+              <span>Requester</span>
+              <strong>Synthetic reviewer</strong>
+            </li>
+            <li>
+              <span>Approver 1</span>
+              <StatusPill tone="success">Approved</StatusPill>
+            </li>
+            <li>
+              <span>Approver 2</span>
+              <StatusPill tone="warning">Pending</StatusPill>
+            </li>
           </ol>
           <PermissionAction
             session={syntheticSupervisorSession}
@@ -112,14 +143,35 @@ export default function EscalationsPage() {
       </div>
 
       <div className="workflow-state-grid" aria-label="Escalation and override critical states">
-        <WorkflowStateCard state="overdue" title="Escalation overdue" description="Severity and due state remain visible until an auditable resolution." tone="danger" />
-        <WorkflowStateCard state="conflicting_action" title="Duplicate approver" description="The same identity cannot count twice toward four-eyes approval." tone="warning" />
-        <WorkflowStateCard state="access_denied" title="Self-approval denied" description="Requester, provider creator and evidence submitter cannot approve." tone="danger" />
-        <WorkflowStateCard state="blocked" title="Mandatory evidence missing" description="An override cannot bypass incomplete evidence or provider/category scope." tone="warning" />
+        <WorkflowStateCard
+          state="overdue"
+          title="Escalation overdue"
+          description="Severity and due state remain visible until an auditable resolution."
+          tone="danger"
+        />
+        <WorkflowStateCard
+          state="conflicting_action"
+          title="Duplicate approver"
+          description="The same identity cannot count twice toward four-eyes approval."
+          tone="warning"
+        />
+        <WorkflowStateCard
+          state="access_denied"
+          title="Self-approval denied"
+          description="Requester, provider creator and evidence submitter cannot approve."
+          tone="danger"
+        />
+        <WorkflowStateCard
+          state="blocked"
+          title="Mandatory evidence missing"
+          description="An override cannot bypass incomplete evidence or provider/category scope."
+          tone="warning"
+        />
       </div>
 
       <p className="api-boundary-note">
-        API boundaries: <code>/api/v1/operations/escalations</code> and <code>/api/v1/operations/high-risk-overrides</code>.
+        API boundaries: <code>/api/v1/operations/escalations</code> and{' '}
+        <code>/api/v1/operations/high-risk-overrides</code>.
       </p>
     </section>
   );

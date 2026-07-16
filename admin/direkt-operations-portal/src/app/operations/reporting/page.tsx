@@ -53,10 +53,30 @@ export default function ReportingPage() {
       </WorkspaceIntro>
 
       <div className="metric-grid" aria-label="Operations metrics">
-        <MetricCard label="Triage breached" value="1" note="Aggregate count from the current queue projection." tone="danger" />
-        <MetricCard label="Corrections · 30d" value="3" note="No provider or case identifiers in the exported metric." tone="warning" />
-        <MetricCard label="Field visits · 30d" value="7" note="Completed advisory work items only." tone="info" />
-        <MetricCard label="Evidence due" value="2" note="Due soon or renew-now evidence records." tone="warning" />
+        <MetricCard
+          label="Triage breached"
+          value="1"
+          note="Aggregate count from the current queue projection."
+          tone="danger"
+        />
+        <MetricCard
+          label="Corrections · 30d"
+          value="3"
+          note="No provider or case identifiers in the exported metric."
+          tone="warning"
+        />
+        <MetricCard
+          label="Field visits · 30d"
+          value="7"
+          note="Completed advisory work items only."
+          tone="info"
+        />
+        <MetricCard
+          label="Evidence due"
+          value="2"
+          note="Due soon or renew-now evidence records."
+          tone="warning"
+        />
       </div>
 
       <DenseTableRegion label="Synthetic expiry and renewal dashboard">
@@ -82,7 +102,9 @@ export default function ReportingPage() {
                 <td>{item.label}</td>
                 <td>{item.expires}</td>
                 <td>{item.days}</td>
-                <td><StatusPill tone={item.tone}>{item.action}</StatusPill></td>
+                <td>
+                  <StatusPill tone={item.tone}>{item.action}</StatusPill>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -111,14 +133,35 @@ export default function ReportingPage() {
       </div>
 
       <div className="workflow-state-grid" aria-label="Reporting critical states">
-        <WorkflowStateCard state="loading" title="Metrics loading" description="Aggregate placeholders carry no private identifiers." tone="info" />
-        <WorkflowStateCard state="empty" title="No expiries due" description="The projection can be empty while current evidence remains valid." tone="success" />
-        <WorkflowStateCard state="access_denied" title="Export denied" description="Read permission does not imply aggregate export permission." tone="warning" />
-        <WorkflowStateCard state="conflicting_action" title="Snapshot changed" description="A refreshed export uses one newly generated aggregate snapshot." tone="neutral" />
+        <WorkflowStateCard
+          state="loading"
+          title="Metrics loading"
+          description="Aggregate placeholders carry no private identifiers."
+          tone="info"
+        />
+        <WorkflowStateCard
+          state="empty"
+          title="No expiries due"
+          description="The projection can be empty while current evidence remains valid."
+          tone="success"
+        />
+        <WorkflowStateCard
+          state="access_denied"
+          title="Export denied"
+          description="Read permission does not imply aggregate export permission."
+          tone="warning"
+        />
+        <WorkflowStateCard
+          state="conflicting_action"
+          title="Snapshot changed"
+          description="A refreshed export uses one newly generated aggregate snapshot."
+          tone="neutral"
+        />
       </div>
 
       <p className="api-boundary-note">
-        API boundaries: <code>/api/v1/operations/expiry-renewal</code>, <code>/api/v1/operations/reporting/metrics</code> and the allowlisted export route.
+        API boundaries: <code>/api/v1/operations/expiry-renewal</code>,{' '}
+        <code>/api/v1/operations/reporting/metrics</code> and the allowlisted export route.
       </p>
     </section>
   );

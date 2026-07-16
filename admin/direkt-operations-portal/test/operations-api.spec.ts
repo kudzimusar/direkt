@@ -48,7 +48,9 @@ describe('OperationsApiClient', () => {
     const client = new OperationsApiClient({
       baseUrl: 'https://api.synthetic.invalid',
       accessToken: 'synthetic-token',
-      fetchImplementation: vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 403 })),
+      fetchImplementation: vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(new Response(null, { status: 403 })),
     });
 
     await expect(client.get(operationsEndpoints.incidents)).rejects.toEqual(

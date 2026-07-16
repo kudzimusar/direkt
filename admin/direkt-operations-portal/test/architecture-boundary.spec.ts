@@ -21,8 +21,8 @@ describe('operations portal architecture boundary', () => {
       const prohibited = [
         /from\s+['"][^'"]*backend\//,
         /from\s+['"][^'"]*database/,
-        /from\s+['"][^'"]*(?:supabase|postgres|postgis|pg)['"]/, 
-        /from\s+['"][^'"]*(?:s3|object-storage|storage-adapter)['"]/, 
+        /from\s+['"][^'"]*(?:supabase|postgres|postgis|pg)['"]/,
+        /from\s+['"][^'"]*(?:s3|object-storage|storage-adapter)['"]/,
       ];
       return prohibited.some((pattern) => pattern.test(source))
         ? [relative(process.cwd(), path)]
