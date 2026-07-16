@@ -45,3 +45,5 @@ jobs:
           git diff --cached --check
           git commit -m "style: format Stage 7F keyboard coverage"
           git push origin HEAD:build/android-v1
+
+# second-commit activation marker
