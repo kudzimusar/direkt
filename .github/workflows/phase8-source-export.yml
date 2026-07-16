@@ -34,13 +34,27 @@ jobs:
               archive.extractall('.', filter='data')
           PY
           cp .github/phase8-interaction-handoff.service.ts backend/direkt-api/src/interaction/interaction-handoff.service.ts
-      - name: Upload exact interrupted source
+          rm -f .github/phase8-backend-bundle.tgz
+          rm -f .github/phase8-interaction-handoff.service.ts
+          rm -f .github/phase8-permissions.ts
+          rm -f .github/workflows/phase8-backend-sync-once.yml
+          rm -f .github/workflows/phase8-lint-diagnostic.yml
+          rm -f .github/workflows/phase8-source-export.yml
+      - name: Upload exact Phase 8 workspace
         uses: actions/upload-artifact@v4
         with:
-          name: phase8-interrupted-source-${{ github.run_number }}-${{ github.sha }}
+          name: phase8-full-workspace-${{ github.run_number }}-${{ github.sha }}
           path: |
-            backend/direkt-api/src/interaction
-            backend/direkt-api/test/e2e
-            database/migrations
+            .github/workflows
+            admin/direkt-operations-portal
+            android/direkt-app
+            backend/direkt-api
+            database
+            docs
+            DECISION_LOG.md
+            MASTER_BUILD_PLAN.md
+            PROJECT_STATUS.md
+            RISK_REGISTER.md
+            WORKSTREAM_LOCK.md
           if-no-files-found: error
           retention-days: 2
