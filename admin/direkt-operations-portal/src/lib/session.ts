@@ -1,5 +1,11 @@
 export type OperationsRole =
-  'field_agent' | 'reviewer' | 'support' | 'trust_supervisor' | 'finance' | 'auditor' | 'admin';
+  | 'field_agent'
+  | 'reviewer'
+  | 'support'
+  | 'trust_supervisor'
+  | 'finance'
+  | 'auditor'
+  | 'admin';
 
 export interface OperationsSession {
   synthetic: true;
@@ -30,7 +36,7 @@ export const syntheticReviewerSession: OperationsSession = {
     'verification.claim.read',
     'discovery.publication.read',
   ],
-  expiresAt: '2026-07-16T23:00:00.000Z',
+  expiresAt: '2026-12-31T23:00:00.000Z',
   stepUpRequired: true,
 };
 
@@ -55,6 +61,11 @@ export const syntheticSupervisorSession: OperationsSession = {
     'operations.incidents.read',
     'operations.incidents.manage',
     'operations.reporting.read',
+    'operations.interactions.read',
+    'operations.reviews.read',
+    'operations.reviews.manage',
+    'operations.complaints.read',
+    'operations.complaints.manage',
     'evidence.read.private',
     'verification.case.read',
     'verification.case.assign',
@@ -63,7 +74,7 @@ export const syntheticSupervisorSession: OperationsSession = {
     'verification.claim.read',
     'discovery.publication.read',
   ],
-  expiresAt: '2026-07-16T23:00:00.000Z',
+  expiresAt: '2026-12-31T23:00:00.000Z',
   stepUpRequired: true,
 };
 
