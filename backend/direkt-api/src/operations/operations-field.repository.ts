@@ -738,7 +738,7 @@ export class OperationsFieldRepository {
     input: {
       actor: AuthenticatedActor;
       providerId: string;
-      requestId?: string;
+      requestId: string | undefined;
       action: string;
       resourceType: string;
       resourceId: string;
