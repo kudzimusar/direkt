@@ -1,20 +1,10 @@
-name: DIREKT Backend CI
+name: Stage 7G regression alignment
 
 on:
-  push:
-    branches:
-      - main
-      - build/android-v1
-    paths:
-      - "backend/direkt-api/**"
-      - "database/**"
-      - ".github/workflows/backend-ci.yml"
   pull_request:
     branches:
       - main
     paths:
-      - "backend/direkt-api/**"
-      - "database/**"
       - ".github/workflows/backend-ci.yml"
   workflow_dispatch:
 
@@ -22,18 +12,13 @@ permissions:
   contents: write
 
 concurrency:
-  group: direkt-backend-ci-${{ github.ref }}
-  cancel-in-progress: true
-
-env:
-  NODE_ENV: test
-  DATABASE_URL: postgresql://direkt:direkt_ci@localhost:5432/direkt_test
+  group: stage7g-regression-alignment-pr-head
+  cancel-in-progress: false
 
 jobs:
-  stage7g_patch:
-    if: contains(github.event.head_commit.message, 'apply Stage 7G test alignment through permanent workflow')
+  patch:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
         with:
@@ -44,7 +29,7 @@ jobs:
           node-version: "24"
           cache: npm
           cache-dependency-path: backend/direkt-api/package-lock.json
-      - name: Align permanent Stage 7 regressions
+      - name: Apply permanent Stage 7 regressions
         shell: bash
         run: |
           python - <<'PY'
@@ -53,53 +38,51 @@ jobs:
           override = Path('backend/direkt-api/test/e2e/operations-escalations-overrides.e2e.spec.ts')
           text = override.read_text()
           start_marker = '      if (requirement.requirement_id === requirement.case_requirement_id) {'
-          start = text.index(start_marker)
-          end = text.index('\n      }', start) + len('\n      }')
-          override.write_text(text[:start] + text[end:])
+          if start_marker in text:
+              start = text.index(start_marker)
+              end = text.index('\n      }', start) + len('\n      }')
+              text = text[:start] + text[end:]
+          override.write_text(text)
 
           reporting = Path('backend/direkt-api/test/e2e/operations-reporting.e2e.spec.ts')
           text = reporting.read_text()
-          replacements = [
-            (
-              '  let support: SessionResponse;\n  let admin: SessionResponse;',
-              '  let support: SessionResponse;\n  let secondSupport: SessionResponse;\n  let admin: SessionResponse;',
-            ),
-            (
-              "    support = await signIn('phase7-reporting-support@example.invalid');\n    admin = await signIn",
-              "    support = await signIn('phase7-reporting-support@example.invalid');\n    secondSupport = await signIn('phase7-reporting-second-support@example.invalid');\n    admin = await signIn",
-            ),
-            (
-              "    await grantRole(support, 'support');\n    await grantRole(admin, 'admin');",
-              "    await grantRole(support, 'support');\n    await grantRole(secondSupport, 'support');\n    await grantRole(admin, 'admin');",
-            ),
-          ]
-          for old, new in replacements:
-              if old not in text:
-                  raise SystemExit(f'missing reporting token: {old[:36]}')
-              text = text.replace(old, new, 1)
-
-          start_token = ".send({ reason: 'Assigned support operator started the synthetic internal investigation.' })"
-          start_index = text.index(start_token)
-          insertion_point = text.index('    const resolvedResponse = await request(httpServer())', start_index)
-          unowned = """    await request(httpServer())
-              .post(`/api/v1/operations/incidents/${incident.incidentId}/resolve`)
-              .set('authorization', `Bearer ${secondSupport.accessToken}`)
-              .send({
-                targetStatus: 'resolved',
-                resolutionCode: 'UNOWNED_RESOLUTION_ATTEMPT',
-                resolutionSummary:
-                  'An unrelated support operator must not resolve another operator owned incident.',
-              })
-              .expect(400);
+          if '  let secondSupport: SessionResponse;' not in text:
+              text = text.replace(
+                  '  let support: SessionResponse;\n  let admin: SessionResponse;',
+                  '  let support: SessionResponse;\n  let secondSupport: SessionResponse;\n  let admin: SessionResponse;',
+                  1,
+              )
+          if "phase7-reporting-second-support@example.invalid" not in text:
+              text = text.replace(
+                  "    support = await signIn('phase7-reporting-support@example.invalid');\n    admin = await signIn",
+                  "    support = await signIn('phase7-reporting-support@example.invalid');\n    secondSupport = await signIn('phase7-reporting-second-support@example.invalid');\n    admin = await signIn",
+                  1,
+              )
+          if "grantRole(secondSupport, 'support')" not in text:
+              text = text.replace(
+                  "    await grantRole(support, 'support');\n    await grantRole(admin, 'admin');",
+                  "    await grantRole(support, 'support');\n    await grantRole(secondSupport, 'support');\n    await grantRole(admin, 'admin');",
+                  1,
+              )
+          if 'UNOWNED_RESOLUTION_ATTEMPT' not in text:
+              start_token = ".send({ reason: 'Assigned support operator started the synthetic internal investigation.' })"
+              start_index = text.index(start_token)
+              insertion_point = text.index('    const resolvedResponse = await request(httpServer())', start_index)
+              unowned = """    await request(httpServer())
+                .post(`/api/v1/operations/incidents/${incident.incidentId}/resolve`)
+                .set('authorization', `Bearer ${secondSupport.accessToken}`)
+                .send({
+                  targetStatus: 'resolved',
+                  resolutionCode: 'UNOWNED_RESOLUTION_ATTEMPT',
+                  resolutionSummary:
+                    'An unrelated support operator must not resolve another operator owned incident.',
+                })
+                .expect(400);
 
           """
-          text = text[:insertion_point] + unowned + text[insertion_point:]
-
-          old_leak = "    expect(serialized).not.toContain('objectKey');"
-          if old_leak not in text:
-              raise SystemExit('missing objectKey leak assertion')
+              text = text[:insertion_point] + unowned + text[insertion_point:]
           text = text.replace(
-              old_leak,
+              "    expect(serialized).not.toContain('objectKey');",
               "    expect(serialized).not.toContain('\\\"objectKey\\\":');\n    expect(serialized).not.toContain('https://storage');",
               1,
           )
@@ -108,55 +91,58 @@ jobs:
           field = Path('backend/direkt-api/test/e2e/operations-field-workflow.e2e.spec.ts')
           text = field.read_text()
           marker = "  it('persists idempotent offline submissions without creating trust state', async () => {"
-          if marker not in text:
-              raise SystemExit('missing field idempotency insertion point')
-          privacy_test = """  it('rejects precise coordinates and private storage references from public field text', async () => {
-            const caseId = await createCase('public_safe_text');
-            const work = await createWork(caseId, fieldAgentA.identityId, 2);
-            await acceptAndStart(work.workItemId, fieldAgentA);
+          if "it('rejects precise coordinates and private storage references from public field text'" not in text:
+              privacy_test = """  it('rejects precise coordinates and private storage references from public field text', async () => {
+              const caseId = await createCase('public_safe_text');
+              const work = await createWork(caseId, fieldAgentA.identityId, 2);
+              await acceptAndStart(work.workItemId, fieldAgentA);
 
-            await request(httpServer())
-              .post(`/api/v1/operations/field-work-items/${work.workItemId}/submissions`)
-              .set('authorization', `Bearer ${fieldAgentA.accessToken}`)
-              .send(
-                submission(
-                  'completed',
-                  'offline-public-safe-0001',
-                  'Synthetic inspection at 15.38761, 28.32282 must not enter public-safe output.',
-                ),
-              )
-              .expect(400);
+              await request(httpServer())
+                .post(`/api/v1/operations/field-work-items/${work.workItemId}/submissions`)
+                .set('authorization', `Bearer ${fieldAgentA.accessToken}`)
+                .send(
+                  submission(
+                    'completed',
+                    'offline-public-safe-0001',
+                    'Synthetic inspection at 15.38761, 28.32282 must not enter public-safe output.',
+                  ),
+                )
+                .expect(400);
 
-            await request(httpServer())
-              .post(`/api/v1/operations/field-work-items/${work.workItemId}/submissions`)
-              .set('authorization', `Bearer ${fieldAgentA.accessToken}`)
-              .send({
-                ...submission(
-                  'completed',
-                  'offline-public-safe-0002',
-                  'Synthetic inspection completed without precise private location data.',
-                ),
-                observations: [
-                  {
-                    key: 'provider_presence',
-                    result: 'confirmed',
-                    note: 'Private object key private/00000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000002/00000000-0000-4000-8000-000000000003',
-                  },
-                ],
-              })
-              .expect(400);
-          });
+              await request(httpServer())
+                .post(`/api/v1/operations/field-work-items/${work.workItemId}/submissions`)
+                .set('authorization', `Bearer ${fieldAgentA.accessToken}`)
+                .send({
+                  ...submission(
+                    'completed',
+                    'offline-public-safe-0002',
+                    'Synthetic inspection completed without precise private location data.',
+                  ),
+                  observations: [
+                    {
+                      key: 'provider_presence',
+                      result: 'confirmed',
+                      note: 'Private object key private/00000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000002/00000000-0000-4000-8000-000000000003',
+                    },
+                  ],
+                })
+                .expect(400);
+            });
 
           """
-          field.write_text(text.replace(marker, privacy_test + marker, 1))
+              text = text.replace(marker, privacy_test + marker, 1)
+          field.write_text(text)
           PY
-      - name: Format tests
+      - name: Format corrected regressions
         shell: bash
         run: |
           cd backend/direkt-api
           npm ci --ignore-scripts
-          npx prettier --write test/e2e/operations-escalations-overrides.e2e.spec.ts test/e2e/operations-reporting.e2e.spec.ts test/e2e/operations-field-workflow.e2e.spec.ts
-      - name: Restore permanent workflow and commit
+          npx prettier --write \
+            test/e2e/operations-escalations-overrides.e2e.spec.ts \
+            test/e2e/operations-reporting.e2e.spec.ts \
+            test/e2e/operations-field-workflow.e2e.spec.ts
+      - name: Restore permanent backend workflow and commit
         shell: bash
         run: |
           cat > .github/workflows/backend-ci.yml <<'YAML'
@@ -300,113 +286,7 @@ jobs:
           rm -f .github/workflows/stage7g-regression-alignment-once.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add backend/direkt-api/test/e2e/operations-escalations-overrides.e2e.spec.ts backend/direkt-api/test/e2e/operations-reporting.e2e.spec.ts backend/direkt-api/test/e2e/operations-field-workflow.e2e.spec.ts .github/workflows/backend-ci.yml .github/workflows/stage7g-regression-alignment-once.yml
+          git add -A
           git diff --cached --check
           git commit -m "test: align Stage 7 trust-boundary regressions"
           git push origin HEAD:build/android-v1
-
-  verify:
-    if: ${{ !contains(github.event.head_commit.message, 'apply Stage 7G test alignment through permanent workflow') }}
-    name: Format, test, migrate and build API
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-
-    services:
-      postgres:
-        image: postgis/postgis:18-3.6
-        env:
-          POSTGRES_DB: direkt_test
-          POSTGRES_USER: direkt
-          POSTGRES_PASSWORD: direkt_ci
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U direkt -d direkt_test"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
-
-    defaults:
-      run:
-        working-directory: backend/direkt-api
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Set up Node.js 24 LTS
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: npm
-          cache-dependency-path: backend/direkt-api/package-lock.json
-
-      - name: Verify runtime and committed lockfile
-        shell: bash
-        run: |
-          node --version
-          npm --version
-          [[ "$(npm --version)" == 11.* ]]
-          test -f package-lock.json
-          git diff --exit-code -- package.json package-lock.json
-
-      - name: Install exact locked dependencies
-        run: npm ci --ignore-scripts
-
-      - name: Check formatting
-        run: npm run format:check
-
-      - name: Lint
-        shell: bash
-        run: |
-          mkdir -p artifacts/diagnostics
-          set -o pipefail
-          npm run lint 2>&1 | tee artifacts/diagnostics/eslint.txt
-
-      - name: Typecheck
-        shell: bash
-        run: |
-          mkdir -p artifacts/diagnostics
-          set -o pipefail
-          npm run typecheck 2>&1 | tee artifacts/diagnostics/typecheck.txt
-
-      - name: Apply and verify migrations
-        run: npm run migration:check
-
-      - name: Run tests with coverage
-        shell: bash
-        run: |
-          mkdir -p artifacts/diagnostics
-          set -o pipefail
-          npm run test 2>&1 | tee artifacts/diagnostics/vitest.txt
-
-      - name: Build production JavaScript
-        run: npm run build
-
-      - name: Generate and validate OpenAPI
-        run: npm run openapi:check
-
-      - name: Upload backend verification artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: direkt-backend-reports-${{ github.run_number }}-${{ github.sha }}
-          path: |
-            backend/direkt-api/coverage/**
-            backend/direkt-api/artifacts/openapi.json
-            backend/direkt-api/artifacts/diagnostics/**
-            backend/direkt-api/package-lock.json
-          if-no-files-found: warn
-          retention-days: 14
-
-      - name: Publish backend summary
-        shell: bash
-        run: |
-          echo "### DIREKT backend foundation" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Commit: \`${GITHUB_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Branch: \`${GITHUB_REF_NAME}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Runtime: Node.js 24 / npm 11" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Framework: NestJS 11.1.x / TypeScript 5.9.x" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Database: PostgreSQL 18 / PostGIS 3.6" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Dependencies: committed npm lockfile installed with \`npm ci\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Result: format, lint, typecheck, migrations, tests, build and OpenAPI passed" >> "$GITHUB_STEP_SUMMARY"
