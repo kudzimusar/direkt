@@ -1,55 +1,64 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
+import { MetricCard, WorkflowStateCard, WorkspaceIntro } from '@/components/operations-workspace';
 
 export const metadata: Metadata = { title: 'Mission control' };
 
-const summaryCards = [
-  {
-    label: 'Provider drafts',
-    value: '2',
-    note: 'Synthetic private profiles only; public discoverability remains structurally blocked.',
-  },
-  {
-    label: 'Verification cases',
-    value: '2',
-    note: 'Separate fictional checks with assignment, evidence-version and reason-code history.',
-  },
-  {
-    label: 'Active scoped claims',
-    value: '1',
-    note: 'Derived from one synthetic decision, with an explicit limitation and expiry.',
-  },
+const workspaces = [
+  { label: 'Triage queue', href: '/operations/triage', note: 'Priority, ownership, age and SLA state.' },
+  { label: 'Evidence review', href: '/operations/evidence-review', note: 'Assigned revocable private access.' },
+  { label: 'Field workflow', href: '/operations/field-work', note: 'Structured advisory inspections.' },
+  { label: 'Escalations and overrides', href: '/operations/escalations', note: 'Owned escalation and four-eyes control.' },
+  { label: 'Incidents and complaints', href: '/operations/incidents', note: 'Bounded internal operations records.' },
+  { label: 'Expiry and reporting', href: '/operations/reporting', note: 'Privacy-safe renewal and aggregate metrics.' },
 ] as const;
 
 export default function OperationsPage() {
   return (
     <section aria-labelledby="mission-control-heading">
-      <p className="eyebrow">Phase 4 operations foundation</p>
-      <h1 id="mission-control-heading">Mission control</h1>
-      <p className="lede">
-        This checkpoint adds a bounded private verification queue while preserving server-owned
-        sessions, provider scope, case assignments and deny-by-default authorization.
-      </p>
+      <WorkspaceIntro
+        eyebrow="Phase 7 operations portal"
+        title="Mission control"
+        description="One synthetic desktop workspace for triage, assigned private review, structured field work, escalations and privacy-safe reporting. Every route remains permission-aware and API-only."
+        headingId="mission-control-heading"
+      />
 
-      <div className="summary-grid" aria-label="Synthetic operations summary">
-        {summaryCards.map((card) => (
-          <article className="summary-card" key={card.label}>
-            <h2>{card.label}</h2>
-            <strong>{card.value}</strong>
-            <p>{card.note}</p>
-          </article>
-        ))}
+      <div className="metric-grid" aria-label="Synthetic operations summary">
+        <MetricCard label="Triage visible" value="3" note="One breached case and one unassigned case." tone="danger" />
+        <MetricCard label="Field work active" value="1" note="Advisory only; no decision or claim mutation." tone="info" />
+        <MetricCard label="Escalations active" value="2" note="Explicit owner, severity, due date and policy." tone="warning" />
+        <MetricCard label="Evidence due" value="2" note="Document contents and storage metadata excluded." tone="warning" />
+      </div>
+
+      <section className="workspace-panel" aria-labelledby="workspace-links-heading">
+        <h2 id="workspace-links-heading">Operations workspaces</h2>
+        <div className="summary-grid">
+          {workspaces.map((workspace) => (
+            <article className="summary-card" key={workspace.href}>
+              <h3><Link href={workspace.href}>{workspace.label}</Link></h3>
+              <p>{workspace.note}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <div className="workflow-state-grid" aria-label="Portal-wide critical states">
+        <WorkflowStateCard state="loading" title="Loading" description="Safe skeletons contain no copied private records." tone="info" />
+        <WorkflowStateCard state="access_denied" title="Access denied" description="Navigation and controls derive from server permission keys." tone="danger" />
+        <WorkflowStateCard state="revoked_assignment" title="Assignment revoked" description="Private evidence access stops immediately." tone="warning" />
+        <WorkflowStateCard state="conflicting_action" title="Conflicting action" description="Stale or duplicate workflow mutations are rejected." tone="warning" />
       </div>
 
       <section className="control-panel" aria-labelledby="controls-heading">
-        <h2 id="controls-heading">Phase 4 controls</h2>
+        <h2 id="controls-heading">Non-negotiable Phase 7 controls</h2>
         <ul>
-          <li>Evidence metadata and original private objects have separate access boundaries.</li>
-          <li>Only an actively assigned reviewer or supervisor may request private access.</li>
-          <li>Recommendations, decisions and evidence versions are append-only.</li>
-          <li>Reason codes, limitations, policy version and expiry accompany each scoped claim.</li>
-          <li>Expired or revoked evidence degrades dependent claims deterministically.</li>
-          <li>The portal has no direct database or object-storage connector.</li>
-          <li>Provider discovery and production integrations remain disabled.</li>
+          <li>The portal communicates through versioned HTTP API routes only.</li>
+          <li>No database, PostGIS, object-storage or backend repository module is imported.</li>
+          <li>Private evidence access is assigned, short-lived, audited and revocable.</li>
+          <li>Field observations remain advisory and cannot create claims or final decisions.</li>
+          <li>High-risk authorization requires two distinct eligible approvers.</li>
+          <li>Reports exclude document contents, object keys, private coordinates and private notes.</li>
+          <li>Phase 8 customer workflows and Phase 9 commercial workflows remain unavailable.</li>
         </ul>
       </section>
     </section>
