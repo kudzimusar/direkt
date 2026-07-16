@@ -111,7 +111,8 @@ describe('Phase 7 escalations and four-eyes high-risk controls', () => {
       const evidenceId = randomUUID();
       const versionId = randomUUID();
       const objectKey = `private/${providerId}/${uploadSessionId}/${versionId}`;
-      const evidenceClass = requirement.requirement_kind === 'registration' ? 'business' : 'identity';
+      const evidenceClass =
+        requirement.requirement_kind === 'registration' ? 'business' : 'identity';
       await pool.query(
         `INSERT INTO evidence.upload_sessions (
            id,
@@ -241,7 +242,14 @@ describe('Phase 7 escalations and four-eyes high-risk controls', () => {
       })
       .expect(201);
     caseId = (caseResponse.body as CaseResponse).id;
-    await pool.query("UPDATE verification.cases SET status = 'ready_for_review' WHERE id = $1", [caseId]);
+    await pool.query(
+      "UPDATE verification.cases SET status = 'awaiting_evidence' WHERE id = $1 AND status = 'draft'",
+      [caseId],
+    );
+    await pool.query(
+      "UPDATE verification.cases SET status = 'ready_for_review' WHERE id = $1 AND status = 'awaiting_evidence'",
+      [caseId],
+    );
     await request(httpServer())
       .post(`/api/v1/verification-cases/${caseId}/assignments`)
       .set('authorization', `Bearer ${admin.accessToken}`)
@@ -306,7 +314,8 @@ describe('Phase 7 escalations and four-eyes high-risk controls', () => {
       .send({
         targetStatus: 'resolved',
         resolutionCode: 'SCOPE_CONFIRMED',
-        resolutionSummary: 'Synthetic escalation resolved after review of the scoped case controls.',
+        resolutionSummary:
+          'Synthetic escalation resolved after review of the scoped case controls.',
       })
       .expect(200);
     expect(resolvedResponse.body as EscalationResponse).toMatchObject({ status: 'resolved' });
@@ -368,9 +377,7 @@ describe('Phase 7 escalations and four-eyes high-risk controls', () => {
     expect(requestView.evidenceVersionCount).toBeGreaterThan(0);
 
     await request(httpServer())
-      .post(
-        `/api/v1/operations/high-risk-overrides/${requestView.overrideRequestId}/approvals`,
-      )
+      .post(`/api/v1/operations/high-risk-overrides/${requestView.overrideRequestId}/approvals`)
       .set('authorization', `Bearer ${reviewer.accessToken}`)
       .send({
         decision: 'approve',
@@ -380,13 +387,12 @@ describe('Phase 7 escalations and four-eyes high-risk controls', () => {
       .expect(403);
 
     const firstResponse = await request(httpServer())
-      .post(
-        `/api/v1/operations/high-risk-overrides/${requestView.overrideRequestId}/approvals`,
-      )
+      .post(`/api/v1/operations/high-risk-overrides/${requestView.overrideRequestId}/approvals`)
       .set('authorization', `Bearer ${supervisorOne.accessToken}`)
       .send({
         decision: 'approve',
-        rationale: 'First independent synthetic supervisor approves the evidence-backed authorization.',
+        rationale:
+          'First independent synthetic supervisor approves the evidence-backed authorization.',
         policyVersion: 'phase7-override-v1',
       })
       .expect(201);
@@ -396,9 +402,7 @@ describe('Phase 7 escalations and four-eyes high-risk controls', () => {
     });
 
     await request(httpServer())
-      .post(
-        `/api/v1/operations/high-risk-overrides/${requestView.overrideRequestId}/approvals`,
-      )
+      .post(`/api/v1/operations/high-risk-overrides/${requestView.overrideRequestId}/approvals`)
       .set('authorization', `Bearer ${supervisorOne.accessToken}`)
       .send({
         decision: 'approve',
@@ -408,9 +412,7 @@ describe('Phase 7 escalations and four-eyes high-risk controls', () => {
       .expect(409);
 
     const secondResponse = await request(httpServer())
-      .post(
-        `/api/v1/operations/high-risk-overrides/${requestView.overrideRequestId}/approvals`,
-      )
+      .post(`/api/v1/operations/high-risk-overrides/${requestView.overrideRequestId}/approvals`)
       .set('authorization', `Bearer ${supervisorTwo.accessToken}`)
       .send({
         decision: 'approve',

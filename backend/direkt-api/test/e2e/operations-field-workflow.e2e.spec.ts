@@ -271,10 +271,10 @@ describe('Phase 7 structured operations field workflow', () => {
       .set('authorization', `Bearer ${admin.accessToken}`)
       .expect(200);
     const allQueueBody = allQueue.body as FieldQueueResponse;
-    expect(allQueueBody).toMatchObject({
-      scope: 'all',
-      items: expect.arrayContaining([expect.objectContaining({ workItemId: work.workItemId })]),
-    });
+    expect(allQueueBody.scope).toBe('all');
+    expect(allQueueBody.items).toEqual(
+      expect.arrayContaining([expect.objectContaining({ workItemId: work.workItemId })]),
+    );
 
     await request(httpServer())
       .post(`/api/v1/operations/field-work-items/${work.workItemId}/transitions`)
