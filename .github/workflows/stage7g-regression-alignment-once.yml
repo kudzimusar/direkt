@@ -170,3 +170,5 @@ jobs:
           git diff --cached --check
           git commit -m "test: align Stage 7 trust-boundary regressions"
           git push origin HEAD:build/android-v1
+
+# second-commit activation marker
