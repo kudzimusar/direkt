@@ -68,3 +68,5 @@ jobs:
           git diff --cached --check
           git commit -m "ci: capture Stage 7G public-safe predicate result"
           git push origin HEAD:build/android-v1
+
+# second-commit activation marker
