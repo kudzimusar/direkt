@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
 import { OperationsController } from './operations.controller';
+import { OperationsEscalationController } from './operations-escalation.controller';
+import { OperationsEscalationRepository } from './operations-escalation.repository';
+import { OperationsEscalationService } from './operations-escalation.service';
 import { OperationsFieldController } from './operations-field.controller';
 import { OperationsFieldRepository } from './operations-field.repository';
 import { OperationsFieldService } from './operations-field.service';
@@ -11,10 +14,13 @@ import { ProviderWorkspaceOperationsRepository } from './provider-workspace-oper
 @Module({
   controllers: [
     OperationsController,
+    OperationsEscalationController,
     OperationsFieldController,
     ProviderWorkspaceOperationsController,
   ],
   providers: [
+    OperationsEscalationRepository,
+    OperationsEscalationService,
     OperationsFieldRepository,
     OperationsFieldService,
     OperationsTriageRepository,
