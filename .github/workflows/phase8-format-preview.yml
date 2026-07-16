@@ -1,0 +1,52 @@
+name: Phase 8 formatting preview
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - ".github/workflows/phase8-format-preview.yml"
+      - "backend/direkt-api/**"
+      - "admin/direkt-operations-portal/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase8-format-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  patch:
+    name: Generate formatting patch
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Format backend
+        working-directory: backend/direkt-api
+        run: |
+          npm ci --ignore-scripts
+          npm run format
+      - name: Format operations portal
+        working-directory: admin/direkt-operations-portal
+        run: |
+          npm ci --ignore-scripts
+          npm run format
+      - name: Create deterministic patch
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          git diff --binary -- backend/direkt-api admin/direkt-operations-portal > artifacts/phase8-format.patch
+          git diff --name-only -- backend/direkt-api admin/direkt-operations-portal > artifacts/phase8-format-files.txt
+          test -s artifacts/phase8-format.patch
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase8-format-patch-${{ github.sha }}
+          path: artifacts/phase8-format-*
+          if-no-files-found: error
+          retention-days: 3
