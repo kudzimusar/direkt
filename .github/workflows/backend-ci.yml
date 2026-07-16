@@ -63,15 +63,24 @@ jobs:
               archive.extractall('.')
           bundle.unlink()
           PY
-      - name: Validate application source before commit
+      - name: Install exact locked dependencies
         working-directory: backend/direkt-api
-        run: |
-          npm ci --ignore-scripts
-          npm run format
-          npm run lint
-          npm run typecheck
-          npm run build
-          npm run openapi:check
+        run: npm ci --ignore-scripts
+      - name: Format reviewed source
+        working-directory: backend/direkt-api
+        run: npm run format
+      - name: Lint reviewed source
+        working-directory: backend/direkt-api
+        run: npm run lint
+      - name: Typecheck reviewed source
+        working-directory: backend/direkt-api
+        run: npm run typecheck
+      - name: Build reviewed source
+        working-directory: backend/direkt-api
+        run: npm run build
+      - name: Validate reviewed OpenAPI
+        working-directory: backend/direkt-api
+        run: npm run openapi:check
       - name: Commit permanent Phase 8 backend source
         shell: bash
         run: |
