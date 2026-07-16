@@ -1,6 +1,0 @@
-safe_assignment_reason
-t
-precise_coordinate
-f
-private_path
-f
