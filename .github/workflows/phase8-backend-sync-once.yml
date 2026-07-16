@@ -1,4 +1,5 @@
 name: Phase 8 backend sync once
+# Second-pass activation uses the reviewed workflow already stored on the branch.
 
 on:
   push:
