@@ -135,3 +135,25 @@ jobs:
           echo "- Database: PostgreSQL 18 / PostGIS 3.6" >> "$GITHUB_STEP_SUMMARY"
           echo "- Dependencies: committed npm lockfile installed with \`npm ci\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Result: format, lint, typecheck, migrations, tests, build and OpenAPI passed" >> "$GITHUB_STEP_SUMMARY"
+
+  export-phase8-workspace:
+    name: Export current Phase 8 workspace once
+    if: github.event_name == 'push' && github.ref_name == 'build/android-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Package source tree
+        shell: bash
+        run: |
+          tar --exclude=.git --exclude='**/node_modules' --exclude='**/build' --exclude='**/.next' -czf /tmp/direkt-phase8-current.tgz .
+      - name: Upload source tree
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-phase8-current-${{ github.sha }}
+          path: /tmp/direkt-phase8-current.tgz
+          if-no-files-found: error
+          retention-days: 1
