@@ -1,1 +1,0 @@
-Temporary owner-authored validation trigger. This file is deleted in the next commit.
