@@ -1,0 +1,70 @@
+name: Stage 7G public-safe diagnostic once
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - ".github/workflows/stage7g-public-safe-diagnostic-once.yml"
+
+permissions:
+  contents: write
+
+env:
+  NODE_ENV: test
+  DATABASE_URL: postgresql://direkt:direkt_ci@localhost:5432/direkt_test
+
+jobs:
+  diagnose:
+    if: contains(github.event.head_commit.message, 'activate Stage 7G public-safe diagnostic')
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgis/postgis:18-3.6
+        env:
+          POSTGRES_DB: direkt_test
+          POSTGRES_USER: direkt
+          POSTGRES_PASSWORD: direkt_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U direkt -d direkt_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - name: Capture predicate behavior
+        shell: bash
+        run: |
+          cd backend/direkt-api
+          npm ci --ignore-scripts
+          npm run migration:check
+          cd ../..
+          {
+            echo "safe_assignment_reason"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -Atc "SELECT operations.is_public_safe_text('Synthetic scoped field inspection assignment for Phase 7 regression coverage.');"
+            echo "precise_coordinate"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -Atc "SELECT operations.is_public_safe_text('Synthetic inspection at 15.38761, 28.32282.');"
+            echo "private_path"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -Atc "SELECT operations.is_public_safe_text('private/00000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000002/00000000-0000-4000-8000-000000000003');"
+          } > stage7g-public-safe-diagnostic.txt 2>&1
+      - name: Commit diagnostic and remove helper
+        shell: bash
+        run: |
+          rm .github/workflows/stage7g-public-safe-diagnostic-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add stage7g-public-safe-diagnostic.txt .github/workflows/stage7g-public-safe-diagnostic-once.yml
+          git diff --cached --check
+          git commit -m "ci: capture Stage 7G public-safe predicate result"
+          git push origin HEAD:build/android-v1
