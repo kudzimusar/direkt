@@ -52,8 +52,17 @@ jobs:
         shell: bash
         run: |
           test -f .github/phase8-backend-bundle.tgz
-          tar -xzf .github/phase8-backend-bundle.tgz
-          rm .github/phase8-backend-bundle.tgz
+          sha256sum .github/phase8-backend-bundle.tgz
+          python - <<'PY'
+          from pathlib import Path
+          import tarfile
+          bundle = Path('.github/phase8-backend-bundle.tgz')
+          with tarfile.open(bundle, 'r:gz') as archive:
+              members = archive.getmembers()
+              print(f'extracting {len(members)} reviewed files')
+              archive.extractall('.')
+          bundle.unlink()
+          PY
       - name: Validate application source before commit
         working-directory: backend/direkt-api
         run: |
