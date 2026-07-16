@@ -3,12 +3,7 @@
 import { useEffect, useState } from 'react';
 
 export type KeyboardAction =
-  | 'close_help'
-  | 'toggle_help'
-  | 'focus_filter'
-  | 'queue_next'
-  | 'queue_previous'
-  | 'none';
+  'close_help' | 'toggle_help' | 'focus_filter' | 'queue_next' | 'queue_previous' | 'none';
 
 export function resolveKeyboardAction(key: string, editableTarget: boolean): KeyboardAction {
   if (key === 'Escape') return 'close_help';

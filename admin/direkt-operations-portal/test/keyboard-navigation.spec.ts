@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  nextQueueRowIndex,
-  resolveKeyboardAction,
-} from '../src/components/keyboard-shortcuts';
+import { nextQueueRowIndex, resolveKeyboardAction } from '../src/components/keyboard-shortcuts';
 
 describe('Stage 7F keyboard navigation decisions', () => {
   it.each([
