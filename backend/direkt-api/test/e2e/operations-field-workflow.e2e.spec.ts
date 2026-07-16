@@ -270,7 +270,8 @@ describe('Phase 7 structured operations field workflow', () => {
       .get('/api/v1/operations/field-work-items')
       .set('authorization', `Bearer ${admin.accessToken}`)
       .expect(200);
-    expect(allQueue.body as FieldQueueResponse).toMatchObject({
+    const allQueueBody = allQueue.body as FieldQueueResponse;
+    expect(allQueueBody).toMatchObject({
       scope: 'all',
       items: expect.arrayContaining([expect.objectContaining({ workItemId: work.workItemId })]),
     });
