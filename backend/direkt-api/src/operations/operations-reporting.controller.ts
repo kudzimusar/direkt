@@ -58,7 +58,9 @@ export class OperationsReportingController {
   @Post('incidents/:incidentId/start')
   @RequirePermission(PERMISSIONS.OPERATIONS_INCIDENTS_MANAGE)
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ description: 'Starts an internal incident owned by the authenticated operator.' })
+  @ApiOkResponse({
+    description: 'Starts an internal incident owned by the authenticated operator.',
+  })
   startIncident(
     @Req() request: DirektRequest,
     @Param('incidentId', ParseUUIDPipe) incidentId: string,

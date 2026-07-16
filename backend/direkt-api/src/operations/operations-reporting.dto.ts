@@ -1,13 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsDateString,
-  IsIn,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Length,
-  Matches,
-} from 'class-validator';
+import { IsDateString, IsIn, IsOptional, IsString, IsUUID, Length, Matches } from 'class-validator';
 import type {
   OperationsIncidentSeverity,
   OperationsIncidentStatus,
@@ -83,7 +75,9 @@ export class ResolveOperationsIncidentDto {
   @Matches(/^[A-Z][A-Z0-9_]{2,63}$/)
   resolutionCode!: string;
 
-  @ApiProperty({ example: 'Synthetic internal incident resolved without creating a customer review workflow.' })
+  @ApiProperty({
+    example: 'Synthetic internal incident resolved without creating a customer review workflow.',
+  })
   @IsString()
   @Length(20, 1000)
   resolutionSummary!: string;

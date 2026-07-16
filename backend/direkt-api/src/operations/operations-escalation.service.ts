@@ -86,9 +86,7 @@ export class OperationsEscalationService {
 
   private async hasAllAccess(actor: AuthenticatedActor): Promise<boolean> {
     const snapshot = await this.authorization.snapshot(actor);
-    return snapshot.roles.some((role) =>
-      ['trust_supervisor', 'admin', 'auditor'].includes(role),
-    );
+    return snapshot.roles.some((role) => ['trust_supervisor', 'admin', 'auditor'].includes(role));
   }
 
   private assertFuture(value: string, label: string): void {

@@ -1,11 +1,7 @@
 export type OperationsEscalationStatus = 'open' | 'in_progress' | 'resolved' | 'dismissed';
 export type OperationsEscalationSeverity = 'low' | 'medium' | 'high' | 'critical';
 export type OperationsOverrideStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
-export type OperationsOverrideResult =
-  | 'approved'
-  | 'rejected'
-  | 'correction_required'
-  | 'revoked';
+export type OperationsOverrideResult = 'approved' | 'rejected' | 'correction_required' | 'revoked';
 
 export interface OperationsEscalationView {
   escalationId: string;

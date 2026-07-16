@@ -51,9 +51,7 @@ export class OperationsReportingService {
     reason: string,
     requestId?: string,
   ): Promise<OperationsIncidentView> {
-    return this.domain(() =>
-      this.repository.startIncident(actor, incidentId, reason, requestId),
-    );
+    return this.domain(() => this.repository.startIncident(actor, incidentId, reason, requestId));
   }
 
   resolveIncident(
@@ -62,9 +60,7 @@ export class OperationsReportingService {
     dto: ResolveOperationsIncidentDto,
     requestId?: string,
   ): Promise<OperationsIncidentView> {
-    return this.domain(() =>
-      this.repository.resolveIncident(actor, incidentId, dto, requestId),
-    );
+    return this.domain(() => this.repository.resolveIncident(actor, incidentId, dto, requestId));
   }
 
   expiry(): Promise<OperationsExpiryItem[]> {

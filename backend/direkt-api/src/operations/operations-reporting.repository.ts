@@ -73,7 +73,7 @@ export class OperationsReportingRepository {
   ): Promise<OperationsIncidentView> {
     return this.database.transaction(async (client) => {
       const provider = await client.query<{ id: string }>(
-        'SELECT id FROM provider.organizations WHERE id = $1 AND status <> \'archived\'',
+        "SELECT id FROM provider.organizations WHERE id = $1 AND status <> 'archived'",
         [dto.providerId],
       );
       if (!provider.rows[0]) {
@@ -132,12 +132,10 @@ export class OperationsReportingRepository {
     });
   }
 
-  listIncidents(
-    actorIdentityId: string,
-    allAccess: boolean,
-  ): Promise<OperationsIncidentView[]> {
-    return this.database.query<IncidentRow>(
-      `${this.incidentQuery()}
+  listIncidents(actorIdentityId: string, allAccess: boolean): Promise<OperationsIncidentView[]> {
+    return this.database
+      .query<IncidentRow>(
+        `${this.incidentQuery()}
        WHERE $2::boolean = true
           OR incidents.owner_identity_id = $1
           OR incidents.reported_by_identity_id = $1
@@ -147,8 +145,9 @@ export class OperationsReportingRepository {
          END,
          incidents.due_at,
          incidents.created_at`,
-      [actorIdentityId, allAccess],
-    ).then((result) => result.rows.map((row) => this.mapIncident(row)));
+        [actorIdentityId, allAccess],
+      )
+      .then((result) => result.rows.map((row) => this.mapIncident(row)));
   }
 
   startIncident(
@@ -223,8 +222,9 @@ export class OperationsReportingRepository {
   }
 
   expiry(): Promise<OperationsExpiryItem[]> {
-    return this.database.query<ExpiryRow>(
-      `SELECT
+    return this.database
+      .query<ExpiryRow>(
+        `SELECT
          record_type,
          provider_id,
          provider_display_name,
@@ -242,7 +242,8 @@ export class OperationsReportingRepository {
          provider_display_name,
          record_type,
          record_key`,
-    ).then((result) => result.rows.map((row) => this.mapExpiry(row)));
+      )
+      .then((result) => result.rows.map((row) => this.mapExpiry(row)));
   }
 
   async metrics(): Promise<OperationsMetricsSnapshot> {

@@ -120,9 +120,13 @@ export class OperationsEscalationRepository {
     });
   }
 
-  listEscalations(actorIdentityId: string, allAccess: boolean): Promise<OperationsEscalationView[]> {
-    return this.database.query<EscalationRow>(
-      `${this.escalationQuery()}
+  listEscalations(
+    actorIdentityId: string,
+    allAccess: boolean,
+  ): Promise<OperationsEscalationView[]> {
+    return this.database
+      .query<EscalationRow>(
+        `${this.escalationQuery()}
        WHERE $2::boolean = true
           OR escalations.owner_identity_id = $1
           OR EXISTS (
@@ -138,8 +142,9 @@ export class OperationsEscalationRepository {
          END,
          escalations.due_at,
          escalations.created_at`,
-      [actorIdentityId, allAccess],
-    ).then((result) => result.rows.map((row) => this.mapEscalation(row)));
+        [actorIdentityId, allAccess],
+      )
+      .then((result) => result.rows.map((row) => this.mapEscalation(row)));
   }
 
   startEscalation(
@@ -311,7 +316,13 @@ export class OperationsEscalationRepository {
            policy_version
          ) VALUES ($1, $2, $3, $4, $5)
          RETURNING id`,
-        [overrideRequestId, actor.identityId, dto.decision, dto.rationale.trim(), dto.policyVersion],
+        [
+          overrideRequestId,
+          actor.identityId,
+          dto.decision,
+          dto.rationale.trim(),
+          dto.policyVersion,
+        ],
       );
       const approvalId = approval.rows[0]?.id;
       if (!approvalId) throw new Error('Override approval returned no identifier.');
@@ -330,7 +341,10 @@ export class OperationsEscalationRepository {
     });
   }
 
-  listOverrides(actorIdentityId: string, allAccess: boolean): Promise<OperationsOverrideRequestView[]> {
+  listOverrides(
+    actorIdentityId: string,
+    allAccess: boolean,
+  ): Promise<OperationsOverrideRequestView[]> {
     return this.database.transaction(async (client) => {
       const result = await client.query<OverrideRow>(
         `${this.overrideQuery()}

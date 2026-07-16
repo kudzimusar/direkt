@@ -18,7 +18,9 @@ export class CreateOperationsEscalationDto {
   @Matches(/^[A-Z][A-Z0-9_]{2,63}$/)
   reasonCode!: string;
 
-  @ApiProperty({ example: 'Synthetic high-priority verification review requires supervisor attention.' })
+  @ApiProperty({
+    example: 'Synthetic high-priority verification review requires supervisor attention.',
+  })
   @IsString()
   @Length(20, 1000)
   summary!: string;
@@ -53,7 +55,9 @@ export class ResolveOperationsEscalationDto {
   @Matches(/^[A-Z][A-Z0-9_]{2,63}$/)
   resolutionCode!: string;
 
-  @ApiProperty({ example: 'Synthetic escalation resolved after scoped evidence and assignment review.' })
+  @ApiProperty({
+    example: 'Synthetic escalation resolved after scoped evidence and assignment review.',
+  })
   @IsString()
   @Length(20, 1000)
   resolutionSummary!: string;
@@ -95,7 +99,9 @@ export class ApproveOperationsOverrideDto {
   @IsIn(['approve', 'reject'])
   decision!: 'approve' | 'reject';
 
-  @ApiProperty({ example: 'Independent synthetic review confirms the authorization request scope.' })
+  @ApiProperty({
+    example: 'Independent synthetic review confirms the authorization request scope.',
+  })
   @IsString()
   @Length(20, 1000)
   rationale!: string;

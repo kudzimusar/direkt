@@ -80,12 +80,7 @@ export class OperationsEscalationController {
     @Param('escalationId', ParseUUIDPipe) escalationId: string,
     @Body() body: ResolveOperationsEscalationDto,
   ): Promise<OperationsEscalationView> {
-    return this.service.resolveEscalation(
-      request.actor,
-      escalationId,
-      body,
-      request.requestId,
-    );
+    return this.service.resolveEscalation(request.actor, escalationId, body, request.requestId);
   }
 
   @Get('high-risk-overrides')
@@ -122,11 +117,6 @@ export class OperationsEscalationController {
     @Param('overrideRequestId', ParseUUIDPipe) overrideRequestId: string,
     @Body() body: ApproveOperationsOverrideDto,
   ): Promise<OperationsOverrideRequestView> {
-    return this.service.approveOverride(
-      request.actor,
-      overrideRequestId,
-      body,
-      request.requestId,
-    );
+    return this.service.approveOverride(request.actor, overrideRequestId, body, request.requestId);
   }
 }
