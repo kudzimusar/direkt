@@ -31,7 +31,9 @@ export class OperationsFieldObservationDto {
   @IsIn(['confirmed', 'not_confirmed', 'not_observed', 'not_applicable'])
   result!: OperationsFieldObservationResult;
 
-  @ApiPropertyOptional({ example: 'Synthetic structured observation without private location data.' })
+  @ApiPropertyOptional({
+    example: 'Synthetic structured observation without private location data.',
+  })
   @IsOptional()
   @IsString()
   @Length(4, 500)
@@ -65,7 +67,9 @@ export class CreateOperationsFieldWorkDto {
   @IsDateString()
   dueAt!: string;
 
-  @ApiProperty({ example: 'Synthetic field inspection required for the scoped verification check.' })
+  @ApiProperty({
+    example: 'Synthetic field inspection required for the scoped verification check.',
+  })
   @IsString()
   @Length(12, 500)
   reason!: string;
@@ -100,7 +104,9 @@ export class ReassignOperationsFieldWorkDto {
   @IsDateString()
   dueAt!: string;
 
-  @ApiProperty({ example: 'Synthetic reassignment after the original field agent became unavailable.' })
+  @ApiProperty({
+    example: 'Synthetic reassignment after the original field agent became unavailable.',
+  })
   @IsString()
   @Length(12, 500)
   reason!: string;
@@ -112,7 +118,9 @@ export class ReassignOperationsFieldWorkDto {
 }
 
 export class CancelOperationsFieldWorkDto {
-  @ApiProperty({ example: 'Synthetic inspection cancelled because the scoped case no longer requires a visit.' })
+  @ApiProperty({
+    example: 'Synthetic inspection cancelled because the scoped case no longer requires a visit.',
+  })
   @IsString()
   @Length(12, 500)
   reason!: string;
@@ -148,12 +156,16 @@ export class SubmitOperationsFieldInspectionDto {
   @Length(3, 80)
   checklistVersion!: string;
 
-  @ApiProperty({ example: 'Synthetic field inspection completed without recording private coordinates.' })
+  @ApiProperty({
+    example: 'Synthetic field inspection completed without recording private coordinates.',
+  })
   @IsString()
   @Length(12, 500)
   publicSafeSummary!: string;
 
-  @ApiPropertyOptional({ example: 'Synthetic internal field note without real personal information.' })
+  @ApiPropertyOptional({
+    example: 'Synthetic internal field note without real personal information.',
+  })
   @IsOptional()
   @IsString()
   @Length(8, 1000)

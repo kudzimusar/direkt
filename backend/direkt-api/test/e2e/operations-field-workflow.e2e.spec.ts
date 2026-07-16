@@ -170,7 +170,11 @@ describe('Phase 7 structured operations field workflow', () => {
       privateNotes: 'Synthetic private operations note with no real person or address.',
       observations: [
         { key: 'arrival_and_safety', result: 'confirmed', note: 'Synthetic safe arrival.' },
-        { key: 'provider_presence', result: 'confirmed', note: 'Synthetic representative present.' },
+        {
+          key: 'provider_presence',
+          result: 'confirmed',
+          note: 'Synthetic representative present.',
+        },
         {
           key: 'evidence_consistency',
           result: outcome === 'completed' ? 'confirmed' : 'not_confirmed',
@@ -243,7 +247,12 @@ describe('Phase 7 structured operations field workflow', () => {
       .expect(200);
     expect(ownQueue.body as FieldQueueResponse).toMatchObject({
       scope: 'mine',
-      items: [expect.objectContaining({ workItemId: work.workItemId, fieldAgentIdentityId: fieldAgentA.identityId })],
+      items: [
+        expect.objectContaining({
+          workItemId: work.workItemId,
+          fieldAgentIdentityId: fieldAgentA.identityId,
+        }),
+      ],
     });
 
     const otherQueue = await request(httpServer())
@@ -269,7 +278,10 @@ describe('Phase 7 structured operations field workflow', () => {
     await request(httpServer())
       .post(`/api/v1/operations/field-work-items/${work.workItemId}/transitions`)
       .set('authorization', `Bearer ${fieldAgentB.accessToken}`)
-      .send({ targetState: 'accepted', reason: 'Wrong field agent must not accept this assignment.' })
+      .send({
+        targetState: 'accepted',
+        reason: 'Wrong field agent must not accept this assignment.',
+      })
       .expect(404);
     await acceptAndStart(work.workItemId, fieldAgentA);
   });
@@ -320,7 +332,10 @@ describe('Phase 7 structured operations field workflow', () => {
     await request(httpServer())
       .post(`/api/v1/operations/field-work-items/${work.workItemId}/submissions`)
       .set('authorization', `Bearer ${fieldAgentA.accessToken}`)
-      .send({ ...body, publicSafeSummary: 'Different synthetic payload using the same client key.' })
+      .send({
+        ...body,
+        publicSafeSummary: 'Different synthetic payload using the same client key.',
+      })
       .expect(409);
 
     const after = await pool.query<{ decisions: string; claims: string }>(
@@ -370,7 +385,9 @@ describe('Phase 7 structured operations field workflow', () => {
     const cancelledResponse = await request(httpServer())
       .post(`/api/v1/operations/field-work-items/${replacement.workItemId}/cancel`)
       .set('authorization', `Bearer ${admin.accessToken}`)
-      .send({ reason: 'Synthetic replacement inspection cancelled by the authorized administrator.' })
+      .send({
+        reason: 'Synthetic replacement inspection cancelled by the authorized administrator.',
+      })
       .expect(200);
     expect(cancelledResponse.body as FieldWorkResponse).toMatchObject({ state: 'cancelled' });
   });

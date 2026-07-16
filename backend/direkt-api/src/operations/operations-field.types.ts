@@ -18,10 +18,7 @@ export type OperationsFieldOutcome =
   | 'unable_to_verify';
 
 export type OperationsFieldObservationResult =
-  | 'confirmed'
-  | 'not_confirmed'
-  | 'not_observed'
-  | 'not_applicable';
+  'confirmed' | 'not_confirmed' | 'not_observed' | 'not_applicable';
 
 export interface OperationsFieldObservation {
   key: string;

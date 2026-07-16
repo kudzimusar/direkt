@@ -21,10 +21,7 @@ import {
   TransitionOperationsFieldWorkDto,
 } from './operations-field.dto';
 import { OperationsFieldService } from './operations-field.service';
-import type {
-  OperationsFieldQueue,
-  OperationsFieldWorkItem,
-} from './operations-field.types';
+import type { OperationsFieldQueue, OperationsFieldWorkItem } from './operations-field.types';
 
 @ApiTags('operations field workflow')
 @ApiBearerAuth()
@@ -99,8 +96,7 @@ export class OperationsFieldController {
   @Post(':workItemId/reassign')
   @RequirePermission(PERMISSIONS.OPERATIONS_FIELD_WORK_MANAGE)
   @ApiCreatedResponse({
-    description:
-      'Atomically closes the prior field assignment and creates a scoped replacement.',
+    description: 'Atomically closes the prior field assignment and creates a scoped replacement.',
   })
   reassign(
     @Req() request: DirektRequest,
@@ -113,7 +109,9 @@ export class OperationsFieldController {
   @Post(':workItemId/cancel')
   @RequirePermission(PERMISSIONS.OPERATIONS_FIELD_WORK_MANAGE)
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ description: 'Cancels active field work and revokes its field-agent assignment.' })
+  @ApiOkResponse({
+    description: 'Cancels active field work and revokes its field-agent assignment.',
+  })
   cancel(
     @Req() request: DirektRequest,
     @Param('workItemId', ParseUUIDPipe) workItemId: string,

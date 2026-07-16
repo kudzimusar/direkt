@@ -388,7 +388,9 @@ export class OperationsFieldRepository {
         return this.load(client, workItemId, actor.identityId, false);
       }
       if (!['accepted', 'in_progress'].includes(current.state)) {
-        throw new ConflictException('Field work must be accepted before an inspection is submitted.');
+        throw new ConflictException(
+          'Field work must be accepted before an inspection is submitted.',
+        );
       }
 
       const visitOutcome = this.visitOutcome(dto.outcome);
@@ -599,10 +601,7 @@ export class OperationsFieldRepository {
     return this.mapWork(client, row);
   }
 
-  private async mapWork(
-    client: PoolClient,
-    row: FieldWorkRow,
-  ): Promise<OperationsFieldWorkItem> {
+  private async mapWork(client: PoolClient, row: FieldWorkRow): Promise<OperationsFieldWorkItem> {
     const submissionResult = await client.query<FieldSubmissionRow>(
       `SELECT
          submissions.id AS submission_id,

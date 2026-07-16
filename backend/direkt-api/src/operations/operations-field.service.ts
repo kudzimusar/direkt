@@ -15,10 +15,7 @@ import type {
   TransitionOperationsFieldWorkDto,
 } from './operations-field.dto';
 import { OperationsFieldRepository } from './operations-field.repository';
-import type {
-  OperationsFieldQueue,
-  OperationsFieldWorkItem,
-} from './operations-field.types';
+import type { OperationsFieldQueue, OperationsFieldWorkItem } from './operations-field.types';
 
 interface PostgresErrorLike {
   code?: string;
@@ -42,18 +39,21 @@ export class OperationsFieldService {
       summary: {
         total: items.length,
         scheduled: items.filter((item) => item.state === 'scheduled').length,
-        inProgress: items.filter((item) =>
-          ['accepted', 'in_progress'].includes(item.state),
-        ).length,
+        inProgress: items.filter((item) => ['accepted', 'in_progress'].includes(item.state)).length,
         overdue: items.filter(
           (item) =>
             ['scheduled', 'accepted', 'in_progress'].includes(item.state) &&
             new Date(item.dueAt).getTime() < now,
         ).length,
         terminal: items.filter((item) =>
-          ['submitted', 'missed', 'unable_to_verify', 'safety_abort', 'cancelled', 'reassigned'].includes(
-            item.state,
-          ),
+          [
+            'submitted',
+            'missed',
+            'unable_to_verify',
+            'safety_abort',
+            'cancelled',
+            'reassigned',
+          ].includes(item.state),
         ).length,
       },
       items,
@@ -110,7 +110,9 @@ export class OperationsFieldService {
   ): Promise<OperationsFieldWorkItem> {
     const occurredAt = new Date(dto.occurredAt);
     if (Number.isNaN(occurredAt.getTime()) || occurredAt.getTime() > Date.now()) {
-      throw new BadRequestException('Field inspection occurrence time must be valid and not future.');
+      throw new BadRequestException(
+        'Field inspection occurrence time must be valid and not future.',
+      );
     }
     if (dto.observations.length === 0) {
       throw new BadRequestException('At least one structured field observation is required.');
@@ -145,9 +147,7 @@ export class OperationsFieldService {
 
   private async hasFullAccess(actor: AuthenticatedActor): Promise<boolean> {
     const snapshot = await this.authorization.snapshot(actor);
-    const fullAccess = snapshot.roles.some((role) =>
-      ['trust_supervisor', 'admin'].includes(role),
-    );
+    const fullAccess = snapshot.roles.some((role) => ['trust_supervisor', 'admin'].includes(role));
     if (!fullAccess && !snapshot.roles.includes('field_agent')) {
       throw new ForbiddenException('The authenticated identity has no field-work scope.');
     }
