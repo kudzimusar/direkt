@@ -1,9 +1,9 @@
 # DIREKT Project Status
 
-**Updated:** 2026-07-16  
+**Updated:** 2026-07-17  
 **Stable branch:** `main`  
 **Implementation branch:** `build/android-v1`  
-**Programme state:** Phase 8 enquiries, interactions and reviews is active under Issue #30.
+**Programme state:** Phase 8 implementation is complete in source and Stage 8G exact-head validation is active under Issue #30 and PR #31.
 
 ## Stable checkpoints
 
@@ -14,26 +14,52 @@
 | Phase 6 provider workspace | #26 | `3083b54278c73ce74f53db800c2ec0dfc59c4dde` | #25 closed |
 | Phase 7 operations workflow | #29 | `7ea8aa17dbced5f9e56dd259b15216223aa33921` | #28 closed |
 
-## Active Phase 8 scope
+## Phase 8 implementation state
 
-Issue #30 is the sole active implementation tracker. The phase delivers:
+Issue #30 remains the sole active implementation tracker and PR #31 remains the checkpoint PR.
 
-- publication-scoped structured enquiries;
-- provider inbox and explicit response states;
-- consent-aware synthetic call/WhatsApp handoff;
-- immutable interaction history;
-- tracked-interaction review eligibility;
-- provider review responses;
-- review moderation and appeals;
-- complaint linkage;
-- native Android customer/provider experiences;
-- API-only operations moderation workflows;
-- permanent database, API, Android, portal and documentation regressions.
+| Stage | State | Implemented source |
+|---|---|---|
+| 8A — foundation and structured enquiry | Implemented | forward migrations, bounded idempotent enquiry API, customer scope and immutable events |
+| 8B — provider lifecycle | Implemented | actor-resolved provider inbox, explicit transitions, optimistic revisions and invalid-action denial |
+| 8C — consent-aware handoff | Implemented | verified contact references, masked hints, 24-hour consent, revocation and disabled delivery |
+| 8D — history and eligibility | Implemented | tracked interactions, safe history projections and deterministic review eligibility |
+| 8E — reviews and appeals | Implemented | one review/response, moderation, public allowlist, reports and appeal restoration |
+| 8F — complaints and clients | Implemented | separate customer complaints, Android customer/provider experiences and portal workspaces |
+| 8G — checkpoint promotion | Active | regression, documentation, exact-head gates, review, merge and synchronization |
+
+## Permanent evidence added
+
+- complete backend enquiry and interaction-lifecycle E2E coverage;
+- database authorization and lifecycle guards for moderation, appeals and complaints;
+- privacy-safe operations interaction projection;
+- Android persistent offline enquiry drafts and critical recovery states;
+- Android customer/provider interaction, consent, review and response experiences;
+- operations portal interaction-history, review-moderation and customer-complaint workspaces;
+- OpenAPI route and prohibited-domain checks;
+- interaction trust contract, validation matrix and Phase 9 handoff;
+- updated decisions and risk treatments.
 
 ## Phase 8 boundaries
 
-No real customer/provider/contact data, production messaging/call/push adapter, payment provider, credential, deployment or public pilot is authorized. Full chat, attachments and voice/video calling remain deferred. Reviews require a qualifying owned tracked interaction. Interaction or commercial state cannot create verification claims, publication eligibility or trust ranking.
+No real customer, provider, contact, enquiry, review, complaint or appeal data is authorized. No production messaging, call, push, payment, credential, deployment or public pilot is authorized. Full chat, attachments and voice/video calling remain deferred.
 
-Phase 9 remains unclaimed and retains products, entitlements, subscriptions, invoices, payments, webhooks and commercial enforcement.
+Reviews require a qualifying owned tracked interaction. Contact handoff requires current channel-specific consent and stores only a verified contact reference and masked hint. Enquiries, interactions, handoffs, reviews, responses, reports, appeals, complaints and commercial state cannot create verification claims, publication eligibility or trust ranking.
+
+## Current exit work
+
+Before Phase 8 can become stable:
+
+1. backend/PostgreSQL/PostGIS verification must pass;
+2. Android unit, lint, debug APK and Compose test APK assembly must pass;
+3. operations portal format, lint, type, tests and production build must pass;
+4. documentation and repository privacy controls must pass;
+5. all permanent workflows must report green on one exact reviewed head;
+6. source review findings must be remediated;
+7. PR #31 must merge, Issue #30 must close, the implementation branch must synchronize and the workstream lock must release.
+
+## Next phase boundary
+
+Phase 9 remains unclaimed. It owns products, entitlements, subscriptions, invoices, payments, webhooks, reconciliation and commercial enforcement. Its entry contract is documented in `docs/phase9/HANDOFF_FROM_PHASE8.md`.
 
 Issue #5 remains open as a later, non-blocking Zambia pilot-validation obligation.
