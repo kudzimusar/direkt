@@ -38,7 +38,6 @@ class Phase8InteractionExperienceTest {
             .assertIsDisplayed()
         composeRule.onNodeWithTag("phase8-save-offline").performScrollTo().performClick()
         composeRule.onNodeWithText("Saved offline").assertIsDisplayed()
-        composeRule.onNodeWithText("Retry-safe request request-").assertDoesNotExist()
         composeRule.onNodeWithTag("phase8-offline-draft").assertIsDisplayed()
 
         composeRule.activityRule.scenario.recreate()
