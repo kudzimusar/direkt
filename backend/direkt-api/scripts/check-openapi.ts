@@ -13,10 +13,7 @@ interface OpenApiDocument {
 async function main(): Promise<void> {
   const path = await generateOpenApi();
   const document = JSON.parse(await readFile(path, 'utf8')) as OpenApiDocument;
-
-  if (!document.openapi?.startsWith('3.')) {
-    throw new Error('Expected an OpenAPI 3.x document.');
-  }
+  if (!document.openapi?.startsWith('3.')) throw new Error('Expected an OpenAPI 3.x document.');
 
   const paths = document.paths ?? {};
   const requiredOperations: Array<[string, string]> = [
@@ -26,66 +23,53 @@ async function main(): Promise<void> {
     ['/api/v1/auth/challenges/verify', 'post'],
     ['/api/v1/auth/sessions/rotate', 'post'],
     ['/api/v1/auth/sessions', 'get'],
-    ['/api/v1/auth/sessions/revoke-others', 'post'],
     ['/api/v1/account/profile', 'put'],
     ['/api/v1/providers', 'post'],
     ['/api/v1/providers/{providerId}', 'get'],
-    ['/api/v1/providers/{providerId}/profile', 'patch'],
-    ['/api/v1/providers/{providerId}/state-transitions', 'post'],
-    ['/api/v1/providers/{providerId}/representatives', 'post'],
-    ['/api/v1/providers/{providerId}/categories/{categoryKey}', 'put'],
     ['/api/v1/categories', 'get'],
     ['/api/v1/provider-workspace/me', 'get'],
-    ['/api/v1/provider-workspace/me/verification-timeline', 'get'],
-    ['/api/v1/provider-workspace/me/profile', 'patch'],
-    ['/api/v1/provider-workspace/me/services/{categoryKey}', 'put'],
-    ['/api/v1/provider-workspace/me/services/{categoryKey}', 'delete'],
-    ['/api/v1/provider-workspace/me/location', 'put'],
-    ['/api/v1/provider-workspace/me/availability/{categoryKey}', 'put'],
-    ['/api/v1/provider-workspace/me/upload-intents', 'post'],
-    ['/api/v1/provider-workspace/me/upload-intents', 'get'],
-    ['/api/v1/provider-workspace/me/upload-intents/{uploadIntentId}', 'get'],
-    ['/api/v1/provider-workspace/me/upload-intents/{uploadIntentId}/retry', 'post'],
-    ['/api/v1/provider-workspace/me/upload-intents/{uploadIntentId}/interrupted', 'put'],
-    ['/api/v1/provider-workspace/me/upload-intents/{uploadIntentId}/confirm', 'post'],
-    ['/api/v1/provider-workspace/me/upload-intents/{uploadIntentId}', 'delete'],
-    ['/api/v1/provider-workspace/me/enquiries', 'get'],
-    ['/api/v1/provider-workspace/me/review-responses', 'get'],
     ['/api/v1/provider-workspace/me/subscription-status', 'get'],
-    ['/api/v1/providers/{providerId}/evidence/upload-sessions', 'post'],
-    ['/api/v1/providers/{providerId}/evidence', 'post'],
-    ['/api/v1/providers/{providerId}/evidence', 'get'],
-    ['/api/v1/providers/{providerId}/evidence/{evidenceId}', 'get'],
-    ['/api/v1/providers/{providerId}/evidence/{evidenceId}/revoke', 'post'],
-    ['/api/v1/providers/{providerId}/verification-cases', 'post'],
-    ['/api/v1/providers/{providerId}/verification-cases', 'get'],
-    ['/api/v1/providers/{providerId}/claims', 'get'],
-    ['/api/v1/operations/verification-queue', 'get'],
-    ['/api/v1/verification-cases/{caseId}', 'get'],
-    ['/api/v1/verification-cases/{caseId}/assignments', 'post'],
-    ['/api/v1/verification-cases/{caseId}/evidence/{evidenceId}/access', 'post'],
-    ['/api/v1/verification-cases/{caseId}/recommendations', 'post'],
-    ['/api/v1/verification-cases/{caseId}/decisions', 'post'],
-    ['/api/v1/verification-cases/{caseId}/field-visits', 'post'],
-    ['/api/v1/operations/verification/expire-claims', 'post'],
-    ['/api/v1/operations/providers/{providerId}/claims', 'get'],
+    ['/api/v1/enquiries', 'post'],
+    ['/api/v1/enquiries', 'get'],
+    ['/api/v1/enquiries/{enquiryId}', 'get'],
+    ['/api/v1/enquiries/{enquiryId}/cancel', 'post'],
+    ['/api/v1/provider-workspace/me/enquiries', 'get'],
+    ['/api/v1/provider-workspace/me/enquiries/{enquiryId}', 'get'],
+    ['/api/v1/provider-workspace/me/enquiries/{enquiryId}/transitions', 'post'],
+    ['/api/v1/enquiries/{enquiryId}/handoffs', 'post'],
+    ['/api/v1/enquiries/{enquiryId}/handoffs', 'get'],
+    ['/api/v1/enquiries/{enquiryId}/handoffs/{handoffId}/revoke', 'post'],
+    ['/api/v1/interactions', 'get'],
+    ['/api/v1/interactions/{interactionId}', 'get'],
+    ['/api/v1/interactions/{interactionId}/review-eligibility', 'get'],
+    ['/api/v1/provider-workspace/me/interactions', 'get'],
+    ['/api/v1/provider-workspace/me/enquiries/{enquiryId}/handoff', 'get'],
+    ['/api/v1/interactions/{interactionId}/reviews', 'post'],
+    ['/api/v1/reviews', 'get'],
+    ['/api/v1/reviews/{reviewId}', 'get'],
+    ['/api/v1/reviews/{reviewId}/appeals', 'post'],
+    ['/api/v1/reviews/{reviewId}/reports', 'post'],
+    ['/api/v1/provider-workspace/me/reviews', 'get'],
+    ['/api/v1/provider-workspace/me/reviews/{reviewId}/response', 'post'],
+    ['/api/v1/provider-workspace/me/reviews/{reviewId}/appeals', 'post'],
+    ['/api/v1/operations/reviews', 'get'],
+    ['/api/v1/operations/reviews/{reviewId}/moderation', 'post'],
+    ['/api/v1/operations/review-appeals/{appealId}/decisions', 'post'],
+    ['/api/v1/public/providers/{publicProviderId}/reviews', 'get'],
+    ['/api/v1/interactions/{interactionId}/complaints', 'post'],
+    ['/api/v1/complaints', 'get'],
+    ['/api/v1/complaints/{complaintId}', 'get'],
+    ['/api/v1/operations/interaction-complaints', 'get'],
+    ['/api/v1/operations/interaction-complaints/{complaintId}/transitions', 'post'],
     ['/api/v1/public/categories', 'get'],
     ['/api/v1/public/providers/search', 'get'],
     ['/api/v1/public/providers/{publicProviderId}', 'get'],
     ['/api/v1/public/providers/{publicProviderId}/claims', 'get'],
     ['/api/v1/public/providers/{publicProviderId}/availability', 'get'],
     ['/api/v1/public/providers/{publicProviderId}/share', 'get'],
-    ['/api/v1/account/saved-providers/{publicProviderId}', 'post'],
-    ['/api/v1/account/saved-providers/{publicProviderId}', 'delete'],
-    ['/api/v1/account/saved-providers', 'get'],
-    ['/api/v1/operations/discovery/publication-eligibility', 'get'],
-    ['/api/v1/operations/providers/{providerId}/discovery/publication', 'post'],
-    ['/api/v1/operations/discovery/publications/{publicProviderId}/hide', 'post'],
     ['/api/v1/operations/session', 'get'],
-    ['/api/v1/operations/providers', 'get'],
-    ['/api/v1/operations/provider-workspaces', 'get'],
-    ['/api/v1/operations/emergency-actions', 'post'],
   ];
+
   for (const [requiredPath, method] of requiredOperations) {
     if (!paths[requiredPath]?.[method]) {
       throw new Error(`Missing required ${method.toUpperCase()} operation: ${requiredPath}`);
@@ -104,6 +88,7 @@ async function main(): Promise<void> {
     'GET /api/v1/public/providers/{publicProviderId}/claims',
     'GET /api/v1/public/providers/{publicProviderId}/availability',
     'GET /api/v1/public/providers/{publicProviderId}/share',
+    'GET /api/v1/public/providers/{publicProviderId}/reviews',
   ]);
   for (const [protectedPath, method] of requiredOperations.filter(
     ([pathName]) => !pathName.includes('/health/'),
@@ -118,43 +103,38 @@ async function main(): Promise<void> {
     }
   }
 
-  const publicEvidencePaths = Object.keys(paths).filter(
+  const publicPrivatePaths = Object.keys(paths).filter(
     (pathName) =>
       pathName.startsWith('/api/v1/public/') &&
-      /evidence|verification-cases|upload-intents/i.test(pathName),
+      /evidence|verification-cases|upload-intents|complaints|appeals|handoffs|interactions/i.test(
+        pathName,
+      ),
   );
-  if (publicEvidencePaths.length > 0) {
-    throw new Error(
-      `Private evidence, case or upload routes were exposed publicly: ${publicEvidencePaths.join(', ')}`,
-    );
+  if (publicPrivatePaths.length > 0) {
+    throw new Error(`Private lifecycle routes were exposed publicly: ${publicPrivatePaths.join(', ')}`);
   }
 
-  const deferredReadOnlyPaths = new Set([
-    '/api/v1/provider-workspace/me/enquiries',
-    '/api/v1/provider-workspace/me/review-responses',
-    '/api/v1/provider-workspace/me/subscription-status',
-  ]);
-  for (const deferredPath of deferredReadOnlyPaths) {
-    const methods = Object.keys(paths[deferredPath] ?? {}).filter((method) =>
-      ['get', 'post', 'put', 'patch', 'delete'].includes(method),
-    );
-    if (methods.length !== 1 || methods[0] !== 'get') {
-      throw new Error(`Deferred Phase 8/9 boundary is not read-only: ${deferredPath}`);
-    }
+  const subscriptionMethods = Object.keys(
+    paths['/api/v1/provider-workspace/me/subscription-status'] ?? {},
+  ).filter((method) => ['get', 'post', 'put', 'patch', 'delete'].includes(method));
+  if (subscriptionMethods.length !== 1 || subscriptionMethods[0] !== 'get') {
+    throw new Error('The deferred Phase 9 subscription boundary is not read-only.');
   }
 
   const prohibited = Object.keys(paths).filter(
     (pathName) =>
-      /(payments|invoices|entitlements|webhooks|public-directory|discoverable)/i.test(pathName) ||
+      /(payments|invoices|entitlements|webhooks|public-directory|discoverable|chat|attachments|voice-calls|video-calls)/i.test(
+        pathName,
+      ) ||
       (/subscriptions/i.test(pathName) &&
         pathName !== '/api/v1/provider-workspace/me/subscription-status'),
   );
   if (prohibited.length > 0) {
-    throw new Error(`Phase 6 exposed prohibited domain paths: ${prohibited.join(', ')}`);
+    throw new Error(`Phase 8 exposed prohibited domain paths: ${prohibited.join(', ')}`);
   }
 
   process.stdout.write(
-    `${JSON.stringify({ event: 'openapi_check_passed', pathCount: Object.keys(paths).length, phase: 6 })}\n`,
+    `${JSON.stringify({ event: 'openapi_check_passed', pathCount: Object.keys(paths).length, phase: 8 })}\n`,
   );
 }
 
