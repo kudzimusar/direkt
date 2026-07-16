@@ -48,14 +48,12 @@ jobs:
           node-version: "24"
           cache: npm
           cache-dependency-path: backend/direkt-api/package-lock.json
-      - name: Apply source and remove one-time files
+      - name: Apply reviewed source bundle
         shell: bash
         run: |
           test -f .github/phase8-backend-bundle.tgz
           tar -xzf .github/phase8-backend-bundle.tgz
           rm .github/phase8-backend-bundle.tgz
-          rm -f .github/workflows/phase8-backend-sync-once.yml
-          git show origin/main:.github/workflows/backend-ci.yml > .github/workflows/backend-ci.yml
       - name: Validate application source before commit
         working-directory: backend/direkt-api
         run: |
@@ -70,7 +68,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add --all
+          git add backend database .github/phase8-backend-bundle.tgz
           git commit -m "feat: complete Phase 8 interaction review backend"
           git push origin HEAD:build/android-v1
 
