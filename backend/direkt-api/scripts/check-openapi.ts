@@ -44,6 +44,7 @@ async function main(): Promise<void> {
     ['/api/v1/interactions/{interactionId}/review-eligibility', 'get'],
     ['/api/v1/provider-workspace/me/interactions', 'get'],
     ['/api/v1/provider-workspace/me/enquiries/{enquiryId}/handoff', 'get'],
+    ['/api/v1/operations/interactions', 'get'],
     ['/api/v1/interactions/{interactionId}/reviews', 'post'],
     ['/api/v1/reviews', 'get'],
     ['/api/v1/reviews/{reviewId}', 'get'],
