@@ -1,0 +1,45 @@
+name: Stage 7C-E formatter once
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - ".github/workflows/stage7cde-format-once.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage7cde-formatter
+  cancel-in-progress: false
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - name: Normalize backend source and tests
+        working-directory: backend/direkt-api
+        run: |
+          npm ci --ignore-scripts
+          npm run format
+      - name: Commit formatting and remove helper
+        shell: bash
+        run: |
+          rm .github/workflows/stage7cde-format-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/direkt-api .github/workflows/stage7cde-format-once.yml
+          git diff --cached --check
+          git commit -m "style: format Stage 7C-E operations workflows"
+          git push origin HEAD:build/android-v1
