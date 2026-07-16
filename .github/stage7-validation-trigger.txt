@@ -1,0 +1,1 @@
+Temporary owner-authored validation trigger. Deleted in the next commit.
