@@ -15,7 +15,7 @@ import { ProviderModule } from './provider-core/provider.module';
 import { ProviderWorkspaceModule } from './provider-workspace/provider-workspace.module';
 import { VerificationEvidenceModule } from './verification-evidence/verification-evidence.module';
 
-// Phase 8 backend synchronization trigger. No runtime behavior changes.
+// Phase 8 permanent formatter trigger. No runtime behavior changes.
 @Module({
   imports: [
     ConfigModule.forRoot({
