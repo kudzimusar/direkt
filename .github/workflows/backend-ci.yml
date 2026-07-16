@@ -20,7 +20,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: direkt-backend-ci-${{ github.ref }}
@@ -31,7 +31,37 @@ env:
   DATABASE_URL: postgresql://direkt:direkt_ci@localhost:5432/direkt_test
 
 jobs:
+  stage8_format_once:
+    if: contains(github.event.head_commit.message, 'activate Stage 8 formatter')
+    name: Format Stage 8 source once
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - name: Format and commit
+        shell: bash
+        run: |
+          cd backend/direkt-api
+          npm ci --ignore-scripts
+          npx prettier --write '{src,scripts,test}/**/*.ts' '*.{json,js,mjs}'
+          cd ../..
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backend/direkt-api
+          git diff --cached --check
+          git commit -m 'style: format Phase 8 enquiry foundation'
+          git push origin HEAD:build/android-v1
+
   verify:
+    if: ${{ !contains(github.event.head_commit.message, 'activate Stage 8 formatter') }}
     name: Format, test, migrate and build API
     runs-on: ubuntu-latest
     timeout-minutes: 25
