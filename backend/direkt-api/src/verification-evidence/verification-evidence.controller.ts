@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PERMISSIONS } from '../authorization/permissions';
 import { RequirePermission } from '../authorization/require-permission.decorator';
@@ -218,6 +229,7 @@ export class VerificationEvidenceController {
 
   @Post('operations/evidence-access/:grantId/revoke')
   @RequirePermission(PERMISSIONS.OPERATIONS_EVIDENCE_ACCESS_REVOKE)
+  @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     description: 'Revokes an active evidence access authorization without retaining its URL.',
   })

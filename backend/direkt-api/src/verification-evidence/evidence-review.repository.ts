@@ -297,76 +297,79 @@ export class EvidenceReviewRepository {
     grantId: string;
     requestId?: string | undefined;
   }): Promise<EvidenceGrantRow> {
-    return this.database.transaction(async (client) => {
+    const grant = await this.database.transaction(async (client) => {
       await client.query(
         `UPDATE operations.evidence_access_grants
-         SET status = 'expired',
-             ended_at = now(),
-             end_reason = 'Evidence access authorization expired before redemption'
-         WHERE id = $1
-           AND grantee_identity_id = $2
-           AND status = 'active'
-           AND expires_at <= now()`,
+       SET status = 'expired',
+           ended_at = now(),
+           end_reason = 'Evidence access authorization expired before redemption'
+       WHERE id = $1
+         AND grantee_identity_id = $2
+         AND status = 'active'
+         AND expires_at <= now()`,
         [input.grantId, input.actor.identityId],
       );
 
       const result = await client.query<EvidenceGrantRow>(
         `SELECT
-           grants.id AS grant_id,
-           grants.evidence_id,
-           cases.provider_id,
-           grants.assignment_id,
-           grants.evidence_version_id,
-           versions.object_key,
-           grants.expires_at
-         FROM operations.evidence_access_grants AS grants
-         JOIN verification.assignments AS assignments
-           ON assignments.id = grants.assignment_id
-          AND assignments.case_id = grants.case_id
-          AND assignments.assignee_identity_id = grants.grantee_identity_id
-          AND assignments.assignment_kind IN ('reviewer', 'supervisor')
-          AND assignments.status = 'active'
-         JOIN verification.cases AS cases
-           ON cases.id = grants.case_id
-          AND cases.status IN ('assigned', 'in_review')
-         JOIN verification.case_evidence AS links
-           ON links.case_id = grants.case_id
-          AND links.evidence_id = grants.evidence_id
-         JOIN evidence.items AS items
-           ON items.id = grants.evidence_id
-          AND items.current_version_id = grants.evidence_version_id
-          AND items.status IN ('ready_for_review', 'approved')
-         JOIN evidence.versions AS versions ON versions.id = grants.evidence_version_id
-         WHERE grants.id = $1
-           AND grants.grantee_identity_id = $2
-           AND grants.status = 'active'
-           AND grants.expires_at > now()
-         FOR UPDATE OF grants`,
+         grants.id AS grant_id,
+         grants.evidence_id,
+         cases.provider_id,
+         grants.assignment_id,
+         grants.evidence_version_id,
+         versions.object_key,
+         grants.expires_at
+       FROM operations.evidence_access_grants AS grants
+       JOIN verification.assignments AS assignments
+         ON assignments.id = grants.assignment_id
+        AND assignments.case_id = grants.case_id
+        AND assignments.assignee_identity_id = grants.grantee_identity_id
+        AND assignments.assignment_kind IN ('reviewer', 'supervisor')
+        AND assignments.status = 'active'
+       JOIN verification.cases AS cases
+         ON cases.id = grants.case_id
+        AND cases.status IN ('assigned', 'in_review')
+       JOIN verification.case_evidence AS links
+         ON links.case_id = grants.case_id
+        AND links.evidence_id = grants.evidence_id
+       JOIN evidence.items AS items
+         ON items.id = grants.evidence_id
+        AND items.current_version_id = grants.evidence_version_id
+        AND items.status IN ('ready_for_review', 'approved')
+       JOIN evidence.versions AS versions ON versions.id = grants.evidence_version_id
+       WHERE grants.id = $1
+         AND grants.grantee_identity_id = $2
+         AND grants.status = 'active'
+         AND grants.expires_at > now()
+       FOR UPDATE OF grants`,
         [input.grantId, input.actor.identityId],
       );
-      const grant = result.rows[0];
-      if (!grant) {
-        throw new NotFoundException('Private evidence authorization is no longer active.');
+      const resolvedGrant = result.rows[0] ?? null;
+      if (resolvedGrant) {
+        await this.insertAudit(client, {
+          actor: input.actor,
+          providerId: resolvedGrant.provider_id,
+          requestId: input.requestId,
+          action: 'private_evidence_access_redeemed',
+          resourceType: 'evidence_access_grant',
+          resourceId: resolvedGrant.grant_id,
+          metadata: {
+            evidenceId: resolvedGrant.evidence_id,
+            evidenceVersionId: resolvedGrant.evidence_version_id,
+            assignmentId: resolvedGrant.assignment_id,
+            accessUrlStored: false,
+            objectKeyStored: false,
+            evidenceBytesLogged: false,
+          },
+        });
       }
-
-      await this.insertAudit(client, {
-        actor: input.actor,
-        providerId: grant.provider_id,
-        requestId: input.requestId,
-        action: 'private_evidence_access_redeemed',
-        resourceType: 'evidence_access_grant',
-        resourceId: grant.grant_id,
-        metadata: {
-          evidenceId: grant.evidence_id,
-          evidenceVersionId: grant.evidence_version_id,
-          assignmentId: grant.assignment_id,
-          accessUrlStored: false,
-          objectKeyStored: false,
-          evidenceBytesLogged: false,
-        },
-      });
-      return grant;
+      return resolvedGrant;
     });
+
+    if (!grant) {
+      throw new NotFoundException('Private evidence authorization is no longer active.');
+    }
+    return grant;
   }
 
   async revokeAccessGrant(input: {
