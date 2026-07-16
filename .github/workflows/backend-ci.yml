@@ -35,7 +35,7 @@ env:
 jobs:
   sync-phase8-backend:
     name: Apply reviewed Phase 8 backend source once
-    if: github.event_name == 'push' && github.ref_name == 'build/android-v1'
+    if: github.event_name == 'pull_request' && github.head_ref == 'build/android-v1'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -74,7 +74,6 @@ jobs:
 
   verify:
     name: Format, test, migrate and build API
-    if: github.event_name != 'push' || github.ref_name != 'build/android-v1'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     services:
