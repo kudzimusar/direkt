@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Headers, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Req,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PERMISSIONS } from '../authorization/permissions';
 import { RequirePermission } from '../authorization/require-permission.decorator';
@@ -41,6 +52,7 @@ export class InteractionController {
   }
 
   @Post('enquiries/:enquiryId/cancel')
+  @HttpCode(HttpStatus.OK)
   @RequirePermission(PERMISSIONS.INTERACTION_ENQUIRY_CANCEL_OWN)
   @ApiOkResponse({ description: 'Cancels a customer-owned non-terminal enquiry.' })
   cancelCustomer(
@@ -69,6 +81,7 @@ export class InteractionController {
   }
 
   @Post('provider-workspace/me/enquiries/:enquiryId/transitions')
+  @HttpCode(HttpStatus.OK)
   @RequirePermission(PERMISSIONS.PROVIDER_ENQUIRIES_RESPOND, { providerFromActor: true })
   @ApiOkResponse({ description: 'Applies a concurrency-safe provider enquiry transition.' })
   transitionProvider(
