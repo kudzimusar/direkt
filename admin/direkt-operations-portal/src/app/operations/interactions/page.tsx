@@ -180,8 +180,8 @@ export default function InteractionHistoryPage() {
       </div>
 
       <p className="api-boundary-note">
-        API-only boundary: <code>{operationsEndpoints.interactions}</code>. No browser database client is
-        imported.
+        API-only boundary: <code>{operationsEndpoints.interactions}</code>. No browser database
+        client is imported.
       </p>
     </section>
   );
