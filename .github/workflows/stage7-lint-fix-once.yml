@@ -1,0 +1,59 @@
+name: Stage 7 evidence review lint fix once
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - ".github/workflows/stage7-lint-fix-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+      - name: Type the redemption response before assertions
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('backend/direkt-api/test/e2e/operations-evidence-review.e2e.spec.ts')
+          text = path.read_text()
+          old = """    expect(redemption.body).toMatchObject({
+      grantId: second.grantId,
+      status: 'active',
+      synthetic: true,
+    });
+    expect(redemption.body.accessUrl).toMatch(/^https:\/\/storage\\.invalid\/private-review\//);
+    expect(redemption.body.accessUrl).not.toBe(second.accessUrl);
+"""
+          new = """    const redemptionBody = redemption.body as AccessGrantResponse;
+    expect(redemptionBody).toMatchObject({
+      grantId: second.grantId,
+      status: 'active',
+      synthetic: true,
+    });
+    expect(redemptionBody.accessUrl).toMatch(/^https:\/\/storage\\.invalid\/private-review\//);
+    expect(redemptionBody.accessUrl).not.toBe(second.accessUrl);
+"""
+          if text.count(old) != 1:
+              raise SystemExit('expected one untyped redemption assertion block')
+          path.write_text(text.replace(old, new, 1))
+          PY
+      - name: Commit lint correction
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/direkt-api/test/e2e/operations-evidence-review.e2e.spec.ts
+          git diff --cached --check
+          git commit -m "test: type secure evidence redemption response"
+          git push origin HEAD:build/android-v1
