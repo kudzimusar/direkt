@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   patch:
-    if: contains(github.event.head_commit.message, 'activate Stage 7 lint fix')
+    if: contains(github.event.head_commit.message, 'activate Stage 7 lint fix retry')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -31,26 +31,19 @@ jobs:
 
           path = Path('backend/direkt-api/test/e2e/operations-evidence-review.e2e.spec.ts')
           text = path.read_text()
-          old = """    expect(redemption.body).toMatchObject({
-            grantId: second.grantId,
-            status: 'active',
-            synthetic: true,
-          });
-          expect(redemption.body.accessUrl).toMatch(/^https:\/\/storage\\.invalid\/private-review\//);
-          expect(redemption.body.accessUrl).not.toBe(second.accessUrl);
-          """
-          new = """    const redemptionBody = redemption.body as AccessGrantResponse;
-          expect(redemptionBody).toMatchObject({
-            grantId: second.grantId,
-            status: 'active',
-            synthetic: true,
-          });
-          expect(redemptionBody.accessUrl).toMatch(/^https:\/\/storage\\.invalid\/private-review\//);
-          expect(redemptionBody.accessUrl).not.toBe(second.accessUrl);
-          """
-          if text.count(old) != 1:
-              raise SystemExit('expected one untyped redemption assertion block')
-          path.write_text(text.replace(old, new, 1))
+          marker = '    expect(redemption.body).toMatchObject({'
+          if text.count(marker) != 1:
+              raise SystemExit(f'expected one redemption assertion marker, found {text.count(marker)}')
+          text = text.replace(
+              marker,
+              '    const redemptionBody = redemption.body as AccessGrantResponse;\n'
+              '    expect(redemptionBody).toMatchObject({',
+              1,
+          )
+          if text.count('redemption.body.accessUrl') != 2:
+              raise SystemExit('expected two untyped access URL assertions')
+          text = text.replace('redemption.body.accessUrl', 'redemptionBody.accessUrl')
+          path.write_text(text)
           PY
       - name: Commit lint correction
         shell: bash
