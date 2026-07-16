@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { AuthorizationModule } from './authorization/authorization.module';
 import { environmentSchema } from './config/environment';
 import { DiscoveryModule } from './discovery/discovery.module';
+import { InteractionModule } from './interaction/interaction.module';
 import { OperationsModule } from './operations/operations.module';
 import { AuditModule } from './platform/audit/audit.module';
 import { DatabaseModule } from './platform/database/database.module';
@@ -30,6 +31,7 @@ import { VerificationEvidenceModule } from './verification-evidence/verification
     AuthModule,
     AuthorizationModule,
     HealthModule,
+    InteractionModule,
     OperationsModule,
     ProviderModule,
     ProviderWorkspaceModule,
