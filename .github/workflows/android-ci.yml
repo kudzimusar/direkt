@@ -1,4 +1,5 @@
 name: DIREKT Android CI
+# Phase 7 exact-head checkpoint validation anchor.
 
 on:
   push:

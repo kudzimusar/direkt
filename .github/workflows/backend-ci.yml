@@ -1,136 +1,137 @@
-name: Phase 7 checkpoint documentation
+name: DIREKT Backend CI
+# Phase 7 exact-head checkpoint validation anchor.
 
 on:
+  push:
+    branches:
+      - main
+      - build/android-v1
+    paths:
+      - "backend/direkt-api/**"
+      - "database/**"
+      - ".github/workflows/backend-ci.yml"
   pull_request:
     branches:
       - main
     paths:
+      - "backend/direkt-api/**"
+      - "database/**"
       - ".github/workflows/backend-ci.yml"
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: phase7-checkpoint-docs-pr-head
-  cancel-in-progress: false
+  group: direkt-backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_ENV: test
+  DATABASE_URL: postgresql://direkt:direkt_ci@localhost:5432/direkt_test
 
 jobs:
-  patch:
+  verify:
+    name: Format, test, migrate and build API
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgis/postgis:18-3.6
+        env:
+          POSTGRES_DB: direkt_test
+          POSTGRES_USER: direkt
+          POSTGRES_PASSWORD: direkt_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U direkt -d direkt_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    defaults:
+      run:
+        working-directory: backend/direkt-api
+
     steps:
-      - uses: actions/checkout@v6
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js 24 LTS
+        uses: actions/setup-node@v6
         with:
-          ref: build/android-v1
-          fetch-depth: 0
-      - name: Update project status and lock
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+
+      - name: Verify runtime and committed lockfile
         shell: bash
         run: |
-          python - <<'PY'
-          from pathlib import Path
+          node --version
+          npm --version
+          [[ "$(npm --version)" == 11.* ]]
+          test -f package-lock.json
+          git diff --exit-code -- package.json package-lock.json
 
-          status = Path('PROJECT_STATUS.md')
-          text = status.read_text()
-          text = text.replace(
-              '**Current programme state:** Phase 6 Android provider workspace is complete and stable. Phase 7 operations portal and field workflow is active under Issue #28.',
-              '**Current programme state:** Phase 7 operations portal and field workflow implementation and review are complete. PR #29 is in final checkpoint promotion; Phase 8 is not authorized.',
-              1,
-          )
-          text = text.replace(
-              '| Phase 7 operations portal and field workflow | Active; Issue #28 |',
-              '| Phase 7 operations portal and field workflow | Checkpoint promotion; PR #29 and Issue #28 |\n| Phase 8 enquiries, interactions and reviews | Not authorized; remains a later phase |',
-              1,
-          )
-          text = text.replace(
-              'Issue #28 is the sole active implementation tracker. Issue #5 remains a deliberate later validation obligation and is not a current implementation blocker.',
-              'Issue #28 remains the sole active implementation tracker until PR #29 is merged. Issue #5 remains a deliberate later validation obligation and is not a current implementation blocker.',
-              1,
-          )
-          phase6_row = '| Phase 6 provider workspace | #26 | `3083b54278c73ce74f53db800c2ec0dfc59c4dde` | #25 closed |'
-          if '| Phase 7 operations workflow | #29 |' not in text:
-              text = text.replace(
-                  phase6_row,
-                  phase6_row + '\n| Phase 7 operations workflow | #29 | Pending final merge | #28 open until merge |',
-                  1,
-              )
-          start = text.index('## Active Phase 7 scope')
-          end = text.index('## Phase 7 stop gates', start)
-          candidate = '''## Phase 7 checkpoint candidate
+      - name: Install exact locked dependencies
+        run: npm ci --ignore-scripts
 
-```text
-PR #29
-reviewed implementation head: 0fc6add2ea1bcdebbeb2eb6430049b6061081667
-final documentation and exact-head checkpoint validation: active
-merge commit: pending
-Issue #28: remains open until merge
-```
+      - name: Check formatting
+        run: npm run format:check
 
-The reviewed implementation head passed permanent backend/PostGIS, operations portal and documentation gates. The checkpoint promotion commit also validates the unchanged Android project so backend, Android, portal and documentation evidence is available on one exact head before merge.
-
-Phase 7 delivered:
-
-- deterministic role-scoped triage queues and service-level states;
-- active-assignment short-lived private evidence grants with audit, expiry and revocation;
-- scoped field assignments, structured inspections, reassignment, cancellation, missed and unable-to-verify states;
-- advisory-only field observations that cannot create decisions, claims or publication;
-- explicit escalations and serialized two-person high-risk override approval;
-- bounded operations incidents with owner-scoped resolution and immutable terminal data;
-- evidence/claim expiry and aggregate privacy-allowlisted reporting;
-- seven accessible permission-aware operations portal workspaces;
-- database-level public-safe text controls for coordinates and private storage references;
-- permanent database, HTTP, service, accessibility, keyboard, architecture and privacy regressions;
-- updated architecture, backend/API, security/privacy, testing, decision and risk records.
-
-Review findings and permanent regressions are recorded in `docs/testing/PHASE_7_REVIEW_REGRESSIONS.md`.
-
-'''
-          text = text[:start] + candidate + text[end:]
-          deferred = '## Deferred validation — not a current blocker'
-          if '## Next phase boundary' not in text:
-              text = text.replace(
-                  deferred,
-                  '## Next phase boundary\n\nPhase 8 remains unclaimed. No enquiry, customer interaction history, review, moderation, appeal or tracked complaint-linkage mutation may be implemented until a new governing issue and workstream lock explicitly authorize that scope.\n\n' + deferred,
-                  1,
-              )
-          status.write_text(text)
-
-          lock = Path('WORKSTREAM_LOCK.md')
-          text = lock.read_text()
-          text = text.replace('| Status | CLAIMED |', '| Status | CLAIMED — CHECKPOINT PROMOTION |', 1)
-          text = text.replace(
-              '| Task | Implement scoped triage, secure evidence review, field assignments and inspections, escalations, four-eyes overrides, incident/expiry dashboards and privacy-safe operational reporting |',
-              '| Task | Complete Phase 7 documentation, exact-head validation, PR #29 merge, Issue #28 closure and branch synchronization |',
-              1,
-          )
-          text = text.replace(
-              '| Expected handoff | Reviewed operations and field-workflow checkpoint with assigned private review access, scoped inspections, immutable escalations/decisions, four-eyes high-risk controls, aggregate dashboards and green permanent CI |',
-              '| Expected handoff | Merged Phase 7 checkpoint with green backend, Android, portal and documentation workflows, Issue #28 closed and build branch synchronized |',
-              1,
-          )
-          text = text.replace(
-              '| Last clean checkpoint | `3083b54278c73ce74f53db800c2ec0dfc59c4dde` |',
-              '| Last clean checkpoint | `3083b54278c73ce74f53db800c2ec0dfc59c4dde` |\n| Reviewed Phase 7 implementation head | `0fc6add2ea1bcdebbeb2eb6430049b6061081667` |',
-              1,
-          )
-          marker = '## Conflict rule'
-          if '## Checkpoint promotion state' not in text:
-              section = '''## Checkpoint promotion state
-
-Phase 7 implementation, review findings and permanent regressions are complete. The lock remains claimed only for final documentation, exact-head backend/Android/portal/documentation validation, PR #29 merge, Issue #28 closure and synchronization of `build/android-v1` to the new stable `main` checkpoint.
-
-Phase 8 remains unclaimed and unauthorized.
-
-'''
-              text = text.replace(marker, section + marker, 1)
-          lock.write_text(text)
-          PY
-      - name: Commit checkpoint documentation
+      - name: Lint
         shell: bash
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add PROJECT_STATUS.md WORKSTREAM_LOCK.md
-          git diff --cached --check
-          git commit -m "docs: move Phase 7 to checkpoint promotion"
-          git push origin HEAD:build/android-v1
+          mkdir -p artifacts/diagnostics
+          set -o pipefail
+          npm run lint 2>&1 | tee artifacts/diagnostics/eslint.txt
+
+      - name: Typecheck
+        shell: bash
+        run: |
+          mkdir -p artifacts/diagnostics
+          set -o pipefail
+          npm run typecheck 2>&1 | tee artifacts/diagnostics/typecheck.txt
+
+      - name: Apply and verify migrations
+        run: npm run migration:check
+
+      - name: Run tests with coverage
+        shell: bash
+        run: |
+          mkdir -p artifacts/diagnostics
+          set -o pipefail
+          npm run test 2>&1 | tee artifacts/diagnostics/vitest.txt
+
+      - name: Build production JavaScript
+        run: npm run build
+
+      - name: Generate and validate OpenAPI
+        run: npm run openapi:check
+
+      - name: Upload backend verification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-backend-reports-${{ github.run_number }}-${{ github.sha }}
+          path: |
+            backend/direkt-api/coverage/**
+            backend/direkt-api/artifacts/openapi.json
+            backend/direkt-api/artifacts/diagnostics/**
+            backend/direkt-api/package-lock.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish backend summary
+        shell: bash
+        run: |
+          echo "### DIREKT backend foundation" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Commit: \`${GITHUB_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Branch: \`${GITHUB_REF_NAME}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Runtime: Node.js 24 / npm 11" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Framework: NestJS 11.1.x / TypeScript 5.9.x" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Database: PostgreSQL 18 / PostGIS 3.6" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Dependencies: committed npm lockfile installed with \`npm ci\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Result: format, lint, typecheck, migrations, tests, build and OpenAPI passed" >> "$GITHUB_STEP_SUMMARY"
