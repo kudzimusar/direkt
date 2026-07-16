@@ -68,7 +68,19 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Format reviewed source
         working-directory: backend/direkt-api
-        run: npm run format
+        shell: bash
+        run: |
+          mkdir -p ../../artifacts/phase8-sync
+          set -o pipefail
+          npm run format 2>&1 | tee ../../artifacts/phase8-sync/format.txt
+      - name: Upload Phase 8 sync diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-phase8-sync-diagnostics-${{ github.run_number }}-${{ github.sha }}
+          path: artifacts/phase8-sync/**
+          if-no-files-found: warn
+          retention-days: 2
       - name: Lint reviewed source
         working-directory: backend/direkt-api
         run: npm run lint
