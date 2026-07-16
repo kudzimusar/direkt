@@ -1,4 +1,5 @@
 name: Phase 8 backend formatter
+# One-time formatter activation.
 
 on:
   push:
