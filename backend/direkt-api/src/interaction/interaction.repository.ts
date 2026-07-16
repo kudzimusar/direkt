@@ -71,10 +71,11 @@ export class InteractionRepository {
     requestId?: string,
   ): Promise<EnquiryView> {
     return this.database.transaction(async (client) => {
-      const existing = await client.query<{
-        enquiry_id: string;
-        request_fingerprint: string;
-      }>(
+      await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1 || ':' || $2, 0))`, [
+        actor.identityId,
+        keyHash,
+      ]);
+      const existing = await client.query<{ enquiry_id: string; request_fingerprint: string }>(
         `SELECT id AS enquiry_id, request_fingerprint
          FROM interaction.enquiries
          WHERE customer_identity_id = $1 AND idempotency_key_hash = $2
@@ -417,6 +418,7 @@ export class InteractionRepository {
          enquiries.id AS enquiry_id,
          enquiries.customer_identity_id,
          publications.id AS public_provider_id,
+         enquiries.provider_id,
          profiles.display_name AS provider_display_name,
          categories.category_key,
          categories.name AS category_name,
