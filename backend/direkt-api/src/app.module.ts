@@ -15,6 +15,7 @@ import { ProviderModule } from './provider-core/provider.module';
 import { ProviderWorkspaceModule } from './provider-workspace/provider-workspace.module';
 import { VerificationEvidenceModule } from './verification-evidence/verification-evidence.module';
 
+// Phase 8 backend synchronization trigger; the product bundle replaces no module wiring here.
 @Module({
   imports: [
     ConfigModule.forRoot({
