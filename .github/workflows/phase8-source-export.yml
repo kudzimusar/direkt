@@ -21,11 +21,18 @@ jobs:
       - uses: actions/checkout@v6
         with:
           ref: build/android-v1
-      - name: Extract interrupted source
+      - name: Extract interrupted source safely
         shell: bash
         run: |
           test -f .github/phase8-backend-bundle.tgz
-          tar -xzf .github/phase8-backend-bundle.tgz
+          python - <<'PY'
+          from pathlib import Path
+          import tarfile
+
+          bundle = Path('.github/phase8-backend-bundle.tgz')
+          with tarfile.open(bundle, 'r:gz') as archive:
+              archive.extractall('.', filter='data')
+          PY
           cp .github/phase8-interaction-handoff.service.ts backend/direkt-api/src/interaction/interaction-handoff.service.ts
       - name: Upload exact interrupted source
         uses: actions/upload-artifact@v4
