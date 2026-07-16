@@ -46,7 +46,7 @@ class ProviderWorkspaceRecoveryTest {
     }
 
     @Test
-    fun providerDashboardAndDeferredBoundariesAreAccessible() {
+    fun providerDashboardAndPhase9BoundaryAreAccessible() {
         composeRule.onNodeWithText("Provider").performClick()
         composeRule.onNodeWithText("Discover").performClick()
 
@@ -57,7 +57,6 @@ class ProviderWorkspaceRecoveryTest {
 
         composeRule.onNodeWithText("Account").performClick()
         composeRule.onNodeWithTag("provider-profile-workspace").assertIsDisplayed()
-        composeRule.onNodeWithText("Enquiries: Empty · Phase 8").assertIsDisplayed()
         composeRule.onNodeWithText("Subscription status: Synthetic read-only · Phase 9")
             .assertIsDisplayed()
     }
