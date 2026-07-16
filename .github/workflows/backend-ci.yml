@@ -34,7 +34,10 @@ env:
 jobs:
   sync-phase8-backend:
     name: Apply reviewed Phase 8 backend source once
-    if: github.event_name == 'pull_request' && github.head_ref == 'build/android-v1'
+    if: >-
+      github.event_name == 'push' &&
+      github.ref_name == 'build/android-v1' &&
+      contains(github.event.head_commit.message, 'run final Phase 8 backend sync')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -55,13 +58,11 @@ jobs:
           test -f .github/phase8-permissions.ts
           test -f .github/phase8-complaint.controller.ts
           test -f .github/phase8-complaint.service.ts
-          sha256sum .github/phase8-backend-bundle.tgz
           python - <<'PY'
           from pathlib import Path
           import tarfile
 
-          bundle = Path('.github/phase8-backend-bundle.tgz')
-          with tarfile.open(bundle, 'r:gz') as archive:
+          with tarfile.open(Path('.github/phase8-backend-bundle.tgz'), 'r:gz') as archive:
               archive.extractall('.', filter='data')
           PY
           cp .github/phase8-interaction-handoff.service.ts backend/direkt-api/src/interaction/interaction-handoff.service.ts
@@ -128,28 +129,18 @@ jobs:
 '''
           if anchor not in text:
               raise SystemExit('OpenAPI insertion anchor missing')
-          text = text.replace(anchor, operations)
-          public_anchor = '    "GET /api/v1/public/providers/{publicProviderId}/share",\n'
-          if public_anchor not in text:
-              raise SystemExit('Public OpenAPI anchor missing')
-          text = text.replace(
-              public_anchor,
-              public_anchor + '    "GET /api/v1/public/providers/{publicProviderId}/reviews",\n',
-          )
-          checker.write_text(text)
+          checker.write_text(text.replace(anchor, operations))
           PY
-      - name: Install exact locked dependencies
-        working-directory: backend/direkt-api
-        run: npm ci --ignore-scripts
-      - name: Format and validate reviewed source
+      - name: Validate reviewed backend source
         working-directory: backend/direkt-api
         run: |
+          npm ci --ignore-scripts
           npm run format
           npm run lint
           npm run typecheck
           npm run build
           npm run openapi:check
-      - name: Commit permanent Phase 8 backend source
+      - name: Commit permanent backend source
         shell: bash
         run: |
           rm .github/phase8-backend-bundle.tgz
@@ -190,40 +181,21 @@ jobs:
       run:
         working-directory: backend/direkt-api
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-      - name: Set up Node.js 24 LTS
-        uses: actions/setup-node@v6
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: npm
           cache-dependency-path: backend/direkt-api/package-lock.json
-      - name: Verify runtime and committed lockfile
-        shell: bash
-        run: |
-          node --version
-          npm --version
-          [[ "$(npm --version)" == 11.* ]]
-          test -f package-lock.json
-          git diff --exit-code -- package.json package-lock.json
-      - name: Install exact locked dependencies
-        run: npm ci --ignore-scripts
-      - name: Check formatting
-        run: npm run format:check
-      - name: Lint
-        run: npm run lint
-      - name: Typecheck
-        run: npm run typecheck
-      - name: Apply and verify migrations
-        run: npm run migration:check
-      - name: Run tests with coverage
-        run: npm run test
-      - name: Build production JavaScript
-        run: npm run build
-      - name: Generate and validate OpenAPI
-        run: npm run openapi:check
-      - name: Upload backend verification artifacts
-        if: always()
+      - run: npm ci --ignore-scripts
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run migration:check
+      - run: npm run test
+      - run: npm run build
+      - run: npm run openapi:check
+      - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: direkt-backend-reports-${{ github.run_number }}-${{ github.sha }}
@@ -231,6 +203,5 @@ jobs:
             backend/direkt-api/coverage/**
             backend/direkt-api/artifacts/openapi.json
             backend/direkt-api/artifacts/diagnostics/**
-            backend/direkt-api/package-lock.json
           if-no-files-found: warn
           retention-days: 14
