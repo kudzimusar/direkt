@@ -1,5 +1,4 @@
 name: DIREKT Backend CI
-# Phase 8 one-time formatter activation; restored after formatter commit.
 
 on:
   push:
@@ -20,7 +19,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: direkt-backend-ci-${{ github.ref }}
@@ -31,42 +30,7 @@ env:
   DATABASE_URL: postgresql://direkt:direkt_ci@localhost:5432/direkt_test
 
 jobs:
-  format-phase8:
-    if: >-
-      github.event_name == 'push' &&
-      github.ref_name == 'build/android-v1' &&
-      contains(github.event.head_commit.message, 'execute permanent Phase 8 formatter')
-    runs-on: ubuntu-latest
-    timeout-minutes: 12
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: build/android-v1
-          fetch-depth: 0
-      - uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: npm
-          cache-dependency-path: backend/direkt-api/package-lock.json
-      - name: Format permanent backend source
-        working-directory: backend/direkt-api
-        run: |
-          npm ci --ignore-scripts
-          npm run format
-      - name: Commit formatter-clean source
-        shell: bash
-        run: |
-          rm -f .github/workflows/phase8-format-backend.yml
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git diff --cached --check
-          git commit -m "style: format Phase 8 interaction lifecycle"
-          git push origin HEAD:build/android-v1
-
   verify:
-    if: >-
-      !contains(github.event.head_commit.message || '', 'execute permanent Phase 8 formatter')
     name: Format, test, migrate and build API
     runs-on: ubuntu-latest
     timeout-minutes: 25
