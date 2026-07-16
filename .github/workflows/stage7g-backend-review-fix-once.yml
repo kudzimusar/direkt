@@ -1,0 +1,280 @@
+name: Stage 7G backend review fixes once
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - ".github/workflows/stage7g-backend-review-fix-once.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage7g-backend-review-fixes
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    if: contains(github.event.head_commit.message, 'activate Stage 7G backend review fixes')
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - name: Apply incident ownership and public-safe field controls
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          reporting = Path('backend/direkt-api/src/operations/operations-reporting.repository.ts')
+          text = reporting.read_text()
+          marker = """      if (!['open', 'investigating'].includes(current.status)) {
+            throw new ConflictException('Only an active operations incident can be resolved.');
+          }
+          await client.query(
+          """
+          replacement = """      if (!['open', 'investigating'].includes(current.status)) {
+            throw new ConflictException('Only an active operations incident can be resolved.');
+          }
+          if (current.owner_identity_id !== actor.identityId) {
+            const override = await client.query<{ allowed: boolean }>(
+              `SELECT EXISTS (
+                 SELECT 1
+                 FROM authz.role_assignments AS assignments
+                 JOIN authz.roles AS roles ON roles.id = assignments.role_id
+                 WHERE assignments.identity_id = $1
+                   AND assignments.scope_type = 'global'
+                   AND assignments.revoked_at IS NULL
+                   AND assignments.starts_at <= now()
+                   AND (assignments.ends_at IS NULL OR assignments.ends_at > now())
+                   AND roles.role_key IN ('trust_supervisor', 'admin')
+               ) AS allowed`,
+              [actor.identityId],
+            );
+            if (!override.rows[0]?.allowed) {
+              throw new NotFoundException('Owned operations incident was not found.');
+            }
+          }
+          await client.query(
+          """
+          if text.count(marker) != 1:
+              raise SystemExit(f'incident resolution marker count={text.count(marker)}')
+          reporting.write_text(text.replace(marker, replacement, 1))
+
+          field = Path('backend/direkt-api/src/operations/operations-field.service.ts')
+          text = field.read_text()
+          create_marker = """  ): Promise<OperationsFieldWorkItem> {
+            this.assertSchedule(dto.scheduledFor, dto.dueAt);
+            return this.domain(() => this.repository.create(actor, dto, requestId));
+          }
+          """
+          create_replacement = """  ): Promise<OperationsFieldWorkItem> {
+            this.assertSchedule(dto.scheduledFor, dto.dueAt);
+            this.assertPublicSafeText(dto.reason, 'Field assignment reason');
+            return this.domain(() => this.repository.create(actor, dto, requestId));
+          }
+          """
+          if text.count(create_marker) != 1:
+              raise SystemExit(f'field create marker count={text.count(create_marker)}')
+          text = text.replace(create_marker, create_replacement, 1)
+
+          transition_marker = """  ): Promise<OperationsFieldWorkItem> {
+            return this.domain(() => this.repository.transition(actor, workItemId, dto, requestId));
+          }
+          """
+          transition_replacement = """  ): Promise<OperationsFieldWorkItem> {
+            this.assertPublicSafeText(dto.reason, 'Field transition reason');
+            return this.domain(() => this.repository.transition(actor, workItemId, dto, requestId));
+          }
+          """
+          if text.count(transition_marker) != 1:
+              raise SystemExit(f'field transition marker count={text.count(transition_marker)}')
+          text = text.replace(transition_marker, transition_replacement, 1)
+
+          cancel_marker = """  ): Promise<OperationsFieldWorkItem> {
+            return this.domain(() => this.repository.cancel(actor, workItemId, dto, requestId));
+          }
+          """
+          cancel_replacement = """  ): Promise<OperationsFieldWorkItem> {
+            this.assertPublicSafeText(dto.reason, 'Field cancellation reason');
+            return this.domain(() => this.repository.cancel(actor, workItemId, dto, requestId));
+          }
+          """
+          if text.count(cancel_marker) != 1:
+              raise SystemExit(f'field cancel marker count={text.count(cancel_marker)}')
+          text = text.replace(cancel_marker, cancel_replacement, 1)
+
+          reassign_marker = """  ): Promise<OperationsFieldWorkItem> {
+            this.assertSchedule(dto.scheduledFor, dto.dueAt);
+            return this.domain(() => this.repository.reassign(actor, workItemId, dto, requestId));
+          }
+          """
+          reassign_replacement = """  ): Promise<OperationsFieldWorkItem> {
+            this.assertSchedule(dto.scheduledFor, dto.dueAt);
+            this.assertPublicSafeText(dto.reason, 'Field reassignment reason');
+            return this.domain(() => this.repository.reassign(actor, workItemId, dto, requestId));
+          }
+          """
+          if text.count(reassign_marker) != 1:
+              raise SystemExit(f'field reassign marker count={text.count(reassign_marker)}')
+          text = text.replace(reassign_marker, reassign_replacement, 1)
+
+          submit_marker = """    if (dto.observations.length === 0) {
+            throw new BadRequestException('At least one structured field observation is required.');
+          }
+          const keys = dto.observations.map((observation) => observation.key);
+          """
+          submit_replacement = """    if (dto.observations.length === 0) {
+            throw new BadRequestException('At least one structured field observation is required.');
+          }
+          this.assertPublicSafeText(dto.publicSafeSummary, 'Field public-safe summary');
+          for (const observation of dto.observations) {
+            if (observation.note) {
+              this.assertPublicSafeText(observation.note, 'Field public observation note');
+            }
+          }
+          const keys = dto.observations.map((observation) => observation.key);
+          """
+          if text.count(submit_marker) != 1:
+              raise SystemExit(f'field submit marker count={text.count(submit_marker)}')
+          text = text.replace(submit_marker, submit_replacement, 1)
+
+          method_marker = """  private assertSchedule(scheduledForValue: string, dueAtValue: string): void {
+          """
+          safe_method = """  private assertPublicSafeText(value: string, label: string): void {
+            const text = value.trim();
+            const prohibitedPatterns = [
+              /(?:latitude|longitude)\\s*[:=]?\\s*[-+]?\\d{1,3}(?:\\.\\d{4,})?/i,
+              /[-+]?\\d{1,3}\\.\\d{4,}\\s*[,/]\\s*[-+]?\\d{1,3}\\.\\d{4,}/,
+              /\\bgeo:\\s*[-+]?\\d/i,
+              /\\bprivate\\/[0-9a-f-]{36}\\/[0-9a-f-]{36}\\/[0-9a-f-]{36}\\b/i,
+              /https?:\\/\\/(?:storage\\.invalid|[^/\\s]*storage[^/\\s]*)\\//i,
+              /\\b(?:object[_ ]?key|sha256)\\b/i,
+            ];
+            if (prohibitedPatterns.some((pattern) => pattern.test(text))) {
+              throw new BadRequestException(
+                `${label} must not contain precise coordinates, private storage references or checksums.`,
+              );
+            }
+          }
+
+          private assertSchedule(scheduledForValue: string, dueAtValue: string): void {
+          """
+          if text.count(method_marker) != 1:
+              raise SystemExit(f'assertSchedule marker count={text.count(method_marker)}')
+          field.write_text(text.replace(method_marker, safe_method, 1))
+
+          reporting_test = Path('backend/direkt-api/test/e2e/operations-reporting.e2e.spec.ts')
+          text = reporting_test.read_text()
+          replacements = [
+            (
+              '  let support: SessionResponse;\n  let admin: SessionResponse;',
+              '  let support: SessionResponse;\n  let secondSupport: SessionResponse;\n  let admin: SessionResponse;',
+            ),
+            (
+              "    support = await signIn('phase7-reporting-support@example.invalid');\n    admin = await signIn",
+              "    support = await signIn('phase7-reporting-support@example.invalid');\n    secondSupport = await signIn('phase7-reporting-second-support@example.invalid');\n    admin = await signIn",
+            ),
+            (
+              "    await grantRole(support, 'support');\n    await grantRole(admin, 'admin');",
+              "    await grantRole(support, 'support');\n    await grantRole(secondSupport, 'support');\n    await grantRole(admin, 'admin');",
+            ),
+          ]
+          for old, new in replacements:
+              if text.count(old) != 1:
+                  raise SystemExit(f'reporting test marker count={text.count(old)} for {old[:30]}')
+              text = text.replace(old, new, 1)
+
+          resolve_marker = """      .send({ reason: 'Assigned support operator started the synthetic internal investigation.' })
+              .expect(200);
+            const resolvedResponse = await request(httpServer())
+          """
+          resolve_replacement = """      .send({ reason: 'Assigned support operator started the synthetic internal investigation.' })
+              .expect(200);
+            await request(httpServer())
+              .post(`/api/v1/operations/incidents/${incident.incidentId}/resolve`)
+              .set('authorization', `Bearer ${secondSupport.accessToken}`)
+              .send({
+                targetStatus: 'resolved',
+                resolutionCode: 'UNOWNED_RESOLUTION_ATTEMPT',
+                resolutionSummary:
+                  'An unrelated support operator must not resolve another operator owned incident.',
+              })
+              .expect(404);
+            const resolvedResponse = await request(httpServer())
+          """
+          if text.count(resolve_marker) != 1:
+              raise SystemExit(f'reporting resolution marker count={text.count(resolve_marker)}')
+          reporting_test.write_text(text.replace(resolve_marker, resolve_replacement, 1))
+
+          field_test = Path('backend/direkt-api/test/e2e/operations-field-workflow.e2e.spec.ts')
+          text = field_test.read_text()
+          test_marker = """  it('persists idempotent offline submissions without creating trust state', async () => {
+          """
+          privacy_test = """  it('rejects precise coordinates and private storage references from public field text', async () => {
+            const caseId = await createCase('public_safe_text');
+            const work = await createWork(caseId, fieldAgentA.identityId, 2);
+            await acceptAndStart(work.workItemId, fieldAgentA);
+
+            await request(httpServer())
+              .post(`/api/v1/operations/field-work-items/${work.workItemId}/submissions`)
+              .set('authorization', `Bearer ${fieldAgentA.accessToken}`)
+              .send(
+                submission(
+                  'completed',
+                  'offline-public-safe-0001',
+                  'Synthetic inspection at 15.38761, 28.32282 must not enter public-safe output.',
+                ),
+              )
+              .expect(400);
+
+            await request(httpServer())
+              .post(`/api/v1/operations/field-work-items/${work.workItemId}/submissions`)
+              .set('authorization', `Bearer ${fieldAgentA.accessToken}`)
+              .send({
+                ...submission(
+                  'completed',
+                  'offline-public-safe-0002',
+                  'Synthetic inspection completed without precise private location data.',
+                ),
+                observations: [
+                  {
+                    key: 'provider_presence',
+                    result: 'confirmed',
+                    note: 'Private object key private/00000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000002/00000000-0000-4000-8000-000000000003',
+                  },
+                ],
+              })
+              .expect(400);
+          });
+
+          it('persists idempotent offline submissions without creating trust state', async () => {
+          """
+          if text.count(test_marker) != 1:
+              raise SystemExit(f'field privacy test marker count={text.count(test_marker)}')
+          field_test.write_text(text.replace(test_marker, privacy_test, 1))
+          PY
+      - name: Format, commit and remove helpers
+        shell: bash
+        run: |
+          cd backend/direkt-api
+          npm ci --ignore-scripts
+          npm run format
+          cd ../..
+          rm .github/workflows/stage7g-backend-review-fix-once.yml
+          rm -f .github/workflows/stage7-privacy-auth-fix-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/direkt-api/src/operations/operations-reporting.repository.ts backend/direkt-api/src/operations/operations-field.service.ts backend/direkt-api/test/e2e/operations-reporting.e2e.spec.ts backend/direkt-api/test/e2e/operations-field-workflow.e2e.spec.ts .github/workflows/stage7g-backend-review-fix-once.yml .github/workflows/stage7-privacy-auth-fix-once.yml
+          git diff --cached --check
+          git commit -m "fix: enforce Stage 7 incident ownership and public-safe field text"
+          git push origin HEAD:build/android-v1
