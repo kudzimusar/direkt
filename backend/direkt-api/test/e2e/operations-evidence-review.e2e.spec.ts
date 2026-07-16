@@ -388,13 +388,14 @@ describe('Phase 7 secure assigned evidence review', () => {
       .post(`/api/v1/operations/evidence-access/${second.grantId}/redeem`)
       .set('authorization', `Bearer ${reviewer.accessToken}`)
       .expect(201);
-    expect(redemption.body).toMatchObject({
+    const redemptionBody = redemption.body as AccessGrantResponse;
+    expect(redemptionBody).toMatchObject({
       grantId: second.grantId,
       status: 'active',
       synthetic: true,
     });
-    expect(redemption.body.accessUrl).toMatch(/^https:\/\/storage\.invalid\/private-review\//);
-    expect(redemption.body.accessUrl).not.toBe(second.accessUrl);
+    expect(redemptionBody.accessUrl).toMatch(/^https:\/\/storage\.invalid\/private-review\//);
+    expect(redemptionBody.accessUrl).not.toBe(second.accessUrl);
 
     const audit = await pool.query<{ action: string; metadata: Record<string, unknown> }>(
       `SELECT action, metadata
