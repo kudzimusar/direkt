@@ -324,7 +324,7 @@ describe('Phase 7 bounded incidents, expiry and reporting', () => {
     const serialized = JSON.stringify(items);
     expect(serialized).not.toContain('private/');
     expect(serialized).not.toContain('sha256');
-    expect(serialized).not.toContain('\"objectKey\":');
+    expect(serialized).not.toContain('"objectKey":');
     expect(serialized).not.toContain('https://storage');
   });
 
