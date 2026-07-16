@@ -1,0 +1,85 @@
+name: Stage 7C-D regression fixes once
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - ".github/workflows/stage7cd-regression-fix-once.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage7cd-regression-fixes
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - name: Apply typed assertion and valid case transition
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          field_path = Path('backend/direkt-api/test/e2e/operations-field-workflow.e2e.spec.ts')
+          field_text = field_path.read_text()
+          old_field = """    const allQueueBody = allQueue.body as FieldQueueResponse;
+          expect(allQueueBody).toMatchObject({
+            scope: 'all',
+            items: expect.arrayContaining([expect.objectContaining({ workItemId: work.workItemId })]),
+          });
+          """
+          new_field = """    const allQueueBody = allQueue.body as FieldQueueResponse;
+          expect(allQueueBody.scope).toBe('all');
+          expect(allQueueBody.items).toEqual(
+            expect.arrayContaining([expect.objectContaining({ workItemId: work.workItemId })]),
+          );
+          """
+          if field_text.count(old_field) != 1:
+              raise SystemExit('expected one Stage 7C all-queue assertion')
+          field_path.write_text(field_text.replace(old_field, new_field, 1))
+
+          override_path = Path('backend/direkt-api/test/e2e/operations-escalations-overrides.e2e.spec.ts')
+          override_text = override_path.read_text()
+          old_transition = """    await pool.query(\"UPDATE verification.cases SET status = 'ready_for_review' WHERE id = $1\", [caseId]);
+          """
+          new_transition = """    await pool.query(
+            \"UPDATE verification.cases SET status = 'awaiting_evidence' WHERE id = $1 AND status = 'draft'\",
+            [caseId],
+          );
+          await pool.query(
+            \"UPDATE verification.cases SET status = 'ready_for_review' WHERE id = $1 AND status = 'awaiting_evidence'\",
+            [caseId],
+          );
+          """
+          if override_text.count(old_transition) != 1:
+              raise SystemExit('expected one direct Stage 7D ready-for-review transition')
+          override_path.write_text(override_text.replace(old_transition, new_transition, 1))
+          PY
+      - name: Format, commit and remove helper
+        shell: bash
+        run: |
+          cd backend/direkt-api
+          npm ci --ignore-scripts
+          npm run format
+          cd ../..
+          rm .github/workflows/stage7cd-regression-fix-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/direkt-api/test/e2e/operations-field-workflow.e2e.spec.ts backend/direkt-api/test/e2e/operations-escalations-overrides.e2e.spec.ts .github/workflows/stage7cd-regression-fix-once.yml
+          git diff --cached --check
+          git commit -m "test: align Stage 7C-D workflow regressions"
+          git push origin HEAD:build/android-v1
