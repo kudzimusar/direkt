@@ -24,7 +24,7 @@ interface DeferredSurfaceResponse {
   message: string;
 }
 
-describe('Phase 6 deferred provider workspace boundaries', () => {
+describe('Later-phase provider workspace boundaries', () => {
   const url = databaseUrl();
   let app: INestApplication;
   let owner: SessionResponse;
@@ -56,7 +56,7 @@ describe('Phase 6 deferred provider workspace boundaries', () => {
     configureApplication(app);
     await app.init();
 
-    owner = await signIn('phase6-deferred-owner@example.invalid');
+    owner = await signIn('phase8-deferred-owner@example.invalid');
     await request(httpServer())
       .post('/api/v1/providers')
       .set('authorization', `Bearer ${owner.accessToken}`)
@@ -76,7 +76,6 @@ describe('Phase 6 deferred provider workspace boundaries', () => {
   });
 
   it.each([
-    ['enquiries', 'phase8', 'empty'],
     ['review-responses', 'phase8', 'empty'],
     ['subscription-status', 'phase9', 'synthetic_only'],
   ])('returns a read-only %s boundary', async (path, phaseOwner, state) => {
@@ -94,8 +93,8 @@ describe('Phase 6 deferred provider workspace boundaries', () => {
     expect(body.message.length).toBeGreaterThan(20);
   });
 
-  it.each(['enquiries', 'review-responses', 'subscription-status'])(
-    'exposes no Phase 6 mutation route for %s',
+  it.each(['review-responses', 'subscription-status'])(
+    'exposes no mutation route for %s',
     async (path) => {
       await request(httpServer())
         .post(`/api/v1/provider-workspace/me/${path}`)
