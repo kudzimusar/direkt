@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   patch:
-    if: contains(github.event.head_commit.message, 'activate Stage 7C lint fix')
+    if: contains(github.event.head_commit.message, 'activate robust Stage 7C lint fix')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -36,20 +36,16 @@ jobs:
 
           path = Path('backend/direkt-api/test/e2e/operations-field-workflow.e2e.spec.ts')
           text = path.read_text()
-          old = """    expect(allQueue.body as FieldQueueResponse).toMatchObject({
-            scope: 'all',
-            items: expect.arrayContaining([expect.objectContaining({ workItemId: work.workItemId })]),
-          });
-          """
-          new = """    const allQueueBody = allQueue.body as FieldQueueResponse;
-          expect(allQueueBody.scope).toBe('all');
-          expect(allQueueBody.items).toEqual(
-            expect.arrayContaining([expect.objectContaining({ workItemId: work.workItemId })]),
-          );
-          """
-          if text.count(old) != 1:
-              raise SystemExit(f'expected one untyped all-work queue assertion, found {text.count(old)}')
-          path.write_text(text.replace(old, new, 1))
+          marker = '    expect(allQueue.body as FieldQueueResponse).toMatchObject({'
+          if text.count(marker) != 1:
+              raise SystemExit(f'expected one untyped all-work marker, found {text.count(marker)}')
+          text = text.replace(
+              marker,
+              '    const allQueueBody = allQueue.body as FieldQueueResponse;\n'
+              '    expect(allQueueBody).toMatchObject({',
+              1,
+          )
+          path.write_text(text)
           PY
       - name: Format, commit and remove helper
         shell: bash
