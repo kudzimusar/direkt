@@ -1,0 +1,172 @@
+name: Stage 7G regression alignment once
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - ".github/workflows/stage7g-regression-alignment-once.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage7g-regression-alignment
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    if: contains(github.event.head_commit.message, 'activate Stage 7G regression alignment')
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - name: Align permanent Stage 7 regressions
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          override = Path('backend/direkt-api/test/e2e/operations-escalations-overrides.e2e.spec.ts')
+          text = override.read_text()
+          pattern = re.compile(
+              r"\n      if \(requirement\.requirement_id === requirement\.case_requirement_id\) \{\n"
+              r"        await pool\.query\(\n"
+              r"          `INSERT INTO verification\.case_evidence \(case_id, evidence_id, linked_by_identity_id\)\n"
+              r"           VALUES \(\$1, \$2, \$3\)`,\n"
+              r"          \[caseId, evidenceId, owner\.identityId\],\n"
+              r"        \);\n"
+              r"      \}",
+          )
+          text, count = pattern.subn('', text, count=1)
+          if count != 1:
+              raise SystemExit(f'override case-evidence fixture block count={count}')
+          override.write_text(text)
+
+          reporting = Path('backend/direkt-api/test/e2e/operations-reporting.e2e.spec.ts')
+          text = reporting.read_text()
+          text = text.replace(
+              '  let support: SessionResponse;\n  let admin: SessionResponse;',
+              '  let support: SessionResponse;\n  let secondSupport: SessionResponse;\n  let admin: SessionResponse;',
+              1,
+          )
+          text = text.replace(
+              "    support = await signIn('phase7-reporting-support@example.invalid');\n    admin = await signIn",
+              "    support = await signIn('phase7-reporting-support@example.invalid');\n    secondSupport = await signIn('phase7-reporting-second-support@example.invalid');\n    admin = await signIn",
+              1,
+          )
+          text = text.replace(
+              "    await grantRole(support, 'support');\n    await grantRole(admin, 'admin');",
+              "    await grantRole(support, 'support');\n    await grantRole(secondSupport, 'support');\n    await grantRole(admin, 'admin');",
+              1,
+          )
+          resolution_marker = """    await request(httpServer())
+              .post(`/api/v1/operations/incidents/${incident.incidentId}/start`)
+              .set('authorization', `Bearer ${support.accessToken}`)
+              .send({ reason: 'Assigned support operator started the synthetic internal investigation.' })
+              .expect(200);
+            const resolvedResponse = await request(httpServer())
+          """
+          resolution_replacement = """    await request(httpServer())
+              .post(`/api/v1/operations/incidents/${incident.incidentId}/start`)
+              .set('authorization', `Bearer ${support.accessToken}`)
+              .send({ reason: 'Assigned support operator started the synthetic internal investigation.' })
+              .expect(200);
+            await request(httpServer())
+              .post(`/api/v1/operations/incidents/${incident.incidentId}/resolve`)
+              .set('authorization', `Bearer ${secondSupport.accessToken}`)
+              .send({
+                targetStatus: 'resolved',
+                resolutionCode: 'UNOWNED_RESOLUTION_ATTEMPT',
+                resolutionSummary:
+                  'An unrelated support operator must not resolve another operator owned incident.',
+              })
+              .expect(400);
+            const resolvedResponse = await request(httpServer())
+          """
+          if text.count(resolution_marker) != 1:
+              raise SystemExit(f'incident resolution marker count={text.count(resolution_marker)}')
+          text = text.replace(resolution_marker, resolution_replacement, 1)
+          leak_marker = """    expect(serialized).not.toContain('private/');
+            expect(serialized).not.toContain('sha256');
+            expect(serialized).not.toContain('objectKey');
+          """
+          leak_replacement = """    expect(serialized).not.toContain('private/');
+            expect(serialized).not.toContain('sha256');
+            expect(serialized).not.toContain('"objectKey":');
+            expect(serialized).not.toContain('https://storage');
+          """
+          if text.count(leak_marker) != 1:
+              raise SystemExit(f'reporting leak assertion marker count={text.count(leak_marker)}')
+          reporting.write_text(text.replace(leak_marker, leak_replacement, 1))
+
+          field = Path('backend/direkt-api/test/e2e/operations-field-workflow.e2e.spec.ts')
+          text = field.read_text()
+          marker = """  it('persists idempotent offline submissions without creating trust state', async () => {
+          """
+          replacement = """  it('rejects precise coordinates and private storage references from public field text', async () => {
+            const caseId = await createCase('public_safe_text');
+            const work = await createWork(caseId, fieldAgentA.identityId, 2);
+            await acceptAndStart(work.workItemId, fieldAgentA);
+
+            await request(httpServer())
+              .post(`/api/v1/operations/field-work-items/${work.workItemId}/submissions`)
+              .set('authorization', `Bearer ${fieldAgentA.accessToken}`)
+              .send(
+                submission(
+                  'completed',
+                  'offline-public-safe-0001',
+                  'Synthetic inspection at 15.38761, 28.32282 must not enter public-safe output.',
+                ),
+              )
+              .expect(400);
+
+            await request(httpServer())
+              .post(`/api/v1/operations/field-work-items/${work.workItemId}/submissions`)
+              .set('authorization', `Bearer ${fieldAgentA.accessToken}`)
+              .send({
+                ...submission(
+                  'completed',
+                  'offline-public-safe-0002',
+                  'Synthetic inspection completed without precise private location data.',
+                ),
+                observations: [
+                  {
+                    key: 'provider_presence',
+                    result: 'confirmed',
+                    note: 'Private object key private/00000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000002/00000000-0000-4000-8000-000000000003',
+                  },
+                ],
+              })
+              .expect(400);
+          });
+
+          it('persists idempotent offline submissions without creating trust state', async () => {
+          """
+          if text.count(marker) != 1:
+              raise SystemExit(f'field public-safe test marker count={text.count(marker)}')
+          field.write_text(text.replace(marker, replacement, 1))
+          PY
+      - name: Format, commit and remove helper
+        shell: bash
+        run: |
+          cd backend/direkt-api
+          npm ci --ignore-scripts
+          npm run format
+          cd ../..
+          rm .github/workflows/stage7g-regression-alignment-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/direkt-api/test/e2e/operations-escalations-overrides.e2e.spec.ts backend/direkt-api/test/e2e/operations-reporting.e2e.spec.ts backend/direkt-api/test/e2e/operations-field-workflow.e2e.spec.ts .github/workflows/stage7g-regression-alignment-once.yml
+          git diff --cached --check
+          git commit -m "test: align Stage 7 trust-boundary regressions"
+          git push origin HEAD:build/android-v1
