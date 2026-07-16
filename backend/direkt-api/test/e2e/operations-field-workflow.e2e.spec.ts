@@ -436,7 +436,18 @@ describe('Phase 7 structured operations field workflow', () => {
   ])('records %s as an advisory terminal field state', async (outcome, expectedState) => {
     const caseId = await createCase(`terminal_${outcome}`);
     const work = await createWork(caseId, fieldAgentB.identityId, 5);
-    await acceptAndStart(work.workItemId, fieldAgentB);
+    if (outcome === 'missed') {
+      await request(httpServer())
+        .post(`/api/v1/operations/field-work-items/${work.workItemId}/transitions`)
+        .set('authorization', `Bearer ${fieldAgentB.accessToken}`)
+        .send({
+          targetState: 'accepted',
+          reason: 'Field agent accepted the assignment before the missed visit was recorded.',
+        })
+        .expect(200);
+    } else {
+      await acceptAndStart(work.workItemId, fieldAgentB);
+    }
     const response = await request(httpServer())
       .post(`/api/v1/operations/field-work-items/${work.workItemId}/submissions`)
       .set('authorization', `Bearer ${fieldAgentB.accessToken}`)
