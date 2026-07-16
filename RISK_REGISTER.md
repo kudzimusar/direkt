@@ -58,17 +58,24 @@ Scores use probability (P) and impact (I) from 1–5. Priority is `P × I`.
 | R-052 | Provider timeline or operations readiness leaks reviewer or evidence data | 2 | 5 | 10 | dedicated allowlisted projections, aggregate counts, explicit non-exposure flags and serialization tests | Privacy/operations / controlled |
 | R-053 | Android recovery persistence stores sensitive evidence or bearer-like data | 3 | 5 | 15 | metadata-only synthetic snapshot, no bytes/URI/hash/object key/token, corruption-safe fallback; encrypted storage required before real evidence | Android/security / production gate |
 | R-054 | Phase 6 accidentally implements enquiry, review or payment mutations | 2 | 4 | 8 | explicit read-only endpoints, absent mutation routes, Phase 8/9 ownership copy and HTTP regressions | Product/architecture / controlled |
+| R-055 | Unassigned, revoked or expired operators access private evidence | 2 | 5 | 10 | active assignment match, short-lived grants, access audit, immediate revocation/expiry checks and deny regressions | Security/trust / controlled |
+| R-056 | Field text leaks precise coordinates, private storage paths or checksums into operator responses | 2 | 5 | 10 | database public-safe text predicate, structured observations, separate private notes and HTTP regressions | Privacy/operations / controlled |
+| R-057 | Field agents create final trust decisions or claims | 2 | 5 | 10 | advisory-only schema, separate permissions, absent decision routes and before/after trust-state regressions | Trust/operations / controlled |
+| R-058 | High-risk override requester, duplicate or colluding approvers weaken evidence policy | 3 | 5 | 15 | serialized approvals, two distinct eligible identities, requester/self/duplicate rejection and mandatory-evidence gates | Trust/security / controlled; pilot review required |
+| R-059 | An unrelated operator starts or resolves another owner's incident | 2 | 4 | 8 | owner-scoped lookup, trust-supervisor/admin override rules, immutable terminal resolution and HTTP regressions | Operations/security / controlled |
+| R-060 | Expiry or aggregate reporting leaks provider/evidence identifiers or storage metadata | 2 | 5 | 10 | fixed allowlists, safe views/types, explicit non-exposure flags and serialization tests | Privacy/reporting / controlled |
 
 ## Current treatment priorities
 
-Phase 6 exit controls are implemented for the synthetic checkpoint:
+Phase 7 exit controls are implemented for the synthetic checkpoint:
 
-- R-006 is reduced through persistent logical upload state, retry sessions, process-recreation tests and text-first UI;
-- R-038 and R-050 are controlled by actor-resolved provider scope, revocation checks and cross-provider tests;
-- R-051 is controlled by database linkage triggers, transactional rollback and idempotent recovery tests;
-- R-052 is controlled by provider-safe timeline and aggregate operations projections;
-- R-054 is controlled by explicit read-only Phase 8/9 boundaries and missing mutation routes;
-- R-003, R-035 and R-046 remain protected by separate location models and publication-policy independence.
+- R-055 is controlled by assigned short-lived evidence grants, audit and immediate revocation/expiry enforcement;
+- R-056 is controlled by database-level public-safe text checks across work reasons, summaries and observation notes;
+- R-057 is controlled by advisory-only field schemas, role permissions and decision/claim non-creation tests;
+- R-058 is controlled by serialized four-eyes approval and non-bypassable evidence/publication gates;
+- R-059 is controlled by owner-scoped incident lifecycle and explicit supervisor/admin override authority;
+- R-060 is controlled by allowlisted expiry/reporting projections and concrete leak assertions;
+- R-033 remains controlled by the API-only portal architecture and permanent import isolation gate.
 
 Before production integration:
 
@@ -76,7 +83,8 @@ Before production integration:
 - R-014 and R-048 require an approved map/location provider, quotas, cost controls and manual fallback validation;
 - R-039, R-042 and R-043 require production storage, scheduler, scanning, alerting and recovery validation;
 - R-053 requires approved encrypted Android storage, secure file handling and deletion tests;
-- R-045 requires production monitoring for stale or policy-invalid publication rows.
+- R-055 and R-056 require production identity, object-storage and log-redaction review;
+- R-059 requires operational monitoring, escalation policy and incident-response exercises.
 
 Before the controlled pilot:
 
@@ -84,7 +92,7 @@ Before the controlled pilot:
 - R-030 requires approved providers, distributed rate limiting and monitored abuse controls;
 - R-033 requires deployment, cookie/session, CSP and private-data review;
 - R-034 requires production configuration and secret-management validation;
-- R-037 requires representative provider and customer fairness testing.
+- R-037 and R-058 require representative fairness, independence and anti-collusion testing.
 
 ## Review cadence
 
