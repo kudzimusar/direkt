@@ -1,5 +1,5 @@
 name: DIREKT Backend CI
-# Temporary Stage 8 workspace-export job; remove after artifact retrieval.
+# Phase 7 final exact-head validation anchor v2.
 
 on:
   push:
@@ -135,24 +135,3 @@ jobs:
           echo "- Database: PostgreSQL 18 / PostGIS 3.6" >> "$GITHUB_STEP_SUMMARY"
           echo "- Dependencies: committed npm lockfile installed with \`npm ci\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Result: format, lint, typecheck, migrations, tests, build and OpenAPI passed" >> "$GITHUB_STEP_SUMMARY"
-
-  stage8_workspace_export:
-    name: Export Stage 8 workspace once
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - name: Package repository workspace
-        shell: bash
-        run: |
-          tar --exclude=.git --exclude='**/node_modules' --exclude='**/build' --exclude='**/.next' -czf /tmp/direkt-stage8-workspace.tgz .
-      - name: Upload workspace
-        uses: actions/upload-artifact@v4
-        with:
-          name: direkt-stage8-workspace-${{ github.sha }}
-          path: /tmp/direkt-stage8-workspace.tgz
-          if-no-files-found: error
-          retention-days: 1
