@@ -1,0 +1,46 @@
+name: Stage 7 backend format once
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - ".github/workflows/stage7-format-once.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage7-backend-format-once
+  cancel-in-progress: false
+
+jobs:
+  format:
+    if: contains(github.event.head_commit.message, 'normalize consolidated Stage 7A-D formatting once')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/direkt-api
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run format
+      - name: Commit formatter output and remove runner
+        shell: bash
+        working-directory: .
+        run: |
+          rm .github/workflows/stage7-format-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/direkt-api/src backend/direkt-api/test backend/direkt-api/scripts .github/workflows/stage7-format-once.yml
+          git diff --cached --check
+          git commit -m "style: apply pinned Stage 7A-D backend formatter"
+          git push origin HEAD:build/android-v1
