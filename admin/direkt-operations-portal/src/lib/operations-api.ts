@@ -11,6 +11,15 @@ export const operationsEndpoints = {
   expiry: '/api/v1/operations/expiry-renewal',
   metrics: '/api/v1/operations/reporting/metrics',
   metricsExport: '/api/v1/operations/reporting/export',
+  interactions: '/api/v1/operations/interactions',
+  reviews: '/api/v1/operations/reviews',
+  reviewModeration: (reviewId: string) =>
+    `/api/v1/operations/reviews/${encodeURIComponent(reviewId)}/moderation`,
+  reviewAppealDecision: (appealId: string) =>
+    `/api/v1/operations/review-appeals/${encodeURIComponent(appealId)}/decisions`,
+  interactionComplaints: '/api/v1/operations/interaction-complaints',
+  interactionComplaintTransition: (complaintId: string) =>
+    `/api/v1/operations/interaction-complaints/${encodeURIComponent(complaintId)}/transitions`,
 } as const;
 
 export interface OperationsApiOptions {
