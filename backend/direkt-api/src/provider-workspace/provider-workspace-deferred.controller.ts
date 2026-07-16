@@ -12,14 +12,6 @@ import type { ProviderWorkspaceDeferredSurfaceView } from './provider-workspace.
 export class ProviderWorkspaceDeferredController {
   constructor(private readonly service: ProviderWorkspaceService) {}
 
-  @Get('enquiries')
-  @RequirePermission(PERMISSIONS.PROVIDER_PROFILE_READ, { providerFromActor: true })
-  @ApiOkResponse({ description: 'Read-only empty Phase 8 enquiry boundary.' })
-  async enquiries(@Req() request: DirektRequest): Promise<ProviderWorkspaceDeferredSurfaceView> {
-    const workspace = await this.service.workspace(request.actor);
-    return workspace.deferredSurfaces.enquiries;
-  }
-
   @Get('review-responses')
   @RequirePermission(PERMISSIONS.PROVIDER_PROFILE_READ, { providerFromActor: true })
   @ApiOkResponse({ description: 'Read-only empty Phase 8 review-response boundary.' })
