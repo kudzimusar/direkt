@@ -6,156 +6,138 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | FINAL_VALIDATION |
-| Owner/agent | OpenAI GPT-5.6 Thinking — Phase 6 provider-workspace agent |
-| Phase | Phase 6 — Android provider workspace |
-| Task | Validate the promoted Phase 6 programme record, merge reviewed PR #26, close Issue #25 and synchronize the implementation branch |
-| Modules/paths | `database`, `backend/direkt-api`, `android/direkt-app`, `admin/direkt-operations-portal`, `docs/backend`, `docs/api`, `docs/android`, `docs/architecture`, `docs/security`, `docs/testing`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
-| Claimed at | 2026-07-15 after Phase 5 checkpoint merge and branch synchronization |
-| Expected handoff | Merged and recorded provider workspace with server-resolved scope, private evidence recovery, safe timeline, independent availability, bounded Phase 8/9 surfaces and synchronized branches |
-| Last clean checkpoint | `11541db4d5ea856404f8fee03c0ca55cf6bab36c` |
-| Reviewed implementation head | `aa10d727091c4e742f0a26c41b00daa07c5000ad` |
-| Governing issue | Issue #25 |
+| Status | CLAIMED |
+| Owner/agent | OpenAI GPT-5.6 Thinking — Phase 7 operations and field-workflow agent |
+| Phase | Phase 7 — Operations portal and field workflow |
+| Task | Implement scoped triage, secure evidence review, field assignments and inspections, escalations, four-eyes overrides, incident/expiry dashboards and privacy-safe operational reporting |
+| Modules/paths | `database`, `backend/direkt-api`, `admin/direkt-operations-portal`, `docs/backend`, `docs/api`, `docs/architecture`, `docs/security`, `docs/testing`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
+| Claimed at | 2026-07-16 after Phase 6 checkpoint merge and branch synchronization |
+| Expected handoff | Reviewed operations and field-workflow checkpoint with assigned private review access, scoped inspections, immutable escalations/decisions, four-eyes high-risk controls, aggregate dashboards and green permanent CI |
+| Last clean checkpoint | `3083b54278c73ce74f53db800c2ec0dfc59c4dde` |
+| Governing issue | Issue #28 |
 
 ## Stable predecessor
 
-Phase 5 completed through PR #24 and Issue #23.
+Phase 6 completed through PR #26 and Issue #25.
 
 ```text
-Phase 5 reviewed source head: 4107aff54b098d299fd41dd60f63256150aab573
-Phase 5 verified final head:  28f03c196f0c6dc47c77c61cbe70d6448d179755
-Phase 5 merge commit:         11541db4d5ea856404f8fee03c0ca55cf6bab36c
-Issue #23:                    closed as completed
+Phase 6 reviewed source head: aa10d727091c4e742f0a26c41b00daa07c5000ad
+Phase 6 verified final head:  0358cca3bad5b93e146ddca2f07d7ff43c9cc063
+Phase 6 merge commit:         3083b54278c73ce74f53db800c2ec0dfc59c4dde
+Issue #25:                    closed as completed
 ```
 
-Final exact-head workflows passed: Backend/PostGIS #360, Android #223, Operations Portal #224 and Documentation #674. `main` and `build/android-v1` were synchronized before this Phase 6 claim.
+Final exact-head workflows passed: Backend/PostGIS #497, Android #287, Operations Portal #272 and Documentation #876. `main` and `build/android-v1` were synchronized before this Phase 7 claim.
 
-## Phase 6 objective
+## Phase 7 objective
 
-Create a bounded, synthetic Android provider workspace that lets an authenticated provider representative manage only their own organization, services, lawful location models, evidence submissions, verification progress, availability and interrupted uploads without weakening identity, authorization, evidence, claim, publication or location-privacy boundaries.
+Create a bounded synthetic operations workflow that lets authorized staff triage verification work, review private evidence through assigned short-lived access, coordinate field inspections, record reasoned recommendations and decisions, apply distinct four-eyes approval to high-risk overrides, and inspect privacy-safe complaint, incident, expiry and operational reporting projections.
 
 ## Delivery stages
 
-### Stage 6A — workspace contracts and authorization
+### Stage 7A — triage contracts and scoped queues
 
-- resolve provider organization from the authenticated actor/session;
-- expose provider workspace summary and readiness contracts;
-- enforce provider representative scope on every path;
-- provide empty, partial, blocked and ready synthetic states;
-- define OpenAPI and database/application authorization regressions.
+- define deterministic queue priorities, ages, service-level states and escalation metadata;
+- enforce role-specific queue visibility from server permissions;
+- keep provider, category, requirement, case and assignment identifiers distinct;
+- provide empty, normal, overdue, blocked and escalated synthetic states;
+- prove finance, support, provider and field-agent roles cannot acquire reviewer or final-decision authority.
 
-### Stage 6B — registration, profile, services and service areas
+### Stage 7B — secure evidence review workspace
 
-- complete provider registration/profile editing on existing Phase 3 models;
-- manage category selections through immutable requirement versions;
-- edit operating model, locality summary and lawful service areas;
-- preserve distinct private base, consented public premises and service-area models;
-- prove profile completion and service selection cannot publish or create claims.
+- issue short-lived private evidence grants only to active assigned reviewers;
+- provide review-safe evidence metadata without storage keys or persistent URLs;
+- audit access, recommendation, correction and review actions;
+- enforce immediate revocation and expiry behavior;
+- prevent submitters, providers, unassigned operators and field agents from final approval.
 
-### Stage 6C — evidence capture and recoverable uploads
+### Stage 7C — field assignment and structured inspections
 
-- submit provider-owned evidence metadata only against a specific case/check;
-- keep storage references and original evidence private;
-- model queued, uploading, interrupted, retryable, submitted and terminal states;
-- persist idempotency and resumable intent locally;
-- support retry/cancel without duplicate evidence versions.
+- create scoped field-visit assignment lifecycle;
+- add structured inspection templates and observations;
+- require actor, timestamp, reason and policy version;
+- support reassignment, cancellation, missed and unable-to-verify states;
+- keep all field observations advisory and non-decisional.
 
-### Stage 6D — verification timeline and availability
+### Stage 7D — escalations and four-eyes controls
 
-- derive a provider-safe timeline from evidence versions and immutable decisions;
-- exclude reviewer notes, internal risk data and other providers' records;
-- show correction, renewal, validity and safe reason-code messages;
-- update availability independently of trust, claims, ranking and publication.
+- preserve immutable reason-code/result and active-review lifecycle rules;
+- add explicit escalation records with severity, owner, due date and resolution state;
+- require two distinct authorized identities for high-risk overrides;
+- reject requester/self/duplicate approvers;
+- prove overrides cannot bypass mandatory evidence or publication policy.
 
-### Stage 6E — bounded later-phase surfaces
+### Stage 7E — complaints, incidents, expiry and reporting
 
-- enquiry inbox: synthetic/empty workspace boundary only; Phase 8 owns real enquiries and responses;
-- review response: synthetic/empty boundary only; Phase 8 owns review eligibility, moderation and appeals;
-- subscription status: read-only synthetic boundary only; Phase 9 owns products, entitlements and payments;
-- tests must prove Phase 6 exposes no Phase 8/9 business mutation.
+- add bounded operations complaint and incident records without implementing Phase 8 interaction workflows;
+- provide expiry/renewal dashboards for evidence and claims;
+- provide aggregate queue, review, correction, field, escalation and expiry metrics;
+- keep reporting export-safe and privacy-allowlisted.
 
-### Stage 6F — Android and operations surfaces
+### Stage 7F — operations portal experience
 
-- provider dashboard and prioritized work queue;
-- profile/services/service-area editing;
-- evidence capture and upload recovery;
-- verification timeline and availability;
-- TalkBack, focus, data-saver and preview-free operation;
-- operations readiness/upload visibility without unauthorized evidence disclosure.
+- build triage, secure review, field assignment, escalation, incident, expiry and reporting pages;
+- enforce permission-aware navigation and actions;
+- support keyboard, focus and screen-reader semantics;
+- add loading, empty, overdue, access-denied, revoked and conflicting-action states;
+- keep the portal API-only with no database or storage imports.
 
-### Stage 6G — checkpoint promotion
+### Stage 7G — checkpoint promotion
 
-- update architecture, authorization, evidence, privacy, API, Android, testing, decisions and risks;
+- update OpenAPI, architecture, authorization, evidence, field-safety, privacy, testing, decisions and risks;
 - obtain green backend/PostGIS, Android, portal and documentation workflows on one reviewed exact head;
-- repair valid review findings with regressions;
-- merge automatically, close Issue #25 and synchronize the build branch.
-
-## Reviewed checkpoint evidence
-
-The Phase 6 implementation was reviewed and verified on exact source head `aa10d727091c4e742f0a26c41b00daa07c5000ad`.
-
-| Gate | Run | Result | Artifact SHA-256 |
-|---|---:|---|---|
-| Backend/PostGIS | #484 | Passed | `03f3997a885482443f74e0a5ce7c2a349c8068d00572d9aae4dcb97f0ab8462c` |
-| Android reports | #274 | Passed | `17937634afd4030b039d1de8b1155d483042892af51c053887e0e534027ffe0e` |
-| Operations portal | #259 | Passed | `a24e51790fcfda7d28398be71dffd033a84287497b71e30e8929021bc0fc6790` |
-| Documentation quality | #850 | Passed | `8b274470105372b1ed9c8e5b255d5693dec7350e3caa636ae22a06c25564e6d6` |
-
-Review findings are recorded in `docs/testing/PHASE_6_REVIEW_REGRESSIONS.md`. The current mutation promotes only the programme record and lock state; permanent CI must pass again on the resulting exact head before merge.
+- repair valid review findings with permanent regressions;
+- merge automatically, close Issue #28 and synchronize the build branch.
 
 ## Acceptance criteria
 
 The active owner must:
 
-1. preserve all Phase 3–5 identity, authorization, evidence, claim, publication and location boundaries;
-2. resolve provider scope server-side and reject cross-provider access;
-3. keep human identities, provider organizations, categories, cases, checks and evidence versions distinct;
-4. support provider profile, service/category and lawful service-area editing;
-5. keep private base, public premises and service area as separate typed models;
-6. prevent profile completion, service selection, availability, uploads, subscription placeholders or admin edits from creating claims or publication;
-7. create evidence only for an authorized provider case/check and retain immutable versions;
-8. prevent Android/public DTOs, logs and fixtures from exposing original evidence, storage keys or reviewer notes;
-9. make upload retry/cancel persistent and idempotent without duplicate evidence versions;
-10. present a provider-safe verification timeline with scoped claims, limitations, validity and correction/renewal states;
-11. allow availability updates independently of trust and discovery eligibility;
-12. provide bounded enquiry/review/subscription placeholders with no Phase 8/9 business mutations;
-13. implement accessible low-bandwidth Android provider states;
-14. provide operations visibility without bypassing evidence authorization;
-15. add database, HTTP, service, Android and portal regression evidence;
-16. update OpenAPI, architecture, privacy, testing, decisions, risks and project status;
-17. obtain green permanent workflows on one reviewed exact head;
-18. repair valid review findings, merge, close Issue #25 and synchronize the branch.
+1. preserve all Phase 3–6 identity, evidence, claim, publication, provider-scope and location boundaries;
+2. enforce role-specific triage queues and cross-role denial;
+3. grant private evidence access only to active assigned reviewers through short-lived audited grants;
+4. make revoked, expired and unassigned access fail immediately;
+5. keep field assignments and inspections provider/category/check scoped and advisory;
+6. prevent field agents from recommendations, final decisions or claims;
+7. preserve immutable decisions and reason-code/result compatibility;
+8. require two distinct authorized approvers for high-risk overrides;
+9. prevent requester, submitter, self-approval and duplicate-approver combinations;
+10. prevent overrides from bypassing mandatory evidence, provider/category scope or publication policy;
+11. keep complaints/incidents bounded to operations and avoid Phase 8 interaction/review mutations;
+12. keep expiry and reporting projections aggregate and privacy-safe;
+13. provide permission-aware, accessible portal workflows and critical states;
+14. add database, HTTP, service and portal regression evidence;
+15. update OpenAPI, architecture, security, testing, decisions, risks and project status;
+16. obtain green permanent workflows on one reviewed exact head;
+17. repair valid review findings, merge, close Issue #28 and synchronize the branch.
 
 ## Non-negotiable stop gates
 
-- No real provider, customer, evidence, enquiry, review, subscription or payment records.
-- No production storage/upload endpoint, maps/geocoding service, messaging/payment integration, credential, deployment or public pilot.
-- Provider ownership and permissions are never accepted from client input.
-- A representative cannot read or mutate another provider's profile, locations, evidence, timeline, availability or uploads.
-- Evidence remains private, case/check-specific, versioned and authorization-tested.
-- Original evidence, storage keys, identity numbers, signatures, private addresses, precise private bases and reviewer notes remain outside public/provider-safe output.
-- Public premises require explicit consent; private base coordinates never enter public DTOs, analytics or Android presentation.
-- Interrupted upload recovery cannot create duplicate evidence versions.
-- Availability and commercial placeholders cannot influence claims, publication or trust ranking.
-- Phase 8 retains real enquiry/review/contact workflows.
-- Phase 9 retains products, entitlements, invoices, payments and webhooks.
+- No real provider, customer, evidence, complaint, incident or field-visit records.
+- No production credentials, storage, maps, messaging, payments, deployment or public pilot.
+- Operations portal remains API-only and cannot import backend, database or storage modules.
+- Evidence access is private, short-lived, assigned, audited and revocable.
+- A field agent cannot make a final decision or create a claim.
+- Submitters and providers cannot approve their own evidence.
+- High-risk overrides require two distinct authorized approvers.
+- Commercial state, profile completion, availability and direct edits cannot create claims or publication.
+- Private coordinates, object keys, document content, identity numbers, signatures and reviewer private notes remain outside dashboards and reports.
+- Phase 8 retains enquiries, interaction history, reviews, moderation, appeals and tracked complaint linkage.
+- Phase 9 retains products, entitlements, subscriptions, invoices, payments and webhooks.
 
 ## Required regression evidence
 
 At minimum, prove:
 
-- authenticated actor scope resolves the correct provider and denies cross-provider access;
-- profile/category/location changes do not create claims or publication;
-- private base, public premises and service-area data remain separated;
-- evidence submissions require the provider's own open case/check;
-- evidence retry with the same idempotency key does not duplicate a version;
-- provider timeline excludes reviewer notes and internal-only fields;
-- availability updates do not change claim or publication state;
-- deferred enquiry/review/subscription endpoints are read-only bounded placeholders;
-- Android upload recovery survives process recreation in synthetic tests;
-- empty, partial, correction-required, expired, offline and access-denied states are usable;
+- reviewer, field-agent, support, finance and admin queue permissions behave as designed;
+- private evidence grants require an active matching assignment and expire/revoke correctly;
+- field observations cannot create decisions or claims;
+- four-eyes approvals require distinct eligible identities and cannot bypass evidence gates;
+- complaint/incident records expose no Phase 8 review or interaction mutation;
+- expiry/reporting projections contain no evidence IDs, object keys, private coordinates or reviewer notes;
+- portal navigation and actions follow server permissions;
 - fixtures contain no real people, providers, evidence, credentials or production endpoints.
 
 ## Conflict rule
 
-A second agent must not modify the listed Phase 6 paths while this lock is claimed. Read-only review is allowed. A stale or ambiguous lock must be resolved explicitly rather than overwritten by assumption.
+A second agent must not modify the listed Phase 7 paths while this lock is claimed. Read-only review is allowed. A stale or ambiguous lock must be resolved explicitly rather than overwritten by assumption.

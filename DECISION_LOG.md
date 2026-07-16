@@ -76,6 +76,12 @@ This log records product and technical decisions with long-term impact.
 | D-070 | 2026-07-16 | Provider timeline and operations readiness use dedicated safe aggregate projections | Providers and operators need progress visibility without reviewer identities, private rationale, evidence identifiers, object keys or coordinates | Accepted |
 | D-071 | 2026-07-16 | Availability is independently editable but cannot alter claims, publication or ranking | Operational capacity is useful to customers but must not be interpreted as trust or commercial preference | Accepted |
 | D-072 | 2026-07-16 | Enquiry, review-response and subscription surfaces remain explicit read-only boundaries in Phase 6 | Makes Phase 8 and Phase 9 ownership testable and prevents accidental early coupling to messaging, moderation or payment logic | Accepted |
+| D-073 | 2026-07-16 | Phase 7 operations queues and actions are authorized from live server-side permissions | Portal navigation is not an authorization boundary; revocation and role changes must take effect without trusting client state | Accepted |
+| D-074 | 2026-07-16 | Private evidence review uses active assignment-scoped, short-lived, audited and revocable grants | Operators need controlled review access without persistent storage URLs or broad evidence visibility | Accepted |
+| D-075 | 2026-07-16 | Field assignments and structured inspections remain advisory and cannot create decisions, claims or publication | Field observations support verification operations but cannot substitute for independent review authority | Accepted |
+| D-076 | 2026-07-16 | High-risk overrides require two distinct eligible approvers and cannot bypass mandatory evidence or publication policy | Four-eyes review must add authorization without weakening the trust model | Accepted |
+| D-077 | 2026-07-16 | Operations incidents are internal bounded records with owner-scoped resolution and immutable terminal data | Phase 7 needs operational control records without prematurely implementing Phase 8 customer complaint and review workflows | Accepted |
+| D-078 | 2026-07-16 | Public-returning field text and aggregate reporting are constrained by database-level privacy allowlists | Precise coordinates, object paths, checksums and private evidence metadata must remain blocked even if an application caller is defective | Accepted |
 
 ## How to add a decision
 

@@ -3,7 +3,7 @@
 **Updated:** 2026-07-16  
 **Authoritative branch:** `main` for stable checkpoints  
 **Implementation branch:** `build/android-v1`  
-**Current programme state:** Phase 5 Android customer discovery is complete and stable. Phase 6 Android provider workspace is review-complete on an exact green implementation head and is awaiting final record validation and merge through PR #26.
+**Current programme state:** Phase 6 Android provider workspace is complete and stable. Phase 7 operations portal and field workflow is active under Issue #28.
 
 ## Current phase
 
@@ -20,206 +20,89 @@
 | API/integration planning checkpoint | Complete; PR #19 merged |
 | Phase 4 verification and private evidence engine | Complete; PR #21 merged and Issue #20 closed |
 | Phase 5 Android customer discovery | Complete; PR #24 merged and Issue #23 closed |
-| Phase 6 Android provider workspace | Review complete; PR #26 final record validation pending |
+| Phase 6 Android provider workspace | Complete; PR #26 merged and Issue #25 closed |
+| Phase 7 operations portal and field workflow | Active; Issue #28 |
 | Deferred Zambia pilot validation | Open as non-blocking Issue #5 |
 | Firebase tester distribution | Installed but intentionally deferred |
 | Public pilot | Not authorized |
 
-Issue #25 remains the sole active implementation tracker until PR #26 merges. Issue #5 remains a deliberate later validation obligation and is not a current implementation blocker.
+Issue #28 is the sole active implementation tracker. Issue #5 remains a deliberate later validation obligation and is not a current implementation blocker.
 
 ## Stable checkpoint record
 
-### Phase 2A — Android foundation
+| Phase | Pull request | Stable merge commit | Governing issue |
+|---|---:|---|---:|
+| Phase 2A Android foundation | #11 | `c97ea31e79f387f9c3ced3b4f6ac07d75296c1eb` | #10 closed |
+| Phase 2B backend/PostGIS | #13 | `3873b378787390ea757e44b6bd5af3a2daac080f` | #12 closed |
+| Phase 2C identity/auth/admin | #15 | `bd8e937bf234cd894e04cc05935c7994e62c42be` | #14 closed |
+| Phase 3 provider/category core | #17 | `149f3b3aa24163ebb6a0b023283cf4a39badb5d6` | #16 closed |
+| API/integration planning | #19 | `7736c0909130a3bfbbe993f26ecf28056a699315` | Planning checkpoint |
+| Phase 4 verification/evidence | #21 | `d9078a78d3677a94a720de2d16483487594b261e` | #20 closed |
+| Phase 5 customer discovery | #24 | `11541db4d5ea856404f8fee03c0ca55cf6bab36c` | #23 closed |
+| Phase 6 provider workspace | #26 | `3083b54278c73ce74f53db800c2ec0dfc59c4dde` | #25 closed |
+
+## Phase 6 final checkpoint
 
 ```text
-PR #11
-merge commit: c97ea31e79f387f9c3ced3b4f6ac07d75296c1eb
-Android CI: #28
-```
-
-Retained evidence:
-
-| Artifact | SHA-256 |
-|---|---|
-| Debug APK | `b1f4f2e1466f2c24233d5507dd6beadb6f4d5b012a1cfbbbd84fd53cda0a6c15` |
-| Compose test APK | `e31da8950cac0f97287b2a6c99ac9022d35eca7f7db28183b285cf77930fe40b` |
-| Unit/lint reports | `3ff6c14e878bdd01799c4955c3b98f0865e7bd86cff1fdcab9459b13c211c794` |
-
-Android identities:
-
-```text
-production: com.kudzimusar.direkt
-debug:      com.kudzimusar.direkt.debug
-```
-
-### Phase 2B — backend and PostGIS foundation
-
-```text
-PR #13
-merge commit: 3873b378787390ea757e44b6bd5af3a2daac080f
-Backend CI: #37
-artifact sha256: 4c78aa58547502abbac97bb8b6606f6739a160b1548dd44a1cf6b99fc0906d5b
-```
-
-Phase 2B established NestJS, PostgreSQL/PostGIS, health/readiness, request IDs, problem details, OpenAPI, transactional checksummed migrations, append-only audit, outbox and hashed idempotency foundations.
-
-### Phase 2C — identity, sessions, authorization and operations portal
-
-```text
-PR #15
-verified head: 2e31df2233a63c39e4ef5df43a40a9683eef106e
-merge commit: bd8e937bf234cd894e04cc05935c7994e62c42be
-Issue #14: closed as completed
-```
-
-Exact-head evidence:
-
-| Gate | Run | Result | Artifact SHA-256 |
-|---|---:|---|---|
-| Backend/database | #112 | Passed | `eb2ef088dcc5655dcc6ef864c29b7bfca78c48ecf971b5b1e1e4357ece842114` |
-| Operations portal | #38 | Passed | `3111922097ec7fda582c7f649687bd738a8f0eec5df37262ab584c6d888ff1b7` |
-| Documentation quality | #272 | Passed | `f9989fda65d229dbf1d4907d63d0c871d515ac7b0daeb53ef6dff4732a19343b` |
-
-Phase 2C delivered identity/contact/consent contracts, synthetic passwordless authentication, rotating refresh sessions, server-resolved roles and permissions, provider scope, append-only privileged audit, and the isolated Next.js operations portal.
-
-### Phase 3 — identity, provider and category core
-
-```text
-PR #17
-verified head: dab29ac118c3b695ab84f4fcd2ac96091e16052c
-merge commit: 149f3b3aa24163ebb6a0b023283cf4a39badb5d6
-Issue #16: closed as completed
-```
-
-Exact-head evidence:
-
-| Gate | Run | Result | Artifact SHA-256 |
-|---|---:|---|---|
-| Backend/PostGIS | #235 | Passed | `cc730fb7a2c0fd590baeb810b8adc9de7c2413a3cf5dbdef0e6fb9a6aab2e554` |
-| Android reports | #122 | Passed | `129ed6bfc0eba8f277580abbb8f499c4ff36445d2b1dd480ee8d297dd6ea71d6` |
-| Operations portal | #132 | Passed | `45ea34f050952da493bd2df09d6acafc98e045819cd83b55e7b55d1c452fd6e7` |
-| Documentation quality | #450 | Passed | `360dd3e56d2e97d988f056db0f039b0dbc6c7a6e3bf217be07f03fc5945a27ee` |
-
-Retained Android artifacts:
-
-| Artifact | SHA-256 |
-|---|---|
-| Debug APK | `f999086fb6fbc19b0af5c03d53907f49dc82e9db4606eff8c00a26ba2cff78f1` |
-| Compose test APK | `fb0c4d7742e248ea1f748b82c4b89228007466a0e222ca3f144a8864ed9859d5` |
-
-Phase 3 delivered separate human identities/provider organizations, provider pathways and operating models, non-public drafts, provider-scoped representatives, immutable category requirement versions, actor-attributed audit and a structurally empty public-directory boundary.
-
-### API/integration planning checkpoint
-
-```text
-PR #19
-merge commit: 7736c0909130a3bfbbe993f26ecf28056a699315
-```
-
-The repository contains authoritative infrastructure/secrets and backend/frontend API plans. No production integration was activated.
-
-### Phase 4 — verification and private evidence engine
-
-```text
-PR #21
-verified head: 10c21f076ba27a7e0e38ac1819a4489e063eb6ec
-merge commit: d9078a78d3677a94a720de2d16483487594b261e
-Issue #20: closed as completed
-```
-
-Exact-head evidence:
-
-| Gate | Run | Result | Artifact SHA-256 |
-|---|---:|---|---|
-| Backend/PostGIS | #296 | Passed | `af68f4556085b0ec92f8b774697a1c76980f647aa731ce29ad788ba0ced2f7b5` |
-| Android reports | #173 | Passed | `9802c03b45a7599840f4b14a469dd12f4751cd50f95c802a712908b34f22ab79` |
-| Operations portal | #175 | Passed | `6724c536c93bb8eea793f28977e556594843e809ac595fe5e9ab33c32a6fb6a3` |
-| Documentation quality | #556 | Passed | `1e0937dc76f18f77fcb9ccd1c1ff3fafc4283da468ce86c0b1e3c320aaa93db6` |
-
-Retained Android artifacts:
-
-| Artifact | SHA-256 |
-|---|---|
-| Debug APK | `4940d82fecb05ab1f407cdb86e0776fdfb026b56c4200f04a360b279103f32ba` |
-| Compose test APK | `680b5f05fd9c01bb293a963492ec8c6dd835599b3c72aae4b45eae5bdb0ed561` |
-
-Phase 4 delivered provider/category/check-specific cases, private evidence metadata and immutable versions, assignment-bound review, immutable decisions, scoped claim cards, automatic expiry degradation, synthetic Android/admin states and regression-tested trust controls.
-
-### Phase 5 — Android customer discovery
-
-```text
-PR #24
-reviewed implementation head: 4107aff54b098d299fd41dd60f63256150aab573
-verified final head: 28f03c196f0c6dc47c77c61cbe70d6448d179755
-merge commit: 11541db4d5ea856404f8fee03c0ca55cf6bab36c
-Issue #23: closed as completed
+PR #26
+reviewed implementation head: aa10d727091c4e742f0a26c41b00daa07c5000ad
+verified final head: 0358cca3bad5b93e146ddca2f07d7ff43c9cc063
+merge commit: 3083b54278c73ce74f53db800c2ec0dfc59c4dde
+Issue #25: closed as completed
 ```
 
 Final exact-head evidence:
 
 | Gate | Run | Result | Artifact SHA-256 |
 |---|---:|---|---|
-| Backend/PostGIS | #360 | Passed | `5346cbc1d9f791da03e0145daa315b1f4bede574b071bc567593f51edd828b79` |
-| Android reports | #223 | Passed | `f2f7e80e65db779a19dce8bf9f9bf1db66158a08dbebe2a920b4b8d0f1da31f8` |
-| Operations portal | #224 | Passed | `229d586e38f0f1e0a4189193987d00a10e484920cf397acda9bc8d82555a7807` |
-| Documentation quality | #674 | Passed | `421ef455e38c0daabdbe72fa1c833b9fe66930be37da4c4c9013f01249b09ec8` |
+| Backend/PostGIS | #497 | Passed | `6b00fe91caa46a688a28ceb410894b00e53f3026fc017c286a6e869a6fe7cde2` |
+| Android reports | #287 | Passed | `3a3be0de236a473ec6e45ddc2cac31be2c57ff8f73062d3610b705a48939a69d` |
+| Operations portal | #272 | Passed | `82d8f1e4774e6105d0bc4a2fbfb295965e4ab48ec09ccda3e69c4a715d815ceb` |
+| Documentation quality | #876 | Passed | `6f37047496485aa454013e1045aa38cf9672012903ec997d8e760cfa46bd79e0` |
 
 Retained Android artifacts:
 
 | Artifact | SHA-256 |
 |---|---|
-| Debug APK | `03c05a83b402da9e9edb020a7fe10da7792304d9f152b72ac05715b527517658` |
-| Compose test APK | `673675dad7b431d5953340c636d804dd231b200a48282d890be1f45a9697c6ec` |
+| Debug APK | `8e70747935e0c1d5ab0b36935316c65bb208887e62bddf473574cddac4f8cf29` |
+| Compose test APK | `3e700a43ca9c343e44b8d2b6f6c83d1f85e3c628be61737c5cb2553a7a2aadc5` |
 
-Phase 5 delivered policy-controlled provider/category publication, distinct private/public/service-area location models, live provider/category/claim eligibility, public-safe PostGIS search and profiles, deterministic filters and opaque pagination, saves and sharing, Android list/map/profile and low-bandwidth states, operations eligibility visibility, and regression-tested exclusion of removed categories, suspended providers and stale claims.
+Phase 6 delivered:
 
-### Phase 6 — Android provider workspace
+- actor-resolved provider workspace authorization and cross-provider denial;
+- profile, services, location and availability management without trust/publication side effects;
+- separate private base, consented public premises and service-area models;
+- private case/check-specific evidence capture;
+- persistent idempotent interrupted-upload recovery;
+- confirmation rollback for provider/requirement/lifecycle mismatches;
+- provider-safe verification timeline;
+- explicit read-only Phase 8 enquiry/review and Phase 9 subscription boundaries;
+- native Android provider dashboard, profile, timeline and upload-recovery states;
+- privacy-safe aggregate operations visibility;
+- reviewed architecture, API, privacy, testing, decision and risk records.
 
-```text
-PR #26
-reviewed implementation head: aa10d727091c4e742f0a26c41b00daa07c5000ad
-merge commit: pending final record validation
-Issue #25: pending automatic closure on merge
-```
+Review findings and their permanent regressions are recorded in `docs/testing/PHASE_6_REVIEW_REGRESSIONS.md`.
 
-Exact reviewed-head evidence:
+## Active Phase 7 scope
 
-| Gate | Run | Result | Artifact SHA-256 |
-|---|---:|---|---|
-| Backend/PostGIS | #484 | Passed | `03f3997a885482443f74e0a5ce7c2a349c8068d00572d9aae4dcb97f0ab8462c` |
-| Android reports | #274 | Passed | `17937634afd4030b039d1de8b1155d483042892af51c053887e0e534027ffe0e` |
-| Operations portal | #259 | Passed | `a24e51790fcfda7d28398be71dffd033a84287497b71e30e8929021bc0fc6790` |
-| Documentation quality | #850 | Passed | `8b274470105372b1ed9c8e5b255d5693dec7350e3caa636ae22a06c25564e6d6` |
+Phase 7 implements:
 
-Retained Android artifacts:
+- role-scoped triage queues with deterministic priority, age and service-level state;
+- assigned short-lived private evidence review access;
+- field-agent assignment and structured inspection records;
+- reasoned recommendations, decisions and explicit escalations;
+- distinct four-eyes approval for high-risk overrides;
+- bounded operations complaint and incident records;
+- evidence/claim expiry and renewal dashboards;
+- aggregate operational reporting;
+- permission-aware, accessible operations-portal workflows;
+- OpenAPI, authorization, field-safety, privacy, testing, decision and risk updates.
 
-| Artifact | SHA-256 |
-|---|---|
-| Debug APK | `bc5ea200789d66554fbd6ec213ee827c4012743c622fbc1fd07c68814a4c8952` |
-| Compose test APK | `c4ec8ce2d659527a55a1b4ba9414dc65846993ae2f257b7a3aff684c0b1f199c` |
+## Phase 7 stop gates
 
-Phase 6 delivers actor-resolved provider scope, profile/services/location and availability management, private case/check-specific evidence capture, idempotent interrupted-upload recovery, provider-safe verification timeline, explicit Phase 8/9 read-only boundaries, native Android provider states, aggregate operations visibility and regression-tested confirmation/publication/privacy controls.
+No real provider, customer, evidence, complaint, incident or field-visit data, production storage, maps, messaging, payments, deployment or public pilot is authorized.
 
-## Phase 6 delivered scope
-
-Phase 6 implements:
-
-- authenticated provider workspace summary and server-resolved provider scope;
-- provider registration/profile, services and lawful service-area editing;
-- case/check-specific private evidence capture;
-- provider-safe verification timeline and correction/renewal states;
-- availability management independent of claims and publication;
-- recoverable interrupted uploads with persistent idempotent retry/cancel;
-- Android provider dashboard, task prioritization and accessibility states;
-- bounded synthetic/empty enquiry, review-response and subscription-status surfaces only, with Phase 8 and Phase 9 retaining their business logic;
-- operations readiness/upload visibility without unauthorized evidence access;
-- OpenAPI, authorization, privacy, testing, architecture, decision and risk updates.
-
-## Phase 6 stop gates
-
-No real provider/customer/evidence/enquiry/payment data, production storage/upload endpoint, map/location provider, messaging/payment integration, production credential, deployment or public pilot is authorized.
-
-Provider ownership and permissions must be resolved server-side. Cross-provider access is forbidden. Evidence remains private and versioned. Profile completion, availability, uploads, subscription placeholders or administrator edits cannot create claims, publish a provider or improve trust/ranking. Phase 8 retains real enquiry/review workflows; Phase 9 retains products, entitlements and payments.
+Evidence access must remain private, assigned, short-lived, audited and revocable. Field agents may record observations but cannot decide verification or create claims. High-risk overrides require two distinct authorized approvers and cannot bypass mandatory evidence or publication policy. The operations portal remains API-only. Phase 8 retains enquiries, reviews and tracked complaint linkage; Phase 9 retains subscriptions and payments.
 
 ## Deferred validation — not a current blocker
 

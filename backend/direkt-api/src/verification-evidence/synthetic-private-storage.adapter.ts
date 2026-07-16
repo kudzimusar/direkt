@@ -60,12 +60,21 @@ export class SyntheticPrivateStorageAdapter implements EvidenceStoragePort {
     record.confirmed = true;
   }
 
-  createReadGrant(objectKey: string, actorIdentityId: string, purpose: string): PrivateReadGrant {
+  createReadGrant(
+    objectKey: string,
+    actorIdentityId: string,
+    purpose: string,
+    notAfter?: Date,
+  ): PrivateReadGrant {
     const record = this.objects.get(objectKey);
     if (!record?.confirmed) {
       throw new NotFoundException('Private evidence object is not available for review.');
     }
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    const defaultExpiry = Date.now() + 5 * 60 * 1000;
+    const expiresAt = new Date(Math.min(defaultExpiry, notAfter?.getTime() ?? defaultExpiry));
+    if (expiresAt.getTime() <= Date.now()) {
+      throw new NotFoundException('Private evidence authorization is no longer active.');
+    }
     return {
       accessUrl: `https://storage.invalid/private-review/${randomUUID()}?token=${randomUUID()}`,
       expiresAt,

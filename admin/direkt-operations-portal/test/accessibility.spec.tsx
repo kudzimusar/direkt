@@ -16,23 +16,24 @@ describe('OperationsShell accessibility contract', () => {
     expect(markup).toContain('id="main-content"');
     expect(markup).toContain('role="status"');
     expect(markup).toContain('Synthetic interface only');
-    expect(markup).toContain('href="/operations/verification"');
+    expect(markup).toContain('href="/operations/triage"');
+    expect(markup).toContain('href="/operations/evidence-review"');
   });
 
   it('marks planned navigation as disabled instead of linking to unavailable work', () => {
-    const fieldAgentSession: OperationsSession = {
+    const financeSession: OperationsSession = {
       ...syntheticReviewerSession,
-      role: 'field_agent',
-      permissions: ['operations.portal.access', 'verification.field_visit.record'],
+      role: 'finance',
+      permissions: ['operations.portal.access', 'finance.ledger.read'],
     };
     const markup = renderToStaticMarkup(
-      <OperationsShell session={fieldAgentSession}>
-        <h1>Field test content</h1>
+      <OperationsShell session={financeSession}>
+        <h1>Finance test content</h1>
       </OperationsShell>,
     );
 
-    expect(markup).toContain('Field visits');
+    expect(markup).toContain('Finance');
     expect(markup).toContain('aria-disabled="true"');
-    expect(markup).not.toContain('href="/operations/field-visits"');
+    expect(markup).not.toContain('href="/operations/finance"');
   });
 });

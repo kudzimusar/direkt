@@ -1,8 +1,24 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PERMISSIONS } from '../authorization/permissions';
 import { RequirePermission } from '../authorization/require-permission.decorator';
+import { OperationsTriageQueryDto } from '../operations/operations-triage.dto';
+import { OperationsTriageService } from '../operations/operations-triage.service';
+import type { OperationsTriageQueue } from '../operations/operations-triage.types';
 import type { DirektRequest } from '../platform/http/request-context';
+import { RevokeEvidenceAccessGrantDto } from './evidence-access.dto';
+import { EvidenceReviewService } from './evidence-review.service';
 import {
   AssignVerificationCaseDto,
   ConfirmEvidenceDto,
@@ -16,19 +32,25 @@ import {
 } from './verification-evidence.dto';
 import { VerificationEvidenceService } from './verification-evidence.service';
 import type {
+  EvidenceAccessGrantState,
   EvidenceView,
   PrivateEvidenceAccessGrant,
+  PrivateEvidenceAccessResolution,
+  ReviewWorkspaceView,
   SafeClaimCard,
   UploadSessionView,
   VerificationCaseView,
-  VerificationQueueItem,
 } from './verification-evidence.types';
 
 @ApiTags('verification and evidence')
 @ApiBearerAuth()
 @Controller()
 export class VerificationEvidenceController {
-  constructor(private readonly service: VerificationEvidenceService) {}
+  constructor(
+    private readonly service: VerificationEvidenceService,
+    private readonly evidenceReview: EvidenceReviewService,
+    private readonly triage: OperationsTriageService,
+  ) {}
 
   @Post('providers/:providerId/evidence/upload-sessions')
   @RequirePermission(PERMISSIONS.EVIDENCE_UPLOAD_CREATE, { providerParam: 'providerId' })
@@ -127,12 +149,16 @@ export class VerificationEvidenceController {
   }
 
   @Get('operations/verification-queue')
-  @RequirePermission(PERMISSIONS.VERIFICATION_CASE_REVIEW)
+  @RequirePermission(PERMISSIONS.OPERATIONS_TRIAGE_READ)
   @ApiOkResponse({
-    description: 'Lists synthetic verification queue items for authorized operators.',
+    description:
+      'Lists the deterministic role-scoped verification triage queue without private evidence content.',
   })
-  queue(): Promise<VerificationQueueItem[]> {
-    return this.service.queue();
+  queue(
+    @Query() query: OperationsTriageQueryDto,
+    @Req() request: DirektRequest,
+  ): Promise<OperationsTriageQueue> {
+    return this.triage.queue(request.actor, query);
   }
 
   @Get('verification-cases/:caseId')
@@ -143,6 +169,19 @@ export class VerificationEvidenceController {
     @Req() request: DirektRequest,
   ): Promise<VerificationCaseView> {
     return this.service.assignedCase(caseId, request.actor);
+  }
+
+  @Get('verification-cases/:caseId/review-workspace')
+  @RequirePermission(PERMISSIONS.EVIDENCE_READ_PRIVATE)
+  @ApiOkResponse({
+    description:
+      'Returns the assigned reviewer workspace without storage references, submitter identity or private notes.',
+  })
+  reviewWorkspace(
+    @Param('caseId', ParseUUIDPipe) caseId: string,
+    @Req() request: DirektRequest,
+  ): Promise<ReviewWorkspaceView> {
+    return this.evidenceReview.reviewWorkspace(request.actor, caseId);
   }
 
   @Post('verification-cases/:caseId/assignments')
@@ -159,14 +198,47 @@ export class VerificationEvidenceController {
   @Post('verification-cases/:caseId/evidence/:evidenceId/access')
   @RequirePermission(PERMISSIONS.EVIDENCE_READ_PRIVATE)
   @ApiCreatedResponse({
-    description: 'Creates an audited short-lived synthetic reviewer access grant.',
+    description:
+      'Issues an audited revocable authorization and a short-lived synthetic reviewer URL.',
   })
   privateEvidenceAccess(
     @Param('caseId', ParseUUIDPipe) caseId: string,
     @Param('evidenceId', ParseUUIDPipe) evidenceId: string,
     @Req() request: DirektRequest,
   ): Promise<PrivateEvidenceAccessGrant> {
-    return this.service.privateEvidenceAccess(request.actor, caseId, evidenceId, request.requestId);
+    return this.evidenceReview.issueAccessGrant(
+      request.actor,
+      caseId,
+      evidenceId,
+      request.requestId,
+    );
+  }
+
+  @Post('operations/evidence-access/:grantId/redeem')
+  @RequirePermission(PERMISSIONS.EVIDENCE_READ_PRIVATE)
+  @ApiCreatedResponse({
+    description:
+      'Rechecks the live assignment and evidence version before issuing a fresh short-lived URL.',
+  })
+  redeemEvidenceAccess(
+    @Param('grantId', ParseUUIDPipe) grantId: string,
+    @Req() request: DirektRequest,
+  ): Promise<PrivateEvidenceAccessResolution> {
+    return this.evidenceReview.resolveAccessGrant(request.actor, grantId, request.requestId);
+  }
+
+  @Post('operations/evidence-access/:grantId/revoke')
+  @RequirePermission(PERMISSIONS.OPERATIONS_EVIDENCE_ACCESS_REVOKE)
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({
+    description: 'Revokes an active evidence access authorization without retaining its URL.',
+  })
+  revokeEvidenceAccess(
+    @Param('grantId', ParseUUIDPipe) grantId: string,
+    @Body() dto: RevokeEvidenceAccessGrantDto,
+    @Req() request: DirektRequest,
+  ): Promise<EvidenceAccessGrantState> {
+    return this.evidenceReview.revokeAccessGrant(request.actor, grantId, dto.reason);
   }
 
   @Post('verification-cases/:caseId/recommendations')

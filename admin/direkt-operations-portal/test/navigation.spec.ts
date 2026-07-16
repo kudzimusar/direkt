@@ -13,46 +13,71 @@ function session(
     displayName: 'Synthetic operator',
     role,
     permissions,
-    expiresAt: '2026-07-15T23:00:00.000Z',
+    expiresAt: '2026-07-16T23:00:00.000Z',
     stepUpRequired: true,
   };
 }
 
 describe('visibleNavigation', () => {
-  it('shows verification, discovery and workspace queues only to an authorized reviewer', () => {
+  it('shows only reviewer-authorized Phase 7 and inherited verification workspaces', () => {
     const items = visibleNavigation(
       session('reviewer', [
         'operations.portal.access',
         'operations.providers.read',
+        'operations.triage.read',
+        'evidence.read.private',
         'verification.case.review',
-        'verification.final_decision',
         'discovery.publication.read',
       ]),
     );
 
     expect(items.map((item) => item.label)).toEqual([
       'Mission control',
+      'Triage queue',
+      'Evidence review',
       'Provider drafts',
       'Provider workspaces',
-      'Verification queue',
       'Discovery eligibility',
     ]);
-    expect(items.find((item) => item.label === 'Provider workspaces')?.status).toBe('available');
-    expect(items.find((item) => item.label === 'Verification queue')?.status).toBe('available');
-    expect(items.find((item) => item.label === 'Discovery eligibility')?.status).toBe('available');
+    expect(items.map((item) => item.label)).not.toContain('Field workflow');
+    expect(items.map((item) => item.label)).not.toContain('Incidents and complaints');
     expect(items.map((item) => item.label)).not.toContain('Finance');
   });
 
-  it('keeps finance out of provider verification and discovery controls', () => {
+  it('shows the complete Stage 7 workspace set to a permissioned trust supervisor', () => {
+    const labels = visibleNavigation(
+      session('trust_supervisor', [
+        'operations.portal.access',
+        'operations.triage.read',
+        'evidence.read.private',
+        'operations.field_work.read',
+        'operations.escalations.read',
+        'operations.incidents.read',
+        'operations.reporting.read',
+      ]),
+    ).map((item) => item.label);
+
+    expect(labels).toEqual([
+      'Mission control',
+      'Triage queue',
+      'Evidence review',
+      'Field workflow',
+      'Escalations and overrides',
+      'Incidents and complaints',
+      'Expiry and reporting',
+    ]);
+  });
+
+  it('keeps finance outside verification, field, incident and reporting controls', () => {
     const labels = visibleNavigation(
       session('finance', ['operations.portal.access', 'finance.ledger.read']),
     ).map((item) => item.label);
 
     expect(labels).toEqual(['Mission control', 'Finance']);
-    expect(labels).not.toContain('Provider drafts');
-    expect(labels).not.toContain('Provider workspaces');
-    expect(labels).not.toContain('Verification queue');
-    expect(labels).not.toContain('Discovery eligibility');
+    expect(labels).not.toContain('Triage queue');
+    expect(labels).not.toContain('Evidence review');
+    expect(labels).not.toContain('Field workflow');
+    expect(labels).not.toContain('Incidents and complaints');
   });
 
   it('uses server permissions rather than the displayed role label', () => {
