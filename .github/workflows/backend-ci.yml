@@ -138,7 +138,6 @@ jobs:
 
   export-phase8-workspace:
     name: Export current Phase 8 workspace once
-    if: github.event_name == 'push' && github.ref_name == 'build/android-v1'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
