@@ -41,15 +41,24 @@ jobs:
           PY
           cp .github/phase8-interaction-handoff.service.ts backend/direkt-api/src/interaction/interaction-handoff.service.ts
           cp .github/phase8-permissions.ts backend/direkt-api/src/authorization/permissions.ts
-      - name: Validate reviewed source
+      - name: Install exact locked dependencies
         working-directory: backend/direkt-api
-        run: |
-          npm ci --ignore-scripts
-          npm run format
-          npm run lint
-          npm run typecheck
-          npm run build
-          npm run openapi:check
+        run: npm ci --ignore-scripts
+      - name: Format reviewed source
+        working-directory: backend/direkt-api
+        run: npm run format
+      - name: Lint reviewed source
+        working-directory: backend/direkt-api
+        run: npm run lint
+      - name: Typecheck reviewed source
+        working-directory: backend/direkt-api
+        run: npm run typecheck
+      - name: Build reviewed source
+        working-directory: backend/direkt-api
+        run: npm run build
+      - name: Validate reviewed OpenAPI
+        working-directory: backend/direkt-api
+        run: npm run openapi:check
       - name: Commit permanent product source
         shell: bash
         run: |
