@@ -11,7 +11,7 @@ describe('ProviderWorkspacesPage', () => {
     expect(markup).toContain('Interrupted · retryable');
     expect(markup).toContain('Location and evidence boundary');
     expect(markup).toContain('does not expose private or public coordinate values');
-    expect(markup).toContain('Enquiries and review responses remain Phase 8');
+    expect(markup).toContain('Stage 8 enquiries and review responses use separate actor-scoped API workspaces');
     expect(markup).toContain('Subscription status remains a Phase 9');
 
     expect(markup).not.toContain('object_key');
