@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   patch:
-    if: contains(github.event.head_commit.message, 'activate Stage 7C-D regression fixes')
+    if: contains(github.event.head_commit.message, 'activate robust Stage 7C-D regression fixes')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -37,38 +37,29 @@ jobs:
 
           field_path = Path('backend/direkt-api/test/e2e/operations-field-workflow.e2e.spec.ts')
           field_text = field_path.read_text()
-          old_field = """    const allQueueBody = allQueue.body as FieldQueueResponse;
-          expect(allQueueBody).toMatchObject({
-            scope: 'all',
-            items: expect.arrayContaining([expect.objectContaining({ workItemId: work.workItemId })]),
-          });
-          """
-          new_field = """    const allQueueBody = allQueue.body as FieldQueueResponse;
+          start = field_text.index('    const allQueueBody = allQueue.body as FieldQueueResponse;')
+          end = field_text.index('\n\n    await request(httpServer())', start)
+          replacement = """    const allQueueBody = allQueue.body as FieldQueueResponse;
           expect(allQueueBody.scope).toBe('all');
           expect(allQueueBody.items).toEqual(
             expect.arrayContaining([expect.objectContaining({ workItemId: work.workItemId })]),
-          );
-          """
-          if field_text.count(old_field) != 1:
-              raise SystemExit('expected one Stage 7C all-queue assertion')
-          field_path.write_text(field_text.replace(old_field, new_field, 1))
+          );"""
+          field_path.write_text(field_text[:start] + replacement + field_text[end:])
 
           override_path = Path('backend/direkt-api/test/e2e/operations-escalations-overrides.e2e.spec.ts')
           override_text = override_path.read_text()
-          old_transition = """    await pool.query(\"UPDATE verification.cases SET status = 'ready_for_review' WHERE id = $1\", [caseId]);
-          """
-          new_transition = """    await pool.query(
+          marker = "    await pool.query(\"UPDATE verification.cases SET status = 'ready_for_review' WHERE id = $1\", [caseId]);"
+          if override_text.count(marker) != 1:
+              raise SystemExit(f'expected one direct Stage 7D transition, found {override_text.count(marker)}')
+          replacement = """    await pool.query(
             \"UPDATE verification.cases SET status = 'awaiting_evidence' WHERE id = $1 AND status = 'draft'\",
             [caseId],
           );
           await pool.query(
             \"UPDATE verification.cases SET status = 'ready_for_review' WHERE id = $1 AND status = 'awaiting_evidence'\",
             [caseId],
-          );
-          """
-          if override_text.count(old_transition) != 1:
-              raise SystemExit('expected one direct Stage 7D ready-for-review transition')
-          override_path.write_text(override_text.replace(old_transition, new_transition, 1))
+          );"""
+          override_path.write_text(override_text.replace(marker, replacement, 1))
           PY
       - name: Format, commit and remove helper
         shell: bash
