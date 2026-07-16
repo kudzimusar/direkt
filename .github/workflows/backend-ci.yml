@@ -52,6 +52,7 @@ jobs:
         shell: bash
         run: |
           test -f .github/phase8-backend-bundle.tgz
+          test -f .github/phase8-interaction-handoff.service.ts
           sha256sum .github/phase8-backend-bundle.tgz
           python - <<'PY'
           from pathlib import Path
@@ -63,6 +64,7 @@ jobs:
               archive.extractall('.')
           bundle.unlink()
           PY
+          cp .github/phase8-interaction-handoff.service.ts backend/direkt-api/src/interaction/interaction-handoff.service.ts
       - name: Install exact locked dependencies
         working-directory: backend/direkt-api
         run: npm ci --ignore-scripts
@@ -96,9 +98,10 @@ jobs:
       - name: Commit permanent Phase 8 backend source
         shell: bash
         run: |
+          rm .github/phase8-interaction-handoff.service.ts
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add backend database .github/phase8-backend-bundle.tgz
+          git add backend database .github/phase8-backend-bundle.tgz .github/phase8-interaction-handoff.service.ts
           git commit -m "feat: complete Phase 8 interaction review backend"
           git push origin HEAD:build/android-v1
 
