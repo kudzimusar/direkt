@@ -278,3 +278,5 @@ jobs:
           git diff --cached --check
           git commit -m "fix: enforce Stage 7 incident ownership and public-safe field text"
           git push origin HEAD:build/android-v1
+
+# second-commit activation marker
