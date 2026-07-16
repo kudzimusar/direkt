@@ -19,11 +19,11 @@ describe('OperationsApiClient', () => {
       fetchImplementation,
     });
 
-    await expect(client.get<{ synthetic: true }>(operationsEndpoints.triage)).resolves.toEqual({
+    await expect(client.get<{ synthetic: true }>(operationsEndpoints.interactions)).resolves.toEqual({
       synthetic: true,
     });
     expect(fetchImplementation).toHaveBeenCalledWith(
-      'https://api.synthetic.invalid/api/v1/operations/verification-queue',
+      'https://api.synthetic.invalid/api/v1/operations/interactions',
       expect.objectContaining({
         method: 'GET',
         cache: 'no-store',
@@ -35,12 +35,54 @@ describe('OperationsApiClient', () => {
     );
   });
 
-  it('encodes case and evidence identifiers in route builders', () => {
+  it('encodes verification and Stage 8 identifiers in route builders', () => {
     expect(operationsEndpoints.reviewWorkspace('case/one')).toBe(
       '/api/v1/verification-cases/case%2Fone/review-workspace',
     );
     expect(operationsEndpoints.evidenceAccess('case/one', 'evidence/two')).toBe(
       '/api/v1/verification-cases/case%2Fone/evidence/evidence%2Ftwo/access',
+    );
+    expect(operationsEndpoints.reviewModeration('review/one')).toBe(
+      '/api/v1/operations/reviews/review%2Fone/moderation',
+    );
+    expect(operationsEndpoints.reviewAppealDecision('appeal/one')).toBe(
+      '/api/v1/operations/review-appeals/appeal%2Fone/decisions',
+    );
+    expect(operationsEndpoints.interactionComplaintTransition('complaint/one')).toBe(
+      '/api/v1/operations/interaction-complaints/complaint%2Fone/transitions',
+    );
+  });
+
+  it('posts JSON only through the API boundary', async () => {
+    const fetchImplementation = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ status: 'triaged', revision: 2 }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+    const client = new OperationsApiClient({
+      baseUrl: 'https://api.synthetic.invalid',
+      accessToken: 'synthetic-token',
+      fetchImplementation,
+    });
+
+    await client.post(operationsEndpoints.interactionComplaintTransition('complaint-id'), {
+      targetStatus: 'triaged',
+      expectedRevision: 1,
+      reason: 'Synthetic reasoned transition for API boundary testing.',
+      policyVersion: 'phase8-v1',
+    });
+
+    expect(fetchImplementation).toHaveBeenCalledWith(
+      'https://api.synthetic.invalid/api/v1/operations/interaction-complaints/complaint-id/transitions',
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.any(String),
+        headers: expect.objectContaining({
+          'content-type': 'application/json',
+          authorization: 'Bearer synthetic-token',
+        }),
+      }),
     );
   });
 
@@ -53,7 +95,7 @@ describe('OperationsApiClient', () => {
         .mockResolvedValue(new Response(null, { status: 403 })),
     });
 
-    await expect(client.get(operationsEndpoints.incidents)).rejects.toEqual(
+    await expect(client.get(operationsEndpoints.reviews)).rejects.toEqual(
       expect.objectContaining<Partial<OperationsApiError>>({ status: 403 }),
     );
   });
