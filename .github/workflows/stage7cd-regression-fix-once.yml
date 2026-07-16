@@ -16,6 +16,7 @@ concurrency:
 
 jobs:
   patch:
+    if: contains(github.event.head_commit.message, 'activate Stage 7C-D regression fixes')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
