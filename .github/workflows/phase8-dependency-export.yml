@@ -1,0 +1,46 @@
+name: Phase 8 locked dependency export
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/phase8-dependency-export.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    if: github.head_ref == 'build/android-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            backend/direkt-api/package-lock.json
+            admin/direkt-operations-portal/package-lock.json
+      - name: Install exact backend dependencies
+        working-directory: backend/direkt-api
+        run: npm ci --ignore-scripts
+      - name: Install exact portal dependencies
+        working-directory: admin/direkt-operations-portal
+        run: npm ci --ignore-scripts
+      - name: Package dependency trees
+        shell: bash
+        run: |
+          tar -czf phase8-node-dependencies.tgz \
+            backend/direkt-api/node_modules \
+            admin/direkt-operations-portal/node_modules
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase8-node-dependencies-${{ github.run_number }}-${{ github.sha }}
+          path: phase8-node-dependencies.tgz
+          if-no-files-found: error
+          retention-days: 2
