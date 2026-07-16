@@ -16,7 +16,6 @@ import type {
 import { VerificationEvidenceRepository } from './verification-evidence.repository';
 import type {
   EvidenceView,
-  PrivateEvidenceAccessGrant,
   SafeClaimCard,
   UploadSessionView,
   VerificationCaseView,
@@ -106,41 +105,6 @@ export class VerificationEvidenceService {
 
   evidenceItem(providerId: string, evidenceId: string): Promise<EvidenceView> {
     return this.repository.evidence(providerId, evidenceId);
-  }
-
-  async privateEvidenceAccess(
-    actor: AuthenticatedActor,
-    caseId: string,
-    evidenceId: string,
-    requestId?: string,
-  ): Promise<PrivateEvidenceAccessGrant> {
-    try {
-      const object = await this.repository.evidenceObjectForAssignedCase(
-        caseId,
-        evidenceId,
-        actor.identityId,
-      );
-      const grant = this.storage.createReadGrant(
-        object.objectKey,
-        actor.identityId,
-        `case:${caseId.slice(0, 8)}`,
-      );
-      await this.repository.auditEvidenceAccess({
-        actor,
-        providerId: object.providerId,
-        evidenceId,
-        caseId,
-        requestId,
-      });
-      return {
-        accessUrl: grant.accessUrl,
-        expiresAt: grant.expiresAt.toISOString(),
-        watermark: grant.watermark,
-        synthetic: true,
-      };
-    } catch (error) {
-      this.throwDomainError(error);
-    }
   }
 
   createCase(
