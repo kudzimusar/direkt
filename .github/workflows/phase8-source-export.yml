@@ -1,0 +1,39 @@
+name: Phase 8 interrupted source export
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/phase8-source-export.yml"
+      - ".github/phase8-backend-bundle.tgz"
+      - ".github/phase8-interaction-handoff.service.ts"
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    if: github.head_ref == 'build/android-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+      - name: Extract interrupted source
+        shell: bash
+        run: |
+          test -f .github/phase8-backend-bundle.tgz
+          tar -xzf .github/phase8-backend-bundle.tgz
+          cp .github/phase8-interaction-handoff.service.ts backend/direkt-api/src/interaction/interaction-handoff.service.ts
+      - name: Upload exact interrupted source
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase8-interrupted-source-${{ github.run_number }}-${{ github.sha }}
+          path: |
+            backend/direkt-api/src/interaction
+            backend/direkt-api/test/e2e
+            database/migrations
+          if-no-files-found: error
+          retention-days: 2
