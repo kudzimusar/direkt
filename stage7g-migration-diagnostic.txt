@@ -1,7 +1,0 @@
-
-> @direkt/api@0.1.0 migration:check
-> ts-node --project tsconfig.json scripts/check-migrations.ts
-
-{"event":"migration_check_failed","message":"constraint \"operations_field_work_items_replaced_by_work_item_id_fkey\" of relation \"field_work_items\" does not exist"}
-
-exit_status=1
