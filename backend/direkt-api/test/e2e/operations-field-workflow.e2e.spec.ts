@@ -287,6 +287,43 @@ describe('Phase 7 structured operations field workflow', () => {
     await acceptAndStart(work.workItemId, fieldAgentA);
   });
 
+  it('rejects precise coordinates and private storage references from public field text', async () => {
+    const caseId = await createCase('public_safe_text');
+    const work = await createWork(caseId, fieldAgentA.identityId, 2);
+    await acceptAndStart(work.workItemId, fieldAgentA);
+
+    await request(httpServer())
+      .post(`/api/v1/operations/field-work-items/${work.workItemId}/submissions`)
+      .set('authorization', `Bearer ${fieldAgentA.accessToken}`)
+      .send(
+        submission(
+          'completed',
+          'offline-public-safe-0001',
+          'Synthetic inspection at 15.38761, 28.32282 must not enter public-safe output.',
+        ),
+      )
+      .expect(400);
+
+    await request(httpServer())
+      .post(`/api/v1/operations/field-work-items/${work.workItemId}/submissions`)
+      .set('authorization', `Bearer ${fieldAgentA.accessToken}`)
+      .send({
+        ...submission(
+          'completed',
+          'offline-public-safe-0002',
+          'Synthetic inspection completed without precise private location data.',
+        ),
+        observations: [
+          {
+            key: 'provider_presence',
+            result: 'confirmed',
+            note: 'Private object key private/00000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000002/00000000-0000-4000-8000-000000000003',
+          },
+        ],
+      })
+      .expect(400);
+  });
+
   it('persists idempotent offline submissions without creating trust state', async () => {
     const caseId = await createCase('offline_idempotency');
     const work = await createWork(caseId, fieldAgentA.identityId, 2);

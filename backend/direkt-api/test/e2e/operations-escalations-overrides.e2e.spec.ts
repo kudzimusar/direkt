@@ -175,13 +175,6 @@ describe('Phase 7 escalations and four-eyes high-risk controls', () => {
         evidenceId,
         versionId,
       ]);
-      if (requirement.requirement_id === requirement.case_requirement_id) {
-        await pool.query(
-          `INSERT INTO verification.case_evidence (case_id, evidence_id, linked_by_identity_id)
-           VALUES ($1, $2, $3)`,
-          [caseId, evidenceId, owner.identityId],
-        );
-      }
     }
   }
 

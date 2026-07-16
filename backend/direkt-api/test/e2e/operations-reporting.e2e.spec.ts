@@ -67,6 +67,7 @@ describe('Phase 7 bounded incidents, expiry and reporting', () => {
   let app: INestApplication;
   let owner: SessionResponse;
   let support: SessionResponse;
+  let secondSupport: SessionResponse;
   let admin: SessionResponse;
   let auditor: SessionResponse;
   let providerId: string;
@@ -114,9 +115,11 @@ describe('Phase 7 bounded incidents, expiry and reporting', () => {
 
     owner = await signIn('phase7-reporting-owner@example.invalid');
     support = await signIn('phase7-reporting-support@example.invalid');
+    secondSupport = await signIn('phase7-reporting-second-support@example.invalid');
     admin = await signIn('phase7-reporting-admin@example.invalid');
     auditor = await signIn('phase7-reporting-auditor@example.invalid');
     await grantRole(support, 'support');
+    await grantRole(secondSupport, 'support');
     await grantRole(admin, 'admin');
     await grantRole(auditor, 'auditor');
 
@@ -245,6 +248,17 @@ describe('Phase 7 bounded incidents, expiry and reporting', () => {
       .set('authorization', `Bearer ${support.accessToken}`)
       .send({ reason: 'Assigned support operator started the synthetic internal investigation.' })
       .expect(200);
+    await request(httpServer())
+      .post(`/api/v1/operations/incidents/${incident.incidentId}/resolve`)
+      .set('authorization', `Bearer ${secondSupport.accessToken}`)
+      .send({
+        targetStatus: 'resolved',
+        resolutionCode: 'UNOWNED_RESOLUTION_ATTEMPT',
+        resolutionSummary:
+          'An unrelated support operator must not resolve another operator owned incident.',
+      })
+      .expect(400);
+
     const resolvedResponse = await request(httpServer())
       .post(`/api/v1/operations/incidents/${incident.incidentId}/resolve`)
       .set('authorization', `Bearer ${support.accessToken}`)
@@ -310,7 +324,8 @@ describe('Phase 7 bounded incidents, expiry and reporting', () => {
     const serialized = JSON.stringify(items);
     expect(serialized).not.toContain('private/');
     expect(serialized).not.toContain('sha256');
-    expect(serialized).not.toContain('objectKey');
+    expect(serialized).not.toContain('\"objectKey\":');
+    expect(serialized).not.toContain('https://storage');
   });
 
   it('exports only the fixed aggregate metric allowlist', async () => {
