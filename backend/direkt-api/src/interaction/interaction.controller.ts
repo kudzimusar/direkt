@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Headers,
-  Param,
-  ParseUUIDPipe,
-  Post,
-  Req,
-} from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PERMISSIONS } from '../authorization/permissions';
 import { RequirePermission } from '../authorization/require-permission.decorator';
@@ -85,11 +76,6 @@ export class InteractionController {
     @Param('enquiryId', ParseUUIDPipe) enquiryId: string,
     @Body() dto: TransitionEnquiryDto,
   ) {
-    return this.interactions.transitionProvider(
-      request.actor,
-      enquiryId,
-      dto,
-      request.requestId,
-    );
+    return this.interactions.transitionProvider(request.actor, enquiryId, dto, request.requestId);
   }
 }
