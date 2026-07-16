@@ -10,9 +10,13 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: stage7-evidence-review-lint-fix
+  cancel-in-progress: false
+
 jobs:
   patch:
-    if: github.actor != 'github-actions[bot]'
+    if: contains(github.event.head_commit.message, 'activate Stage 7 lint fix')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -28,22 +32,22 @@ jobs:
           path = Path('backend/direkt-api/test/e2e/operations-evidence-review.e2e.spec.ts')
           text = path.read_text()
           old = """    expect(redemption.body).toMatchObject({
-      grantId: second.grantId,
-      status: 'active',
-      synthetic: true,
-    });
-    expect(redemption.body.accessUrl).toMatch(/^https:\/\/storage\\.invalid\/private-review\//);
-    expect(redemption.body.accessUrl).not.toBe(second.accessUrl);
-"""
+            grantId: second.grantId,
+            status: 'active',
+            synthetic: true,
+          });
+          expect(redemption.body.accessUrl).toMatch(/^https:\/\/storage\\.invalid\/private-review\//);
+          expect(redemption.body.accessUrl).not.toBe(second.accessUrl);
+          """
           new = """    const redemptionBody = redemption.body as AccessGrantResponse;
-    expect(redemptionBody).toMatchObject({
-      grantId: second.grantId,
-      status: 'active',
-      synthetic: true,
-    });
-    expect(redemptionBody.accessUrl).toMatch(/^https:\/\/storage\\.invalid\/private-review\//);
-    expect(redemptionBody.accessUrl).not.toBe(second.accessUrl);
-"""
+          expect(redemptionBody).toMatchObject({
+            grantId: second.grantId,
+            status: 'active',
+            synthetic: true,
+          });
+          expect(redemptionBody.accessUrl).toMatch(/^https:\/\/storage\\.invalid\/private-review\//);
+          expect(redemptionBody.accessUrl).not.toBe(second.accessUrl);
+          """
           if text.count(old) != 1:
               raise SystemExit('expected one untyped redemption assertion block')
           path.write_text(text.replace(old, new, 1))
