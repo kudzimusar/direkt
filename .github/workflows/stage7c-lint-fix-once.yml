@@ -1,0 +1,63 @@
+name: Stage 7C lint fix once
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - ".github/workflows/stage7c-lint-fix-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: contains(github.event.head_commit.message, 'activate Stage 7C lint fix')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - name: Type the all-work queue assertion
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('backend/direkt-api/test/e2e/operations-field-workflow.e2e.spec.ts')
+          text = path.read_text()
+          old = """    expect(allQueue.body as FieldQueueResponse).toMatchObject({
+      scope: 'all',
+      items: expect.arrayContaining([expect.objectContaining({ workItemId: work.workItemId })]),
+    });
+"""
+          new = """    const allQueueBody = allQueue.body as FieldQueueResponse;
+    expect(allQueueBody.scope).toBe('all');
+    expect(allQueueBody.items).toEqual(
+      expect.arrayContaining([expect.objectContaining({ workItemId: work.workItemId })]),
+    );
+"""
+          if text.count(old) != 1:
+              raise SystemExit(f'expected one untyped all-work queue assertion, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1))
+          PY
+      - name: Format, commit and remove helper
+        shell: bash
+        run: |
+          cd backend/direkt-api
+          npm ci --ignore-scripts
+          npm run format
+          cd ../..
+          rm .github/workflows/stage7c-lint-fix-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/direkt-api/test/e2e/operations-field-workflow.e2e.spec.ts .github/workflows/stage7c-lint-fix-once.yml
+          git diff --cached --check
+          git commit -m "test: type Stage 7C operations queue assertion"
+          git push origin HEAD:build/android-v1
