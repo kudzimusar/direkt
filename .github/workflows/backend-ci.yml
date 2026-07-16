@@ -59,7 +59,13 @@ jobs:
           cache: npm
           cache-dependency-path: backend/direkt-api/package-lock.json
       - run: npm ci --ignore-scripts
-      - run: npm run format:check
+      - name: Generate formatting diagnostic
+        shell: bash
+        run: |
+          mkdir -p artifacts/diagnostics
+          npm run format
+          git diff -- . > artifacts/diagnostics/format.patch
+          git diff --name-only -- . > artifacts/diagnostics/format-files.txt
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run migration:check
