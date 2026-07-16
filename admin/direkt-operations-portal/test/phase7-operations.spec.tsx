@@ -48,7 +48,8 @@ describe('Phase 7 operations portal', () => {
     expect(markup).toContain('data-workflow-state="revoked_assignment"');
     expect(markup).toContain('data-workflow-state="expired_grant"');
     expect(markup).not.toContain('objectKey');
-    expect(markup).not.toContain('persistent URL');
+    expect(markup).not.toContain('https://storage');
+    expect(markup).not.toContain('private/00000000');
   });
 
   it('labels field observations advisory and non-decisional', () => {
