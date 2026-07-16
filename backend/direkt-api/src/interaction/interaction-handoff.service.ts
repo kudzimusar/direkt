@@ -1,17 +1,14 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
-import { createHash } from "node:crypto";
-import type { AuthenticatedActor } from "../authorization/authenticated-actor";
-import type {
-  CreateContactHandoffDto,
-  RevokeContactHandoffDto,
-} from "./interaction-handoff.dto";
-import { InteractionHandoffRepository } from "./interaction-handoff.repository";
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { createHash } from 'node:crypto';
+import type { AuthenticatedActor } from '../authorization/authenticated-actor';
+import type { CreateContactHandoffDto, RevokeContactHandoffDto } from './interaction-handoff.dto';
+import { InteractionHandoffRepository } from './interaction-handoff.repository';
 import type {
   ContactHandoffView,
   ProviderInteractionListView,
   ReviewEligibilityView,
   TrackedInteractionView,
-} from "./interaction-handoff.types";
+} from './interaction-handoff.types';
 
 @Injectable()
 export class InteractionHandoffService {
@@ -26,7 +23,7 @@ export class InteractionHandoffService {
   ): Promise<ContactHandoffView> {
     const normalizedKey = idempotencyKey?.trim();
     if (!normalizedKey || normalizedKey.length < 8 || normalizedKey.length > 200) {
-      throw new BadRequestException("A valid Idempotency-Key header is required.");
+      throw new BadRequestException('A valid Idempotency-Key header is required.');
     }
     return this.repository.createHandoff(
       actor,
@@ -74,7 +71,10 @@ export class InteractionHandoffService {
     return this.repository.listCustomerInteractions(actor);
   }
 
-  customerInteraction(actor: AuthenticatedActor, interactionId: string): Promise<TrackedInteractionView> {
+  customerInteraction(
+    actor: AuthenticatedActor,
+    interactionId: string,
+  ): Promise<TrackedInteractionView> {
     return this.repository.customerInteraction(actor, interactionId);
   }
 
@@ -82,11 +82,14 @@ export class InteractionHandoffService {
     return this.repository.providerInteractions(actor);
   }
 
-  reviewEligibility(actor: AuthenticatedActor, interactionId: string): Promise<ReviewEligibilityView> {
+  reviewEligibility(
+    actor: AuthenticatedActor,
+    interactionId: string,
+  ): Promise<ReviewEligibilityView> {
     return this.repository.reviewEligibility(actor, interactionId);
   }
 
   private hash(value: string): string {
-    return createHash("sha256").update(value, "utf8").digest("hex");
+    return createHash('sha256').update(value, 'utf8').digest('hex');
   }
 }

@@ -3,22 +3,22 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
-} from "@nestjs/common";
-import type { PoolClient } from "pg";
-import type { AuthenticatedActor } from "../authorization/authenticated-actor";
-import { DatabaseService } from "../platform/database/database.service";
+} from '@nestjs/common';
+import type { PoolClient } from 'pg';
+import type { AuthenticatedActor } from '../authorization/authenticated-actor';
+import { DatabaseService } from '../platform/database/database.service';
 import type {
   CreateInteractionComplaintDto,
   OperationsComplaintQueryDto,
   TransitionInteractionComplaintDto,
-} from "./complaint.dto";
+} from './complaint.dto';
 import type {
   InteractionComplaintEventView,
   InteractionComplaintStatus,
   InteractionComplaintType,
   InteractionComplaintView,
   OperationsComplaintListView,
-} from "./complaint.types";
+} from './complaint.types';
 
 interface ComplaintRow {
   complaint_id: string;
@@ -41,7 +41,7 @@ interface ComplaintEventRow {
   sequence: number;
   from_status: InteractionComplaintStatus | null;
   to_status: InteractionComplaintStatus;
-  actor_kind: "customer" | "operations";
+  actor_kind: 'customer' | 'operations';
   reason: string;
   policy_version: string;
   occurred_at: Date;
@@ -60,10 +60,10 @@ export class ComplaintRepository {
     requestId?: string,
   ): Promise<InteractionComplaintView> {
     return this.database.transaction(async (client) => {
-      await client.query(
-        `SELECT pg_advisory_xact_lock(hashtextextended($1 || ':' || $2, 0))`,
-        [actor.identityId, keyHash],
-      );
+      await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1 || ':' || $2, 0))`, [
+        actor.identityId,
+        keyHash,
+      ]);
       const existing = await client.query<{ id: string; request_fingerprint: string }>(
         `SELECT id, request_fingerprint FROM interaction.complaints
          WHERE customer_identity_id = $1 AND idempotency_key_hash = $2 FOR UPDATE`,
@@ -73,10 +73,10 @@ export class ComplaintRepository {
       if (replay) {
         if (replay.request_fingerprint !== fingerprint) {
           throw new ConflictException(
-            "The idempotency key already exists with a different complaint.",
+            'The idempotency key already exists with a different complaint.',
           );
         }
-        return this.load(client, replay.id, "customer", actor.identityId);
+        return this.load(client, replay.id, 'customer', actor.identityId);
       }
 
       const scope = await client.query<{
@@ -91,9 +91,7 @@ export class ComplaintRepository {
       );
       const row = scope.rows[0];
       if (!row) {
-        throw new NotFoundException(
-          "Tracked interaction was not found in the customer scope.",
-        );
+        throw new NotFoundException('Tracked interaction was not found in the customer scope.');
       }
       const inserted = await client.query<{ id: string }>(
         `INSERT INTO interaction.complaints (
@@ -113,14 +111,22 @@ export class ComplaintRepository {
         ],
       );
       const complaintId = inserted.rows[0]?.id;
-      if (!complaintId) throw new Error("Complaint creation returned no identifier.");
-      await this.audit(client, actor, row.provider_id, requestId, "interaction_complaint_created", complaintId, {
-        interactionId,
-        complaintType: dto.complaintType,
-        phase7IncidentLinked: false,
-        trustOrRankingMutation: false,
-      });
-      return this.load(client, complaintId, "customer", actor.identityId);
+      if (!complaintId) throw new Error('Complaint creation returned no identifier.');
+      await this.audit(
+        client,
+        actor,
+        row.provider_id,
+        requestId,
+        'interaction_complaint_created',
+        complaintId,
+        {
+          interactionId,
+          complaintType: dto.complaintType,
+          phase7IncidentLinked: false,
+          trustOrRankingMutation: false,
+        },
+      );
+      return this.load(client, complaintId, 'customer', actor.identityId);
     });
   }
 
@@ -131,20 +137,25 @@ export class ComplaintRepository {
          ORDER BY created_at DESC, id DESC LIMIT 100`,
         [actor.identityId],
       );
-      return Promise.all(ids.rows.map((row) => this.load(client, row.id, "customer", actor.identityId)));
+      return Promise.all(
+        ids.rows.map((row) => this.load(client, row.id, 'customer', actor.identityId)),
+      );
     });
   }
 
-  detailCustomer(actor: AuthenticatedActor, complaintId: string): Promise<InteractionComplaintView> {
+  detailCustomer(
+    actor: AuthenticatedActor,
+    complaintId: string,
+  ): Promise<InteractionComplaintView> {
     return this.database.transaction((client) =>
-      this.load(client, complaintId, "customer", actor.identityId),
+      this.load(client, complaintId, 'customer', actor.identityId),
     );
   }
 
   operations(query: OperationsComplaintQueryDto): Promise<OperationsComplaintListView> {
     return this.database.transaction(async (client) => {
       const values: unknown[] = [];
-      let where = "";
+      let where = '';
       if (query.status) {
         values.push(query.status);
         where = `WHERE status = $${values.length}`;
@@ -157,7 +168,9 @@ export class ComplaintRepository {
       );
       return {
         phase7IncidentDataIncluded: false,
-        items: await Promise.all(ids.rows.map((row) => this.load(client, row.id, "operations", ""))),
+        items: await Promise.all(
+          ids.rows.map((row) => this.load(client, row.id, 'operations', '')),
+        ),
       };
     });
   }
@@ -170,46 +183,51 @@ export class ComplaintRepository {
   ): Promise<InteractionComplaintView> {
     return this.database.transaction(async (client) => {
       const scope = await client.query<{ provider_id: string }>(
-        "SELECT provider_id FROM interaction.complaints WHERE id = $1",
+        'SELECT provider_id FROM interaction.complaints WHERE id = $1',
         [complaintId],
       );
       const providerId = scope.rows[0]?.provider_id;
-      if (!providerId) throw new NotFoundException("Complaint was not found.");
+      if (!providerId) throw new NotFoundException('Complaint was not found.');
       try {
-        await client.query(
-          `SELECT (interaction.transition_complaint($1, $2, $3, $4, $5, $6)).id`,
-          [
-            complaintId,
-            actor.identityId,
-            dto.targetStatus,
-            dto.expectedRevision,
-            dto.reason.trim(),
-            dto.policyVersion.trim(),
-          ],
-        );
+        await client.query(`SELECT (interaction.transition_complaint($1, $2, $3, $4, $5, $6)).id`, [
+          complaintId,
+          actor.identityId,
+          dto.targetStatus,
+          dto.expectedRevision,
+          dto.reason.trim(),
+          dto.policyVersion.trim(),
+        ]);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "";
-        if (message.includes("revision conflict")) throw new ConflictException(message);
-        if (message.includes("not found")) throw new NotFoundException("Complaint was not found.");
-        throw new BadRequestException(message || "Complaint transition failed.");
+        const message = error instanceof Error ? error.message : '';
+        if (message.includes('revision conflict')) throw new ConflictException(message);
+        if (message.includes('not found')) throw new NotFoundException('Complaint was not found.');
+        throw new BadRequestException(message || 'Complaint transition failed.');
       }
-      await this.audit(client, actor, providerId, requestId, "interaction_complaint_transitioned", complaintId, {
-        targetStatus: dto.targetStatus,
-        phase7IncidentLinked: false,
-      });
-      return this.load(client, complaintId, "operations", "");
+      await this.audit(
+        client,
+        actor,
+        providerId,
+        requestId,
+        'interaction_complaint_transitioned',
+        complaintId,
+        {
+          targetStatus: dto.targetStatus,
+          phase7IncidentLinked: false,
+        },
+      );
+      return this.load(client, complaintId, 'operations', '');
     });
   }
 
   private async load(
     client: PoolClient,
     complaintId: string,
-    scope: "customer" | "operations",
+    scope: 'customer' | 'operations',
     scopeValue: string,
   ): Promise<InteractionComplaintView> {
     const values: unknown[] = [complaintId];
-    const clauses = ["complaints.id = $1"];
-    if (scope === "customer") {
+    const clauses = ['complaints.id = $1'];
+    if (scope === 'customer') {
       values.push(scopeValue);
       clauses.push(`complaints.customer_identity_id = $${values.length}`);
     }
@@ -233,12 +251,12 @@ export class ComplaintRepository {
        JOIN discovery.publications AS publications ON publications.id = tracked.publication_id
        JOIN provider.profiles AS profiles ON profiles.provider_id = complaints.provider_id
        JOIN catalog.service_categories AS categories ON categories.id = complaints.category_id
-       WHERE ${clauses.join(" AND ")}`,
+       WHERE ${clauses.join(' AND ')}`,
       values,
     );
     const row = result.rows[0];
     if (!row) {
-      throw new NotFoundException("Complaint was not found in the authenticated scope.");
+      throw new NotFoundException('Complaint was not found in the authenticated scope.');
     }
     const events = await client.query<ComplaintEventRow>(
       `SELECT id AS event_id, sequence, from_status, to_status, actor_kind, reason, policy_version, occurred_at
@@ -291,7 +309,14 @@ export class ComplaintRepository {
       `INSERT INTO platform.audit_events (
          request_id, actor_type, actor_id, provider_id, action, resource_type, resource_id, outcome, metadata
        ) VALUES ($1, 'identity', $2, $3, $4, 'interaction_complaint', $5, 'success', $6::jsonb)`,
-      [requestId ?? null, actor.identityId, providerId, action, resourceId, JSON.stringify(metadata)],
+      [
+        requestId ?? null,
+        actor.identityId,
+        providerId,
+        action,
+        resourceId,
+        JSON.stringify(metadata),
+      ],
     );
   }
 }

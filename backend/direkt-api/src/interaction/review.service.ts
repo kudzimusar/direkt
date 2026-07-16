@@ -1,5 +1,5 @@
-import { Injectable } from "@nestjs/common";
-import type { AuthenticatedActor } from "../authorization/authenticated-actor";
+import { Injectable } from '@nestjs/common';
+import type { AuthenticatedActor } from '../authorization/authenticated-actor';
 import type {
   CreateProviderReviewResponseDto,
   CreateReviewAppealDto,
@@ -8,14 +8,19 @@ import type {
   ModerateReviewDto,
   OperationsReviewQueryDto,
   ReportReviewDto,
-} from "./review.dto";
-import { ReviewRepository } from "./review.repository";
+} from './review.dto';
+import { ReviewRepository } from './review.repository';
 
 @Injectable()
 export class ReviewService {
   constructor(private readonly repository: ReviewRepository) {}
 
-  create(actor: AuthenticatedActor, interactionId: string, dto: CreateReviewDto, requestId?: string) {
+  create(
+    actor: AuthenticatedActor,
+    interactionId: string,
+    dto: CreateReviewDto,
+    requestId?: string,
+  ) {
     return this.repository.createReview(actor, interactionId, dto, requestId);
   }
 

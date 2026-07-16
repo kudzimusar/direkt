@@ -1,6 +1,6 @@
-export type ContactHandoffChannel = "call" | "whatsapp";
-export type EffectiveContactHandoffStatus = "active" | "expired" | "revoked";
-export type TrackedInteractionStatus = "active" | "completed" | "cancelled";
+export type ContactHandoffChannel = 'call' | 'whatsapp';
+export type EffectiveContactHandoffStatus = 'active' | 'expired' | 'revoked';
+export type TrackedInteractionStatus = 'active' | 'completed' | 'cancelled';
 
 export interface ContactHandoffView {
   handoffId: string;
@@ -13,7 +13,7 @@ export interface ContactHandoffView {
   expiresAt: string;
   revokedAt: string | null;
   policyVersion: string;
-  deliveryState: "disabled";
+  deliveryState: 'disabled';
   externalDeliveryAttempted: false;
   rawContactIncluded: false;
   synthetic: true;
@@ -23,19 +23,19 @@ export interface TrackedInteractionEventView {
   eventId: string;
   sequence: number;
   eventType:
-    | "accepted"
-    | "handoff_created"
-    | "handoff_revoked"
-    | "completed"
-    | "cancelled"
-    | "review_submitted"
-    | "provider_response_submitted"
-    | "review_moderated"
-    | "appeal_submitted"
-    | "appeal_decided"
-    | "complaint_submitted"
-    | "complaint_linked";
-  actorKind: "customer" | "provider" | "operations" | "system";
+    | 'accepted'
+    | 'handoff_created'
+    | 'handoff_revoked'
+    | 'completed'
+    | 'cancelled'
+    | 'review_submitted'
+    | 'provider_response_submitted'
+    | 'review_moderated'
+    | 'appeal_submitted'
+    | 'appeal_decided'
+    | 'complaint_submitted'
+    | 'complaint_linked';
+  actorKind: 'customer' | 'provider' | 'operations' | 'system';
   reason: string;
   policyVersion: string;
   occurredAt: string;
@@ -46,12 +46,12 @@ export interface TrackedInteractionEventView {
 export interface ReviewEligibilityView {
   eligible: boolean;
   reasonCode:
-    | "INTERACTION_ACTIVE"
-    | "INTERACTION_CANCELLED"
-    | "WINDOW_NOT_OPEN"
-    | "WINDOW_EXPIRED"
-    | "ALREADY_REVIEWED"
-    | "ELIGIBLE";
+    | 'INTERACTION_ACTIVE'
+    | 'INTERACTION_CANCELLED'
+    | 'WINDOW_NOT_OPEN'
+    | 'WINDOW_EXPIRED'
+    | 'ALREADY_REVIEWED'
+    | 'ELIGIBLE';
   eligibleFrom: string | null;
   eligibleUntil: string | null;
 }
@@ -78,6 +78,6 @@ export interface TrackedInteractionView {
 }
 
 export interface ProviderInteractionListView {
-  providerScope: "actor_resolved";
+  providerScope: 'actor_resolved';
   items: TrackedInteractionView[];
 }

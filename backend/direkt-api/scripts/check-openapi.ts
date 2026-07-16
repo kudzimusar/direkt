@@ -111,7 +111,9 @@ async function main(): Promise<void> {
       ),
   );
   if (publicPrivatePaths.length > 0) {
-    throw new Error(`Private lifecycle routes were exposed publicly: ${publicPrivatePaths.join(', ')}`);
+    throw new Error(
+      `Private lifecycle routes were exposed publicly: ${publicPrivatePaths.join(', ')}`,
+    );
   }
 
   const subscriptionMethods = Object.keys(

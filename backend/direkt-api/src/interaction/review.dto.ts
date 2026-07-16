@@ -1,14 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import {
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  Length,
-  Max,
-  Min,
-} from "class-validator";
-import type { ReviewModerationStatus } from "./review.types";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsIn, IsInt, IsOptional, IsString, Length, Max, Min } from 'class-validator';
+import type { ReviewModerationStatus } from './review.types';
 
 export class CreateReviewDto {
   @ApiProperty({ minimum: 1, maximum: 5 })
@@ -58,9 +50,9 @@ export class CreateReviewAppealDto {
 }
 
 export class ModerateReviewDto {
-  @ApiProperty({ enum: ["published", "withheld", "removed"] })
-  @IsIn(["published", "withheld", "removed"])
-  targetStatus!: Extract<ReviewModerationStatus, "published" | "withheld" | "removed">;
+  @ApiProperty({ enum: ['published', 'withheld', 'removed'] })
+  @IsIn(['published', 'withheld', 'removed'])
+  targetStatus!: Extract<ReviewModerationStatus, 'published' | 'withheld' | 'removed'>;
 
   @ApiProperty({ minimum: 1 })
   @IsInt()
@@ -84,9 +76,9 @@ export class ModerateReviewDto {
 }
 
 export class DecideReviewAppealDto {
-  @ApiProperty({ enum: ["upheld", "denied"] })
-  @IsIn(["upheld", "denied"])
-  decisionStatus!: "upheld" | "denied";
+  @ApiProperty({ enum: ['upheld', 'denied'] })
+  @IsIn(['upheld', 'denied'])
+  decisionStatus!: 'upheld' | 'denied';
 
   @ApiProperty()
   @IsString()
@@ -105,9 +97,9 @@ export class DecideReviewAppealDto {
 }
 
 export class ReportReviewDto {
-  @ApiProperty({ enum: ["SPAM", "PRIVACY", "ABUSE", "FRAUD", "OTHER"] })
-  @IsIn(["SPAM", "PRIVACY", "ABUSE", "FRAUD", "OTHER"])
-  reasonCode!: "SPAM" | "PRIVACY" | "ABUSE" | "FRAUD" | "OTHER";
+  @ApiProperty({ enum: ['SPAM', 'PRIVACY', 'ABUSE', 'FRAUD', 'OTHER'] })
+  @IsIn(['SPAM', 'PRIVACY', 'ABUSE', 'FRAUD', 'OTHER'])
+  reasonCode!: 'SPAM' | 'PRIVACY' | 'ABUSE' | 'FRAUD' | 'OTHER';
 
   @ApiProperty()
   @IsString()
@@ -116,8 +108,8 @@ export class ReportReviewDto {
 }
 
 export class OperationsReviewQueryDto {
-  @ApiPropertyOptional({ enum: ["pending", "published", "withheld", "removed", "appealed"] })
+  @ApiPropertyOptional({ enum: ['pending', 'published', 'withheld', 'removed', 'appealed'] })
   @IsOptional()
-  @IsIn(["pending", "published", "withheld", "removed", "appealed"])
+  @IsIn(['pending', 'published', 'withheld', 'removed', 'appealed'])
   status?: ReviewModerationStatus;
 }

@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import type { PoolClient } from 'pg';
 import type { AuthenticatedActor } from '../authorization/authenticated-actor';
 import { DatabaseService } from '../platform/database/database.service';
@@ -69,39 +65,40 @@ export class InteractionHandoffRepository {
     fingerprint: string,
     requestId?: string,
   ): Promise<ContactHandoffView> {
-    return this.database.transaction(async (client) => {
-      await client.query(
-        `SELECT pg_advisory_xact_lock(hashtextextended($1 || ':' || $2, 0))`,
-        [actor.identityId, keyHash],
-      );
-      const replay = await client.query<{
-        handoff_id: string;
-        request_fingerprint: string;
-      }>(
-        `SELECT handoffs.id AS handoff_id, consents.request_fingerprint
+    return this.database
+      .transaction(async (client) => {
+        await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1 || ':' || $2, 0))`, [
+          actor.identityId,
+          keyHash,
+        ]);
+        const replay = await client.query<{
+          handoff_id: string;
+          request_fingerprint: string;
+        }>(
+          `SELECT handoffs.id AS handoff_id, consents.request_fingerprint
          FROM interaction.contact_consents AS consents
          JOIN interaction.contact_handoffs AS handoffs ON handoffs.consent_id = consents.id
          WHERE consents.customer_identity_id = $1 AND consents.idempotency_key_hash = $2
          FOR UPDATE OF consents, handoffs`,
-        [actor.identityId, keyHash],
-      );
-      const existing = replay.rows[0];
-      if (existing) {
-        if (existing.request_fingerprint !== fingerprint) {
-          throw new ConflictException(
-            'The idempotency key already exists with a different handoff request.',
-          );
+          [actor.identityId, keyHash],
+        );
+        const existing = replay.rows[0];
+        if (existing) {
+          if (existing.request_fingerprint !== fingerprint) {
+            throw new ConflictException(
+              'The idempotency key already exists with a different handoff request.',
+            );
+          }
+          return this.loadHandoff(client, existing.handoff_id, 'customer', actor.identityId);
         }
-        return this.loadHandoff(client, existing.handoff_id, 'customer', actor.identityId);
-      }
 
-      const scope = await client.query<{
-        interaction_id: string;
-        customer_identity_id: string;
-        provider_id: string;
-        contact_display_hint: string;
-      }>(
-        `SELECT tracked.id AS interaction_id,
+        const scope = await client.query<{
+          interaction_id: string;
+          customer_identity_id: string;
+          provider_id: string;
+          contact_display_hint: string;
+        }>(
+          `SELECT tracked.id AS interaction_id,
                 enquiries.customer_identity_id,
                 enquiries.provider_id,
                 contacts.display_hint AS contact_display_hint
@@ -116,83 +113,92 @@ export class InteractionHandoffRepository {
            AND contacts.channel = 'phone'
            AND contacts.verified_at IS NOT NULL
          FOR UPDATE OF enquiries, tracked, contacts`,
-        [enquiryId, actor.identityId, dto.contactId],
-      );
-      const row = scope.rows[0];
-      if (!row) {
-        throw new NotFoundException(
-          'An accepted owned enquiry with an active interaction and verified phone contact was not found.',
+          [enquiryId, actor.identityId, dto.contactId],
         );
-      }
+        const row = scope.rows[0];
+        if (!row) {
+          throw new NotFoundException(
+            'An accepted owned enquiry with an active interaction and verified phone contact was not found.',
+          );
+        }
 
-      const consent = await client.query<{ id: string; expires_at: Date }>(
-        `INSERT INTO interaction.contact_consents (
+        const consent = await client.query<{ id: string; expires_at: Date }>(
+          `INSERT INTO interaction.contact_consents (
            interaction_id, enquiry_id, customer_identity_id, provider_id,
            contact_id, channel, contact_display_hint, policy_version,
            idempotency_key_hash, request_fingerprint, expires_at
          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now() + interval '24 hours')
          RETURNING id, expires_at`,
-        [
-          row.interaction_id,
-          enquiryId,
-          actor.identityId,
-          row.provider_id,
-          dto.contactId,
-          dto.channel,
-          row.contact_display_hint,
-          dto.policyVersion.trim(),
-          keyHash,
-          fingerprint,
-        ],
-      );
-      const consentRow = consent.rows[0];
-      if (!consentRow) throw new Error('Contact consent creation returned no identifier.');
+          [
+            row.interaction_id,
+            enquiryId,
+            actor.identityId,
+            row.provider_id,
+            dto.contactId,
+            dto.channel,
+            row.contact_display_hint,
+            dto.policyVersion.trim(),
+            keyHash,
+            fingerprint,
+          ],
+        );
+        const consentRow = consent.rows[0];
+        if (!consentRow) throw new Error('Contact consent creation returned no identifier.');
 
-      const handoff = await client.query<{ id: string }>(
-        `INSERT INTO interaction.contact_handoffs (
+        const handoff = await client.query<{ id: string }>(
+          `INSERT INTO interaction.contact_handoffs (
            consent_id, interaction_id, enquiry_id, customer_identity_id,
            provider_id, channel, contact_display_hint, expires_at
          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING id`,
-        [
-          consentRow.id,
-          row.interaction_id,
-          enquiryId,
-          actor.identityId,
-          row.provider_id,
-          dto.channel,
-          row.contact_display_hint,
-          consentRow.expires_at,
-        ],
-      );
-      const handoffId = handoff.rows[0]?.id;
-      if (!handoffId) throw new Error('Contact handoff creation returned no identifier.');
+          [
+            consentRow.id,
+            row.interaction_id,
+            enquiryId,
+            actor.identityId,
+            row.provider_id,
+            dto.channel,
+            row.contact_display_hint,
+            consentRow.expires_at,
+          ],
+        );
+        const handoffId = handoff.rows[0]?.id;
+        if (!handoffId) throw new Error('Contact handoff creation returned no identifier.');
 
-      await client.query(
-        `SELECT interaction.append_interaction_event(
+        await client.query(
+          `SELECT interaction.append_interaction_event(
            $1, 'handoff_created', 'customer', $2,
            'Customer granted a time-limited channel-specific contact handoff.',
            $3, jsonb_build_object('channel', $4, 'rawContactIncluded', false, 'externalDeliveryAttempted', false)
          )`,
-        [row.interaction_id, actor.identityId, dto.policyVersion.trim(), dto.channel],
-      );
-      await this.audit(client, actor, row.provider_id, requestId, 'interaction_contact_handoff_created', handoffId, {
-        interactionId: row.interaction_id,
-        channel: dto.channel,
-        rawContactIncluded: false,
-        externalDeliveryAttempted: false,
-        trustOrPublicationMutation: false,
-      });
-      return this.loadHandoff(client, handoffId, 'customer', actor.identityId);
-    }).catch((error: unknown) => {
-      const code = (error as { code?: string }).code;
-      if (code === '23P01') {
-        throw new ConflictException(
-          'A current contact handoff already exists for this interaction and channel.',
+          [row.interaction_id, actor.identityId, dto.policyVersion.trim(), dto.channel],
         );
-      }
-      throw error;
-    });
+        await this.audit(
+          client,
+          actor,
+          row.provider_id,
+          requestId,
+          'interaction_contact_handoff_created',
+          handoffId,
+          {
+            interactionId: row.interaction_id,
+            channel: dto.channel,
+            rawContactIncluded: false,
+            externalDeliveryAttempted: false,
+            trustOrPublicationMutation: false,
+          },
+        );
+        return this.loadHandoff(client, handoffId, 'customer', actor.identityId);
+      })
+      .catch((error: unknown) => {
+        const code = (error as { code?: string }).code;
+        if (code === '23P01') {
+          throw new ConflictException(
+            'A current contact handoff already exists for this interaction and channel.',
+          );
+        }
+        throw error;
+      });
   }
 
   listCustomerHandoffs(
@@ -212,10 +218,7 @@ export class InteractionHandoffRepository {
     });
   }
 
-  providerHandoff(
-    actor: AuthenticatedActor,
-    enquiryId: string,
-  ): Promise<ContactHandoffView> {
+  providerHandoff(actor: AuthenticatedActor, enquiryId: string): Promise<ContactHandoffView> {
     return this.database.transaction(async (client) => {
       const providerId = await this.providerContext(client, actor.identityId);
       const row = await client.query<{ id: string }>(
@@ -247,14 +250,24 @@ export class InteractionHandoffRepository {
       );
       const providerId = scope.rows[0]?.provider_id;
       if (!providerId) throw new NotFoundException('Contact handoff was not found.');
-      await client.query(
-        `SELECT (interaction.revoke_contact_handoff($1, $2, $3, $4)).id`,
-        [handoffId, actor.identityId, reason.trim(), policyVersion.trim()],
+      await client.query(`SELECT (interaction.revoke_contact_handoff($1, $2, $3, $4)).id`, [
+        handoffId,
+        actor.identityId,
+        reason.trim(),
+        policyVersion.trim(),
+      ]);
+      await this.audit(
+        client,
+        actor,
+        providerId,
+        requestId,
+        'interaction_contact_handoff_revoked',
+        handoffId,
+        {
+          enquiryId,
+          rawContactIncluded: false,
+        },
       );
-      await this.audit(client, actor, providerId, requestId, 'interaction_contact_handoff_revoked', handoffId, {
-        enquiryId,
-        rawContactIncluded: false,
-      });
       return this.loadHandoff(client, handoffId, 'customer', actor.identityId);
     });
   }
@@ -332,8 +345,14 @@ export class InteractionHandoffRepository {
       [handoffId, scopeId],
     );
     const row = result.rows[0];
-    if (!row) throw new NotFoundException('Contact handoff was not found in the authenticated scope.');
-    const status = row.stored_status === 'revoked' ? 'revoked' : row.expires_at <= new Date() ? 'expired' : 'active';
+    if (!row)
+      throw new NotFoundException('Contact handoff was not found in the authenticated scope.');
+    const status =
+      row.stored_status === 'revoked'
+        ? 'revoked'
+        : row.expires_at <= new Date()
+          ? 'expired'
+          : 'active';
     return {
       handoffId: row.handoff_id,
       interactionId: row.interaction_id,
@@ -382,7 +401,8 @@ export class InteractionHandoffRepository {
       [interactionId, scopeId],
     );
     const row = result.rows[0];
-    if (!row) throw new NotFoundException('Tracked interaction was not found in the authenticated scope.');
+    if (!row)
+      throw new NotFoundException('Tracked interaction was not found in the authenticated scope.');
     const [events, handoffs] = await Promise.all([
       client.query<EventRow>(
         `SELECT id, sequence, event_type, actor_kind, reason, policy_version, occurred_at
@@ -439,10 +459,20 @@ export class InteractionHandoffRepository {
       };
     }
     if (row.status === 'active') {
-      return { eligible: false, reasonCode: 'INTERACTION_ACTIVE', eligibleFrom: null, eligibleUntil: null };
+      return {
+        eligible: false,
+        reasonCode: 'INTERACTION_ACTIVE',
+        eligibleFrom: null,
+        eligibleUntil: null,
+      };
     }
     if (row.status === 'cancelled') {
-      return { eligible: false, reasonCode: 'INTERACTION_CANCELLED', eligibleFrom: null, eligibleUntil: null };
+      return {
+        eligible: false,
+        reasonCode: 'INTERACTION_CANCELLED',
+        eligibleFrom: null,
+        eligibleUntil: null,
+      };
     }
     const now = Date.now();
     const from = row.review_eligible_from?.getTime() ?? Number.POSITIVE_INFINITY;
@@ -470,8 +500,10 @@ export class InteractionHandoffRepository {
        ORDER BY assignments.provider_id LIMIT 2`,
       [identityId],
     );
-    if (result.rows.length === 0) throw new NotFoundException('No active provider workspace was found.');
-    if (result.rows.length > 1) throw new ConflictException('A server-owned provider workspace context is required.');
+    if (result.rows.length === 0)
+      throw new NotFoundException('No active provider workspace was found.');
+    if (result.rows.length > 1)
+      throw new ConflictException('A server-owned provider workspace context is required.');
     return (result.rows[0] as { provider_id: string }).provider_id;
   }
 
@@ -489,7 +521,14 @@ export class InteractionHandoffRepository {
          request_id, actor_type, actor_id, provider_id, action,
          resource_type, resource_id, outcome, metadata
        ) VALUES ($1, 'identity', $2, $3, $4, 'tracked_interaction', $5, 'success', $6::jsonb)`,
-      [requestId ?? null, actor.identityId, providerId, action, resourceId, JSON.stringify(metadata)],
+      [
+        requestId ?? null,
+        actor.identityId,
+        providerId,
+        action,
+        resourceId,
+        JSON.stringify(metadata),
+      ],
     );
   }
 }

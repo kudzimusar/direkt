@@ -1,22 +1,12 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import {
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  Length,
-  Min,
-} from "class-validator";
-import type {
-  InteractionComplaintStatus,
-  InteractionComplaintType,
-} from "./complaint.types";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsIn, IsInt, IsOptional, IsString, Length, Min } from 'class-validator';
+import type { InteractionComplaintStatus, InteractionComplaintType } from './complaint.types';
 
 export class CreateInteractionComplaintDto {
   @ApiProperty({
-    enum: ["service_quality", "contact_privacy", "provider_conduct", "other"],
+    enum: ['service_quality', 'contact_privacy', 'provider_conduct', 'other'],
   })
-  @IsIn(["service_quality", "contact_privacy", "provider_conduct", "other"])
+  @IsIn(['service_quality', 'contact_privacy', 'provider_conduct', 'other'])
   complaintType!: InteractionComplaintType;
 
   @ApiProperty()
@@ -31,12 +21,9 @@ export class CreateInteractionComplaintDto {
 }
 
 export class TransitionInteractionComplaintDto {
-  @ApiProperty({ enum: ["triaged", "resolved", "closed"] })
-  @IsIn(["triaged", "resolved", "closed"])
-  targetStatus!: Extract<
-    InteractionComplaintStatus,
-    "triaged" | "resolved" | "closed"
-  >;
+  @ApiProperty({ enum: ['triaged', 'resolved', 'closed'] })
+  @IsIn(['triaged', 'resolved', 'closed'])
+  targetStatus!: Extract<InteractionComplaintStatus, 'triaged' | 'resolved' | 'closed'>;
 
   @ApiProperty({ minimum: 1 })
   @IsInt()
@@ -55,8 +42,8 @@ export class TransitionInteractionComplaintDto {
 }
 
 export class OperationsComplaintQueryDto {
-  @ApiPropertyOptional({ enum: ["submitted", "triaged", "resolved", "closed"] })
+  @ApiPropertyOptional({ enum: ['submitted', 'triaged', 'resolved', 'closed'] })
   @IsOptional()
-  @IsIn(["submitted", "triaged", "resolved", "closed"])
+  @IsIn(['submitted', 'triaged', 'resolved', 'closed'])
   status?: InteractionComplaintStatus;
 }

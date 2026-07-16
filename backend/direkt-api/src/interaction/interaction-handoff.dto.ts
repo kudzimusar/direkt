@@ -1,13 +1,13 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsIn, IsString, IsUUID, Length } from "class-validator";
-import type { ContactHandoffChannel } from "./interaction-handoff.types";
+import { ApiProperty } from '@nestjs/swagger';
+import { IsIn, IsString, IsUUID, Length } from 'class-validator';
+import type { ContactHandoffChannel } from './interaction-handoff.types';
 
 export class CreateContactHandoffDto {
-  @ApiProperty({ enum: ["call", "whatsapp"] })
-  @IsIn(["call", "whatsapp"])
+  @ApiProperty({ enum: ['call', 'whatsapp'] })
+  @IsIn(['call', 'whatsapp'])
   channel!: ContactHandoffChannel;
 
-  @ApiProperty({ format: "uuid" })
+  @ApiProperty({ format: 'uuid' })
   @IsUUID()
   contactId!: string;
 

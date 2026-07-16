@@ -1,12 +1,12 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
-import { createHash } from "node:crypto";
-import type { AuthenticatedActor } from "../authorization/authenticated-actor";
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { createHash } from 'node:crypto';
+import type { AuthenticatedActor } from '../authorization/authenticated-actor';
 import type {
   CreateInteractionComplaintDto,
   OperationsComplaintQueryDto,
   TransitionInteractionComplaintDto,
-} from "./complaint.dto";
-import { ComplaintRepository } from "./complaint.repository";
+} from './complaint.dto';
+import { ComplaintRepository } from './complaint.repository';
 
 @Injectable()
 export class ComplaintService {
@@ -21,7 +21,7 @@ export class ComplaintService {
   ) {
     const normalizedKey = idempotencyKey?.trim();
     if (!normalizedKey || normalizedKey.length < 8 || normalizedKey.length > 200) {
-      throw new BadRequestException("A valid Idempotency-Key header is required.");
+      throw new BadRequestException('A valid Idempotency-Key header is required.');
     }
     return this.repository.create(
       actor,
@@ -62,6 +62,6 @@ export class ComplaintService {
   }
 
   private hash(value: string): string {
-    return createHash("sha256").update(value, "utf8").digest("hex");
+    return createHash('sha256').update(value, 'utf8').digest('hex');
   }
 }

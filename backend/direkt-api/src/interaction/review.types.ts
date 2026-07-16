@@ -1,6 +1,5 @@
-export type ReviewModerationStatus =
-  "pending" | "published" | "withheld" | "removed" | "appealed";
-export type ReviewAppealStatus = "submitted" | "upheld" | "denied";
+export type ReviewModerationStatus = 'pending' | 'published' | 'withheld' | 'removed' | 'appealed';
+export type ReviewAppealStatus = 'submitted' | 'upheld' | 'denied';
 
 export interface ProviderReviewResponseView {
   responseId: string;
@@ -11,7 +10,7 @@ export interface ProviderReviewResponseView {
 
 export interface ReviewAppealView {
   appealId: string;
-  appellantScope: "customer" | "provider";
+  appellantScope: 'customer' | 'provider';
   reason: string;
   status: ReviewAppealStatus;
   createdAt: string;
@@ -63,11 +62,11 @@ export interface PublicReviewView {
 }
 
 export interface ProviderReviewListView {
-  providerScope: "actor_resolved";
+  providerScope: 'actor_resolved';
   items: ReviewView[];
 }
 
 export interface OperationsReviewListView {
   items: ReviewView[];
-  moderationScope: "privacy_safe";
+  moderationScope: 'privacy_safe';
 }

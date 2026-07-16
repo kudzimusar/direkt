@@ -65,58 +65,68 @@ export class ReviewRepository {
     dto: CreateReviewDto,
     requestId?: string,
   ): Promise<ReviewView> {
-    return this.database.transaction(async (client) => {
-      const scope = await client.query<{
-        customer_identity_id: string;
-        publication_id: string;
-        provider_id: string;
-        category_id: string;
-      }>(
-        `SELECT customer_identity_id, publication_id, provider_id, category_id
+    return this.database
+      .transaction(async (client) => {
+        const scope = await client.query<{
+          customer_identity_id: string;
+          publication_id: string;
+          provider_id: string;
+          category_id: string;
+        }>(
+          `SELECT customer_identity_id, publication_id, provider_id, category_id
          FROM interaction.tracked_interactions
          WHERE id = $1 AND customer_identity_id = $2
          FOR UPDATE`,
-        [interactionId, actor.identityId],
-      );
-      const row = scope.rows[0];
-      if (!row) throw new NotFoundException('Qualifying tracked interaction was not found.');
-      const inserted = await client.query<{ id: string }>(
-        `INSERT INTO interaction.reviews (
+          [interactionId, actor.identityId],
+        );
+        const row = scope.rows[0];
+        if (!row) throw new NotFoundException('Qualifying tracked interaction was not found.');
+        const inserted = await client.query<{ id: string }>(
+          `INSERT INTO interaction.reviews (
            interaction_id, customer_identity_id, publication_id, provider_id,
            category_id, rating, title, body, policy_version
          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING id`,
-        [
-          interactionId,
-          actor.identityId,
-          row.publication_id,
+          [
+            interactionId,
+            actor.identityId,
+            row.publication_id,
+            row.provider_id,
+            row.category_id,
+            dto.rating,
+            dto.title.trim(),
+            dto.body.trim(),
+            dto.policyVersion.trim(),
+          ],
+        );
+        const reviewId = inserted.rows[0]?.id;
+        if (!reviewId) throw new Error('Review creation returned no identifier.');
+        await this.audit(
+          client,
+          actor,
           row.provider_id,
-          row.category_id,
-          dto.rating,
-          dto.title.trim(),
-          dto.body.trim(),
-          dto.policyVersion.trim(),
-        ],
-      );
-      const reviewId = inserted.rows[0]?.id;
-      if (!reviewId) throw new Error('Review creation returned no identifier.');
-      await this.audit(client, actor, row.provider_id, requestId, 'interaction_review_created', reviewId, {
-        interactionId,
-        rating: dto.rating,
-        trustOrRankingMutation: false,
+          requestId,
+          'interaction_review_created',
+          reviewId,
+          {
+            interactionId,
+            rating: dto.rating,
+            trustOrRankingMutation: false,
+          },
+        );
+        return this.load(client, reviewId, 'customer', actor.identityId);
+      })
+      .catch((error: unknown) => {
+        const code = (error as { code?: string }).code;
+        if (code === '23505') {
+          throw new ConflictException('This tracked interaction already has a review.');
+        }
+        const message = error instanceof Error ? error.message : '';
+        if (message.includes('qualifying tracked interaction')) {
+          throw new BadRequestException(message);
+        }
+        throw error;
       });
-      return this.load(client, reviewId, 'customer', actor.identityId);
-    }).catch((error: unknown) => {
-      const code = (error as { code?: string }).code;
-      if (code === '23505') {
-        throw new ConflictException('This tracked interaction already has a review.');
-      }
-      const message = error instanceof Error ? error.message : '';
-      if (message.includes('qualifying tracked interaction')) {
-        throw new BadRequestException(message);
-      }
-      throw error;
-    });
   }
 
   listCustomer(actor: AuthenticatedActor): Promise<ReviewView[]> {
@@ -126,7 +136,9 @@ export class ReviewRepository {
          WHERE customer_identity_id = $1 ORDER BY created_at DESC, id DESC`,
         [actor.identityId],
       );
-      return Promise.all(ids.rows.map((row) => this.load(client, row.id, 'customer', actor.identityId)));
+      return Promise.all(
+        ids.rows.map((row) => this.load(client, row.id, 'customer', actor.identityId)),
+      );
     });
   }
 
@@ -174,9 +186,17 @@ export class ReviewRepository {
         }
         throw error;
       }
-      await this.audit(client, actor, providerId, requestId, 'interaction_provider_review_response_created', reviewId, {
-        trustOrRankingMutation: false,
-      });
+      await this.audit(
+        client,
+        actor,
+        providerId,
+        requestId,
+        'interaction_provider_review_response_created',
+        reviewId,
+        {
+          trustOrRankingMutation: false,
+        },
+      );
       return this.load(client, reviewId, 'provider', providerId);
     });
   }
@@ -215,7 +235,9 @@ export class ReviewRepository {
       );
       return {
         moderationScope: 'privacy_safe',
-        items: await Promise.all(ids.rows.map((row) => this.load(client, row.id, 'operations', ''))),
+        items: await Promise.all(
+          ids.rows.map((row) => this.load(client, row.id, 'operations', '')),
+        ),
       };
     });
   }
@@ -229,26 +251,31 @@ export class ReviewRepository {
     return this.database.transaction(async (client) => {
       const providerId = await this.providerId(client, reviewId);
       try {
-        await client.query(
-          `SELECT (interaction.moderate_review($1, $2, $3, $4, $5, $6, $7)).id`,
-          [
-            reviewId,
-            actor.identityId,
-            dto.targetStatus,
-            dto.reasonCode.trim().toUpperCase(),
-            dto.reason.trim(),
-            dto.policyVersion.trim(),
-            dto.expectedRevision,
-          ],
-        );
+        await client.query(`SELECT (interaction.moderate_review($1, $2, $3, $4, $5, $6, $7)).id`, [
+          reviewId,
+          actor.identityId,
+          dto.targetStatus,
+          dto.reasonCode.trim().toUpperCase(),
+          dto.reason.trim(),
+          dto.policyVersion.trim(),
+          dto.expectedRevision,
+        ]);
       } catch (error) {
         throw this.lifecycleError(error, 'Review');
       }
-      await this.audit(client, actor, providerId, requestId, 'interaction_review_moderated', reviewId, {
-        targetStatus: dto.targetStatus,
-        reasonCode: dto.reasonCode.trim().toUpperCase(),
-        trustOrRankingMutation: false,
-      });
+      await this.audit(
+        client,
+        actor,
+        providerId,
+        requestId,
+        'interaction_review_moderated',
+        reviewId,
+        {
+          targetStatus: dto.targetStatus,
+          reasonCode: dto.reasonCode.trim().toUpperCase(),
+          trustOrRankingMutation: false,
+        },
+      );
       return this.load(client, reviewId, 'operations', '');
     });
   }
@@ -270,24 +297,29 @@ export class ReviewRepository {
       const row = scope.rows[0];
       if (!row) throw new NotFoundException('Review appeal was not found.');
       try {
-        await client.query(
-          `SELECT (interaction.decide_review_appeal($1, $2, $3, $4, $5, $6)).id`,
-          [
-            appealId,
-            actor.identityId,
-            dto.decisionStatus,
-            dto.reasonCode.trim().toUpperCase(),
-            dto.reason.trim(),
-            dto.policyVersion.trim(),
-          ],
-        );
+        await client.query(`SELECT (interaction.decide_review_appeal($1, $2, $3, $4, $5, $6)).id`, [
+          appealId,
+          actor.identityId,
+          dto.decisionStatus,
+          dto.reasonCode.trim().toUpperCase(),
+          dto.reason.trim(),
+          dto.policyVersion.trim(),
+        ]);
       } catch (error) {
         throw this.lifecycleError(error, 'Appeal');
       }
-      await this.audit(client, actor, row.provider_id, requestId, 'interaction_review_appeal_decided', appealId, {
-        decision: dto.decisionStatus,
-        reasonCode: dto.reasonCode.trim().toUpperCase(),
-      });
+      await this.audit(
+        client,
+        actor,
+        row.provider_id,
+        requestId,
+        'interaction_review_appeal_decided',
+        appealId,
+        {
+          decision: dto.decisionStatus,
+          reasonCode: dto.reasonCode.trim().toUpperCase(),
+        },
+      );
       return this.load(client, row.review_id, 'operations', '');
     });
   }
@@ -333,7 +365,9 @@ export class ReviewRepository {
          ORDER BY reviews.published_at DESC, reviews.id DESC LIMIT 100`,
         [publicProviderId],
       );
-      const views = await Promise.all(ids.rows.map((row) => this.load(client, row.id, 'operations', '')));
+      const views = await Promise.all(
+        ids.rows.map((row) => this.load(client, row.id, 'operations', '')),
+      );
       return views.map((view): PublicReviewView => ({
         reviewId: view.reviewId,
         publicProviderId: view.publicProviderId,
@@ -367,18 +401,35 @@ export class ReviewRepository {
           `INSERT INTO interaction.review_appeals (
              review_id, appellant_scope, appellant_identity_id, provider_id, reason, policy_version
            ) VALUES ($1, $2, $3, $4, $5, $6)`,
-          [reviewId, scope, actor.identityId, providerId, dto.reason.trim(), dto.policyVersion.trim()],
+          [
+            reviewId,
+            scope,
+            actor.identityId,
+            providerId,
+            dto.reason.trim(),
+            dto.policyVersion.trim(),
+          ],
         );
       } catch (error) {
         if ((error as { code?: string }).code === '23505') {
-          throw new ConflictException('A submitted appeal already exists for this review and scope.');
+          throw new ConflictException(
+            'A submitted appeal already exists for this review and scope.',
+          );
         }
         throw this.lifecycleError(error, 'Appeal');
       }
       const resolvedProviderId = providerId ?? (await this.providerId(client, reviewId));
-      await this.audit(client, actor, resolvedProviderId, requestId, 'interaction_review_appeal_created', reviewId, {
-        appellantScope: scope,
-      });
+      await this.audit(
+        client,
+        actor,
+        resolvedProviderId,
+        requestId,
+        'interaction_review_appeal_created',
+        reviewId,
+        {
+          appellantScope: scope,
+        },
+      );
       return this.load(
         client,
         reviewId,
@@ -504,8 +555,10 @@ export class ReviewRepository {
        ORDER BY assignments.provider_id LIMIT 2`,
       [identityId],
     );
-    if (result.rows.length === 0) throw new NotFoundException('No active provider workspace was found.');
-    if (result.rows.length > 1) throw new ConflictException('A server-owned provider workspace context is required.');
+    if (result.rows.length === 0)
+      throw new NotFoundException('No active provider workspace was found.');
+    if (result.rows.length > 1)
+      throw new ConflictException('A server-owned provider workspace context is required.');
     return (result.rows[0] as { provider_id: string }).provider_id;
   }
 
@@ -542,7 +595,14 @@ export class ReviewRepository {
          request_id, actor_type, actor_id, provider_id, action,
          resource_type, resource_id, outcome, metadata
        ) VALUES ($1, 'identity', $2, $3, $4, 'interaction_review', $5, 'success', $6::jsonb)`,
-      [requestId ?? null, actor.identityId, providerId, action, resourceId, JSON.stringify(metadata)],
+      [
+        requestId ?? null,
+        actor.identityId,
+        providerId,
+        action,
+        resourceId,
+        JSON.stringify(metadata),
+      ],
     );
   }
 }

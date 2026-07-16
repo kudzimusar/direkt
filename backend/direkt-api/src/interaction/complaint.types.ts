@@ -1,14 +1,13 @@
 export type InteractionComplaintType =
-  "service_quality" | "contact_privacy" | "provider_conduct" | "other";
-export type InteractionComplaintStatus =
-  "submitted" | "triaged" | "resolved" | "closed";
+  'service_quality' | 'contact_privacy' | 'provider_conduct' | 'other';
+export type InteractionComplaintStatus = 'submitted' | 'triaged' | 'resolved' | 'closed';
 
 export interface InteractionComplaintEventView {
   eventId: string;
   sequence: number;
   fromStatus: InteractionComplaintStatus | null;
   toStatus: InteractionComplaintStatus;
-  actorKind: "customer" | "operations";
+  actorKind: 'customer' | 'operations';
   reason: string;
   policyVersion: string;
   occurredAt: string;
