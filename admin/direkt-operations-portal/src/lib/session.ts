@@ -1,11 +1,5 @@
 export type OperationsRole =
-  | 'field_agent'
-  | 'reviewer'
-  | 'support'
-  | 'trust_supervisor'
-  | 'finance'
-  | 'auditor'
-  | 'admin';
+  'field_agent' | 'reviewer' | 'support' | 'trust_supervisor' | 'finance' | 'auditor' | 'admin';
 
 export interface OperationsSession {
   synthetic: true;
