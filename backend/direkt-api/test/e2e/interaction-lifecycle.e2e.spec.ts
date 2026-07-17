@@ -91,6 +91,23 @@ interface TrustStateCounts {
   publications: string;
 }
 
+interface OperationsInteractionListView {
+  interactionScope: 'privacy_safe';
+  items: Array<{
+    interactionId: string;
+    customerIdentityExposed: false;
+    contactIncluded: false;
+    privateEvidenceIncluded: false;
+    internalModerationRationaleIncluded: false;
+    trustOrRankingMutation: false;
+  }>;
+}
+
+interface OperationsComplaintListView {
+  phase7IncidentDataIncluded: false;
+  items: ComplaintView[];
+}
+
 describe('Phase 8 consent, review, appeal and complaint closed loop', () => {
   const url = databaseUrl();
   const pool = new Pool({ connectionString: url, max: 4 });
@@ -122,7 +139,11 @@ describe('Phase 8 consent, review, appeal and complaint closed loop', () => {
     return verified.body as SessionResponse;
   }
 
-  async function grantGlobalRole(identityId: string, roleKey: string, reason: string): Promise<void> {
+  async function grantGlobalRole(
+    identityId: string,
+    roleKey: string,
+    reason: string,
+  ): Promise<void> {
     await pool.query(
       `INSERT INTO authz.role_assignments (
          identity_id, role_id, scope_type, assigned_by_identity_id, reason
@@ -146,7 +167,10 @@ describe('Phase 8 consent, review, appeal and complaint closed loop', () => {
     );
   }
 
-  async function seedPublishedProvider(): Promise<{ providerId: string; publicProviderId: string }> {
+  async function seedPublishedProvider(): Promise<{
+    providerId: string;
+    publicProviderId: string;
+  }> {
     const seededProviderId = randomUUID();
     await pool.query(
       `INSERT INTO provider.organizations (
@@ -477,21 +501,21 @@ describe('Phase 8 consent, review, appeal and complaint closed loop', () => {
       .get('/api/v1/operations/interactions')
       .set('authorization', `Bearer ${operator.accessToken}`)
       .expect(200);
-    expect(operationsInteractions.body).toMatchObject({
-      interactionScope: 'privacy_safe',
-      items: expect.arrayContaining([
-        expect.objectContaining({
-          interactionId,
-          customerIdentityExposed: false,
-          contactIncluded: false,
-          privateEvidenceIncluded: false,
-          internalModerationRationaleIncluded: false,
-          trustOrRankingMutation: false,
-        }),
-      ]),
+    const operationsInteractionBody = operationsInteractions.body as OperationsInteractionListView;
+    expect(operationsInteractionBody.interactionScope).toBe('privacy_safe');
+    const operationsInteraction = operationsInteractionBody.items.find(
+      (item) => item.interactionId === interactionId,
+    );
+    expect(operationsInteraction).toMatchObject({
+      interactionId,
+      customerIdentityExposed: false,
+      contactIncluded: false,
+      privateEvidenceIncluded: false,
+      internalModerationRationaleIncluded: false,
+      trustOrRankingMutation: false,
     });
-    expect(JSON.stringify(operationsInteractions.body)).not.toContain('+260 ••• •• 104');
-    expect(JSON.stringify(operationsInteractions.body)).not.toContain(customer.identityId);
+    expect(JSON.stringify(operationsInteractionBody)).not.toContain('+260 ••• •• 104');
+    expect(JSON.stringify(operationsInteractionBody)).not.toContain(customer.identityId);
 
     const revoked = await request(httpServer())
       .post(`/api/v1/enquiries/${enquiry.enquiryId}/handoffs/${handoff.handoffId}/revoke`)
@@ -632,27 +656,31 @@ describe('Phase 8 consent, review, appeal and complaint closed loop', () => {
       .send({
         decisionStatus: 'denied',
         reasonCode: 'PRIVACY_REMAINS',
-        reason: 'The bounded privacy concern remains and the prior withheld state must be restored.',
+        reason:
+          'The bounded privacy concern remains and the prior withheld state must be restored.',
         policyVersion: 'phase8-lifecycle-v1',
       })
       .expect(200);
-    expect(deniedAppeal.body as ReviewView).toMatchObject({
+    const deniedAppealReview = deniedAppeal.body as ReviewView;
+    expect(deniedAppealReview).toMatchObject({
       moderationStatus: 'withheld',
       revision: 4,
-      appeals: expect.arrayContaining([
-        expect.objectContaining({
-          appealId: firstAppealId,
-          status: 'denied',
-          decisionReasonCode: 'PRIVACY_REMAINS',
-        }),
-      ]),
+    });
+    const decidedAppeal = deniedAppealReview.appeals.find(
+      (appeal) => appeal.appealId === firstAppealId,
+    );
+    expect(decidedAppeal).toMatchObject({
+      appealId: firstAppealId,
+      status: 'denied',
+      decisionReasonCode: 'PRIVACY_REMAINS',
     });
 
     const secondAppealResponse = await request(httpServer())
       .post(`/api/v1/reviews/${review.reviewId}/appeals`)
       .set('authorization', `Bearer ${customer.accessToken}`)
       .send({
-        reason: 'A corrected synthetic privacy explanation is available for a second bounded appeal.',
+        reason:
+          'A corrected synthetic privacy explanation is available for a second bounded appeal.',
         policyVersion: 'phase8-lifecycle-v1',
       })
       .expect(200);
@@ -768,15 +796,15 @@ describe('Phase 8 consent, review, appeal and complaint closed loop', () => {
       .get('/api/v1/operations/interaction-complaints')
       .set('authorization', `Bearer ${operator.accessToken}`)
       .expect(200);
-    expect(operationsComplaints.body).toMatchObject({
-      phase7IncidentDataIncluded: false,
-      items: expect.arrayContaining([
-        expect.objectContaining({
-          complaintId: complaint.complaintId,
-          phase7IncidentLinked: false,
-          contactIncluded: false,
-        }),
-      ]),
+    const operationsComplaintBody = operationsComplaints.body as OperationsComplaintListView;
+    expect(operationsComplaintBody.phase7IncidentDataIncluded).toBe(false);
+    const operationsComplaint = operationsComplaintBody.items.find(
+      (item) => item.complaintId === complaint.complaintId,
+    );
+    expect(operationsComplaint).toMatchObject({
+      complaintId: complaint.complaintId,
+      phase7IncidentLinked: false,
+      contactIncluded: false,
     });
 
     await request(httpServer())
@@ -853,15 +881,15 @@ describe('Phase 8 consent, review, appeal and complaint closed loop', () => {
         review.reviewId,
         'Direct content mutation must be blocked by the database lifecycle guard.',
       ]),
-    ).rejects.toThrow(/immutable/i);
+    ).rejects.toThrow(/immutable|append-only/i);
     await expect(
       pool.query('DELETE FROM interaction.provider_review_responses WHERE review_id = $1', [
         review.reviewId,
       ]),
-    ).rejects.toThrow(/immutable/i);
+    ).rejects.toThrow(/immutable|append-only/i);
     await expect(
       pool.query('DELETE FROM interaction.reviews WHERE id = $1', [review.reviewId]),
-    ).rejects.toThrow(/immutable/i);
+    ).rejects.toThrow(/immutable|append-only/i);
 
     const afterTrust = await trustState();
     expect(afterTrust).toEqual(beforeTrust);

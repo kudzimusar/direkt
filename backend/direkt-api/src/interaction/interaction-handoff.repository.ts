@@ -164,7 +164,7 @@ export class InteractionHandoffRepository {
           `SELECT interaction.append_interaction_event(
            $1, 'handoff_created', 'customer', $2,
            'Customer granted a time-limited channel-specific contact handoff.',
-           $3, jsonb_build_object('channel', $4, 'rawContactIncluded', false, 'externalDeliveryAttempted', false)
+           $3, jsonb_build_object('channel', $4::text, 'rawContactIncluded', false, 'externalDeliveryAttempted', false)
          )`,
           [row.interaction_id, actor.identityId, dto.policyVersion.trim(), dto.channel],
         );
@@ -180,7 +180,6 @@ export class InteractionHandoffRepository {
             channel: dto.channel,
             rawContactIncluded: false,
             externalDeliveryAttempted: false,
-            trustOrPublicationMutation: false,
           },
         );
         return this.loadHandoff(client, handoffId, 'customer', actor.identityId);
@@ -363,7 +362,6 @@ export class InteractionHandoffRepository {
       deliveryState: 'disabled',
       externalDeliveryAttempted: false,
       rawContactIncluded: false,
-      trustOrPublicationMutation: false,
       synthetic: true,
     };
   }
@@ -441,49 +439,64 @@ export class InteractionHandoffRepository {
         reason: event.reason,
         policyVersion: event.policy_version,
         occurredAt: event.occurred_at.toISOString(),
-        actorIdentifierIncluded: false,
-        contactIncluded: false,
-        privateEvidenceIncluded: false,
-        internalModerationIncluded: false,
+        actorIdentityExposed: false,
+        privateMetadataIncluded: false,
       })),
       customerContactIncluded: false,
       privateEvidenceIncluded: false,
       internalModerationIncluded: false,
-      trustOrPublicationMutation: false,
       synthetic: true,
     };
   }
 
   private eligibility(row: InteractionRow, now: number): ReviewEligibilityView {
     if (row.status === 'active') {
-      return { eligible: false, reasonCode: 'INTERACTION_ACTIVE', eligibleUntil: null };
+      return {
+        eligible: false,
+        reasonCode: 'INTERACTION_ACTIVE',
+        eligibleFrom: null,
+        eligibleUntil: null,
+      };
     }
     if (row.status === 'cancelled') {
-      return { eligible: false, reasonCode: 'INTERACTION_CANCELLED', eligibleUntil: null };
+      return {
+        eligible: false,
+        reasonCode: 'INTERACTION_CANCELLED',
+        eligibleFrom: null,
+        eligibleUntil: null,
+      };
     }
     if (row.review_exists) {
-      return { eligible: false, reasonCode: 'REVIEW_ALREADY_EXISTS', eligibleUntil: null };
+      return {
+        eligible: false,
+        reasonCode: 'ALREADY_REVIEWED',
+        eligibleFrom: row.review_eligible_from?.toISOString() ?? null,
+        eligibleUntil: row.review_eligible_until?.toISOString() ?? null,
+      };
     }
     if (!row.review_eligible_from || !row.review_eligible_until) {
-      return { eligible: false, reasonCode: 'REVIEW_WINDOW_MISSING', eligibleUntil: null };
+      throw new Error('Completed interaction is missing its review eligibility window.');
     }
     if (row.review_eligible_from.getTime() > now) {
       return {
         eligible: false,
-        reasonCode: 'REVIEW_WINDOW_NOT_OPEN',
+        reasonCode: 'WINDOW_NOT_OPEN',
+        eligibleFrom: row.review_eligible_from.toISOString(),
         eligibleUntil: row.review_eligible_until.toISOString(),
       };
     }
     if (row.review_eligible_until.getTime() <= now) {
       return {
         eligible: false,
-        reasonCode: 'REVIEW_WINDOW_EXPIRED',
+        reasonCode: 'WINDOW_EXPIRED',
+        eligibleFrom: row.review_eligible_from.toISOString(),
         eligibleUntil: row.review_eligible_until.toISOString(),
       };
     }
     return {
       eligible: true,
       reasonCode: 'ELIGIBLE',
+      eligibleFrom: row.review_eligible_from.toISOString(),
       eligibleUntil: row.review_eligible_until.toISOString(),
     };
   }
@@ -516,21 +529,20 @@ export class InteractionHandoffRepository {
     requestId: string | undefined,
     action: string,
     resourceId: string,
-    details: Record<string, unknown>,
+    metadata: Record<string, unknown>,
   ): Promise<void> {
     await client.query(
       `INSERT INTO platform.audit_events (
-       actor_identity_id, actor_session_id, action, resource_type, resource_id,
-       provider_id, request_id, details
-     ) VALUES ($1, $2, $3, 'interaction', $4, $5, $6, $7::jsonb)`,
+         request_id, actor_type, actor_id, provider_id, action,
+         resource_type, resource_id, outcome, metadata
+       ) VALUES ($1, 'identity', $2, $3, $4, 'interaction_handoff', $5, 'success', $6::jsonb)`,
       [
+        requestId ?? null,
         actor.identityId,
-        actor.sessionId,
+        providerId,
         action,
         resourceId,
-        providerId,
-        requestId ?? null,
-        JSON.stringify(details),
+        JSON.stringify(metadata),
       ],
     );
   }
