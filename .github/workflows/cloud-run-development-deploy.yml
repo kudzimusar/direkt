@@ -114,6 +114,7 @@ jobs:
           npm run format:check
           npm run lint
           npm run typecheck
+          npm run authorization:check
           npm run migration:check
           npm run test
           npm run build
@@ -151,11 +152,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          TRAFFIC_MODE="internal"
+          if [[ "${{ inputs.access_mode }}" == "public-synthetic" ]]; then
+            TRAFFIC_MODE="synthetic-public"
+          fi
+          echo "TRAFFIC_MODE=${TRAFFIC_MODE}" >> "${GITHUB_ENV}"
+
           cat > "${RUNNER_TEMP}/direkt-runtime-env.yaml" <<EOF
           NODE_ENV: "development"
           PORT: "8080"
           LOG_LEVEL: "info"
           CORS_ORIGINS: "${{ inputs.portal_origin }}"
+          TRUST_PROXY_HOPS: "1"
+          DIREKT_ENVIRONMENT: "development"
+          DIREKT_DATA_MODE: "synthetic-only"
+          DIREKT_TRAFFIC_MODE: "${TRAFFIC_MODE}"
+          RATE_LIMITS_ENABLED: "true"
           AUTH_CHALLENGE_MODE: "synthetic"
           ACCESS_TOKEN_TTL_SECONDS: "600"
           REFRESH_TOKEN_TTL_DAYS: "30"
@@ -166,8 +178,6 @@ jobs:
           SUPABASE_PUBLIC_MEDIA_BUCKET: "provider-media-public"
           SUPABASE_SYSTEM_EXPORTS_BUCKET: "system-exports"
           PAYMENT_PROVIDER_MODE: "disabled"
-          DIREKT_ENVIRONMENT: "development"
-          DIREKT_DATA_MODE: "synthetic-only"
           EOF
 
       - name: Deploy immutable revision to Cloud Run
@@ -194,7 +204,7 @@ jobs:
             --timeout 60 \
             --ingress all \
             --env-vars-file "${RUNNER_TEMP}/direkt-runtime-env.yaml" \
-            --set-secrets "DATABASE_URL=direkt-database-url:latest,SUPABASE_URL=direkt-supabase-url:latest,SUPABASE_SECRET_KEY=direkt-supabase-secret-key:latest,ACCESS_TOKEN_SECRET=direkt-access-token-secret:latest,CONTACT_HASH_PEPPER=direkt-contact-hash-pepper:latest,CHALLENGE_HASH_PEPPER=direkt-challenge-hash-pepper:latest" \
+            --set-secrets "DATABASE_URL=direkt-database-url:latest,SUPABASE_URL=direkt-supabase-url:latest,SUPABASE_SECRET_KEY=direkt-supabase-secret-key:latest,ACCESS_TOKEN_SECRET=direkt-access-token-secret:latest,CONTACT_HASH_PEPPER=direkt-contact-hash-pepper:latest,CHALLENGE_HASH_PEPPER=direkt-challenge-hash-pepper:latest,RATE_LIMIT_HASH_PEPPER=direkt-rate-limit-hash-pepper:latest" \
             ${ACCESS_FLAG} \
             --quiet
 
@@ -242,7 +252,9 @@ jobs:
             echo "- Region: \`${GCP_REGION}\`"
             echo "- Service: \`${GCP_CLOUD_RUN_SERVICE}\`"
             echo "- Access mode: \`${{ inputs.access_mode }}\`"
+            echo "- Traffic mode: \`${TRAFFIC_MODE}\`"
             echo "- Data mode: \`synthetic-only\`"
+            echo "- Distributed rate limits: enabled"
             echo "- Runtime secrets: Google Secret Manager references only"
             echo "- Readiness: passed"
           } >> "${GITHUB_STEP_SUMMARY}"
