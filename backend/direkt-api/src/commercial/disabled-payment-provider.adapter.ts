@@ -1,4 +1,3 @@
-import { ServiceUnavailableException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import type {
   PaymentActionInput,
@@ -12,9 +11,14 @@ export class DisabledPaymentProviderAdapter implements PaymentProviderPort {
   public readonly mode = 'disabled' as const;
 
   createAction(_input: PaymentActionInput): CommercialPaymentActionView {
-    throw new ServiceUnavailableException(
-      'Payment initiation is disabled until a reviewed provider integration is approved.',
-    );
+    return {
+      mode: 'disabled',
+      state: 'unavailable',
+      instruction: 'Payment initiation is disabled until a reviewed provider integration is approved.',
+      externalDeliveryAttempted: false,
+      credentialRequested: false,
+      productionMoneyMovement: false,
+    };
   }
 
   verifyWebhook(input: PaymentWebhookVerificationInput): PaymentWebhookVerification {
