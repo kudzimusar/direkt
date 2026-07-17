@@ -10,6 +10,7 @@ on:
       - "database/**"
       - ".github/workflows/backend-ci.yml"
       - ".github/scripts/phase8-remediate.py"
+      - ".github/scripts/phase8-runtime-fix.py"
   pull_request:
     branches:
       - main
@@ -18,6 +19,7 @@ on:
       - "database/**"
       - ".github/workflows/backend-ci.yml"
       - ".github/scripts/phase8-remediate.py"
+      - ".github/scripts/phase8-runtime-fix.py"
   workflow_dispatch:
 
 permissions:
@@ -68,6 +70,8 @@ jobs:
           set -o pipefail
           python3 ../../.github/scripts/phase8-remediate.py 2>&1 | \
             tee artifacts/diagnostics/remediation.txt
+          python3 ../../.github/scripts/phase8-runtime-fix.py 2>&1 | \
+            tee artifacts/diagnostics/runtime-fix.txt
       - name: Generate formatting diagnostic
         shell: bash
         run: |
