@@ -59,16 +59,16 @@ jobs:
           cache: npm
           cache-dependency-path: backend/direkt-api/package-lock.json
       - run: npm ci --ignore-scripts
-      - name: Apply typed lifecycle E2E remediation in runner
+      - name: Apply typed Phase 8 remediations in runner
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
 
-          path = Path('test/e2e/interaction-lifecycle.e2e.spec.ts')
-          source = path.read_text()
+          lifecycle_path = Path('test/e2e/interaction-lifecycle.e2e.spec.ts')
+          lifecycle = lifecycle_path.read_text()
 
-          replacements = [
+          lifecycle_replacements = [
               (
                   """interface TrustStateCounts {
             decisions: string;
@@ -190,21 +190,134 @@ jobs:
               ),
           ]
 
-          for old, new in replacements:
-              count = source.count(old)
+          for old, new in lifecycle_replacements:
+              count = lifecycle.count(old)
               if count != 1:
                   raise SystemExit(f'Expected one lifecycle remediation target, found {count}')
-              source = source.replace(old, new)
+              lifecycle = lifecycle.replace(old, new)
 
-          path.write_text(source)
+          lifecycle_path.write_text(lifecycle)
+
+          handoff_path = Path('src/interaction/interaction-handoff.repository.ts')
+          handoff = handoff_path.read_text()
+
+          if handoff.count('      trustOrPublicationMutation: false,\n') != 2:
+              raise SystemExit('Expected two obsolete handoff trust-mutation flags')
+          handoff = handoff.replace('      trustOrPublicationMutation: false,\n', '')
+
+          old_event_flags = """        actorIdentifierIncluded: false,
+            contactIncluded: false,
+            privateEvidenceIncluded: false,
+            internalModerationIncluded: false,
+          """
+          new_event_flags = """        actorIdentityExposed: false,
+            privateMetadataIncluded: false,
+          """
+          if handoff.count(old_event_flags) != 1:
+              raise SystemExit('Expected one interaction event privacy projection')
+          handoff = handoff.replace(old_event_flags, new_event_flags)
+
+          old_eligibility = """  private eligibility(row: InteractionRow, now: number): ReviewEligibilityView {
+            if (row.status === 'active') {
+              return { eligible: false, reasonCode: 'INTERACTION_ACTIVE', eligibleUntil: null };
+            }
+            if (row.status === 'cancelled') {
+              return { eligible: false, reasonCode: 'INTERACTION_CANCELLED', eligibleUntil: null };
+            }
+            if (row.review_exists) {
+              return { eligible: false, reasonCode: 'REVIEW_ALREADY_EXISTS', eligibleUntil: null };
+            }
+            if (!row.review_eligible_from || !row.review_eligible_until) {
+              return { eligible: false, reasonCode: 'REVIEW_WINDOW_MISSING', eligibleUntil: null };
+            }
+            if (row.review_eligible_from.getTime() > now) {
+              return {
+                eligible: false,
+                reasonCode: 'REVIEW_WINDOW_NOT_OPEN',
+                eligibleUntil: row.review_eligible_until.toISOString(),
+              };
+            }
+            if (row.review_eligible_until.getTime() <= now) {
+              return {
+                eligible: false,
+                reasonCode: 'REVIEW_WINDOW_EXPIRED',
+                eligibleUntil: row.review_eligible_until.toISOString(),
+              };
+            }
+            return {
+              eligible: true,
+              reasonCode: 'ELIGIBLE',
+              eligibleUntil: row.review_eligible_until.toISOString(),
+            };
+          }
+          """
+          new_eligibility = """  private eligibility(row: InteractionRow, now: number): ReviewEligibilityView {
+            if (row.status === 'active') {
+              return {
+                eligible: false,
+                reasonCode: 'INTERACTION_ACTIVE',
+                eligibleFrom: null,
+                eligibleUntil: null,
+              };
+            }
+            if (row.status === 'cancelled') {
+              return {
+                eligible: false,
+                reasonCode: 'INTERACTION_CANCELLED',
+                eligibleFrom: null,
+                eligibleUntil: null,
+              };
+            }
+            if (row.review_exists) {
+              return {
+                eligible: false,
+                reasonCode: 'ALREADY_REVIEWED',
+                eligibleFrom: row.review_eligible_from?.toISOString() ?? null,
+                eligibleUntil: row.review_eligible_until?.toISOString() ?? null,
+              };
+            }
+            if (!row.review_eligible_from || !row.review_eligible_until) {
+              throw new Error('Completed interaction is missing its review eligibility window.');
+            }
+            if (row.review_eligible_from.getTime() > now) {
+              return {
+                eligible: false,
+                reasonCode: 'WINDOW_NOT_OPEN',
+                eligibleFrom: row.review_eligible_from.toISOString(),
+                eligibleUntil: row.review_eligible_until.toISOString(),
+              };
+            }
+            if (row.review_eligible_until.getTime() <= now) {
+              return {
+                eligible: false,
+                reasonCode: 'WINDOW_EXPIRED',
+                eligibleFrom: row.review_eligible_from.toISOString(),
+                eligibleUntil: row.review_eligible_until.toISOString(),
+              };
+            }
+            return {
+              eligible: true,
+              reasonCode: 'ELIGIBLE',
+              eligibleFrom: row.review_eligible_from.toISOString(),
+              eligibleUntil: row.review_eligible_until.toISOString(),
+            };
+          }
+          """
+          if handoff.count(old_eligibility) != 1:
+              raise SystemExit('Expected one review eligibility projection')
+          handoff = handoff.replace(old_eligibility, new_eligibility)
+          handoff_path.write_text(handoff)
           PY
       - name: Generate formatting diagnostic
         shell: bash
         run: |
           mkdir -p artifacts/diagnostics/formatted/test/e2e
+          mkdir -p artifacts/diagnostics/formatted/src/interaction
           npm run format
           cp test/e2e/interaction-lifecycle.e2e.spec.ts \
             artifacts/diagnostics/formatted/test/e2e/interaction-lifecycle.e2e.spec.ts
+          cp src/interaction/interaction-handoff.repository.ts \
+            artifacts/diagnostics/formatted/src/interaction/interaction-handoff.repository.ts
           git diff -- . > artifacts/diagnostics/format.patch
           git diff --name-only -- . > artifacts/diagnostics/format-files.txt
       - name: Lint
