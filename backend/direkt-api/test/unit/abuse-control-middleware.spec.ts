@@ -22,7 +22,8 @@ function database(result: unknown | Error): {
   service: DatabaseService;
   query: ReturnType<typeof vi.fn>;
 } {
-  const query = result instanceof Error ? vi.fn().mockRejectedValue(result) : vi.fn().mockResolvedValue(result);
+  const query =
+    result instanceof Error ? vi.fn().mockRejectedValue(result) : vi.fn().mockResolvedValue(result);
   return { service: { query } as unknown as DatabaseService, query };
 }
 
@@ -137,17 +138,20 @@ describe('Phase 10 abuse-control middleware', () => {
   });
 
   it('returns a deterministic 429 response after the allowance is exhausted', async () => {
-    const control = middleware({}, {
-      rows: [
-        {
-          allowed: false,
-          remaining: 0,
-          retry_after_seconds: 37,
-          current_count: 6,
-          window_expires_at: new Date('2026-07-17T09:00:00.000Z'),
-        },
-      ],
-    });
+    const control = middleware(
+      {},
+      {
+        rows: [
+          {
+            allowed: false,
+            remaining: 0,
+            retry_after_seconds: 37,
+            current_count: 6,
+            window_expires_at: new Date('2026-07-17T09:00:00.000Z'),
+          },
+        ],
+      },
+    );
     const target = response();
     const next: NextFunction = vi.fn();
 

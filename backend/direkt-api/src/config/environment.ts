@@ -6,11 +6,7 @@ export type PaymentProviderMode = 'synthetic' | 'disabled';
 export type DirektTrafficMode = 'disabled' | 'internal' | 'synthetic-public';
 export type DirektDataMode = 'synthetic-only' | 'controlled-pilot' | 'production';
 export type DirektDeploymentEnvironment =
-  | 'local'
-  | 'development'
-  | 'staging'
-  | 'pilot'
-  | 'production';
+  'local' | 'development' | 'staging' | 'pilot' | 'production';
 
 export interface DirektEnvironment {
   NODE_ENV: NodeEnvironment;
@@ -72,11 +68,14 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     then: Joi.valid('disabled').default('disabled'),
     otherwise: Joi.valid('disabled', 'internal', 'synthetic-public').default('internal'),
   }),
-  RATE_LIMITS_ENABLED: Joi.boolean().truthy('true').falsy('false').when('NODE_ENV', {
-    is: 'test',
-    then: Joi.boolean().default(false),
-    otherwise: Joi.boolean().default(true),
-  }),
+  RATE_LIMITS_ENABLED: Joi.boolean()
+    .truthy('true')
+    .falsy('false')
+    .when('NODE_ENV', {
+      is: 'test',
+      then: Joi.boolean().default(false),
+      otherwise: Joi.boolean().default(true),
+    }),
   RATE_LIMIT_HASH_PEPPER: longSecret.when('NODE_ENV', {
     is: 'production',
     then: longSecret.required(),
