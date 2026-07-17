@@ -42,7 +42,7 @@ describe('visibleNavigation', () => {
     expect(items.map((item) => item.label)).not.toContain('Field workflow');
     expect(items.map((item) => item.label)).not.toContain('Internal incidents');
     expect(items.map((item) => item.label)).not.toContain('Review moderation');
-    expect(items.map((item) => item.label)).not.toContain('Finance');
+    expect(items.map((item) => item.label)).not.toContain('Commercial finance');
   });
 
   it('shows the complete Stage 7 workspace set to a permissioned trust supervisor', () => {
@@ -86,18 +86,31 @@ describe('visibleNavigation', () => {
       'Customer complaints',
     ]);
     expect(labels).not.toContain('Internal incidents');
+    expect(labels).not.toContain('Commercial finance');
   });
 
-  it('keeps finance outside verification, interaction, complaint and reporting controls', () => {
+  it('keeps finance outside verification and exposes commercial work only by permission', () => {
     const labels = visibleNavigation(
-      session('finance', ['operations.portal.access', 'finance.ledger.read']),
+      session('finance', [
+        'operations.portal.access',
+        'commercial.reconciliation.read',
+        'finance.ledger.read',
+      ]),
     ).map((item) => item.label);
 
-    expect(labels).toEqual(['Mission control', 'Finance']);
+    expect(labels).toEqual(['Mission control', 'Commercial finance']);
     expect(labels).not.toContain('Triage queue');
     expect(labels).not.toContain('Evidence review');
     expect(labels).not.toContain('Interaction history');
     expect(labels).not.toContain('Customer complaints');
+  });
+
+  it('does not expose commercial finance from the legacy ledger permission alone', () => {
+    const labels = visibleNavigation(
+      session('finance', ['operations.portal.access', 'finance.ledger.read']),
+    ).map((item) => item.label);
+
+    expect(labels).toEqual(['Mission control']);
   });
 
   it('uses server permissions rather than the displayed role label', () => {
