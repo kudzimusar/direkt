@@ -212,7 +212,11 @@ jobs:
         run: |
           set -o pipefail
           npm run lint 2>&1 | tee artifacts/diagnostics/eslint.txt
-      - run: npm run typecheck
+      - name: Typecheck
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run typecheck 2>&1 | tee artifacts/diagnostics/typecheck.txt
       - run: npm run migration:check
       - name: Test
         shell: bash
