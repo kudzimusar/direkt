@@ -1,4 +1,7 @@
-import { BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -158,5 +161,36 @@ describe('SupabasePrivateStorageAdapter', () => {
     expect(grant.accessUrl).toContain('/storage/v1/object/sign/');
     expect(grant.watermark).toContain('12345678');
     expect(grant.expiresAt.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it('does not expose Supabase response details through mapped errors', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          message: 'private bucket policy and internal object path must never reach the API client',
+        }),
+        {
+          status: 500,
+          headers: { 'content-type': 'application/json' },
+        },
+      ),
+    );
+
+    let failure: unknown;
+    try {
+      await adapter().createUploadGrant({
+        providerId: 'provider',
+        uploadSessionId: 'session',
+        contentType: 'application/pdf',
+        maxBytes: 1024,
+      });
+    } catch (error) {
+      failure = error;
+    }
+
+    expect(failure).toBeInstanceOf(ServiceUnavailableException);
+    expect((failure as Error).message).toBe('Supabase Storage request failed.');
+    expect(JSON.stringify(failure)).not.toContain('private bucket policy');
+    expect(JSON.stringify(failure)).not.toContain('internal object path');
   });
 });
