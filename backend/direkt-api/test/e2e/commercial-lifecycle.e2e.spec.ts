@@ -907,6 +907,7 @@ describe('Phase 9 subscription, payment, ledger and reconciliation closed loop',
     expect(serialized).not.toContain('service_role');
     expect(serialized).not.toContain('cardNumber');
     expect(serialized).not.toContain('mobileMoneyPin');
-    expect(serialized).not.toContain('customerContact');
+    expect(serialized).not.toContain('phase9-owner@example.invalid');
+    expect(serialized).not.toContain('phase9-other-owner@example.invalid');
   });
 });
