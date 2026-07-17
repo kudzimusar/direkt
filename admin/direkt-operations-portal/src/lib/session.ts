@@ -1,5 +1,11 @@
 export type OperationsRole =
-  'field_agent' | 'reviewer' | 'support' | 'trust_supervisor' | 'finance' | 'auditor' | 'admin';
+  | 'field_agent'
+  | 'reviewer'
+  | 'support'
+  | 'trust_supervisor'
+  | 'finance'
+  | 'auditor'
+  | 'admin';
 
 export interface OperationsSession {
   synthetic: true;
@@ -67,6 +73,31 @@ export const syntheticSupervisorSession: OperationsSession = {
     'verification.final_decision',
     'verification.claim.read',
     'discovery.publication.read',
+  ],
+  expiresAt: '2026-12-31T23:00:00.000Z',
+  stepUpRequired: true,
+};
+
+export const syntheticFinanceSession: OperationsSession = {
+  synthetic: true,
+  identityId: '00000000-0000-4000-8000-000000000901',
+  sessionId: '00000000-0000-4000-8000-000000000902',
+  displayName: 'Synthetic finance operator',
+  role: 'finance',
+  permissions: [
+    'account.sessions.manage',
+    'operations.portal.access',
+    'commercial.products.read',
+    'commercial.products.manage',
+    'commercial.subscriptions.read',
+    'commercial.subscriptions.manage',
+    'commercial.invoices.read',
+    'commercial.payments.read',
+    'commercial.reconciliation.read',
+    'commercial.reconciliation.manage',
+    'commercial.adjustments.request',
+    'commercial.adjustments.approve',
+    'finance.ledger.read',
   ],
   expiresAt: '2026-12-31T23:00:00.000Z',
   stepUpRequired: true,
