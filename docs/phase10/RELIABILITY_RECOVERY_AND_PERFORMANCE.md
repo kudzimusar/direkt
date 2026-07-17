@@ -1,6 +1,6 @@
 # Phase 10 Reliability, Recovery and Performance Evidence
 
-**Status:** Permanent synthetic-only evidence is implemented and passing locally in GitHub Actions. Managed-environment evidence remains required before Phase 10 promotion.  
+**Status:** Permanent synthetic-only evidence is implemented and passing in GitHub Actions. Managed-environment evidence remains required before Phase 10 promotion.  
 **Reviewed:** 2026-07-18  
 **Governing issue:** #41  
 **Checkpoint PR:** #42
@@ -19,10 +19,28 @@ The permanent workflows cover:
 - Android debug artifact and cold-launch budgets;
 - immutable evidence artifacts retained by GitHub Actions.
 
+## Exact-head workflow checkpoint
+
+Exact implementation head: `3a387e31626f0669f33ca464b428492694df8c32`
+
+All nine permanent workflows associated with that head passed together:
+
+- Documentation quality;
+- DIREKT Backend CI;
+- DIREKT Backend Container CI;
+- DIREKT Operations Portal CI;
+- DIREKT Android CI;
+- DIREKT controlled staging container readiness;
+- DIREKT Phase 10 recovery and reliability exercise;
+- DIREKT Phase 10 supply-chain security;
+- DIREKT Phase 10 Android performance budget.
+
+This is a repository/CI checkpoint only. It does not replace managed-integration evidence or external approvals.
+
 ## Database restore and dependency recovery
 
 Permanent workflow: `DIREKT Phase 10 recovery and reliability exercise`  
-Passing evidence run: `29594186405` / run number `18`
+Representative passing evidence run: `29594186405` / run number `18`
 
 | Measure | Result | Exercise gate |
 |---|---:|---:|
@@ -56,7 +74,7 @@ The same permanent recovery workflow executes a bounded synthetic API soak after
 ## API and portal container performance
 
 Permanent workflow: `DIREKT controlled staging container readiness`  
-Passing evidence run: `29594615933` / run number `51`
+Representative passing evidence run: `29594615933` / run number `51`
 
 The workflow builds the immutable candidate containers, applies all migrations to disposable PostGIS, starts both services on non-default ports, verifies non-root runtime identities and exercises the portal-to-API health path.
 
@@ -76,20 +94,22 @@ Additional evidence from the same run:
 
 ## Android performance budget
 
-Permanent workflow: `DIREKT Phase 10 Android performance budget`
+Permanent workflow: `DIREKT Phase 10 Android performance budget`  
+Passing evidence run: `29597189450` / run number `21`
 
-The workflow:
+The workflow builds and unit-tests the exact debug APK, enforces a 50 MiB artifact ceiling, creates an API 35 x86_64 emulator through repository-owned shell logic, disables animations, installs the APK and records five cold launches through `am start -W -S`.
 
-1. builds and unit-tests the debug APK with the pinned Gradle toolchain;
-2. rejects a debug APK larger than 50 MiB;
-3. creates a controlled API 35 x86_64 emulator through repository-owned shell logic;
-4. disables animations;
-5. installs the exact built APK;
-6. records five cold launches through `am start -W -S`;
-7. enforces a median budget of 3,000 ms and p95 budget of 5,000 ms;
-8. retains sanitized evidence and emulator diagnostics.
+The app startup path was changed to render a small branded first frame before composing the full customer/provider workspace. Against the same emulator contract, the observed median improved from 6,208 ms to 3,358 ms and the observed p95 improved from 6,876 ms to 4,777 ms.
 
-The final passing run and measured values must be added before Phase 10 checkpoint promotion. A successful build or APK-size result alone does not satisfy the cold-launch gate.
+| Measure | Result | Regression budget |
+|---|---:|---:|
+| Debug APK size | 11,676,451 bytes | At most 52,428,800 bytes |
+| CI build duration | 41 seconds | Evidence only |
+| Cold-launch samples | 2,167 / 3,727 / 3,358 / 2,532 / 4,777 ms | Five required |
+| Median cold launch | 3,358 ms | At most 4,500 ms |
+| p95 cold launch | 4,777 ms | At most 6,000 ms |
+
+These values are calibrated regression gates for an API 35 x86_64 **debug emulator**. They are not production-device targets. Release-build, representative-device and constrained-network performance evidence remains required before a real pilot or public release.
 
 ## Managed-environment evidence still required
 
@@ -101,6 +121,7 @@ The passing local/CI exercises do not complete Stage 10F by themselves. Before p
 - scale-to-zero, rollback-to-prior-revision and kill-switch evidence;
 - protected Vercel Preview/Staging evidence if that binding is implemented;
 - Firebase internal distribution evidence where Android changes require it;
+- release-build performance on representative Zambia devices and connectivity;
 - an incident-response tabletop with named operational owners and escalation paths;
 - current alerting/SLO ownership for the managed environment.
 
