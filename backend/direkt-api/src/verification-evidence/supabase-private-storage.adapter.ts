@@ -171,15 +171,14 @@ export class SupabasePrivateStorageAdapter implements EvidenceStoragePort {
   }
 
   private async throwStorageError(response: Response, fallback: string): Promise<never> {
-    const detail = await response.text().catch(() => '');
-    const message = detail && detail.length <= 500 ? `${fallback} ${detail}` : fallback;
+    await response.body?.cancel().catch(() => undefined);
     if (response.status === 404) {
-      throw new NotFoundException(message);
+      throw new NotFoundException(fallback);
     }
     if (response.status === 400 || response.status === 409 || response.status === 413) {
-      throw new BadRequestException(message);
+      throw new BadRequestException(fallback);
     }
-    throw new ServiceUnavailableException(message);
+    throw new ServiceUnavailableException(fallback);
   }
 
   private absoluteStorageUrl(value: string): string {
