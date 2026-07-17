@@ -26,12 +26,14 @@ interface SignedReadResponse {
 @Injectable()
 export class SupabasePrivateStorageAdapter implements EvidenceStoragePort {
   private readonly supabaseUrl: string;
-  private readonly serviceRoleKey: string;
+  private readonly serverKey: string;
   private readonly evidenceBucket: string;
 
   constructor(configService: ConfigService) {
     this.supabaseUrl = configService.getOrThrow<string>('SUPABASE_URL').replace(/\/$/, '');
-    this.serviceRoleKey = configService.getOrThrow<string>('SUPABASE_SERVICE_ROLE_KEY');
+    this.serverKey =
+      configService.get<string>('SUPABASE_SECRET_KEY') ??
+      configService.getOrThrow<string>('SUPABASE_SERVICE_ROLE_KEY');
     this.evidenceBucket = configService.get<string>(
       'SUPABASE_EVIDENCE_BUCKET',
       'provider-evidence',
@@ -133,8 +135,7 @@ export class SupabasePrivateStorageAdapter implements EvidenceStoragePort {
     const response = await this.fetchWithTimeout(`${this.supabaseUrl}${path}`, {
       ...init,
       headers: {
-        apikey: this.serviceRoleKey,
-        authorization: `Bearer ${this.serviceRoleKey}`,
+        ...this.authorizationHeaders(),
         'content-type': 'application/json',
         ...init.headers,
       },
@@ -143,6 +144,16 @@ export class SupabasePrivateStorageAdapter implements EvidenceStoragePort {
       await this.throwStorageError(response, 'Supabase Storage request failed.');
     }
     return (await response.json()) as T;
+  }
+
+  private authorizationHeaders(): Record<string, string> {
+    if (this.serverKey.startsWith('sb_secret_')) {
+      return { apikey: this.serverKey };
+    }
+    return {
+      apikey: this.serverKey,
+      authorization: `Bearer ${this.serverKey}`,
+    };
   }
 
   private async fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
