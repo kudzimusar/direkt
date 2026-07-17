@@ -1,0 +1,27 @@
+name: Fix Cloud Run readiness contract
+
+on:
+  push:
+    branches:
+      - integration/phase10-infrastructure-bootstrap
+    paths:
+      - ".github/workflows/fix-cloud-run-readiness-contract.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: integration/phase10-infrastructure-bootstrap
+      - run: python3 .github/scripts/fix_cloud_run_readiness_contract.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/cloud-run-development-deploy.yml
+          git commit -m "fix(ci): bind Cloud Run smoke to readiness schema"
+          git push origin HEAD:integration/phase10-infrastructure-bootstrap
