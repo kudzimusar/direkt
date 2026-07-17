@@ -13,6 +13,9 @@ RUN npm run build \
   && npm prune --omit=dev
 
 FROM node:24-bookworm-slim AS runtime
+LABEL org.opencontainers.image.title="DIREKT API" \
+      org.opencontainers.image.description="Synthetic-first DIREKT backend API" \
+      org.opencontainers.image.source="https://github.com/kudzimusar/direkt"
 ENV NODE_ENV=production \
     PORT=8080
 WORKDIR /srv/direkt
