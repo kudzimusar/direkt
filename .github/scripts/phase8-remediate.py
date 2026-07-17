@@ -228,6 +228,52 @@ def remediate_handoff_repository() -> None:
   }
 """
     source = source[:start] + eligibility + source[end:]
+
+    source = replace_once(
+        source,
+        """      .catch((error: unknown) => {
+        const code = (error as { code?: string }).code;
+        if (code === '23P01') {
+          throw new ConflictException(
+            'A current contact handoff already exists for this interaction and channel.',
+          );
+        }
+        throw error;
+      });
+""",
+        """      .catch((error: unknown) => {
+        const databaseError = error as {
+          code?: string;
+          constraint?: string;
+          detail?: string;
+          message?: string;
+          table?: string;
+          where?: string;
+        };
+        if (process.env.NODE_ENV === 'test') {
+          process.stderr.write(
+            `${JSON.stringify({
+              event: 'phase8_handoff_error',
+              code: databaseError.code ?? null,
+              constraint: databaseError.constraint ?? null,
+              detail: databaseError.detail ?? null,
+              message: databaseError.message ?? null,
+              table: databaseError.table ?? null,
+              where: databaseError.where ?? null,
+            })}\n`,
+          );
+        }
+        if (databaseError.code === '23P01') {
+          throw new ConflictException(
+            'A current contact handoff already exists for this interaction and channel.',
+          );
+        }
+        throw error;
+      });
+""",
+        "handoff database diagnostic",
+    )
+
     path.write_text(source)
 
 
