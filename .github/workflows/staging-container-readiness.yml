@@ -1,0 +1,204 @@
+name: DIREKT controlled staging container readiness
+
+on:
+  push:
+    branches:
+      - main
+      - build/android-v1
+    paths:
+      - "backend/direkt-api/**"
+      - "admin/direkt-operations-portal/**"
+      - ".github/scripts/check-cloud-run-staging-readiness.sh"
+      - ".github/scripts/check-protected-literals.mjs"
+      - ".github/workflows/cloud-run-staging-deploy.yml"
+      - ".github/workflows/staging-container-readiness.yml"
+      - "docs/phase10/INFRASTRUCTURE_ACTIVATION_CONTRACT.md"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "backend/direkt-api/**"
+      - "admin/direkt-operations-portal/**"
+      - ".github/scripts/check-cloud-run-staging-readiness.sh"
+      - ".github/scripts/check-protected-literals.mjs"
+      - ".github/workflows/cloud-run-staging-deploy.yml"
+      - ".github/workflows/staging-container-readiness.yml"
+      - "docs/phase10/INFRASTRUCTURE_ACTIVATION_CONTRACT.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-staging-readiness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Build and smoke private staging containers
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+
+      - name: Run static staging and protected-literal gates
+        shell: bash
+        run: bash .github/scripts/check-cloud-run-staging-readiness.sh
+
+      - name: Install backend migration dependencies
+        working-directory: backend/direkt-api
+        run: npm ci --ignore-scripts
+
+      - name: Build immutable candidate containers
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build \
+            --file backend/direkt-api/Dockerfile \
+            --tag "direkt-api-readiness:${GITHUB_SHA}" \
+            backend/direkt-api
+          docker build \
+            --file admin/direkt-operations-portal/Dockerfile \
+            --build-arg NEXT_PUBLIC_APP_ENV=staging-synthetic \
+            --tag "direkt-portal-readiness:${GITHUB_SHA}" \
+            admin/direkt-operations-portal
+
+      - name: Start disposable PostGIS and apply migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker network create direkt-staging-readiness
+          docker run --detach \
+            --name direkt-postgres-readiness \
+            --network direkt-staging-readiness \
+            --publish 55432:5432 \
+            --env POSTGRES_DB=direkt_test \
+            --env POSTGRES_USER=direkt \
+            --env POSTGRES_PASSWORD=direkt_ci \
+            postgis/postgis:18-3.6
+
+          for attempt in {1..30}; do
+            if docker exec direkt-postgres-readiness pg_isready -U direkt -d direkt_test >/dev/null 2>&1; then
+              break
+            fi
+            if [[ "${attempt}" -eq 30 ]]; then
+              echo "Disposable PostGIS did not become ready." >&2
+              exit 1
+            fi
+            sleep 2
+          done
+
+          DATABASE_URL=postgresql://direkt:direkt_ci@localhost:55432/direkt_test \
+          DIRECT_DATABASE_URL=postgresql://direkt:direkt_ci@localhost:55432/direkt_test \
+          NODE_ENV=test \
+          npm --prefix backend/direkt-api run migration:check
+
+      - name: Start containers with non-default PORT values
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/direkt-readiness"
+          chmod 700 "${RUNNER_TEMP}/direkt-readiness"
+
+          for name in access contact challenge rate cookie; do
+            openssl rand -hex 64 > "${RUNNER_TEMP}/direkt-readiness/${name}"
+          done
+
+          cat > "${RUNNER_TEMP}/direkt-readiness/api.env" <<EOF
+          NODE_ENV=development
+          PORT=9091
+          LOG_LEVEL=error
+          DATABASE_URL=postgresql://direkt:direkt_ci@direkt-postgres-readiness:5432/direkt_test
+          CORS_ORIGINS=
+          TRUST_PROXY_HOPS=0
+          DIREKT_ENVIRONMENT=staging
+          DIREKT_DATA_MODE=synthetic-only
+          DIREKT_TRAFFIC_MODE=internal
+          RATE_LIMITS_ENABLED=true
+          RATE_LIMIT_HASH_PEPPER=$(cat "${RUNNER_TEMP}/direkt-readiness/rate")
+          AUTH_CHALLENGE_MODE=synthetic
+          ACCESS_TOKEN_SECRET=$(cat "${RUNNER_TEMP}/direkt-readiness/access")
+          CONTACT_HASH_PEPPER=$(cat "${RUNNER_TEMP}/direkt-readiness/contact")
+          CHALLENGE_HASH_PEPPER=$(cat "${RUNNER_TEMP}/direkt-readiness/challenge")
+          EVIDENCE_STORAGE_PROVIDER=synthetic
+          PAYMENT_PROVIDER_MODE=disabled
+          EOF
+          chmod 600 "${RUNNER_TEMP}/direkt-readiness/api.env"
+
+          docker run --detach \
+            --name direkt-api-readiness \
+            --network direkt-staging-readiness \
+            --publish 19091:9091 \
+            --env-file "${RUNNER_TEMP}/direkt-readiness/api.env" \
+            "direkt-api-readiness:${GITHUB_SHA}"
+
+          docker run --detach \
+            --name direkt-portal-readiness \
+            --network direkt-staging-readiness \
+            --publish 19092:9092 \
+            --env NODE_ENV=production \
+            --env PORT=9092 \
+            --env HOSTNAME=0.0.0.0 \
+            --env NEXT_PUBLIC_APP_ENV=staging-synthetic \
+            --env DIREKT_API_BASE_URL=http://direkt-api-readiness:9091 \
+            --env PORTAL_COOKIE_SECRET="$(cat "${RUNNER_TEMP}/direkt-readiness/cookie")" \
+            "direkt-portal-readiness:${GITHUB_SHA}"
+
+      - name: Verify non-root identity, PORT and end-to-end readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          API_UID="$(docker exec direkt-api-readiness id -u)"
+          PORTAL_UID="$(docker exec direkt-portal-readiness id -u)"
+          test "${API_UID}" != "0"
+          test "${PORTAL_UID}" != "0"
+
+          curl --fail --silent --show-error \
+            --retry 12 --retry-delay 3 --retry-all-errors \
+            http://127.0.0.1:19091/api/v1/health/live \
+            > "${RUNNER_TEMP}/api-live.json"
+          curl --fail --silent --show-error \
+            --retry 12 --retry-delay 3 --retry-all-errors \
+            http://127.0.0.1:19091/api/v1/health/ready \
+            > "${RUNNER_TEMP}/api-ready.json"
+          curl --fail --silent --show-error \
+            --retry 12 --retry-delay 3 --retry-all-errors \
+            http://127.0.0.1:19092/api/health \
+            > "${RUNNER_TEMP}/portal-ready.json"
+
+          jq -e '.status == "ok"' "${RUNNER_TEMP}/api-live.json" >/dev/null
+          jq -e '.status == "ok" and .database.status == "ready"' "${RUNNER_TEMP}/api-ready.json" >/dev/null
+          jq -e '.status == "ready" and .portal == "ready" and .api == "ready"' "${RUNNER_TEMP}/portal-ready.json" >/dev/null
+
+          mkdir -p artifacts/staging
+          jq -n \
+            --arg source "${GITHUB_SHA}" \
+            --arg apiUid "${API_UID}" \
+            --arg portalUid "${PORTAL_UID}" \
+            '{source: $source, api: {port: 9091, uid: $apiUid, ready: true}, portal: {port: 9092, uid: $portalUid, ready: true}, deploymentTriggered: false}' \
+            > artifacts/staging/container-readiness.json
+
+      - name: Upload sanitized readiness reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-staging-readiness-${{ github.run_number }}-${{ github.sha }}
+          path: |
+            artifacts/staging/container-readiness.json
+            artifacts/security/protected-literal-review.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Remove disposable containers and generated values
+        if: always()
+        shell: bash
+        run: |
+          docker rm --force direkt-portal-readiness direkt-api-readiness direkt-postgres-readiness >/dev/null 2>&1 || true
+          docker network rm direkt-staging-readiness >/dev/null 2>&1 || true
+          rm -rf "${RUNNER_TEMP}/direkt-readiness"
