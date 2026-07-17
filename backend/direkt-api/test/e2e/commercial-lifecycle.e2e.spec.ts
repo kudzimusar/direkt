@@ -645,7 +645,7 @@ describe('Phase 9 subscription, payment, ledger and reconciliation closed loop',
     );
     expect(reconciliation).toMatchObject({
       status: 'open',
-      mismatchCode: 'PAYMENT_WEBHOOK_AMOUNT_MISMATCH',
+      mismatchCode: 'PAYMENT_WEBHOOK_AMOUNT_OR_CURRENCY_MISMATCH',
       rawWebhookIncluded: false,
       trustOrRankingMutation: false,
     });
