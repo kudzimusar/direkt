@@ -35,7 +35,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Build and smoke private staging containers
+    name: Build, smoke and soak private staging containers
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -190,6 +190,88 @@ jobs:
             '{source: $source, api: {port: 9091, uid: $apiUid, ready: true}, portal: {port: 9092, uid: $portalUid, ready: true}, deploymentTriggered: false}' \
             > artifacts/staging/container-readiness.json
 
+      - name: Enforce API and portal container performance budgets
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const { performance } = require('node:perf_hooks');
+
+          const targets = [
+            {
+              name: 'api',
+              url: 'http://127.0.0.1:19091/api/v1/health/ready',
+              validate: (body) => body.status === 'ok' && body.database?.status === 'ready',
+              p95BudgetMs: 750,
+              maxBudgetMs: 3000,
+            },
+            {
+              name: 'portal',
+              url: 'http://127.0.0.1:19092/api/health',
+              validate: (body) => body.status === 'ready' && body.portal === 'ready' && body.api === 'ready',
+              p95BudgetMs: 1200,
+              maxBudgetMs: 3000,
+            },
+          ];
+
+          async function exercise(target, requests = 300, concurrency = 10) {
+            const durations = [];
+            let successes = 0;
+            let next = 0;
+
+            async function worker() {
+              while (true) {
+                const index = next++;
+                if (index >= requests) return;
+                const started = performance.now();
+                const response = await fetch(target.url, { signal: AbortSignal.timeout(5000) });
+                const elapsed = performance.now() - started;
+                const body = await response.json();
+                durations.push(elapsed);
+                if (response.status === 200 && target.validate(body)) successes += 1;
+              }
+            }
+
+            await Promise.all(Array.from({ length: concurrency }, () => worker()));
+            durations.sort((a, b) => a - b);
+            const p95Ms = Math.round(durations[Math.max(0, Math.ceil(durations.length * 0.95) - 1)]);
+            const maxMs = Math.round(durations[durations.length - 1]);
+            if (successes !== requests || p95Ms > target.p95BudgetMs || maxMs > target.maxBudgetMs) {
+              throw new Error(`${target.name} performance budget failed: ${successes}/${requests}, p95=${p95Ms}, max=${maxMs}`);
+            }
+            return {
+              requests,
+              concurrency,
+              successes,
+              p95Ms,
+              maxMs,
+              p95BudgetMs: target.p95BudgetMs,
+              maxBudgetMs: target.maxBudgetMs,
+            };
+          }
+
+          async function main() {
+            const evidence = { schemaVersion: 1, dataClassification: 'synthetic-only' };
+            for (const target of targets) evidence[target.name] = await exercise(target);
+            fs.writeFileSync(
+              'artifacts/staging/container-performance.json',
+              `${JSON.stringify(evidence, null, 2)}\n`,
+            );
+          }
+
+          main().catch((error) => {
+            console.error(error);
+            process.exitCode = 1;
+          });
+          NODE
+
+          {
+            echo "### DIREKT private staging container performance"
+            echo "- API: $(jq -r '.api.successes')/$(jq -r '.api.requests') requests, p95 $(jq -r '.api.p95Ms')ms, max $(jq -r '.api.maxMs')ms"
+            echo "- Portal: $(jq -r '.portal.successes')/$(jq -r '.portal.requests') requests, p95 $(jq -r '.portal.p95Ms')ms, max $(jq -r '.portal.maxMs')ms"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Upload sanitized readiness reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -197,6 +279,7 @@ jobs:
           name: direkt-staging-readiness-${{ github.run_number }}-${{ github.sha }}
           path: |
             artifacts/staging/container-readiness.json
+            artifacts/staging/container-performance.json
             artifacts/staging/migration-readiness.log
             artifacts/staging/postgres-readiness.log
             artifacts/security/protected-literal-review.json
