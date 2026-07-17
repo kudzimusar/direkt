@@ -227,7 +227,7 @@ jobs:
               "${SERVICE_URL}/api/v1/health/ready" \
               | tee "${RUNNER_TEMP}/direkt-health.json"
           fi
-          jq -e '.status == "ready"' "${RUNNER_TEMP}/direkt-health.json" >/dev/null
+          jq -e '.status == "ok" and .database.status == "ready"' "${RUNNER_TEMP}/direkt-health.json" >/dev/null
 
       - name: Publish deployment summary
         shell: bash
