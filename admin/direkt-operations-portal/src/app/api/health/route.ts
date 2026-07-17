@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server';
+import {
+  configuredCloudRunAudience,
+  fetchCloudRunIdentityToken,
+} from '@/lib/cloud-run-identity';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,8 +30,14 @@ export async function GET(): Promise<NextResponse> {
   }
 
   try {
+    const platformIdentityToken = await fetchCloudRunIdentityToken({
+      audience: configuredCloudRunAudience(),
+    });
     const response = await fetch(`${apiBaseUrl}/api/v1/health/ready`, {
       cache: 'no-store',
+      headers: platformIdentityToken
+        ? { 'x-serverless-authorization': `Bearer ${platformIdentityToken}` }
+        : undefined,
       signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS),
     });
     const payload = response.ok ? ((await response.json()) as ApiReadinessPayload) : null;
