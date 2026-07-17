@@ -13,13 +13,13 @@ function session(
     displayName: 'Synthetic operator',
     role,
     permissions,
-    expiresAt: '2026-07-16T23:00:00.000Z',
+    expiresAt: '2026-12-31T23:00:00.000Z',
     stepUpRequired: true,
   };
 }
 
 describe('visibleNavigation', () => {
-  it('shows only reviewer-authorized Phase 7 and inherited verification workspaces', () => {
+  it('shows only reviewer-authorized inherited verification workspaces', () => {
     const items = visibleNavigation(
       session('reviewer', [
         'operations.portal.access',
@@ -40,7 +40,8 @@ describe('visibleNavigation', () => {
       'Discovery eligibility',
     ]);
     expect(items.map((item) => item.label)).not.toContain('Field workflow');
-    expect(items.map((item) => item.label)).not.toContain('Incidents and complaints');
+    expect(items.map((item) => item.label)).not.toContain('Internal incidents');
+    expect(items.map((item) => item.label)).not.toContain('Review moderation');
     expect(items.map((item) => item.label)).not.toContain('Finance');
   });
 
@@ -63,12 +64,31 @@ describe('visibleNavigation', () => {
       'Evidence review',
       'Field workflow',
       'Escalations and overrides',
-      'Incidents and complaints',
+      'Internal incidents',
       'Expiry and reporting',
     ]);
   });
 
-  it('keeps finance outside verification, field, incident and reporting controls', () => {
+  it('adds Stage 8 history, moderation and customer complaints only by permission', () => {
+    const labels = visibleNavigation(
+      session('trust_supervisor', [
+        'operations.portal.access',
+        'operations.interactions.read',
+        'operations.reviews.read',
+        'operations.complaints.read',
+      ]),
+    ).map((item) => item.label);
+
+    expect(labels).toEqual([
+      'Mission control',
+      'Interaction history',
+      'Review moderation',
+      'Customer complaints',
+    ]);
+    expect(labels).not.toContain('Internal incidents');
+  });
+
+  it('keeps finance outside verification, interaction, complaint and reporting controls', () => {
     const labels = visibleNavigation(
       session('finance', ['operations.portal.access', 'finance.ledger.read']),
     ).map((item) => item.label);
@@ -76,8 +96,8 @@ describe('visibleNavigation', () => {
     expect(labels).toEqual(['Mission control', 'Finance']);
     expect(labels).not.toContain('Triage queue');
     expect(labels).not.toContain('Evidence review');
-    expect(labels).not.toContain('Field workflow');
-    expect(labels).not.toContain('Incidents and complaints');
+    expect(labels).not.toContain('Interaction history');
+    expect(labels).not.toContain('Customer complaints');
   });
 
   it('uses server permissions rather than the displayed role label', () => {

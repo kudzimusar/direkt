@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { AuthorizationModule } from './authorization/authorization.module';
 import { environmentSchema } from './config/environment';
 import { DiscoveryModule } from './discovery/discovery.module';
+import { InteractionModule } from './interaction/interaction.module';
 import { OperationsModule } from './operations/operations.module';
 import { AuditModule } from './platform/audit/audit.module';
 import { DatabaseModule } from './platform/database/database.module';
@@ -14,6 +15,7 @@ import { ProviderModule } from './provider-core/provider.module';
 import { ProviderWorkspaceModule } from './provider-workspace/provider-workspace.module';
 import { VerificationEvidenceModule } from './verification-evidence/verification-evidence.module';
 
+// Phase 8 permanent formatter trigger. No runtime behavior changes.
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -30,6 +32,7 @@ import { VerificationEvidenceModule } from './verification-evidence/verification
     AuthModule,
     AuthorizationModule,
     HealthModule,
+    InteractionModule,
     OperationsModule,
     ProviderModule,
     ProviderWorkspaceModule,
