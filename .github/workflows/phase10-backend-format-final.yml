@@ -1,0 +1,37 @@
+name: Phase 10 backend final formatting
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - ".github/workflows/phase10-backend-format-final.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - working-directory: backend/direkt-api
+        run: npm ci --ignore-scripts
+      - working-directory: backend/direkt-api
+        run: npm run format
+      - run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/direkt-api
+          git diff --cached --quiet && exit 0
+          git commit -m "style(phase10): apply backend formatting"
+          git push origin HEAD:build/android-v1
