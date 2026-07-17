@@ -147,7 +147,15 @@ Phase 10 does not authorize:
 - a Zambia pilot outside Phase 11;
 - a production release outside Phase 12.
 
-## 7. Exit evidence
+## 7. Repository integration evidence
+
+- Infrastructure bootstrap PR #43 was reviewed and merged to `main` at `4ef98f9f96f17a4aa22109f807ebed1f0381e0e3`.
+- Its exact reviewed source was `14910e3b632cb213244a966ef41ea928e7494e77`.
+- Synchronization PR #44 merged the infrastructure history into `build/android-v1` at `3b0dadb5aed34d13d99ade532eb11ebc8f3c1c90` without force-pushing.
+- The backend container, portal readiness and environment-boundary controls are now part of the active Phase 10 checkpoint PR #42.
+- Managed-environment execution evidence remains separate from repository integration evidence and must be captured from the protected activation/deployment workflows.
+
+## 8. Exit evidence
 
 Infrastructure integration is complete only when the repository records:
 
