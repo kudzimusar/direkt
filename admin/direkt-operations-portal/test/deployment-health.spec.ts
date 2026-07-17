@@ -31,9 +31,11 @@ describe('portal deployment health', () => {
   it('reports ready only when the configured API readiness contract succeeds', async () => {
     process.env.DIREKT_API_BASE_URL = 'https://direkt-api.example.invalid/';
     process.env.NEXT_PUBLIC_APP_ENV = 'development';
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response('{"status":"ok","database":{"status":"ready"}}', { status: 200 }),
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response('{"status":"ok","database":{"status":"ready"}}', { status: 200 }),
+      );
     vi.stubGlobal('fetch', fetchMock);
 
     const response = await GET();

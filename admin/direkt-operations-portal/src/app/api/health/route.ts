@@ -30,11 +30,7 @@ export async function GET(): Promise<NextResponse> {
     });
     const payload = response.ok ? ((await response.json()) as ApiReadinessPayload) : null;
 
-    if (
-      !response.ok ||
-      payload?.status !== 'ok' ||
-      payload.database?.status !== 'ready'
-    ) {
+    if (!response.ok || payload?.status !== 'ok' || payload.database?.status !== 'ready') {
       return NextResponse.json(
         {
           status: 'not_ready',
