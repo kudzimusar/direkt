@@ -153,7 +153,7 @@ jobs:
           set -euo pipefail
           cat > "${RUNNER_TEMP}/direkt-runtime-env.yaml" <<EOF
           NODE_ENV: "development"
-          PORT: "8080"
+          # Cloud Run injects its reserved PORT variable from --port automatically.
           LOG_LEVEL: "info"
           CORS_ORIGINS: "${{ inputs.portal_origin }}"
           AUTH_CHALLENGE_MODE: "synthetic"
