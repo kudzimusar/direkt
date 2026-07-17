@@ -1,4 +1,8 @@
-import { BadRequestException, ForbiddenException, type ExecutionContext } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  type ExecutionContext,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthorizationService } from '../../src/authorization/authorization.service';
