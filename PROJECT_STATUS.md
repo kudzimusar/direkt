@@ -30,37 +30,58 @@ All Stage 9A–9G capabilities are stable and all permanent workflows passed on 
 
 Issue #41 is the sole active tracker and PR #42 is the checkpoint PR. The single implementation lane is claimed on `build/android-v1`.
 
-Stage 10A security architecture and the Stage 10B route/permission baseline are implemented on the active branch. Privacy, retention, legal, storage, abuse, reliability, supply-chain, provider approval and checkpoint work remain in progress.
+Stage 10A security architecture, Stage 10B route/permission enforcement, Phase 10 privacy/retention registers and the controlled staging repository foundation are implemented on the active branch. Storage verification, remaining abuse/reliability exercises, supply-chain review, provider approvals and checkpoint promotion remain in progress.
 
-### Infrastructure activation correction
+### Controlled staging boundary
 
-Phase 10 now explicitly permits:
+Phase 10 permits:
 
 - synthetic-only managed development infrastructure;
-- protected staging infrastructure using synthetic or separately approved non-personal fixtures;
+- IAM-protected staging using synthetic/non-personal fixtures;
 - exact-source Supabase activation and verification;
-- immutable Cloud Run API deployment through GitHub OIDC;
-- protected, no-index Vercel Preview/Staging portal deployment;
+- immutable Cloud Run images and revisions through GitHub OIDC;
+- private API and operations-portal Cloud Run services;
+- protected, no-index Vercel Preview/Staging integration after its private API calling design is approved;
 - Firebase internal tester distribution.
 
-This corrects the previous over-broad deployment prohibition. It does **not** authorize real participant/evidence data, unrestricted public invitations, a Zambia pilot, public promotion or production release.
+This does **not** authorize real participant/evidence data, unrestricted public invocation, public invitations, a Zambia pilot, public promotion or production release.
 
 ## Bound infrastructure
 
-| Service | Development binding |
+| Service | Development/staging binding |
 |---|---|
 | Supabase | project ref `aeeuscifrxcjmnswqwnq`, region `ap-northeast-1` |
 | Google Cloud | project `direkt-dev-502701`, region `asia-northeast1` |
 | Artifact Registry | `direkt-containers` |
-| Cloud Run | `direkt-api` |
+| Cloud Run API | `direkt-api` with `direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com` |
+| Cloud Run portal | `direkt-operations-portal-staging` with `direkt-portal-runtime@direkt-dev-502701.iam.gserviceaccount.com` |
 | Firebase | project `direkt-dev-502701`, tester group `direkt-internal-testers` |
-| Vercel | protected Preview/Staging project still requires owner-side project binding and identifiers |
+| Vercel | protected Preview/Staging project still requires its private API-calling and owner-side binding checkpoint |
 
-The workspace Supabase connector currently exposes only unrelated CarUp projects, so it cannot independently inspect the DIREKT project. The existing protected GitHub activation workflow remains the exact-project migration and verification authority; no unrelated project may be mutated.
+The API and portal are private Cloud Run services. The portal runtime receives `roles/run.invoker` only on the API and uses a Google-signed audience token in `X-Serverless-Authorization` while preserving DIREKT application authorization.
+
+## Staging repository checkpoint
+
+The active Phase 10 branch now contains:
+
+- non-root multi-stage API and Next.js standalone portal containers;
+- minimal Docker contexts that exclude environment files, credentials, caches, tests and artifacts;
+- a manual-only, WIF-authenticated two-service staging deployment workflow;
+- immutable SHA image tags;
+- minimum 0 and maximum 1 Cloud Run instance per service;
+- pinned Secret Manager version variables and strict API/portal secret allowlists;
+- a private service-to-service identity path;
+- IAM checks rejecting public invocation bindings;
+- a non-deploying readiness workflow that builds, migrates and smoke-tests both containers;
+- a non-disclosing protected-literal review that classifies explicit synthetic fixtures separately.
+
+No Cloud Run deployment has been triggered by these repository changes. Deployment remains a manual action after the exact reviewed source is merged to `main` and all required staging variables are present.
+
+The workspace Supabase connector currently exposes only unrelated CarUp projects, so it cannot independently inspect DIREKT. The protected GitHub activation workflow remains the exact-project migration and verification authority; no unrelated project may be mutated.
 
 ## Phase boundaries
 
-- Phase 10: synthetic-only development/protected staging integration and hardening.
+- Phase 10: synthetic-only development/IAM-protected staging integration and hardening.
 - Phase 11: consenting real participants, real pilot evidence and controlled Zambia pilot validation.
 - Phase 12: production backend/portal/Android release and public rollout.
 
