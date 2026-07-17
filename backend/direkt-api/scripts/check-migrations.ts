@@ -1,9 +1,9 @@
 import { Pool } from 'pg';
 import { runMigrations } from './migration-lib';
-import { databaseUrl } from './runtime-config';
+import { directDatabaseUrl } from './runtime-config';
 
 async function main(): Promise<void> {
-  const url = databaseUrl();
+  const url = directDatabaseUrl();
   const first = await runMigrations(url);
   const second = await runMigrations(url);
 

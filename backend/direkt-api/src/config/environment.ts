@@ -1,12 +1,14 @@
 import * as Joi from 'joi';
 
 export type NodeEnvironment = 'development' | 'test' | 'production';
+export type EvidenceStorageProvider = 'synthetic' | 'supabase';
 
 export interface DirektEnvironment {
   NODE_ENV: NodeEnvironment;
   PORT: number;
   LOG_LEVEL: 'debug' | 'info' | 'warn' | 'error';
   DATABASE_URL: string;
+  DIRECT_DATABASE_URL?: string;
   CORS_ORIGINS: string;
   AUTH_CHALLENGE_MODE: 'synthetic' | 'disabled';
   ACCESS_TOKEN_SECRET: string;
@@ -15,10 +17,20 @@ export interface DirektEnvironment {
   ACCESS_TOKEN_TTL_SECONDS: number;
   REFRESH_TOKEN_TTL_DAYS: number;
   CHALLENGE_TTL_SECONDS: number;
+  EVIDENCE_STORAGE_PROVIDER: EvidenceStorageProvider;
+  SUPABASE_URL?: string;
+  SUPABASE_SECRET_KEY?: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
+  SUPABASE_EVIDENCE_BUCKET: string;
+  SUPABASE_PRIVATE_MEDIA_BUCKET: string;
+  SUPABASE_PUBLIC_MEDIA_BUCKET: string;
+  SUPABASE_SYSTEM_EXPORTS_BUCKET: string;
 }
 
 const databaseUrlSchema = Joi.string().uri({ scheme: ['postgresql', 'postgres'] });
 const longSecret = Joi.string().min(64).max(512);
+const supabaseServerKey = Joi.string().min(20).max(2048);
+const bucketName = Joi.string().pattern(/^[a-z0-9][a-z0-9-]{1,62}$/);
 
 export const environmentSchema = Joi.object<DirektEnvironment>({
   NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
@@ -29,6 +41,7 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     then: databaseUrlSchema.required(),
     otherwise: databaseUrlSchema.default('postgresql://direkt:direkt_dev@localhost:5432/direkt'),
   }),
+  DIRECT_DATABASE_URL: databaseUrlSchema.optional(),
   CORS_ORIGINS: Joi.string().allow('').default(''),
   AUTH_CHALLENGE_MODE: Joi.string().when('NODE_ENV', {
     is: 'production',
@@ -59,6 +72,35 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
   ACCESS_TOKEN_TTL_SECONDS: Joi.number().integer().min(60).max(900).default(600),
   REFRESH_TOKEN_TTL_DAYS: Joi.number().integer().min(1).max(90).default(30),
   CHALLENGE_TTL_SECONDS: Joi.number().integer().min(60).max(600).default(300),
+  EVIDENCE_STORAGE_PROVIDER: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.valid('supabase').default('supabase'),
+    otherwise: Joi.valid('synthetic', 'supabase').default('synthetic'),
+  }),
+  SUPABASE_URL: Joi.string()
+    .uri({ scheme: ['https'] })
+    .when('EVIDENCE_STORAGE_PROVIDER', {
+      is: 'supabase',
+      then: Joi.required(),
+      otherwise: Joi.optional(),
+    }),
+  SUPABASE_SECRET_KEY: supabaseServerKey.optional(),
+  SUPABASE_SERVICE_ROLE_KEY: supabaseServerKey.optional(),
+  SUPABASE_EVIDENCE_BUCKET: bucketName.default('provider-evidence'),
+  SUPABASE_PRIVATE_MEDIA_BUCKET: bucketName.default('provider-media-private'),
+  SUPABASE_PUBLIC_MEDIA_BUCKET: bucketName.default('provider-media-public'),
+  SUPABASE_SYSTEM_EXPORTS_BUCKET: bucketName.default('system-exports'),
+}).custom((value: DirektEnvironment, helpers) => {
+  if (
+    value.EVIDENCE_STORAGE_PROVIDER === 'supabase' &&
+    !value.SUPABASE_SECRET_KEY &&
+    !value.SUPABASE_SERVICE_ROLE_KEY
+  ) {
+    return helpers.message({
+      custom: 'SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY is required for Supabase storage.',
+    });
+  }
+  return value;
 });
 
 export function parseCorsOrigins(value: string | undefined): string[] {

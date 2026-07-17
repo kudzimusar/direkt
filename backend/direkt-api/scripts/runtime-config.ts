@@ -12,3 +12,12 @@ export function databaseUrl(): string {
 
   return DEVELOPMENT_DATABASE_URL;
 }
+
+export function directDatabaseUrl(): string {
+  const configured = process.env.DIRECT_DATABASE_URL?.trim();
+  if (configured) {
+    return configured;
+  }
+
+  return databaseUrl();
+}

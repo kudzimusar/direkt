@@ -51,7 +51,7 @@ export class VerificationEvidenceService {
         await this.repository.evidence(providerId, dto.replacementForEvidenceId);
       }
       const uploadSessionId = randomUUID();
-      const grant = this.storage.createUploadGrant({
+      const grant = await this.storage.createUploadGrant({
         providerId,
         uploadSessionId,
         contentType: dto.contentType,
@@ -72,7 +72,7 @@ export class VerificationEvidenceService {
         uploadUrl: grant.uploadUrl,
         expiresAt: grant.expiresAt.toISOString(),
         requiredHeaders: grant.requiredHeaders,
-        synthetic: true,
+        synthetic: grant.synthetic,
       };
     } catch (error) {
       this.throwDomainError(error);
@@ -87,7 +87,7 @@ export class VerificationEvidenceService {
   ): Promise<EvidenceView> {
     try {
       const session = await this.repository.uploadSession(providerId, dto.uploadSessionId);
-      this.storage.confirmUpload({
+      await this.storage.confirmUpload({
         objectKey: session.object_key,
         contentType: session.expected_content_type,
         sizeBytes: dto.sizeBytes,

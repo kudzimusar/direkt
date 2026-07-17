@@ -12,6 +12,7 @@ export interface PrivateUploadGrant {
   uploadUrl: string;
   expiresAt: Date;
   requiredHeaders: Record<string, string>;
+  synthetic: boolean;
 }
 
 export interface CompletePrivateUploadInput {
@@ -25,15 +26,16 @@ export interface PrivateReadGrant {
   accessUrl: string;
   expiresAt: Date;
   watermark: string;
+  synthetic: boolean;
 }
 
 export interface EvidenceStoragePort {
-  createUploadGrant(input: CreatePrivateUploadInput): PrivateUploadGrant;
-  confirmUpload(input: CompletePrivateUploadInput): void;
+  createUploadGrant(input: CreatePrivateUploadInput): Promise<PrivateUploadGrant>;
+  confirmUpload(input: CompletePrivateUploadInput): Promise<void>;
   createReadGrant(
     objectKey: string,
     actorIdentityId: string,
     purpose: string,
     notAfter?: Date,
-  ): PrivateReadGrant;
+  ): Promise<PrivateReadGrant>;
 }

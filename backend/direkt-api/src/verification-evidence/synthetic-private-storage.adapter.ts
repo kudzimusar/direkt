@@ -19,7 +19,7 @@ interface SyntheticObjectRecord {
 export class SyntheticPrivateStorageAdapter implements EvidenceStoragePort {
   private readonly objects = new Map<string, SyntheticObjectRecord>();
 
-  createUploadGrant(input: CreatePrivateUploadInput): PrivateUploadGrant {
+  async createUploadGrant(input: CreatePrivateUploadInput): Promise<PrivateUploadGrant> {
     const objectKey = `private/${input.providerId}/${input.uploadSessionId}/${randomUUID()}`;
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
     this.objects.set(objectKey, {
@@ -37,10 +37,11 @@ export class SyntheticPrivateStorageAdapter implements EvidenceStoragePort {
         'content-type': input.contentType,
         'x-direkt-private-upload': 'synthetic',
       },
+      synthetic: true,
     };
   }
 
-  confirmUpload(input: CompletePrivateUploadInput): void {
+  async confirmUpload(input: CompletePrivateUploadInput): Promise<void> {
     const record = this.objects.get(input.objectKey);
     if (!record) {
       throw new NotFoundException('Synthetic private upload object was not found.');
@@ -60,12 +61,12 @@ export class SyntheticPrivateStorageAdapter implements EvidenceStoragePort {
     record.confirmed = true;
   }
 
-  createReadGrant(
+  async createReadGrant(
     objectKey: string,
     actorIdentityId: string,
     purpose: string,
     notAfter?: Date,
-  ): PrivateReadGrant {
+  ): Promise<PrivateReadGrant> {
     const record = this.objects.get(objectKey);
     if (!record?.confirmed) {
       throw new NotFoundException('Private evidence object is not available for review.');
@@ -79,6 +80,7 @@ export class SyntheticPrivateStorageAdapter implements EvidenceStoragePort {
       accessUrl: `https://storage.invalid/private-review/${randomUUID()}?token=${randomUUID()}`,
       expiresAt,
       watermark: `DIREKT synthetic review · ${actorIdentityId.slice(0, 8)} · ${purpose}`,
+      synthetic: true,
     };
   }
 }

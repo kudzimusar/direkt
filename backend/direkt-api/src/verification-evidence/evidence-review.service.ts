@@ -45,7 +45,7 @@ export class EvidenceReviewService {
         purpose: 'Assigned reviewer private evidence inspection',
         requestId,
       });
-      const storageGrant = this.storage.createReadGrant(
+      const storageGrant = await this.storage.createReadGrant(
         authorization.object_key,
         actor.identityId,
         `grant:${authorization.grant_id.slice(0, 8)}`,
@@ -60,7 +60,7 @@ export class EvidenceReviewService {
         accessUrl: storageGrant.accessUrl,
         expiresAt: storageGrant.expiresAt.toISOString(),
         watermark: storageGrant.watermark,
-        synthetic: true,
+        synthetic: storageGrant.synthetic,
       };
     } catch (error) {
       this.throwDomainError(error);
@@ -78,7 +78,7 @@ export class EvidenceReviewService {
         grantId,
         requestId,
       });
-      const storageGrant = this.storage.createReadGrant(
+      const storageGrant = await this.storage.createReadGrant(
         authorization.object_key,
         actor.identityId,
         `grant:${authorization.grant_id.slice(0, 8)}`,
@@ -90,7 +90,7 @@ export class EvidenceReviewService {
         accessUrl: storageGrant.accessUrl,
         expiresAt: storageGrant.expiresAt.toISOString(),
         watermark: storageGrant.watermark,
-        synthetic: true,
+        synthetic: storageGrant.synthetic,
       };
     } catch (error) {
       this.throwDomainError(error);

@@ -93,7 +93,7 @@ export interface ProviderWorkspaceUploadGrantView extends ProviderWorkspaceUploa
     uploadUrl: string;
     expiresAt: string;
     requiredHeaders: Record<string, string>;
-    synthetic: true;
+    synthetic: boolean;
   };
 }
 
