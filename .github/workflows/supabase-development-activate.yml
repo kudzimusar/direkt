@@ -7,6 +7,10 @@ on:
         description: Type ACTIVATE-DIREKT-DEVELOPMENT to continue
         required: true
         type: string
+      source_sha:
+        description: Exact reviewed DIREKT commit to migrate and verify
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -29,8 +33,34 @@ jobs:
       SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
 
     steps:
-      - name: Check out reviewed source
+      - name: Validate activation controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ inputs.confirmation }}" = "ACTIVATE-DIREKT-DEVELOPMENT"
+          [[ "${{ inputs.source_sha }}" =~ ^[0-9a-f]{40}$ ]]
+          test -n "${SUPABASE_ACCESS_TOKEN}"
+          test -n "${SUPABASE_DATABASE_URL}"
+          case "${SUPABASE_DATABASE_URL}" in
+            postgres://*|postgresql://*) ;;
+            *) echo "SUPABASE_DATABASE_URL must be a PostgreSQL connection string." >&2; exit 1 ;;
+          esac
+          echo "::add-mask::${SUPABASE_ACCESS_TOKEN}"
+          echo "::add-mask::${SUPABASE_DATABASE_URL}"
+
+      - name: Check out exact reviewed source
         uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Record source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          test "${SOURCE_SHA}" = "${{ inputs.source_sha }}"
+          echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
 
       - name: Set up Node.js 24 LTS
         uses: actions/setup-node@v6
@@ -44,20 +74,6 @@ jobs:
         with:
           version: 2.101.0
           github-token: ${{ github.token }}
-
-      - name: Validate activation controls
-        shell: bash
-        run: |
-          set -euo pipefail
-          test "${{ inputs.confirmation }}" = "ACTIVATE-DIREKT-DEVELOPMENT"
-          test -n "${SUPABASE_ACCESS_TOKEN}"
-          test -n "${SUPABASE_DATABASE_URL}"
-          case "${SUPABASE_DATABASE_URL}" in
-            postgres://*|postgresql://*) ;;
-            *) echo "SUPABASE_DATABASE_URL must be a PostgreSQL connection string." >&2; exit 1 ;;
-          esac
-          echo "::add-mask::${SUPABASE_ACCESS_TOKEN}"
-          echo "::add-mask::${SUPABASE_DATABASE_URL}"
 
       - name: Verify Supabase project identity
         shell: bash
@@ -162,14 +178,15 @@ jobs:
             echo "- PostGIS and private buckets: verified"
             echo "- Security advisor: ${SECURITY_ERRORS} errors, ${SECURITY_WARNINGS} warnings"
             echo "- Performance advisor: ${PERFORMANCE_ERRORS} errors, ${PERFORMANCE_WARNINGS} warnings"
-            echo "- Source commit: \`${GITHUB_SHA}\`"
+            echo "- Activated source: \`${SOURCE_SHA}\`"
+            echo "- Workflow source: \`${GITHUB_SHA}\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload sanitized activation evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: direkt-supabase-development-${{ github.run_number }}-${{ github.sha }}
+          name: direkt-supabase-development-${{ github.run_number }}-${{ inputs.source_sha }}
           path: artifacts/supabase/**
           if-no-files-found: warn
           retention-days: 14
