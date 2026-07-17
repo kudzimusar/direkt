@@ -86,88 +86,132 @@ jobs:
       - name: Enable KVM access
         shell: bash
         run: |
+          set -euo pipefail
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
             | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+          test -e /dev/kvm
 
-      - name: Measure bounded cold launches on Android emulator
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 35
-          target: google_apis
-          arch: x86_64
-          profile: pixel_2
-          disable-animations: true
-          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: |
-            set -euo pipefail
-            ARTIFACT_DIR="${GITHUB_WORKSPACE}/artifacts/phase10"
-            DIAGNOSTIC_FILE="${ARTIFACT_DIR}/android-performance-debug.txt"
-            RESULTS="${RUNNER_TEMP}/direkt-cold-launch-ms.txt"
-            COMPONENT="${DIREKT_DEBUG_PACKAGE}/${DIREKT_MAIN_ACTIVITY}"
-            mkdir -p "${ARTIFACT_DIR}"
-            : > "${DIAGNOSTIC_FILE}"
-            : > "${RESULTS}"
+      - name: Provision emulator and measure bounded cold launches
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARTIFACT_DIR="${GITHUB_WORKSPACE}/artifacts/phase10"
+          DIAGNOSTIC_FILE="${ARTIFACT_DIR}/android-performance-debug.txt"
+          RESULTS="${RUNNER_TEMP}/direkt-cold-launch-ms.txt"
+          AVD_NAME="direkt-phase10-api35"
+          COMPONENT="${DIREKT_DEBUG_PACKAGE}/${DIREKT_MAIN_ACTIVITY}"
+          mkdir -p "${ARTIFACT_DIR}"
+          : > "${DIAGNOSTIC_FILE}"
+          : > "${RESULTS}"
 
-            test -f "${APK_PATH}"
-            adb install -r "${APK_PATH}" | tee -a "${DIAGNOSTIC_FILE}"
-            adb shell pm path "${DIREKT_DEBUG_PACKAGE}" | tee -a "${DIAGNOSTIC_FILE}"
-            adb shell pm clear "${DIREKT_DEBUG_PACKAGE}" | tee -a "${DIAGNOSTIC_FILE}"
+          SDKMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          AVDMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager"
+          EMULATOR="${ANDROID_HOME}/emulator/emulator"
+          test -x "${SDKMANAGER}"
+          test -x "${AVDMANAGER}"
 
-            for sample in 1 2 3 4 5; do
-              set +e
-              OUTPUT="$(adb shell am start -W -S -n "${COMPONENT}" 2>&1)"
-              START_EXIT="$?"
-              set -e
-              printf 'sample=%s exit=%s\n%s\n' "${sample}" "${START_EXIT}" "${OUTPUT}" >> "${DIAGNOSTIC_FILE}"
-              test "${START_EXIT}" -eq 0
+          yes | "${SDKMANAGER}" --licenses >/dev/null 2>&1 || true
+          "${SDKMANAGER}" \
+            "platform-tools" \
+            "emulator" \
+            "system-images;android-35;google_apis;x86_64" \
+            >> "${DIAGNOSTIC_FILE}" 2>&1
 
-              TOTAL_MS="$(printf '%s\n' "${OUTPUT}" | awk -F: '/TotalTime/ { gsub(/[[:space:]]/, "", $2); print $2 }')"
-              [[ "${TOTAL_MS}" =~ ^[0-9]+$ ]]
-              echo "${TOTAL_MS}" >> "${RESULTS}"
-              adb shell am force-stop "${DIREKT_DEBUG_PACKAGE}"
-              sleep 1
-            done
+          echo no | "${AVDMANAGER}" create avd \
+            --force \
+            --name "${AVD_NAME}" \
+            --package "system-images;android-35;google_apis;x86_64" \
+            --device pixel_2 \
+            >> "${DIAGNOSTIC_FILE}" 2>&1
 
-            sort -n "${RESULTS}" > "${RESULTS}.sorted"
-            MEDIAN_MS="$(sed -n '3p' "${RESULTS}.sorted")"
-            P95_MS="$(tail -n 1 "${RESULTS}.sorted")"
-            test "${MEDIAN_MS}" -le "${COLD_LAUNCH_MEDIAN_BUDGET_MS}"
-            test "${P95_MS}" -le "${COLD_LAUNCH_P95_BUDGET_MS}"
-            SAMPLES_JSON="$(jq -Rsc 'split("\n") | map(select(length > 0) | tonumber)' "${RESULTS}")"
+          "${EMULATOR}" "@${AVD_NAME}" \
+            -no-window \
+            -no-audio \
+            -no-boot-anim \
+            -no-snapshot \
+            -gpu swiftshader_indirect \
+            -camera-back none \
+            -accel on \
+            >> "${DIAGNOSTIC_FILE}" 2>&1 &
+          EMULATOR_PID="$!"
+          trap 'kill "${EMULATOR_PID}" >/dev/null 2>&1 || true' EXIT
 
-            jq -n \
-              --arg sourceSha "${GITHUB_SHA}" \
-              --arg packageName "${DIREKT_DEBUG_PACKAGE}" \
-              --arg component "${COMPONENT}" \
-              --argjson apkSizeBytes "${APK_SIZE_BYTES}" \
-              --argjson apkSizeBudgetBytes "${APK_SIZE_BUDGET_BYTES}" \
-              --argjson buildDurationSeconds "${ANDROID_BUILD_DURATION_SECONDS}" \
-              --argjson samples "${SAMPLES_JSON}" \
-              --argjson medianMs "${MEDIAN_MS}" \
-              --argjson p95Ms "${P95_MS}" \
-              --argjson medianBudgetMs "${COLD_LAUNCH_MEDIAN_BUDGET_MS}" \
-              --argjson p95BudgetMs "${COLD_LAUNCH_P95_BUDGET_MS}" \
-              '{
-                schemaVersion: 1,
-                sourceSha: $sourceSha,
-                dataClassification: "synthetic-local-only",
-                packageName: $packageName,
-                component: $component,
-                apk: {
-                  sizeBytes: $apkSizeBytes,
-                  sizeBudgetBytes: $apkSizeBudgetBytes,
-                  buildDurationSeconds: $buildDurationSeconds
-                },
-                coldLaunch: {
-                  samplesMs: $samples,
-                  medianMs: $medianMs,
-                  p95Ms: $p95Ms,
-                  medianBudgetMs: $medianBudgetMs,
-                  p95BudgetMs: $p95BudgetMs
-                }
-              }' > "${ARTIFACT_DIR}/android-performance-evidence.json"
+          adb wait-for-device
+          BOOTED=false
+          for attempt in $(seq 1 120); do
+            BOOT_COMPLETED="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+            if [[ "${BOOT_COMPLETED}" == "1" ]]; then
+              BOOTED=true
+              break
+            fi
+            sleep 2
+          done
+          test "${BOOTED}" = "true"
+
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+          adb install -r "${APK_PATH}" | tee -a "${DIAGNOSTIC_FILE}"
+          adb shell pm path "${DIREKT_DEBUG_PACKAGE}" | tee -a "${DIAGNOSTIC_FILE}"
+          adb shell pm clear "${DIREKT_DEBUG_PACKAGE}" | tee -a "${DIAGNOSTIC_FILE}"
+
+          for sample in 1 2 3 4 5; do
+            set +e
+            OUTPUT="$(adb shell am start -W -S -n "${COMPONENT}" 2>&1)"
+            START_EXIT="$?"
+            set -e
+            printf 'sample=%s exit=%s\n%s\n' "${sample}" "${START_EXIT}" "${OUTPUT}" >> "${DIAGNOSTIC_FILE}"
+            test "${START_EXIT}" -eq 0
+
+            TOTAL_MS="$(printf '%s\n' "${OUTPUT}" | awk -F: '/TotalTime/ { gsub(/[[:space:]]/, "", $2); print $2 }')"
+            [[ "${TOTAL_MS}" =~ ^[0-9]+$ ]]
+            echo "${TOTAL_MS}" >> "${RESULTS}"
+            adb shell am force-stop "${DIREKT_DEBUG_PACKAGE}"
+            sleep 1
+          done
+
+          sort -n "${RESULTS}" > "${RESULTS}.sorted"
+          MEDIAN_MS="$(sed -n '3p' "${RESULTS}.sorted")"
+          P95_MS="$(tail -n 1 "${RESULTS}.sorted")"
+          test "${MEDIAN_MS}" -le "${COLD_LAUNCH_MEDIAN_BUDGET_MS}"
+          test "${P95_MS}" -le "${COLD_LAUNCH_P95_BUDGET_MS}"
+          SAMPLES_JSON="$(jq -Rsc 'split("\n") | map(select(length > 0) | tonumber)' "${RESULTS}")"
+
+          jq -n \
+            --arg sourceSha "${GITHUB_SHA}" \
+            --arg packageName "${DIREKT_DEBUG_PACKAGE}" \
+            --arg component "${COMPONENT}" \
+            --arg emulatorApi "35" \
+            --argjson apkSizeBytes "${APK_SIZE_BYTES}" \
+            --argjson apkSizeBudgetBytes "${APK_SIZE_BUDGET_BYTES}" \
+            --argjson buildDurationSeconds "${ANDROID_BUILD_DURATION_SECONDS}" \
+            --argjson samples "${SAMPLES_JSON}" \
+            --argjson medianMs "${MEDIAN_MS}" \
+            --argjson p95Ms "${P95_MS}" \
+            --argjson medianBudgetMs "${COLD_LAUNCH_MEDIAN_BUDGET_MS}" \
+            --argjson p95BudgetMs "${COLD_LAUNCH_P95_BUDGET_MS}" \
+            '{
+              schemaVersion: 1,
+              sourceSha: $sourceSha,
+              dataClassification: "synthetic-local-only",
+              packageName: $packageName,
+              component: $component,
+              emulatorApi: $emulatorApi,
+              apk: {
+                sizeBytes: $apkSizeBytes,
+                sizeBudgetBytes: $apkSizeBudgetBytes,
+                buildDurationSeconds: $buildDurationSeconds
+              },
+              coldLaunch: {
+                samplesMs: $samples,
+                medianMs: $medianMs,
+                p95Ms: $p95Ms,
+                medianBudgetMs: $medianBudgetMs,
+                p95BudgetMs: $p95BudgetMs
+              }
+            }' > "${ARTIFACT_DIR}/android-performance-evidence.json"
 
       - name: Publish Android performance summary
         shell: bash
