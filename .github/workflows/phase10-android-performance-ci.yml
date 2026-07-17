@@ -32,6 +32,7 @@ jobs:
       ANDROID_PROJECT_DIR: android/direkt-app
       DIREKT_GRADLE_VERSION: "9.4.0"
       DIREKT_DEBUG_PACKAGE: com.kudzimusar.direkt.debug
+      DIREKT_MAIN_ACTIVITY: com.kudzimusar.direkt.MainActivity
       APK_SIZE_BUDGET_BYTES: "52428800"
       COLD_LAUNCH_MEDIAN_BUDGET_MS: "3000"
       COLD_LAUNCH_P95_BUDGET_MS: "5000"
@@ -70,14 +71,14 @@ jobs:
           ./gradlew --no-daemon --stacktrace testDebugUnitTest assembleDebug
           BUILD_DURATION_SECONDS="$(( $(date +%s) - BUILD_STARTED_AT ))"
 
-          APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
-          test -f "${APK_PATH}"
-          APK_SIZE_BYTES="$(stat --format='%s' "${APK_PATH}")"
+          APK_RELATIVE_PATH="app/build/outputs/apk/debug/app-debug.apk"
+          test -f "${APK_RELATIVE_PATH}"
+          APK_SIZE_BYTES="$(stat --format='%s' "${APK_RELATIVE_PATH}")"
           test "${APK_SIZE_BYTES}" -le "${APK_SIZE_BUDGET_BYTES}"
 
-          mkdir -p ../../artifacts/phase10
+          mkdir -p "${GITHUB_WORKSPACE}/artifacts/phase10"
           {
-            echo "APK_PATH=${ANDROID_PROJECT_DIR}/${APK_PATH}"
+            echo "APK_PATH=${GITHUB_WORKSPACE}/${ANDROID_PROJECT_DIR}/${APK_RELATIVE_PATH}"
             echo "APK_SIZE_BYTES=${APK_SIZE_BYTES}"
             echo "ANDROID_BUILD_DURATION_SECONDS=${BUILD_DURATION_SECONDS}"
           } >> "${GITHUB_ENV}"
@@ -101,16 +102,27 @@ jobs:
           emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
             set -euo pipefail
-            adb install -r "${APK_PATH}"
-            adb shell pm clear "${DIREKT_DEBUG_PACKAGE}" >/dev/null
-
-            COMPONENT="$(adb shell cmd package resolve-activity --brief "${DIREKT_DEBUG_PACKAGE}" | tr -d '\r' | tail -n 1)"
-            test -n "${COMPONENT}"
-
+            ARTIFACT_DIR="${GITHUB_WORKSPACE}/artifacts/phase10"
+            DIAGNOSTIC_FILE="${ARTIFACT_DIR}/android-performance-debug.txt"
             RESULTS="${RUNNER_TEMP}/direkt-cold-launch-ms.txt"
+            COMPONENT="${DIREKT_DEBUG_PACKAGE}/${DIREKT_MAIN_ACTIVITY}"
+            mkdir -p "${ARTIFACT_DIR}"
+            : > "${DIAGNOSTIC_FILE}"
             : > "${RESULTS}"
+
+            test -f "${APK_PATH}"
+            adb install -r "${APK_PATH}" | tee -a "${DIAGNOSTIC_FILE}"
+            adb shell pm path "${DIREKT_DEBUG_PACKAGE}" | tee -a "${DIAGNOSTIC_FILE}"
+            adb shell pm clear "${DIREKT_DEBUG_PACKAGE}" | tee -a "${DIAGNOSTIC_FILE}"
+
             for sample in 1 2 3 4 5; do
-              OUTPUT="$(adb shell am start -W -S -n "${COMPONENT}")"
+              set +e
+              OUTPUT="$(adb shell am start -W -S -n "${COMPONENT}" 2>&1)"
+              START_EXIT="$?"
+              set -e
+              printf 'sample=%s exit=%s\n%s\n' "${sample}" "${START_EXIT}" "${OUTPUT}" >> "${DIAGNOSTIC_FILE}"
+              test "${START_EXIT}" -eq 0
+
               TOTAL_MS="$(printf '%s\n' "${OUTPUT}" | awk -F: '/TotalTime/ { gsub(/[[:space:]]/, "", $2); print $2 }')"
               [[ "${TOTAL_MS}" =~ ^[0-9]+$ ]]
               echo "${TOTAL_MS}" >> "${RESULTS}"
@@ -123,6 +135,7 @@ jobs:
             P95_MS="$(tail -n 1 "${RESULTS}.sorted")"
             test "${MEDIAN_MS}" -le "${COLD_LAUNCH_MEDIAN_BUDGET_MS}"
             test "${P95_MS}" -le "${COLD_LAUNCH_P95_BUDGET_MS}"
+            SAMPLES_JSON="$(jq -Rsc 'split("\n") | map(select(length > 0) | tonumber)' "${RESULTS}")"
 
             jq -n \
               --arg sourceSha "${GITHUB_SHA}" \
@@ -131,11 +144,11 @@ jobs:
               --argjson apkSizeBytes "${APK_SIZE_BYTES}" \
               --argjson apkSizeBudgetBytes "${APK_SIZE_BUDGET_BYTES}" \
               --argjson buildDurationSeconds "${ANDROID_BUILD_DURATION_SECONDS}" \
+              --argjson samples "${SAMPLES_JSON}" \
               --argjson medianMs "${MEDIAN_MS}" \
               --argjson p95Ms "${P95_MS}" \
               --argjson medianBudgetMs "${COLD_LAUNCH_MEDIAN_BUDGET_MS}" \
               --argjson p95BudgetMs "${COLD_LAUNCH_P95_BUDGET_MS}" \
-              --slurpfile samples <(jq -Rsc 'split("\n") | map(select(length > 0) | tonumber)' "${RESULTS}") \
               '{
                 schemaVersion: 1,
                 sourceSha: $sourceSha,
@@ -148,24 +161,25 @@ jobs:
                   buildDurationSeconds: $buildDurationSeconds
                 },
                 coldLaunch: {
-                  samplesMs: $samples[0],
+                  samplesMs: $samples,
                   medianMs: $medianMs,
                   p95Ms: $p95Ms,
                   medianBudgetMs: $medianBudgetMs,
                   p95BudgetMs: $p95BudgetMs
                 }
-              }' > artifacts/phase10/android-performance-evidence.json
+              }' > "${ARTIFACT_DIR}/android-performance-evidence.json"
 
       - name: Publish Android performance summary
         shell: bash
         run: |
+          EVIDENCE="artifacts/phase10/android-performance-evidence.json"
           {
             echo "### DIREKT Phase 10 Android performance budget"
             echo "- Package: \`${DIREKT_DEBUG_PACKAGE}\`"
-            echo "- Debug APK: $(jq -r '.apk.sizeBytes' artifacts/phase10/android-performance-evidence.json) bytes"
-            echo "- Build duration: $(jq -r '.apk.buildDurationSeconds' artifacts/phase10/android-performance-evidence.json)s"
-            echo "- Cold-launch median: $(jq -r '.coldLaunch.medianMs' artifacts/phase10/android-performance-evidence.json)ms"
-            echo "- Cold-launch p95: $(jq -r '.coldLaunch.p95Ms' artifacts/phase10/android-performance-evidence.json)ms"
+            echo "- Debug APK: $(jq -r '.apk.sizeBytes' "${EVIDENCE}") bytes"
+            echo "- Build duration: $(jq -r '.apk.buildDurationSeconds' "${EVIDENCE}")s"
+            echo "- Cold-launch median: $(jq -r '.coldLaunch.medianMs' "${EVIDENCE}")ms"
+            echo "- Cold-launch p95: $(jq -r '.coldLaunch.p95Ms' "${EVIDENCE}")ms"
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload sanitized Android performance evidence
@@ -173,6 +187,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: direkt-phase10-android-performance-${{ github.run_number }}-${{ github.sha }}
-          path: artifacts/phase10/android-performance-evidence.json
+          path: |
+            artifacts/phase10/android-performance-evidence.json
+            artifacts/phase10/android-performance-debug.txt
           if-no-files-found: warn
           retention-days: 30
