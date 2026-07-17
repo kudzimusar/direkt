@@ -176,6 +176,7 @@ jobs:
           url.protocol = 'postgresql:';
           url.password = password;
           url.port = '5432';
+          url.searchParams.set('uselibpqcompat', 'true');
           url.searchParams.set('sslmode', 'require');
           process.stdout.write(url.toString());
           NODE
@@ -279,6 +280,7 @@ jobs:
             echo "- Project display name: \`${DOCUMENTED_PROJECT_NAME}\`"
             echo "- Region: \`${EXPECTED_PROJECT_REGION}\`"
             echo "- Session pooler: resolved through the Management API"
+            echo "- TLS: encrypted libpq-compatible require mode for development activation"
             echo "- Migrations: applied and idempotency checked"
             echo "- PostGIS and private buckets: verified"
             echo "- Security advisor: ${SECURITY_ERRORS} errors, ${SECURITY_WARNINGS} warnings"
