@@ -1,15 +1,19 @@
 # Phase 10 Infrastructure Activation Contract
 
-**Status:** Authorized development/staging integration boundary  
+**Status:** Authorized controlled development and staging integration boundary  
 **Governing issue:** #41  
 **Checkpoint PR:** #42  
 **Data mode:** Synthetic-only until Phase 11 separately authorizes a controlled pilot
 
 ## 1. Purpose
 
-Phase 10 requires real managed infrastructure to prove private storage, configuration, deployment, backup, restore, monitoring, security and performance controls. A remotely reachable development or staging deployment is therefore allowed when it is restricted, synthetic-only and not represented as a public pilot or production service.
+Phase 10 requires managed infrastructure to prove private storage, deployment, identity, backup, restore, monitoring, security and performance controls. Remotely reachable development or staging services are therefore allowed when they are IAM-restricted, synthetic-only and never represented as a public pilot or production service.
 
-This contract corrects the earlier over-broad wording that prohibited every deployment. It does not relax the Phase 11 real-participant gate or the Phase 12 production-release gate.
+This contract distinguishes infrastructure availability from participant access:
+
+- Phase 10 may build, push and deploy controlled synthetic staging;
+- Phase 11 owns consenting real participants and controlled Zambia pilot data;
+- Phase 12 owns production/public release.
 
 ## 2. Deployment classes
 
@@ -17,11 +21,11 @@ This contract corrects the earlier over-broad wording that prohibited every depl
 |---|---|---|---|---|
 | Local/emulated | Phases 0–10 | synthetic | developers | allowed |
 | Managed development | Phase 10 | synthetic only | repository agents and named internal testers | allowed |
-| Protected staging | Phase 10 | synthetic plus separately approved non-personal fixtures | named team/testers behind deployment protection | allowed |
+| IAM-protected staging | Phase 10 | synthetic/non-personal fixtures only | named team members with explicit cloud access | allowed |
 | Controlled Zambia pilot | Phase 11 | consented pilot data | approved pilot cohort | prohibited until Phase 11 entry gates pass |
 | Production | Phase 12 | approved real data | public users and operations staff | prohibited until Phase 12 release gates pass |
 
-An internet-addressable URL does not by itself make a deployment a public pilot. Public promotion, indexing, unrestricted invitations, real participant processing and production claims remain prohibited in Phase 10.
+An internet-addressable URL does not make a service public when Cloud Run IAM still rejects unauthenticated invocation. Phase 10 prohibits public invocation bindings, search indexing, unrestricted invitations, real participant processing and production claims.
 
 ## 3. Bound infrastructure
 
@@ -29,7 +33,7 @@ An internet-addressable URL does not by itself make a deployment a public pilot.
 
 | Field | Value |
 |---|---|
-| Project display name | `direct-app` (display name is informational) |
+| Project display name | `direct-app` (informational) |
 | Immutable project ref | `aeeuscifrxcjmnswqwnq` |
 | URL | `https://aeeuscifrxcjmnswqwnq.supabase.co` |
 | Region | `ap-northeast-1` |
@@ -44,126 +48,189 @@ Required private buckets:
 - `provider-media-public` (still private until publication approval);
 - `system-exports`.
 
-The existing manual workflow `DIREKT Supabase development activation` remains the mutation and verification authority. Repeated verification must target the immutable project ref and upload sanitized evidence only.
+The manual `DIREKT Supabase development activation` workflow remains the exact-project migration and verification authority. Evidence must be sanitized and bound to the immutable project ref.
 
-### Google Cloud development
+### Google Cloud staging
 
-| Field | Value |
+| Field | Required value |
 |---|---|
 | Project ID | `direkt-dev-502701` |
 | Project number | `264358173369` |
 | Region | `asia-northeast1` |
 | Artifact Registry | `direkt-containers` |
-| Cloud Run service | `direkt-api` |
-| Runtime service account | `direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com` |
-| GitHub deployer service account | `direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com` |
-| GitHub WIF provider | `projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main` |
+| API service | `direkt-api` |
+| Portal service | `direkt-operations-portal-staging` |
+| API runtime identity | `direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com` |
+| Portal runtime identity | `direkt-portal-runtime@direkt-dev-502701.iam.gserviceaccount.com` |
+| GitHub deployer identity | `direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com` |
+| WIF provider | `projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main` |
 
-Runtime secrets are read from Google Secret Manager using these existing names:
+The deployment workflow consumes these through repository variables rather than embedding deployment identities in workflow source.
 
-- `direkt-database-url`;
-- `direkt-supabase-url`;
-- `direkt-supabase-secret-key`;
-- `direkt-access-token-secret`;
-- `direkt-contact-hash-pepper`;
-- `direkt-challenge-hash-pepper`.
+## 4. Runtime secret allowlists
 
-The administrative `direkt-direct-database-url` secret is deliberately not attached to the API runtime.
+Secret Manager values are injected only as pinned numeric versions. `latest` is prohibited for environment-variable injection because a new secret version must not silently change a previously reviewed revision.
 
-### Firebase internal distribution
+### API runtime — exactly seven values
 
-| Field | Value |
+| Environment variable | Secret name |
 |---|---|
-| Firebase project | `direkt-dev-502701` |
-| Debug Android app ID | `1:264358173369:android:64d69e281d447f44e15968` |
-| Production Android app ID | `1:264358173369:android:905e61d484ab6a9ee15968` |
-| Internal tester group | `direkt-internal-testers` |
+| `DATABASE_URL` | `direkt-database-url` |
+| `SUPABASE_URL` | `direkt-supabase-url` |
+| `SUPABASE_SECRET_KEY` | `direkt-supabase-secret-key` |
+| `ACCESS_TOKEN_SECRET` | `direkt-access-token-secret` |
+| `CONTACT_HASH_PEPPER` | `direkt-contact-hash-pepper` |
+| `CHALLENGE_HASH_PEPPER` | `direkt-challenge-hash-pepper` |
+| `RATE_LIMIT_HASH_PEPPER` | `direkt-rate-limit-hash-pepper` |
 
-Phase 10 permits debug/internal tester distribution. Public Play release remains Phase 12.
+The administrative `direkt-direct-database-url` secret is never attached to the API runtime.
 
-### Vercel operations portal
+### Portal runtime — exactly one value
 
-The Vercel project must use:
+| Environment variable | Secret name |
+|---|---|
+| `PORTAL_COOKIE_SECRET` | `direkt-portal-cookie-secret` |
+
+The portal receives no database, Supabase, token-signing, payment, registry or communications credential.
+
+## 5. Private service-to-service authentication
+
+Both Cloud Run services are deployed with unauthenticated invocation disabled. No service IAM policy may contain a public or broad authenticated-user member.
+
+The only service-level `roles/run.invoker` grant on `direkt-api` is:
 
 ```text
-Repository: kudzimusar/direkt
-Root directory: admin/direkt-operations-portal
-Framework: Next.js
-Production branch during Phase 10: a protected Phase 12 release branch, not main
-Preview deployments: enabled
-Deployment protection: enabled for every Phase 10 URL
+serviceAccount:direkt-portal-runtime@direkt-dev-502701.iam.gserviceaccount.com
 ```
 
-Phase 10 Vercel environments are Preview or a protected custom Staging environment. They must remain no-indexed and must not use a public production custom domain.
+For portal-to-API calls:
 
-Required Preview/Staging variables:
+1. the portal runtime requests a Google-signed ID token from the Cloud Run metadata server;
+2. the token audience is the canonical `direkt-api` Cloud Run URL;
+3. the token is sent in `X-Serverless-Authorization`;
+4. the DIREKT application access token remains in `Authorization`;
+5. no service-account JSON key is created, downloaded or mounted.
+
+The platform token proves the calling Cloud Run workload. It does not replace DIREKT session, role, provider-scope or permission enforcement.
+
+## 6. Container contract
+
+### API image
+
+- reproducible multi-stage Node 24 build using `npm ci` and the committed lockfile;
+- TypeScript build in a build stage;
+- production dependencies and `dist` only in the runtime stage;
+- non-root `node` user;
+- listens on `process.env.PORT` and `0.0.0.0`;
+- excludes environment files, credentials, tests, coverage, artifacts and caches;
+- retains `/api/v1/health/live` and `/api/v1/health/ready`.
+
+### Portal image
+
+- Next.js standalone output;
+- reproducible multi-stage Node 24 build using `npm ci` and the committed lockfile;
+- runtime contains only `public`, standalone server output and static assets;
+- non-root `node` user;
+- listens on Cloud Run `PORT` and `0.0.0.0`;
+- excludes environment files, credentials, tests, coverage and caches;
+- remains no-indexed.
+
+## 7. Repository variables
+
+The `staging` GitHub Environment/repository must provide these non-secret variables with the values above:
 
 ```text
-DIREKT_API_BASE_URL
-NEXT_PUBLIC_APP_ENV=development
-PORTAL_COOKIE_SECRET
+GCP_PROJECT_ID
+GCP_REGION
+GCP_ARTIFACT_REGISTRY
+GCP_WORKLOAD_IDENTITY_PROVIDER
+GCP_SERVICE_ACCOUNT
+GCP_API_SERVICE
+GCP_PORTAL_SERVICE
+GCP_API_RUNTIME_SERVICE_ACCOUNT
+GCP_PORTAL_RUNTIME_SERVICE_ACCOUNT
 ```
 
-`DIREKT_API_BASE_URL` points only to the approved DIREKT Cloud Run development service. The portal never receives Supabase or database credentials.
+Pinned numeric secret-version variables:
 
-## 4. Cloud Run access modes
+```text
+DIREKT_DATABASE_URL_SECRET_VERSION
+DIREKT_SUPABASE_URL_SECRET_VERSION
+DIREKT_SUPABASE_SECRET_KEY_SECRET_VERSION
+DIREKT_ACCESS_TOKEN_SECRET_VERSION
+DIREKT_CONTACT_HASH_PEPPER_SECRET_VERSION
+DIREKT_CHALLENGE_HASH_PEPPER_SECRET_VERSION
+DIREKT_RATE_LIMIT_HASH_PEPPER_SECRET_VERSION
+DIREKT_PORTAL_COOKIE_SECRET_VERSION
+```
 
-The protected workflow `DIREKT Cloud Run development deployment` supports:
+These are version numbers, not secret values.
 
-- `private` — default; Cloud Run IAM authentication is required;
-- `public-synthetic` — explicit opt-in for portal integration when the supplied Vercel origin is HTTPS and the environment remains synthetic-only.
+## 8. Workflows and execution boundary
 
-`public-synthetic` means network invocation is unauthenticated at the Cloud Run IAM layer; application authentication and authorization remain mandatory for protected DIREKT routes. It does not authorize real data, public promotion or a pilot.
+### Non-deploying readiness
 
-Before any wider test cohort, Phase 10 must add rate limits, abuse controls, monitoring and a tested kill switch.
+`DIREKT controlled staging container readiness` runs on relevant branch/PR changes and manual dispatch. It:
 
-## 5. Repository deployment controls
+- reruns the static staging contract;
+- scans tracked files without printing matched protected values;
+- classifies explicit `not-for-production` placeholders as synthetic examples;
+- builds both containers;
+- migrates disposable PostgreSQL/PostGIS;
+- runs API and portal on non-default ports;
+- verifies both runtime UIDs are non-root;
+- verifies API liveness/readiness and portal-to-API readiness;
+- records `deploymentTriggered: false` in its sanitized artifact.
 
-Every managed deployment must:
+### Manual deployment
 
-1. be manually dispatched from `main`;
-2. require an exact 40-character reviewed source commit;
-3. require a typed environment-specific confirmation phrase;
-4. use the GitHub `development` Environment;
-5. use GitHub OIDC/Workload Identity Federation rather than a JSON service-account key;
-6. build an immutable image tagged by source SHA;
-7. bind runtime secrets by Secret Manager reference only;
-8. run health/readiness smoke tests;
-9. record the source, image, environment and result without secrets;
-10. preserve rollback to a prior immutable revision;
-11. remain synthetic-only and no-indexed;
-12. stop immediately on project, region, source or secret-reference mismatch.
+`DIREKT controlled Cloud Run staging deployment` is `workflow_dispatch` only and:
 
-## 6. Phase boundaries retained
+1. requires `DEPLOY-DIREKT-STAGING`;
+2. accepts one exact 40-character source commit;
+3. requires that commit to be an ancestor of `main`;
+4. uses the GitHub `staging` Environment;
+5. authenticates through Workload Identity Federation;
+6. builds immutable SHA-tagged API and portal images;
+7. deploys minimum 0 and maximum 1 instance per service;
+8. keeps both services IAM-private;
+9. grants the portal runtime invoker access only on the API;
+10. verifies runtime identities and secret allowlists;
+11. rejects unpinned secret versions and forbidden public IAM members;
+12. runs private API and portal health smoke tests;
+13. publishes only sanitized identifiers and results.
+
+Repository changes and CI do not trigger this workflow automatically.
+
+## 9. Vercel boundary
+
+Vercel remains an approved protected Preview/Staging portal target when its project binding is completed. It must use the portal root directory, deployment protection, no indexing and server-side calls to the same private API boundary. Vercel does not receive database or Supabase credentials.
+
+The Cloud Run portal staging service is the current end-to-end private service-identity validation target. Vercel integration must not make the API publicly invokable; a later approved identity-aware gateway or equivalent private calling design is required before a Vercel-hosted portal can call the IAM-private API.
+
+## 10. Phase boundaries retained
 
 Phase 10 does not authorize:
 
 - real participant, provider or evidence data;
-- unrestricted public signup or invitations;
-- real OTP, WhatsApp, map, registry or payment credentials unless separately approved under the relevant adapter gate;
+- unrestricted signup, invitations or public IAM invocation;
+- real OTP, WhatsApp, map, registry or payment credentials without their adapter approval gate;
 - real money movement;
 - public search-engine indexing;
 - public product claims, marketing launch or uncontrolled traffic;
 - a Zambia pilot outside Phase 11;
 - a production release outside Phase 12.
 
-## 7. Repository integration evidence
-
-- Infrastructure bootstrap PR #43 was reviewed and merged to `main` at `4ef98f9f96f17a4aa22109f807ebed1f0381e0e3`.
-- Its exact reviewed source was `14910e3b632cb213244a966ef41ea928e7494e77`.
-- Synchronization PR #44 merged the infrastructure history into `build/android-v1` at `3b0dadb5aed34d13d99ade532eb11ebc8f3c1c90` without force-pushing.
-- The backend container, portal readiness and environment-boundary controls are now part of the active Phase 10 checkpoint PR #42.
-- Managed-environment execution evidence remains separate from repository integration evidence and must be captured from the protected activation/deployment workflows.
-
-## 8. Exit evidence
+## 11. Exit evidence
 
 Infrastructure integration is complete only when the repository records:
 
-- a passing exact-project Supabase activation/verification run;
-- a passing immutable Cloud Run deployment and readiness smoke;
-- a protected Vercel Preview/Staging deployment and `/api/health` result;
-- a Firebase internal distribution result where Android changes require it;
-- sanitized security/performance advisor findings;
-- Secret Manager and environment ownership without exposed values;
-- rollback, kill-switch and incident-response evidence;
+- passing exact-project Supabase activation/verification evidence;
+- passing container readiness on the exact reviewed Phase 10 head;
+- a manually approved immutable Cloud Run staging deployment and private smoke result;
+- no public invocation binding;
+- runtime secret allowlists and pinned versions;
+- protected Vercel Preview/Staging evidence when that separate binding is implemented;
+- Firebase internal distribution evidence where Android changes require it;
+- sanitized advisor, rollback, kill-switch and incident-response evidence;
 - all permanent CI gates on one reviewed head.
