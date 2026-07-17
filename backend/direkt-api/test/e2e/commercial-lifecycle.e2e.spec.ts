@@ -7,7 +7,6 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { runMigrations } from '../../scripts/migration-lib';
 import { databaseUrl } from '../../scripts/runtime-config';
-import { AppModule } from '../../src/app.module';
 import { configureApplication } from '../../src/configure-application';
 
 const WEBHOOK_SECRET =
@@ -273,6 +272,7 @@ describe('Phase 9 subscription, payment, ledger and reconciliation closed loop',
     process.env.PAYMENT_PROVIDER_MODE = 'synthetic';
     process.env.PAYMENT_SYNTHETIC_WEBHOOK_SECRET = WEBHOOK_SECRET;
     await runMigrations(url);
+    const { AppModule } = await import('../../src/app.module');
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
     configureApplication(app);
@@ -554,6 +554,26 @@ describe('Phase 9 subscription, payment, ledger and reconciliation closed loop',
       reasonCode: 'SYNTHETIC_REVERSAL',
     };
     await sendWebhook(conflictingReplay).expect(409);
+    await expect(
+      pool.query(
+        `SELECT (commercial.record_webhook_receipt(
+           'synthetic', $1, 'payment.reversed', $2, true, true, $3, now(), $4::jsonb
+         )).id`,
+        [
+          successfulWebhookPayload.externalEventId,
+          'f'.repeat(64),
+          payment.paymentIntentId,
+          JSON.stringify({
+            targetStatus: 'reversed',
+            amountMinor: 15000,
+            currency: 'ZMW',
+            reasonCode: 'SYNTHETIC_REVERSAL',
+            policyVersion: 'phase9-e2e-v1',
+            rawPayloadStored: false,
+          }),
+        ],
+      ),
+    ).rejects.toThrow(/different payload/i);
 
     const reversalPayload = {
       ...successfulWebhookPayload,

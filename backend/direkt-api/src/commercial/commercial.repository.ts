@@ -464,6 +464,8 @@ export class CommercialRepository {
             targetStatus: dto.targetStatus,
             amountMinor: dto.amountMinor,
             currency: dto.currency,
+            reasonCode: dto.reasonCode,
+            policyVersion: dto.policyVersion,
             rawPayloadStored: false,
           }),
         ],
@@ -506,7 +508,7 @@ export class CommercialRepository {
         );
         await client.query(
           `SELECT (commercial.open_reconciliation_case(
-             $1, $2, $3, NULL, 'PAYMENT_WEBHOOK_AMOUNT_MISMATCH',
+             $1, $2, $3, NULL, 'PAYMENT_WEBHOOK_AMOUNT_OR_CURRENCY_MISMATCH',
              $4, $5, $6, $7
            )).id`,
           [
