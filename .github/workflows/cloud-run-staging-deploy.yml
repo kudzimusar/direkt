@@ -146,7 +146,7 @@ jobs:
           set -euo pipefail
           cat > "${RUNNER_TEMP}/direkt-api-staging-env.yaml" <<'EOF'
           NODE_ENV: "development"
-          PORT: "8080"
+          # Cloud Run injects its reserved PORT variable from --port automatically.
           LOG_LEVEL: "info"
           CORS_ORIGINS: ""
           AUTH_CHALLENGE_MODE: "synthetic"
@@ -222,7 +222,7 @@ jobs:
             --concurrency 20 \
             --timeout 60 \
             --ingress all \
-            --set-env-vars "NODE_ENV=production,PORT=8080,HOSTNAME=0.0.0.0,NEXT_PUBLIC_APP_ENV=staging-synthetic,DIREKT_API_BASE_URL=${API_URL},DIREKT_API_AUDIENCE=${API_URL}" \
+            --set-env-vars "NODE_ENV=production,HOSTNAME=0.0.0.0,NEXT_PUBLIC_APP_ENV=staging-synthetic,DIREKT_API_BASE_URL=${API_URL},DIREKT_API_AUDIENCE=${API_URL}" \
             --set-secrets "PORTAL_COOKIE_SECRET=direkt-portal-cookie-secret:${DIREKT_PORTAL_COOKIE_SECRET_VERSION}" \
             --no-allow-unauthenticated \
             --quiet
@@ -290,25 +290,50 @@ jobs:
           jq -e '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef.key == "latest")] | length == 0' "${RUNNER_TEMP}/api-service.json" >/dev/null
           jq -e '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef.key == "latest")] | length == 0' "${RUNNER_TEMP}/portal-service.json" >/dev/null
 
+      - name: Mint private API smoke-test ID token
+        id: api-smoke-auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
+          token_format: id_token
+          id_token_audience: ${{ env.API_URL }}
+          id_token_include_email: true
+
+      - name: Mint private portal smoke-test ID token
+        id: portal-smoke-auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
+          token_format: id_token
+          id_token_audience: ${{ env.PORTAL_URL }}
+          id_token_include_email: true
+
       - name: Run private service smoke tests
         shell: bash
+        env:
+          API_ID_TOKEN: ${{ steps.api-smoke-auth.outputs.id_token }}
+          PORTAL_ID_TOKEN: ${{ steps.portal-smoke-auth.outputs.id_token }}
         run: |
           set -euo pipefail
-          API_ID_TOKEN="$(gcloud auth print-identity-token --audiences="${API_URL}")"
-          PORTAL_ID_TOKEN="$(gcloud auth print-identity-token --audiences="${PORTAL_URL}")"
+          test -n "${API_ID_TOKEN}"
+          test -n "${PORTAL_ID_TOKEN}"
           echo "::add-mask::${API_ID_TOKEN}"
           echo "::add-mask::${PORTAL_ID_TOKEN}"
 
           curl --fail --silent --show-error \
             --retry 8 --retry-delay 5 --retry-all-errors \
-            --header "Authorization: Bearer ${API_ID_TOKEN}" \
+            --header "X-Serverless-Authorization: Bearer ${API_ID_TOKEN}" \
             "${API_URL}/api/v1/health/ready" \
             > "${RUNNER_TEMP}/api-health.json"
           jq -e '.status == "ok" and .database.status == "ready"' "${RUNNER_TEMP}/api-health.json" >/dev/null
 
           curl --fail --silent --show-error \
             --retry 8 --retry-delay 5 --retry-all-errors \
-            --header "Authorization: Bearer ${PORTAL_ID_TOKEN}" \
+            --header "X-Serverless-Authorization: Bearer ${PORTAL_ID_TOKEN}" \
             "${PORTAL_URL}/api/health" \
             > "${RUNNER_TEMP}/portal-health.json"
           jq -e '.status == "ready" and .portal == "ready" and .api == "ready"' "${RUNNER_TEMP}/portal-health.json" >/dev/null
