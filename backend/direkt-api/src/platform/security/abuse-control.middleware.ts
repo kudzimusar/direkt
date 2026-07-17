@@ -2,6 +2,7 @@ import { createHmac } from 'node:crypto';
 import { Injectable, type NestMiddleware } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { NextFunction, Response } from 'express';
+import type { DirektTrafficMode } from '../../config/environment';
 import { DatabaseService } from '../database/database.service';
 import type { DirektRequest } from '../http/request-context';
 import { abuseControlPolicy } from './abuse-control.policies';
@@ -14,14 +15,13 @@ interface RateLimitResultRow {
   window_expires_at: Date;
 }
 
-export type DirektTrafficMode = 'disabled' | 'internal' | 'synthetic-public';
-
 const HEALTH_PATHS = new Set(['/api/v1/health/live', '/api/v1/health/ready']);
 
 @Injectable()
 export class AbuseControlMiddleware implements NestMiddleware {
   private readonly trafficMode: DirektTrafficMode;
   private readonly dataMode: string;
+  private readonly rateLimitsEnabled: boolean;
   private readonly hashPepper: string;
 
   constructor(
@@ -30,6 +30,7 @@ export class AbuseControlMiddleware implements NestMiddleware {
   ) {
     this.trafficMode = this.config.getOrThrow<DirektTrafficMode>('DIREKT_TRAFFIC_MODE');
     this.dataMode = this.config.getOrThrow<string>('DIREKT_DATA_MODE');
+    this.rateLimitsEnabled = this.config.getOrThrow<boolean>('RATE_LIMITS_ENABLED');
     this.hashPepper = this.config.getOrThrow<string>('RATE_LIMIT_HASH_PEPPER');
   }
 
@@ -52,6 +53,11 @@ export class AbuseControlMiddleware implements NestMiddleware {
         response,
         'The public synthetic traffic boundary is not available for this data mode.',
       );
+      return;
+    }
+
+    if (!this.rateLimitsEnabled) {
+      next();
       return;
     }
 
