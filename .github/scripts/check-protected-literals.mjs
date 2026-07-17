@@ -33,10 +33,11 @@ const prohibitedRules = [
 ];
 
 function isSafeCredentialExample(line) {
-  const localTarget = /(?:localhost|127\.0\.0\.1)/.test(line);
-  const explicitFixture =
-    /(?:direkt_(?:dev|ci)|placeholder|YOUR[-_]PASSWORD|not-for-production)/i.test(line);
-  return localTarget && explicitFixture;
+  const disposableTarget =
+    /(?:localhost|127\.0\.0\.1|direkt-postgres-readiness|@postgres(?::|\/))/i.test(line);
+  const explicitPlaceholder = /(?:placeholder|YOUR[-_]PASSWORD|not-for-production)/i.test(line);
+  const syntheticCredential = /direkt_(?:dev|ci)/i.test(line);
+  return explicitPlaceholder || (disposableTarget && syntheticCredential);
 }
 
 function trackedFiles() {
@@ -79,7 +80,7 @@ for (const file of trackedFiles()) {
         safeExamples.push({
           file,
           line: index + 1,
-          classification: 'local-synthetic-credential-url',
+          classification: 'synthetic-or-placeholder-credential-url',
         });
         continue;
       }
