@@ -1,0 +1,178 @@
+name: DIREKT Phase 10 supply-chain security
+
+on:
+  push:
+    branches:
+      - main
+      - build/android-v1
+    paths:
+      - ".github/dependabot.yml"
+      - ".github/scripts/check-protected-literals.mjs"
+      - ".github/workflows/**"
+      - "backend/direkt-api/package.json"
+      - "backend/direkt-api/package-lock.json"
+      - "admin/direkt-operations-portal/package.json"
+      - "admin/direkt-operations-portal/package-lock.json"
+      - "android/direkt-app/**.gradle.kts"
+      - "android/direkt-app/gradle/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/dependabot.yml"
+      - ".github/scripts/check-protected-literals.mjs"
+      - ".github/workflows/**"
+      - "backend/direkt-api/package.json"
+      - "backend/direkt-api/package-lock.json"
+      - "admin/direkt-operations-portal/package.json"
+      - "admin/direkt-operations-portal/package-lock.json"
+      - "android/direkt-app/**.gradle.kts"
+      - "android/direkt-app/gradle/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-phase10-supply-chain-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  javascript:
+    name: Locked installs, audit and secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            backend/direkt-api/package-lock.json
+            admin/direkt-operations-portal/package-lock.json
+
+      - name: Reject moving GitHub Action references
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE 'uses:[[:space:]]+[^[:space:]]+@(main|master|latest)([[:space:]]|$)' .github/workflows; then
+            echo "GitHub Actions must not use moving main, master or latest references." >&2
+            exit 1
+          fi
+
+      - name: Run protected-literal review
+        shell: bash
+        run: node .github/scripts/check-protected-literals.mjs
+
+      - name: Install and audit backend lockfile
+        working-directory: backend/direkt-api
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ../../artifacts/security
+          npm ci --ignore-scripts
+          set +e
+          npm audit --audit-level=high --json > ../../artifacts/security/backend-npm-audit.json
+          AUDIT_EXIT="$?"
+          set -e
+          HIGH="$(jq -r '.metadata.vulnerabilities.high // 0' ../../artifacts/security/backend-npm-audit.json)"
+          CRITICAL="$(jq -r '.metadata.vulnerabilities.critical // 0' ../../artifacts/security/backend-npm-audit.json)"
+          test "${HIGH}" -eq 0
+          test "${CRITICAL}" -eq 0
+          if [[ "${AUDIT_EXIT}" -ne 0 ]]; then
+            echo "Backend npm audit returned ${AUDIT_EXIT} without an accepted high/critical-free result." >&2
+            exit "${AUDIT_EXIT}"
+          fi
+
+      - name: Install and audit portal lockfile
+        working-directory: admin/direkt-operations-portal
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ../../artifacts/security
+          npm ci --ignore-scripts
+          set +e
+          npm audit --audit-level=high --json > ../../artifacts/security/portal-npm-audit.json
+          AUDIT_EXIT="$?"
+          set -e
+          HIGH="$(jq -r '.metadata.vulnerabilities.high // 0' ../../artifacts/security/portal-npm-audit.json)"
+          CRITICAL="$(jq -r '.metadata.vulnerabilities.critical // 0' ../../artifacts/security/portal-npm-audit.json)"
+          test "${HIGH}" -eq 0
+          test "${CRITICAL}" -eq 0
+          if [[ "${AUDIT_EXIT}" -ne 0 ]]; then
+            echo "Portal npm audit returned ${AUDIT_EXIT} without an accepted high/critical-free result." >&2
+            exit "${AUDIT_EXIT}"
+          fi
+
+      - name: Publish JavaScript supply-chain summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          BACKEND_TOTAL="$(jq -r '.metadata.dependencies.total // 0' artifacts/security/backend-npm-audit.json)"
+          PORTAL_TOTAL="$(jq -r '.metadata.dependencies.total // 0' artifacts/security/portal-npm-audit.json)"
+          {
+            echo "### DIREKT Phase 10 JavaScript supply chain"
+            echo "- Backend locked dependencies audited: ${BACKEND_TOTAL}"
+            echo "- Portal locked dependencies audited: ${PORTAL_TOTAL}"
+            echo "- High vulnerabilities: 0"
+            echo "- Critical vulnerabilities: 0"
+            echo "- Protected-literal scan: passed"
+            echo "- Moving GitHub Action references: absent"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload sanitized security reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-phase10-supply-chain-${{ github.run_number }}-${{ github.sha }}
+          path: |
+            artifacts/security/backend-npm-audit.json
+            artifacts/security/portal-npm-audit.json
+            artifacts/security/protected-literal-review.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  android:
+    name: Resolve pinned Android dependency graph
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: android/direkt-app
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.4.0"
+
+      - name: Require wrapper and version-catalog integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -x ./gradlew
+          test -f gradle/wrapper/gradle-wrapper.properties
+          test -f gradle/libs.versions.toml
+          grep -q 'distributionUrl=.*gradle-9.4.0-' gradle/wrapper/gradle-wrapper.properties
+
+      - name: Resolve Android dependency graph without mutation
+        shell: bash
+        run: ./gradlew --no-daemon --stacktrace dependencies
+
+      - name: Publish Android supply-chain summary
+        shell: bash
+        run: |
+          {
+            echo "### DIREKT Phase 10 Android supply chain"
+            echo "- Gradle wrapper: 9.4.0"
+            echo "- Version catalog: present"
+            echo "- Dependency graph: resolved without mutation"
+            echo "- Automated advisory updates: configured through Dependabot"
+          } >> "${GITHUB_STEP_SUMMARY}"
