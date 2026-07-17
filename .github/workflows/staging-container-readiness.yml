@@ -73,6 +73,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p artifacts/staging
+          trap 'docker logs direkt-postgres-readiness > artifacts/staging/postgres-readiness.log 2>&1 || true' ERR
+
           docker network create direkt-staging-readiness
           docker run --detach \
             --name direkt-postgres-readiness \
@@ -97,7 +100,10 @@ jobs:
           DATABASE_URL=postgresql://direkt:direkt_ci@localhost:55432/direkt_test \
           DIRECT_DATABASE_URL=postgresql://direkt:direkt_ci@localhost:55432/direkt_test \
           NODE_ENV=test \
-          npm --prefix backend/direkt-api run migration:check
+          npm --prefix backend/direkt-api run migration:check \
+            2>&1 | tee artifacts/staging/migration-readiness.log
+
+          trap - ERR
 
       - name: Start containers with non-default PORT values
         shell: bash
@@ -191,6 +197,8 @@ jobs:
           name: direkt-staging-readiness-${{ github.run_number }}-${{ github.sha }}
           path: |
             artifacts/staging/container-readiness.json
+            artifacts/staging/migration-readiness.log
+            artifacts/staging/postgres-readiness.log
             artifacts/security/protected-literal-review.json
           if-no-files-found: warn
           retention-days: 14
