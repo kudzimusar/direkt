@@ -72,6 +72,8 @@ jobs:
           mkdir -p artifacts/diagnostics
           set -o pipefail
           npm run typecheck 2>&1 | tee artifacts/diagnostics/typecheck.txt
+      - name: Check route authorization policies
+        run: npm run authorization:check
       - run: npm run migration:check
       - name: Run tests with diagnostics
         shell: bash
