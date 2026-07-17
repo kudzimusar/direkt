@@ -41,7 +41,9 @@ function decorators(node: ts.Node): readonly ts.Decorator[] {
 }
 
 function permissionExpression(nodeDecorators: readonly ts.Decorator[]): string | null {
-  const decorator = nodeDecorators.find((candidate) => decoratorName(candidate) === 'RequirePermission');
+  const decorator = nodeDecorators.find(
+    (candidate) => decoratorName(candidate) === 'RequirePermission',
+  );
   if (!decorator || !ts.isCallExpression(decorator.expression)) {
     return null;
   }
@@ -155,9 +157,7 @@ async function main(): Promise<void> {
 
   if (violations.length > 0) {
     for (const violation of violations) {
-      process.stderr.write(
-        `${violation.file} ${violation.symbol}: ${violation.message}\n`,
-      );
+      process.stderr.write(`${violation.file} ${violation.symbol}: ${violation.message}\n`);
     }
     throw new Error(`Authorization policy check found ${violations.length} violation(s).`);
   }
@@ -169,6 +169,8 @@ async function main(): Promise<void> {
 
 void main().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : 'Unknown authorization policy failure';
-  process.stderr.write(`${JSON.stringify({ event: 'authorization_policy_check_failed', message })}\n`);
+  process.stderr.write(
+    `${JSON.stringify({ event: 'authorization_policy_check_failed', message })}\n`,
+  );
   process.exitCode = 1;
 });
