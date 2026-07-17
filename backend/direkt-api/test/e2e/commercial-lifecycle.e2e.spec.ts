@@ -250,7 +250,7 @@ describe('Phase 9 subscription, payment, ledger and reconciliation closed loop',
     });
   }
 
-  async function sendWebhook(
+  function sendWebhook(
     payload: Parameters<typeof canonicalWebhook>[0],
     signatureOverride?: string,
   ) {
