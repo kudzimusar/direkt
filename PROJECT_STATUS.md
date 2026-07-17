@@ -2,8 +2,8 @@
 
 **Updated:** 2026-07-17  
 **Stable branch:** `main`  
-**Implementation branch:** `build/android-v1`  
-**Programme state:** Phase 8 is complete and stable. Phase 9 is active under Issue #34 on the single implementation lane.
+**Implementation branch:** `build/android-v1` pending synchronization  
+**Programme state:** Phase 9 is complete and stable. Phase 10 is the next documented phase and remains unclaimed.
 
 ## Stable checkpoints
 
@@ -14,55 +14,35 @@
 | Phase 6 provider workspace | #26 | `3083b54278c73ce74f53db800c2ec0dfc59c4dde` | #25 closed |
 | Phase 7 operations workflow | #29 | `7ea8aa17dbced5f9e56dd259b15216223aa33921` | #28 closed |
 | Phase 8 enquiries/interactions/reviews | #31 | `0182951cdc26a892b3423728bd843e2969b25bc0` | #30 closed |
+| Phase 9 subscription/payment foundation | #35 | `4c78e2419aa4eca225495acaac8e7e0ee81903f1` | #34 closed |
 
-## Phase 8 checkpoint
-
-Phase 8 completed through PR #31 and Issue #30.
+## Phase 9 checkpoint
 
 ```text
-Phase 8 exact reviewed head: 380687bf8044bc44ec1f70c58e4b71c6b3e3c6a7
-Phase 8 merge commit:       0182951cdc26a892b3423728bd843e2969b25bc0
-Issue #30:                  closed as completed
+Exact reviewed head: 4a2694351b6c0fc03c63a1c97f463e0cb1d96e78
+Merge commit:       4c78e2419aa4eca225495acaac8e7e0ee81903f1
+Issue #34:          closed as completed
 ```
 
-## Phase 9 implementation state
+All Stage 9A–9G capabilities are complete: isolated commercial aggregates, actor-scoped subscriptions and entitlements, immutable invoices, synthetic-only payment contracts, signed/replay-safe webhook processing, balanced append-only ledger entries, reconciliation, controlled adjustments, Android recovery states, API-only finance operations and permanent governance/testing records.
 
-Issue #34 is the sole active implementation tracker. The checkpoint PR will remain open until Stage 9A–9G criteria and exact-head validation are complete.
+All permanent workflows passed on the reviewed head:
 
-| Stage | State | Planned capability |
-|---|---|---|
-| 9A — foundation, products and permissions | Active | isolated commercial schema, catalogue, prices and permission families |
-| 9B — subscriptions and entitlements | Planned | actor-resolved lifecycle, optimistic revisions and bounded grants |
-| 9C — invoices and synthetic payment intents | Planned | immutable minor-unit invoices, receipts and retry-safe disabled/synthetic adapter |
-| 9D — webhooks, ledger and reconciliation | Planned | signature/replay controls, append-only ledger and exception queue |
-| 9E — grace and exception controls | Planned | deterministic grace, failure/recovery, adjustments and four-eyes controls |
-| 9F — Android and portal experiences | Planned | low-bandwidth native states and API-only operations workspaces |
-| 9G — checkpoint promotion | Planned | permanent regression, documentation, exact-head gates, review, merge and synchronization |
+- backend/PostGIS run #1163;
+- Android run #448;
+- operations portal run #531;
+- documentation run #1824.
 
-## Phase 9 boundaries
+The review queue is resolved. Additional permanent regressions cover conflicting webhook reuse, canonical processed-receipt integrity and adjustment invoice/payment relationship integrity.
 
-No real payment provider, payment credential, customer/provider money movement, deployment or public pilot is authorized. The implementation uses explicit disabled and synthetic adapter modes only.
+## Boundaries
 
-Products, entitlements, subscriptions, invoices, payments, receipts, webhooks, ledger entries and reconciliation cases remain separate from verification, discovery publication, ranking, reviews, complaints, appeals and incidents. Payment success cannot create a claim, publish a provider, improve discovery order or suppress accountability records.
+No real payment provider, real money movement, deployment or public pilot is authorized. Commercial state remains independent from verification, publication, ranking and accountability records.
 
-Provider-commercial mutations resolve one active provider workspace from server-side assignments. Client-supplied provider identifiers cannot establish authorization. Retryable operations store only hashed idempotency keys and request fingerprints. Material ledger and commercial history are append-only.
-
-## Supabase execution status
-
-The supplied DIREKT project reference is `aeeuscifrxcjmnswqwnq`. The current Supabase connector cannot access that project and exposes only unrelated CarUp projects, so no live database changes will be sent to Supabase. Forward migrations and clean PostgreSQL/PostGIS CI are authoritative until the correct project is connected and permission is verified.
-
-## Current Phase 9 work
-
-1. define commercial schema, state machines, permissions and safe projections;
-2. implement NestJS products, subscriptions, entitlements, invoices, payment intents, webhook and reconciliation contracts;
-3. replace the provider subscription placeholder and add Android commercial recovery states;
-4. add API-only operations commercial workspaces;
-5. add permanent cross-domain, privacy, idempotency, ledger and accessibility regressions;
-6. update OpenAPI, decision, risk, commercial trust and Phase 10 handoff documentation;
-7. validate one exact reviewed head, merge, close Issue #34 and synchronize the implementation branch.
+The dedicated DIREKT Supabase project is not accessible through the current connector. No unrelated project was modified. Remote activation remains blocked until the correct project access is available.
 
 ## Next phase boundary
 
-Phase 10 remains unclaimed. It owns security, privacy, legal and reliability hardening, including threat modelling, abuse controls, backup/restore, incident response, performance, secret/dependency scanning and qualified Zambia legal/payment-provider approval.
+Phase 10 remains unclaimed. It owns security, privacy, legal and reliability hardening under `docs/phase10/HANDOFF_FROM_PHASE9.md`.
 
 Issue #5 remains open as a later, non-blocking Zambia pilot-validation obligation.
