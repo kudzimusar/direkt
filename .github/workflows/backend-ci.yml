@@ -60,7 +60,12 @@ jobs:
           cache-dependency-path: backend/direkt-api/package-lock.json
       - run: npm ci --ignore-scripts
       - run: npm run format:check
-      - run: npm run lint
+      - name: Run lint with diagnostics
+        shell: bash
+        run: |
+          mkdir -p artifacts/diagnostics
+          set -o pipefail
+          npm run lint 2>&1 | tee artifacts/diagnostics/lint.txt
       - run: npm run typecheck
       - run: npm run migration:check
       - run: npm run test
