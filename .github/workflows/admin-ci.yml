@@ -59,18 +59,8 @@ jobs:
       - name: Install exact dependencies
         run: npm ci --ignore-scripts
 
-      - name: Generate Phase 9 portal formatting artifact
-        shell: bash
-        run: |
-          mkdir -p artifacts/diagnostics/formatted
-          npm run format
-          git diff -- . > artifacts/diagnostics/format.patch
-          git diff --name-only -- . > artifacts/diagnostics/format-files.txt
-          while IFS= read -r file; do
-            test -n "$file" || continue
-            mkdir -p "artifacts/diagnostics/formatted/$(dirname "$file")"
-            cp "$file" "artifacts/diagnostics/formatted/$file"
-          done < artifacts/diagnostics/format-files.txt
+      - name: Check formatting
+        run: npm run format:check
 
       - name: Lint
         run: npm run lint
