@@ -296,37 +296,44 @@ jobs:
           const fs = require('node:fs');
           const { performance } = require('node:perf_hooks');
 
-          const port = Number(process.env.API_PORT);
-          const requests = Number(process.env.SOAK_REQUESTS);
-          const concurrency = Number(process.env.SOAK_CONCURRENCY);
-          const endpoint = `http://127.0.0.1:${port}/api/v1/health/ready`;
-          const durations = [];
-          let successes = 0;
-          let nextRequest = 0;
+          async function main() {
+            const port = Number(process.env.API_PORT);
+            const requests = Number(process.env.SOAK_REQUESTS);
+            const concurrency = Number(process.env.SOAK_CONCURRENCY);
+            const endpoint = `http://127.0.0.1:${port}/api/v1/health/ready`;
+            const durations = [];
+            let successes = 0;
+            let nextRequest = 0;
 
-          async function worker() {
-            while (true) {
-              const index = nextRequest++;
-              if (index >= requests) return;
-              const started = performance.now();
-              const response = await fetch(endpoint, { signal: AbortSignal.timeout(5000) });
-              const elapsed = performance.now() - started;
-              durations.push(elapsed);
-              if (response.status === 200) {
-                const body = await response.json();
-                if (body.status === 'ok' && body.database?.status === 'ready') successes += 1;
+            async function worker() {
+              while (true) {
+                const index = nextRequest++;
+                if (index >= requests) return;
+                const started = performance.now();
+                const response = await fetch(endpoint, { signal: AbortSignal.timeout(5000) });
+                const elapsed = performance.now() - started;
+                durations.push(elapsed);
+                if (response.status === 200) {
+                  const body = await response.json();
+                  if (body.status === 'ok' && body.database?.status === 'ready') successes += 1;
+                }
               }
             }
+
+            await Promise.all(Array.from({ length: concurrency }, () => worker()));
+            durations.sort((a, b) => a - b);
+            const p95 = durations[Math.max(0, Math.ceil(durations.length * 0.95) - 1)];
+            const maximum = durations[durations.length - 1];
+            fs.writeFileSync(
+              'artifacts/phase10/soak-evidence.json',
+              `${JSON.stringify({ requests, concurrency, successes, p95Ms: Math.round(p95), maxMs: Math.round(maximum) }, null, 2)}\n`,
+            );
           }
 
-          await Promise.all(Array.from({ length: concurrency }, () => worker()));
-          durations.sort((a, b) => a - b);
-          const p95 = durations[Math.max(0, Math.ceil(durations.length * 0.95) - 1)];
-          const maximum = durations[durations.length - 1];
-          fs.writeFileSync(
-            'artifacts/phase10/soak-evidence.json',
-            `${JSON.stringify({ requests, concurrency, successes, p95Ms: Math.round(p95), maxMs: Math.round(maximum) }, null, 2)}\n`,
-          );
+          main().catch((error) => {
+            console.error(error);
+            process.exitCode = 1;
+          });
           NODE
 
           SOAK_SUCCESS_COUNT="$(jq -r '.successes' artifacts/phase10/soak-evidence.json)"
