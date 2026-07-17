@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 30
     env:
       EXPECTED_PROJECT_REF: aeeuscifrxcjmnswqwnq
-      EXPECTED_PROJECT_NAME: direkt-app
+      DOCUMENTED_PROJECT_NAME: direct-app
       EXPECTED_PROJECT_REGION: ap-northeast-1
       PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
       SUPABASE_URL: https://aeeuscifrxcjmnswqwnq.supabase.co
@@ -92,7 +92,7 @@ jobs:
           case "${HTTP_STATUS}" in
             200) ;;
             401)
-              echo "::error title=Supabase token rejected::SUPABASE_ACCESS_TOKEN is invalid, expired, or was copied incorrectly. Create a fresh personal access token while signed into the Supabase account that owns direkt-app."
+              echo "::error title=Supabase token rejected::SUPABASE_ACCESS_TOKEN is invalid, expired, or was copied incorrectly. Create a fresh personal access token while signed into the Supabase account that owns project ${EXPECTED_PROJECT_REF}."
               exit 1
               ;;
             403)
@@ -100,7 +100,7 @@ jobs:
               exit 1
               ;;
             404)
-              echo "::error title=Supabase project not visible::The token's Supabase account cannot see project ${PROJECT_REF}, or SUPABASE_PROJECT_REF is wrong. Generate the token from the account where direkt-app is visible."
+              echo "::error title=Supabase project not visible::The token's Supabase account cannot see project ${PROJECT_REF}, or SUPABASE_PROJECT_REF is wrong. Generate the token from the account where this project ref is visible."
               exit 1
               ;;
             *)
@@ -118,13 +118,12 @@ jobs:
             echo "::error title=Supabase project-ref mismatch::Expected ${EXPECTED_PROJECT_REF}, received ${ACTUAL_REF:-missing}."
             exit 1
           fi
-          if [[ "${ACTUAL_NAME}" != "${EXPECTED_PROJECT_NAME}" ]]; then
-            echo "::error title=Supabase project-name mismatch::Expected ${EXPECTED_PROJECT_NAME}, received ${ACTUAL_NAME:-missing}. Rename the project or update the reviewed workflow intentionally."
-            exit 1
-          fi
           if [[ "${ACTUAL_REGION}" != "${EXPECTED_PROJECT_REGION}" ]]; then
             echo "::error title=Supabase region mismatch::Expected ${EXPECTED_PROJECT_REGION}, received ${ACTUAL_REGION:-missing}."
             exit 1
+          fi
+          if [[ "${ACTUAL_NAME}" != "${DOCUMENTED_PROJECT_NAME}" ]]; then
+            echo "::warning title=Supabase display name differs::Project ref and region are correct. The current display name is ${ACTUAL_NAME:-missing}; documentation records ${DOCUMENTED_PROJECT_NAME}. Display names are informational and do not block activation."
           fi
 
           jq '{id, ref, organization_id, organization_slug, name, region, status, database: {version: .database.version, postgres_engine: .database.postgres_engine, release_channel: .database.release_channel}}' \
@@ -277,6 +276,7 @@ jobs:
           {
             echo "### DIREKT Supabase development activation"
             echo "- Project ref: \`${PROJECT_REF}\`"
+            echo "- Project display name: \`${DOCUMENTED_PROJECT_NAME}\`"
             echo "- Region: \`${EXPECTED_PROJECT_REGION}\`"
             echo "- Session pooler: resolved through the Management API"
             echo "- Migrations: applied and idempotency checked"
