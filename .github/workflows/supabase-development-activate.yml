@@ -1,0 +1,192 @@
+name: DIREKT Supabase development activation
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type ACTIVATE-DIREKT-DEVELOPMENT to continue
+        required: true
+        type: string
+      source_sha:
+        description: Exact reviewed DIREKT commit to migrate and verify
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-supabase-development-activation
+  cancel-in-progress: false
+
+jobs:
+  activate:
+    name: Migrate and verify Supabase development
+    if: github.ref == 'refs/heads/main'
+    environment: development
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PROJECT_REF: aeeuscifrxcjmnswqwnq
+      SUPABASE_URL: https://aeeuscifrxcjmnswqwnq.supabase.co
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+
+    steps:
+      - name: Validate activation controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ inputs.confirmation }}" = "ACTIVATE-DIREKT-DEVELOPMENT"
+          [[ "${{ inputs.source_sha }}" =~ ^[0-9a-f]{40}$ ]]
+          test -n "${SUPABASE_ACCESS_TOKEN}"
+          test -n "${SUPABASE_DATABASE_URL}"
+          case "${SUPABASE_DATABASE_URL}" in
+            postgres://*|postgresql://*) ;;
+            *) echo "SUPABASE_DATABASE_URL must be a PostgreSQL connection string." >&2; exit 1 ;;
+          esac
+          echo "::add-mask::${SUPABASE_ACCESS_TOKEN}"
+          echo "::add-mask::${SUPABASE_DATABASE_URL}"
+
+      - name: Check out exact reviewed source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Record source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          test "${SOURCE_SHA}" = "${{ inputs.source_sha }}"
+          echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
+
+      - name: Set up Node.js 24 LTS
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+
+      - name: Set up pinned Supabase CLI
+        uses: supabase/setup-cli@v2
+        with:
+          version: 2.101.0
+          github-token: ${{ github.token }}
+
+      - name: Verify Supabase project identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/supabase
+          curl --fail --silent --show-error \
+            "https://api.supabase.com/v1/projects/${PROJECT_REF}" \
+            --header "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+            --header "Content-Type: application/json" \
+            > "${RUNNER_TEMP}/supabase-project.json"
+          jq -e --arg ref "${PROJECT_REF}" \
+            '.ref == $ref and .name == "direkt-app" and .region == "ap-northeast-1"' \
+            "${RUNNER_TEMP}/supabase-project.json" >/dev/null
+          jq '{id, ref, organization_id, organization_slug, name, region, status, database: {version: .database.version, postgres_engine: .database.postgres_engine, release_channel: .database.release_channel}}' \
+            "${RUNNER_TEMP}/supabase-project.json" \
+            > artifacts/supabase/project-metadata.json
+
+      - name: Link Supabase CLI without exposing credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_PASSWORD="$(node -e 'const value = new URL(process.env.SUPABASE_DATABASE_URL).password; process.stdout.write(decodeURIComponent(value));')"
+          test -n "${DB_PASSWORD}"
+          echo "::add-mask::${DB_PASSWORD}"
+          SUPABASE_DB_PASSWORD="${DB_PASSWORD}" supabase link --project-ref "${PROJECT_REF}"
+
+      - name: Resolve a temporary backend server key
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            "https://api.supabase.com/v1/projects/${PROJECT_REF}/api-keys?reveal=true" \
+            --header "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+            --header "Content-Type: application/json" \
+            > "${RUNNER_TEMP}/supabase-api-keys.json"
+          SERVER_KEY="$(jq -r '[.[] | select(.type == "secret" or .name == "service_role") | .api_key][0] // empty' "${RUNNER_TEMP}/supabase-api-keys.json")"
+          test -n "${SERVER_KEY}"
+          echo "::add-mask::${SERVER_KEY}"
+          if [[ "${SERVER_KEY}" == sb_secret_* ]]; then
+            echo "SUPABASE_SECRET_KEY=${SERVER_KEY}" >> "${GITHUB_ENV}"
+          else
+            echo "SUPABASE_SERVICE_ROLE_KEY=${SERVER_KEY}" >> "${GITHUB_ENV}"
+          fi
+          rm -f "${RUNNER_TEMP}/supabase-api-keys.json"
+
+      - name: Install exact backend dependencies
+        working-directory: backend/direkt-api
+        run: npm ci --ignore-scripts
+
+      - name: Apply and verify all DIREKT migrations
+        working-directory: backend/direkt-api
+        env:
+          NODE_ENV: development
+          DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+          DIRECT_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+        run: npm run migration:check
+
+      - name: Verify PostGIS and private Storage buckets
+        working-directory: backend/direkt-api
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+          DIRECT_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+          SUPABASE_URL: https://aeeuscifrxcjmnswqwnq.supabase.co
+        run: npm run supabase:check | tee ../../artifacts/supabase/integration-check.json
+
+      - name: Capture database inspection report
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/supabase/inspect
+          supabase inspect report \
+            --db-url "${SUPABASE_DATABASE_URL}" \
+            --output-dir artifacts/supabase/inspect
+
+      - name: Capture Supabase advisors
+        shell: bash
+        run: |
+          set -euo pipefail
+          for advisor in security performance; do
+            curl --fail --silent --show-error \
+              "https://api.supabase.com/v1/projects/${PROJECT_REF}/advisors/${advisor}" \
+              --header "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+              --header "Content-Type: application/json" \
+              > "artifacts/supabase/${advisor}-advisor.json"
+            jq -e '.lints | type == "array"' "artifacts/supabase/${advisor}-advisor.json" >/dev/null
+          done
+
+      - name: Publish activation summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          SECURITY_ERRORS="$(jq '[.lints[]? | select(.level == "ERROR")] | length' artifacts/supabase/security-advisor.json)"
+          SECURITY_WARNINGS="$(jq '[.lints[]? | select(.level == "WARN")] | length' artifacts/supabase/security-advisor.json)"
+          PERFORMANCE_ERRORS="$(jq '[.lints[]? | select(.level == "ERROR")] | length' artifacts/supabase/performance-advisor.json)"
+          PERFORMANCE_WARNINGS="$(jq '[.lints[]? | select(.level == "WARN")] | length' artifacts/supabase/performance-advisor.json)"
+          {
+            echo "### DIREKT Supabase development activation"
+            echo "- Project ref: \`${PROJECT_REF}\`"
+            echo "- Region: \`ap-northeast-1\`"
+            echo "- Migrations: applied and idempotency checked"
+            echo "- PostGIS and private buckets: verified"
+            echo "- Security advisor: ${SECURITY_ERRORS} errors, ${SECURITY_WARNINGS} warnings"
+            echo "- Performance advisor: ${PERFORMANCE_ERRORS} errors, ${PERFORMANCE_WARNINGS} warnings"
+            echo "- Activated source: \`${SOURCE_SHA}\`"
+            echo "- Workflow source: \`${GITHUB_SHA}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload sanitized activation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-supabase-development-${{ github.run_number }}-${{ inputs.source_sha }}
+          path: artifacts/supabase/**
+          if-no-files-found: warn
+          retention-days: 14
