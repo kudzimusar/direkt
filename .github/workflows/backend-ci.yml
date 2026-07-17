@@ -11,6 +11,7 @@ on:
       - ".github/workflows/backend-ci.yml"
       - ".github/scripts/phase8-remediate.py"
       - ".github/scripts/phase8-runtime-fix.py"
+      - ".github/scripts/phase8-test-expectation-fix.py"
   pull_request:
     branches:
       - main
@@ -20,6 +21,7 @@ on:
       - ".github/workflows/backend-ci.yml"
       - ".github/scripts/phase8-remediate.py"
       - ".github/scripts/phase8-runtime-fix.py"
+      - ".github/scripts/phase8-test-expectation-fix.py"
   workflow_dispatch:
 
 permissions:
@@ -72,6 +74,8 @@ jobs:
             tee artifacts/diagnostics/remediation.txt
           python3 ../../.github/scripts/phase8-runtime-fix.py 2>&1 | \
             tee artifacts/diagnostics/runtime-fix.txt
+          python3 ../../.github/scripts/phase8-test-expectation-fix.py 2>&1 | \
+            tee artifacts/diagnostics/test-expectation-fix.txt
       - name: Generate formatting diagnostic
         shell: bash
         run: |
