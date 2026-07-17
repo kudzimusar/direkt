@@ -75,38 +75,45 @@ describe('Later-phase provider workspace boundaries', () => {
     await app.close();
   });
 
-  it.each([
-    ['review-responses', 'phase8', 'empty'],
-    ['subscription-status', 'phase9', 'synthetic_only'],
-  ])('returns a read-only %s boundary', async (path, phaseOwner, state) => {
+  it('returns the remaining read-only Phase 9 subscription boundary', async () => {
     const response = await request(httpServer())
-      .get(`/api/v1/provider-workspace/me/${path}`)
+      .get('/api/v1/provider-workspace/me/subscription-status')
       .set('authorization', `Bearer ${owner.accessToken}`)
       .expect(200);
     const body = response.body as DeferredSurfaceResponse;
 
     expect(body).toMatchObject({
-      phaseOwner,
-      state,
+      phaseOwner: 'phase9',
+      state: 'synthetic_only',
       mutationAllowed: false,
     });
     expect(body.message.length).toBeGreaterThan(20);
   });
 
-  it.each(['review-responses', 'subscription-status'])(
-    'exposes no mutation route for %s',
-    async (path) => {
-      await request(httpServer())
-        .post(`/api/v1/provider-workspace/me/${path}`)
-        .set('authorization', `Bearer ${owner.accessToken}`)
-        .send({ syntheticMutation: true })
-        .expect(404);
+  it('removes the former Phase 8 review-response placeholder', async () => {
+    await request(httpServer())
+      .get('/api/v1/provider-workspace/me/review-responses')
+      .set('authorization', `Bearer ${owner.accessToken}`)
+      .expect(404);
 
-      await request(httpServer())
-        .put(`/api/v1/provider-workspace/me/${path}`)
-        .set('authorization', `Bearer ${owner.accessToken}`)
-        .send({ syntheticMutation: true })
-        .expect(404);
-    },
-  );
+    await request(httpServer())
+      .post('/api/v1/provider-workspace/me/review-responses')
+      .set('authorization', `Bearer ${owner.accessToken}`)
+      .send({ syntheticMutation: true })
+      .expect(404);
+  });
+
+  it('exposes no subscription mutation route before Phase 9', async () => {
+    await request(httpServer())
+      .post('/api/v1/provider-workspace/me/subscription-status')
+      .set('authorization', `Bearer ${owner.accessToken}`)
+      .send({ syntheticMutation: true })
+      .expect(404);
+
+    await request(httpServer())
+      .put('/api/v1/provider-workspace/me/subscription-status')
+      .set('authorization', `Bearer ${owner.accessToken}`)
+      .send({ syntheticMutation: true })
+      .expect(404);
+  });
 });
