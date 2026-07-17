@@ -28,7 +28,6 @@ async function main(): Promise<void> {
     ['/api/v1/providers/{providerId}', 'get'],
     ['/api/v1/categories', 'get'],
     ['/api/v1/provider-workspace/me', 'get'],
-    ['/api/v1/provider-workspace/me/subscription-status', 'get'],
     ['/api/v1/enquiries', 'post'],
     ['/api/v1/enquiries', 'get'],
     ['/api/v1/enquiries/{enquiryId}', 'get'],
@@ -69,6 +68,24 @@ async function main(): Promise<void> {
     ['/api/v1/public/providers/{publicProviderId}/availability', 'get'],
     ['/api/v1/public/providers/{publicProviderId}/share', 'get'],
     ['/api/v1/operations/session', 'get'],
+    ['/api/v1/commercial/products', 'get'],
+    ['/api/v1/provider-workspace/me/commercial', 'get'],
+    ['/api/v1/provider-workspace/me/subscriptions', 'post'],
+    ['/api/v1/provider-workspace/me/subscriptions/{subscriptionId}/cancel', 'post'],
+    ['/api/v1/provider-workspace/me/subscriptions/{subscriptionId}/invoices', 'post'],
+    ['/api/v1/provider-workspace/me/invoices/{invoiceId}/payment-intents', 'post'],
+    ['/api/v1/provider-workspace/me/payment-intents/{paymentIntentId}/cancel', 'post'],
+    ['/api/v1/webhooks/payments/synthetic', 'post'],
+    ['/api/v1/operations/commercial', 'get'],
+    ['/api/v1/operations/commercial/products/{productId}/transitions', 'post'],
+    ['/api/v1/operations/commercial/subscriptions/{subscriptionId}/transitions', 'post'],
+    [
+      '/api/v1/operations/commercial/reconciliation/{reconciliationCaseId}/transitions',
+      'post',
+    ],
+    ['/api/v1/operations/commercial/adjustments', 'post'],
+    ['/api/v1/operations/commercial/adjustments/{adjustmentId}/decisions', 'post'],
+    ['/api/v1/operations/commercial/adjustments/{adjustmentId}/apply', 'post'],
   ];
 
   for (const [requiredPath, method] of requiredOperations) {
@@ -90,6 +107,8 @@ async function main(): Promise<void> {
     'GET /api/v1/public/providers/{publicProviderId}/availability',
     'GET /api/v1/public/providers/{publicProviderId}/share',
     'GET /api/v1/public/providers/{publicProviderId}/reviews',
+    'GET /api/v1/commercial/products',
+    'POST /api/v1/webhooks/payments/synthetic',
   ]);
   for (const [protectedPath, method] of requiredOperations.filter(
     ([pathName]) => !pathName.includes('/health/'),
@@ -107,7 +126,7 @@ async function main(): Promise<void> {
   const publicPrivatePaths = Object.keys(paths).filter(
     (pathName) =>
       pathName.startsWith('/api/v1/public/') &&
-      /evidence|verification-cases|upload-intents|complaints|appeals|handoffs|interactions/i.test(
+      /evidence|verification-cases|upload-intents|complaints|appeals|handoffs|interactions|subscriptions|invoices|payments|ledger|reconciliation/i.test(
         pathName,
       ),
   );
@@ -117,27 +136,49 @@ async function main(): Promise<void> {
     );
   }
 
-  const subscriptionMethods = Object.keys(
-    paths['/api/v1/provider-workspace/me/subscription-status'] ?? {},
-  ).filter((method) => ['get', 'post', 'put', 'patch', 'delete'].includes(method));
-  if (subscriptionMethods.length !== 1 || subscriptionMethods[0] !== 'get') {
-    throw new Error('The deferred Phase 9 subscription boundary is not read-only.');
+  if (paths['/api/v1/provider-workspace/me/subscription-status']) {
+    throw new Error('The deferred Phase 9 subscription placeholder still exists.');
   }
 
-  const prohibited = Object.keys(paths).filter(
+  const realProviderPaths = Object.keys(paths).filter(
     (pathName) =>
-      /(payments|invoices|entitlements|webhooks|public-directory|discoverable|chat|attachments|voice-calls|video-calls)/i.test(
+      /(airtel|mtn|mpesa|stripe|paypal|card-payments|mobile-money|production-payments|raw-webhooks)/i.test(
         pathName,
       ) ||
-      (/subscriptions/i.test(pathName) &&
-        pathName !== '/api/v1/provider-workspace/me/subscription-status'),
+      (/webhooks\/payments/i.test(pathName) &&
+        pathName !== '/api/v1/webhooks/payments/synthetic'),
   );
-  if (prohibited.length > 0) {
-    throw new Error(`Phase 8 exposed prohibited domain paths: ${prohibited.join(', ')}`);
+  if (realProviderPaths.length > 0) {
+    throw new Error(`Unapproved payment-provider paths were exposed: ${realProviderPaths.join(', ')}`);
+  }
+
+  const prohibitedDeferredDomains = Object.keys(paths).filter((pathName) =>
+    /(chat|attachments|voice-calls|video-calls)/i.test(pathName),
+  );
+  if (prohibitedDeferredDomains.length > 0) {
+    throw new Error(
+      `Deferred communication domains were exposed: ${prohibitedDeferredDomains.join(', ')}`,
+    );
+  }
+
+  const serialized = JSON.stringify(document);
+  const sensitiveSchemaFields = [
+    '"cardNumber"',
+    '"cvv"',
+    '"mobileMoneyPin"',
+    '"paymentProviderSecret"',
+    '"serviceRoleKey"',
+    '"rawPayload":',
+    '"rawBody":',
+  ].filter((token) => serialized.includes(token));
+  if (sensitiveSchemaFields.length > 0) {
+    throw new Error(
+      `Sensitive payment fields entered OpenAPI: ${sensitiveSchemaFields.join(', ')}`,
+    );
   }
 
   process.stdout.write(
-    `${JSON.stringify({ event: 'openapi_check_passed', pathCount: Object.keys(paths).length, phase: 8 })}\n`,
+    `${JSON.stringify({ event: 'openapi_check_passed', pathCount: Object.keys(paths).length, phase: 9 })}\n`,
   );
 }
 
