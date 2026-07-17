@@ -1,0 +1,57 @@
+name: Phase 9 formatting preview
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - ".github/workflows/phase9-format-preview.yml"
+      - "backend/direkt-api/src/commercial/**"
+      - "backend/direkt-api/src/app.module.ts"
+      - "backend/direkt-api/src/config/environment.ts"
+      - "backend/direkt-api/src/authorization/permissions.ts"
+      - "backend/direkt-api/test/unit/commercial-payment-provider.spec.ts"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase9-format-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  patch:
+    name: Generate Phase 9 backend formatting patch
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - name: Install exact dependencies
+        working-directory: backend/direkt-api
+        run: npm ci --ignore-scripts
+      - name: Format backend
+        working-directory: backend/direkt-api
+        run: npm run format
+      - name: Create deterministic patch
+        shell: bash
+        run: |
+          mkdir -p artifacts/formatted
+          git diff --binary -- backend/direkt-api > artifacts/phase9-format.patch
+          git diff --name-only -- backend/direkt-api > artifacts/phase9-format-files.txt
+          while IFS= read -r file; do
+            mkdir -p "artifacts/formatted/$(dirname "$file")"
+            cp "$file" "artifacts/formatted/$file"
+          done < artifacts/phase9-format-files.txt
+          test -s artifacts/phase9-format.patch
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase9-format-${{ github.sha }}
+          path: artifacts/**
+          if-no-files-found: error
+          retention-days: 3
