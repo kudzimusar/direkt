@@ -7,6 +7,12 @@ on:
     paths:
       - ".github/workflows/supabase-format-preview.yml"
       - "backend/direkt-api/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/supabase-format-preview.yml"
+      - "backend/direkt-api/**"
   workflow_dispatch:
 
 permissions:
