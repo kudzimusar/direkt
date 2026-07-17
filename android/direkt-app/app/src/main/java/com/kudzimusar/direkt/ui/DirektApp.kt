@@ -4,15 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -30,10 +25,10 @@ import androidx.compose.ui.unit.dp
 import com.kudzimusar.direkt.ui.discovery.CustomerDiscoveryExperience
 import com.kudzimusar.direkt.ui.discovery.CustomerOnboardingExperience
 import com.kudzimusar.direkt.ui.discovery.SavedProvidersExperience
-import com.kudzimusar.direkt.ui.provider.ProviderDraft
+import com.kudzimusar.direkt.ui.interaction.CustomerInteractionExperience
+import com.kudzimusar.direkt.ui.interaction.ProviderInteractionExperience
 import com.kudzimusar.direkt.ui.provider.ProviderWorkspaceExperience
 import com.kudzimusar.direkt.ui.provider.ProviderWorkspaceSection
-import com.kudzimusar.direkt.ui.provider.syntheticProviderDraft
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,7 +45,7 @@ fun DirektApp(
                     Column {
                         Text("DIREKT", fontWeight = FontWeight.Bold)
                         Text(
-                            text = "Phase 6 — synthetic provider workspace",
+                            text = "Phase 8 — tracked interactions",
                             style = MaterialTheme.typography.labelSmall,
                         )
                     }
@@ -106,12 +101,7 @@ fun DirektApp(
                     DirektDestination.Discover -> item { CustomerDiscoveryExperience() }
                     DirektDestination.Saved -> item { SavedProvidersExperience() }
                     DirektDestination.Account -> item { CustomerOnboardingExperience() }
-                    DirektDestination.Enquiries -> item {
-                        PlaceholderCard(
-                            title = "Enquiries begin in Phase 8",
-                            body = "Phase 6 retains discovery, saves and share-safe metadata only. No provider contact is exposed.",
-                        )
-                    }
+                    DirektDestination.Enquiries -> item { CustomerInteractionExperience() }
                 }
             } else {
                 when (appState.destination) {
@@ -121,9 +111,7 @@ fun DirektApp(
                     DirektDestination.Saved -> item {
                         ProviderWorkspaceExperience(ProviderWorkspaceSection.Evidence)
                     }
-                    DirektDestination.Enquiries -> item {
-                        ProviderWorkspaceExperience(ProviderWorkspaceSection.Timeline)
-                    }
+                    DirektDestination.Enquiries -> item { ProviderInteractionExperience() }
                     DirektDestination.Account -> item {
                         ProviderWorkspaceExperience(ProviderWorkspaceSection.Profile)
                     }
@@ -153,87 +141,9 @@ private fun ModeSelector(
             }
         }
         Text(
-            text = "Mode is a presentation context only. Backend identity, role, provider, case and publication policy remain authoritative.",
+            text = "Mode is presentation context only. Backend identity, role, provider, publication, interaction and review policy remain authoritative.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun ProviderDraftCard(draft: ProviderDraft) {
-    FoundationCard {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Column {
-                Text(draft.displayName, style = MaterialTheme.typography.titleMedium)
-                Text("${draft.pathway.label} · ${draft.operatingModel.label}")
-            }
-            Text(draft.status.label, fontWeight = FontWeight.SemiBold)
-        }
-        Spacer(Modifier.height(12.dp))
-        Text("Locality: ${draft.localitySummary ?: "Mobile service only"}")
-        Text("Service area: ${draft.serviceAreaSummary}")
-        Spacer(Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            draft.categoryNames.forEach { category ->
-                AssistChip(onClick = {}, label = { Text("$category · v1") })
-            }
-        }
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = "Public publication is policy-controlled",
-            color = MaterialTheme.colorScheme.tertiary,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = "A provider draft, payment or client action cannot create a discovery listing. Search consumes only eligible safe projections.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun ProviderBoundaryCard() {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-        ),
-    ) {
-        Column(Modifier.padding(16.dp)) {
-            Text("Provider trust boundary", fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(6.dp))
-            Text(
-                "No real evidence, private address, production storage, map credential, payment, regulator or public traffic is connected.",
-            )
-        }
-    }
-}
-
-@Composable
-private fun PlaceholderCard(
-    title: String,
-    body: String,
-) {
-    FoundationCard {
-        Text(title, style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        Text(body)
-    }
-}
-
-@Composable
-private fun FoundationCard(content: @Composable () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            content = { content() },
         )
     }
 }
@@ -242,20 +152,26 @@ private fun screenTitle(appState: DirektAppState): String = when (appState.mode)
     DirektMode.Customer -> when (appState.destination) {
         DirektDestination.Discover -> "Find a provider"
         DirektDestination.Saved -> "Saved providers"
-        DirektDestination.Enquiries -> "Enquiries"
+        DirektDestination.Enquiries -> "Enquiries and reviews"
         DirektDestination.Account -> "Customer onboarding"
     }
     DirektMode.Provider -> when (appState.destination) {
         DirektDestination.Discover -> "Provider workspace"
         DirektDestination.Saved -> "Private evidence uploads"
-        DirektDestination.Enquiries -> "Verification timeline"
+        DirektDestination.Enquiries -> "Enquiry inbox and review responses"
         DirektDestination.Account -> "Profile, services and availability"
     }
 }
 
 private fun screenSummary(appState: DirektAppState): String = when (appState.mode) {
-    DirektMode.Customer ->
+    DirektMode.Customer -> if (appState.destination == DirektDestination.Enquiries) {
+        "Track bounded service requests, time-limited contact consent, private history, eligible reviews and appeals."
+    } else {
         "Search fictional, policy-eligible providers using manual area or a one-time location model."
-    DirektMode.Provider ->
+    }
+    DirektMode.Provider -> if (appState.destination == DirektDestination.Enquiries) {
+        "Respond inside the actor-resolved provider scope with optimistic revisions and one bounded review response."
+    } else {
         "Manage a fictional actor-scoped workspace with private evidence recovery, safe verification progress and independent availability."
+    }
 }

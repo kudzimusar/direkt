@@ -99,7 +99,7 @@ export default function ProviderWorkspacesPage() {
           <li>Interrupted uploads remain provider-owned and idempotent.</li>
           <li>Availability is operational metadata and cannot create trust.</li>
           <li>Profile completion and uploads cannot publish a provider.</li>
-          <li>Enquiries and review responses remain Phase 8 read-only boundaries.</li>
+          <li>Stage 8 enquiries and review responses use separate actor-scoped API workspaces.</li>
           <li>Subscription status remains a Phase 9 synthetic read-only boundary.</li>
         </ul>
       </section>

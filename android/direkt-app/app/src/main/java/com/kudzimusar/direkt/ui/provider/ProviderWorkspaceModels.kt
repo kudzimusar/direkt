@@ -87,7 +87,7 @@ data class ProviderWorkspaceSnapshot(
     val synthetic: Boolean = true,
 ) {
     val trustBoundary: String =
-        "Profile, availability, uploads and commercial state cannot create claims, publication or trust ranking."
+        "Profile, availability, uploads, interactions and commercial state cannot create claims, publication or trust ranking."
 }
 
 val syntheticProviderWorkspace = ProviderWorkspaceSnapshot(
@@ -138,8 +138,6 @@ val syntheticProviderWorkspace = ProviderWorkspaceSnapshot(
         ),
     ),
     deferredSurfaces = listOf(
-        ProviderDeferredSurface("Enquiries", "Phase 8", "Empty"),
-        ProviderDeferredSurface("Review responses", "Phase 8", "Empty"),
         ProviderDeferredSurface("Subscription status", "Phase 9", "Synthetic read-only"),
     ),
 )

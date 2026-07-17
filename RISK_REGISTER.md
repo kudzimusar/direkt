@@ -15,7 +15,7 @@ Scores use probability (P) and impact (I) from 1–5. Priority is `P × I`.
 | R-009 | Mobile-money integration creates reconciliation errors | 3 | 5 | 15 | adapter, idempotent webhooks, ledger, reconciliation, exception queue | Finance / Phase 9 gate |
 | R-010 | Verification cost exceeds subscription revenue | 4 | 4 | 16 | narrow pilot, category-specific checks, cost measurement, tier design | Business / pilot gate |
 | R-011 | Too few nearby providers make search useless | 4 | 4 | 16 | Lusaka-first, limited categories, supply onboarding before demand launch | Growth / open |
-| R-012 | Fake or retaliatory reviews | 3 | 4 | 12 | tracked-interaction eligibility, moderation, anomaly rules, appeals | Trust / planned |
+| R-012 | Fake or retaliatory reviews | 3 | 4 | 12 | tracked-interaction eligibility, one review, moderation, reports, appeals and later anomaly rules | Trust / controlled for synthetic phase |
 | R-013 | Legal interpretation is wrong | 3 | 5 | 15 | qualified Zambia counsel, legal register, policy versioning | Owner/legal / Phase 10 gate |
 | R-014 | Map costs or coverage are unsuitable | 3 | 4 | 12 | provider abstraction, manual area fallback, Plus Codes, quotas, pilot tests | Architecture / open |
 | R-015 | Android fragmentation harms usability | 4 | 3 | 12 | conservative design, later device matrix, performance budgets | Android / open |
@@ -31,7 +31,7 @@ Scores use probability (P) and impact (I) from 1–5. Priority is `P × I`.
 | R-025 | High-risk categories exceed pilot safety capacity | 3 | 5 | 15 | excluded-category list, category scorecard, legal review, limited claims | Product/trust / controlled |
 | R-026 | Delayed manual fieldwork blocks design indefinitely | 1 | 4 | 4 | secondary-research gate; primary validation moved to later phases | Programme / mitigated |
 | R-027 | Synthetic prototype is mistaken for implemented functionality | 3 | 4 | 12 | explicit prototype labelling, fictional data, no real submissions | Design/programme / active |
-| R-028 | Call/WhatsApp handoff causes privacy leakage or bypass | 3 | 4 | 12 | consent step, minimum disclosed data, tracked enquiry, warnings and follow-up | Product/privacy / open |
+| R-028 | Call/WhatsApp handoff causes privacy leakage or bypass | 3 | 4 | 12 | accepted tracked interaction, verified contact reference, masked hint, 24-hour consent, revocation, disabled delivery and leak regressions | Product/privacy / controlled for synthetic phase; production gate open |
 | R-029 | Informal-provider pathway is perceived as lower quality or misleading | 3 | 4 | 12 | equal layout, explicit evidence states, no hidden ranking penalty | Product/trust / open |
 | R-030 | OTP/challenge endpoint enables enumeration, spam or cost abuse | 4 | 5 | 20 | enumeration-safe response, expiry, attempt limit, hashed fingerprint, synthetic-only adapter; distributed throttling and vendor controls required before production | Security / Phase 10 gate |
 | R-031 | Refresh-token theft allows persistent account access | 3 | 5 | 15 | raw token never stored, short access token, rotation, family reuse detection, device/session revocation, secure client storage later | Security / active |
@@ -57,24 +57,32 @@ Scores use probability (P) and impact (I) from 1–5. Priority is `P × I`.
 | R-051 | Interrupted retries create duplicate evidence or link to the wrong case | 2 | 5 | 10 | logical intent key, attempt/session linkage triggers, one version per session, case/provider/requirement lifecycle validation and rollback tests | Trust/backend / controlled |
 | R-052 | Provider timeline or operations readiness leaks reviewer or evidence data | 2 | 5 | 10 | dedicated allowlisted projections, aggregate counts, explicit non-exposure flags and serialization tests | Privacy/operations / controlled |
 | R-053 | Android recovery persistence stores sensitive evidence or bearer-like data | 3 | 5 | 15 | metadata-only synthetic snapshot, no bytes/URI/hash/object key/token, corruption-safe fallback; encrypted storage required before real evidence | Android/security / production gate |
-| R-054 | Phase 6 accidentally implements enquiry, review or payment mutations | 2 | 4 | 8 | explicit read-only endpoints, absent mutation routes, Phase 8/9 ownership copy and HTTP regressions | Product/architecture / controlled |
+| R-054 | Phase 6 accidentally implements enquiry, review or payment mutations | 2 | 4 | 8 | explicit read-only endpoints, absent mutation routes, Phase 8/9 ownership copy and HTTP regressions | Product/architecture / mitigated by Phase 8 promotion; Phase 9 boundary retained |
 | R-055 | Unassigned, revoked or expired operators access private evidence | 2 | 5 | 10 | active assignment match, short-lived grants, access audit, immediate revocation/expiry checks and deny regressions | Security/trust / controlled |
 | R-056 | Field text leaks precise coordinates, private storage paths or checksums into operator responses | 2 | 5 | 10 | database public-safe text predicate, structured observations, separate private notes and HTTP regressions | Privacy/operations / controlled |
 | R-057 | Field agents create final trust decisions or claims | 2 | 5 | 10 | advisory-only schema, separate permissions, absent decision routes and before/after trust-state regressions | Trust/operations / controlled |
 | R-058 | High-risk override requester, duplicate or colluding approvers weaken evidence policy | 3 | 5 | 15 | serialized approvals, two distinct eligible identities, requester/self/duplicate rejection and mandatory-evidence gates | Trust/security / controlled; pilot review required |
 | R-059 | An unrelated operator starts or resolves another owner's incident | 2 | 4 | 8 | owner-scoped lookup, trust-supervisor/admin override rules, immutable terminal resolution and HTTP regressions | Operations/security / controlled |
 | R-060 | Expiry or aggregate reporting leaks provider/evidence identifiers or storage metadata | 2 | 5 | 10 | fixed allowlists, safe views/types, explicit non-exposure flags and serialization tests | Privacy/reporting / controlled |
+| R-061 | Stale or replayed enquiry actions overwrite a newer provider/customer decision | 3 | 4 | 12 | expected revisions, immutable events, idempotency fingerprints, conflict responses and Android refresh state | Backend/Android / controlled |
+| R-062 | Contact consent is misunderstood as permanent provider access or marketing consent | 3 | 5 | 15 | channel-specific 24-hour scope, explicit expiry/revocation copy, provider retrieval denial, no marketing reuse and later legal review | Product/privacy / production gate |
+| R-063 | Interaction or review APIs become an alternate route to create trust, publication or ranking | 2 | 5 | 10 | separate schemas, absent write coupling, database state machines and before/after decision/claim/publication assertions | Trust/backend / controlled |
+| R-064 | Appeal handling loses the prior moderation state or accidentally exposes a review | 2 | 5 | 10 | persisted pre-appeal state/timestamp, immutable origin, reasoned decisions and denied/upheld regressions | Trust/data / controlled |
+| R-065 | Customer complaints are confused with public reports or internal incidents | 3 | 4 | 12 | separate tables, permissions, routes, portal workspaces, projections and no-link flags | Operations/product / controlled |
+| R-066 | Moderation, appeal or complaint queues exceed operational service levels | 4 | 4 | 16 | queue metrics, ownership, escalation policy, staffing model, ageing alerts and pilot load testing | Operations / Phase 10–11 gate |
+| R-067 | Android offline draft recovery stores raw contact or sensitive service detail insecurely | 3 | 5 | 15 | bounded synthetic metadata only, no tokens/contact/evidence, reset path; encrypted approved storage and retention tests before real data | Android/security / production gate |
+| R-068 | A production communications adapter sends duplicate, unauthorized or non-consensual messages/calls | 3 | 5 | 15 | disabled adapter in Phase 8; future signed provider adapter, consent-at-send check, idempotency, delivery audit, opt-out and abuse controls | Communications/security / production gate |
 
 ## Current treatment priorities
 
-Phase 7 exit controls are implemented for the synthetic checkpoint:
+Phase 8 exit controls are implemented for the synthetic checkpoint:
 
-- R-055 is controlled by assigned short-lived evidence grants, audit and immediate revocation/expiry enforcement;
-- R-056 is controlled by database-level public-safe text checks across work reasons, summaries and observation notes;
-- R-057 is controlled by advisory-only field schemas, role permissions and decision/claim non-creation tests;
-- R-058 is controlled by serialized four-eyes approval and non-bypassable evidence/publication gates;
-- R-059 is controlled by owner-scoped incident lifecycle and explicit supervisor/admin override authority;
-- R-060 is controlled by allowlisted expiry/reporting projections and concrete leak assertions;
+- R-012 is reduced by accepted-and-closed interaction eligibility, one review, moderation, reports and appeals;
+- R-028 is controlled synthetically by verified-contact references, masked hints, expiry, revocation and disabled delivery;
+- R-061 is controlled by expected revisions, idempotency and explicit Android recovery states;
+- R-063 is controlled by schema separation and before/after verification, claim and publication assertions;
+- R-064 is controlled by persisted immutable appeal origin and denied/upheld lifecycle tests;
+- R-065 is controlled by separate complaint, report and internal-incident domains and portal workspaces;
 - R-033 remains controlled by the API-only portal architecture and permanent import isolation gate.
 
 Before production integration:
@@ -82,9 +90,11 @@ Before production integration:
 - R-006 still requires WorkManager/network implementation and representative low-connectivity device validation;
 - R-014 and R-048 require an approved map/location provider, quotas, cost controls and manual fallback validation;
 - R-039, R-042 and R-043 require production storage, scheduler, scanning, alerting and recovery validation;
-- R-053 requires approved encrypted Android storage, secure file handling and deletion tests;
+- R-053 and R-067 require approved encrypted Android storage, secure local retention and deletion tests;
 - R-055 and R-056 require production identity, object-storage and log-redaction review;
-- R-059 requires operational monitoring, escalation policy and incident-response exercises.
+- R-062 requires approved consent copy, privacy notice, lawful-use boundaries and qualified Zambia review;
+- R-066 requires queue ownership, service levels, ageing alerts, staffing and escalation exercises;
+- R-068 requires approved providers, consent-at-send enforcement, idempotency, audit, opt-out and abuse controls.
 
 Before the controlled pilot:
 
@@ -92,7 +102,8 @@ Before the controlled pilot:
 - R-030 requires approved providers, distributed rate limiting and monitored abuse controls;
 - R-033 requires deployment, cookie/session, CSP and private-data review;
 - R-034 requires production configuration and secret-management validation;
-- R-037 and R-058 require representative fairness, independence and anti-collusion testing.
+- R-037 and R-058 require representative fairness, independence and anti-collusion testing;
+- R-062, R-066, R-067 and R-068 require representative consent, moderation, connectivity and communications validation.
 
 ## Review cadence
 

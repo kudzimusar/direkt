@@ -31,10 +31,10 @@ class ProviderWorkspaceModelsTest {
 
     @Test
     fun `later phase surfaces are read only`() {
-        assertEquals(3, syntheticProviderWorkspace.deferredSurfaces.size)
+        assertEquals(1, syntheticProviderWorkspace.deferredSurfaces.size)
         assertTrue(syntheticProviderWorkspace.deferredSurfaces.all { !it.mutationAllowed })
         assertEquals(
-            listOf("Phase 8", "Phase 8", "Phase 9"),
+            listOf("Phase 9"),
             syntheticProviderWorkspace.deferredSurfaces.map { it.phaseOwner },
         )
     }
