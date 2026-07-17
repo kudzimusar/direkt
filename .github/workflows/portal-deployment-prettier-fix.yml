@@ -1,0 +1,50 @@
+name: Portal deployment Prettier correction
+
+on:
+  push:
+    branches:
+      - integration/phase10-infrastructure-bootstrap
+    paths:
+      - ".github/workflows/portal-deployment-prettier-fix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: integration/phase10-infrastructure-bootstrap
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: admin/direkt-operations-portal/package-lock.json
+      - name: Apply the committed Prettier version
+        working-directory: admin/direkt-operations-portal
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npx prettier --write \
+            src/app/api/health/route.ts \
+            test/deployment-health.spec.ts \
+            vercel.json
+      - name: Commit canonical formatting
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            admin/direkt-operations-portal/src/app/api/health/route.ts \
+            admin/direkt-operations-portal/test/deployment-health.spec.ts \
+            admin/direkt-operations-portal/vercel.json
+          if git diff --cached --quiet; then
+            echo "Portal deployment files are already canonical."
+          else
+            git commit -m "style(portal): apply canonical deployment formatting"
+            git push origin HEAD:integration/phase10-infrastructure-bootstrap
+          fi
