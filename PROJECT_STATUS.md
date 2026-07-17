@@ -2,8 +2,8 @@
 
 **Updated:** 2026-07-17  
 **Stable branch:** `main`  
-**Implementation branch:** `build/android-v1` pending synchronization  
-**Programme state:** Phase 9 is complete and stable. Phase 10 is the next documented phase and remains unclaimed.
+**Implementation branch:** `build/android-v1`  
+**Programme state:** Phase 9 is complete and stable. Phase 10 is active under Issue #41 on the single implementation lane.
 
 ## Stable checkpoints
 
@@ -24,25 +24,36 @@ Merge commit:       4c78e2419aa4eca225495acaac8e7e0ee81903f1
 Issue #34:          closed as completed
 ```
 
-All Stage 9A–9G capabilities are complete: isolated commercial aggregates, actor-scoped subscriptions and entitlements, immutable invoices, synthetic-only payment contracts, signed/replay-safe webhook processing, balanced append-only ledger entries, reconciliation, controlled adjustments, Android recovery states, API-only finance operations and permanent governance/testing records.
+All Stage 9A–9G capabilities are stable and all permanent workflows passed on the reviewed head.
 
-All permanent workflows passed on the reviewed head:
+## Phase 10 implementation state
 
-- backend/PostGIS run #1163;
-- Android run #448;
-- operations portal run #531;
-- documentation run #1824.
+Issue #41 is the sole active implementation tracker. The Phase 10 checkpoint PR remains open until every hardening stage and exact-head exit criterion is satisfied.
 
-The review queue is resolved. Additional permanent regressions cover conflicting webhook reuse, canonical processed-receipt integrity and adjustment invoice/payment relationship integrity.
+| Stage | State | Planned capability |
+|---|---|---|
+| 10A — threat model and security architecture | Active | assets, data flows, abuse cases, mitigations and baseline security review |
+| 10B — authorization and tenant isolation | Planned | permission matrix, scope denial, escalation review and step-up boundaries |
+| 10C — privacy, retention and legal controls | Planned | data inventory, lifecycle rights, consent/policy mapping and Zambia stop gates |
+| 10D — private storage and evidence access | Planned | exact-environment verification, bucket/grant tests, scanning/redaction and recovery scope |
+| 10E — abuse and operational safeguards | Planned | distributed rate limits, enumeration/spam/replay controls, queue ageing and kill switches |
+| 10F — reliability, recovery and performance | Planned | backup/restore, incident exercise, queue recovery, budgets, soak and outage handling |
+| 10G — supply-chain, secret and configuration | Planned | dependency/secret scans, build/environment review, rotation and fail-closed configuration |
+| 10H — provider and authority approvals | Planned | current map, communications, payment, registry, legal and staffing evidence or stop gates |
+| 10I — checkpoint promotion | Planned | permanent regressions, Phase 11 handoff, review, exact-head gates, merge and synchronization |
 
-## Boundaries
+## Current boundaries
 
-No real payment provider, real money movement, deployment or public pilot is authorized. Commercial state remains independent from verification, publication, ranking and accountability records.
+No real participant or evidence data, real money movement, deployment or public pilot is authorized. Phase 10 must preserve all Phase 4–9 trust, privacy, interaction, accountability and commercial invariants.
 
-The dedicated DIREKT Supabase project is not accessible through the current connector. No unrelated project was modified. Remote activation remains blocked until the correct project access is available.
+The dedicated DIREKT Supabase project remains inaccessible through the current connector. No unrelated project may be modified. Remote activation remains blocked until exact project access is verified.
 
-## Next phase boundary
+## Next work
 
-Phase 10 remains unclaimed. It owns security, privacy, legal and reliability hardening under `docs/phase10/HANDOFF_FROM_PHASE9.md`.
+1. complete Stage 10A threat model and security architecture baseline;
+2. inventory route/function authorization and tenant isolation;
+3. implement permanent hardening controls and tests in documented stage order;
+4. record external approval gaps as stop gates rather than assumptions;
+5. validate and promote one exact reviewed Phase 10 checkpoint.
 
 Issue #5 remains open as a later, non-blocking Zambia pilot-validation obligation.
