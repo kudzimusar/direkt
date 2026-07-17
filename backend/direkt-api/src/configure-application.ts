@@ -1,10 +1,7 @@
 import { ValidationPipe, type INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
-import {
-  parseCorsOrigins,
-  type NodeEnvironment,
-} from './config/environment';
+import { parseCorsOrigins, type NodeEnvironment } from './config/environment';
 import { ProblemDetailsFilter } from './platform/http/problem-details.filter';
 import { applySecurityHeaders } from './platform/http/security-headers';
 import { createOpenApiDocument } from './platform/openapi/openapi';
