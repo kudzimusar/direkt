@@ -1,8 +1,8 @@
 import { runMigrations } from './migration-lib';
-import { databaseUrl } from './runtime-config';
+import { directDatabaseUrl } from './runtime-config';
 
 async function main(): Promise<void> {
-  const result = await runMigrations(databaseUrl());
+  const result = await runMigrations(directDatabaseUrl());
   process.stdout.write(
     `${JSON.stringify({ event: 'migrations_completed', ...result }, null, 2)}\n`,
   );

@@ -56,7 +56,7 @@ export interface UploadSessionView {
   uploadUrl: string;
   expiresAt: string;
   requiredHeaders: Record<string, string>;
-  synthetic: true;
+  synthetic: boolean;
 }
 
 export interface EvidenceVersionView {
@@ -179,7 +179,7 @@ export interface PrivateEvidenceAccessGrant {
   accessUrl: string;
   expiresAt: string;
   watermark: string;
-  synthetic: true;
+  synthetic: boolean;
 }
 
 export interface PrivateEvidenceAccessResolution {
@@ -188,7 +188,7 @@ export interface PrivateEvidenceAccessResolution {
   accessUrl: string;
   expiresAt: string;
   watermark: string;
-  synthetic: true;
+  synthetic: boolean;
 }
 
 export interface EvidenceAccessGrantState {

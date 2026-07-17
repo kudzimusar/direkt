@@ -1,0 +1,37 @@
+project_id = "direkt-app"
+
+[api]
+enabled = true
+
+[db]
+major_version = 17
+
+[realtime]
+enabled = false
+
+[auth]
+enabled = false
+
+[storage]
+enabled = true
+file_size_limit = "100MiB"
+
+[storage.buckets.provider-evidence]
+public = false
+file_size_limit = "20MiB"
+allowed_mime_types = ["application/pdf", "image/jpeg", "image/png", "image/webp"]
+
+[storage.buckets.provider-media-private]
+public = false
+file_size_limit = "10MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/webp"]
+
+[storage.buckets.provider-media-public]
+public = false
+file_size_limit = "10MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/webp"]
+
+[storage.buckets.system-exports]
+public = false
+file_size_limit = "100MiB"
+allowed_mime_types = ["application/json", "text/csv", "application/pdf", "application/zip"]

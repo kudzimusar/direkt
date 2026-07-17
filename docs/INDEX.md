@@ -91,6 +91,7 @@ This index lists the authoritative planning and operating documents. Agents must
 ## Integrations
 
 - [Integration and Secrets Plan](integrations/INTEGRATION_AND_SECRETS_PLAN.md)
+- [Supabase Development Integration](integrations/SUPABASE_DEVELOPMENT_INTEGRATION.md)
 
 ## Legal
 
