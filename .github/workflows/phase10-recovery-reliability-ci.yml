@@ -1,0 +1,397 @@
+name: DIREKT Phase 10 recovery and reliability exercise
+
+on:
+  push:
+    branches:
+      - main
+      - build/android-v1
+    paths:
+      - "backend/direkt-api/**"
+      - "database/**"
+      - ".github/workflows/phase10-recovery-reliability-ci.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "backend/direkt-api/**"
+      - "database/**"
+      - ".github/workflows/phase10-recovery-reliability-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-phase10-recovery-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  exercise:
+    name: Restore, outage recovery and bounded soak
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://direkt:direkt_recovery_ci@localhost:5432/direkt_recovery_source
+      SOURCE_DATABASE: direkt_recovery_source
+      RESTORE_DATABASE: direkt_recovery_restored
+      POSTGRES_USER: direkt
+      POSTGRES_PASSWORD: direkt_recovery_ci
+      API_PORT: "8090"
+      SOAK_REQUESTS: "600"
+      SOAK_CONCURRENCY: "10"
+      SOAK_P95_BUDGET_MS: "750"
+      SOAK_MAX_BUDGET_MS: "3000"
+
+    services:
+      postgres:
+        image: postgis/postgis:18-3.6
+        env:
+          POSTGRES_DB: direkt_recovery_source
+          POSTGRES_USER: direkt
+          POSTGRES_PASSWORD: direkt_recovery_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U direkt -d direkt_recovery_source"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend/direkt-api
+        run: npm ci --ignore-scripts
+
+      - name: Apply migrations and seed bounded synthetic data
+        working-directory: backend/direkt-api
+        run: |
+          set -euo pipefail
+          npm run migration:up
+          npm run seed:synthetic
+
+      - name: Add recovery integrity sentinel
+        shell: bash
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          docker exec \
+            --env PGPASSWORD="${POSTGRES_PASSWORD}" \
+            "${POSTGRES_CONTAINER}" \
+            psql \
+              --username "${POSTGRES_USER}" \
+              --dbname "${SOURCE_DATABASE}" \
+              --set ON_ERROR_STOP=1 \
+              --command "CREATE SCHEMA IF NOT EXISTS phase10_exercise; CREATE TABLE IF NOT EXISTS phase10_exercise.recovery_sentinel (id uuid PRIMARY KEY, payload text NOT NULL, created_at timestamptz NOT NULL DEFAULT now()); TRUNCATE phase10_exercise.recovery_sentinel; INSERT INTO phase10_exercise.recovery_sentinel (id, payload) VALUES ('00000000-0000-4000-8000-000000001010', 'DIREKT_PHASE10_SYNTHETIC_RECOVERY_SENTINEL');"
+
+      - name: Capture source integrity baseline
+        shell: bash
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          query() {
+            docker exec \
+              --env PGPASSWORD="${POSTGRES_PASSWORD}" \
+              "${POSTGRES_CONTAINER}" \
+              psql --username "${POSTGRES_USER}" --dbname "${SOURCE_DATABASE}" --tuples-only --no-align --command "$1"
+          }
+
+          SOURCE_TABLE_COUNT="$(query "SELECT count(*) FROM pg_tables WHERE schemaname NOT IN ('pg_catalog', 'information_schema');")"
+          SOURCE_SENTINEL_HASH="$(query "SELECT md5(payload) FROM phase10_exercise.recovery_sentinel WHERE id = '00000000-0000-4000-8000-000000001010';")"
+          SOURCE_IDENTITY_COUNT="$(query "SELECT count(*) FROM account.identities;")"
+          POSTGIS_VERSION="$(query "SELECT extversion FROM pg_extension WHERE extname = 'postgis';")"
+
+          test "${SOURCE_TABLE_COUNT}" -gt 0
+          test -n "${SOURCE_SENTINEL_HASH}"
+          test "${SOURCE_IDENTITY_COUNT}" -gt 0
+          test -n "${POSTGIS_VERSION}"
+
+          {
+            echo "SOURCE_TABLE_COUNT=${SOURCE_TABLE_COUNT}"
+            echo "SOURCE_SENTINEL_HASH=${SOURCE_SENTINEL_HASH}"
+            echo "SOURCE_IDENTITY_COUNT=${SOURCE_IDENTITY_COUNT}"
+            echo "POSTGIS_VERSION=${POSTGIS_VERSION}"
+          } >> "${GITHUB_ENV}"
+
+      - name: Back up and restore the complete synthetic database
+        shell: bash
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          RESTORE_STARTED_AT="$(date +%s)"
+
+          docker exec \
+            --env PGPASSWORD="${POSTGRES_PASSWORD}" \
+            "${POSTGRES_CONTAINER}" \
+            pg_dump \
+              --username "${POSTGRES_USER}" \
+              --dbname "${SOURCE_DATABASE}" \
+              --format custom \
+              --no-owner \
+              --no-acl \
+              --file /tmp/direkt-phase10-recovery.dump
+
+          docker exec \
+            --env PGPASSWORD="${POSTGRES_PASSWORD}" \
+            "${POSTGRES_CONTAINER}" \
+            dropdb --username "${POSTGRES_USER}" --if-exists "${RESTORE_DATABASE}"
+          docker exec \
+            --env PGPASSWORD="${POSTGRES_PASSWORD}" \
+            "${POSTGRES_CONTAINER}" \
+            createdb --username "${POSTGRES_USER}" --owner "${POSTGRES_USER}" --template template0 "${RESTORE_DATABASE}"
+          docker exec \
+            --env PGPASSWORD="${POSTGRES_PASSWORD}" \
+            "${POSTGRES_CONTAINER}" \
+            pg_restore \
+              --username "${POSTGRES_USER}" \
+              --dbname "${RESTORE_DATABASE}" \
+              --no-owner \
+              --no-acl \
+              --exit-on-error \
+              /tmp/direkt-phase10-recovery.dump
+
+          RESTORE_COMPLETED_AT="$(date +%s)"
+          echo "RESTORE_DURATION_SECONDS=$((RESTORE_COMPLETED_AT - RESTORE_STARTED_AT))" >> "${GITHUB_ENV}"
+
+      - name: Verify restored data and forward recovery
+        shell: bash
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          query_restore() {
+            docker exec \
+              --env PGPASSWORD="${POSTGRES_PASSWORD}" \
+              "${POSTGRES_CONTAINER}" \
+              psql --username "${POSTGRES_USER}" --dbname "${RESTORE_DATABASE}" --tuples-only --no-align --command "$1"
+          }
+
+          RESTORED_TABLE_COUNT="$(query_restore "SELECT count(*) FROM pg_tables WHERE schemaname NOT IN ('pg_catalog', 'information_schema');")"
+          RESTORED_SENTINEL_HASH="$(query_restore "SELECT md5(payload) FROM phase10_exercise.recovery_sentinel WHERE id = '00000000-0000-4000-8000-000000001010';")"
+          RESTORED_IDENTITY_COUNT="$(query_restore "SELECT count(*) FROM account.identities;")"
+          RESTORED_POSTGIS_VERSION="$(query_restore "SELECT extversion FROM pg_extension WHERE extname = 'postgis';")"
+
+          test "${RESTORED_TABLE_COUNT}" = "${SOURCE_TABLE_COUNT}"
+          test "${RESTORED_SENTINEL_HASH}" = "${SOURCE_SENTINEL_HASH}"
+          test "${RESTORED_IDENTITY_COUNT}" = "${SOURCE_IDENTITY_COUNT}"
+          test "${RESTORED_POSTGIS_VERSION}" = "${POSTGIS_VERSION}"
+          test "${RESTORE_DURATION_SECONDS}" -le 180
+
+          {
+            echo "RESTORED_TABLE_COUNT=${RESTORED_TABLE_COUNT}"
+            echo "RESTORED_IDENTITY_COUNT=${RESTORED_IDENTITY_COUNT}"
+            echo "RESTORED_POSTGIS_VERSION=${RESTORED_POSTGIS_VERSION}"
+          } >> "${GITHUB_ENV}"
+
+          cd backend/direkt-api
+          DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${RESTORE_DATABASE}" npm run migration:up
+
+      - name: Build and start API against the restored database
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE="direkt-api-recovery:${GITHUB_SHA}"
+          docker build \
+            --file backend/direkt-api/Dockerfile \
+            --tag "${IMAGE}" \
+            backend/direkt-api
+          docker run --detach \
+            --name direkt-api-recovery \
+            --network host \
+            --env NODE_ENV=development \
+            --env PORT="${API_PORT}" \
+            --env DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${RESTORE_DATABASE}" \
+            --env AUTH_CHALLENGE_MODE=synthetic \
+            --env EVIDENCE_STORAGE_PROVIDER=synthetic \
+            --env PAYMENT_PROVIDER_MODE=disabled \
+            "${IMAGE}"
+
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error \
+              "http://127.0.0.1:${API_PORT}/api/v1/health/ready" \
+              > "${RUNNER_TEMP}/restored-api-health.json"; then
+              jq -e '.status == "ok" and .database.status == "ready"' \
+                "${RUNNER_TEMP}/restored-api-health.json" >/dev/null
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker logs direkt-api-recovery
+          exit 1
+
+      - name: Exercise dependency outage detection and recovery
+        shell: bash
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          docker stop "${POSTGRES_CONTAINER}" >/dev/null
+
+          OUTAGE_STATUS="$(curl --silent --show-error --max-time 12 \
+            --output "${RUNNER_TEMP}/outage-health.json" \
+            --write-out '%{http_code}' \
+            "http://127.0.0.1:${API_PORT}/api/v1/health/ready" || true)"
+          if [[ "${OUTAGE_STATUS}" == "200" ]]; then
+            echo "Readiness remained healthy while PostgreSQL was unavailable." >&2
+            exit 1
+          fi
+
+          RECOVERY_STARTED_AT="$(date +%s)"
+          docker start "${POSTGRES_CONTAINER}" >/dev/null
+          for attempt in $(seq 1 30); do
+            if docker exec \
+              --env PGPASSWORD="${POSTGRES_PASSWORD}" \
+              "${POSTGRES_CONTAINER}" \
+              pg_isready --username "${POSTGRES_USER}" --dbname "${RESTORE_DATABASE}" >/dev/null 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error \
+              "http://127.0.0.1:${API_PORT}/api/v1/health/ready" \
+              > "${RUNNER_TEMP}/recovered-api-health.json"; then
+              jq -e '.status == "ok" and .database.status == "ready"' \
+                "${RUNNER_TEMP}/recovered-api-health.json" >/dev/null
+              RECOVERY_COMPLETED_AT="$(date +%s)"
+              RECOVERY_DURATION_SECONDS="$((RECOVERY_COMPLETED_AT - RECOVERY_STARTED_AT))"
+              test "${RECOVERY_DURATION_SECONDS}" -le 120
+              echo "RECOVERY_DURATION_SECONDS=${RECOVERY_DURATION_SECONDS}" >> "${GITHUB_ENV}"
+              echo "OUTAGE_STATUS=${OUTAGE_STATUS:-000}" >> "${GITHUB_ENV}"
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker logs direkt-api-recovery
+          exit 1
+
+      - name: Run bounded synthetic API soak
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS="${RUNNER_TEMP}/soak-results.txt"
+          export RESULTS API_PORT
+          : > "${RESULTS}"
+
+          seq 1 "${SOAK_REQUESTS}" | xargs -P "${SOAK_CONCURRENCY}" -I {} bash -c '
+            curl --silent --show-error --max-time 5 \
+              --output /dev/null \
+              --write-out "%{http_code} %{time_total}\n" \
+              "http://127.0.0.1:${API_PORT}/api/v1/health/ready" >> "${RESULTS}"
+          '
+
+          REQUEST_COUNT="$(wc -l < "${RESULTS}" | tr -d ' ')"
+          SUCCESS_COUNT="$(awk '$1 == 200 { count += 1 } END { print count + 0 }' "${RESULTS}")"
+          test "${REQUEST_COUNT}" = "${SOAK_REQUESTS}"
+          test "${SUCCESS_COUNT}" = "${SOAK_REQUESTS}"
+
+          sort -n -k2 "${RESULTS}" > "${RUNNER_TEMP}/soak-results-sorted.txt"
+          P95_INDEX="$(( (SOAK_REQUESTS * 95 + 99) / 100 ))"
+          P95_SECONDS="$(awk -v line="${P95_INDEX}" 'NR == line { print $2 }' "${RUNNER_TEMP}/soak-results-sorted.txt")"
+          MAX_SECONDS="$(awk 'END { print $2 }' "${RUNNER_TEMP}/soak-results-sorted.txt")"
+          P95_MS="$(awk -v value="${P95_SECONDS}" 'BEGIN { printf "%d", value * 1000 }')"
+          MAX_MS="$(awk -v value="${MAX_SECONDS}" 'BEGIN { printf "%d", value * 1000 }')"
+
+          test "${P95_MS}" -le "${SOAK_P95_BUDGET_MS}"
+          test "${MAX_MS}" -le "${SOAK_MAX_BUDGET_MS}"
+          {
+            echo "SOAK_SUCCESS_COUNT=${SUCCESS_COUNT}"
+            echo "SOAK_P95_MS=${P95_MS}"
+            echo "SOAK_MAX_MS=${MAX_MS}"
+          } >> "${GITHUB_ENV}"
+
+      - name: Write sanitized exercise evidence
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/phase10
+          jq -n \
+            --arg sourceSha "${GITHUB_SHA}" \
+            --argjson sourceTableCount "${SOURCE_TABLE_COUNT}" \
+            --argjson restoredTableCount "${RESTORED_TABLE_COUNT}" \
+            --argjson sourceIdentityCount "${SOURCE_IDENTITY_COUNT}" \
+            --argjson restoredIdentityCount "${RESTORED_IDENTITY_COUNT}" \
+            --arg postgisVersion "${RESTORED_POSTGIS_VERSION}" \
+            --argjson restoreDurationSeconds "${RESTORE_DURATION_SECONDS}" \
+            --arg outageHttpStatus "${OUTAGE_STATUS}" \
+            --argjson recoveryDurationSeconds "${RECOVERY_DURATION_SECONDS}" \
+            --argjson soakRequests "${SOAK_REQUESTS}" \
+            --argjson soakConcurrency "${SOAK_CONCURRENCY}" \
+            --argjson soakSuccessCount "${SOAK_SUCCESS_COUNT}" \
+            --argjson soakP95Ms "${SOAK_P95_MS}" \
+            --argjson soakMaxMs "${SOAK_MAX_MS}" \
+            '{
+              schemaVersion: 1,
+              sourceSha: $sourceSha,
+              dataClassification: "synthetic-only",
+              databaseRestore: {
+                sourceTableCount: $sourceTableCount,
+                restoredTableCount: $restoredTableCount,
+                sourceIdentityCount: $sourceIdentityCount,
+                restoredIdentityCount: $restoredIdentityCount,
+                postgisVersion: $postgisVersion,
+                sentinelIntegrity: "matched",
+                restoreDurationSeconds: $restoreDurationSeconds,
+                exerciseRpo: "zero synthetic sentinel loss"
+              },
+              dependencyOutage: {
+                readinessFailedClosed: true,
+                outageHttpStatus: $outageHttpStatus,
+                recoveryDurationSeconds: $recoveryDurationSeconds
+              },
+              boundedSoak: {
+                requests: $soakRequests,
+                concurrency: $soakConcurrency,
+                successes: $soakSuccessCount,
+                p95Ms: $soakP95Ms,
+                maxMs: $soakMaxMs
+              }
+            }' > artifacts/phase10/recovery-reliability-evidence.json
+
+          {
+            echo "### DIREKT Phase 10 recovery and reliability exercise"
+            echo "- Source: \`${GITHUB_SHA}\`"
+            echo "- Data: synthetic-only"
+            echo "- Database restore: ${RESTORED_TABLE_COUNT} tables and ${RESTORED_IDENTITY_COUNT} synthetic identities verified"
+            echo "- PostGIS: \`${RESTORED_POSTGIS_VERSION}\`"
+            echo "- Restore duration: ${RESTORE_DURATION_SECONDS}s (CI exercise limit: 180s)"
+            echo "- Exercise RPO: zero synthetic sentinel loss"
+            echo "- Dependency outage: readiness failed closed with HTTP \`${OUTAGE_STATUS}\`"
+            echo "- Recovery duration: ${RECOVERY_DURATION_SECONDS}s (CI exercise limit: 120s)"
+            echo "- Bounded soak: ${SOAK_SUCCESS_COUNT}/${SOAK_REQUESTS} succeeded at concurrency ${SOAK_CONCURRENCY}"
+            echo "- Latency: p95 ${SOAK_P95_MS}ms, max ${SOAK_MAX_MS}ms"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Show sanitized API logs on failure
+        if: failure()
+        shell: bash
+        run: docker logs direkt-api-recovery 2>&1 | tail -n 200 || true
+
+      - name: Upload recovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-phase10-recovery-${{ github.run_number }}-${{ github.sha }}
+          path: artifacts/phase10/recovery-reliability-evidence.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Stop exercise API
+        if: always()
+        shell: bash
+        run: docker rm --force direkt-api-recovery >/dev/null 2>&1 || true
