@@ -5,43 +5,52 @@
 **Project ref:** `aeeuscifrxcjmnswqwnq`  
 **Project URL:** `https://aeeuscifrxcjmnswqwnq.supabase.co`  
 **Region:** `ap-northeast-1` — Tokyo  
-**Runtime owner:** DIREKT NestJS API only
+**Runtime owner:** DIREKT NestJS API only  
+**Phase baseline:** Phase 8 complete and synchronized
 
 ## 1. Security boundary
 
-Android and browser clients must call the DIREKT API. They must not connect directly to PostgreSQL or Supabase Storage and must never receive a database password or `service_role` key.
+Android and browser clients call the DIREKT API. They do not connect directly to PostgreSQL or Supabase Storage and never receive database credentials, Supabase secret keys or legacy `service_role` keys.
 
 DIREKT does not use Supabase Auth, Realtime, Edge Functions or direct client data access in this integration. The existing NestJS authentication, authorization, audit and policy model remains authoritative.
 
-The Supabase publishable key is therefore not required by Android, the operations portal or the NestJS runtime at this checkpoint.
+The supplied publishable key is intentionally unused because DIREKT has no direct client-to-Supabase path.
 
-## 2. Immediate credential response
+## 2. Credential incident status
 
-A database password was previously shared outside an approved secret manager. Treat that password as compromised and rotate it in the Supabase Dashboard before linking or migrating the project.
+The database password that was previously shared outside an approved secret manager has been rotated.
 
-After rotation:
+Retained controls:
 
-1. invalidate every local connection string containing the old password;
-2. replace it only in local ignored `.env` files and approved secret stores;
-3. do not paste the replacement into issues, pull requests, chat, source files or command history;
-4. review Supabase database and API logs for unexpected access.
+1. the old connection string must remain invalid;
+2. the replacement belongs only in ignored local environment files, GitHub Environment secrets and later Google Secret Manager;
+3. credentials must not be pasted into issues, pull requests, chat, source files or command history;
+4. Supabase database and API logs should be reviewed for unexpected access around the exposure window.
 
 ## 3. Repository integration
 
 The repository contains:
 
-- `supabase/config.toml` for safe local Supabase CLI configuration;
+- `supabase/config.toml` for safe Supabase CLI configuration;
 - checksummed DIREKT migrations in `database/migrations`;
 - `DIRECT_DATABASE_URL` support for migration and administrative traffic;
 - pooled `DATABASE_URL` support for normal API traffic;
 - a backend-only Supabase private evidence-storage adapter;
+- support for preferred Supabase secret API keys and temporary legacy `service_role` compatibility;
 - private bucket provisioning that safely skips ordinary PostGIS CI;
 - a remote integration verification command;
+- a protected GitHub Actions activation workflow;
 - ignored Supabase CLI local-link state.
 
 The existing DIREKT migration runner remains the schema authority. Do not create a second migration history under `supabase/migrations`, and do not use `supabase db push` or `supabase db pull` as the normal DIREKT schema workflow.
 
-## 4. Supabase CLI link
+## 4. Phase 8 reconciliation
+
+Phase 8 is complete. The Supabase integration branch was reconciled with the Phase 8 stable `main` through a true two-parent merge commit. Supabase activation therefore includes all Phase 8 database migrations and does not target the earlier Phase 7-only snapshot.
+
+The remote activation workflow runs the complete current migration chain and verifies idempotency after application.
+
+## 5. Local Supabase CLI link
 
 Run from the repository root:
 
@@ -50,42 +59,42 @@ supabase login
 supabase link --project-ref aeeuscifrxcjmnswqwnq
 ```
 
-`supabase init` has already been represented by the committed `supabase/config.toml`. Do not rerun it in a way that overwrites the reviewed configuration.
+`supabase init` is already represented by the committed `supabase/config.toml`. Do not rerun it in a way that overwrites the reviewed configuration.
 
 The CLI stores its local project link under `supabase/.temp/`, which is ignored by Git.
 
-## 5. Required database connections
+## 6. Required database connections
 
-Obtain both connection strings from **Supabase Dashboard → Connect** after rotating the password.
+Obtain connection strings from **Supabase Dashboard → Connect**.
 
 | Variable | Use | Placement |
 |---|---|---|
 | `DATABASE_URL` | Normal NestJS API traffic through the recommended Supabase pooler | local ignored `.env`; later Google Secret Manager |
-| `DIRECT_DATABASE_URL` | migrations, restore checks and administrative operations | local ignored `.env`; later protected deployment/migration secret |
+| `DIRECT_DATABASE_URL` | migrations, restore checks and administrative operations | local ignored `.env`; protected deployment/migration environment |
 
-Use TLS. The connection string should include `sslmode=require` when the supplied Dashboard connection string does not already enforce TLS.
+Use TLS. Prefer the Session pooler connection for GitHub-hosted activation because it is compatible with IPv4 GitHub runners. Normal Cloud Run traffic must use the appropriate Supabase pooler and the API's bounded pool.
 
-Do not use the direct database connection as the normal Cloud Run application pool. Cloud Run can create many instances; normal runtime traffic must use the Supabase connection pooler and the API's bounded pool.
+## 7. Required backend configuration
 
-## 6. Required backend configuration
-
-Create `backend/direkt-api/.env` from `.env.example` and supply the rotated values locally:
+Create `backend/direkt-api/.env` from `.env.example` and supply values locally:
 
 ```text
 DATABASE_URL=<Supabase pooled connection string>
-DIRECT_DATABASE_URL=<Supabase direct connection string>
+DIRECT_DATABASE_URL=<Supabase migration connection string>
 EVIDENCE_STORAGE_PROVIDER=supabase
 SUPABASE_URL=https://aeeuscifrxcjmnswqwnq.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=<server-only service-role key>
+SUPABASE_SECRET_KEY=<dedicated server-side secret API key>
 SUPABASE_EVIDENCE_BUCKET=provider-evidence
 SUPABASE_PRIVATE_MEDIA_BUCKET=provider-media-private
 SUPABASE_PUBLIC_MEDIA_BUCKET=provider-media-public
 SUPABASE_SYSTEM_EXPORTS_BUCKET=system-exports
 ```
 
+`SUPABASE_SECRET_KEY` is preferred. `SUPABASE_SERVICE_ROLE_KEY` remains a temporary legacy fallback only.
+
 The `.env` file is ignored. Never commit it.
 
-## 7. Schema and bucket provisioning
+## 8. Schema and bucket provisioning
 
 From `backend/direkt-api`:
 
@@ -95,7 +104,7 @@ npm run migration:up:env
 npm run supabase:check
 ```
 
-The migration command applies every checksummed repository migration through `DIRECT_DATABASE_URL`. It also provisions these buckets when the Supabase `storage` schema is available:
+The migration command applies every checksummed repository migration through `DIRECT_DATABASE_URL`. It provisions these buckets when the Supabase `storage` schema is available:
 
 | Bucket | Maximum object size | Allowed content | Public |
 |---|---:|---|---|
@@ -104,9 +113,9 @@ The migration command applies every checksummed repository migration through `DI
 | `provider-media-public` | 10 MiB | JPEG, PNG, WebP | No — remains private until publication policy explicitly changes |
 | `system-exports` | 100 MiB | JSON, CSV, PDF, ZIP | No |
 
-No broad `anon` or `authenticated` Storage policy is introduced. The backend uses the service role only to issue narrow, expiring signed URLs after DIREKT authorization succeeds.
+No broad `anon` or `authenticated` Storage policy is introduced. The backend uses a server-side key only to issue narrow, expiring signed URLs after DIREKT authorization succeeds.
 
-## 8. Evidence-storage behavior
+## 9. Evidence-storage behavior
 
 When `EVIDENCE_STORAGE_PROVIDER=supabase`:
 
@@ -119,9 +128,85 @@ When `EVIDENCE_STORAGE_PROVIDER=supabase`:
 7. only then does DIREKT accept the evidence metadata;
 8. assigned reviewers receive separate short-lived, audited read grants.
 
-The service-role key, object key and permanent storage URL are never returned to Android or the portal.
+The server key, object key and permanent storage URL are never returned to Android or the portal.
 
-## 9. Credential placement
+## 10. Protected GitHub remote activation
+
+Workflow:
+
+```text
+.github/workflows/supabase-development-activate.yml
+```
+
+The workflow is manual-only, runs only from `main`, uses the GitHub `development` Environment and requires this exact confirmation input:
+
+```text
+ACTIVATE-DIREKT-DEVELOPMENT
+```
+
+### 10.1 Create the GitHub Environment
+
+Open:
+
+```text
+GitHub repository → Settings → Environments → New environment
+```
+
+Create:
+
+```text
+development
+```
+
+Recommended protection:
+
+- deployment branches limited to `main`;
+- required reviewer enabled where the repository plan supports it;
+- prevent administrators from bypassing protection where appropriate.
+
+### 10.2 Add environment secrets
+
+Add exactly these two secrets to the `development` Environment:
+
+```text
+SUPABASE_ACCESS_TOKEN
+SUPABASE_DATABASE_URL
+```
+
+`SUPABASE_ACCESS_TOKEN` is a Supabase personal access token created under **Supabase Account → Access Tokens**. It must belong to a user who can administer project `aeeuscifrxcjmnswqwnq`.
+
+`SUPABASE_DATABASE_URL` is the **Session pooler** connection string copied from **Supabase Dashboard → Connect**, containing the rotated database password. Add it directly in GitHub; do not paste it into chat.
+
+The project ref and URL are non-secret and remain committed in the workflow.
+
+### 10.3 What the workflow performs
+
+The workflow:
+
+1. verifies the project name, ref and Tokyo region through the Supabase Management API;
+2. links the Supabase CLI non-interactively;
+3. retrieves a temporary elevated API key through the Management API and masks it immediately;
+4. prefers a modern secret API key and falls back to legacy `service_role` only when necessary;
+5. applies every DIREKT migration and reruns the migration check for idempotency;
+6. verifies PostGIS and all four private Storage buckets;
+7. captures a Supabase database inspection report;
+8. captures security and performance advisor reports;
+9. uploads only sanitized evidence artifacts for 14 days;
+10. publishes a run summary containing counts, commit SHA and verification status.
+
+API keys, database URLs and passwords are never included in uploaded artifacts.
+
+### 10.4 Run the activation
+
+After the Supabase integration PR is merged:
+
+```text
+GitHub repository → Actions → DIREKT Supabase development activation → Run workflow
+```
+
+Select `main`, enter the confirmation phrase and approve the `development` Environment deployment when prompted.
+
+## 11. Credential placement
 
 ### Local development
 
@@ -131,7 +216,7 @@ Store in `backend/direkt-api/.env`, which is ignored:
 DATABASE_URL
 DIRECT_DATABASE_URL
 SUPABASE_URL
-SUPABASE_SERVICE_ROLE_KEY
+SUPABASE_SECRET_KEY
 ```
 
 ### Google Secret Manager
@@ -142,32 +227,31 @@ This becomes the backend runtime authority during the Google Cloud integration:
 DATABASE_URL
 DIRECT_DATABASE_URL
 SUPABASE_URL
-SUPABASE_SERVICE_ROLE_KEY
+SUPABASE_SECRET_KEY
 ```
 
-Bucket names may be normal environment configuration, although keeping all backend integration configuration together in Secret Manager is acceptable.
+Use a dedicated secret API key for the DIREKT API runtime so it can be rotated independently.
 
-### GitHub Environments
+### GitHub Environment
 
-For a future approved migration workflow, prefer:
+Store only:
 
 ```text
-Variable: SUPABASE_PROJECT_REF=aeeuscifrxcjmnswqwnq
-Secret:   SUPABASE_ACCESS_TOKEN
-Secret:   SUPABASE_DB_PASSWORD
+SUPABASE_ACCESS_TOKEN
+SUPABASE_DATABASE_URL
 ```
 
-Use the `development` GitHub Environment with approval and branch restrictions. Do not add these to repository files. Do not add the service-role key to GitHub unless a reviewed workflow demonstrably requires it.
+The activation workflow resolves the temporary server key itself. Do not add the server key to GitHub.
 
 ### Android
 
-Add none of the Supabase database, publishable or service-role credentials. Android communicates with the DIREKT API only.
+Add no Supabase database, publishable, secret or service-role credentials. Android communicates with the DIREKT API only.
 
 ### Vercel
 
-Add none of the Supabase database or service-role credentials. The Next.js server boundary communicates with the DIREKT API only.
+Add no Supabase database or server credentials. The Next.js server boundary communicates with the DIREKT API only.
 
-## 10. Supabase Dashboard requirements
+## 12. Supabase Dashboard requirements
 
 Complete and verify:
 
@@ -179,29 +263,35 @@ Complete and verify:
 - all four buckets exist and remain private;
 - no permissive Storage policy grants direct client access;
 - database network restrictions are reviewed before staging/production;
-- backups and point-in-time recovery expectations are documented for the paid plan selected later;
+- backups and point-in-time recovery expectations are documented for the selected plan;
 - database, API and Storage logs are available to the operating team;
 - budget and usage alerts are configured in the Supabase organization;
 - production will use a separate Supabase project and credentials.
 
-## 11. Workspace connector status
+## 13. ChatGPT connector access
 
-The Supabase connector currently available to this ChatGPT workspace does not have access to project `aeeuscifrxcjmnswqwnq`; attempts to inspect migrations return a permission error. Authorize the Supabase account or organization that owns `direkt-app` before asking the connector to apply migrations, inspect logs or run security/performance advisors.
+GitHub authentication and Supabase authentication are independent. Adding GitHub credentials does not grant ChatGPT access to a Supabase organization.
 
-The project ref is not an organization ID. Confirm the actual organization ID in **Supabase Dashboard → Organization Settings** before recording it in the programme register.
+The earlier Supabase connector was authenticated to an account that exposed only CarUp projects. In the current workspace session, no Supabase management plugin is available. This is why direct project operations were denied even though the project ref was correct.
 
-## 12. Completion evidence
+The GitHub activation workflow is the authoritative remote-activation route and does not require a ChatGPT Supabase connector.
+
+Where a Supabase plugin is available in ChatGPT, connect it from **Settings → Plugins/Apps**, sign in with the Supabase account that owns `direkt-app`, and authorize the organization containing project `aeeuscifrxcjmnswqwnq`. This is optional and is not a prerequisite for the protected workflow.
+
+## 14. Completion evidence
 
 Supabase is complete for the development checkpoint only when all of the following are true:
 
-- compromised database password rotated;
+- database password rotated;
+- Phase 8 and Supabase histories reconciled;
+- protected GitHub Environment configured;
+- activation workflow completed successfully on `main`;
 - CLI linked to `aeeuscifrxcjmnswqwnq`;
-- pooled and direct connections configured outside Git;
 - repository migrations applied successfully;
 - PostGIS readiness succeeds;
 - four private buckets verified;
 - `npm run supabase:check` passes;
+- security and performance advisors captured and reviewed;
 - synthetic storage remains the default for tests;
 - real Supabase storage is enabled only through backend configuration;
-- security and performance advisors reviewed after migration;
 - no secret appears in Git history, Actions logs, Android, Vercel or documentation.
