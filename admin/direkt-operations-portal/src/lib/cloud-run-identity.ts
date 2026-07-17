@@ -1,7 +1,6 @@
 const DEFAULT_METADATA_HOST = 'metadata.google.internal';
 const DEFAULT_TIMEOUT_MS = 3_000;
-const METADATA_IDENTITY_PATH =
-  '/computeMetadata/v1/instance/service-accounts/default/identity';
+const METADATA_IDENTITY_PATH = '/computeMetadata/v1/instance/service-accounts/default/identity';
 
 export interface CloudRunIdentityTokenOptions {
   audience?: string | null;

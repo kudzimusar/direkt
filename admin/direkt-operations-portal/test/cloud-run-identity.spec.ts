@@ -40,9 +40,7 @@ describe('Cloud Run platform identity', () => {
 
     const [request, init] = fetchImplementation.mock.calls[0] ?? [];
     expect(String(request)).toContain('http://metadata.test/computeMetadata/v1/');
-    expect(String(request)).toContain(
-      'audience=https%3A%2F%2Fdirekt-api.example.run.app',
-    );
+    expect(String(request)).toContain('audience=https%3A%2F%2Fdirekt-api.example.run.app');
     expect(init).toEqual(
       expect.objectContaining({
         cache: 'no-store',
