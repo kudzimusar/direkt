@@ -1,0 +1,88 @@
+name: Phase 8 source finalization
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - ".github/workflows/phase8-source-finalize.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: phase8-source-finalization
+  cancel-in-progress: false
+
+env:
+  NODE_ENV: test
+  DATABASE_URL: postgresql://direkt:direkt_ci@localhost:5432/direkt_test
+
+jobs:
+  finalize:
+    name: Validate and commit finalized interaction source
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgis/postgis:18-3.6
+        env:
+          POSTGRES_DB: direkt_test
+          POSTGRES_USER: direkt
+          POSTGRES_PASSWORD: direkt_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U direkt -d direkt_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - name: Install exact backend dependencies
+        working-directory: backend/direkt-api
+        run: npm ci --ignore-scripts
+      - name: Materialize reviewed Phase 8 source
+        working-directory: backend/direkt-api
+        run: |
+          python3 ../../.github/scripts/phase8-remediate.py
+          python3 ../../.github/scripts/phase8-runtime-fix.py
+          python3 ../../.github/scripts/phase8-test-expectation-fix.py
+          npm run format
+      - name: Verify only reviewed files changed
+        shell: bash
+        run: |
+          git diff --name-only | sort > /tmp/phase8-changed.txt
+          printf '%s\n' \
+            'backend/direkt-api/src/interaction/interaction-handoff.repository.ts' \
+            'backend/direkt-api/test/e2e/interaction-lifecycle.e2e.spec.ts' \
+            | sort > /tmp/phase8-expected.txt
+          diff -u /tmp/phase8-expected.txt /tmp/phase8-changed.txt
+      - name: Run complete backend gate
+        working-directory: backend/direkt-api
+        run: |
+          npm run format:check
+          npm run lint
+          npm run typecheck
+          npm run migration:check
+          npm run test
+          npm run build
+          npm run openapi:check
+      - name: Commit finalized source
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            backend/direkt-api/src/interaction/interaction-handoff.repository.ts \
+            backend/direkt-api/test/e2e/interaction-lifecycle.e2e.spec.ts
+          git commit -m 'fix(api): finalize Phase 8 interaction lifecycle'
+          git push origin HEAD:build/android-v1
