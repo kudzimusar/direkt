@@ -6,32 +6,26 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED |
-| Owner/agent | OpenAI GPT-5.6 Thinking — Phase 8 enquiries, interactions and reviews agent |
-| Phase | Phase 8 — Enquiries, interactions and reviews |
-| Task | Implement structured enquiries, provider response lifecycle, consent-aware contact handoff, interaction history, review eligibility, moderation, appeals and complaint linkage |
-| Modules/paths | `database`, `backend/direkt-api`, `android/direkt-app`, `admin/direkt-operations-portal`, `docs`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
-| Claimed at | 2026-07-16 after Phase 7 checkpoint merge and branch synchronization |
-| Expected handoff | Reviewed Phase 8 checkpoint with tracked interactions, consent-scoped handoff, eligible reviews, moderation/appeals, complaint linkage and green permanent CI |
-| Last stable checkpoint | `7ea8aa17dbced5f9e56dd259b15216223aa33921` |
-| Governing issue | Issue #30 |
+| Status | RELEASED |
+| Owner/agent | None |
+| Phase | None claimed |
+| Task | Phase 8 checkpoint promoted; Phase 9 awaits an explicit claim |
+| Modules/paths | No active write reservation |
+| Released at | 2026-07-17 after PR #31 merge, Issue #30 closure and stable-record update |
+| Last stable checkpoint | `0182951cdc26a892b3423728bd843e2969b25bc0` |
+| Governing issue | None active |
 
-## Stable predecessor
+## Latest completed checkpoint
 
-Phase 7 completed through PR #29 and Issue #28.
+Phase 8 completed through PR #31 and Issue #30.
 
 ```text
-Phase 7 reviewed source head: 0fc6add2ea1bcdebbeb2eb6430049b6061081667
-Phase 7 verified final head:  d9e621b659b42797fbf45478d5b7109fdc274459
-Phase 7 merge commit:         7ea8aa17dbced5f9e56dd259b15216223aa33921
-Issue #28:                    closed as completed
+Phase 8 exact reviewed head: 380687bf8044bc44ec1f70c58e4b71c6b3e3c6a7
+Phase 8 merge commit:       0182951cdc26a892b3423728bd843e2969b25bc0
+Issue #30:                  closed as completed
 ```
 
-## Phase 8 objective
-
-Complete DIREKT's synthetic tracked-interaction loop from a currently eligible public provider publication through a structured enquiry, provider response, channel-specific consent and handoff, interaction history, review eligibility, moderation, appeals and complaint linkage.
-
-## Delivery stages
+## Stable Phase 8 capabilities
 
 ### Stage 8A — interaction foundation and structured enquiry
 
@@ -84,17 +78,30 @@ Complete DIREKT's synthetic tracked-interaction loop from a currently eligible p
 - green backend, Android, portal and documentation workflows on one exact reviewed head;
 - review remediation, merge, Issue #30 closure and branch synchronization.
 
-## Non-negotiable stop gates
+## Next authorized claim
 
-- No real customer, provider, contact, enquiry, review, complaint or appeal data.
-- No production messaging/call/push adapter, payment provider, credentials, deployment or public pilot.
+Phase 9 — Subscription and payment foundation is the next planned phase. It is not active until a new agent explicitly updates this file to `CLAIMED`, identifies its governing issue and reserves the required modules/paths.
+
+The Phase 9 agent must first read:
+
+- `MASTER_BUILD_PLAN.md`;
+- `docs/phase8/INTERACTION_TRUST_CONTRACT.md`;
+- `docs/phase9/HANDOFF_FROM_PHASE8.md`;
+- `PROJECT_STATUS.md`;
+- `DECISION_LOG.md`;
+- `RISK_REGISTER.md`.
+
+## Non-negotiable inherited stop gates
+
+- No real customer, provider, contact, enquiry, review, complaint or appeal data without later authorization.
+- No production messaging/call/push adapter, payment provider, credentials, deployment or public pilot under the Phase 8 checkpoint.
 - Full chat, attachments and voice/video calling remain deferred.
 - Contact data is private and disclosed only after current channel-specific consent and provider acceptance.
 - Reviews require an owned qualifying tracked interaction.
 - Enquiries, reviews, responses, complaints, appeals, payments and direct edits cannot create claims, publication or ranking.
-- Phase 9 retains subscriptions, invoices, payments, webhooks and commercial enforcement.
+- Phase 9 commercial state must remain independent from verification, review outcomes and ranking.
 - Issue #5 remains a later, non-blocking Zambia pilot-validation obligation.
 
 ## Conflict rule
 
-A second agent must not modify the listed Phase 8 paths while this lock is claimed. Read-only review is allowed. A stale or ambiguous lock must be resolved explicitly rather than overwritten by assumption.
+A second agent must not modify paths reserved by an active `CLAIMED` lock. Read-only review is allowed. A stale or ambiguous lock must be resolved explicitly rather than overwritten by assumption.
