@@ -1,12 +1,12 @@
 import { BadRequestException, ForbiddenException, type ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { describe, expect, it, vi } from 'vitest';
-import type { DirektRequest } from '../../src/platform/http/request-context';
+import type { AuthorizationService } from '../../src/authorization/authorization.service';
 import { PermissionGuard } from '../../src/authorization/permission.guard';
 import { PERMISSIONS } from '../../src/authorization/permissions';
 import { PublicRoute } from '../../src/authorization/public.decorator';
 import { RequirePermission } from '../../src/authorization/require-permission.decorator';
-import type { AuthorizationService } from '../../src/authorization/authorization.service';
+import type { DirektRequest } from '../../src/platform/http/request-context';
 
 class UnclassifiedController {
   handler(): void {}
@@ -35,8 +35,15 @@ class AmbiguousPolicyController {
   handler(): void {}
 }
 
+interface ControllerWithHandler {
+  new (): unknown;
+  prototype: {
+    handler: () => void;
+  };
+}
+
 function contextFor(
-  controller: new () => unknown,
+  controller: ControllerWithHandler,
   request: Partial<DirektRequest> = {},
 ): ExecutionContext {
   return {
