@@ -62,6 +62,26 @@ if grep -Eq 'direkt-(api|portal)-runtime@|direkt-github-deployer@|projects/[0-9]
   echo "Deployment identities must come from repository variables." >&2
   exit 1
 fi
+if grep -Eq '^[[:space:]]+PORT:[[:space:]]*' "${workflow}" || grep -q 'PORT=8080' "${workflow}"; then
+  echo "Cloud Run must inject its reserved PORT variable from --port." >&2
+  exit 1
+fi
+if grep -q 'gcloud auth print-identity-token' "${workflow}"; then
+  echo "Federated Cloud Run smoke tokens must be minted through google-github-actions/auth." >&2
+  exit 1
+fi
+if grep -q -- '--header "Authorization: Bearer' "${workflow}"; then
+  echo "Cloud Run infrastructure tokens must not replace DIREKT application authorization." >&2
+  exit 1
+fi
+
+token_format_count="$(grep -c 'token_format: id_token' "${workflow}" || true)"
+token_audience_count="$(grep -c 'id_token_audience:' "${workflow}" || true)"
+serverless_header_count="$(grep -c 'X-Serverless-Authorization: Bearer' "${workflow}" || true)"
+if [[ "${token_format_count}" -ne 2 || "${token_audience_count}" -ne 2 || "${serverless_header_count}" -ne 2 ]]; then
+  echo "Both private staging services require separate audience-bound OIDC smoke tokens." >&2
+  exit 1
+fi
 
 grep -q "x-serverless-authorization" admin/direkt-operations-portal/src/lib/operations-api.ts
 grep -q "Metadata-Flavor" admin/direkt-operations-portal/src/lib/cloud-run-identity.ts
