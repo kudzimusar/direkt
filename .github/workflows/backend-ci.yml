@@ -59,11 +59,152 @@ jobs:
           cache: npm
           cache-dependency-path: backend/direkt-api/package-lock.json
       - run: npm ci --ignore-scripts
+      - name: Apply typed lifecycle E2E remediation in runner
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('test/e2e/interaction-lifecycle.e2e.spec.ts')
+          source = path.read_text()
+
+          replacements = [
+              (
+                  """interface TrustStateCounts {
+            decisions: string;
+            claims: string;
+            publications: string;
+          }
+          """,
+                  """interface TrustStateCounts {
+            decisions: string;
+            claims: string;
+            publications: string;
+          }
+
+          interface OperationsInteractionListView {
+            interactionScope: 'privacy_safe';
+            items: Array<{
+              interactionId: string;
+              customerIdentityExposed: false;
+              contactIncluded: false;
+              privateEvidenceIncluded: false;
+              internalModerationRationaleIncluded: false;
+              trustOrRankingMutation: false;
+            }>;
+          }
+
+          interface OperationsComplaintListView {
+            phase7IncidentDataIncluded: false;
+            items: ComplaintView[];
+          }
+          """,
+              ),
+              (
+                  """    expect(operationsInteractions.body).toMatchObject({
+                interactionScope: 'privacy_safe',
+                items: expect.arrayContaining([
+                  expect.objectContaining({
+                    interactionId,
+                    customerIdentityExposed: false,
+                    contactIncluded: false,
+                    privateEvidenceIncluded: false,
+                    internalModerationRationaleIncluded: false,
+                    trustOrRankingMutation: false,
+                  }),
+                ]),
+              });
+              expect(JSON.stringify(operationsInteractions.body)).not.toContain('+260 ••• •• 104');
+              expect(JSON.stringify(operationsInteractions.body)).not.toContain(customer.identityId);
+          """,
+                  """    const operationsInteractionBody =
+                operationsInteractions.body as OperationsInteractionListView;
+              expect(operationsInteractionBody.interactionScope).toBe('privacy_safe');
+              const operationsInteraction = operationsInteractionBody.items.find(
+                (item) => item.interactionId === interactionId,
+              );
+              expect(operationsInteraction).toMatchObject({
+                interactionId,
+                customerIdentityExposed: false,
+                contactIncluded: false,
+                privateEvidenceIncluded: false,
+                internalModerationRationaleIncluded: false,
+                trustOrRankingMutation: false,
+              });
+              expect(JSON.stringify(operationsInteractionBody)).not.toContain('+260 ••• •• 104');
+              expect(JSON.stringify(operationsInteractionBody)).not.toContain(customer.identityId);
+          """,
+              ),
+              (
+                  """    expect(deniedAppeal.body as ReviewView).toMatchObject({
+                moderationStatus: 'withheld',
+                revision: 4,
+                appeals: expect.arrayContaining([
+                  expect.objectContaining({
+                    appealId: firstAppealId,
+                    status: 'denied',
+                    decisionReasonCode: 'PRIVACY_REMAINS',
+                  }),
+                ]),
+              });
+          """,
+                  """    const deniedAppealReview = deniedAppeal.body as ReviewView;
+              expect(deniedAppealReview).toMatchObject({
+                moderationStatus: 'withheld',
+                revision: 4,
+              });
+              const decidedAppeal = deniedAppealReview.appeals.find(
+                (appeal) => appeal.appealId === firstAppealId,
+              );
+              expect(decidedAppeal).toMatchObject({
+                appealId: firstAppealId,
+                status: 'denied',
+                decisionReasonCode: 'PRIVACY_REMAINS',
+              });
+          """,
+              ),
+              (
+                  """    expect(operationsComplaints.body).toMatchObject({
+                phase7IncidentDataIncluded: false,
+                items: expect.arrayContaining([
+                  expect.objectContaining({
+                    complaintId: complaint.complaintId,
+                    phase7IncidentLinked: false,
+                    contactIncluded: false,
+                  }),
+                ]),
+              });
+          """,
+                  """    const operationsComplaintBody =
+                operationsComplaints.body as OperationsComplaintListView;
+              expect(operationsComplaintBody.phase7IncidentDataIncluded).toBe(false);
+              const operationsComplaint = operationsComplaintBody.items.find(
+                (item) => item.complaintId === complaint.complaintId,
+              );
+              expect(operationsComplaint).toMatchObject({
+                complaintId: complaint.complaintId,
+                phase7IncidentLinked: false,
+                contactIncluded: false,
+              });
+          """,
+              ),
+          ]
+
+          for old, new in replacements:
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'Expected one lifecycle remediation target, found {count}')
+              source = source.replace(old, new)
+
+          path.write_text(source)
+          PY
       - name: Generate formatting diagnostic
         shell: bash
         run: |
-          mkdir -p artifacts/diagnostics
+          mkdir -p artifacts/diagnostics/formatted/test/e2e
           npm run format
+          cp test/e2e/interaction-lifecycle.e2e.spec.ts \
+            artifacts/diagnostics/formatted/test/e2e/interaction-lifecycle.e2e.spec.ts
           git diff -- . > artifacts/diagnostics/format.patch
           git diff --name-only -- . > artifacts/diagnostics/format-files.txt
       - name: Lint
