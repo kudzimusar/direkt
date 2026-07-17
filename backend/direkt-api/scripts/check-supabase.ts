@@ -16,7 +16,15 @@ const REQUIRED_BUCKETS = [
 
 async function main(): Promise<void> {
   const supabaseUrl = requiredEnvironment('SUPABASE_URL').replace(/\/$/, '');
-  const serviceRoleKey = requiredEnvironment('SUPABASE_SERVICE_ROLE_KEY');
+  const serverKey =
+    process.env.SUPABASE_SECRET_KEY?.trim() ??
+    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ??
+    '';
+  if (!serverKey) {
+    throw new Error(
+      'SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY is required for the Supabase integration check.',
+    );
+  }
   const pool = new Pool({ connectionString: directDatabaseUrl(), max: 1 });
 
   try {
@@ -31,12 +39,11 @@ async function main(): Promise<void> {
         (SELECT count(*)::text FROM public.direkt_schema_migrations) AS migration_count
     `);
 
-    const response = await fetch(`${supabaseUrl}/storage/v1/bucket`, {
-      headers: {
-        apikey: serviceRoleKey,
-        authorization: `Bearer ${serviceRoleKey}`,
-      },
-    });
+    const headers: Record<string, string> = { apikey: serverKey };
+    if (!serverKey.startsWith('sb_secret_')) {
+      headers.authorization = `Bearer ${serverKey}`;
+    }
+    const response = await fetch(`${supabaseUrl}/storage/v1/bucket`, { headers });
     if (!response.ok) {
       throw new Error(`Supabase bucket inspection failed with HTTP ${response.status}.`);
     }
@@ -61,6 +68,7 @@ async function main(): Promise<void> {
           projectRef,
           database: database.rows[0],
           privateBuckets: [...REQUIRED_BUCKETS],
+          serverKeyType: serverKey.startsWith('sb_secret_') ? 'secret' : 'legacy_service_role',
         },
         null,
         2,
