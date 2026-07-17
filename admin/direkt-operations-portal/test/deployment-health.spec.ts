@@ -28,10 +28,12 @@ describe('portal deployment health', () => {
     });
   });
 
-  it('reports ready only when the configured API readiness endpoint succeeds', async () => {
+  it('reports ready only when the configured API readiness contract succeeds', async () => {
     process.env.DIREKT_API_BASE_URL = 'https://direkt-api.example.invalid/';
     process.env.NEXT_PUBLIC_APP_ENV = 'development';
-    const fetchMock = vi.fn().mockResolvedValue(new Response('{"status":"ready"}', { status: 200 }));
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('{"status":"ok","database":{"status":"ready"}}', { status: 200 }),
+    );
     vi.stubGlobal('fetch', fetchMock);
 
     const response = await GET();
@@ -45,6 +47,23 @@ describe('portal deployment health', () => {
       status: 'ready',
       portal: 'ready',
       api: 'ready',
+    });
+  });
+
+  it('fails closed when an upstream 200 does not satisfy the readiness schema', async () => {
+    process.env.DIREKT_API_BASE_URL = 'https://direkt-api.example.invalid';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response('{"status":"ok"}', { status: 200 })),
+    );
+
+    const response = await GET();
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toMatchObject({
+      status: 'not_ready',
+      api: 'unreachable',
+      upstreamStatus: 200,
     });
   });
 
