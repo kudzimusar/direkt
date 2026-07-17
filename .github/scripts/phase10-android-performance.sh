@@ -20,16 +20,23 @@ component="${DIREKT_DEBUG_PACKAGE}/${DIREKT_MAIN_ACTIVITY}"
 sdkmanager="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
 avdmanager="${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager"
 emulator="${ANDROID_HOME}/emulator/emulator"
+adb="${ANDROID_HOME}/platform-tools/adb"
 
 mkdir -p "${artifact_dir}" "${avd_home}"
 : > "${diagnostic_file}"
 : > "${results}"
 export ANDROID_AVD_HOME="${avd_home}"
 
+log_stage() {
+  printf '\n=== %s ===\n' "$1" | tee -a "${diagnostic_file}"
+}
+
+log_stage "verify Android SDK tools"
 test -x "${sdkmanager}"
 test -x "${avdmanager}"
 test -f "${APK_PATH}"
 
+log_stage "install emulator and API 35 system image"
 yes | "${sdkmanager}" --licenses >/dev/null 2>&1 || true
 "${sdkmanager}" \
   "platform-tools" \
@@ -38,6 +45,11 @@ yes | "${sdkmanager}" --licenses >/dev/null 2>&1 || true
   >> "${diagnostic_file}" 2>&1
 
 test -x "${emulator}"
+test -x "${adb}"
+"${emulator}" -version >> "${diagnostic_file}" 2>&1
+"${adb}" version >> "${diagnostic_file}" 2>&1
+
+log_stage "create deterministic AVD"
 "${avdmanager}" create avd \
   --force \
   --name "${avd_name}" \
@@ -49,7 +61,11 @@ test -x "${emulator}"
 
 "${emulator}" -list-avds | tee -a "${diagnostic_file}"
 "${emulator}" -list-avds | grep -Fx "${avd_name}" >/dev/null
-"${emulator}" "@${avd_name}" \
+
+log_stage "launch emulator"
+"${adb}" kill-server >/dev/null 2>&1 || true
+"${adb}" start-server >> "${diagnostic_file}" 2>&1
+stdbuf -oL -eL "${emulator}" "@${avd_name}" \
   -no-window \
   -no-audio \
   -no-boot-anim \
@@ -61,32 +77,48 @@ test -x "${emulator}"
 emulator_pid="$!"
 trap 'kill "${emulator_pid}" >/dev/null 2>&1 || true' EXIT
 
-adb wait-for-device
+sleep 5
+if ! kill -0 "${emulator_pid}" >/dev/null 2>&1; then
+  set +e
+  wait "${emulator_pid}"
+  emulator_exit="$?"
+  set -e
+  echo "Emulator exited before ADB connection with status ${emulator_exit}." | tee -a "${diagnostic_file}"
+  exit 1
+fi
+
+echo "Emulator process ${emulator_pid} is alive; waiting for ADB." >> "${diagnostic_file}"
+timeout 180 "${adb}" wait-for-device
+
+log_stage "wait for Android boot completion"
 booted=false
 for attempt in $(seq 1 120); do
-  boot_completed="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+  boot_completed="$(${adb} shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
   if [[ "${boot_completed}" == "1" ]]; then
     booted=true
     break
   fi
   if ! kill -0 "${emulator_pid}" >/dev/null 2>&1; then
-    echo "Emulator exited before Android reported boot completion." >> "${diagnostic_file}"
+    echo "Emulator exited before Android reported boot completion." | tee -a "${diagnostic_file}"
     break
   fi
   sleep 2
 done
 test "${booted}" = "true"
+"${adb}" shell getprop ro.build.version.release >> "${diagnostic_file}"
+"${adb}" shell getprop ro.build.version.sdk >> "${diagnostic_file}"
 
-adb shell settings put global window_animation_scale 0
-adb shell settings put global transition_animation_scale 0
-adb shell settings put global animator_duration_scale 0
-adb install -r "${APK_PATH}" | tee -a "${diagnostic_file}"
-adb shell pm path "${DIREKT_DEBUG_PACKAGE}" | tee -a "${diagnostic_file}"
-adb shell pm clear "${DIREKT_DEBUG_PACKAGE}" | tee -a "${diagnostic_file}"
+log_stage "install DIREKT and capture cold launches"
+"${adb}" shell settings put global window_animation_scale 0
+"${adb}" shell settings put global transition_animation_scale 0
+"${adb}" shell settings put global animator_duration_scale 0
+"${adb}" install -r "${APK_PATH}" | tee -a "${diagnostic_file}"
+"${adb}" shell pm path "${DIREKT_DEBUG_PACKAGE}" | tee -a "${diagnostic_file}"
+"${adb}" shell pm clear "${DIREKT_DEBUG_PACKAGE}" | tee -a "${diagnostic_file}"
 
 for sample in 1 2 3 4 5; do
   set +e
-  output="$(adb shell am start -W -S -n "${component}" 2>&1)"
+  output="$(${adb} shell am start -W -S -n "${component}" 2>&1)"
   start_exit="$?"
   set -e
   printf 'sample=%s exit=%s\n%s\n' "${sample}" "${start_exit}" "${output}" >> "${diagnostic_file}"
@@ -95,7 +127,7 @@ for sample in 1 2 3 4 5; do
   total_ms="$(printf '%s\n' "${output}" | awk -F: '/TotalTime/ { gsub(/[[:space:]]/, "", $2); print $2 }')"
   [[ "${total_ms}" =~ ^[0-9]+$ ]]
   echo "${total_ms}" >> "${results}"
-  adb shell am force-stop "${DIREKT_DEBUG_PACKAGE}"
+  "${adb}" shell am force-stop "${DIREKT_DEBUG_PACKAGE}"
   sleep 1
 done
 
