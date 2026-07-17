@@ -47,6 +47,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: supabase-format-patch-${{ github.sha }}
-          path: artifacts/supabase-format-*
+          path: artifacts/
           if-no-files-found: error
           retention-days: 1
