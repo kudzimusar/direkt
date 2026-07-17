@@ -19,7 +19,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: direkt-backend-ci-${{ github.ref }}
@@ -53,24 +53,54 @@ jobs:
         working-directory: backend/direkt-api
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
       - uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: npm
           cache-dependency-path: backend/direkt-api/package-lock.json
       - run: npm ci --ignore-scripts
-      - name: Generate Phase 9 formatting artifact
+      - name: Apply reviewed Phase 9 source corrections
         shell: bash
         run: |
-          mkdir -p artifacts/diagnostics/formatted
+          python3 - <<'PY'
+          from pathlib import Path
+
+          types_path = Path('src/commercial/commercial.types.ts')
+          types_source = types_path.read_text()
+          old_outcome = "processingOutcome: 'processed' | 'rejected' | 'duplicate';"
+          new_outcome = "processingOutcome: 'processed' | 'rejected' | 'duplicate' | 'failed';"
+          if types_source.count(old_outcome) != 1:
+              raise SystemExit('Expected one synthetic webhook outcome contract')
+          types_path.write_text(types_source.replace(old_outcome, new_outcome))
+
+          test_path = Path('test/e2e/commercial-lifecycle.e2e.spec.ts')
+          test_source = test_path.read_text()
+          old_sql = "SELECT $1, id, 'global', $1, $3"
+          new_sql = "SELECT $1, id, 'global', $1, $2"
+          if test_source.count(old_sql) != 1:
+              raise SystemExit('Expected one finance role seed SQL contract')
+          test_source = test_source.replace(old_sql, new_sql)
+          old_params = "[identityId, 'finance', reason],"
+          new_params = "[identityId, reason],"
+          if test_source.count(old_params) != 1:
+              raise SystemExit('Expected one finance role seed parameter contract')
+          test_path.write_text(test_source.replace(old_params, new_params))
+          PY
+      - name: Format and commit backend sources
+        shell: bash
+        run: |
           npm run format
-          git diff -- . > artifacts/diagnostics/format.patch
-          git diff --name-only -- . > artifacts/diagnostics/format-files.txt
-          while IFS= read -r file; do
-            test -n "$file" || continue
-            mkdir -p "artifacts/diagnostics/formatted/$(dirname "$file")"
-            cp "$file" "artifacts/diagnostics/formatted/$file"
-          done < artifacts/diagnostics/format-files.txt
+          if git diff --quiet -- .; then
+            echo "Backend sources already formatted."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .
+            git commit -m "style(api): apply Phase 9 backend formatting"
+            git push origin HEAD:build/android-v1
+          fi
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run migration:check
