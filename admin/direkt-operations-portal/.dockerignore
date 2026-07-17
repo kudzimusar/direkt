@@ -1,0 +1,14 @@
+.git
+.github
+.next
+node_modules
+coverage
+artifacts
+test
+*.log
+npm-debug.log*
+.env
+.env.*
+gha-creds-*.json
+*.pem
+*.key
