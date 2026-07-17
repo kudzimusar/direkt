@@ -1,0 +1,39 @@
+name: Phase 9 finalization patch
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - ".github/workflows/phase9-finalize-patch.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - working-directory: backend/direkt-api
+        run: npm ci --ignore-scripts
+      - name: Apply finalization patch
+        run: python3 .github/scripts/phase9_finalize.py
+      - name: Format changed TypeScript
+        working-directory: backend/direkt-api
+        run: npx prettier --write test/e2e/commercial-lifecycle.e2e.spec.ts test/unit/commercial-payment-provider.spec.ts
+      - name: Commit finalization
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add DECISION_LOG.md RISK_REGISTER.md docs/architecture/BACKEND_ARCHITECTURE.md docs/backend/AUTHENTICATION_AND_AUTHORIZATION.md docs/security/PRIVACY_MODEL.md docs/testing/TEST_STRATEGY.md backend/direkt-api/test/e2e/commercial-lifecycle.e2e.spec.ts backend/direkt-api/test/unit/commercial-payment-provider.spec.ts
+          git commit -m "docs: complete Phase 9 governance and type contracts"
+          git push origin HEAD:build/android-v1
