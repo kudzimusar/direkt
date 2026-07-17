@@ -152,8 +152,8 @@ def remediate_handoff_repository() -> None:
 
     obsolete_flag = "      trustOrPublicationMutation: false,\n"
     count = source.count(obsolete_flag)
-    if count != 2:
-        raise SystemExit(f"Expected two obsolete trust-mutation flags, found {count}")
+    if count != 3:
+        raise SystemExit(f"Expected three obsolete trust-mutation flags, found {count}")
     source = source.replace(obsolete_flag, "")
 
     old_event_flags = (
