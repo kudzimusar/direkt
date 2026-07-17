@@ -19,9 +19,7 @@ describe('OperationsApiClient', () => {
       fetchImplementation,
     });
 
-    await expect(
-      client.get<{ synthetic: true }>(operationsEndpoints.commercial),
-    ).resolves.toEqual({
+    await expect(client.get<{ synthetic: true }>(operationsEndpoints.commercial)).resolves.toEqual({
       synthetic: true,
     });
     expect(fetchImplementation).toHaveBeenCalledWith(
