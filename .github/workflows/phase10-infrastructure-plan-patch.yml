@@ -1,0 +1,27 @@
+name: Phase 10 infrastructure plan patch
+
+on:
+  push:
+    branches:
+      - integration/phase10-infrastructure-bootstrap
+    paths:
+      - ".github/workflows/phase10-infrastructure-plan-patch.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: integration/phase10-infrastructure-bootstrap
+      - run: python3 .github/scripts/phase10_infrastructure_plan_patch.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add MASTER_BUILD_PLAN.md docs/phase10/HANDOFF_FROM_PHASE9.md docs/integrations/INTEGRATION_AND_SECRETS_PLAN.md docs/operations/ENVIRONMENT_STRATEGY.md docs/operations/DEPLOYMENT_RUNBOOK.md .gitignore
+          git commit -m "docs(infra): authorize controlled Phase 10 deployment"
+          git push origin HEAD:integration/phase10-infrastructure-bootstrap
