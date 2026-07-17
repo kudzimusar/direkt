@@ -1,0 +1,140 @@
+name: DIREKT Backend Container CI
+
+on:
+  push:
+    branches:
+      - main
+      - build/android-v1
+    paths:
+      - "backend/direkt-api/**"
+      - "database/**"
+      - ".github/workflows/backend-container-ci.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "backend/direkt-api/**"
+      - "database/**"
+      - ".github/workflows/backend-container-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-backend-container-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  container:
+    name: Build and smoke-test API container
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgis/postgis:18-3.6
+        env:
+          POSTGRES_DB: direkt_container_test
+          POSTGRES_USER: direkt
+          POSTGRES_PASSWORD: direkt_container_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U direkt -d direkt_container_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Initialize the readiness extension
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            --network host \
+            --env PGPASSWORD=direkt_container_ci \
+            postgis/postgis:18-3.6 \
+            psql \
+              --host 127.0.0.1 \
+              --username direkt \
+              --dbname direkt_container_test \
+              --set ON_ERROR_STOP=1 \
+              --command 'CREATE EXTENSION IF NOT EXISTS postgis;'
+
+      - name: Build immutable test image
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE="direkt-api:${GITHUB_SHA}"
+          docker build \
+            --file backend/direkt-api/Dockerfile \
+            --tag "${IMAGE}" \
+            backend/direkt-api
+          echo "IMAGE=${IMAGE}" >> "${GITHUB_ENV}"
+
+      - name: Start container with synthetic development configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --detach \
+            --name direkt-api-container-ci \
+            --network host \
+            --env NODE_ENV=development \
+            --env PORT=8080 \
+            --env DATABASE_URL=postgresql://direkt:direkt_container_ci@localhost:5432/direkt_container_test \
+            --env AUTH_CHALLENGE_MODE=synthetic \
+            --env EVIDENCE_STORAGE_PROVIDER=synthetic \
+            --env PAYMENT_PROVIDER_MODE=disabled \
+            "${IMAGE}"
+
+      - name: Require container readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:8080/api/v1/health/ready \
+              > "${RUNNER_TEMP}/direkt-container-health.json"; then
+              jq -e '.status == "ok" and .database.status == "ready"' \
+                "${RUNNER_TEMP}/direkt-container-health.json" >/dev/null
+              exit 0
+            fi
+            if ! docker inspect --format='{{.State.Running}}' direkt-api-container-ci | grep -qx true; then
+              docker logs direkt-api-container-ci
+              exit 1
+            fi
+            sleep 2
+          done
+          docker logs direkt-api-container-ci
+          exit 1
+
+      - name: Verify non-root runtime and image metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(docker inspect --format='{{.Config.User}}' "${IMAGE}")" = "node"
+          test "$(docker inspect --format='{{json .Config.ExposedPorts}}' "${IMAGE}")" = '{"8080/tcp":{}}'
+
+      - name: Publish container summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "### DIREKT backend container"
+            echo "- Source: \`${GITHUB_SHA}\`"
+            echo "- Runtime user: \`node\`"
+            echo "- Port: \`8080\`"
+            echo "- Readiness: passed against clean PostgreSQL with PostGIS initialized"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Show sanitized logs on failure
+        if: failure()
+        shell: bash
+        run: docker logs direkt-api-container-ci 2>&1 | tail -n 200 || true
+
+      - name: Stop test container
+        if: always()
+        shell: bash
+        run: docker rm --force direkt-api-container-ci >/dev/null 2>&1 || true

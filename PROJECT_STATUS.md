@@ -2,8 +2,8 @@
 
 **Updated:** 2026-07-17  
 **Stable branch:** `main`  
-**Implementation branch:** `build/android-v1` pending synchronization  
-**Programme state:** Phase 9 is complete and stable. Phase 10 is the next documented phase and remains unclaimed.
+**Implementation branch:** `build/android-v1`  
+**Programme state:** Phase 9 is complete and stable. Phase 10 is active under Issue #41 and checkpoint PR #42.
 
 ## Stable checkpoints
 
@@ -24,25 +24,44 @@ Merge commit:       4c78e2419aa4eca225495acaac8e7e0ee81903f1
 Issue #34:          closed as completed
 ```
 
-All Stage 9A–9G capabilities are complete: isolated commercial aggregates, actor-scoped subscriptions and entitlements, immutable invoices, synthetic-only payment contracts, signed/replay-safe webhook processing, balanced append-only ledger entries, reconciliation, controlled adjustments, Android recovery states, API-only finance operations and permanent governance/testing records.
+All Stage 9A–9G capabilities are stable and all permanent workflows passed on the reviewed head.
 
-All permanent workflows passed on the reviewed head:
+## Phase 10 implementation state
 
-- backend/PostGIS run #1163;
-- Android run #448;
-- operations portal run #531;
-- documentation run #1824.
+Issue #41 is the sole active tracker and PR #42 is the checkpoint PR. The single implementation lane is claimed on `build/android-v1`.
 
-The review queue is resolved. Additional permanent regressions cover conflicting webhook reuse, canonical processed-receipt integrity and adjustment invoice/payment relationship integrity.
+Stage 10A security architecture and the Stage 10B route/permission baseline are implemented on the active branch. Privacy, retention, legal, storage, abuse, reliability, supply-chain, provider approval and checkpoint work remain in progress.
 
-## Boundaries
+### Infrastructure activation correction
 
-No real payment provider, real money movement, deployment or public pilot is authorized. Commercial state remains independent from verification, publication, ranking and accountability records.
+Phase 10 now explicitly permits:
 
-The dedicated DIREKT Supabase project is not accessible through the current connector. No unrelated project was modified. Remote activation remains blocked until the correct project access is available.
+- synthetic-only managed development infrastructure;
+- protected staging infrastructure using synthetic or separately approved non-personal fixtures;
+- exact-source Supabase activation and verification;
+- immutable Cloud Run API deployment through GitHub OIDC;
+- protected, no-index Vercel Preview/Staging portal deployment;
+- Firebase internal tester distribution.
 
-## Next phase boundary
+This corrects the previous over-broad deployment prohibition. It does **not** authorize real participant/evidence data, unrestricted public invitations, a Zambia pilot, public promotion or production release.
 
-Phase 10 remains unclaimed. It owns security, privacy, legal and reliability hardening under `docs/phase10/HANDOFF_FROM_PHASE9.md`.
+## Bound infrastructure
+
+| Service | Development binding |
+|---|---|
+| Supabase | project ref `aeeuscifrxcjmnswqwnq`, region `ap-northeast-1` |
+| Google Cloud | project `direkt-dev-502701`, region `asia-northeast1` |
+| Artifact Registry | `direkt-containers` |
+| Cloud Run | `direkt-api` |
+| Firebase | project `direkt-dev-502701`, tester group `direkt-internal-testers` |
+| Vercel | protected Preview/Staging project still requires owner-side project binding and identifiers |
+
+The workspace Supabase connector currently exposes only unrelated CarUp projects, so it cannot independently inspect the DIREKT project. The existing protected GitHub activation workflow remains the exact-project migration and verification authority; no unrelated project may be mutated.
+
+## Phase boundaries
+
+- Phase 10: synthetic-only development/protected staging integration and hardening.
+- Phase 11: consenting real participants, real pilot evidence and controlled Zambia pilot validation.
+- Phase 12: production backend/portal/Android release and public rollout.
 
 Issue #5 remains open as a later, non-blocking Zambia pilot-validation obligation.

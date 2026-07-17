@@ -26,6 +26,10 @@ coverage/
 supabase/.temp/
 supabase/.branches/
 
+# Deployment provider local/auth state
+.vercel/
+gha-creds-*.json
+
 # Python/docs
 .venv/
 __pycache__/
