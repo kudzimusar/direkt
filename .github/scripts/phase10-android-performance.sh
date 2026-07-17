@@ -15,14 +15,16 @@ artifact_dir="${GITHUB_WORKSPACE}/artifacts/phase10"
 diagnostic_file="${artifact_dir}/android-performance-debug.txt"
 results="${RUNNER_TEMP}/direkt-cold-launch-ms.txt"
 avd_name="direkt-phase10-api35"
+avd_home="${RUNNER_TEMP}/direkt-android-avd"
 component="${DIREKT_DEBUG_PACKAGE}/${DIREKT_MAIN_ACTIVITY}"
 sdkmanager="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
 avdmanager="${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager"
 emulator="${ANDROID_HOME}/emulator/emulator"
 
-mkdir -p "${artifact_dir}"
+mkdir -p "${artifact_dir}" "${avd_home}"
 : > "${diagnostic_file}"
 : > "${results}"
+export ANDROID_AVD_HOME="${avd_home}"
 
 test -x "${sdkmanager}"
 test -x "${avdmanager}"
@@ -41,10 +43,12 @@ test -x "${emulator}"
   --name "${avd_name}" \
   --package "system-images;android-35;google_apis;x86_64" \
   --device pixel_2 \
+  --path "${avd_home}/${avd_name}.avd" \
   >> "${diagnostic_file}" 2>&1 \
   <<< "no"
 
-test -f "${HOME}/.android/avd/${avd_name}.ini"
+"${emulator}" -list-avds | tee -a "${diagnostic_file}"
+"${emulator}" -list-avds | grep -Fx "${avd_name}" >/dev/null
 "${emulator}" "@${avd_name}" \
   -no-window \
   -no-audio \
