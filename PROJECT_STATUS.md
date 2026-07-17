@@ -1,9 +1,9 @@
 # DIREKT Project Status
 
-**Updated:** 2026-07-17  
+**Updated:** 2026-07-18  
 **Stable branch:** `main`  
 **Implementation branch:** `build/android-v1`  
-**Programme state:** Phase 9 is complete and stable. Phase 10 is active under Issue #41 and checkpoint PR #42.
+**Programme state:** Phase 9 is complete and stable. Phase 10 is technically hardened in repository/CI but remains active and blocked from Phase 11 by managed-integration and external-approval gates.
 
 ## Stable checkpoints
 
@@ -28,11 +28,36 @@ All Stage 9A–9G capabilities are stable and all permanent workflows passed on 
 
 ## Phase 10 implementation state
 
-Issue #41 is the sole active tracker and PR #42 is the checkpoint PR. The single implementation lane is claimed on `build/android-v1`.
+Issue #41 is the sole active tracker and PR #42 is the checkpoint PR. The single implementation lane remains claimed on `build/android-v1`.
 
-Stage 10A security architecture, Stage 10B route/permission enforcement, Phase 10 privacy/retention registers and the controlled staging repository foundation are implemented on the active branch. Storage verification, remaining abuse/reliability exercises, supply-chain review, provider approvals and checkpoint promotion remain in progress.
+The repository-side implementation for Stages 10A–10G is substantially complete: authorization and tenant boundaries, privacy/retention controls, private storage adapters, distributed abuse controls, location minimization, backup/restore and outage recovery, performance budgets, secret scanning, dependency auditing and private staging controls are implemented.
 
-### Controlled staging boundary
+A representative exact technical checkpoint, `3a387e31626f0669f33ca464b428492694df8c32`, passed nine permanent workflows together:
+
+- documentation quality;
+- backend CI and backend container CI;
+- operations portal CI;
+- Android CI;
+- staging container readiness;
+- recovery/reliability exercise;
+- supply-chain security;
+- Android performance budget.
+
+Phase 10 is **not complete** because managed activation, final external approvals, operational exercises and checkpoint promotion remain open. Phase 11 has not started.
+
+## Technical evidence checkpoint
+
+- PostgreSQL/PostGIS restore: 118/118 tables, 1/1 synthetic identities, PostGIS 3.6.4 and integrity sentinel preserved.
+- Restore duration: 2 seconds in the synthetic CI exercise; zero synthetic sentinel loss.
+- Dependency outage: readiness failed closed and recovered after dependency return.
+- API recovery soak: 600/600 requests, concurrency 10, p95 15 ms, maximum 173 ms.
+- API container soak: 300/300, p95 10 ms, maximum 125 ms.
+- Portal-through-API soak: 300/300, p95 23 ms, maximum 70 ms.
+- Android debug APK: 11,676,451 bytes.
+- Android API 35 cold launch: median 3,358 ms, p95 4,777 ms.
+- Supply chain: locked installs, protected-literal scan, Gradle resolution and zero high/critical npm audit findings pass.
+
+## Controlled staging boundary
 
 Phase 10 permits:
 
@@ -48,41 +73,31 @@ This does **not** authorize real participant/evidence data, unrestricted public 
 
 ## Bound infrastructure
 
-| Service | Development/staging binding |
-|---|---|
-| Supabase | project ref `aeeuscifrxcjmnswqwnq`, region `ap-northeast-1` |
-| Google Cloud | project `direkt-dev-502701`, region `asia-northeast1` |
-| Artifact Registry | `direkt-containers` |
-| Cloud Run API | `direkt-api` with `direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com` |
-| Cloud Run portal | `direkt-operations-portal-staging` with `direkt-portal-runtime@direkt-dev-502701.iam.gserviceaccount.com` |
-| Firebase | project `direkt-dev-502701`, tester group `direkt-internal-testers` |
-| Vercel | protected Preview/Staging project still requires its private API-calling and owner-side binding checkpoint |
+| Service | Development/staging binding | Current evidence state |
+|---|---|---|
+| Supabase | project ref `aeeuscifrxcjmnswqwnq`, region `ap-northeast-1` | Repository integration exists; connected tool does not expose the exact project, so remote activation remains unverified |
+| Google Cloud | project `direkt-dev-502701`, region `asia-northeast1` | Identity and deployment contracts exist; final private staging readiness remains unrecorded |
+| Artifact Registry | `direkt-containers` | Immutable SHA tagging is implemented |
+| Cloud Run API | `direkt-api` with `direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com` | Private deployment reached GCP previously; successful final readiness still required |
+| Cloud Run portal | `direkt-operations-portal-staging` with `direkt-portal-runtime@direkt-dev-502701.iam.gserviceaccount.com` | Private two-service workflow implemented; manual managed run still required |
+| Firebase | project `direkt-dev-502701`, tester group `direkt-internal-testers` | Final internal distribution evidence absent |
+| Vercel | protected Preview/Staging project | Owner binding/private API evidence absent |
 
-The API and portal are private Cloud Run services. The portal runtime receives `roles/run.invoker` only on the API and uses a Google-signed audience token in `X-Serverless-Authorization` while preserving DIREKT application authorization.
+The API and portal design keeps both Cloud Run services private. The portal runtime receives `roles/run.invoker` only on the API and uses a Google-signed audience token in `X-Serverless-Authorization` while preserving DIREKT application authorization.
 
-## Staging repository checkpoint
+## Remaining Phase 10 gates
 
-The active Phase 10 branch now contains:
-
-- non-root multi-stage API and Next.js standalone portal containers;
-- minimal Docker contexts that exclude environment files, credentials, caches, tests and artifacts;
-- a manual-only, WIF-authenticated two-service staging deployment workflow;
-- immutable SHA image tags;
-- minimum 0 and maximum 1 Cloud Run instance per service;
-- pinned Secret Manager version variables and strict API/portal secret allowlists;
-- a private service-to-service identity path;
-- IAM checks rejecting public invocation bindings;
-- a non-deploying readiness workflow that builds, migrates and smoke-tests both containers;
-- a non-disclosing protected-literal review that classifies explicit synthetic fixtures separately.
-
-No Cloud Run deployment has been triggered by these repository changes. Deployment remains a manual action after the exact reviewed source is merged to `main` and all required staging variables are present.
-
-The workspace Supabase connector currently exposes only unrelated CarUp projects, so it cannot independently inspect DIREKT. The protected GitHub activation workflow remains the exact-project migration and verification authority; no unrelated project may be mutated.
+1. Expose and verify exact Supabase project `aeeuscifrxcjmnswqwnq`; apply migrations and private-bucket checks through the protected activation workflow.
+2. Merge the exact reviewed source to `main`, configure approved staging variables and run the manual private Cloud Run deployment/smoke workflow.
+3. Record managed rollback, scale-to-zero, kill-switch, restore and incident-tabletop evidence.
+4. Complete or explicitly exclude protected Vercel and Firebase evidence according to the authoritative plan.
+5. Obtain qualified Zambia legal, privacy, authority, payment, tax and provider findings; keep unapproved adapters disabled.
+6. Review and merge PR #42, close Issue #41 and synchronize long-lived branches without force-pushing.
 
 ## Phase boundaries
 
 - Phase 10: synthetic-only development/IAM-protected staging integration and hardening.
-- Phase 11: consenting real participants, real pilot evidence and controlled Zambia pilot validation.
+- Phase 11: consenting real participants, real pilot evidence and controlled Zambia pilot validation, only after the blocked handoff checklist is satisfied.
 - Phase 12: production backend/portal/Android release and public rollout.
 
 Issue #5 remains open as a later, non-blocking Zambia pilot-validation obligation.
