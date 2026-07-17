@@ -27,10 +27,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      PROJECT_REF: aeeuscifrxcjmnswqwnq
+      EXPECTED_PROJECT_REF: aeeuscifrxcjmnswqwnq
+      EXPECTED_PROJECT_NAME: direkt-app
+      EXPECTED_PROJECT_REGION: ap-northeast-1
+      PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
       SUPABASE_URL: https://aeeuscifrxcjmnswqwnq.supabase.co
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
 
     steps:
       - name: Validate activation controls
@@ -40,13 +43,11 @@ jobs:
           test "${{ inputs.confirmation }}" = "ACTIVATE-DIREKT-DEVELOPMENT"
           [[ "${{ inputs.source_sha }}" =~ ^[0-9a-f]{40}$ ]]
           test -n "${SUPABASE_ACCESS_TOKEN}"
-          test -n "${SUPABASE_DATABASE_URL}"
-          case "${SUPABASE_DATABASE_URL}" in
-            postgres://*|postgresql://*) ;;
-            *) echo "SUPABASE_DATABASE_URL must be a PostgreSQL connection string." >&2; exit 1 ;;
-          esac
+          test -n "${SUPABASE_DB_PASSWORD}"
+          test -n "${PROJECT_REF}"
+          test "${PROJECT_REF}" = "${EXPECTED_PROJECT_REF}"
           echo "::add-mask::${SUPABASE_ACCESS_TOKEN}"
-          echo "::add-mask::${SUPABASE_DATABASE_URL}"
+          echo "::add-mask::${SUPABASE_DB_PASSWORD}"
 
       - name: Check out exact reviewed source
         uses: actions/checkout@v6
@@ -80,37 +81,140 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p artifacts/supabase
-          curl --fail --silent --show-error \
+          PROJECT_RESPONSE="${RUNNER_TEMP}/supabase-project.json"
+          HTTP_STATUS="$(curl --silent --show-error \
+            --output "${PROJECT_RESPONSE}" \
+            --write-out '%{http_code}' \
             "https://api.supabase.com/v1/projects/${PROJECT_REF}" \
             --header "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
-            --header "Content-Type: application/json" \
-            > "${RUNNER_TEMP}/supabase-project.json"
-          jq -e --arg ref "${PROJECT_REF}" \
-            '.ref == $ref and .name == "direkt-app" and .region == "ap-northeast-1"' \
-            "${RUNNER_TEMP}/supabase-project.json" >/dev/null
+            --header "Content-Type: application/json")"
+
+          case "${HTTP_STATUS}" in
+            200) ;;
+            401)
+              echo "::error title=Supabase token rejected::SUPABASE_ACCESS_TOKEN is invalid, expired, or was copied incorrectly. Create a fresh personal access token while signed into the Supabase account that owns direkt-app."
+              exit 1
+              ;;
+            403)
+              echo "::error title=Supabase project permission denied::The token is valid but its Supabase user lacks project_admin_read access to ${PROJECT_REF}. Add that user to the owning organization/project as Owner, Administrator, or Developer, then create a fresh token."
+              exit 1
+              ;;
+            404)
+              echo "::error title=Supabase project not visible::The token's Supabase account cannot see project ${PROJECT_REF}, or SUPABASE_PROJECT_REF is wrong. Generate the token from the account where direkt-app is visible."
+              exit 1
+              ;;
+            *)
+              SAFE_MESSAGE="$(jq -r '.message // .error // "Management API request failed"' "${PROJECT_RESPONSE}" 2>/dev/null | head -c 240)"
+              echo "::error title=Supabase Management API failure::HTTP ${HTTP_STATUS}: ${SAFE_MESSAGE}"
+              exit 1
+              ;;
+          esac
+
+          ACTUAL_REF="$(jq -r '.ref // empty' "${PROJECT_RESPONSE}")"
+          ACTUAL_NAME="$(jq -r '.name // empty' "${PROJECT_RESPONSE}")"
+          ACTUAL_REGION="$(jq -r '.region // empty' "${PROJECT_RESPONSE}")"
+
+          if [[ "${ACTUAL_REF}" != "${EXPECTED_PROJECT_REF}" ]]; then
+            echo "::error title=Supabase project-ref mismatch::Expected ${EXPECTED_PROJECT_REF}, received ${ACTUAL_REF:-missing}."
+            exit 1
+          fi
+          if [[ "${ACTUAL_NAME}" != "${EXPECTED_PROJECT_NAME}" ]]; then
+            echo "::error title=Supabase project-name mismatch::Expected ${EXPECTED_PROJECT_NAME}, received ${ACTUAL_NAME:-missing}. Rename the project or update the reviewed workflow intentionally."
+            exit 1
+          fi
+          if [[ "${ACTUAL_REGION}" != "${EXPECTED_PROJECT_REGION}" ]]; then
+            echo "::error title=Supabase region mismatch::Expected ${EXPECTED_PROJECT_REGION}, received ${ACTUAL_REGION:-missing}."
+            exit 1
+          fi
+
           jq '{id, ref, organization_id, organization_slug, name, region, status, database: {version: .database.version, postgres_engine: .database.postgres_engine, release_channel: .database.release_channel}}' \
-            "${RUNNER_TEMP}/supabase-project.json" \
+            "${PROJECT_RESPONSE}" \
             > artifacts/supabase/project-metadata.json
+
+      - name: Resolve Session pooler connection safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          POOLER_RESPONSE="${RUNNER_TEMP}/supabase-pooler.json"
+          HTTP_STATUS="$(curl --silent --show-error \
+            --output "${POOLER_RESPONSE}" \
+            --write-out '%{http_code}' \
+            "https://api.supabase.com/v1/projects/${PROJECT_REF}/config/database/pooler" \
+            --header "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+            --header "Content-Type: application/json")"
+
+          if [[ "${HTTP_STATUS}" != "200" ]]; then
+            echo "::error title=Supabase pooler configuration unavailable::Management API returned HTTP ${HTTP_STATUS}. The token needs database_pooling_config_read permission."
+            exit 1
+          fi
+
+          POOLER_ROW="$(jq -c '[.[] | select(.database_type == "PRIMARY")] | (map(select(.db_port == 5432 or .pool_mode == "session"))[0] // .[0] // empty)' "${POOLER_RESPONSE}")"
+          test -n "${POOLER_ROW}"
+          RAW_CONNECTION_STRING="$(jq -r '.connection_string // .connectionString // empty' <<<"${POOLER_ROW}")"
+          DB_USER="$(jq -r '.db_user // empty' <<<"${POOLER_ROW}")"
+          DB_HOST="$(jq -r '.db_host // empty' <<<"${POOLER_ROW}")"
+          DB_NAME="$(jq -r '.db_name // "postgres"' <<<"${POOLER_ROW}")"
+
+          export RAW_CONNECTION_STRING DB_USER DB_HOST DB_NAME
+          DATABASE_URL="$(node <<'NODE'
+          const password = process.env.SUPABASE_DB_PASSWORD;
+          const raw = process.env.RAW_CONNECTION_STRING;
+          let url;
+          if (raw) {
+            const normalized = raw
+              .replace(/\[YOUR-PASSWORD\]/g, 'placeholder')
+              .replace(/\[YOUR_PASSWORD\]/g, 'placeholder');
+            url = new URL(normalized);
+          } else {
+            if (!process.env.DB_USER || !process.env.DB_HOST) {
+              throw new Error('Supabase pooler response did not include usable connection details.');
+            }
+            url = new URL('postgresql://localhost/postgres');
+            url.username = process.env.DB_USER;
+            url.hostname = process.env.DB_HOST;
+            url.pathname = `/${process.env.DB_NAME || 'postgres'}`;
+          }
+          url.protocol = 'postgresql:';
+          url.password = password;
+          url.port = '5432';
+          url.searchParams.set('sslmode', 'require');
+          process.stdout.write(url.toString());
+          NODE
+          )"
+
+          case "${DATABASE_URL}" in
+            postgresql://*) ;;
+            *) echo "::error title=Invalid Supabase pooler URL::Could not construct the Session pooler PostgreSQL URL."; exit 1 ;;
+          esac
+          echo "::add-mask::${DATABASE_URL}"
+          {
+            echo "SUPABASE_DATABASE_URL=${DATABASE_URL}"
+            echo "DATABASE_URL=${DATABASE_URL}"
+            echo "DIRECT_DATABASE_URL=${DATABASE_URL}"
+          } >> "${GITHUB_ENV}"
 
       - name: Link Supabase CLI without exposing credentials
         shell: bash
         run: |
           set -euo pipefail
-          DB_PASSWORD="$(node -e 'const value = new URL(process.env.SUPABASE_DATABASE_URL).password; process.stdout.write(decodeURIComponent(value));')"
-          test -n "${DB_PASSWORD}"
-          echo "::add-mask::${DB_PASSWORD}"
-          SUPABASE_DB_PASSWORD="${DB_PASSWORD}" supabase link --project-ref "${PROJECT_REF}"
+          SUPABASE_DB_PASSWORD="${SUPABASE_DB_PASSWORD}" supabase link --project-ref "${PROJECT_REF}"
 
       - name: Resolve a temporary backend server key
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error \
+          KEY_RESPONSE="${RUNNER_TEMP}/supabase-api-keys.json"
+          HTTP_STATUS="$(curl --silent --show-error \
+            --output "${KEY_RESPONSE}" \
+            --write-out '%{http_code}' \
             "https://api.supabase.com/v1/projects/${PROJECT_REF}/api-keys?reveal=true" \
             --header "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
-            --header "Content-Type: application/json" \
-            > "${RUNNER_TEMP}/supabase-api-keys.json"
-          SERVER_KEY="$(jq -r '[.[] | select(.type == "secret" or .name == "service_role") | .api_key][0] // empty' "${RUNNER_TEMP}/supabase-api-keys.json")"
+            --header "Content-Type: application/json")"
+          if [[ "${HTTP_STATUS}" != "200" ]]; then
+            echo "::error title=Supabase backend key unavailable::Management API returned HTTP ${HTTP_STATUS}. The token needs api_gateway_keys_read permission."
+            exit 1
+          fi
+          SERVER_KEY="$(jq -r '[.[] | select(.type == "secret" or .name == "service_role") | .api_key][0] // empty' "${KEY_RESPONSE}")"
           test -n "${SERVER_KEY}"
           echo "::add-mask::${SERVER_KEY}"
           if [[ "${SERVER_KEY}" == sb_secret_* ]]; then
@@ -118,7 +222,7 @@ jobs:
           else
             echo "SUPABASE_SERVICE_ROLE_KEY=${SERVER_KEY}" >> "${GITHUB_ENV}"
           fi
-          rm -f "${RUNNER_TEMP}/supabase-api-keys.json"
+          rm -f "${KEY_RESPONSE}"
 
       - name: Install exact backend dependencies
         working-directory: backend/direkt-api
@@ -128,16 +232,10 @@ jobs:
         working-directory: backend/direkt-api
         env:
           NODE_ENV: development
-          DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
-          DIRECT_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
         run: npm run migration:check
 
       - name: Verify PostGIS and private Storage buckets
         working-directory: backend/direkt-api
-        env:
-          DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
-          DIRECT_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
-          SUPABASE_URL: https://aeeuscifrxcjmnswqwnq.supabase.co
         run: npm run supabase:check | tee ../../artifacts/supabase/integration-check.json
 
       - name: Capture database inspection report
@@ -154,12 +252,18 @@ jobs:
         run: |
           set -euo pipefail
           for advisor in security performance; do
-            curl --fail --silent --show-error \
+            ADVISOR_RESPONSE="artifacts/supabase/${advisor}-advisor.json"
+            HTTP_STATUS="$(curl --silent --show-error \
+              --output "${ADVISOR_RESPONSE}" \
+              --write-out '%{http_code}' \
               "https://api.supabase.com/v1/projects/${PROJECT_REF}/advisors/${advisor}" \
               --header "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
-              --header "Content-Type: application/json" \
-              > "artifacts/supabase/${advisor}-advisor.json"
-            jq -e '.lints | type == "array"' "artifacts/supabase/${advisor}-advisor.json" >/dev/null
+              --header "Content-Type: application/json")"
+            if [[ "${HTTP_STATUS}" != "200" ]]; then
+              echo "::error title=Supabase ${advisor} advisor unavailable::Management API returned HTTP ${HTTP_STATUS}."
+              exit 1
+            fi
+            jq -e '.lints | type == "array"' "${ADVISOR_RESPONSE}" >/dev/null
           done
 
       - name: Publish activation summary
@@ -173,7 +277,8 @@ jobs:
           {
             echo "### DIREKT Supabase development activation"
             echo "- Project ref: \`${PROJECT_REF}\`"
-            echo "- Region: \`ap-northeast-1\`"
+            echo "- Region: \`${EXPECTED_PROJECT_REGION}\`"
+            echo "- Session pooler: resolved through the Management API"
             echo "- Migrations: applied and idempotency checked"
             echo "- PostGIS and private buckets: verified"
             echo "- Security advisor: ${SECURITY_ERRORS} errors, ${SECURITY_WARNINGS} warnings"
