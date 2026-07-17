@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       source_sha:
-        description: Exact reviewed DIREKT commit to build and deploy
+        description: Exact reviewed DIREKT commit already merged to main
         required: true
         type: string
       access_mode:
@@ -84,12 +84,17 @@ jobs:
           ref: ${{ inputs.source_sha }}
           fetch-depth: 0
 
-      - name: Record source identity
+      - name: Verify source identity and main ancestry
         shell: bash
         run: |
           set -euo pipefail
           SOURCE_SHA="$(git rev-parse HEAD)"
           test "${SOURCE_SHA}" = "${{ inputs.source_sha }}"
+          git fetch origin main --no-tags
+          if ! git merge-base --is-ancestor "${SOURCE_SHA}" origin/main; then
+            echo "::error title=Unmerged deployment source::The selected source commit is not an ancestor of origin/main. Merge and validate it before deployment."
+            exit 1
+          fi
           echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
           echo "IMAGE_URI=${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/${GCP_CLOUD_RUN_SERVICE}:${SOURCE_SHA}" >> "${GITHUB_ENV}"
 
@@ -231,6 +236,7 @@ jobs:
           {
             echo "### DIREKT Cloud Run development deployment"
             echo "- Source: \`${SOURCE_SHA}\`"
+            echo "- Source ancestry: verified against \`origin/main\`"
             echo "- Image: \`${IMAGE_URI}\`"
             echo "- Project: \`${GCP_PROJECT_ID}\`"
             echo "- Region: \`${GCP_REGION}\`"
