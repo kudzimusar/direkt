@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  type ExecutionContext,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, type ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { describe, expect, it, vi } from 'vitest';
 import type { DirektRequest } from '../../src/platform/http/request-context';
@@ -92,9 +88,9 @@ describe('Phase 10 permission guard', () => {
     const authorization = authorizationMock();
     const guard = new PermissionGuard(new Reflector(), authorization.service);
 
-    await expect(
-      guard.canActivate(contextFor(AmbiguousPolicyController)),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(guard.canActivate(contextFor(AmbiguousPolicyController))).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 
   it('uses the live actor-resolved provider permission path', async () => {
