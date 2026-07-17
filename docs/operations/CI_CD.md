@@ -1,98 +1,93 @@
 # DIREKT CI/CD
 
-## Current documentation and Pages pipeline
+## Documentation and Pages
 
-The Pages workflow on `main`:
+The Pages workflow on `main` validates required documentation, scans for placeholders and obvious secret patterns, creates the planning archive, performs a strict MkDocs build and deploys only synthetic documentation/prototype content.
 
-1. validates required documentation;
-2. scans for placeholders and obvious secret patterns;
-3. generates the downloadable planning pack;
-4. prepares the MkDocs source tree;
-5. runs a strict MkDocs build;
-6. uploads the static Pages artifact;
-7. deploys the approved documentation site.
+GitHub Pages is not an Android runtime, backend host, authenticated portal or production target.
 
-GitHub Pages is a documentation and synthetic-prototype surface. It is not the Android runtime, backend host, authenticated operations portal or production deployment target.
+## Permanent product validation
 
-## Android continuous integration
+### Android
 
-Workflow: `.github/workflows/android-ci.yml`
+`.github/workflows/android-ci.yml` runs unit tests, Android lint, debug assembly, Compose test assembly and retained reports for relevant `build/android-v1`, `main` and manual runs.
 
-Triggers:
+### Backend/PostGIS
 
-- Android changes pushed to `build/android-v1`;
-- Android changes promoted to `main`;
-- a manual workflow dispatch.
+`.github/workflows/backend-ci.yml` runs formatting, lint, TypeScript, route-authorization inventory, checksummed migrations, tests, production build and OpenAPI validation.
 
-Before Android scaffolding exists, the workflow reports a dormant but correctly connected state. After `android/direkt-app/gradlew` and the Gradle settings file exist, the workflow runs:
+### Operations portal
 
-`unit tests → Android lint → debug assembly → report upload → APK artifact upload`
+The portal workflow runs formatting, lint, TypeScript, tests, production build and the API-only isolation checks.
 
-The build uses a standard Ubuntu GitHub-hosted runner, JDK 17 and the Gradle build cache. The debug APK and reports are retained for 14 days to control artifact storage and prevent old test builds from being mistaken for current releases.
+### Documentation
 
-## Android tester distribution
+The documentation workflow validates required records, packages the archive and runs the strict MkDocs build.
 
-Workflow: `.github/workflows/android-distribute.yml`
+## Controlled staging container readiness
 
-Distribution is manual and gated. It must never run automatically on every commit. The operator chooses the approved Firebase tester group and provides release notes.
+Workflow: `.github/workflows/staging-container-readiness.yml`
 
-Required repository secrets:
+This workflow does **not** deploy. It runs for relevant branch/PR changes and by manual dispatch. It:
 
-- `FIREBASE_ANDROID_APP_ID`
-- `FIREBASE_SERVICE_ACCOUNT_JSON`
+1. checks required Docker and staging artifacts;
+2. runs the non-disclosing protected-literal scan;
+3. builds the API and portal containers;
+4. creates disposable PostgreSQL/PostGIS and applies the complete migration chain;
+5. runs API and portal on non-default ports;
+6. verifies both runtime UIDs are non-root;
+7. verifies API liveness/readiness;
+8. verifies portal-to-API readiness;
+9. uploads only sanitized readiness reports with `deploymentTriggered: false`.
 
-The distribution workflow reruns unit tests and Android lint, builds the exact APK, uploads it to Firebase App Distribution and retains the distributed APK in GitHub Actions for traceability.
+Explicit development strings containing `not-for-production` and disposable local database URLs are classified as synthetic examples. Real token, key, private-key and credential-bearing URL patterns fail without printing the matched value.
 
-See [`REMOTE_ANDROID_TESTING.md`](REMOTE_ANDROID_TESTING.md) for the full testing-channel model.
+## Managed infrastructure workflows
 
-## Managed development deployment pipelines
+### Supabase activation
 
-### Supabase development activation
+`.github/workflows/supabase-development-activate.yml` is manual, exact-source, main-only and protected by the `development` Environment. It verifies the immutable DIREKT project, migrations, PostGIS, private buckets and sanitized advisor evidence.
 
-`.github/workflows/supabase-development-activate.yml` is manual, main-only and protected by the `development` Environment. It verifies the exact DIREKT project, an exact source commit, migrations, PostGIS, private buckets and sanitized advisor evidence.
+### Cloud Run staging deployment
 
-### Cloud Run development API
+`.github/workflows/cloud-run-staging-deploy.yml` is manual-only and protected by the `staging` Environment. It requires an exact reviewed commit already merged to `main` and the confirmation phrase `DEPLOY-DIREKT-STAGING`.
 
-`.github/workflows/cloud-run-development-deploy.yml` is manual, main-only and protected by the `development` Environment. It uses GitHub OIDC/Workload Identity Federation, verifies an exact source commit, builds an immutable SHA-tagged image, binds runtime secret references, deploys the synthetic-only API and runs readiness smoke tests. Private invocation is the default; `public-synthetic` is an explicit protected-Vercel integration mode and does not authorize real data or a pilot.
+It uses:
 
-### Vercel Preview/Staging portal
+- `contents: read` and `id-token: write` only;
+- GitHub OIDC/Workload Identity Federation from repository variables;
+- immutable commit-SHA image tags;
+- Artifact Registry repository variables;
+- separate API and portal runtime identities;
+- pinned Secret Manager version variables;
+- minimum 0 and maximum 1 instance per service;
+- IAM-private API and portal services;
+- a portal-runtime `roles/run.invoker` grant only on the API;
+- Google-signed audience tokens in `X-Serverless-Authorization` while retaining DIREKT application authorization;
+- post-deploy identity, secret-allowlist, IAM and health verification.
 
-The Vercel project is configured in the provider dashboard with root `admin/direkt-operations-portal`, Preview deployment and deployment protection. Phase 10 URLs remain no-indexed and use only the server-side DIREKT API base URL and portal session configuration. No database or Supabase server credential enters the browser or Vercel client bundle.
+The workflow contains no unauthenticated deployment mode and no service-account JSON key path.
 
-## Later product pipelines
+### Vercel Preview/Staging
 
-### Backend
+Vercel remains a protected portal target after its project binding and private API-calling design are approved. Preview/Staging URLs remain no-indexed. Vercel receives portal server configuration only and never database or Supabase server credentials.
 
-`format/lint/type-check → unit tests → PostgreSQL integration/migrations → API contract/security tests → container build`
+### Firebase internal distribution
 
-### Administration portal
-
-`format/lint/type-check → component tests → browser E2E → production build`
-
-### Android instrumented and device tests
-
-Instrumented tests are added after the Compose application and test harness exist. They should run in a separate workflow because emulator/device jobs are slower than the standard unit-test pipeline. Firebase Test Lab may later provide broader virtual and physical device coverage.
-
-### Security
-
-Dependency, secret, code and artifact-provenance checks are introduced with the corresponding implementation layers. No workflow may print secret values or upload private verification evidence.
+Android tester distribution remains manual and targets the named internal tester group. Public Play release remains Phase 12.
 
 ## Deployment rules
 
 - `build/android-v1` is the sequential implementation branch.
-- Pushes to the build branch validate code and produce test artifacts.
-- Stable phase checkpoints are promoted to `main` only after required quality gates pass.
-- GitHub Pages deploys only from `main`.
-- Firebase distribution is manual and targets named tester groups.
-- Synthetic-only managed development and protected staging deployment are authorized during Phase 10.
-- A development/staging URL is not a Phase 11 pilot or Phase 12 production release.
-- Bootstrap workflows that require the default branch may be promoted through a narrow reviewed PR and synchronized back without force-pushing.
-- Production deployments require manual approval and current-head verification.
-- Database migrations are explicit and environment-specific.
+- Branch pushes validate and create test artifacts; they do not trigger Cloud Run deployment.
+- Stable phase checkpoints are promoted to `main` only after required exact-head gates pass.
+- Managed Phase 10 staging is synthetic-only and IAM-protected.
+- A staging URL is not a Phase 11 pilot or Phase 12 production release.
+- No public Cloud Run invocation binding is permitted in Phase 10.
+- Production deployment requires later manual approval and current-head verification.
+- Migrations are explicit and environment-specific.
 - Force-pushing is prohibited.
 
 ## Artifact rules
 
-Every retained build must be traceable to its Git commit and workflow run. Artifacts must not contain production credentials, personal identity documents, private location evidence or production database exports.
-
-Debug APKs are test artifacts only. Signed release Android App Bundles use a separate protected release-signing workflow when Play testing begins.
+Every retained build is traceable to a commit and workflow run. Artifacts must not contain credentials, personal identity documents, private location evidence or production database exports. Debug APKs and staging containers are test artifacts only.
