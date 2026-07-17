@@ -6,9 +6,15 @@ on:
       - build/android-v1
     paths:
       - ".github/workflows/phase10-portal-security-upgrade.yml"
+      - "admin/direkt-operations-portal/package.json"
+      - "admin/direkt-operations-portal/package-lock.json"
 
 permissions:
   contents: write
+
+concurrency:
+  group: direkt-phase10-portal-security-upgrade
+  cancel-in-progress: false
 
 jobs:
   upgrade:
