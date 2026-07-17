@@ -1,7 +1,7 @@
-import { ConfigService } from '@nestjs/config';
+import type { ConfigService } from '@nestjs/config';
 import type { NextFunction, Response } from 'express';
 import { describe, expect, it, vi } from 'vitest';
-import { DatabaseService } from '../../src/platform/database/database.service';
+import type { DatabaseService } from '../../src/platform/database/database.service';
 import type { DirektRequest } from '../../src/platform/http/request-context';
 import { AbuseControlMiddleware } from '../../src/platform/security/abuse-control.middleware';
 
@@ -18,7 +18,7 @@ function config(values: Record<string, unknown>): ConfigService {
   } as ConfigService;
 }
 
-function database(result: unknown | Error): {
+function database(result: unknown): {
   service: DatabaseService;
   query: ReturnType<typeof vi.fn>;
 } {
