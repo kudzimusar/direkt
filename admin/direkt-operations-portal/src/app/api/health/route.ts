@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 const HEALTH_TIMEOUT_MS = 5_000;
 
 interface ApiReadinessPayload {
