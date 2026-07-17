@@ -73,7 +73,12 @@ jobs:
           set -o pipefail
           npm run typecheck 2>&1 | tee artifacts/diagnostics/typecheck.txt
       - run: npm run migration:check
-      - run: npm run test
+      - name: Run tests with diagnostics
+        shell: bash
+        run: |
+          mkdir -p artifacts/diagnostics
+          set -o pipefail
+          npm run test 2>&1 | tee artifacts/diagnostics/vitest.txt
       - run: npm run build
       - run: npm run openapi:check
       - if: always()
