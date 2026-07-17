@@ -6,16 +6,17 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | RELEASED |
-| Owner/agent | None |
-| Phase | None claimed |
-| Task | Phase 8 checkpoint promoted; Phase 9 awaits an explicit claim |
-| Modules/paths | No active write reservation |
-| Released at | 2026-07-17 after PR #31 merge, Issue #30 closure and stable-record update |
+| Status | CLAIMED |
+| Owner/agent | OpenAI GPT-5.6 Thinking — Phase 9 subscription and payment foundation agent |
+| Phase | Phase 9 — Subscription and payment foundation |
+| Task | Implement products, entitlements, subscriptions, invoices, synthetic payment intents, webhook contracts, append-only ledger, grace periods, reconciliation and commercial client experiences |
+| Modules/paths | `database`, `backend/direkt-api`, `android/direkt-app`, `admin/direkt-operations-portal`, `docs`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
+| Claimed at | 2026-07-17 after Phase 8 checkpoint promotion and branch synchronization |
+| Expected handoff | Reviewed Phase 9 checkpoint with isolated commercial aggregates, synthetic-disabled payment adapter, green permanent CI and Phase 10 handoff |
 | Last stable checkpoint | `0182951cdc26a892b3423728bd843e2969b25bc0` |
-| Governing issue | None active |
+| Governing issue | Issue #34 |
 
-## Latest completed checkpoint
+## Stable predecessor
 
 Phase 8 completed through PR #31 and Issue #30.
 
@@ -25,83 +26,91 @@ Phase 8 merge commit:       0182951cdc26a892b3423728bd843e2969b25bc0
 Issue #30:                  closed as completed
 ```
 
-## Stable Phase 8 capabilities
+## Phase 9 objective
 
-### Stage 8A — interaction foundation and structured enquiry
+Create a synthetic-first commercial foundation for provider products, entitlements, subscriptions, invoices, receipts, retry-safe payment intents, verified webhook processing, append-only ledger accounting, grace periods and reconciliation while keeping commercial state completely independent from verification, publication, review outcomes, complaints and ranking.
 
-- forward-only interaction/enquiry schema and immutable event history;
-- server-resolved customer, provider, publication and category scope;
-- idempotent bounded structured enquiry creation;
-- customer-owned detail/history and cross-identity denial;
-- no trust, publication, ranking or payment side effects.
+## Delivery stages
 
-### Stage 8B — provider inbox and response lifecycle
+### Stage 9A — commercial foundation, products and permissions
 
-- live provider-scoped inbox/detail replacing the Phase 6 placeholder;
-- explicit acknowledged, accepted, declined, needs-information, closed and cancelled states;
-- actor, reason, policy version and optimistic revision on transitions;
-- invalid, repeated, stale and wrong-provider actions rejected.
+- forward-only `commercial` schema and explicit aggregates;
+- separate commercial permission families and role grants;
+- synthetic product/price catalogue with currency, interval, version and activation lifecycle;
+- provider-safe and operations-safe catalogue projections;
+- no verification, publication or ranking side effects.
 
-### Stage 8C — consent-aware call/WhatsApp handoff
+### Stage 9B — subscriptions and entitlements
 
-- tracked interaction before handoff;
-- current channel-specific customer consent and provider acceptance;
-- synthetic disabled-delivery adapters only;
-- minimum contact disclosure, expiry, revocation, idempotency and audit.
+- actor-resolved provider scope;
+- pending, active, grace, past-due, cancelled and expired subscription lifecycle;
+- optimistic revisions, reasoned events and duplicate-active-subscription prevention;
+- explicit product entitlement grants and deterministic effective-state projection;
+- cancellation independent from provider suspension and trust/publication state.
 
-### Stage 8D — interaction history and review eligibility
+### Stage 9C — invoices, receipts and synthetic payment intents
 
-- immutable interaction events;
-- qualifying owned interaction as the sole review-eligibility source;
-- deterministic eligibility window and duplicate prevention;
-- private customer/provider/operations history views.
+- immutable invoice/line snapshots in minor units;
+- hashed idempotency keys and request fingerprints;
+- disabled/synthetic payment adapter only;
+- explicit pending, requires-action, processing, succeeded, failed, cancelled, expired and reversed states;
+- backend-confirmed safe receipt projection;
+- no credential, PIN, card or Phase 8 contact storage.
 
-### Stage 8E — reviews, responses, moderation and appeals
+### Stage 9D — webhooks, ledger and reconciliation
 
-- one bounded review per eligible interaction;
-- one provider response per review;
-- pending, published, withheld, removed and appealed moderation states;
-- immutable author/provider appeals and operator reasoned moderation;
-- public allowlist with no contact, interaction detail or internal rationale.
+- bounded webhook receipts with unique provider event identifiers;
+- signature, timestamp, provider and replay verification before state mutation;
+- idempotent verified replays;
+- balanced append-only ledger entries;
+- deterministic reconciliation and separate exception queue.
 
-### Stage 8F — complaint linkage and client experiences
+### Stage 9E — grace periods, adjustments and exception controls
 
-- customer complaint linkage to an owned tracked interaction;
-- separation of public reports, customer complaints and Phase 7 internal incidents;
-- Android customer/provider flows and critical offline/consent/moderation states;
-- API-only permission-aware operations portal moderation/appeal workspace.
+- deterministic grace start/end and entitlement degradation;
+- cancellation, expiry, failure and recovery state machines;
+- synthetic adjustment/refund requests separate from ledger correction;
+- four-eyes approval for high-risk commercial adjustments where implemented;
+- immutable commercial decisions and events.
 
-### Stage 8G — checkpoint promotion
+### Stage 9F — Android and operations experiences
+
+- live subscription status replacing the Phase 6 placeholder;
+- native low-bandwidth product, subscription, invoice, payment, receipt and recovery states;
+- process-death recovery without sensitive credential storage;
+- API-only operations product, subscription, invoice/payment and reconciliation workspaces;
+- permission-denied, empty, stale, duplicate, signature-failure and mismatch states;
+- TalkBack, keyboard, focus and screen-reader semantics.
+
+### Stage 9G — regression, documentation and checkpoint promotion
 
 - permanent database, API, Android and portal regressions;
-- OpenAPI, architecture, authorization, privacy, testing, decision and risk records;
+- OpenAPI, architecture, authorization, privacy, commercial trust, decision and risk records;
+- explicit real-provider approval gate and Phase 10 handoff;
 - green backend, Android, portal and documentation workflows on one exact reviewed head;
-- review remediation, merge, Issue #30 closure and branch synchronization.
+- review remediation, merge, Issue #34 closure and branch synchronization.
 
-## Next authorized claim
+## Supabase execution state
 
-Phase 9 — Subscription and payment foundation is the next planned phase. It is not active until a new agent explicitly updates this file to `CLAIMED`, identifies its governing issue and reserves the required modules/paths.
+The supplied project reference is `aeeuscifrxcjmnswqwnq`, derived from `https://aeeuscifrxcjmnswqwnq.supabase.co`.
 
-The Phase 9 agent must first read:
+The current Supabase connector cannot access that project and lists only unrelated CarUp projects. No live database mutation is authorized through the connector until the DIREKT project is connected and permission is confirmed. Repository migrations and clean PostgreSQL/PostGIS CI remain the Phase 9 implementation authority meanwhile.
 
-- `MASTER_BUILD_PLAN.md`;
-- `docs/phase8/INTERACTION_TRUST_CONTRACT.md`;
-- `docs/phase9/HANDOFF_FROM_PHASE8.md`;
-- `PROJECT_STATUS.md`;
-- `DECISION_LOG.md`;
-- `RISK_REGISTER.md`.
+## Non-negotiable stop gates
 
-## Non-negotiable inherited stop gates
-
-- No real customer, provider, contact, enquiry, review, complaint or appeal data without later authorization.
-- No production messaging/call/push adapter, payment provider, credentials, deployment or public pilot under the Phase 8 checkpoint.
-- Full chat, attachments and voice/video calling remain deferred.
-- Contact data is private and disclosed only after current channel-specific consent and provider acceptance.
-- Reviews require an owned qualifying tracked interaction.
-- Enquiries, reviews, responses, complaints, appeals, payments and direct edits cannot create claims, publication or ranking.
-- Phase 9 commercial state must remain independent from verification, review outcomes and ranking.
+- No real payment provider, production credential, customer/provider money movement, deployment or public pilot.
+- Only hashed idempotency keys and bounded fingerprints may be persisted.
+- Webhook signatures and timestamps are verified before business parsing or mutation.
+- Raw provider payload retention requires a later encrypted, private and retention-controlled store; this phase stores safe metadata/fingerprints only.
+- Ledger and material commercial history are append-only.
+- Provider scope is actor-resolved from one active server-side assignment; client identifiers do not grant access.
+- Commercial state cannot create, strengthen, extend or suppress verification claims, publication, ranking, reviews, complaints, appeals or incidents.
+- Interaction handoff consent is not payment or marketing consent.
+- Android and portal store no payment credentials or provider secrets.
+- Real Zambia mobile-money integration requires current commercial, settlement, security, tax, consumer, AML, privacy, support and legal approval.
+- Phase 10 retains security, privacy, legal and reliability hardening.
 - Issue #5 remains a later, non-blocking Zambia pilot-validation obligation.
 
 ## Conflict rule
 
-A second agent must not modify paths reserved by an active `CLAIMED` lock. Read-only review is allowed. A stale or ambiguous lock must be resolved explicitly rather than overwritten by assumption.
+A second agent must not modify the listed Phase 9 paths while this lock is claimed. Read-only review is allowed. A stale or ambiguous lock must be resolved explicitly rather than overwritten by assumption.
