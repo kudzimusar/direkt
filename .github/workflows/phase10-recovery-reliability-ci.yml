@@ -76,7 +76,7 @@ jobs:
           npm run migration:up
           npm run seed:synthetic
 
-      - name: Execute restore, outage and soak exercise
+      - name: Back up, restore and verify the synthetic database
         shell: bash
         env:
           POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
@@ -167,6 +167,38 @@ jobs:
           RESTORED_DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${RESTORE_DATABASE}"
           DATABASE_URL="${RESTORED_DATABASE_URL}" npm --prefix backend/direkt-api run migration:up
 
+          {
+            echo "SOURCE_TABLE_COUNT=${SOURCE_TABLE_COUNT}"
+            echo "SOURCE_IDENTITY_COUNT=${SOURCE_IDENTITY_COUNT}"
+            echo "RESTORED_TABLE_COUNT=${RESTORED_TABLE_COUNT}"
+            echo "RESTORED_IDENTITY_COUNT=${RESTORED_IDENTITY_COUNT}"
+            echo "RESTORED_POSTGIS_VERSION=${RESTORED_POSTGIS_VERSION}"
+            echo "RESTORE_DURATION_SECONDS=${RESTORE_DURATION_SECONDS}"
+            echo "RESTORED_DATABASE_URL=${RESTORED_DATABASE_URL}"
+          } >> "${GITHUB_ENV}"
+
+          jq -n \
+            --argjson sourceTableCount "${SOURCE_TABLE_COUNT}" \
+            --argjson restoredTableCount "${RESTORED_TABLE_COUNT}" \
+            --argjson sourceIdentityCount "${SOURCE_IDENTITY_COUNT}" \
+            --argjson restoredIdentityCount "${RESTORED_IDENTITY_COUNT}" \
+            --arg postgisVersion "${RESTORED_POSTGIS_VERSION}" \
+            --argjson restoreDurationSeconds "${RESTORE_DURATION_SECONDS}" \
+            '{
+              sourceTableCount: $sourceTableCount,
+              restoredTableCount: $restoredTableCount,
+              sourceIdentityCount: $sourceIdentityCount,
+              restoredIdentityCount: $restoredIdentityCount,
+              postgisVersion: $postgisVersion,
+              sentinelIntegrity: "matched",
+              restoreDurationSeconds: $restoreDurationSeconds,
+              exerciseRpo: "zero synthetic sentinel loss"
+            }' > artifacts/phase10/database-restore-evidence.json
+
+      - name: Start the API against the restored database
+        shell: bash
+        run: |
+          set -euo pipefail
           IMAGE="direkt-api-recovery:${GITHUB_SHA}"
           docker build \
             --file backend/direkt-api/Dockerfile \
@@ -189,7 +221,7 @@ jobs:
               > "${RUNNER_TEMP}/restored-api-health.json"; then
               jq -e '.status == "ok" and .database.status == "ready"' \
                 "${RUNNER_TEMP}/restored-api-health.json" >/dev/null
-              break
+              exit 0
             fi
             if [[ "${attempt}" -eq 30 ]]; then
               docker logs direkt-api-recovery
@@ -198,8 +230,15 @@ jobs:
             sleep 2
           done
 
+      - name: Exercise fail-closed dependency outage and recovery
+        shell: bash
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
           docker pause "${POSTGRES_CONTAINER}" >/dev/null
-          trap 'docker unpause "${POSTGRES_CONTAINER}" >/dev/null 2>&1 || true' ERR
+          trap 'docker unpause "${POSTGRES_CONTAINER}" >/dev/null 2>&1 || true' EXIT
+
           set +e
           OUTAGE_HTTP_STATUS="$(curl --silent --show-error --max-time 8 \
             --output "${RUNNER_TEMP}/outage-health.json" \
@@ -212,8 +251,9 @@ jobs:
             echo "Readiness remained healthy while PostgreSQL was paused." >&2
             exit 1
           fi
+
           docker unpause "${POSTGRES_CONTAINER}" >/dev/null
-          trap - ERR
+          trap - EXIT
 
           RECOVERY_STARTED_AT="$(date +%s)"
           RECOVERY_DURATION_SECONDS=""
@@ -228,76 +268,95 @@ jobs:
             fi
             sleep 2
           done
+
           test -n "${RECOVERY_DURATION_SECONDS}"
           test "${RECOVERY_DURATION_SECONDS}" -le 120
-
-          RESULTS="${RUNNER_TEMP}/soak-results.txt"
-          export RESULTS API_PORT
-          : > "${RESULTS}"
-          seq 1 "${SOAK_REQUESTS}" | xargs -P "${SOAK_CONCURRENCY}" -I {} bash -c '
-            curl --silent --show-error --max-time 5 \
-              --output /dev/null \
-              --write-out "%{http_code} %{time_total}\n" \
-              "http://127.0.0.1:${API_PORT}/api/v1/health/ready" >> "${RESULTS}"
-          '
-
-          REQUEST_COUNT="$(wc -l < "${RESULTS}" | tr -d ' ')"
-          SUCCESS_COUNT="$(awk '$1 == 200 { count += 1 } END { print count + 0 }' "${RESULTS}")"
-          test "${REQUEST_COUNT}" = "${SOAK_REQUESTS}"
-          test "${SUCCESS_COUNT}" = "${SOAK_REQUESTS}"
-
-          sort -n -k2 "${RESULTS}" > "${RUNNER_TEMP}/soak-results-sorted.txt"
-          P95_INDEX="$(( (SOAK_REQUESTS * 95 + 99) / 100 ))"
-          P95_SECONDS="$(awk -v line="${P95_INDEX}" 'NR == line { print $2 }' "${RUNNER_TEMP}/soak-results-sorted.txt")"
-          MAX_SECONDS="$(awk 'END { print $2 }' "${RUNNER_TEMP}/soak-results-sorted.txt")"
-          P95_MS="$(awk -v value="${P95_SECONDS}" 'BEGIN { printf "%d", value * 1000 }')"
-          MAX_MS="$(awk -v value="${MAX_SECONDS}" 'BEGIN { printf "%d", value * 1000 }')"
-          test "${P95_MS}" -le "${SOAK_P95_BUDGET_MS}"
-          test "${MAX_MS}" -le "${SOAK_MAX_BUDGET_MS}"
+          {
+            echo "OUTAGE_HTTP_STATUS=${OUTAGE_HTTP_STATUS}"
+            echo "OUTAGE_CURL_EXIT=${OUTAGE_CURL_EXIT}"
+            echo "RECOVERY_DURATION_SECONDS=${RECOVERY_DURATION_SECONDS}"
+          } >> "${GITHUB_ENV}"
 
           jq -n \
-            --arg sourceSha "${GITHUB_SHA}" \
-            --argjson sourceTableCount "${SOURCE_TABLE_COUNT}" \
-            --argjson restoredTableCount "${RESTORED_TABLE_COUNT}" \
-            --argjson sourceIdentityCount "${SOURCE_IDENTITY_COUNT}" \
-            --argjson restoredIdentityCount "${RESTORED_IDENTITY_COUNT}" \
-            --arg postgisVersion "${RESTORED_POSTGIS_VERSION}" \
-            --argjson restoreDurationSeconds "${RESTORE_DURATION_SECONDS}" \
             --arg outageHttpStatus "${OUTAGE_HTTP_STATUS}" \
             --argjson outageCurlExit "${OUTAGE_CURL_EXIT}" \
             --argjson recoveryDurationSeconds "${RECOVERY_DURATION_SECONDS}" \
-            --argjson soakRequests "${SOAK_REQUESTS}" \
-            --argjson soakConcurrency "${SOAK_CONCURRENCY}" \
-            --argjson soakSuccessCount "${SUCCESS_COUNT}" \
-            --argjson soakP95Ms "${P95_MS}" \
-            --argjson soakMaxMs "${MAX_MS}" \
+            '{
+              readinessFailedClosed: true,
+              outageHttpStatus: $outageHttpStatus,
+              curlExit: $outageCurlExit,
+              recoveryDurationSeconds: $recoveryDurationSeconds
+            }' > artifacts/phase10/dependency-outage-evidence.json
+
+      - name: Run bounded synthetic API soak
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const { performance } = require('node:perf_hooks');
+
+          const port = Number(process.env.API_PORT);
+          const requests = Number(process.env.SOAK_REQUESTS);
+          const concurrency = Number(process.env.SOAK_CONCURRENCY);
+          const endpoint = `http://127.0.0.1:${port}/api/v1/health/ready`;
+          const durations = [];
+          let successes = 0;
+          let nextRequest = 0;
+
+          async function worker() {
+            while (true) {
+              const index = nextRequest++;
+              if (index >= requests) return;
+              const started = performance.now();
+              const response = await fetch(endpoint, { signal: AbortSignal.timeout(5000) });
+              const elapsed = performance.now() - started;
+              durations.push(elapsed);
+              if (response.status === 200) {
+                const body = await response.json();
+                if (body.status === 'ok' && body.database?.status === 'ready') successes += 1;
+              }
+            }
+          }
+
+          await Promise.all(Array.from({ length: concurrency }, () => worker()));
+          durations.sort((a, b) => a - b);
+          const p95 = durations[Math.max(0, Math.ceil(durations.length * 0.95) - 1)];
+          const maximum = durations[durations.length - 1];
+          fs.writeFileSync(
+            'artifacts/phase10/soak-evidence.json',
+            `${JSON.stringify({ requests, concurrency, successes, p95Ms: Math.round(p95), maxMs: Math.round(maximum) }, null, 2)}\n`,
+          );
+          NODE
+
+          SOAK_SUCCESS_COUNT="$(jq -r '.successes' artifacts/phase10/soak-evidence.json)"
+          SOAK_P95_MS="$(jq -r '.p95Ms' artifacts/phase10/soak-evidence.json)"
+          SOAK_MAX_MS="$(jq -r '.maxMs' artifacts/phase10/soak-evidence.json)"
+          test "${SOAK_SUCCESS_COUNT}" = "${SOAK_REQUESTS}"
+          test "${SOAK_P95_MS}" -le "${SOAK_P95_BUDGET_MS}"
+          test "${SOAK_MAX_MS}" -le "${SOAK_MAX_BUDGET_MS}"
+          {
+            echo "SOAK_SUCCESS_COUNT=${SOAK_SUCCESS_COUNT}"
+            echo "SOAK_P95_MS=${SOAK_P95_MS}"
+            echo "SOAK_MAX_MS=${SOAK_MAX_MS}"
+          } >> "${GITHUB_ENV}"
+
+      - name: Write consolidated sanitized exercise evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq -n \
+            --arg sourceSha "${GITHUB_SHA}" \
+            --slurpfile databaseRestore artifacts/phase10/database-restore-evidence.json \
+            --slurpfile dependencyOutage artifacts/phase10/dependency-outage-evidence.json \
+            --slurpfile boundedSoak artifacts/phase10/soak-evidence.json \
             '{
               schemaVersion: 1,
               sourceSha: $sourceSha,
               dataClassification: "synthetic-only",
-              databaseRestore: {
-                sourceTableCount: $sourceTableCount,
-                restoredTableCount: $restoredTableCount,
-                sourceIdentityCount: $sourceIdentityCount,
-                restoredIdentityCount: $restoredIdentityCount,
-                postgisVersion: $postgisVersion,
-                sentinelIntegrity: "matched",
-                restoreDurationSeconds: $restoreDurationSeconds,
-                exerciseRpo: "zero synthetic sentinel loss"
-              },
-              dependencyOutage: {
-                readinessFailedClosed: true,
-                outageHttpStatus: $outageHttpStatus,
-                curlExit: $outageCurlExit,
-                recoveryDurationSeconds: $recoveryDurationSeconds
-              },
-              boundedSoak: {
-                requests: $soakRequests,
-                concurrency: $soakConcurrency,
-                successes: $soakSuccessCount,
-                p95Ms: $soakP95Ms,
-                maxMs: $soakMaxMs
-              }
+              databaseRestore: $databaseRestore[0],
+              dependencyOutage: $dependencyOutage[0],
+              boundedSoak: $boundedSoak[0]
             }' > artifacts/phase10/recovery-reliability-evidence.json
 
           {
@@ -310,8 +369,8 @@ jobs:
             echo "- Exercise RPO: zero synthetic sentinel loss"
             echo "- Dependency outage: readiness failed closed with HTTP \`${OUTAGE_HTTP_STATUS}\`"
             echo "- Recovery duration: ${RECOVERY_DURATION_SECONDS}s"
-            echo "- Bounded soak: ${SUCCESS_COUNT}/${SOAK_REQUESTS} succeeded at concurrency ${SOAK_CONCURRENCY}"
-            echo "- Latency: p95 ${P95_MS}ms, max ${MAX_MS}ms"
+            echo "- Bounded soak: ${SOAK_SUCCESS_COUNT}/${SOAK_REQUESTS} succeeded at concurrency ${SOAK_CONCURRENCY}"
+            echo "- Latency: p95 ${SOAK_P95_MS}ms, max ${SOAK_MAX_MS}ms"
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Show sanitized API logs on failure
@@ -324,7 +383,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: direkt-phase10-recovery-${{ github.run_number }}-${{ github.sha }}
-          path: artifacts/phase10/recovery-reliability-evidence.json
+          path: artifacts/phase10/*.json
           if-no-files-found: warn
           retention-days: 30
 
