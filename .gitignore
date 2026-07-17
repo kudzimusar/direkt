@@ -22,6 +22,10 @@ dist/
 coverage/
 .nest/
 
+# Supabase CLI local state
+supabase/.temp/
+supabase/.branches/
+
 # Python/docs
 .venv/
 __pycache__/
