@@ -33,7 +33,8 @@ The MVP is not a directory of unreviewed listings. It is a closed-loop trust and
 - Low bandwidth, intermittent connectivity and recoverable uploads are first-class requirements.
 - Public Pages content is synthetic and non-sensitive.
 - Design and scaffolding may proceed on an explicit provisional baseline.
-- Primary Zambia validation is mandatory before controlled pilot and production claims, not before prototype design.
+- Synthetic-only managed development and protected staging deployments may proceed during Phase 10 for integration, security, recovery and performance validation.
+- Primary Zambia validation is mandatory before controlled pilot and production claims, not before prototype design or restricted infrastructure validation.
 - Every phase must remain testable, reversible and documented.
 
 ## 3. Target architecture
@@ -296,7 +297,11 @@ Deliver:
 - dependency and secret scanning;
 - qualified Zambia legal review;
 - authority-access and data-use approval;
-- approved map, OTP and payment-provider terms.
+- approved map, OTP and payment-provider terms;
+- synthetic-only managed development and protected staging deployment evidence for Supabase, Cloud Run, Vercel and Firebase;
+- tested deployment rollback, environment isolation and infrastructure kill-switch procedures.
+
+Phase 10 deployment authorization is limited to synthetic-only development and protected staging. It does not authorize real participants, real evidence, public promotion, a Zambia pilot or a production release.
 
 ### Phase 11 — Controlled Zambia pilot and primary validation
 

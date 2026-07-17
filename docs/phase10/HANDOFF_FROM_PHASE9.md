@@ -2,7 +2,7 @@
 
 **Next planned phase:** Phase 10 — Security, privacy, legal and reliability hardening  
 **Predecessor:** Phase 9 — Subscription and payment foundation  
-**Authorization state:** Unclaimed until the Phase 9 checkpoint is merged, Issue #34 is closed and the workstream lock is released.
+**Authorization state:** Active under Issue #41 and checkpoint PR #42 after the Phase 9 checkpoint was promoted and the workstream lock was explicitly claimed.
 
 ## Stable capabilities inherited from Phase 9
 
@@ -39,9 +39,10 @@ The master plan authorizes Phase 10 to deliver:
 - dependency and secret scanning;
 - qualified Zambia legal review;
 - authority-access and data-use approval;
-- approved map, OTP and payment-provider terms.
+- approved map, OTP and payment-provider terms;
+- synthetic-only managed development and protected staging infrastructure needed to execute the hardening, restore, security and performance evidence.
 
-Phase 10 is a hardening and approval phase. It must not be used to bypass Phase 11 controlled Zambia pilot validation or Phase 12 production-release gates.
+Phase 10 is a hardening, approval and controlled infrastructure-activation phase. It may create restricted development/staging deployments, but it must not be used to bypass Phase 11 controlled Zambia pilot validation or Phase 12 production-release gates.
 
 ## Required workstreams
 
@@ -94,9 +95,11 @@ Deliver:
 - object-key and provider-error redaction tests;
 - storage retention/deletion procedure;
 - access audit and incident procedure;
-- backup and restore scope for evidence metadata and objects.
+- backup and restore scope for evidence metadata and objects;
+- protected Supabase-to-Cloud-Run integration evidence using synthetic records only;
+- protected Vercel Preview/Staging integration evidence without browser database/storage credentials.
 
-Real evidence remains prohibited until these controls and legal approvals pass.
+Real evidence remains prohibited until these controls and legal approvals pass. Synthetic-only remote integration is authorized by `INFRASTRUCTURE_ACTIVATION_CONTRACT.md`.
 
 ### 10E — Abuse, rate limiting and operational safeguards
 
@@ -120,7 +123,9 @@ Deliver:
 - migration rollback/forward-recovery procedure;
 - Android/API/portal performance budgets and representative soak tests;
 - alerting and service-level objectives;
-- dependency failure and external-provider outage scenarios.
+- dependency failure and external-provider outage scenarios;
+- immutable Cloud Run revision deployment, readiness, rollback and scale-to-zero evidence;
+- protected Vercel Preview/Staging health and API-connectivity evidence.
 
 ### 10G — Supply-chain, secret and configuration hardening
 
@@ -146,6 +151,12 @@ Before any real provider activation, record current evidence for:
 - operational staffing and escalation ownership.
 
 Provider names or credentials must not be assumed before approval.
+
+## Managed development and staging deployment boundary
+
+Phase 10 explicitly authorizes remotely reachable managed development and protected staging infrastructure when all data is synthetic, access is restricted or deliberately bounded, search indexing and public promotion are disabled, exact-source deployment is recorded and rollback/kill-switch controls exist.
+
+The deployment classes, bound project identifiers, Cloud Run access modes, Vercel protection requirements and retained Phase 11/12 gates are authoritative in `INFRASTRUCTURE_ACTIVATION_CONTRACT.md`. An internet-addressable development URL is not a controlled Zambia pilot or production launch by itself. Real participant processing, unrestricted invitations, real evidence and production claims remain prohibited.
 
 ## Supabase activation boundary
 
@@ -203,14 +214,14 @@ Phase 10 must add permanent regressions for:
 
 Phase 10 may be claimed only after:
 
-- [ ] all Phase 9 permanent workflows pass on one exact reviewed head;
-- [ ] PR #35 is merged;
-- [ ] Issue #34 is closed as completed;
-- [ ] `PROJECT_STATUS.md` records Phase 9 as stable and Phase 10 as next;
-- [ ] `WORKSTREAM_LOCK.md` is released and then explicitly claimed for Phase 10;
-- [ ] the Phase 9 commercial trust contract is treated as inherited architecture;
-- [ ] a Phase 10 governing issue and checkpoint PR exist;
-- [ ] no real provider, credential, deployment or pilot is assumed without current approval.
+- [x] all Phase 9 permanent workflows passed on one exact reviewed head;
+- [x] PR #35 was merged;
+- [x] Issue #34 was closed as completed;
+- [x] `PROJECT_STATUS.md` records Phase 9 as stable and Phase 10 as active;
+- [x] `WORKSTREAM_LOCK.md` was released and explicitly claimed for Phase 10;
+- [x] the Phase 9 commercial trust contract is inherited architecture;
+- [x] Issue #41 and PR #42 govern Phase 10;
+- [x] real providers, real credentials, a public pilot and production remain gated, while controlled synthetic-only development/staging deployment is explicitly authorized.
 
 ## Phase 10 exit preview
 
@@ -223,6 +234,7 @@ Phase 10 must not be promoted until:
 - backup restore and incident-response exercises succeed;
 - rate limits and abuse controls are tested;
 - performance and soak thresholds pass;
+- Supabase, Cloud Run, protected Vercel Preview/Staging and Firebase internal distribution evidence is recorded where applicable;
 - external provider and authority terms are approved or remain explicit stop gates;
 - no critical or high unresolved security/privacy/legal/reliability defect remains;
 - Phase 11 pilot entry criteria and handoff are current;
