@@ -19,6 +19,7 @@ export interface DirektEnvironment {
   CHALLENGE_TTL_SECONDS: number;
   EVIDENCE_STORAGE_PROVIDER: EvidenceStorageProvider;
   SUPABASE_URL?: string;
+  SUPABASE_SECRET_KEY?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
   SUPABASE_EVIDENCE_BUCKET: string;
   SUPABASE_PRIVATE_MEDIA_BUCKET: string;
@@ -28,6 +29,7 @@ export interface DirektEnvironment {
 
 const databaseUrlSchema = Joi.string().uri({ scheme: ['postgresql', 'postgres'] });
 const longSecret = Joi.string().min(64).max(512);
+const supabaseServerKey = Joi.string().min(20).max(2048);
 const bucketName = Joi.string().pattern(/^[a-z0-9][a-z0-9-]{1,62}$/);
 
 export const environmentSchema = Joi.object<DirektEnvironment>({
@@ -82,15 +84,23 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
       then: Joi.required(),
       otherwise: Joi.optional(),
     }),
-  SUPABASE_SERVICE_ROLE_KEY: Joi.string().min(20).max(2048).when('EVIDENCE_STORAGE_PROVIDER', {
-    is: 'supabase',
-    then: Joi.required(),
-    otherwise: Joi.optional(),
-  }),
+  SUPABASE_SECRET_KEY: supabaseServerKey.optional(),
+  SUPABASE_SERVICE_ROLE_KEY: supabaseServerKey.optional(),
   SUPABASE_EVIDENCE_BUCKET: bucketName.default('provider-evidence'),
   SUPABASE_PRIVATE_MEDIA_BUCKET: bucketName.default('provider-media-private'),
   SUPABASE_PUBLIC_MEDIA_BUCKET: bucketName.default('provider-media-public'),
   SUPABASE_SYSTEM_EXPORTS_BUCKET: bucketName.default('system-exports'),
+}).custom((value: DirektEnvironment, helpers) => {
+  if (
+    value.EVIDENCE_STORAGE_PROVIDER === 'supabase' &&
+    !value.SUPABASE_SECRET_KEY &&
+    !value.SUPABASE_SERVICE_ROLE_KEY
+  ) {
+    return helpers.message({
+      custom: 'SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY is required for Supabase storage.',
+    });
+  }
+  return value;
 });
 
 export function parseCorsOrigins(value: string | undefined): string[] {
