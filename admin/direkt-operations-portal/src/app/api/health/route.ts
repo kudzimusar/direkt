@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
-import {
-  configuredCloudRunAudience,
-  fetchCloudRunIdentityToken,
-} from '@/lib/cloud-run-identity';
+import { configuredCloudRunAudience, fetchCloudRunIdentityToken } from '@/lib/cloud-run-identity';
 
 export const dynamic = 'force-dynamic';
 
