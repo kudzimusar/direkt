@@ -1,15 +1,21 @@
 import { ValidationPipe, type INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
-import { parseCorsOrigins } from './config/environment';
+import {
+  parseCorsOrigins,
+  type NodeEnvironment,
+} from './config/environment';
 import { ProblemDetailsFilter } from './platform/http/problem-details.filter';
+import { applySecurityHeaders } from './platform/http/security-headers';
 import { createOpenApiDocument } from './platform/openapi/openapi';
 
 export function configureApplication(app: INestApplication): OpenAPIObject {
   const configService = app.get(ConfigService);
   const origins = parseCorsOrigins(configService.get<string>('CORS_ORIGINS'));
+  const environment = configService.getOrThrow<NodeEnvironment>('NODE_ENV');
 
   app.setGlobalPrefix('api/v1');
+  applySecurityHeaders(app, environment);
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
