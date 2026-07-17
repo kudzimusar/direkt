@@ -48,6 +48,21 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Initialize the readiness extension
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            --network host \
+            --env PGPASSWORD=direkt_container_ci \
+            postgis/postgis:18-3.6 \
+            psql \
+              --host 127.0.0.1 \
+              --username direkt \
+              --dbname direkt_container_test \
+              --set ON_ERROR_STOP=1 \
+              --command 'CREATE EXTENSION IF NOT EXISTS postgis;'
+
       - name: Build immutable test image
         shell: bash
         run: |
@@ -82,7 +97,8 @@ jobs:
             if curl --fail --silent --show-error \
               http://127.0.0.1:8080/api/v1/health/ready \
               > "${RUNNER_TEMP}/direkt-container-health.json"; then
-              jq -e '.status == "ready"' "${RUNNER_TEMP}/direkt-container-health.json" >/dev/null
+              jq -e '.status == "ok" and .database.status == "ready"' \
+                "${RUNNER_TEMP}/direkt-container-health.json" >/dev/null
               exit 0
             fi
             if ! docker inspect --format='{{.State.Running}}' direkt-api-container-ci | grep -qx true; then
@@ -110,7 +126,7 @@ jobs:
             echo "- Source: \`${GITHUB_SHA}\`"
             echo "- Runtime user: \`node\`"
             echo "- Port: \`8080\`"
-            echo "- Readiness: passed against clean PostGIS"
+            echo "- Readiness: passed against clean PostgreSQL with PostGIS initialized"
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Show sanitized logs on failure
