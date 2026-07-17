@@ -36,3 +36,7 @@ Maintain subprocessor/integration register, data shared, location/retention, con
 ## Policy versioning
 
 Record accepted terms/privacy version, language, time and lawful basis/consent where applicable.
+
+## Phase 9 commercial privacy boundary
+
+Commercial storage and projections exclude payment credentials, account/PIN/card values, raw webhook bodies, interaction contact values, handoff consent, private evidence, storage object keys and trust-review rationale. Webhooks persist bounded metadata and fingerprints only. Android recovery stores opaque request/invoice identifiers, integer minor-unit amount, currency, revision and safe state/error metadata. The operations portal consumes the versioned backend API only. Commercial status cannot alter trust, publication, ranking, reviews, complaints, appeals or incidents.

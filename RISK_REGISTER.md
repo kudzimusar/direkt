@@ -73,17 +73,31 @@ Scores use probability (P) and impact (I) from 1–5. Priority is `P × I`.
 | R-067 | Android offline draft recovery stores raw contact or sensitive service detail insecurely | 3 | 5 | 15 | bounded synthetic metadata only, no tokens/contact/evidence, reset path; encrypted approved storage and retention tests before real data | Android/security / production gate |
 | R-068 | A production communications adapter sends duplicate, unauthorized or non-consensual messages/calls | 3 | 5 | 15 | disabled adapter in Phase 8; future signed provider adapter, consent-at-send check, idempotency, delivery audit, opt-out and abuse controls | Communications/security / production gate |
 
+
+| R-069 | Forged, stale or replayed payment webhook changes commercial state | 3 | 5 | 15 | canonical HMAC, timestamp window, unique event ID/fingerprint, replay tests and Phase 10 key-rotation monitoring | Finance/security / controlled synthetically; production gate |
+| R-070 | Ledger imbalance or direct historical edits corrupt financial audit | 2 | 5 | 10 | append-only triggers, controlled posting functions, debit/credit balance checks and reconciliation | Finance/data / controlled synthetically |
+| R-071 | Subscription or payment state changes verification, publication, ranking or accountability rights | 2 | 5 | 10 | separate schema/module, absent write coupling, explicit false-effect fields and before/after trust assertions | Product/trust / controlled |
+| R-072 | Credentials, raw webhook bodies, contact or evidence leak through commercial clients or projections | 3 | 5 | 15 | minimized DTOs, no raw-body storage, API-only portal, metadata-only Android persistence and leak regressions | Privacy/security / controlled synthetically; production gate |
+| R-073 | Ambiguous or copied provider context causes cross-tenant commercial access | 2 | 5 | 10 | actor-resolved active assignment, zero/multiple-assignment denial, database permission checks and cross-provider tests | Security/backend / controlled |
+| R-074 | Reconciliation exceptions are unresolved or resolved against incorrect evidence | 4 | 4 | 16 | explicit mismatch codes, ownership, revisions, immutable source records, queue ageing and Phase 10 service levels | Finance/operations / Phase 10 gate |
+| R-075 | Adjustment or refund requester colludes with or acts as approver | 3 | 5 | 15 | requester exclusion, two distinct eligible approvers, immutable approvals and later anti-collusion review | Finance/security / controlled synthetically; pilot gate |
+| R-076 | Synthetic payment adapter or test secret is enabled in production | 2 | 5 | 10 | production schema permits disabled mode only, no real provider SDK/credential and Phase 10 configuration/secret scans | Security/operations / controlled; production gate |
+| R-077 | Supabase activation targets the wrong project or exposes protected credentials | 2 | 5 | 10 | exact project-ref check, protected environment secrets, backend-only keys, sanitized artifacts and abort-on-mismatch workflow | Security/infrastructure / blocked until verified access |
+
 ## Current treatment priorities
 
-Phase 8 exit controls are implemented for the synthetic checkpoint:
+Phase 9 exit controls are implemented for the synthetic checkpoint:
 
-- R-012 is reduced by accepted-and-closed interaction eligibility, one review, moderation, reports and appeals;
-- R-028 is controlled synthetically by verified-contact references, masked hints, expiry, revocation and disabled delivery;
-- R-061 is controlled by expected revisions, idempotency and explicit Android recovery states;
-- R-063 is controlled by schema separation and before/after verification, claim and publication assertions;
-- R-064 is controlled by persisted immutable appeal origin and denied/upheld lifecycle tests;
-- R-065 is controlled by separate complaint, report and internal-incident domains and portal workspaces;
-- R-033 remains controlled by the API-only portal architecture and permanent import isolation gate.
+- R-009 is controlled by adapter isolation, idempotent signed webhooks, an append-only balanced ledger and reconciliation queues;
+- R-054 is mitigated because the former subscription placeholder is replaced by a live actor-scoped commercial workspace;
+- R-069 is controlled synthetically by canonical HMAC verification, timestamp freshness and replay/conflict regressions;
+- R-070 is controlled by immutable ledger history, balanced posting functions and direct-mutation denial;
+- R-071 is controlled by schema separation and before/after verification, claim, publication, review and complaint assertions;
+- R-072 is controlled by minimized projections, absent raw webhook storage, API-only portal access and credential-free Android persistence;
+- R-073 is controlled by active actor-resolved provider scope and cross-provider denial tests;
+- R-075 is controlled synthetically by requester exclusion and two independent approvals;
+- R-076 is controlled because production configuration accepts only disabled payment mode;
+- R-077 remains blocked until the exact DIREKT Supabase project and protected secrets are verifiably accessible.
 
 Before production integration:
 
@@ -93,17 +107,18 @@ Before production integration:
 - R-053 and R-067 require approved encrypted Android storage, secure local retention and deletion tests;
 - R-055 and R-056 require production identity, object-storage and log-redaction review;
 - R-062 requires approved consent copy, privacy notice, lawful-use boundaries and qualified Zambia review;
-- R-066 requires queue ownership, service levels, ageing alerts, staffing and escalation exercises;
-- R-068 requires approved providers, consent-at-send enforcement, idempotency, audit, opt-out and abuse controls.
+- R-066 and R-074 require queue ownership, service levels, ageing alerts, staffing and escalation exercises;
+- R-068 requires approved communication providers, consent-at-send enforcement, idempotency, audit, opt-out and abuse controls;
+- R-069, R-072, R-076 and R-077 require production key rotation, secret/configuration scanning, verified infrastructure activation and incident monitoring.
 
 Before the controlled pilot:
 
 - R-004, R-010, R-013, R-015, R-021, R-022, R-023 and R-025 require real operational or legal evidence;
 - R-030 requires approved providers, distributed rate limiting and monitored abuse controls;
 - R-033 requires deployment, cookie/session, CSP and private-data review;
-- R-034 requires production configuration and secret-management validation;
-- R-037 and R-058 require representative fairness, independence and anti-collusion testing;
-- R-062, R-066, R-067 and R-068 require representative consent, moderation, connectivity and communications validation.
+- R-034 and R-076 require production configuration and secret-management validation;
+- R-037, R-058 and R-075 require representative fairness, independence and anti-collusion testing;
+- R-062, R-066, R-067, R-068 and R-074 require representative consent, moderation, connectivity, communications and finance-operations validation.
 
 ## Review cadence
 

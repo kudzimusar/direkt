@@ -208,3 +208,7 @@ Before production authentication:
 ## Verification evidence
 
 Phase 2C backend CI runs formatting, lint, strict type checking, clean PostgreSQL/PostGIS migrations, unit/HTTP/database tests with coverage, production build and OpenAPI validation. The operations portal has an independent locked-dependency pipeline.
+
+## Phase 9 commercial authorization
+
+Provider-commercial mutations resolve one active provider workspace from server-side role assignments; request-body, query or copied resource identifiers do not establish tenant scope. Commercial operations use separate global permission families for products, subscriptions, invoices, payments, reconciliation, adjustments and ledger reads. Trust, field, moderation and complaint roles do not inherit finance access. High-risk adjustments exclude the requester and require two distinct current eligible approvers. Controller guards are necessary but database functions independently verify scope and permission.

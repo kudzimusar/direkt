@@ -51,3 +51,7 @@ Every push runs relevant checks. Phase checkpoint runs full suites, migration ve
 ## Evidence
 
 Store machine-readable reports/artifacts with retention appropriate to public repository privacy.
+
+## Phase 9 commercial validation
+
+Permanent Phase 9 tests cover actor-resolved provider scope, hashed idempotency and fingerprint conflicts, subscription states, immutable invoice lines, signed/timestamped webhook processing, replay/conflict handling, amount/currency mismatch reconciliation, balanced append-only ledger posting, two-approver adjustments, production-disabled adapters, credential/privacy leak assertions, Android process-death recovery and accessible commercial states, portal finance-permission separation, API-only architecture and before/after trust independence. Promotion requires backend, Android, portal and documentation gates on one exact reviewed head.

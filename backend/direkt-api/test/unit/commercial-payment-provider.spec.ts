@@ -76,14 +76,7 @@ describe('Phase 9 payment provider boundary', () => {
   it('keeps disabled payment history readable without enabling action', () => {
     const adapter = new DisabledPaymentProviderAdapter();
 
-    expect(
-      adapter.createAction({
-        externalReference: 'SYN-PAY-HISTORICAL',
-        currency: 'ZMW',
-        amountMinor: 15000,
-        expiresAt: '2026-07-17T03:00:00.000Z',
-      }),
-    ).toMatchObject({
+    expect(adapter.createAction()).toMatchObject({
       mode: 'disabled',
       state: 'unavailable',
       credentialRequested: false,

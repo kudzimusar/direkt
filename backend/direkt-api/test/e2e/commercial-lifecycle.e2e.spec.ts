@@ -111,6 +111,7 @@ interface WorkspaceResponse {
 
 interface ReconciliationResponse {
   reconciliationCaseId: string;
+  paymentIntentId: string;
   status: string;
   revision: number;
   mismatchCode: string;

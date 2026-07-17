@@ -146,3 +146,7 @@ CI retains coverage, OpenAPI and the exact lockfile. Migration tests prove PostG
 The API is designed as a stateless container-ready process. Workers are separate processes when introduced. Each environment has separate database and storage resources.
 
 Migrations run as an explicit release step under an advisory lock. Application instances do not silently alter the schema during startup.
+
+## Phase 9 commercial architecture
+
+Phase 9 adds a bounded `commercial` NestJS module and PostgreSQL schema for products, prices, entitlements, subscriptions, immutable invoices, synthetic payment intents, webhook receipts, ledger entries, reconciliation and adjustments. Controllers delegate lifecycle and authorization-sensitive mutations to database functions. The module may reference account/provider scope but has no write coupling to verification, discovery, interaction, review, complaint or incident aggregates. Payment providers implement a port with `synthetic` development/test and production-disabled adapters only.
