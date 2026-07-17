@@ -88,6 +88,15 @@ This index lists the authoritative planning and operating documents. Agents must
 
 - [References](REFERENCES.md)
 
+## Phase checkpoints
+
+- [Phase 8 Interaction Trust Contract](phase8/INTERACTION_TRUST_CONTRACT.md)
+- [Phase 8 Validation and Exit Matrix](phase8/VALIDATION_PLAN.md)
+- [Phase 9 Handoff from Phase 8](phase9/HANDOFF_FROM_PHASE8.md)
+- [Phase 9 Commercial Trust Contract](phase9/COMMERCIAL_TRUST_CONTRACT.md)
+- [Phase 9 Validation and Exit Matrix](phase9/VALIDATION_PLAN.md)
+- [Phase 10 Handoff from Phase 9](phase10/HANDOFF_FROM_PHASE9.md)
+
 ## Integrations
 
 - [Integration and Secrets Plan](integrations/INTEGRATION_AND_SECRETS_PLAN.md)

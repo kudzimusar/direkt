@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { OperationsShell } from '../src/components/operations-shell';
-import { syntheticReviewerSession, type OperationsSession } from '../src/lib/session';
+import { syntheticFinanceSession, syntheticReviewerSession } from '../src/lib/session';
 
 describe('OperationsShell accessibility contract', () => {
   it('renders skip navigation, labelled navigation, main landmark and status warning', () => {
@@ -18,22 +18,18 @@ describe('OperationsShell accessibility contract', () => {
     expect(markup).toContain('Synthetic interface only');
     expect(markup).toContain('href="/operations/triage"');
     expect(markup).toContain('href="/operations/evidence-review"');
+    expect(markup).not.toContain('href="/operations/finance"');
   });
 
-  it('marks planned navigation as disabled instead of linking to unavailable work', () => {
-    const financeSession: OperationsSession = {
-      ...syntheticReviewerSession,
-      role: 'finance',
-      permissions: ['operations.portal.access', 'finance.ledger.read'],
-    };
+  it('links the live finance workspace only for commercial permissions', () => {
     const markup = renderToStaticMarkup(
-      <OperationsShell session={financeSession}>
+      <OperationsShell session={syntheticFinanceSession}>
         <h1>Finance test content</h1>
       </OperationsShell>,
     );
 
     expect(markup).toContain('Finance');
-    expect(markup).toContain('aria-disabled="true"');
-    expect(markup).not.toContain('href="/operations/finance"');
+    expect(markup).toContain('href="/operations/finance"');
+    expect(markup).not.toContain('aria-disabled="true"');
   });
 });

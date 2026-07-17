@@ -20,6 +20,18 @@ export const operationsEndpoints = {
   interactionComplaints: '/api/v1/operations/interaction-complaints',
   interactionComplaintTransition: (complaintId: string) =>
     `/api/v1/operations/interaction-complaints/${encodeURIComponent(complaintId)}/transitions`,
+  commercial: '/api/v1/operations/commercial',
+  commercialProductTransition: (productId: string) =>
+    `/api/v1/operations/commercial/products/${encodeURIComponent(productId)}/transitions`,
+  commercialSubscriptionTransition: (subscriptionId: string) =>
+    `/api/v1/operations/commercial/subscriptions/${encodeURIComponent(subscriptionId)}/transitions`,
+  commercialReconciliationTransition: (reconciliationCaseId: string) =>
+    `/api/v1/operations/commercial/reconciliation/${encodeURIComponent(reconciliationCaseId)}/transitions`,
+  commercialAdjustments: '/api/v1/operations/commercial/adjustments',
+  commercialAdjustmentDecision: (adjustmentId: string) =>
+    `/api/v1/operations/commercial/adjustments/${encodeURIComponent(adjustmentId)}/decisions`,
+  commercialAdjustmentApply: (adjustmentId: string) =>
+    `/api/v1/operations/commercial/adjustments/${encodeURIComponent(adjustmentId)}/apply`,
 } as const;
 
 export interface OperationsApiOptions {

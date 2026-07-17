@@ -17,14 +17,20 @@ interface SessionResponse {
   accessToken: string;
 }
 
-interface DeferredSurfaceResponse {
-  state: string;
-  phaseOwner: string;
-  mutationAllowed: false;
-  message: string;
+interface CommercialWorkspaceResponse {
+  providerScope: string;
+  products: Array<{ productKey: string; synthetic: true }>;
+  subscriptions: unknown[];
+  invoices: unknown[];
+  paymentIntents: unknown[];
+  paymentProviderMode: string;
+  credentialStored: false;
+  verificationMutation: false;
+  publicationMutation: false;
+  rankingMutation: false;
 }
 
-describe('Later-phase provider workspace boundaries', () => {
+describe('Promoted provider workspace phase boundaries', () => {
   const url = databaseUrl();
   let app: INestApplication;
   let owner: SessionResponse;
@@ -42,7 +48,7 @@ describe('Later-phase provider workspace boundaries', () => {
       .send({
         challengeId: body.challengeId,
         code: body.synthetic.code,
-        deviceLabel: 'Synthetic deferred-boundary client',
+        deviceLabel: 'Synthetic promoted-boundary client',
       })
       .expect(200);
     return verified.body as SessionResponse;
@@ -56,17 +62,17 @@ describe('Later-phase provider workspace boundaries', () => {
     configureApplication(app);
     await app.init();
 
-    owner = await signIn('phase8-deferred-owner@example.invalid');
+    owner = await signIn('phase9-promoted-owner@example.invalid');
     await request(httpServer())
       .post('/api/v1/providers')
       .set('authorization', `Bearer ${owner.accessToken}`)
       .send({
         pathway: 'registered_business',
-        displayName: 'Synthetic Deferred Boundary Provider',
+        displayName: 'Synthetic Promoted Boundary Provider',
         operatingModel: 'mobile',
         localitySummary: 'Synthetic locality',
         serviceAreaSummary: 'Synthetic service area',
-        registeredBusinessName: 'Synthetic Deferred Boundary Provider Limited',
+        registeredBusinessName: 'Synthetic Promoted Boundary Provider Limited',
       })
       .expect(201);
   });
@@ -75,22 +81,45 @@ describe('Later-phase provider workspace boundaries', () => {
     await app.close();
   });
 
-  it('returns the remaining read-only Phase 9 subscription boundary', async () => {
-    const response = await request(httpServer())
+  it('removes the former Phase 9 subscription placeholder', async () => {
+    await request(httpServer())
       .get('/api/v1/provider-workspace/me/subscription-status')
       .set('authorization', `Bearer ${owner.accessToken}`)
-      .expect(200);
-    const body = response.body as DeferredSurfaceResponse;
+      .expect(404);
 
-    expect(body).toMatchObject({
-      phaseOwner: 'phase9',
-      state: 'synthetic_only',
-      mutationAllowed: false,
-    });
-    expect(body.message.length).toBeGreaterThan(20);
+    await request(httpServer())
+      .post('/api/v1/provider-workspace/me/subscription-status')
+      .set('authorization', `Bearer ${owner.accessToken}`)
+      .send({ syntheticMutation: true })
+      .expect(404);
   });
 
-  it('removes the former Phase 8 review-response placeholder', async () => {
+  it('returns the live actor-resolved Phase 9 commercial workspace', async () => {
+    const response = await request(httpServer())
+      .get('/api/v1/provider-workspace/me/commercial')
+      .set('authorization', `Bearer ${owner.accessToken}`)
+      .expect(200);
+    const body = response.body as CommercialWorkspaceResponse;
+
+    expect(body).toMatchObject({
+      providerScope: 'actor_resolved',
+      subscriptions: [],
+      invoices: [],
+      paymentIntents: [],
+      paymentProviderMode: 'synthetic',
+      credentialStored: false,
+      verificationMutation: false,
+      publicationMutation: false,
+      rankingMutation: false,
+    });
+    expect(body.products).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ productKey: 'provider_workspace_core', synthetic: true }),
+      ]),
+    );
+  });
+
+  it('keeps the former Phase 8 review-response placeholder removed', async () => {
     await request(httpServer())
       .get('/api/v1/provider-workspace/me/review-responses')
       .set('authorization', `Bearer ${owner.accessToken}`)
@@ -98,20 +127,6 @@ describe('Later-phase provider workspace boundaries', () => {
 
     await request(httpServer())
       .post('/api/v1/provider-workspace/me/review-responses')
-      .set('authorization', `Bearer ${owner.accessToken}`)
-      .send({ syntheticMutation: true })
-      .expect(404);
-  });
-
-  it('exposes no subscription mutation route before Phase 9', async () => {
-    await request(httpServer())
-      .post('/api/v1/provider-workspace/me/subscription-status')
-      .set('authorization', `Bearer ${owner.accessToken}`)
-      .send({ syntheticMutation: true })
-      .expect(404);
-
-    await request(httpServer())
-      .put('/api/v1/provider-workspace/me/subscription-status')
       .set('authorization', `Bearer ${owner.accessToken}`)
       .send({ syntheticMutation: true })
       .expect(404);

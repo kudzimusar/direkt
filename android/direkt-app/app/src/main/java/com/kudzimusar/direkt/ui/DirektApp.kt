@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.kudzimusar.direkt.ui.commercial.ProviderCommercialExperience
 import com.kudzimusar.direkt.ui.discovery.CustomerDiscoveryExperience
 import com.kudzimusar.direkt.ui.discovery.CustomerOnboardingExperience
 import com.kudzimusar.direkt.ui.discovery.SavedProvidersExperience
@@ -45,7 +46,7 @@ fun DirektApp(
                     Column {
                         Text("DIREKT", fontWeight = FontWeight.Bold)
                         Text(
-                            text = "Phase 8 — tracked interactions",
+                            text = "Phase 9 — synthetic commercial foundation",
                             style = MaterialTheme.typography.labelSmall,
                         )
                     }
@@ -116,6 +117,9 @@ fun DirektApp(
                         ProviderWorkspaceExperience(ProviderWorkspaceSection.Profile)
                     }
                 }
+                if (appState.destination == DirektDestination.Account) {
+                    item { ProviderCommercialExperience() }
+                }
             }
         }
     }
@@ -141,7 +145,7 @@ private fun ModeSelector(
             }
         }
         Text(
-            text = "Mode is presentation context only. Backend identity, role, provider, publication, interaction and review policy remain authoritative.",
+            text = "Mode is presentation context only. Backend identity, role, provider, publication, interaction, review and commercial policy remain authoritative.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -159,7 +163,7 @@ private fun screenTitle(appState: DirektAppState): String = when (appState.mode)
         DirektDestination.Discover -> "Provider workspace"
         DirektDestination.Saved -> "Private evidence uploads"
         DirektDestination.Enquiries -> "Enquiry inbox and review responses"
-        DirektDestination.Account -> "Profile, services and availability"
+        DirektDestination.Account -> "Profile, services and subscription"
     }
 }
 
@@ -169,9 +173,12 @@ private fun screenSummary(appState: DirektAppState): String = when (appState.mod
     } else {
         "Search fictional, policy-eligible providers using manual area or a one-time location model."
     }
-    DirektMode.Provider -> if (appState.destination == DirektDestination.Enquiries) {
-        "Respond inside the actor-resolved provider scope with optimistic revisions and one bounded review response."
-    } else {
-        "Manage a fictional actor-scoped workspace with private evidence recovery, safe verification progress and independent availability."
+    DirektMode.Provider -> when (appState.destination) {
+        DirektDestination.Enquiries ->
+            "Respond inside the actor-resolved provider scope with optimistic revisions and one bounded review response."
+        DirektDestination.Account ->
+            "Manage profile and synthetic commercial state with retry-safe payments, immutable invoices and no trust or ranking effect."
+        else ->
+            "Manage a fictional actor-scoped workspace with private evidence recovery, safe verification progress and independent availability."
     }
 }

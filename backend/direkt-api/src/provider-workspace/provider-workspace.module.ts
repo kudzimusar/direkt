@@ -3,7 +3,6 @@ import { ProviderModule } from '../provider-core/provider.module';
 import { VerificationEvidenceModule } from '../verification-evidence/verification-evidence.module';
 import { ProviderWorkspaceCommandRepository } from './provider-workspace-command.repository';
 import { ProviderWorkspaceController } from './provider-workspace.controller';
-import { ProviderWorkspaceDeferredController } from './provider-workspace-deferred.controller';
 import { ProviderWorkspaceRepository } from './provider-workspace.repository';
 import { ProviderWorkspaceService } from './provider-workspace.service';
 import { ProviderWorkspaceTimelineRepository } from './provider-workspace-timeline.repository';
@@ -12,7 +11,7 @@ import { ProviderWorkspaceUploadService } from './provider-workspace-upload.serv
 
 @Module({
   imports: [ProviderModule, VerificationEvidenceModule],
-  controllers: [ProviderWorkspaceController, ProviderWorkspaceDeferredController],
+  controllers: [ProviderWorkspaceController],
   providers: [
     ProviderWorkspaceCommandRepository,
     ProviderWorkspaceRepository,

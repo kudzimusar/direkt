@@ -2,6 +2,7 @@ import * as Joi from 'joi';
 
 export type NodeEnvironment = 'development' | 'test' | 'production';
 export type EvidenceStorageProvider = 'synthetic' | 'supabase';
+export type PaymentProviderMode = 'synthetic' | 'disabled';
 
 export interface DirektEnvironment {
   NODE_ENV: NodeEnvironment;
@@ -25,6 +26,8 @@ export interface DirektEnvironment {
   SUPABASE_PRIVATE_MEDIA_BUCKET: string;
   SUPABASE_PUBLIC_MEDIA_BUCKET: string;
   SUPABASE_SYSTEM_EXPORTS_BUCKET: string;
+  PAYMENT_PROVIDER_MODE: PaymentProviderMode;
+  PAYMENT_SYNTHETIC_WEBHOOK_SECRET?: string;
 }
 
 const databaseUrlSchema = Joi.string().uri({ scheme: ['postgresql', 'postgres'] });
@@ -90,6 +93,18 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
   SUPABASE_PRIVATE_MEDIA_BUCKET: bucketName.default('provider-media-private'),
   SUPABASE_PUBLIC_MEDIA_BUCKET: bucketName.default('provider-media-public'),
   SUPABASE_SYSTEM_EXPORTS_BUCKET: bucketName.default('system-exports'),
+  PAYMENT_PROVIDER_MODE: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.valid('disabled').default('disabled'),
+    otherwise: Joi.valid('synthetic', 'disabled').default('synthetic'),
+  }),
+  PAYMENT_SYNTHETIC_WEBHOOK_SECRET: longSecret.when('PAYMENT_PROVIDER_MODE', {
+    is: 'synthetic',
+    then: longSecret.default(
+      'direkt-development-synthetic-payment-webhook-secret-not-for-production-0001',
+    ),
+    otherwise: Joi.optional(),
+  }),
 }).custom((value: DirektEnvironment, helpers) => {
   if (
     value.EVIDENCE_STORAGE_PROVIDER === 'supabase' &&
@@ -98,6 +113,11 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
   ) {
     return helpers.message({
       custom: 'SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY is required for Supabase storage.',
+    });
+  }
+  if (value.NODE_ENV === 'production' && value.PAYMENT_PROVIDER_MODE !== 'disabled') {
+    return helpers.message({
+      custom: 'Production payment provider mode must remain disabled until a later approval gate.',
     });
   }
   return value;

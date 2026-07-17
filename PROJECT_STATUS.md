@@ -2,8 +2,8 @@
 
 **Updated:** 2026-07-17  
 **Stable branch:** `main`  
-**Implementation branch:** `build/android-v1` synchronized to stable after checkpoint promotion  
-**Programme state:** Phase 8 is complete and stable. Phase 9 is the next planned phase and remains unclaimed.
+**Implementation branch:** `build/android-v1`  
+**Programme state:** Phase 8 is complete and stable. Phase 9 is active under Issue #34 on the single implementation lane.
 
 ## Stable checkpoints
 
@@ -25,49 +25,44 @@ Phase 8 merge commit:       0182951cdc26a892b3423728bd843e2969b25bc0
 Issue #30:                  closed as completed
 ```
 
-| Stage | State | Stable capability |
+## Phase 9 implementation state
+
+Issue #34 is the sole active implementation tracker. The checkpoint PR will remain open until Stage 9A–9G criteria and exact-head validation are complete.
+
+| Stage | State | Planned capability |
 |---|---|---|
-| 8A — foundation and structured enquiry | Complete | forward migrations, bounded idempotent enquiry API, customer scope and immutable events |
-| 8B — provider lifecycle | Complete | actor-resolved provider inbox, explicit transitions, optimistic revisions and invalid-action denial |
-| 8C — consent-aware handoff | Complete | verified contact references, masked hints, 24-hour consent, revocation and disabled delivery |
-| 8D — history and eligibility | Complete | tracked interactions, safe history projections and deterministic review eligibility |
-| 8E — reviews and appeals | Complete | one review/response, moderation, public allowlist, reports and appeal restoration |
-| 8F — complaints and clients | Complete | separate customer complaints, Android customer/provider experiences and portal workspaces |
-| 8G — checkpoint promotion | Complete | permanent regression, documentation, exact-head gates, review, merge, closure and synchronization |
+| 9A — foundation, products and permissions | Active | isolated commercial schema, catalogue, prices and permission families |
+| 9B — subscriptions and entitlements | Planned | actor-resolved lifecycle, optimistic revisions and bounded grants |
+| 9C — invoices and synthetic payment intents | Planned | immutable minor-unit invoices, receipts and retry-safe disabled/synthetic adapter |
+| 9D — webhooks, ledger and reconciliation | Planned | signature/replay controls, append-only ledger and exception queue |
+| 9E — grace and exception controls | Planned | deterministic grace, failure/recovery, adjustments and four-eyes controls |
+| 9F — Android and portal experiences | Planned | low-bandwidth native states and API-only operations workspaces |
+| 9G — checkpoint promotion | Planned | permanent regression, documentation, exact-head gates, review, merge and synchronization |
 
-## Permanent Phase 8 evidence
+## Phase 9 boundaries
 
-- complete backend enquiry and interaction-lifecycle E2E coverage;
-- database authorization and lifecycle guards for moderation, appeals and complaints;
-- privacy-safe operations interaction projection;
-- Android persistent offline enquiry drafts and critical recovery states;
-- Android customer/provider interaction, consent, review and response experiences;
-- operations portal interaction-history, review-moderation and customer-complaint workspaces;
-- OpenAPI route and prohibited-domain checks;
-- interaction trust contract, validation matrix and Phase 9 handoff;
-- updated decisions and risk treatments.
+No real payment provider, payment credential, customer/provider money movement, deployment or public pilot is authorized. The implementation uses explicit disabled and synthetic adapter modes only.
 
-## Final checkpoint validation
+Products, entitlements, subscriptions, invoices, payments, receipts, webhooks, ledger entries and reconciliation cases remain separate from verification, discovery publication, ranking, reviews, complaints, appeals and incidents. Payment success cannot create a claim, publish a provider, improve discovery order or suppress accountability records.
 
-All permanent workflows passed on exact source head `380687bf8044bc44ec1f70c58e4b71c6b3e3c6a7`:
+Provider-commercial mutations resolve one active provider workspace from server-side assignments. Client-supplied provider identifiers cannot establish authorization. Retryable operations store only hashed idempotency keys and request fingerprints. Material ledger and commercial history are append-only.
 
-- backend formatting, lint, typecheck, clean migrations, 142 tests, build and OpenAPI checks;
-- Android identity/safety checks, unit tests, lint, debug APK and Compose test APK assembly;
-- operations portal formatting, lint, typecheck, tests, production build and API-isolation checks;
-- documentation validation, archive packaging, Pages source and strict MkDocs build.
+## Supabase execution status
 
-No unresolved PR review threads or comments remained. Temporary diagnostic scripts and workflows were removed before checkpoint promotion.
+The supplied DIREKT project reference is `aeeuscifrxcjmnswqwnq`. The current Supabase connector cannot access that project and exposes only unrelated CarUp projects, so no live database changes will be sent to Supabase. Forward migrations and clean PostgreSQL/PostGIS CI are authoritative until the correct project is connected and permission is verified.
 
-## Phase 8 boundaries
+## Current Phase 9 work
 
-No real customer, provider, contact, enquiry, review, complaint or appeal data is authorized. No production messaging, call, push, payment, credential, deployment or public pilot is authorized. Full chat, attachments and voice/video calling remain deferred.
-
-Reviews require a qualifying owned tracked interaction. Contact handoff requires current channel-specific consent and stores only a verified contact reference and masked hint. Enquiries, interactions, handoffs, reviews, responses, reports, appeals, complaints and commercial state cannot create verification claims, publication eligibility or trust ranking.
+1. define commercial schema, state machines, permissions and safe projections;
+2. implement NestJS products, subscriptions, entitlements, invoices, payment intents, webhook and reconciliation contracts;
+3. replace the provider subscription placeholder and add Android commercial recovery states;
+4. add API-only operations commercial workspaces;
+5. add permanent cross-domain, privacy, idempotency, ledger and accessibility regressions;
+6. update OpenAPI, decision, risk, commercial trust and Phase 10 handoff documentation;
+7. validate one exact reviewed head, merge, close Issue #34 and synchronize the implementation branch.
 
 ## Next phase boundary
 
-Phase 9 remains unclaimed. It owns products, entitlements, subscriptions, invoices, payments, webhooks, reconciliation and commercial enforcement. Its entry contract is documented in `docs/phase9/HANDOFF_FROM_PHASE8.md`.
-
-Phase 9 must be claimed explicitly in `WORKSTREAM_LOCK.md` before implementation begins. It must preserve the Phase 8 interaction trust contract and keep payment, subscription and entitlement state independent from verification, publication, review outcomes and ranking.
+Phase 10 remains unclaimed. It owns security, privacy, legal and reliability hardening, including threat modelling, abuse controls, backup/restore, incident response, performance, secret/dependency scanning and qualified Zambia legal/payment-provider approval.
 
 Issue #5 remains open as a later, non-blocking Zambia pilot-validation obligation.

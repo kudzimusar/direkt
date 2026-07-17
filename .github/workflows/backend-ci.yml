@@ -60,10 +60,25 @@ jobs:
           cache-dependency-path: backend/direkt-api/package-lock.json
       - run: npm ci --ignore-scripts
       - run: npm run format:check
-      - run: npm run lint
-      - run: npm run typecheck
+      - name: Run lint with diagnostics
+        shell: bash
+        run: |
+          mkdir -p artifacts/diagnostics
+          set -o pipefail
+          npm run lint 2>&1 | tee artifacts/diagnostics/lint.txt
+      - name: Run typecheck with diagnostics
+        shell: bash
+        run: |
+          mkdir -p artifacts/diagnostics
+          set -o pipefail
+          npm run typecheck 2>&1 | tee artifacts/diagnostics/typecheck.txt
       - run: npm run migration:check
-      - run: npm run test
+      - name: Run tests with diagnostics
+        shell: bash
+        run: |
+          mkdir -p artifacts/diagnostics
+          set -o pipefail
+          npm run test 2>&1 | tee artifacts/diagnostics/vitest.txt
       - run: npm run build
       - run: npm run openapi:check
       - if: always()

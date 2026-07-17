@@ -92,6 +92,15 @@ This log records product and technical decisions with long-term impact.
 | D-086 | 2026-07-17 | Phase 8 operations interaction history is a privacy-safe API projection without customer identity, contact hints, evidence or moderation rationale | Operators need lifecycle visibility without broadening privileged data exposure | Accepted |
 | D-087 | 2026-07-17 | Enquiries, interactions, handoffs, reviews, responses, appeals and complaints cannot alter verification, publication, ranking or commercial state | Accountability features must not become an alternate trust or paid-promotion path | Accepted |
 
+
+| D-088 | 2026-07-17 | Phase 9 commercial aggregates remain in a separate schema and module | Products, subscriptions, invoices, payments, ledger and reconciliation must not become columns or transitions inside trust or interaction aggregates | Accepted |
+| D-089 | 2026-07-17 | Commercial amounts use immutable integer minor units and issued invoice-line snapshots | Avoids floating-point ambiguity and prevents later catalogue edits from rewriting historical obligations | Accepted |
+| D-090 | 2026-07-17 | Payment-provider integration uses disabled and synthetic adapters; production accepts disabled mode only | Establishes testable contracts while making accidental production money movement impossible before approval | Accepted with production stop gate |
+| D-091 | 2026-07-17 | Webhook state changes require canonical HMAC verification, timestamp freshness, unique external identity and replay-safe fingerprints | External callbacks are untrusted and cannot mutate money state solely because a payload parses | Accepted |
+| D-092 | 2026-07-17 | Ledger history is append-only and every transaction must balance before completion | Commercial audit and reconciliation require corrections through new entries, never silent historical edits | Accepted |
+| D-093 | 2026-07-17 | Commercial mismatches use a separate reconciliation lifecycle and high-risk adjustments require two distinct non-requester approvers | Exceptions and corrections need explicit ownership, optimistic revisions and four-eyes control | Accepted |
+| D-094 | 2026-07-17 | Android and the operations portal persist or render only minimized commercial state through API-owned contracts | Device and browser code must not store credentials, raw webhooks, private evidence/contact data or bypass backend authorization | Accepted |
+
 ## How to add a decision
 
 Use the next ID and include:
