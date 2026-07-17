@@ -14,7 +14,7 @@ const navigation: readonly NavigationItem[] = [
     href: '/operations',
     permission: 'operations.portal.access',
     status: 'available',
-    description: 'Aggregate synthetic Stage 7 and Stage 8 operations status.',
+    description: 'Aggregate synthetic Stage 7, Stage 8 and Stage 9 operations status.',
   },
   {
     label: 'Triage queue',
@@ -73,6 +73,13 @@ const navigation: readonly NavigationItem[] = [
     description: 'Tracked-interaction complaints with reasoned operations transitions.',
   },
   {
+    label: 'Commercial finance',
+    href: '/operations/finance',
+    permission: 'commercial.reconciliation.read',
+    status: 'available',
+    description: 'Products, subscriptions, invoices, synthetic payments and reconciliation.',
+  },
+  {
     label: 'Expiry and reporting',
     href: '/operations/reporting',
     permission: 'operations.reporting.read',
@@ -99,13 +106,6 @@ const navigation: readonly NavigationItem[] = [
     permission: 'discovery.publication.read',
     status: 'available',
     description: 'Read-only publication eligibility boundaries.',
-  },
-  {
-    label: 'Finance',
-    href: '/operations/finance',
-    permission: 'finance.ledger.read',
-    status: 'planned',
-    description: 'Reserved for Phase 9 commercial workflows.',
   },
   {
     label: 'Audit',
