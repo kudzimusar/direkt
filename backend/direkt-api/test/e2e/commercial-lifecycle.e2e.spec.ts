@@ -202,9 +202,9 @@ describe('Phase 9 subscription, payment, ledger and reconciliation closed loop',
       `INSERT INTO authz.role_assignments (
          identity_id, role_id, scope_type, assigned_by_identity_id, reason
        )
-       SELECT $1, id, 'global', $1, $3
+       SELECT $1, id, 'global', $1, $2
        FROM authz.roles WHERE role_key = 'finance'`,
-      [identityId, 'finance', reason],
+      [identityId, reason],
     );
   }
 
@@ -312,7 +312,9 @@ describe('Phase 9 subscription, payment, ledger and reconciliation closed loop',
       .get('/api/v1/commercial/products')
       .expect(200);
     const products = productsResponse.body as ProductResponse[];
-    const coreProduct = products.find((product) => product.productKey === 'provider_workspace_core');
+    const coreProduct = products.find(
+      (product) => product.productKey === 'provider_workspace_core',
+    );
     expect(coreProduct).toMatchObject({
       verificationIncluded: false,
       rankingIncluded: false,
@@ -376,9 +378,7 @@ describe('Phase 9 subscription, payment, ledger and reconciliation closed loop',
       .expect(404);
 
     const invoiceCreated = await request(httpServer())
-      .post(
-        `/api/v1/provider-workspace/me/subscriptions/${subscription.subscriptionId}/invoices`,
-      )
+      .post(`/api/v1/provider-workspace/me/subscriptions/${subscription.subscriptionId}/invoices`)
       .set('authorization', `Bearer ${owner.accessToken}`)
       .send({ policyVersion: 'phase9-e2e-v1' })
       .expect(201);
@@ -394,9 +394,7 @@ describe('Phase 9 subscription, payment, ledger and reconciliation closed loop',
     expect(invoice.lines).toEqual([expect.objectContaining({ lineTotalMinor: 15000 })]);
 
     const invoiceReplay = await request(httpServer())
-      .post(
-        `/api/v1/provider-workspace/me/subscriptions/${subscription.subscriptionId}/invoices`,
-      )
+      .post(`/api/v1/provider-workspace/me/subscriptions/${subscription.subscriptionId}/invoices`)
       .set('authorization', `Bearer ${owner.accessToken}`)
       .send({ policyVersion: 'phase9-e2e-v1' })
       .expect(201);
@@ -444,10 +442,7 @@ describe('Phase 9 subscription, payment, ledger and reconciliation closed loop',
       currency: 'ZMW',
       policyVersion: 'phase9-e2e-v1',
     };
-    const rejectedWebhook = await sendWebhook(
-      rejectedWebhookPayload,
-      '0'.repeat(64),
-    ).expect(200);
+    const rejectedWebhook = await sendWebhook(rejectedWebhookPayload, '0'.repeat(64)).expect(200);
     expect(rejectedWebhook.body as WebhookResponse).toMatchObject({
       processingOutcome: 'rejected',
       signatureVerified: false,
@@ -497,9 +492,7 @@ describe('Phase 9 subscription, payment, ledger and reconciliation closed loop',
     });
     expect(paidWorkspace.subscriptions[0]?.entitlements.length).toBeGreaterThan(0);
     expect(paidWorkspace.subscriptions[0]?.entitlements).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ status: 'active', rankingEffect: false }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ status: 'active', rankingEffect: false })]),
     );
     expect(paidWorkspace.invoices[0]).toMatchObject({
       invoiceId: invoice.invoiceId,
@@ -585,9 +578,9 @@ describe('Phase 9 subscription, payment, ledger and reconciliation closed loop',
     );
     expect(graceSubscription).toMatchObject({ status: 'grace', revision: 3 });
     expect(graceSubscription?.graceEndsAt).not.toBeNull();
-    expect(reversedWorkspace.invoices.find((item) => item.invoiceId === invoice.invoiceId)).toMatchObject(
-      { status: 'open' },
-    );
+    expect(
+      reversedWorkspace.invoices.find((item) => item.invoiceId === invoice.invoiceId),
+    ).toMatchObject({ status: 'open' });
 
     const retryPaymentCreated = await request(httpServer())
       .post(`/api/v1/provider-workspace/me/invoices/${invoice.invoiceId}/payment-intents`)
@@ -668,7 +661,10 @@ describe('Phase 9 subscription, payment, ledger and reconciliation closed loop',
         policyVersion: 'phase9-e2e-v1',
       })
       .expect(200);
-    expect(resolved.body as ReconciliationResponse).toMatchObject({ status: 'resolved', revision: 3 });
+    expect(resolved.body as ReconciliationResponse).toMatchObject({
+      status: 'resolved',
+      revision: 3,
+    });
 
     await request(httpServer())
       .post(
@@ -726,9 +722,7 @@ describe('Phase 9 subscription, payment, ledger and reconciliation closed loop',
     });
 
     const firstApproval = await request(httpServer())
-      .post(
-        `/api/v1/operations/commercial/adjustments/${adjustment.adjustmentRequestId}/decisions`,
-      )
+      .post(`/api/v1/operations/commercial/adjustments/${adjustment.adjustmentRequestId}/decisions`)
       .set('authorization', `Bearer ${financeApproverOne.accessToken}`)
       .send({
         decision: 'approved',
@@ -740,9 +734,7 @@ describe('Phase 9 subscription, payment, ledger and reconciliation closed loop',
     expect((firstApproval.body as AdjustmentResponse).approvals).toHaveLength(1);
 
     const secondApproval = await request(httpServer())
-      .post(
-        `/api/v1/operations/commercial/adjustments/${adjustment.adjustmentRequestId}/decisions`,
-      )
+      .post(`/api/v1/operations/commercial/adjustments/${adjustment.adjustmentRequestId}/decisions`)
       .set('authorization', `Bearer ${financeApproverTwo.accessToken}`)
       .send({
         decision: 'approved',
@@ -750,13 +742,14 @@ describe('Phase 9 subscription, payment, ledger and reconciliation closed loop',
         policyVersion: 'phase9-e2e-v1',
       })
       .expect(200);
-    expect(secondApproval.body as AdjustmentResponse).toMatchObject({ status: 'approved', revision: 2 });
+    expect(secondApproval.body as AdjustmentResponse).toMatchObject({
+      status: 'approved',
+      revision: 2,
+    });
     expect((secondApproval.body as AdjustmentResponse).approvals).toHaveLength(2);
 
     const appliedAdjustment = await request(httpServer())
-      .post(
-        `/api/v1/operations/commercial/adjustments/${adjustment.adjustmentRequestId}/apply`,
-      )
+      .post(`/api/v1/operations/commercial/adjustments/${adjustment.adjustmentRequestId}/apply`)
       .set('authorization', `Bearer ${financeApproverTwo.accessToken}`)
       .send({ policyVersion: 'phase9-e2e-v1' })
       .expect(200);

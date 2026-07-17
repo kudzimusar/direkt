@@ -642,18 +642,17 @@ export class CommercialRepository {
     requestId?: string,
   ): Promise<CommercialProductView> {
     return this.database.transaction(async (client) => {
-      await client.query(
-        `SELECT (commercial.transition_product($1, $2, $3, $4, $5, $6)).id`,
-        [
-          actor.identityId,
-          productId,
-          dto.targetStatus,
-          dto.reason,
-          dto.policyVersion,
-          requestId ?? null,
-        ],
+      await client.query(`SELECT (commercial.transition_product($1, $2, $3, $4, $5, $6)).id`, [
+        actor.identityId,
+        productId,
+        dto.targetStatus,
+        dto.reason,
+        dto.policyVersion,
+        requestId ?? null,
+      ]);
+      const product = (await this.loadProducts(client)).find(
+        (item) => item.productId === productId,
       );
-      const product = (await this.loadProducts(client)).find((item) => item.productId === productId);
       if (!product) throw new NotFoundException('Commercial product was not found.');
       return product;
     });
@@ -693,17 +692,14 @@ export class CommercialRepository {
     requestId?: string,
   ): Promise<CommercialAdjustmentView> {
     return this.database.transaction(async (client) => {
-      await client.query(
-        `SELECT (commercial.decide_adjustment($1, $2, $3, $4, $5, $6)).id`,
-        [
-          actor.identityId,
-          adjustmentId,
-          dto.decision,
-          dto.reason,
-          dto.policyVersion,
-          requestId ?? null,
-        ],
-      );
+      await client.query(`SELECT (commercial.decide_adjustment($1, $2, $3, $4, $5, $6)).id`, [
+        actor.identityId,
+        adjustmentId,
+        dto.decision,
+        dto.reason,
+        dto.policyVersion,
+        requestId ?? null,
+      ]);
       return this.loadAdjustment(client, adjustmentId);
     });
   }

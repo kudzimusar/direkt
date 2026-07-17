@@ -95,18 +95,15 @@ export class CommercialController {
   @RequirePermission(PERMISSIONS.COMMERCIAL_SUBSCRIPTIONS_MANAGE, {
     providerFromActor: true,
   })
-  @ApiCreatedResponse({ description: 'Issues or returns the current immutable subscription invoice.' })
+  @ApiCreatedResponse({
+    description: 'Issues or returns the current immutable subscription invoice.',
+  })
   issueInvoice(
     @Req() request: DirektRequest,
     @Param('subscriptionId', ParseUUIDPipe) subscriptionId: string,
     @Body() dto: CommercialPolicyDto,
   ) {
-    return this.commercial.issueInvoice(
-      request.actor,
-      subscriptionId,
-      dto,
-      request.requestId,
-    );
+    return this.commercial.issueInvoice(request.actor, subscriptionId, dto, request.requestId);
   }
 
   @Post('provider-workspace/me/invoices/:invoiceId/payment-intents')
@@ -158,7 +155,8 @@ export class CommercialWebhookController {
   @ApiHeader({ name: 'x-direkt-signature', required: true })
   @ApiHeader({ name: 'x-direkt-timestamp', required: true })
   @ApiOkResponse({
-    description: 'Verifies and processes one bounded synthetic webhook without storing raw payload.',
+    description:
+      'Verifies and processes one bounded synthetic webhook without storing raw payload.',
   })
   processSyntheticWebhook(
     @Body() dto: SyntheticPaymentWebhookDto,

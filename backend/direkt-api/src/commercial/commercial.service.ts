@@ -240,12 +240,7 @@ export class CommercialService {
     requestId?: string,
   ): Promise<CommercialAdjustmentView> {
     return this.run(
-      this.repository.applyAdjustment(
-        actor,
-        adjustmentId,
-        dto.policyVersion.trim(),
-        requestId,
-      ),
+      this.repository.applyAdjustment(actor, adjustmentId, dto.policyVersion.trim(), requestId),
     );
   }
 

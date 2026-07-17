@@ -9,11 +9,7 @@ import { PAYMENT_PROVIDER } from './payment-provider.port';
 import { SyntheticPaymentProviderAdapter } from './synthetic-payment-provider.adapter';
 
 @Module({
-  controllers: [
-    CommercialController,
-    CommercialWebhookController,
-    CommercialOperationsController,
-  ],
+  controllers: [CommercialController, CommercialWebhookController, CommercialOperationsController],
   providers: [
     {
       provide: PAYMENT_PROVIDER,

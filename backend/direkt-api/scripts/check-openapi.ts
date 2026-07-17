@@ -79,10 +79,7 @@ async function main(): Promise<void> {
     ['/api/v1/operations/commercial', 'get'],
     ['/api/v1/operations/commercial/products/{productId}/transitions', 'post'],
     ['/api/v1/operations/commercial/subscriptions/{subscriptionId}/transitions', 'post'],
-    [
-      '/api/v1/operations/commercial/reconciliation/{reconciliationCaseId}/transitions',
-      'post',
-    ],
+    ['/api/v1/operations/commercial/reconciliation/{reconciliationCaseId}/transitions', 'post'],
     ['/api/v1/operations/commercial/adjustments', 'post'],
     ['/api/v1/operations/commercial/adjustments/{adjustmentId}/decisions', 'post'],
     ['/api/v1/operations/commercial/adjustments/{adjustmentId}/apply', 'post'],
@@ -145,11 +142,12 @@ async function main(): Promise<void> {
       /(airtel|mtn|mpesa|stripe|paypal|card-payments|mobile-money|production-payments|raw-webhooks)/i.test(
         pathName,
       ) ||
-      (/webhooks\/payments/i.test(pathName) &&
-        pathName !== '/api/v1/webhooks/payments/synthetic'),
+      (/webhooks\/payments/i.test(pathName) && pathName !== '/api/v1/webhooks/payments/synthetic'),
   );
   if (realProviderPaths.length > 0) {
-    throw new Error(`Unapproved payment-provider paths were exposed: ${realProviderPaths.join(', ')}`);
+    throw new Error(
+      `Unapproved payment-provider paths were exposed: ${realProviderPaths.join(', ')}`,
+    );
   }
 
   const prohibitedDeferredDomains = Object.keys(paths).filter((pathName) =>

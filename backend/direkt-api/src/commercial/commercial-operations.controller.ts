@@ -85,10 +85,7 @@ export class CommercialOperationsController {
   @Post('adjustments')
   @RequirePermission(PERMISSIONS.COMMERCIAL_ADJUSTMENTS_REQUEST)
   @ApiCreatedResponse({ description: 'Creates one bounded adjustment request.' })
-  requestAdjustment(
-    @Req() request: DirektRequest,
-    @Body() dto: RequestCommercialAdjustmentDto,
-  ) {
+  requestAdjustment(@Req() request: DirektRequest, @Body() dto: RequestCommercialAdjustmentDto) {
     return this.commercial.requestAdjustment(request.actor, dto, request.requestId);
   }
 
@@ -101,12 +98,7 @@ export class CommercialOperationsController {
     @Param('adjustmentId', ParseUUIDPipe) adjustmentId: string,
     @Body() dto: DecideCommercialAdjustmentDto,
   ) {
-    return this.commercial.decideAdjustment(
-      request.actor,
-      adjustmentId,
-      dto,
-      request.requestId,
-    );
+    return this.commercial.decideAdjustment(request.actor, adjustmentId, dto, request.requestId);
   }
 
   @Post('adjustments/:adjustmentId/apply')
@@ -118,11 +110,6 @@ export class CommercialOperationsController {
     @Param('adjustmentId', ParseUUIDPipe) adjustmentId: string,
     @Body() dto: CommercialPolicyDto,
   ) {
-    return this.commercial.applyAdjustment(
-      request.actor,
-      adjustmentId,
-      dto,
-      request.requestId,
-    );
+    return this.commercial.applyAdjustment(request.actor, adjustmentId, dto, request.requestId);
   }
 }

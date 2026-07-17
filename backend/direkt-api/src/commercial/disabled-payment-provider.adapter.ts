@@ -14,7 +14,8 @@ export class DisabledPaymentProviderAdapter implements PaymentProviderPort {
     return {
       mode: 'disabled',
       state: 'unavailable',
-      instruction: 'Payment initiation is disabled until a reviewed provider integration is approved.',
+      instruction:
+        'Payment initiation is disabled until a reviewed provider integration is approved.',
       externalDeliveryAttempted: false,
       credentialRequested: false,
       productionMoneyMovement: false,
@@ -25,9 +26,7 @@ export class DisabledPaymentProviderAdapter implements PaymentProviderPort {
     return {
       signatureVerified: false,
       timestampVerified: false,
-      eventFingerprint: createHash('sha256')
-        .update(input.canonicalPayload, 'utf8')
-        .digest('hex'),
+      eventFingerprint: createHash('sha256').update(input.canonicalPayload, 'utf8').digest('hex'),
     };
   }
 }

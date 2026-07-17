@@ -1,18 +1,9 @@
 export type CommercialProductStatus = 'active' | 'retired';
 export type CommercialBillingInterval = 'monthly' | 'annual' | 'one_time';
 export type CommercialSubscriptionStatus =
-  | 'pending'
-  | 'active'
-  | 'grace'
-  | 'past_due'
-  | 'cancelled'
-  | 'expired';
+  'pending' | 'active' | 'grace' | 'past_due' | 'cancelled' | 'expired';
 export type CommercialEntitlementStatus =
-  | 'active'
-  | 'limited'
-  | 'suspended'
-  | 'expired'
-  | 'revoked';
+  'active' | 'limited' | 'suspended' | 'expired' | 'revoked';
 export type CommercialInvoiceStatus = 'open' | 'paid' | 'void' | 'uncollectible';
 export type CommercialPaymentStatus =
   | 'pending'
@@ -311,7 +302,7 @@ export interface OperationsCommercialOverviewView {
 
 export interface SyntheticWebhookProcessingView {
   webhookReceiptId: string;
-  processingOutcome: 'processed' | 'rejected' | 'duplicate';
+  processingOutcome: 'processed' | 'rejected' | 'duplicate' | 'failed';
   signatureVerified: boolean;
   timestampVerified: boolean;
   rejectionCode: string | null;
