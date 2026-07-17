@@ -36,7 +36,7 @@ function isSafeCredentialExample(line) {
   const disposableTarget =
     /(?:localhost|127\.0\.0\.1|direkt-postgres-readiness|@postgres(?::|\/))/i.test(line);
   const explicitPlaceholder = /(?:placeholder|YOUR[-_]PASSWORD|not-for-production)/i.test(line);
-  const syntheticCredential = /direkt_(?:dev|ci)/i.test(line);
+  const syntheticCredential = /direkt_(?:dev|ci|[a-z0-9_]*_ci)/i.test(line);
   return explicitPlaceholder || (disposableTarget && syntheticCredential);
 }
 
