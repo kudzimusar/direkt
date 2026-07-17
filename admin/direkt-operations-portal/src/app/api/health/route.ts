@@ -17,7 +17,7 @@ export async function GET(): Promise<NextResponse> {
   }
 
   try {
-    const response = await fetch(`${apiBaseUrl}/api/v1/health/live`, {
+    const response = await fetch(`${apiBaseUrl}/api/v1/health/ready`, {
       cache: 'no-store',
       signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS),
     });
@@ -38,7 +38,7 @@ export async function GET(): Promise<NextResponse> {
     return NextResponse.json({
       status: 'ready',
       portal: 'ready',
-      api: 'live',
+      api: 'ready',
       environment: process.env.NEXT_PUBLIC_APP_ENV ?? 'unknown',
     });
   } catch {
