@@ -18,7 +18,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { PERMISSIONS } from '../authorization/permissions';
-import { Public } from '../authorization/public.decorator';
+import { PublicRoute } from '../authorization/public.decorator';
 import { RequirePermission } from '../authorization/require-permission.decorator';
 import type { DirektRequest } from '../platform/http/request-context';
 import {
@@ -37,7 +37,7 @@ export class CommercialController {
   constructor(private readonly commercial: CommercialService) {}
 
   @Get('commercial/products')
-  @Public()
+  @PublicRoute()
   @ApiOkResponse({ description: 'Returns the safe synthetic commercial product catalogue.' })
   products() {
     return this.commercial.products();
@@ -150,7 +150,7 @@ export class CommercialWebhookController {
   constructor(private readonly commercial: CommercialService) {}
 
   @Post('synthetic')
-  @Public()
+  @PublicRoute()
   @HttpCode(HttpStatus.OK)
   @ApiHeader({ name: 'x-direkt-signature', required: true })
   @ApiHeader({ name: 'x-direkt-timestamp', required: true })
