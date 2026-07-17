@@ -96,6 +96,7 @@ This index lists the authoritative planning and operating documents. Agents must
 - [Phase 9 Commercial Trust Contract](phase9/COMMERCIAL_TRUST_CONTRACT.md)
 - [Phase 9 Validation and Exit Matrix](phase9/VALIDATION_PLAN.md)
 - [Phase 10 Handoff from Phase 9](phase10/HANDOFF_FROM_PHASE9.md)
+- [Phase 10 Infrastructure Activation Contract](phase10/INFRASTRUCTURE_ACTIVATION_CONTRACT.md)
 
 ## Integrations
 
