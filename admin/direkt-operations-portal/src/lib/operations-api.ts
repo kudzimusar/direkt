@@ -57,7 +57,7 @@ export class OperationsApiClient {
   private readonly baseUrl: string;
   private readonly accessToken: string;
   private readonly fetchImplementation: typeof fetch;
-  private readonly platformIdentityTokenProvider?: PlatformIdentityTokenProvider;
+  private readonly platformIdentityTokenProvider: PlatformIdentityTokenProvider | undefined;
 
   constructor(options: OperationsApiOptions) {
     this.baseUrl = options.baseUrl.replace(/\/$/, '');
