@@ -34,10 +34,13 @@ export const operationsEndpoints = {
     `/api/v1/operations/commercial/adjustments/${encodeURIComponent(adjustmentId)}/apply`,
 } as const;
 
+export type PlatformIdentityTokenProvider = () => Promise<string | null>;
+
 export interface OperationsApiOptions {
   baseUrl: string;
   accessToken: string;
   fetchImplementation?: typeof fetch;
+  platformIdentityTokenProvider?: PlatformIdentityTokenProvider;
 }
 
 export class OperationsApiError extends Error {
@@ -54,11 +57,13 @@ export class OperationsApiClient {
   private readonly baseUrl: string;
   private readonly accessToken: string;
   private readonly fetchImplementation: typeof fetch;
+  private readonly platformIdentityTokenProvider?: PlatformIdentityTokenProvider;
 
   constructor(options: OperationsApiOptions) {
     this.baseUrl = options.baseUrl.replace(/\/$/, '');
     this.accessToken = options.accessToken;
     this.fetchImplementation = options.fetchImplementation ?? fetch;
+    this.platformIdentityTokenProvider = options.platformIdentityTokenProvider;
   }
 
   get<T>(path: string): Promise<T> {
@@ -73,12 +78,16 @@ export class OperationsApiClient {
   }
 
   private async request<T>(path: string, init: RequestInit): Promise<T> {
+    const platformIdentityToken = await this.platformIdentityTokenProvider?.();
     const response = await this.fetchImplementation(`${this.baseUrl}${path}`, {
       ...init,
       cache: 'no-store',
       headers: {
         accept: 'application/json',
         authorization: `Bearer ${this.accessToken}`,
+        ...(platformIdentityToken
+          ? { 'x-serverless-authorization': `Bearer ${platformIdentityToken}` }
+          : {}),
         ...(init.body === undefined ? {} : { 'content-type': 'application/json' }),
       },
     });
