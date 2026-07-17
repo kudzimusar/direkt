@@ -214,7 +214,11 @@ jobs:
           npm run lint 2>&1 | tee artifacts/diagnostics/eslint.txt
       - run: npm run typecheck
       - run: npm run migration:check
-      - run: npm run test
+      - name: Test
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test 2>&1 | tee artifacts/diagnostics/tests.txt
       - run: npm run build
       - run: npm run openapi:check
       - if: always()
