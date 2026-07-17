@@ -17,6 +17,7 @@
     "format:check": "prettier --check \"{src,scripts,test}/**/*.ts\" \"*.{json,js,mjs}\"",
     "lint": "eslint src scripts test --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "authorization:check": "ts-node --project tsconfig.json scripts/check-authorization-policies.ts",
     "test": "vitest run --coverage",
     "test:unit": "vitest run test/unit",
     "test:integration": "vitest run test/integration",
@@ -27,7 +28,7 @@
     "seed:synthetic": "ts-node --project tsconfig.json scripts/seed-synthetic.ts",
     "openapi:generate": "ts-node --project tsconfig.json scripts/generate-openapi.ts",
     "openapi:check": "ts-node --project tsconfig.json scripts/check-openapi.ts",
-    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build"
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run authorization:check && npm run test && npm run build"
   },
   "dependencies": {
     "@nestjs/common": "11.1.28",
