@@ -9,9 +9,6 @@ on:
       - "backend/direkt-api/**"
       - "database/**"
       - ".github/workflows/backend-ci.yml"
-      - ".github/scripts/phase8-remediate.py"
-      - ".github/scripts/phase8-runtime-fix.py"
-      - ".github/scripts/phase8-test-expectation-fix.py"
   pull_request:
     branches:
       - main
@@ -19,9 +16,6 @@ on:
       - "backend/direkt-api/**"
       - "database/**"
       - ".github/workflows/backend-ci.yml"
-      - ".github/scripts/phase8-remediate.py"
-      - ".github/scripts/phase8-runtime-fix.py"
-      - ".github/scripts/phase8-test-expectation-fix.py"
   workflow_dispatch:
 
 permissions:
@@ -65,45 +59,11 @@ jobs:
           cache: npm
           cache-dependency-path: backend/direkt-api/package-lock.json
       - run: npm ci --ignore-scripts
-      - name: Apply typed Phase 8 remediations in runner
-        shell: bash
-        run: |
-          mkdir -p artifacts/diagnostics
-          set -o pipefail
-          python3 ../../.github/scripts/phase8-remediate.py 2>&1 | \
-            tee artifacts/diagnostics/remediation.txt
-          python3 ../../.github/scripts/phase8-runtime-fix.py 2>&1 | \
-            tee artifacts/diagnostics/runtime-fix.txt
-          python3 ../../.github/scripts/phase8-test-expectation-fix.py 2>&1 | \
-            tee artifacts/diagnostics/test-expectation-fix.txt
-      - name: Generate formatting diagnostic
-        shell: bash
-        run: |
-          mkdir -p artifacts/diagnostics/formatted/test/e2e
-          mkdir -p artifacts/diagnostics/formatted/src/interaction
-          npm run format
-          cp test/e2e/interaction-lifecycle.e2e.spec.ts \
-            artifacts/diagnostics/formatted/test/e2e/interaction-lifecycle.e2e.spec.ts
-          cp src/interaction/interaction-handoff.repository.ts \
-            artifacts/diagnostics/formatted/src/interaction/interaction-handoff.repository.ts
-          git diff -- . > artifacts/diagnostics/format.patch
-          git diff --name-only -- . > artifacts/diagnostics/format-files.txt
-      - name: Lint
-        shell: bash
-        run: |
-          set -o pipefail
-          npm run lint 2>&1 | tee artifacts/diagnostics/eslint.txt
-      - name: Typecheck
-        shell: bash
-        run: |
-          set -o pipefail
-          npm run typecheck 2>&1 | tee artifacts/diagnostics/typecheck.txt
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
       - run: npm run migration:check
-      - name: Test
-        shell: bash
-        run: |
-          set -o pipefail
-          npm run test 2>&1 | tee artifacts/diagnostics/tests.txt
+      - run: npm run test
       - run: npm run build
       - run: npm run openapi:check
       - if: always()
