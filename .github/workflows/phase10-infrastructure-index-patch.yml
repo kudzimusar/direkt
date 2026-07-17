@@ -1,0 +1,27 @@
+name: Phase 10 infrastructure index patch
+
+on:
+  push:
+    branches:
+      - integration/phase10-infrastructure-bootstrap
+    paths:
+      - ".github/workflows/phase10-infrastructure-index-patch.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: integration/phase10-infrastructure-bootstrap
+      - run: python3 .github/scripts/phase10_infrastructure_index_patch.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/INDEX.md docs/operations/CI_CD.md
+          git commit -m "docs(infra): record managed deployment pipelines"
+          git push origin HEAD:integration/phase10-infrastructure-bootstrap
