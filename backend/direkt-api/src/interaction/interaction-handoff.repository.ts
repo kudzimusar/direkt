@@ -122,13 +122,13 @@ export class InteractionHandoffRepository {
           );
         }
 
-        const consent = await client.query<{ id: string; expires_at: Date }>(
+        const consent = await client.query<{ id: string }>(
           `INSERT INTO interaction.contact_consents (
            interaction_id, enquiry_id, customer_identity_id, provider_id,
            contact_id, channel, contact_display_hint, policy_version,
            idempotency_key_hash, request_fingerprint, expires_at
          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now() + interval '24 hours')
-         RETURNING id, expires_at`,
+         RETURNING id`,
           [
             row.interaction_id,
             enquiryId,
@@ -142,25 +142,20 @@ export class InteractionHandoffRepository {
             fingerprint,
           ],
         );
-        const consentRow = consent.rows[0];
-        if (!consentRow) throw new Error('Contact consent creation returned no identifier.');
+        const consentId = consent.rows[0]?.id;
+        if (!consentId) throw new Error('Contact consent creation returned no identifier.');
 
         const handoff = await client.query<{ id: string }>(
           `INSERT INTO interaction.contact_handoffs (
            consent_id, interaction_id, enquiry_id, customer_identity_id,
            provider_id, channel, contact_display_hint, expires_at
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         )
+         SELECT id, interaction_id, enquiry_id, customer_identity_id,
+                provider_id, channel, contact_display_hint, expires_at
+         FROM interaction.contact_consents
+         WHERE id = $1
          RETURNING id`,
-          [
-            consentRow.id,
-            row.interaction_id,
-            enquiryId,
-            actor.identityId,
-            row.provider_id,
-            dto.channel,
-            row.contact_display_hint,
-            consentRow.expires_at,
-          ],
+          [consentId],
         );
         const handoffId = handoff.rows[0]?.id;
         if (!handoffId) throw new Error('Contact handoff creation returned no identifier.');
@@ -341,16 +336,17 @@ export class InteractionHandoffRepository {
        FROM interaction.contact_handoffs AS handoffs
        JOIN interaction.contact_consents AS consents ON consents.id = handoffs.consent_id
        WHERE handoffs.id = $1
-         AND ${scope === 'customer' ? 'handoffs.customer_identity_id' : 'handoffs.provider_id'} = $2`,
-      [handoffId, scopeId],
+         AND (($2 = 'customer' AND handoffs.customer_identity_id = $3)
+           OR ($2 = 'provider' AND handoffs.provider_id = $3))`,
+      [handoffId, scope, scopeId],
     );
     const row = result.rows[0];
-    if (!row)
-      throw new NotFoundException('Contact handoff was not found in the authenticated scope.');
-    const status =
+    if (!row) throw new NotFoundException('Contact handoff was not found.');
+    const now = Date.now();
+    const effectiveStatus =
       row.stored_status === 'revoked'
         ? 'revoked'
-        : row.expires_at <= new Date()
+        : row.expires_at.getTime() <= now
           ? 'expired'
           : 'active';
     return {
@@ -359,7 +355,7 @@ export class InteractionHandoffRepository {
       enquiryId: row.enquiry_id,
       channel: row.channel,
       contactDisplayHint: row.contact_display_hint,
-      status,
+      status: effectiveStatus,
       consentedAt: row.consented_at.toISOString(),
       expiresAt: row.expires_at.toISOString(),
       revokedAt: row.revoked_at?.toISOString() ?? null,
@@ -367,6 +363,7 @@ export class InteractionHandoffRepository {
       deliveryState: 'disabled',
       externalDeliveryAttempted: false,
       rawContactIncluded: false,
+      trustOrPublicationMutation: false,
       synthetic: true,
     };
   }
@@ -391,30 +388,35 @@ export class InteractionHandoffRepository {
               tracked.cancelled_at,
               tracked.review_eligible_from,
               tracked.review_eligible_until,
-              EXISTS (SELECT 1 FROM interaction.reviews WHERE interaction_id = tracked.id) AS review_exists
+              EXISTS (
+                SELECT 1 FROM interaction.reviews AS reviews
+                WHERE reviews.interaction_id = tracked.id
+              ) AS review_exists
        FROM interaction.tracked_interactions AS tracked
        JOIN discovery.publications AS publications ON publications.id = tracked.publication_id
        JOIN provider.profiles AS profiles ON profiles.provider_id = tracked.provider_id
        JOIN catalog.service_categories AS categories ON categories.id = tracked.category_id
        WHERE tracked.id = $1
-         AND ${scope === 'customer' ? 'tracked.customer_identity_id' : 'tracked.provider_id'} = $2`,
-      [interactionId, scopeId],
+         AND (($2 = 'customer' AND tracked.customer_identity_id = $3)
+           OR ($2 = 'provider' AND tracked.provider_id = $3))`,
+      [interactionId, scope, scopeId],
     );
     const row = result.rows[0];
-    if (!row)
-      throw new NotFoundException('Tracked interaction was not found in the authenticated scope.');
-    const [events, handoffs] = await Promise.all([
-      client.query<EventRow>(
-        `SELECT id, sequence, event_type, actor_kind, reason, policy_version, occurred_at
-         FROM interaction.interaction_events WHERE interaction_id = $1 ORDER BY sequence`,
-        [interactionId],
-      ),
-      client.query<{ id: string }>(
-        `SELECT id FROM interaction.contact_handoffs
-         WHERE interaction_id = $1 ORDER BY created_at`,
-        [interactionId],
-      ),
-    ]);
+    if (!row) throw new NotFoundException('Tracked interaction was not found.');
+    const events = await client.query<EventRow>(
+      `SELECT id, sequence, event_type, actor_kind, reason, policy_version, occurred_at
+       FROM interaction.interaction_events
+       WHERE interaction_id = $1
+       ORDER BY sequence`,
+      [interactionId],
+    );
+    const handoffs = await client.query<{ id: string }>(
+      `SELECT id FROM interaction.contact_handoffs
+       WHERE interaction_id = $1 ORDER BY created_at`,
+      [interactionId],
+    );
+    const now = Date.now();
+    const eligibility = this.eligibility(row, now);
     return {
       interactionId: row.interaction_id,
       enquiryId: row.enquiry_id,
@@ -427,11 +429,11 @@ export class InteractionHandoffRepository {
       startedAt: row.started_at.toISOString(),
       completedAt: row.completed_at?.toISOString() ?? null,
       cancelledAt: row.cancelled_at?.toISOString() ?? null,
-      reviewEligibility: this.eligibility(row),
+      reviewEligibility: eligibility,
       handoffs: await Promise.all(
         handoffs.rows.map((handoff) => this.loadHandoff(client, handoff.id, scope, scopeId)),
       ),
-      events: events.rows.map((event): TrackedInteractionEventView => ({
+      events: events.rows.map((event) => ({
         eventId: event.id,
         sequence: event.sequence,
         eventType: event.event_type,
@@ -439,55 +441,56 @@ export class InteractionHandoffRepository {
         reason: event.reason,
         policyVersion: event.policy_version,
         occurredAt: event.occurred_at.toISOString(),
-        actorIdentityExposed: false,
-        privateMetadataIncluded: false,
+        actorIdentifierIncluded: false,
+        contactIncluded: false,
+        privateEvidenceIncluded: false,
+        internalModerationIncluded: false,
       })),
       customerContactIncluded: false,
       privateEvidenceIncluded: false,
       internalModerationIncluded: false,
+      trustOrPublicationMutation: false,
       synthetic: true,
     };
   }
 
-  private eligibility(row: InteractionRow): ReviewEligibilityView {
-    if (row.review_exists) {
-      return {
-        eligible: false,
-        reasonCode: 'ALREADY_REVIEWED',
-        eligibleFrom: row.review_eligible_from?.toISOString() ?? null,
-        eligibleUntil: row.review_eligible_until?.toISOString() ?? null,
-      };
-    }
+  private eligibility(row: InteractionRow, now: number): ReviewEligibilityView {
     if (row.status === 'active') {
-      return {
-        eligible: false,
-        reasonCode: 'INTERACTION_ACTIVE',
-        eligibleFrom: null,
-        eligibleUntil: null,
-      };
+      return { eligible: false, reasonCode: 'INTERACTION_ACTIVE', eligibleUntil: null };
     }
     if (row.status === 'cancelled') {
+      return { eligible: false, reasonCode: 'INTERACTION_CANCELLED', eligibleUntil: null };
+    }
+    if (row.review_exists) {
+      return { eligible: false, reasonCode: 'REVIEW_ALREADY_EXISTS', eligibleUntil: null };
+    }
+    if (!row.review_eligible_from || !row.review_eligible_until) {
+      return { eligible: false, reasonCode: 'REVIEW_WINDOW_MISSING', eligibleUntil: null };
+    }
+    if (row.review_eligible_from.getTime() > now) {
       return {
         eligible: false,
-        reasonCode: 'INTERACTION_CANCELLED',
-        eligibleFrom: null,
-        eligibleUntil: null,
+        reasonCode: 'REVIEW_WINDOW_NOT_OPEN',
+        eligibleUntil: row.review_eligible_until.toISOString(),
       };
     }
-    const now = Date.now();
-    const from = row.review_eligible_from?.getTime() ?? Number.POSITIVE_INFINITY;
-    const until = row.review_eligible_until?.getTime() ?? Number.NEGATIVE_INFINITY;
+    if (row.review_eligible_until.getTime() <= now) {
+      return {
+        eligible: false,
+        reasonCode: 'REVIEW_WINDOW_EXPIRED',
+        eligibleUntil: row.review_eligible_until.toISOString(),
+      };
+    }
     return {
-      eligible: now >= from && now < until,
-      reasonCode: now < from ? 'WINDOW_NOT_OPEN' : now >= until ? 'WINDOW_EXPIRED' : 'ELIGIBLE',
-      eligibleFrom: row.review_eligible_from?.toISOString() ?? null,
-      eligibleUntil: row.review_eligible_until?.toISOString() ?? null,
+      eligible: true,
+      reasonCode: 'ELIGIBLE',
+      eligibleUntil: row.review_eligible_until.toISOString(),
     };
   }
 
   private async providerContext(client: PoolClient, identityId: string): Promise<string> {
-    const result = await client.query<{ provider_id: string }>(
-      `SELECT DISTINCT assignments.provider_id
+    const assignments = await client.query<{ provider_id: string }>(
+      `SELECT assignments.provider_id
        FROM authz.role_assignments AS assignments
        JOIN authz.roles AS roles ON roles.id = assignments.role_id
        WHERE assignments.identity_id = $1
@@ -497,14 +500,13 @@ export class InteractionHandoffRepository {
          AND assignments.starts_at <= now()
          AND (assignments.ends_at IS NULL OR assignments.ends_at > now())
          AND roles.role_key IN ('provider_owner', 'provider_member', 'provider_responder')
-       ORDER BY assignments.provider_id LIMIT 2`,
+       GROUP BY assignments.provider_id`,
       [identityId],
     );
-    if (result.rows.length === 0)
-      throw new NotFoundException('No active provider workspace was found.');
-    if (result.rows.length > 1)
-      throw new ConflictException('A server-owned provider workspace context is required.');
-    return (result.rows[0] as { provider_id: string }).provider_id;
+    if (assignments.rows.length !== 1) {
+      throw new NotFoundException('An unambiguous active provider workspace was not found.');
+    }
+    return assignments.rows[0]?.provider_id as string;
   }
 
   private async audit(
@@ -514,20 +516,21 @@ export class InteractionHandoffRepository {
     requestId: string | undefined,
     action: string,
     resourceId: string,
-    metadata: Record<string, unknown>,
+    details: Record<string, unknown>,
   ): Promise<void> {
     await client.query(
       `INSERT INTO platform.audit_events (
-         request_id, actor_type, actor_id, provider_id, action,
-         resource_type, resource_id, outcome, metadata
-       ) VALUES ($1, 'identity', $2, $3, $4, 'tracked_interaction', $5, 'success', $6::jsonb)`,
+       actor_identity_id, actor_session_id, action, resource_type, resource_id,
+       provider_id, request_id, details
+     ) VALUES ($1, $2, $3, 'interaction', $4, $5, $6, $7::jsonb)`,
       [
-        requestId ?? null,
         actor.identityId,
-        providerId,
+        actor.sessionId,
         action,
         resourceId,
-        JSON.stringify(metadata),
+        providerId,
+        requestId ?? null,
+        JSON.stringify(details),
       ],
     );
   }
