@@ -62,7 +62,12 @@ jobs:
           cache-dependency-path: backend/direkt-api/package-lock.json
       - run: npm ci --ignore-scripts
       - name: Apply typed Phase 8 remediations in runner
-        run: python3 ../../.github/scripts/phase8-remediate.py
+        shell: bash
+        run: |
+          mkdir -p artifacts/diagnostics
+          set -o pipefail
+          python3 ../../.github/scripts/phase8-remediate.py 2>&1 | \
+            tee artifacts/diagnostics/remediation.txt
       - name: Generate formatting diagnostic
         shell: bash
         run: |
