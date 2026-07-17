@@ -1,4 +1,5 @@
 name: Phase 9 governance patch
+# Applies the final documented governance and TypeScript corrections in one fast-forward commit.
 
 on:
   push:
@@ -102,23 +103,19 @@ Before the controlled pilot:
           risks.write_text(source[:start] + treatment + source[end:])
 
           addenda = {
-              'docs/architecture/BACKEND_ARCHITECTURE.md': """
-## Phase 9 commercial architecture
+              'docs/architecture/BACKEND_ARCHITECTURE.md': """## Phase 9 commercial architecture
 
 Phase 9 adds a bounded `commercial` NestJS module and PostgreSQL schema for products, prices, entitlements, subscriptions, immutable invoices, synthetic payment intents, webhook receipts, ledger entries, reconciliation and adjustments. Controllers delegate lifecycle and authorization-sensitive mutations to database functions. The module may reference account/provider scope but has no write coupling to verification, discovery, interaction, review, complaint or incident aggregates. Payment providers implement a port with `synthetic` development/test and production-disabled adapters only.
 """,
-              'docs/backend/AUTHENTICATION_AND_AUTHORIZATION.md': """
-## Phase 9 commercial authorization
+              'docs/backend/AUTHENTICATION_AND_AUTHORIZATION.md': """## Phase 9 commercial authorization
 
 Provider-commercial mutations resolve one active provider workspace from server-side role assignments; request-body, query or copied resource identifiers do not establish tenant scope. Commercial operations use separate global permission families for products, subscriptions, invoices, payments, reconciliation, adjustments and ledger reads. Trust, field, moderation and complaint roles do not inherit finance access. High-risk adjustments exclude the requester and require two distinct current eligible approvers. Controller guards are necessary but database functions independently verify scope and permission.
 """,
-              'docs/security/PRIVACY_MODEL.md': """
-## Phase 9 commercial privacy boundary
+              'docs/security/PRIVACY_MODEL.md': """## Phase 9 commercial privacy boundary
 
 Commercial storage and projections exclude payment credentials, account/PIN/card values, raw webhook bodies, interaction contact values, handoff consent, private evidence, storage object keys and trust-review rationale. Webhooks persist bounded metadata and fingerprints only. Android recovery stores opaque request/invoice identifiers, integer minor-unit amount, currency, revision and safe state/error metadata. The operations portal consumes the versioned backend API only. Commercial status cannot alter trust, publication, ranking, reviews, complaints, appeals or incidents.
 """,
-              'docs/testing/TEST_STRATEGY.md': """
-## Phase 9 commercial validation
+              'docs/testing/TEST_STRATEGY.md': """## Phase 9 commercial validation
 
 Permanent Phase 9 tests cover actor-resolved provider scope, hashed idempotency and fingerprint conflicts, subscription states, immutable invoice lines, signed/timestamped webhook processing, replay/conflict handling, amount/currency mismatch reconciliation, balanced append-only ledger posting, two-approver adjustments, production-disabled adapters, credential/privacy leak assertions, Android process-death recovery and accessible commercial states, portal finance-permission separation, API-only architecture and before/after trust independence. Promotion requires backend, Android, portal and documentation gates on one exact reviewed head.
 """,
@@ -126,15 +123,37 @@ Permanent Phase 9 tests cover actor-resolved provider scope, hashed idempotency 
           for name, addition in addenda.items():
               path = Path(name)
               text = path.read_text()
-              heading = addition.strip().splitlines()[0]
+              heading = addition.splitlines()[0]
               if heading not in text:
                   path.write_text(text.rstrip() + '\n\n' + addition.strip() + '\n')
+
+          lifecycle = Path('backend/direkt-api/test/e2e/commercial-lifecycle.e2e.spec.ts')
+          text = lifecycle.read_text()
+          old = 'interface ReconciliationResponse {\n  reconciliationCaseId: string;'
+          new = 'interface ReconciliationResponse {\n  reconciliationCaseId: string;\n  paymentIntentId: string;'
+          if 'paymentIntentId: string;' not in text[text.index('interface ReconciliationResponse'):text.index('interface AdjustmentResponse')]:
+              if old not in text:
+                  raise SystemExit('Reconciliation interface marker missing')
+              lifecycle.write_text(text.replace(old, new))
+
+          unit = Path('backend/direkt-api/test/unit/commercial-payment-provider.spec.ts')
+          text = unit.read_text()
+          start_call = """adapter.createAction({
+        externalReference: 'SYN-PAY-HISTORICAL',
+        currency: 'ZMW',
+        amountMinor: 15000,
+        expiresAt: '2026-07-17T03:00:00.000Z',
+      })"""
+          if start_call in text:
+              unit.write_text(text.replace(start_call, 'adapter.createAction()'))
           PY
-      - name: Commit governance updates
+          cd backend/direkt-api
+          npx prettier --write test/e2e/commercial-lifecycle.e2e.spec.ts test/unit/commercial-payment-provider.spec.ts
+      - name: Commit governance and type updates
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add DECISION_LOG.md RISK_REGISTER.md docs/architecture/BACKEND_ARCHITECTURE.md docs/backend/AUTHENTICATION_AND_AUTHORIZATION.md docs/security/PRIVACY_MODEL.md docs/testing/TEST_STRATEGY.md
-          git commit -m "docs: complete Phase 9 governance records"
+          git add DECISION_LOG.md RISK_REGISTER.md docs/architecture/BACKEND_ARCHITECTURE.md docs/backend/AUTHENTICATION_AND_AUTHORIZATION.md docs/security/PRIVACY_MODEL.md docs/testing/TEST_STRATEGY.md backend/direkt-api/test/e2e/commercial-lifecycle.e2e.spec.ts backend/direkt-api/test/unit/commercial-payment-provider.spec.ts
+          git commit -m "docs: complete Phase 9 governance and type contracts"
           git push origin HEAD:build/android-v1
