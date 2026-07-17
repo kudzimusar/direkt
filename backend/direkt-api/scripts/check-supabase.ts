@@ -17,9 +17,7 @@ const REQUIRED_BUCKETS = [
 async function main(): Promise<void> {
   const supabaseUrl = requiredEnvironment('SUPABASE_URL').replace(/\/$/, '');
   const serverKey =
-    process.env.SUPABASE_SECRET_KEY?.trim() ??
-    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ??
-    '';
+    process.env.SUPABASE_SECRET_KEY?.trim() ?? process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? '';
   if (!serverKey) {
     throw new Error(
       'SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY is required for the Supabase integration check.',
