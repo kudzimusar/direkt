@@ -209,16 +209,30 @@ jobs:
           test -n "${SERVICE_URL}"
           echo "SERVICE_URL=${SERVICE_URL}" >> "${GITHUB_ENV}"
 
+      - name: Mint private Cloud Run smoke-test ID token
+        id: cloud-run-smoke-auth
+        if: inputs.access_mode == 'private'
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+          token_format: id_token
+          id_token_audience: ${{ env.SERVICE_URL }}
+          id_token_include_email: true
+
       - name: Run readiness smoke test
         shell: bash
+        env:
+          CLOUD_RUN_ID_TOKEN: ${{ steps.cloud-run-smoke-auth.outputs.id_token }}
         run: |
           set -euo pipefail
           if [[ "${{ inputs.access_mode }}" == "private" ]]; then
-            ID_TOKEN="$(gcloud auth print-identity-token --audiences="${SERVICE_URL}")"
-            echo "::add-mask::${ID_TOKEN}"
+            test -n "${CLOUD_RUN_ID_TOKEN}"
+            echo "::add-mask::${CLOUD_RUN_ID_TOKEN}"
             curl --fail --silent --show-error \
               --retry 8 --retry-delay 5 --retry-all-errors \
-              --header "Authorization: Bearer ${ID_TOKEN}" \
+              --header "X-Serverless-Authorization: Bearer ${CLOUD_RUN_ID_TOKEN}" \
               "${SERVICE_URL}/api/v1/health/ready" \
               | tee "${RUNNER_TEMP}/direkt-health.json"
           else
