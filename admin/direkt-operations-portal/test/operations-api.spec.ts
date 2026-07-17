@@ -20,12 +20,12 @@ describe('OperationsApiClient', () => {
     });
 
     await expect(
-      client.get<{ synthetic: true }>(operationsEndpoints.interactions),
+      client.get<{ synthetic: true }>(operationsEndpoints.commercial),
     ).resolves.toEqual({
       synthetic: true,
     });
     expect(fetchImplementation).toHaveBeenCalledWith(
-      'https://api.synthetic.invalid/api/v1/operations/interactions',
+      'https://api.synthetic.invalid/api/v1/operations/commercial',
       expect.objectContaining({
         method: 'GET',
         cache: 'no-store',
@@ -37,7 +37,7 @@ describe('OperationsApiClient', () => {
     );
   });
 
-  it('encodes verification and Stage 8 identifiers in route builders', () => {
+  it('encodes verification, Stage 8 and Stage 9 identifiers in route builders', () => {
     expect(operationsEndpoints.reviewWorkspace('case/one')).toBe(
       '/api/v1/verification-cases/case%2Fone/review-workspace',
     );
@@ -53,11 +53,20 @@ describe('OperationsApiClient', () => {
     expect(operationsEndpoints.interactionComplaintTransition('complaint/one')).toBe(
       '/api/v1/operations/interaction-complaints/complaint%2Fone/transitions',
     );
+    expect(operationsEndpoints.commercialSubscriptionTransition('subscription/one')).toBe(
+      '/api/v1/operations/commercial/subscriptions/subscription%2Fone/transitions',
+    );
+    expect(operationsEndpoints.commercialReconciliationTransition('case/one')).toBe(
+      '/api/v1/operations/commercial/reconciliation/case%2Fone/transitions',
+    );
+    expect(operationsEndpoints.commercialAdjustmentDecision('adjustment/one')).toBe(
+      '/api/v1/operations/commercial/adjustments/adjustment%2Fone/decisions',
+    );
   });
 
-  it('posts JSON only through the API boundary', async () => {
+  it('posts JSON only through the commercial API boundary', async () => {
     const fetchImplementation = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(JSON.stringify({ status: 'triaged', revision: 2 }), {
+      new Response(JSON.stringify({ status: 'investigating', revision: 2 }), {
         status: 200,
         headers: { 'content-type': 'application/json' },
       }),
@@ -68,15 +77,16 @@ describe('OperationsApiClient', () => {
       fetchImplementation,
     });
 
-    await client.post(operationsEndpoints.interactionComplaintTransition('complaint-id'), {
-      targetStatus: 'triaged',
+    await client.post(operationsEndpoints.commercialReconciliationTransition('case-id'), {
+      targetStatus: 'investigating',
       expectedRevision: 1,
-      reason: 'Synthetic reasoned transition for API boundary testing.',
-      policyVersion: 'phase8-v1',
+      reasonCode: 'MISMATCH_REVIEW_STARTED',
+      reason: 'Synthetic reasoned commercial transition for API boundary testing.',
+      policyVersion: 'phase9-v1',
     });
 
     expect(fetchImplementation).toHaveBeenCalledWith(
-      'https://api.synthetic.invalid/api/v1/operations/interaction-complaints/complaint-id/transitions',
+      'https://api.synthetic.invalid/api/v1/operations/commercial/reconciliation/case-id/transitions',
       expect.objectContaining({
         method: 'POST',
         body: expect.any(String),
@@ -97,7 +107,7 @@ describe('OperationsApiClient', () => {
         .mockResolvedValue(new Response(null, { status: 403 })),
     });
 
-    await expect(client.get(operationsEndpoints.reviews)).rejects.toEqual(
+    await expect(client.get(operationsEndpoints.commercial)).rejects.toEqual(
       expect.objectContaining<Partial<OperationsApiError>>({ status: 403 }),
     );
   });
