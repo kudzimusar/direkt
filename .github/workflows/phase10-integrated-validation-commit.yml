@@ -1,0 +1,112 @@
+name: Create integrated Phase 10 infrastructure validation head
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - ".github/workflows/phase10-integrated-validation-commit.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: build/android-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: admin/direkt-operations-portal/package-lock.json
+      - name: Apply permanent integrated controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              file = Path(path)
+              text = file.read_text()
+              if text.count(old) != 1:
+                  raise SystemExit(f"Expected one marker in {path}; found {text.count(old)}")
+              file.write_text(text.replace(old, new))
+
+          replace_once(
+              'backend/direkt-api/Dockerfile',
+              'FROM node:24-bookworm-slim AS runtime\nENV NODE_ENV=production',
+              '''FROM node:24-bookworm-slim AS runtime
+ARG SOURCE_REVISION=unknown
+LABEL org.opencontainers.image.title="DIREKT API" \\
+      org.opencontainers.image.description="Synthetic-first DIREKT backend API" \\
+      org.opencontainers.image.source="https://github.com/kudzimusar/direkt" \\
+      org.opencontainers.image.revision="${SOURCE_REVISION}"
+ENV NODE_ENV=production''',
+          )
+
+          for path in [
+              '.github/workflows/backend-container-ci.yml',
+              '.github/workflows/cloud-run-development-deploy.yml',
+          ]:
+              replace_once(
+                  path,
+                  '            --file backend/direkt-api/Dockerfile \\\n            --tag "${IMAGE}" \\\n            backend/direkt-api' if 'backend-container' in path else '            --file backend/direkt-api/Dockerfile \\\n            --tag "${IMAGE_URI}" \\\n            backend/direkt-api',
+                  '            --file backend/direkt-api/Dockerfile \\\n            --build-arg SOURCE_REVISION="${GITHUB_SHA}" \\\n            --tag "${IMAGE}" \\\n            backend/direkt-api' if 'backend-container' in path else '            --file backend/direkt-api/Dockerfile \\\n            --build-arg SOURCE_REVISION="${SOURCE_SHA}" \\\n            --tag "${IMAGE_URI}" \\\n            backend/direkt-api',
+              )
+
+          replace_once(
+              '.github/workflows/backend-container-ci.yml',
+              '          test "$(docker inspect --format=\'{{json .Config.ExposedPorts}}\' "${IMAGE}")" = \'{"8080/tcp":{}}\'',
+              '''          test "$(docker inspect --format='{{json .Config.ExposedPorts}}' "${IMAGE}")" = '{"8080/tcp":{}}'
+          test "$(docker inspect --format='{{index .Config.Labels "org.opencontainers.image.revision"}}' "${IMAGE}")" = "${GITHUB_SHA}"''',
+          )
+
+          replace_once(
+              'admin/direkt-operations-portal/src/app/api/health/route.ts',
+              "const HEALTH_TIMEOUT_MS = 5_000;",
+              "export const dynamic = 'force-dynamic';\n\nconst HEALTH_TIMEOUT_MS = 5_000;",
+          )
+
+          replace_once(
+              'docs/phase10/INFRASTRUCTURE_ACTIVATION_CONTRACT.md',
+              '## 7. Exit evidence',
+              '''## 7. Repository integration evidence
+
+- infrastructure bootstrap PR #43 was reviewed and merged to `main` at `4ef98f9f96f17a4aa22109f807ebed1f0381e0e3`;
+- the bootstrap exact reviewed source was `14910e3b632cb213244a966ef41ea928e7494e77`;
+- synchronization PR #44 merged the infrastructure history into `build/android-v1` at `3b0dadb5aed34d13d99ade532eb11ebc8f3c1c90` without force-pushing;
+- the backend container, portal health and documentation controls are now part of the active Phase 10 checkpoint PR #42;
+- managed environment execution evidence remains separate from repository integration evidence and must be captured from the protected activation/deployment workflows.
+
+## 8. Exit evidence''',
+          )
+          PY
+
+      - name: Apply canonical portal formatting
+        working-directory: admin/direkt-operations-portal
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npx prettier --write src/app/api/health/route.ts
+
+      - name: Commit the permanent-only validation head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/phase10-integrated-validation-commit.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            .github/workflows/backend-container-ci.yml \
+            .github/workflows/cloud-run-development-deploy.yml \
+            backend/direkt-api/Dockerfile \
+            admin/direkt-operations-portal/src/app/api/health/route.ts \
+            docs/phase10/INFRASTRUCTURE_ACTIVATION_CONTRACT.md
+          git commit -m "feat(infra): integrate deployment provenance and validation"
+          git push origin HEAD:build/android-v1
