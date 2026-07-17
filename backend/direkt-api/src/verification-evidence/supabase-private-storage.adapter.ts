@@ -87,7 +87,9 @@ export class SupabasePrivateStorageAdapter implements EvidenceStoragePort {
       );
     }
     if (actualChecksum !== input.sha256) {
-      throw new BadRequestException('Uploaded object checksum does not match the submitted evidence.');
+      throw new BadRequestException(
+        'Uploaded object checksum does not match the submitted evidence.',
+      );
     }
   }
 
@@ -183,7 +185,10 @@ export class SupabasePrivateStorageAdapter implements EvidenceStoragePort {
   }
 
   private encodedPath(value: string): string {
-    return value.split('/').map((segment) => this.encoded(segment)).join('/');
+    return value
+      .split('/')
+      .map((segment) => this.encoded(segment))
+      .join('/');
   }
 
   private encoded(value: string): string {

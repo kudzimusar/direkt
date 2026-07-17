@@ -81,6 +81,8 @@ function requiredEnvironment(name: string): string {
 
 void main().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : 'Unknown Supabase integration failure';
-  process.stderr.write(`${JSON.stringify({ event: 'supabase_integration_check_failed', message })}\n`);
+  process.stderr.write(
+    `${JSON.stringify({ event: 'supabase_integration_check_failed', message })}\n`,
+  );
   process.exitCode = 1;
 });

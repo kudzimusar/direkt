@@ -55,10 +55,13 @@ describe('SupabasePrivateStorageAdapter', () => {
     const sha256 = createHash('sha256').update(bytes).digest('hex');
     vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ signedURL: '/object/sign/provider-evidence/object?token=read' }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
+        new Response(
+          JSON.stringify({ signedURL: '/object/sign/provider-evidence/object?token=read' }),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          },
+        ),
       )
       .mockResolvedValueOnce(
         new Response(bytes, {
@@ -81,10 +84,13 @@ describe('SupabasePrivateStorageAdapter', () => {
     const bytes = Buffer.from('different bytes');
     vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ signedURL: '/object/sign/provider-evidence/object?token=read' }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
+        new Response(
+          JSON.stringify({ signedURL: '/object/sign/provider-evidence/object?token=read' }),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          },
+        ),
       )
       .mockResolvedValueOnce(
         new Response(bytes, {
@@ -105,10 +111,13 @@ describe('SupabasePrivateStorageAdapter', () => {
 
   it('creates a short-lived private read grant', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ signedURL: '/object/sign/provider-evidence/object?token=read' }), {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      }),
+      new Response(
+        JSON.stringify({ signedURL: '/object/sign/provider-evidence/object?token=read' }),
+        {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        },
+      ),
     );
 
     const grant = await adapter().createReadGrant(

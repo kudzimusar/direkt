@@ -82,14 +82,11 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
       then: Joi.required(),
       otherwise: Joi.optional(),
     }),
-  SUPABASE_SERVICE_ROLE_KEY: Joi.string()
-    .min(20)
-    .max(2048)
-    .when('EVIDENCE_STORAGE_PROVIDER', {
-      is: 'supabase',
-      then: Joi.required(),
-      otherwise: Joi.optional(),
-    }),
+  SUPABASE_SERVICE_ROLE_KEY: Joi.string().min(20).max(2048).when('EVIDENCE_STORAGE_PROVIDER', {
+    is: 'supabase',
+    then: Joi.required(),
+    otherwise: Joi.optional(),
+  }),
   SUPABASE_EVIDENCE_BUCKET: bucketName.default('provider-evidence'),
   SUPABASE_PRIVATE_MEDIA_BUCKET: bucketName.default('provider-media-private'),
   SUPABASE_PUBLIC_MEDIA_BUCKET: bucketName.default('provider-media-public'),
