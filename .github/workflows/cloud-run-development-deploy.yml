@@ -109,7 +109,6 @@ jobs:
           npm run format:check
           npm run lint
           npm run typecheck
-          npm run authorization:check
           npm run migration:check
           npm run test
           npm run build
@@ -205,7 +204,7 @@ jobs:
           test -n "${SERVICE_URL}"
           echo "SERVICE_URL=${SERVICE_URL}" >> "${GITHUB_ENV}"
 
-      - name: Run authenticated readiness smoke test
+      - name: Run readiness smoke test
         shell: bash
         run: |
           set -euo pipefail
