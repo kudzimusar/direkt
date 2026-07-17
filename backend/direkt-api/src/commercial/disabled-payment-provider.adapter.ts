@@ -1,6 +1,5 @@
 import { createHash } from 'node:crypto';
 import type {
-  PaymentActionInput,
   PaymentProviderPort,
   PaymentWebhookVerification,
   PaymentWebhookVerificationInput,
@@ -10,7 +9,7 @@ import type { CommercialPaymentActionView } from './commercial.types';
 export class DisabledPaymentProviderAdapter implements PaymentProviderPort {
   public readonly mode = 'disabled' as const;
 
-  createAction(_input: PaymentActionInput): CommercialPaymentActionView {
+  createAction(): CommercialPaymentActionView {
     return {
       mode: 'disabled',
       state: 'unavailable',
