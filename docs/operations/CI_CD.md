@@ -45,6 +45,20 @@ The distribution workflow reruns unit tests and Android lint, builds the exact A
 
 See [`REMOTE_ANDROID_TESTING.md`](REMOTE_ANDROID_TESTING.md) for the full testing-channel model.
 
+## Managed development deployment pipelines
+
+### Supabase development activation
+
+`.github/workflows/supabase-development-activate.yml` is manual, main-only and protected by the `development` Environment. It verifies the exact DIREKT project, an exact source commit, migrations, PostGIS, private buckets and sanitized advisor evidence.
+
+### Cloud Run development API
+
+`.github/workflows/cloud-run-development-deploy.yml` is manual, main-only and protected by the `development` Environment. It uses GitHub OIDC/Workload Identity Federation, verifies an exact source commit, builds an immutable SHA-tagged image, binds runtime secret references, deploys the synthetic-only API and runs readiness smoke tests. Private invocation is the default; `public-synthetic` is an explicit protected-Vercel integration mode and does not authorize real data or a pilot.
+
+### Vercel Preview/Staging portal
+
+The Vercel project is configured in the provider dashboard with root `admin/direkt-operations-portal`, Preview deployment and deployment protection. Phase 10 URLs remain no-indexed and use only the server-side DIREKT API base URL and portal session configuration. No database or Supabase server credential enters the browser or Vercel client bundle.
+
 ## Later product pipelines
 
 ### Backend
@@ -70,6 +84,9 @@ Dependency, secret, code and artifact-provenance checks are introduced with the 
 - Stable phase checkpoints are promoted to `main` only after required quality gates pass.
 - GitHub Pages deploys only from `main`.
 - Firebase distribution is manual and targets named tester groups.
+- Synthetic-only managed development and protected staging deployment are authorized during Phase 10.
+- A development/staging URL is not a Phase 11 pilot or Phase 12 production release.
+- Bootstrap workflows that require the default branch may be promoted through a narrow reviewed PR and synchronized back without force-pushing.
 - Production deployments require manual approval and current-head verification.
 - Database migrations are explicit and environment-specific.
 - Force-pushing is prohibited.

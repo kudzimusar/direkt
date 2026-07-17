@@ -3,7 +3,7 @@
 **Updated:** 2026-07-17  
 **Stable branch:** `main`  
 **Implementation branch:** `build/android-v1`  
-**Programme state:** Phase 9 is complete and stable. Phase 10 is active under Issue #41 on the single implementation lane.
+**Programme state:** Phase 9 is complete and stable. Phase 10 is active under Issue #41 and checkpoint PR #42.
 
 ## Stable checkpoints
 
@@ -28,32 +28,40 @@ All Stage 9A–9G capabilities are stable and all permanent workflows passed on 
 
 ## Phase 10 implementation state
 
-Issue #41 is the sole active implementation tracker. The Phase 10 checkpoint PR remains open until every hardening stage and exact-head exit criterion is satisfied.
+Issue #41 is the sole active tracker and PR #42 is the checkpoint PR. The single implementation lane is claimed on `build/android-v1`.
 
-| Stage | State | Planned capability |
-|---|---|---|
-| 10A — threat model and security architecture | Active | assets, data flows, abuse cases, mitigations and baseline security review |
-| 10B — authorization and tenant isolation | Planned | permission matrix, scope denial, escalation review and step-up boundaries |
-| 10C — privacy, retention and legal controls | Planned | data inventory, lifecycle rights, consent/policy mapping and Zambia stop gates |
-| 10D — private storage and evidence access | Planned | exact-environment verification, bucket/grant tests, scanning/redaction and recovery scope |
-| 10E — abuse and operational safeguards | Planned | distributed rate limits, enumeration/spam/replay controls, queue ageing and kill switches |
-| 10F — reliability, recovery and performance | Planned | backup/restore, incident exercise, queue recovery, budgets, soak and outage handling |
-| 10G — supply-chain, secret and configuration | Planned | dependency/secret scans, build/environment review, rotation and fail-closed configuration |
-| 10H — provider and authority approvals | Planned | current map, communications, payment, registry, legal and staffing evidence or stop gates |
-| 10I — checkpoint promotion | Planned | permanent regressions, Phase 11 handoff, review, exact-head gates, merge and synchronization |
+Stage 10A security architecture and the Stage 10B route/permission baseline are implemented on the active branch. Privacy, retention, legal, storage, abuse, reliability, supply-chain, provider approval and checkpoint work remain in progress.
 
-## Current boundaries
+### Infrastructure activation correction
 
-No real participant or evidence data, real money movement, deployment or public pilot is authorized. Phase 10 must preserve all Phase 4–9 trust, privacy, interaction, accountability and commercial invariants.
+Phase 10 now explicitly permits:
 
-The dedicated DIREKT Supabase project remains inaccessible through the current connector. No unrelated project may be modified. Remote activation remains blocked until exact project access is verified.
+- synthetic-only managed development infrastructure;
+- protected staging infrastructure using synthetic or separately approved non-personal fixtures;
+- exact-source Supabase activation and verification;
+- immutable Cloud Run API deployment through GitHub OIDC;
+- protected, no-index Vercel Preview/Staging portal deployment;
+- Firebase internal tester distribution.
 
-## Next work
+This corrects the previous over-broad deployment prohibition. It does **not** authorize real participant/evidence data, unrestricted public invitations, a Zambia pilot, public promotion or production release.
 
-1. complete Stage 10A threat model and security architecture baseline;
-2. inventory route/function authorization and tenant isolation;
-3. implement permanent hardening controls and tests in documented stage order;
-4. record external approval gaps as stop gates rather than assumptions;
-5. validate and promote one exact reviewed Phase 10 checkpoint.
+## Bound infrastructure
+
+| Service | Development binding |
+|---|---|
+| Supabase | project ref `aeeuscifrxcjmnswqwnq`, region `ap-northeast-1` |
+| Google Cloud | project `direkt-dev-502701`, region `asia-northeast1` |
+| Artifact Registry | `direkt-containers` |
+| Cloud Run | `direkt-api` |
+| Firebase | project `direkt-dev-502701`, tester group `direkt-internal-testers` |
+| Vercel | protected Preview/Staging project still requires owner-side project binding and identifiers |
+
+The workspace Supabase connector currently exposes only unrelated CarUp projects, so it cannot independently inspect the DIREKT project. The existing protected GitHub activation workflow remains the exact-project migration and verification authority; no unrelated project may be mutated.
+
+## Phase boundaries
+
+- Phase 10: synthetic-only development/protected staging integration and hardening.
+- Phase 11: consenting real participants, real pilot evidence and controlled Zambia pilot validation.
+- Phase 12: production backend/portal/Android release and public rollout.
 
 Issue #5 remains open as a later, non-blocking Zambia pilot-validation obligation.

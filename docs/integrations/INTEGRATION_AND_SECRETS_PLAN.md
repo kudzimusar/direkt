@@ -1,6 +1,6 @@
 # DIREKT Integration and Secrets Plan
 
-**Status:** Planning baseline — no production integration is authorized by this document.  
+**Status:** Phase 10 controlled development/staging activation baseline — public pilot and production remain separately gated.  
 **Platform:** Native Android customer/provider application, Next.js internal operations portal, NestJS API, PostgreSQL/PostGIS.  
 **Repository:** `kudzimusar/direkt`
 
@@ -11,6 +11,8 @@ This document defines the external services, connectors, credentials, secret-sto
 The central rule is:
 
 > Android and browser clients call the DIREKT API. They do not connect directly to PostgreSQL, Supabase service credentials, payment operators, regulator systems or privileged storage.
+
+Phase 10 may activate synthetic-only managed development and protected staging services to validate this topology. Phase 11 still owns real participant/pilot data and Phase 12 owns production release. Exact provisioned identifiers and deployment controls are recorded in `../phase10/INFRASTRUCTURE_ACTIVATION_CONTRACT.md`.
 
 ## 2. Target deployment topology
 
@@ -70,14 +72,15 @@ No direct Vercel or Google Cloud/Firebase management connector is currently expo
 3. Google Workload Identity Federation rather than long-lived JSON service-account keys;
 4. environment variables and managed secret stores.
 
-## 4. Services to connect now
+## 4. Provisioned and remaining services
 
 ### 4.1 Supabase project
 
 Create one development project first. Create a separate production project only when the production gate is approved.
 
-**Development project name:** `direkt-dev`  
-**Recommended provisional region:** a Europe West region, subject to a latency test from Zambia before production.
+**Development project display name:** `direct-app`  
+**Immutable project ref:** `aeeuscifrxcjmnswqwnq`  
+**Region:** `ap-northeast-1` (Tokyo development infrastructure; Zambia latency and cross-border approval remain Phase 10/11 gates).
 
 Required capabilities:
 
@@ -116,9 +119,13 @@ Do not place `SUPABASE_SERVICE_ROLE_KEY`, database passwords or database URLs in
 
 Create one Google Cloud project and attach Firebase to the same project.
 
-**Development project name:** `direkt-dev`
+**Development project ID:** `direkt-dev-502701`  
+**Project number:** `264358173369`  
+**Region:** `asia-northeast1`
 
-Enable now:
+The project, Artifact Registry, Cloud Run service identities, Workload Identity Federation and Secret Manager entries are provisioned. Repository deployment and verification remain controlled by the Phase 10 infrastructure contract.
+
+Enable/verify:
 
 - Cloud Run API;
 - Artifact Registry API;
@@ -464,16 +471,16 @@ Implementation must extend this schema in bounded phases. Production startup mus
 
 ## 11. Setup order for the owner
 
-1. Authorize the Supabase connector or create `direkt-dev` in the Supabase dashboard.
-2. Create `direkt-dev` in Google Cloud and attach Firebase.
-3. Register the debug Android application and create `direkt-internal-testers`.
-4. Create the Vercel portal project with the correct root directory.
-5. Configure Workload Identity Federation and the two service accounts.
-6. Add only the listed GitHub deployment variables/secrets.
-7. Add runtime secrets to Google Secret Manager, not GitHub.
-8. Create Sentry projects for API and portal.
-9. Create Maps, Twilio Verify, Brevo and Meta accounts only when their phase is authorized.
-10. Keep MTN MoMo, Airtel Money and regulator credentials deferred until formal access and product gates are satisfied.
+1. Re-run and retain passing Supabase exact-project activation evidence for `aeeuscifrxcjmnswqwnq`.
+2. Merge the protected Cloud Run development deployment workflow to `main`, then deploy an exact reviewed source through GitHub OIDC.
+3. Verify Firebase debug/internal tester configuration for `direkt-internal-testers`.
+4. Create or verify the protected Vercel Preview/Staging portal project with the correct root directory.
+5. Verify Workload Identity Federation, the deployer/runtime service accounts and least-privilege IAM.
+6. Keep deployment material in GitHub Environments and runtime secrets in Google Secret Manager.
+7. Create/verify Sentry projects and PII scrubbing before telemetry activation.
+8. Create Maps, OTP, email and WhatsApp accounts only when their adapter gates are authorized.
+9. Keep MTN MoMo, Airtel Money and regulator credentials deferred until formal access and product gates are satisfied.
+10. Do not convert managed development/staging activation into a public pilot or production launch.
 
 ## 12. Required owner handoff data
 
