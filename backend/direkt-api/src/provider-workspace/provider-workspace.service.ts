@@ -24,8 +24,21 @@ export class ProviderWorkspaceService {
     private readonly providers: ProviderService,
   ) {}
 
-  workspace(actor: AuthenticatedActor): Promise<ProviderWorkspaceSummary> {
-    return this.repository.workspace(actor.identityId);
+  async workspace(actor: AuthenticatedActor): Promise<ProviderWorkspaceSummary> {
+    const workspace = await this.repository.workspace(actor.identityId);
+    return {
+      ...workspace,
+      deferredSurfaces: {
+        ...workspace.deferredSurfaces,
+        subscription: {
+          state: 'read_only',
+          phaseOwner: 'phase9',
+          mutationAllowed: false,
+          message:
+            'The Phase 9 commercial workspace is live at /provider-workspace/me/commercial. This provider summary remains read-only.',
+        },
+      },
+    };
   }
 
   async timeline(actor: AuthenticatedActor): Promise<ProviderWorkspaceTimelineEventView[]> {
