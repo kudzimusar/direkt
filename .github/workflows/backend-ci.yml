@@ -1,4 +1,5 @@
 name: DIREKT Backend CI
+# Phase 9 one-run formatter is removed after the fast-forward commit.
 
 on:
   push:
