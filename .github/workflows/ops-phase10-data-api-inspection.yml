@@ -1,4 +1,4 @@
-name: Phase 10 backend formatting diagnostic
+name: Format Phase 10 Supabase boundary check
 
 on:
   pull_request:
@@ -7,18 +7,35 @@ on:
       - .github/workflows/ops-phase10-data-api-inspection.yml
 
 permissions:
-  actions: read
-  contents: read
+  contents: write
 
 jobs:
-  inspect:
+  format:
     runs-on: ubuntu-latest
     steps:
-      - name: Show failed backend formatting output
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/phase10-supabase-data-api-quarantine
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - name: Apply pinned repository formatter to the changed file
+        working-directory: backend/direkt-api
+        shell: bash
         run: |
           set -euo pipefail
-          gh run view 29634377401 --repo "$GITHUB_REPOSITORY" --log-failed \
-            | grep -A20 -B5 -E 'prettier|Prettier|format|check-supabase|Code style issues' \
-            | tail -n 120
+          npm ci --ignore-scripts
+          npx prettier --write scripts/check-supabase.ts
+          git diff --check
+          if git diff --quiet -- scripts/check-supabase.ts; then
+            echo "No formatter changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/check-supabase.ts
+          git commit -m "style: format Supabase boundary check"
+          git push origin HEAD:fix/phase10-supabase-data-api-quarantine
