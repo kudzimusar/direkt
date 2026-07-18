@@ -1,6 +1,6 @@
 # DIREKT Project Status
 
-**Updated:** 2026-07-19  
+**Updated (Asia/Tokyo):** 2026-07-19  
 **Stable branch:** `main`  
 **Implementation branch:** `build/android-v1`  
 **Programme state:** Phases 0–10 are complete and stable. Phase 11 repository-side entry preparation is active under Issue #112. Real-participant controlled-pilot execution remains blocked until the explicit legal/privacy/provider/ownership/cohort/consent/support/device/stop gates are satisfied.
