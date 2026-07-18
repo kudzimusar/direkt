@@ -97,6 +97,12 @@ This index lists the authoritative planning and operating documents. Agents must
 - [Phase 9 Validation and Exit Matrix](phase9/VALIDATION_PLAN.md)
 - [Phase 10 Handoff from Phase 9](phase10/HANDOFF_FROM_PHASE9.md)
 - [Phase 10 Infrastructure Activation Contract](phase10/INFRASTRUCTURE_ACTIVATION_CONTRACT.md)
+- [Phase 10 Closeout](phase10/PHASE10_CLOSEOUT_2026-07-18.md)
+- [Phase 11 Handoff from Phase 10](phase11/HANDOFF_FROM_PHASE10.md)
+- [Phase 11 Execution and Entry Control](phase11/PHASE11_EXECUTION_AND_ENTRY_CONTROL.md)
+- [Phase 11 Zambia Legal and Privacy Entry Research](phase11/ZAMBIA_LEGAL_PRIVACY_ENTRY_RESEARCH_2026-07-19.md)
+- [Phase 11 Maps and Sentry Reconciliation](phase11/MAPS_SENTRY_RECONCILIATION_2026-07-19.md)
+- [Phase 11 Pilot Validation Evidence Register](phase11/PILOT_VALIDATION_EVIDENCE_REGISTER.md)
 
 ## Integrations
 
