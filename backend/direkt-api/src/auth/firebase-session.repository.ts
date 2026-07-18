@@ -6,6 +6,7 @@ export interface CreateFirebaseSessionInput {
   subjectHash: string;
   contactHash: string;
   displayHint: string;
+  noticeVersion: string;
   sessionId: string;
   familyId: string;
   refreshTokenHash: string;
@@ -25,7 +26,14 @@ export type CreateFirebaseSessionResult =
       displayHint: string;
     }
   | { kind: 'identity_conflict' }
-  | { kind: 'identity_disabled' };
+  | { kind: 'identity_disabled' }
+  | { kind: 'invite_required' }
+  | { kind: 'notice_unavailable' };
+
+interface PendingInvitation {
+  id: string;
+  participant_type: 'customer' | 'provider';
+}
 
 @Injectable()
 export class FirebaseSessionRepository {
@@ -34,6 +42,17 @@ export class FirebaseSessionRepository {
   createSession(input: CreateFirebaseSessionInput): Promise<CreateFirebaseSessionResult> {
     return this.database.transaction(async (client) => {
       await this.lockIdentityBinding(client, input.subjectHash, input.contactHash);
+      await client.query(
+        `UPDATE account.pilot_invitations
+         SET status = 'expired'
+         WHERE contact_hash = $1 AND status = 'pending' AND expires_at <= now()`,
+        [input.contactHash],
+      );
+      const policyVersionId = await this.currentPolicyVersionId(client, input.noticeVersion);
+      if (!policyVersionId) {
+        return { kind: 'notice_unavailable' };
+      }
+
       const boundIdentity = await client.query<{
         identity_id: string;
         status: string;
@@ -72,6 +91,22 @@ export class FirebaseSessionRepository {
           );
           return { kind: 'identity_conflict' };
         }
+
+        const admitted = await this.hasCurrentAdmission(client, identityId, policyVersionId);
+        if (!admitted) {
+          const invitation = await this.pendingInvitation(client, input.contactHash, policyVersionId);
+          if (!invitation) {
+            await this.insertDeniedAudit(client, input, identityId, 'current_invitation_required');
+            return { kind: 'invite_required' };
+          }
+          await this.claimInvitationAndRecordConsent(
+            client,
+            invitation,
+            identityId,
+            policyVersionId,
+            input.requestId,
+          );
+        }
         await client.query(
           `UPDATE account.external_identities
            SET last_seen_at = now()
@@ -80,11 +115,10 @@ export class FirebaseSessionRepository {
         );
       } else {
         const existingContact = await client.query<{
-          id: string;
           identity_id: string;
           status: string;
         }>(
-          `SELECT contacts.id, contacts.identity_id, identities.status
+          `SELECT contacts.identity_id, identities.status
            FROM account.contacts AS contacts
            JOIN account.identities AS identities ON identities.id = contacts.identity_id
            WHERE contacts.channel = 'phone' AND contacts.value_hash = $1
@@ -93,65 +127,50 @@ export class FirebaseSessionRepository {
         );
         const contact = existingContact.rows[0];
         if (contact) {
-          if (contact.status !== 'active') {
-            return { kind: 'identity_disabled' };
-          }
-          identityId = contact.identity_id;
-          const otherBinding = await client.query<{ subject_hash: string }>(
-            `SELECT subject_hash
-             FROM account.external_identities
-             WHERE identity_id = $1 AND provider = 'firebase'
-             FOR UPDATE`,
-            [identityId],
+          await this.insertDeniedAudit(
+            client,
+            input,
+            contact.identity_id,
+            'existing_unbound_phone_requires_recovery',
           );
-          if (otherBinding.rows[0]) {
-            await this.insertDeniedAudit(
-              client,
-              input,
-              identityId,
-              'phone_already_bound_to_other_firebase_subject',
-            );
-            return { kind: 'identity_conflict' };
-          }
-          await client.query(
-            `UPDATE account.contacts
-             SET verified_at = COALESCE(verified_at, now())
-             WHERE id = $1`,
-            [contact.id],
-          );
-        } else {
-          const identityResult = await client.query<{ id: string }>(
-            `INSERT INTO account.identities DEFAULT VALUES RETURNING id`,
-          );
-          const identity = identityResult.rows[0];
-          if (!identity) {
-            throw new Error('Identity creation returned no row.');
-          }
-          identityId = identity.id;
-          await client.query(
-            `INSERT INTO account.contacts (
-               identity_id,
-               channel,
-               value_hash,
-               display_hint,
-               verified_at
-             ) VALUES ($1, 'phone', $2, $3, now())`,
-            [identityId, input.contactHash, input.displayHint],
-          );
-          await client.query(
-            `INSERT INTO authz.role_assignments (
-               identity_id,
-               role_id,
-               scope_type,
-               reason
-             )
-             SELECT $1, id, 'global', 'Initial Firebase verified phone registration'
-             FROM authz.roles
-             WHERE role_key = 'customer'`,
-            [identityId],
-          );
+          return { kind: contact.status === 'active' ? 'identity_conflict' : 'identity_disabled' };
         }
 
+        const invitation = await this.pendingInvitation(client, input.contactHash, policyVersionId);
+        if (!invitation) {
+          return { kind: 'invite_required' };
+        }
+
+        const identityResult = await client.query<{ id: string }>(
+          `INSERT INTO account.identities DEFAULT VALUES RETURNING id`,
+        );
+        const identity = identityResult.rows[0];
+        if (!identity) {
+          throw new Error('Identity creation returned no row.');
+        }
+        identityId = identity.id;
+        await client.query(
+          `INSERT INTO account.contacts (
+             identity_id,
+             channel,
+             value_hash,
+             display_hint,
+             verified_at
+           ) VALUES ($1, 'phone', $2, $3, now())`,
+          [identityId, input.contactHash, input.displayHint],
+        );
+        await client.query(
+          `INSERT INTO authz.role_assignments (
+             identity_id,
+             role_id,
+             scope_type,
+             reason
+           )
+           SELECT $1, id, 'global', 'Initial invited Firebase verified phone registration'
+           FROM authz.roles
+           WHERE role_key = 'customer'`,
+          [identityId],
+        );
         await client.query(
           `INSERT INTO account.external_identities (
              identity_id,
@@ -159,6 +178,13 @@ export class FirebaseSessionRepository {
              subject_hash
            ) VALUES ($1, 'firebase', $2)`,
           [identityId, input.subjectHash],
+        );
+        await this.claimInvitationAndRecordConsent(
+          client,
+          invitation,
+          identityId,
+          policyVersionId,
+          input.requestId,
         );
       }
 
@@ -193,6 +219,7 @@ export class FirebaseSessionRepository {
         metadata: {
           channel: 'phone',
           identityProvider: 'firebase',
+          noticeVersion: input.noticeVersion,
           rawProviderSubjectStored: false,
         },
       });
@@ -205,6 +232,98 @@ export class FirebaseSessionRepository {
         displayHint: input.displayHint,
       };
     });
+  }
+
+  private async currentPolicyVersionId(
+    client: PoolClient,
+    noticeVersion: string,
+  ): Promise<string | null> {
+    const result = await client.query<{ id: string }>(
+      `SELECT id
+       FROM account.policy_versions
+       WHERE policy_key = 'pilot_participation_notice'
+         AND version = $1
+         AND effective_at <= now()
+         AND (retired_at IS NULL OR retired_at > now())
+       ORDER BY effective_at DESC
+       LIMIT 1`,
+      [noticeVersion],
+    );
+    return result.rows[0]?.id ?? null;
+  }
+
+  private async hasCurrentAdmission(
+    client: PoolClient,
+    identityId: string,
+    policyVersionId: string,
+  ): Promise<boolean> {
+    const result = await client.query<{ admitted: boolean }>(
+      `SELECT (
+         EXISTS (
+           SELECT 1
+           FROM account.pilot_invitations
+           WHERE claimed_identity_id = $1
+             AND policy_version_id = $2
+             AND status = 'claimed'
+         )
+         AND COALESCE((
+           SELECT status = 'accepted'
+           FROM account.consents
+           WHERE identity_id = $1 AND policy_version_id = $2
+           ORDER BY recorded_at DESC, id DESC
+           LIMIT 1
+         ), false)
+       ) AS admitted`,
+      [identityId, policyVersionId],
+    );
+    return result.rows[0]?.admitted ?? false;
+  }
+
+  private async pendingInvitation(
+    client: PoolClient,
+    contactHash: string,
+    policyVersionId: string,
+  ): Promise<PendingInvitation | null> {
+    const result = await client.query<PendingInvitation>(
+      `SELECT id, participant_type
+       FROM account.pilot_invitations
+       WHERE contact_hash = $1
+         AND policy_version_id = $2
+         AND status = 'pending'
+         AND expires_at > now()
+       FOR UPDATE`,
+      [contactHash, policyVersionId],
+    );
+    return result.rows[0] ?? null;
+  }
+
+  private async claimInvitationAndRecordConsent(
+    client: PoolClient,
+    invitation: PendingInvitation,
+    identityId: string,
+    policyVersionId: string,
+    requestId?: string,
+  ): Promise<void> {
+    const claimed = await client.query<{ id: string }>(
+      `UPDATE account.pilot_invitations
+       SET status = 'claimed', claimed_identity_id = $2, claimed_at = now()
+       WHERE id = $1 AND status = 'pending'
+       RETURNING id`,
+      [invitation.id, identityId],
+    );
+    if (!claimed.rows[0]) {
+      throw new Error('Pilot invitation could not be claimed.');
+    }
+    await client.query(
+      `INSERT INTO account.consents (
+         identity_id,
+         policy_version_id,
+         status,
+         source,
+         request_id
+       ) VALUES ($1, $2, 'accepted', 'android_firebase_pilot_exchange', $3)`,
+      [identityId, policyVersionId, requestId ?? null],
+    );
   }
 
   private async lockIdentityBinding(
