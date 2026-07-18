@@ -1,4 +1,4 @@
-name: Phase 10 staging diagnostic
+name: Managed restore diagnostic
 on:
   pull_request:
     branches: [build/android-v1]
@@ -10,7 +10,7 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Show failure
+      - name: Show restore failure
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run view 29627582756 --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 80
+        run: gh run view 29628324096 --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 50
