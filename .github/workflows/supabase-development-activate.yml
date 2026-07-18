@@ -50,7 +50,7 @@ jobs:
           echo "::add-mask::${SUPABASE_DB_PASSWORD}"
 
       - name: Check out exact reviewed source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.source_sha }}
           fetch-depth: 0
@@ -64,14 +64,14 @@ jobs:
           echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
 
       - name: Set up Node.js 24 LTS
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
           cache-dependency-path: backend/direkt-api/package-lock.json
 
       - name: Set up pinned Supabase CLI
-        uses: supabase/setup-cli@v2
+        uses: supabase/setup-cli@v3
         with:
           version: 2.101.0
           github-token: ${{ github.token }}
@@ -294,7 +294,7 @@ jobs:
 
       - name: Upload sanitized activation evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: direkt-supabase-development-${{ github.run_number }}-${{ inputs.source_sha }}
           path: artifacts/supabase/**

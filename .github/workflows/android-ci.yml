@@ -36,7 +36,7 @@ jobs:
       project_ready: ${{ steps.detect.outputs.project_ready }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Detect Android project
         id: detect
@@ -65,7 +65,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
@@ -74,7 +74,7 @@ jobs:
           java-version: "17"
 
       - name: Configure pinned Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: ${{ env.DIREKT_GRADLE_VERSION }}
 
@@ -103,7 +103,7 @@ jobs:
 
       - name: Upload test and lint reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: direkt-android-reports-${{ github.run_number }}
           path: |
@@ -113,7 +113,7 @@ jobs:
           retention-days: 14
 
       - name: Upload debug APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: direkt-debug-apk-${{ github.run_number }}-${{ github.sha }}
           path: android/direkt-app/app/build/outputs/apk/debug/*.apk
@@ -121,7 +121,7 @@ jobs:
           retention-days: 14
 
       - name: Upload Compose test APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: direkt-compose-test-apk-${{ github.run_number }}-${{ github.sha }}
           path: android/direkt-app/app/build/outputs/apk/androidTest/debug/*.apk

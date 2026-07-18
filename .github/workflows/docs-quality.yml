@@ -19,7 +19,7 @@ jobs:
     name: Validate and build documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
@@ -39,7 +39,7 @@ jobs:
           mkdocs build --strict 2>&1 | tee artifacts/docs/mkdocs.txt
       - name: Upload documentation diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: direkt-docs-reports-${{ github.run_number }}-${{ github.sha }}
           path: artifacts/docs/**

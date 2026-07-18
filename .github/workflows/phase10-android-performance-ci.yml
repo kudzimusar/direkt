@@ -45,14 +45,14 @@ jobs:
       COLD_LAUNCH_P95_BUDGET_MS: "6500"
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: ${{ env.DIREKT_GRADLE_VERSION }}
 
@@ -126,7 +126,7 @@ jobs:
 
       - name: Upload sanitized Android performance evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: direkt-phase10-android-performance-${{ github.run_number }}-${{ github.sha }}
           path: |
