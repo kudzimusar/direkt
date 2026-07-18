@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.kudzimusar.direkt.ui.auth.PilotAuthenticationExperience
 import com.kudzimusar.direkt.ui.commercial.ProviderCommercialExperience
 import com.kudzimusar.direkt.ui.discovery.CustomerDiscoveryExperience
 import com.kudzimusar.direkt.ui.discovery.CustomerOnboardingExperience
@@ -46,7 +47,7 @@ fun DirektApp(
                     Column {
                         Text("DIREKT", fontWeight = FontWeight.Bold)
                         Text(
-                            text = "Phase 9 — synthetic commercial foundation",
+                            text = "Phase 11 — controlled pilot entry",
                             style = MaterialTheme.typography.labelSmall,
                         )
                     }
@@ -96,6 +97,9 @@ fun DirektApp(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            if (appState.destination == DirektDestination.Account) {
+                item { PilotAuthenticationExperience() }
+            }
 
             if (appState.mode == DirektMode.Customer) {
                 when (appState.destination) {
@@ -131,7 +135,7 @@ private fun ModeSelector(
     onModeSelected: (DirektMode) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(text = "Synthetic preview mode", style = MaterialTheme.typography.labelLarge)
+        Text(text = "Preview context", style = MaterialTheme.typography.labelLarge)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -157,19 +161,21 @@ private fun screenTitle(appState: DirektAppState): String = when (appState.mode)
         DirektDestination.Discover -> "Find a provider"
         DirektDestination.Saved -> "Saved providers"
         DirektDestination.Enquiries -> "Enquiries and reviews"
-        DirektDestination.Account -> "Customer onboarding"
+        DirektDestination.Account -> "Account and pilot access"
     }
     DirektMode.Provider -> when (appState.destination) {
         DirektDestination.Discover -> "Provider workspace"
         DirektDestination.Saved -> "Private evidence uploads"
         DirektDestination.Enquiries -> "Enquiry inbox and review responses"
-        DirektDestination.Account -> "Profile, services and subscription"
+        DirektDestination.Account -> "Account, profile and subscription"
     }
 }
 
 private fun screenSummary(appState: DirektAppState): String = when (appState.mode) {
     DirektMode.Customer -> if (appState.destination == DirektDestination.Enquiries) {
         "Track bounded service requests, time-limited contact consent, private history, eligible reviews and appeals."
+    } else if (appState.destination == DirektDestination.Account) {
+        "Real pilot sign-in remains fail-closed until approved Firebase, API and notice configuration is injected."
     } else {
         "Search fictional, policy-eligible providers using manual area or a one-time location model."
     }
@@ -177,7 +183,7 @@ private fun screenSummary(appState: DirektAppState): String = when (appState.mod
         DirektDestination.Enquiries ->
             "Respond inside the actor-resolved provider scope with optimistic revisions and one bounded review response."
         DirektDestination.Account ->
-            "Manage profile and synthetic commercial state with retry-safe payments, immutable invoices and no trust or ranking effect."
+            "Pilot authentication proves phone possession only; provider scope, verification and commercial state remain backend-authoritative."
         else ->
             "Manage a fictional actor-scoped workspace with private evidence recovery, safe verification progress and independent availability."
     }
