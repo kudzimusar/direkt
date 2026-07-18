@@ -11,18 +11,6 @@ on:
         description: Exact reviewed DIREKT commit already merged to main
         required: true
         type: string
-      access_mode:
-        description: Cloud Run invocation boundary
-        required: true
-        default: private
-        type: choice
-        options:
-          - private
-          - public-synthetic
-      portal_origin:
-        description: Optional Vercel preview/staging origin for CORS, without a trailing slash
-        required: false
-        type: string
 
 permissions:
   contents: read
@@ -34,7 +22,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Build, deploy and verify DIREKT development API
+    name: Build, deploy and verify private DIREKT development API
     if: github.ref == 'refs/heads/main'
     environment: development
     runs-on: ubuntu-latest
@@ -73,10 +61,6 @@ jobs:
           set -euo pipefail
           test "${{ inputs.confirmation }}" = "DEPLOY-DIREKT-DEVELOPMENT"
           [[ "${{ inputs.source_sha }}" =~ ^[0-9a-f]{40}$ ]]
-          if [[ "${{ inputs.access_mode }}" == "public-synthetic" ]]; then
-            test -n "${{ inputs.portal_origin }}"
-            [[ "${{ inputs.portal_origin }}" =~ ^https://[^/]+$ ]]
-          fi
 
       - name: Check out exact reviewed source
         uses: actions/checkout@v6
@@ -92,7 +76,7 @@ jobs:
           test "${SOURCE_SHA}" = "${{ inputs.source_sha }}"
           git fetch origin main --no-tags
           if ! git merge-base --is-ancestor "${SOURCE_SHA}" origin/main; then
-            echo "::error title=Unmerged deployment source::The selected source commit is not an ancestor of origin/main. Merge and validate it before deployment."
+            echo "::error title=Unmerged deployment source::The selected source commit is not an ancestor of origin/main."
             exit 1
           fi
           echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
@@ -131,11 +115,42 @@ jobs:
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Configure Artifact Registry authentication
+      - name: Resolve enabled numeric Secret Manager versions
         shell: bash
         run: |
           set -euo pipefail
-          gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+
+          mappings=(
+            "DIREKT_DATABASE_URL_SECRET_VERSION:direkt-database-url"
+            "DIREKT_SUPABASE_URL_SECRET_VERSION:direkt-supabase-url"
+            "DIREKT_SUPABASE_SECRET_KEY_SECRET_VERSION:direkt-supabase-secret-key"
+            "DIREKT_ACCESS_TOKEN_SECRET_VERSION:direkt-access-token-secret"
+            "DIREKT_CONTACT_HASH_PEPPER_SECRET_VERSION:direkt-contact-hash-pepper"
+            "DIREKT_CHALLENGE_HASH_PEPPER_SECRET_VERSION:direkt-challenge-hash-pepper"
+          )
+
+          for mapping in "${mappings[@]}"; do
+            variable_name="${mapping%%:*}"
+            secret_name="${mapping#*:}"
+            version_record="$(gcloud secrets versions describe latest \
+              --secret "${secret_name}" \
+              --project "${GCP_PROJECT_ID}" \
+              --format=json)"
+            version="$(jq -r '.name | split("/") | last' <<< "${version_record}")"
+            state="$(jq -r '.state' <<< "${version_record}")"
+
+            if [[ ! "${version}" =~ ^[1-9][0-9]*$ ]] || [[ "${state}" != "ENABLED" ]]; then
+              echo "::error title=Enabled secret version missing::${secret_name} did not resolve to an enabled numeric version."
+              exit 1
+            fi
+
+            echo "${variable_name}=${version}" >> "${GITHUB_ENV}"
+            echo "- ${secret_name}: version ${version}" >> "${GITHUB_STEP_SUMMARY}"
+          done
+
+      - name: Configure Artifact Registry authentication
+        shell: bash
+        run: gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
 
       - name: Build and push immutable API image
         shell: bash
@@ -151,11 +166,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat > "${RUNNER_TEMP}/direkt-runtime-env.yaml" <<EOF
+          cat > "${RUNNER_TEMP}/direkt-runtime-env.yaml" <<'EOF'
           NODE_ENV: "development"
-          # Cloud Run injects its reserved PORT variable from --port automatically.
           LOG_LEVEL: "info"
-          CORS_ORIGINS: "${{ inputs.portal_origin }}"
+          CORS_ORIGINS: ""
           AUTH_CHALLENGE_MODE: "synthetic"
           ACCESS_TOKEN_TTL_SECONDS: "600"
           REFRESH_TOKEN_TTL_DAYS: "30"
@@ -170,15 +184,10 @@ jobs:
           DIREKT_DATA_MODE: "synthetic-only"
           EOF
 
-      - name: Deploy immutable revision to Cloud Run
+      - name: Deploy immutable private revision to Cloud Run
         shell: bash
         run: |
           set -euo pipefail
-          ACCESS_FLAG="--no-allow-unauthenticated"
-          if [[ "${{ inputs.access_mode }}" == "public-synthetic" ]]; then
-            ACCESS_FLAG="--allow-unauthenticated"
-          fi
-
           gcloud run deploy "${GCP_CLOUD_RUN_SERVICE}" \
             --project "${GCP_PROJECT_ID}" \
             --region "${GCP_REGION}" \
@@ -189,29 +198,54 @@ jobs:
             --cpu 1 \
             --memory 512Mi \
             --min-instances 0 \
-            --max-instances 2 \
+            --max-instances 1 \
             --concurrency 40 \
             --timeout 60 \
             --ingress all \
             --env-vars-file "${RUNNER_TEMP}/direkt-runtime-env.yaml" \
-            --set-secrets "DATABASE_URL=direkt-database-url:latest,SUPABASE_URL=direkt-supabase-url:latest,SUPABASE_SECRET_KEY=direkt-supabase-secret-key:latest,ACCESS_TOKEN_SECRET=direkt-access-token-secret:latest,CONTACT_HASH_PEPPER=direkt-contact-hash-pepper:latest,CHALLENGE_HASH_PEPPER=direkt-challenge-hash-pepper:latest" \
-            ${ACCESS_FLAG} \
+            --set-secrets "DATABASE_URL=direkt-database-url:${DIREKT_DATABASE_URL_SECRET_VERSION},SUPABASE_URL=direkt-supabase-url:${DIREKT_SUPABASE_URL_SECRET_VERSION},SUPABASE_SECRET_KEY=direkt-supabase-secret-key:${DIREKT_SUPABASE_SECRET_KEY_SECRET_VERSION},ACCESS_TOKEN_SECRET=direkt-access-token-secret:${DIREKT_ACCESS_TOKEN_SECRET_VERSION},CONTACT_HASH_PEPPER=direkt-contact-hash-pepper:${DIREKT_CONTACT_HASH_PEPPER_SECRET_VERSION},CHALLENGE_HASH_PEPPER=direkt-challenge-hash-pepper:${DIREKT_CHALLENGE_HASH_PEPPER_SECRET_VERSION}" \
+            --no-allow-unauthenticated \
             --quiet
 
-      - name: Resolve deployed service URL
+      - name: Remove and reject public invocation bindings
         shell: bash
         run: |
           set -euo pipefail
-          SERVICE_URL="$(gcloud run services describe "${GCP_CLOUD_RUN_SERVICE}" \
+          for member in allUsers allAuthenticatedUsers; do
+            gcloud run services remove-iam-policy-binding "${GCP_CLOUD_RUN_SERVICE}" \
+              --project "${GCP_PROJECT_ID}" \
+              --region "${GCP_REGION}" \
+              --member "${member}" \
+              --role roles/run.invoker \
+              --quiet >/dev/null 2>&1 || true
+          done
+
+          gcloud run services get-iam-policy "${GCP_CLOUD_RUN_SERVICE}" \
             --project "${GCP_PROJECT_ID}" \
             --region "${GCP_REGION}" \
-            --format='value(status.url)')"
+            --format=json > "${RUNNER_TEMP}/direkt-api-iam.json"
+          jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' \
+            "${RUNNER_TEMP}/direkt-api-iam.json" >/dev/null
+
+      - name: Resolve and verify deployed service
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run services describe "${GCP_CLOUD_RUN_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --format=json > "${RUNNER_TEMP}/direkt-api-service.json"
+
+          SERVICE_URL="$(jq -r '.status.url' "${RUNNER_TEMP}/direkt-api-service.json")"
           test -n "${SERVICE_URL}"
+          jq -e --arg identity "${GCP_RUNTIME_SERVICE_ACCOUNT}" '.spec.template.spec.serviceAccountName == $identity' \
+            "${RUNNER_TEMP}/direkt-api-service.json" >/dev/null
+          jq -e '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef.key == "latest")] | length == 0' \
+            "${RUNNER_TEMP}/direkt-api-service.json" >/dev/null
           echo "SERVICE_URL=${SERVICE_URL}" >> "${GITHUB_ENV}"
 
       - name: Mint private Cloud Run smoke-test ID token
         id: cloud-run-smoke-auth
-        if: inputs.access_mode == 'private'
         uses: google-github-actions/auth@v3
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
@@ -227,20 +261,13 @@ jobs:
           CLOUD_RUN_ID_TOKEN: ${{ steps.cloud-run-smoke-auth.outputs.id_token }}
         run: |
           set -euo pipefail
-          if [[ "${{ inputs.access_mode }}" == "private" ]]; then
-            test -n "${CLOUD_RUN_ID_TOKEN}"
-            echo "::add-mask::${CLOUD_RUN_ID_TOKEN}"
-            curl --fail --silent --show-error \
-              --retry 8 --retry-delay 5 --retry-all-errors \
-              --header "X-Serverless-Authorization: Bearer ${CLOUD_RUN_ID_TOKEN}" \
-              "${SERVICE_URL}/api/v1/health/ready" \
-              | tee "${RUNNER_TEMP}/direkt-health.json"
-          else
-            curl --fail --silent --show-error \
-              --retry 8 --retry-delay 5 --retry-all-errors \
-              "${SERVICE_URL}/api/v1/health/ready" \
-              | tee "${RUNNER_TEMP}/direkt-health.json"
-          fi
+          test -n "${CLOUD_RUN_ID_TOKEN}"
+          echo "::add-mask::${CLOUD_RUN_ID_TOKEN}"
+          curl --fail --silent --show-error \
+            --retry 8 --retry-delay 5 --retry-all-errors \
+            --header "X-Serverless-Authorization: Bearer ${CLOUD_RUN_ID_TOKEN}" \
+            "${SERVICE_URL}/api/v1/health/ready" \
+            > "${RUNNER_TEMP}/direkt-health.json"
           jq -e '.status == "ok" and .database.status == "ready"' "${RUNNER_TEMP}/direkt-health.json" >/dev/null
 
       - name: Publish deployment summary
@@ -250,13 +277,13 @@ jobs:
           {
             echo "### DIREKT Cloud Run development deployment"
             echo "- Source: \`${SOURCE_SHA}\`"
-            echo "- Source ancestry: verified against \`origin/main\`"
             echo "- Image: \`${IMAGE_URI}\`"
             echo "- Project: \`${GCP_PROJECT_ID}\`"
             echo "- Region: \`${GCP_REGION}\`"
             echo "- Service: \`${GCP_CLOUD_RUN_SERVICE}\`"
-            echo "- Access mode: \`${{ inputs.access_mode }}\`"
+            echo "- Invocation: IAM-private"
             echo "- Data mode: \`synthetic-only\`"
-            echo "- Runtime secrets: Google Secret Manager references only"
+            echo "- Runtime secret versions: resolved to enabled numeric versions"
+            echo "- Public invocation bindings: absent"
             echo "- Readiness: passed"
           } >> "${GITHUB_STEP_SUMMARY}"
