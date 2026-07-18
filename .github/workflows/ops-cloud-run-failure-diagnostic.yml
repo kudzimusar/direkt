@@ -1,0 +1,23 @@
+name: Cloud Run failure diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/ops-cloud-run-failure-diagnostic.yml
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print failed preflight lines
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run view 29623925889 --repo "$GITHUB_REPOSITORY" --log-failed \
+            | grep -E 'Missing pinned secret version|must be a positive|::error|Process completed' \
+            | tail -n 40
