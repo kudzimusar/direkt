@@ -172,13 +172,9 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
       custom: 'Public synthetic traffic requires DIREKT_DATA_MODE=synthetic-only.',
     });
   }
-  if (
-    value.PILOT_ENTRY_APPROVED &&
-    value.DIREKT_DATA_MODE !== 'controlled-pilot'
-  ) {
+  if (value.PILOT_ENTRY_APPROVED && value.DIREKT_DATA_MODE !== 'controlled-pilot') {
     return helpers.message({
-      custom:
-        'PILOT_ENTRY_APPROVED may be true only with DIREKT_DATA_MODE=controlled-pilot.',
+      custom: 'PILOT_ENTRY_APPROVED may be true only with DIREKT_DATA_MODE=controlled-pilot.',
     });
   }
   if (value.DIREKT_DATA_MODE === 'controlled-pilot') {
