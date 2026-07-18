@@ -57,14 +57,15 @@ function token(
 function installCertificateFetch(): void {
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () =>
-      new Response(JSON.stringify({ 'test-key': publicPem }), {
-        status: 200,
-        headers: {
-          'content-type': 'application/json',
-          'cache-control': 'public, max-age=300',
-        },
-      }),
+    vi.fn(
+      async () =>
+        new Response(JSON.stringify({ 'test-key': publicPem }), {
+          status: 200,
+          headers: {
+            'content-type': 'application/json',
+            'cache-control': 'public, max-age=300',
+          },
+        }),
     ),
   );
 }
