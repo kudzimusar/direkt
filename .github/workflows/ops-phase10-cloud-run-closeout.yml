@@ -13,12 +13,39 @@ permissions:
 jobs:
   closeout:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     env:
-      SOURCE_SHA: b1e980e8f2f913228bd5053ec8d8380ab3bcc391
+      SOURCE_SHA: f40dcfa700a7ccecdca520b4420aaa5aff17478c
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Independently inspect already-verified private staging
+      - name: Deploy private staging from exact current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          gh workflow run cloud-run-staging-deploy-v2.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f confirmation=DEPLOY-DIREKT-STAGING \
+            -f source_sha="$SOURCE_SHA"
+          run_id=""
+          for attempt in $(seq 1 60); do
+            run_id=$(gh run list --repo "$GITHUB_REPOSITORY" \
+              --workflow cloud-run-staging-deploy-v2.yml \
+              --branch main --event workflow_dispatch --limit 20 \
+              --json databaseId,createdAt \
+              --jq "map(select(.createdAt >= \"$started\")) | sort_by(.createdAt) | last | .databaseId // empty")
+            test -n "$run_id" && break
+            sleep 5
+          done
+          test -n "$run_id"
+          echo "Cloud Run staging deploy run ID: $run_id"
+          if ! gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status; then
+            gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --log-failed || true
+            exit 1
+          fi
+
+      - name: Independently inspect private staging
         shell: bash
         run: |
           set -euo pipefail
