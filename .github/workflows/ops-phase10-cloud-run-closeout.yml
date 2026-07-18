@@ -17,14 +17,8 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Print exact-main child run IDs and inspection failure
+      - name: Print exact-main inspection failed log tail
         shell: bash
         run: |
           set -euo pipefail
-          gh run view 29645718385 --repo "$GITHUB_REPOSITORY" --log \
-            | grep -E 'Final Cloud Run staging (deploy|inspection) run ID|Final managed Cloud Run operations run ID' \
-            | tail -n 20 || true
-          echo '--- failed inspection evidence ---'
-          gh run view 29645718385 --repo "$GITHUB_REPOSITORY" --log-failed \
-            | grep -E 'inspection run ID|Expected|expected|image|revision|scale|IAM|invoker|secret|readiness|403|401|ERROR|Error|Process completed|curl:' \
-            | tail -n 180 || true
+          gh run view 29645801091 --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 180
