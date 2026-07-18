@@ -128,7 +128,6 @@ jobs:
           url.protocol = 'postgresql:';
           url.password = password;
           url.port = '5432';
-          url.searchParams.set('uselibpqcompat', 'true');
           url.searchParams.set('sslmode', 'require');
           process.stdout.write(url.toString());
           NODE
