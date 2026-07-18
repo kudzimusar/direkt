@@ -11,10 +11,11 @@ interface DatabaseCheck {
   database: string;
   postgis_version: string;
   migration_count: string;
-  anon_spatial_ref_sys_access: boolean;
-  authenticated_spatial_ref_sys_access: boolean;
-  anon_estimatedextent_execute: boolean;
-  authenticated_estimatedextent_execute: boolean;
+  anon_application_schema_usage: boolean;
+  authenticated_application_schema_usage: boolean;
+  anon_quarantine_schema_usage: boolean;
+  authenticated_quarantine_schema_usage: boolean;
+  quarantine_schema_object_count: string;
   anon_migration_ledger_access: boolean;
   authenticated_migration_ledger_access: boolean;
 }
@@ -24,6 +25,22 @@ const REQUIRED_BUCKETS = [
   'provider-media-private',
   'provider-media-public',
   'system-exports',
+] as const;
+
+const APPLICATION_SCHEMAS = [
+  'platform',
+  'account',
+  'authz',
+  'provider',
+  'catalog',
+  'evidence',
+  'verification',
+  'discovery',
+  'provider_workspace',
+  'operations',
+  'interaction',
+  'commercial',
+  'security',
 ] as const;
 
 async function main(): Promise<void> {
@@ -38,33 +55,31 @@ async function main(): Promise<void> {
   const pool = new Pool({ connectionString: directDatabaseUrl(), max: 1 });
 
   try {
+    const schemaList = APPLICATION_SCHEMAS.map((schema) => `'${schema}'`).join(', ');
     const database = await pool.query<DatabaseCheck>(`
       SELECT
         current_database() AS database,
         PostGIS_Version() AS postgis_version,
         (SELECT count(*)::text FROM public.direkt_schema_migrations) AS migration_count,
+        EXISTS (
+          SELECT 1
+          FROM pg_namespace
+          WHERE nspname IN (${schemaList})
+            AND has_schema_privilege('anon', oid, 'USAGE')
+        ) AS anon_application_schema_usage,
+        EXISTS (
+          SELECT 1
+          FROM pg_namespace
+          WHERE nspname IN (${schemaList})
+            AND has_schema_privilege('authenticated', oid, 'USAGE')
+        ) AS authenticated_application_schema_usage,
+        has_schema_privilege('anon', 'direkt_api_disabled', 'USAGE') AS anon_quarantine_schema_usage,
+        has_schema_privilege('authenticated', 'direkt_api_disabled', 'USAGE') AS authenticated_quarantine_schema_usage,
         (
-          has_table_privilege('anon', 'public.spatial_ref_sys', 'SELECT') OR
-          has_table_privilege('anon', 'public.spatial_ref_sys', 'INSERT') OR
-          has_table_privilege('anon', 'public.spatial_ref_sys', 'UPDATE') OR
-          has_table_privilege('anon', 'public.spatial_ref_sys', 'DELETE')
-        ) AS anon_spatial_ref_sys_access,
-        (
-          has_table_privilege('authenticated', 'public.spatial_ref_sys', 'SELECT') OR
-          has_table_privilege('authenticated', 'public.spatial_ref_sys', 'INSERT') OR
-          has_table_privilege('authenticated', 'public.spatial_ref_sys', 'UPDATE') OR
-          has_table_privilege('authenticated', 'public.spatial_ref_sys', 'DELETE')
-        ) AS authenticated_spatial_ref_sys_access,
-        (
-          has_function_privilege('anon', 'public.st_estimatedextent(text,text)', 'EXECUTE') OR
-          has_function_privilege('anon', 'public.st_estimatedextent(text,text,text)', 'EXECUTE') OR
-          has_function_privilege('anon', 'public.st_estimatedextent(text,text,text,boolean)', 'EXECUTE')
-        ) AS anon_estimatedextent_execute,
-        (
-          has_function_privilege('authenticated', 'public.st_estimatedextent(text,text)', 'EXECUTE') OR
-          has_function_privilege('authenticated', 'public.st_estimatedextent(text,text,text)', 'EXECUTE') OR
-          has_function_privilege('authenticated', 'public.st_estimatedextent(text,text,text,boolean)', 'EXECUTE')
-        ) AS authenticated_estimatedextent_execute,
+          SELECT count(*)::text
+          FROM information_schema.tables
+          WHERE table_schema = 'direkt_api_disabled'
+        ) AS quarantine_schema_object_count,
         (
           has_table_privilege('anon', 'public.direkt_schema_migrations', 'SELECT') OR
           has_table_privilege('anon', 'public.direkt_schema_migrations', 'INSERT') OR
@@ -85,10 +100,10 @@ async function main(): Promise<void> {
     }
 
     const exposedDatabaseSurfaces = [
-      ['anon spatial_ref_sys', databaseState.anon_spatial_ref_sys_access],
-      ['authenticated spatial_ref_sys', databaseState.authenticated_spatial_ref_sys_access],
-      ['anon st_estimatedextent', databaseState.anon_estimatedextent_execute],
-      ['authenticated st_estimatedextent', databaseState.authenticated_estimatedextent_execute],
+      ['anon application schema usage', databaseState.anon_application_schema_usage],
+      ['authenticated application schema usage', databaseState.authenticated_application_schema_usage],
+      ['anon quarantine schema usage', databaseState.anon_quarantine_schema_usage],
+      ['authenticated quarantine schema usage', databaseState.authenticated_quarantine_schema_usage],
       ['anon migration ledger', databaseState.anon_migration_ledger_access],
       ['authenticated migration ledger', databaseState.authenticated_migration_ledger_access],
     ]
@@ -98,6 +113,12 @@ async function main(): Promise<void> {
     if (exposedDatabaseSurfaces.length > 0) {
       throw new Error(
         `Browser-facing Supabase database privileges must remain revoked: ${exposedDatabaseSurfaces.join(', ')}.`,
+      );
+    }
+
+    if (databaseState.quarantine_schema_object_count !== '0') {
+      throw new Error(
+        `The Supabase Data API quarantine schema must remain empty; found ${databaseState.quarantine_schema_object_count} table(s).`,
       );
     }
 
@@ -130,7 +151,9 @@ async function main(): Promise<void> {
           projectRef,
           database: databaseState,
           privateBuckets: [...REQUIRED_BUCKETS],
-          browserDatabaseSurface: 'revoked',
+          applicationSchemas: [...APPLICATION_SCHEMAS],
+          browserDatabaseSurface: 'application schemas and migration ledger private',
+          dataApiQuarantineSchema: 'direkt_api_disabled',
           serverKeyType: serverKey.startsWith('sb_secret_') ? 'secret' : 'legacy_service_role',
         },
         null,
