@@ -32,6 +32,7 @@ export interface RequestSecurityContext {
 export class AuthService {
   private readonly challengeTtlSeconds: number;
   private readonly refreshTokenTtlDays: number;
+  private readonly pilotNoticeVersion: string | undefined;
 
   constructor(
     private readonly repository: AuthRepository,
@@ -43,6 +44,7 @@ export class AuthService {
   ) {
     this.challengeTtlSeconds = config.getOrThrow<number>('CHALLENGE_TTL_SECONDS');
     this.refreshTokenTtlDays = config.getOrThrow<number>('REFRESH_TOKEN_TTL_DAYS');
+    this.pilotNoticeVersion = config.get<string>('PILOT_NOTICE_VERSION');
   }
 
   async requestChallenge(
@@ -124,6 +126,13 @@ export class AuthService {
     dto: FirebaseSessionExchangeDto,
     context: RequestSecurityContext,
   ): Promise<AuthenticatedSession> {
+    if (
+      !dto.consentAccepted ||
+      !this.pilotNoticeVersion ||
+      dto.noticeVersion !== this.pilotNoticeVersion
+    ) {
+      throw new UnauthorizedException('The approved pilot notice must be accepted before sign-in.');
+    }
     const verified = await this.firebaseVerifier.verify(dto.idToken);
     const contact = normalizeContact('phone', verified.phoneNumber);
     const sessionId = randomUUID();
@@ -134,6 +143,7 @@ export class AuthService {
       subjectHash: this.tokens.hashExternalSubject('firebase', verified.subject),
       contactHash: this.tokens.hashContact(contact.value),
       displayHint: contact.displayHint,
+      noticeVersion: dto.noticeVersion,
       sessionId,
       familyId,
       refreshTokenHash: this.tokens.hashRefreshToken(refreshToken),
@@ -145,7 +155,7 @@ export class AuthService {
     });
 
     if (result.kind !== 'success') {
-      throw new UnauthorizedException('The external identity could not be linked safely.');
+      throw new UnauthorizedException('The external identity is not admitted to the pilot.');
     }
 
     return {
