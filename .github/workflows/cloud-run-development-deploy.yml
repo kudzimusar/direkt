@@ -36,12 +36,6 @@ jobs:
       GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
       GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
       GCP_RUNTIME_SERVICE_ACCOUNT: direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com
-      DIREKT_DATABASE_URL_SECRET_VERSION: ${{ vars.DIREKT_DATABASE_URL_SECRET_VERSION }}
-      DIREKT_SUPABASE_URL_SECRET_VERSION: ${{ vars.DIREKT_SUPABASE_URL_SECRET_VERSION }}
-      DIREKT_SUPABASE_SECRET_KEY_SECRET_VERSION: ${{ vars.DIREKT_SUPABASE_SECRET_KEY_SECRET_VERSION }}
-      DIREKT_ACCESS_TOKEN_SECRET_VERSION: ${{ vars.DIREKT_ACCESS_TOKEN_SECRET_VERSION }}
-      DIREKT_CONTACT_HASH_PEPPER_SECRET_VERSION: ${{ vars.DIREKT_CONTACT_HASH_PEPPER_SECRET_VERSION }}
-      DIREKT_CHALLENGE_HASH_PEPPER_SECRET_VERSION: ${{ vars.DIREKT_CHALLENGE_HASH_PEPPER_SECRET_VERSION }}
       DATABASE_URL: postgresql://direkt:direkt_ci@localhost:5432/direkt_test
       NODE_ENV: test
 
@@ -67,21 +61,6 @@ jobs:
           set -euo pipefail
           test "${{ inputs.confirmation }}" = "DEPLOY-DIREKT-DEVELOPMENT"
           [[ "${{ inputs.source_sha }}" =~ ^[0-9a-f]{40}$ ]]
-
-          secret_versions=(
-            DIREKT_DATABASE_URL_SECRET_VERSION
-            DIREKT_SUPABASE_URL_SECRET_VERSION
-            DIREKT_SUPABASE_SECRET_KEY_SECRET_VERSION
-            DIREKT_ACCESS_TOKEN_SECRET_VERSION
-            DIREKT_CONTACT_HASH_PEPPER_SECRET_VERSION
-            DIREKT_CHALLENGE_HASH_PEPPER_SECRET_VERSION
-          )
-          for name in "${secret_versions[@]}"; do
-            if [[ ! "${!name:-}" =~ ^[1-9][0-9]*$ ]]; then
-              echo "::error title=Missing pinned secret version::${name} must be a positive Secret Manager version number."
-              exit 1
-            fi
-          done
 
       - name: Check out exact reviewed source
         uses: actions/checkout@v6
@@ -135,6 +114,39 @@ jobs:
         uses: google-github-actions/setup-gcloud@v3
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Resolve enabled numeric Secret Manager versions
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mappings=(
+            "DIREKT_DATABASE_URL_SECRET_VERSION:direkt-database-url"
+            "DIREKT_SUPABASE_URL_SECRET_VERSION:direkt-supabase-url"
+            "DIREKT_SUPABASE_SECRET_KEY_SECRET_VERSION:direkt-supabase-secret-key"
+            "DIREKT_ACCESS_TOKEN_SECRET_VERSION:direkt-access-token-secret"
+            "DIREKT_CONTACT_HASH_PEPPER_SECRET_VERSION:direkt-contact-hash-pepper"
+            "DIREKT_CHALLENGE_HASH_PEPPER_SECRET_VERSION:direkt-challenge-hash-pepper"
+          )
+
+          for mapping in "${mappings[@]}"; do
+            variable_name="${mapping%%:*}"
+            secret_name="${mapping#*:}"
+            version_record="$(gcloud secrets versions describe latest \
+              --secret "${secret_name}" \
+              --project "${GCP_PROJECT_ID}" \
+              --format=json)"
+            version="$(jq -r '.name | split("/") | last' <<< "${version_record}")"
+            state="$(jq -r '.state' <<< "${version_record}")"
+
+            if [[ ! "${version}" =~ ^[1-9][0-9]*$ ]] || [[ "${state}" != "ENABLED" ]]; then
+              echo "::error title=Enabled secret version missing::${secret_name} did not resolve to an enabled numeric version."
+              exit 1
+            fi
+
+            echo "${variable_name}=${version}" >> "${GITHUB_ENV}"
+            echo "- ${secret_name}: version ${version}" >> "${GITHUB_STEP_SUMMARY}"
+          done
 
       - name: Configure Artifact Registry authentication
         shell: bash
@@ -271,7 +283,7 @@ jobs:
             echo "- Service: \`${GCP_CLOUD_RUN_SERVICE}\`"
             echo "- Invocation: IAM-private"
             echo "- Data mode: \`synthetic-only\`"
-            echo "- Runtime secret versions: pinned"
+            echo "- Runtime secret versions: resolved to enabled numeric versions"
             echo "- Public invocation bindings: absent"
             echo "- Readiness: passed"
           } >> "${GITHUB_STEP_SUMMARY}"
