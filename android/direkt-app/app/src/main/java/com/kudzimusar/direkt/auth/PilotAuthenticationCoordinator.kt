@@ -33,6 +33,7 @@ internal class PilotAuthenticationCoordinator(
     private val sessionStore = PilotSessionStore(context)
     private val executor = Executors.newSingleThreadExecutor()
     private var verificationId: String? = null
+    private var consentAcceptedForVerification = false
 
     val enabled: Boolean
         get() = configuration.enabled
@@ -45,10 +46,15 @@ internal class PilotAuthenticationCoordinator(
     fun startPhoneVerification(
         activity: Activity,
         phoneNumber: String,
+        consentAccepted: Boolean,
         onResult: (PilotAuthResult) -> Unit,
     ) {
         if (!enabled) {
             onResult(PilotAuthResult.Error("Pilot authentication is not configured."))
+            return
+        }
+        if (!consentAccepted) {
+            onResult(PilotAuthResult.Error("Accept the approved pilot notice before verification."))
             return
         }
         if (!ZAMBIA_PHONE_PATTERN.matches(phoneNumber)) {
@@ -56,6 +62,7 @@ internal class PilotAuthenticationCoordinator(
             return
         }
 
+        consentAcceptedForVerification = true
         val auth = firebaseAuth()
         val callbacks =
             object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
@@ -64,6 +71,7 @@ internal class PilotAuthenticationCoordinator(
                 }
 
                 override fun onVerificationFailed(exception: com.google.firebase.FirebaseException) {
+                    consentAcceptedForVerification = false
                     onResult(PilotAuthResult.Error("Phone verification could not be completed."))
                 }
 
@@ -92,6 +100,10 @@ internal class PilotAuthenticationCoordinator(
         onResult: (PilotAuthResult) -> Unit,
     ) {
         val activeVerificationId = verificationId
+        if (!consentAcceptedForVerification) {
+            onResult(PilotAuthResult.Error("Accept the approved pilot notice before verification."))
+            return
+        }
         if (activeVerificationId.isNullOrBlank()) {
             onResult(PilotAuthResult.Error("Request a verification code first."))
             return
@@ -114,6 +126,7 @@ internal class PilotAuthenticationCoordinator(
         }
         sessionStore.clear()
         verificationId = null
+        consentAcceptedForVerification = false
     }
 
     private fun signInAndExchange(
@@ -160,6 +173,9 @@ internal class PilotAuthenticationCoordinator(
         executor.execute {
             val result =
                 runCatching {
+                    if (!consentAcceptedForVerification) {
+                        throw IllegalStateException("Pilot notice consent is not active.")
+                    }
                     val endpoint = URL("${configuration.apiBaseUrl}/api/v1/auth/firebase/exchange")
                     val connection = endpoint.openConnection() as HttpsURLConnection
                     try {
@@ -172,6 +188,8 @@ internal class PilotAuthenticationCoordinator(
                         val body =
                             JSONObject()
                                 .put("idToken", idToken)
+                                .put("noticeVersion", configuration.noticeVersion)
+                                .put("consentAccepted", true)
                                 .put("deviceLabel", "Android pilot device")
                                 .toString()
                         connection.outputStream.use { output ->
@@ -194,6 +212,7 @@ internal class PilotAuthenticationCoordinator(
                     onSuccess = { session ->
                         sessionStore.save(session)
                         verificationId = null
+                        consentAcceptedForVerification = false
                         onResult(PilotAuthResult.SignedIn(session.sessionId))
                     },
                     onFailure = {
