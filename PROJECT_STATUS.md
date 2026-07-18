@@ -3,7 +3,7 @@
 **Updated:** 2026-07-18  
 **Stable branch:** `main`  
 **Implementation branch:** `build/android-v1`  
-**Programme state:** Phase 9 is complete and stable. Phase 10 is active under Issue #41 and checkpoint PR #42.
+**Programme state:** Phase 9 is complete and stable. Phase 10 implementation and managed exit evidence are complete; final documentation promotion, Issue #41 closure and branch synchronization remain administrative closeout actions before Phase 11 is claimed.
 
 ## Stable checkpoints
 
@@ -28,9 +28,9 @@ All Stage 9A–9G capabilities are stable and all permanent workflows passed on 
 
 ## Phase 10 implementation state
 
-Issue #41 is the sole active tracker and PR #42 is the checkpoint PR. The single implementation lane is claimed on `build/android-v1`.
+Issue #41 remains the sole tracker until final documentation promotion and branch synchronization. Phase 10 stages 10A–10I and the required managed synthetic/private-staging evidence are complete. The final managed source is `5d9313333c49d6501944e6ddba4cd408c540ff47`.
 
-Stage 10A security architecture and the Stage 10B route/permission baseline are implemented on the active branch. Privacy, retention, legal, storage, abuse, reliability, supply-chain, provider approval and checkpoint work remain in progress.
+See `docs/phase10/PHASE10_CLOSEOUT_2026-07-18.md` for the authoritative managed evidence and retained Phase 11 entry stop gates.
 
 ### Infrastructure activation correction
 
@@ -40,7 +40,7 @@ Phase 10 explicitly permits:
 - protected staging infrastructure using synthetic or separately approved non-personal fixtures;
 - exact-source Supabase activation and verification;
 - immutable Cloud Run API deployment through GitHub OIDC;
-- protected, no-index Vercel Preview/Staging portal deployment;
+- IAM-private Cloud Run operations-portal staging;
 - Firebase internal tester distribution.
 
 This does **not** authorize real participant/evidence data, unrestricted public invitations, a Zambia pilot, public promotion or production release.
@@ -52,36 +52,39 @@ This does **not** authorize real participant/evidence data, unrestricted public 
 | Supabase | project `direct-app`, ref `aeeuscifrxcjmnswqwnq`, region `ap-northeast-1` |
 | Google Cloud | project `direkt-dev-502701`, region `asia-northeast1` |
 | Artifact Registry | `direkt-containers` |
-| Cloud Run | `direkt-api` |
+| Cloud Run API | `direkt-api` |
+| Cloud Run portal | `direkt-operations-portal-staging` |
 | Firebase | project `direkt-dev-502701`, tester group `direkt-internal-testers` |
-| Vercel | protected Preview/Staging project still requires owner-side project binding and identifiers |
+| Vercel | explicitly excluded from the current Phase 10/Phase 11-entry path by programme decision |
 
-### Supabase activation state — complete
+### Supabase activation and restore state — complete
 
-Protected activation and independent inspection confirm:
+Protected activation, independent inspection and managed restore confirm:
 
-- PostGIS is installed and `PostGIS_Version()` succeeds;
-- 34 checksummed DIREKT migrations are recorded through `202607180925_supabase_exposed_schema_hardening.sql`;
-- the required DIREKT schemas and platform tables exist;
+- PostgreSQL 17 and PostGIS are active;
+- 37 checksummed DIREKT migrations are recorded;
+- all 13 DIREKT application schemas exist;
 - all four required Storage buckets exist and are private;
-- the Storage object count is zero;
-- RLS is enabled on the DIREKT migration ledger;
-- browser-facing roles have no table privileges on that ledger.
+- the Storage object count is zero for Phase 10 evidence;
+- browser-facing roles have no direct DIREKT application-schema/table access;
+- managed restore run `29641165494` passed clean restore, integrity, migration-ledger, forward-migration and restored API-readiness checks.
 
-The remaining `public.spatial_ref_sys` advisor finding is a documented Supabase-managed PostGIS exception. See `docs/phase10/SUPABASE_DEVELOPMENT_ACTIVATION.md`.
+### Cloud Run managed staging state — complete
 
-### Cloud Run recovery state — external IAM gate
+Final exact-source evidence on `5d9313333c49d6501944e6ddba4cd408c540ff47`:
 
-The API deployment workflow is private-only, immutable-source controlled, and rejects Secret Manager `:latest` references. The recovery deployment failed closed before any build, image push, or Cloud Run mutation because numeric secret-version metadata was unavailable.
+- private deployment run `29647717734`: passed;
+- independent staging inspection run `29647798494`: passed;
+- managed operations run `29647821458`: passed.
 
-GitHub-to-Google OIDC succeeds. The deployer identity currently lacks the metadata permissions required to resolve the six pinned runtime secret versions. No secret payload was read and no version number was guessed.
+The final chain verifies immutable images, bounded runtime identities, numeric Secret Manager versions, no public invokers, latest-created/latest-ready revision integrity, rollback and floating-`LATEST` recovery, portal-to-API kill switch and restoration, scale-to-zero/post-idle readiness, Cloud Monitoring alerting and temporary-Invoker cleanup.
 
-The exact external configuration and recovery sequence are documented in `docs/phase10/CLOUD_RUN_DEVELOPMENT_RECOVERY.md`. Cloud Run is not yet accepted as recovered.
+Firebase internal distribution run `29635486574` also passed for internal debug testing only.
 
 ## Phase boundaries
 
-- Phase 10: synthetic-only development/protected staging integration and hardening.
-- Phase 11: consenting real participants, real pilot evidence and controlled Zambia pilot validation.
+- Phase 10: synthetic-only development/protected staging integration and hardening — managed evidence complete.
+- Phase 11: consenting real participants and controlled Zambia pilot validation — separately entry-gated by legal/privacy/consent/owner/provider prerequisites.
 - Phase 12: production backend/portal/Android release and public rollout.
 
 Issue #5 remains open as a later, non-blocking Zambia pilot-validation obligation.
