@@ -8,6 +8,7 @@ describe('Phase 10 abuse-control policies', () => {
   it.each([
     ['POST', '/api/v1/auth/challenges', 'auth_challenge_request'],
     ['POST', '/api/v1/auth/challenges/verify', 'auth_challenge_verify'],
+    ['POST', '/api/v1/auth/firebase/exchange', 'auth_firebase_exchange'],
     ['POST', '/api/v1/auth/sessions/rotate', 'auth_session_rotate'],
     ['GET', '/api/v1/public/providers/search', 'public_discovery_search'],
     ['POST', '/api/v1/enquiries', 'interaction_enquiry_create'],
