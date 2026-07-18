@@ -1,6 +1,8 @@
 package com.kudzimusar.direkt.ui.auth
 
 import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,7 +30,7 @@ import com.kudzimusar.direkt.auth.PilotAuthenticationCoordinator
 @Composable
 fun PilotAuthenticationExperience() {
     val context = LocalContext.current
-    val activity = context as? Activity
+    val activity = context.findActivity()
     val coordinator = remember { PilotAuthenticationCoordinator(context.applicationContext) }
     var phoneNumber by remember { mutableStateOf("+260") }
     var verificationCode by remember { mutableStateOf("") }
@@ -112,6 +114,7 @@ fun PilotAuthenticationExperience() {
                     coordinator.startPhoneVerification(
                         activity = activity ?: return@Button,
                         phoneNumber = phoneNumber,
+                        consentAccepted = consented,
                         onResult = { result ->
                             when (result) {
                                 PilotAuthResult.CodeSent -> {
@@ -144,7 +147,7 @@ fun PilotAuthenticationExperience() {
                     singleLine = true,
                 )
                 Button(
-                    enabled = verificationCode.length == 6 && activity != null,
+                    enabled = consented && verificationCode.length == 6 && activity != null,
                     onClick = {
                         status = "Verifying…"
                         coordinator.submitVerificationCode(
@@ -180,3 +183,10 @@ fun PilotAuthenticationExperience() {
         }
     }
 }
+
+private tailrec fun Context.findActivity(): Activity? =
+    when (this) {
+        is Activity -> this
+        is ContextWrapper -> baseContext.findActivity()
+        else -> null
+    }
