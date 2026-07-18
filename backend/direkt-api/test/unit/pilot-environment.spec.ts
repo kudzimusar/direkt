@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { environmentSchema } from '../../src/config/environment';
+import {
+  environmentSchema,
+  type DirektEnvironment,
+} from '../../src/config/environment';
 
 const approvedPilotConfig = {
   NODE_ENV: 'test',
@@ -25,9 +28,10 @@ function validationMessage(overrides: Record<string, unknown>): string {
 describe('Phase 11 controlled-pilot configuration', () => {
   it('accepts only the traffic-disabled, approved pilot preparation boundary', () => {
     const result = environmentSchema.validate(approvedPilotConfig);
+    const value = result.value as DirektEnvironment;
     expect(result.error).toBeUndefined();
-    expect(result.value.PILOT_ENTRY_APPROVED).toBe(true);
-    expect(result.value.DIREKT_DATA_MODE).toBe('controlled-pilot');
+    expect(value.PILOT_ENTRY_APPROVED).toBe(true);
+    expect(value.DIREKT_DATA_MODE).toBe('controlled-pilot');
   });
 
   it('rejects controlled-pilot data mode without the explicit entry latch', () => {
