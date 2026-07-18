@@ -1,52 +1,16 @@
-name: Synchronize main into Phase 10 lane
-
+name: Phase 10 staging diagnostic
 on:
   pull_request:
     branches: [build/android-v1]
-    paths:
-      - .github/workflows/ops-sync-main-into-phase10.yml
-
+    paths: [.github/workflows/ops-sync-main-into-phase10.yml]
 permissions:
-  contents: write
-
+  actions: read
+  contents: read
 jobs:
-  synchronize:
+  inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out Phase 10 lane
-        uses: actions/checkout@v6
-        with:
-          ref: build/android-v1
-          fetch-depth: 0
-
-      - name: Merge current main without rewriting history
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main --no-tags
-
-          set +e
-          git merge --no-ff origin/main -m "chore: synchronize main recovery into Phase 10 lane"
-          merge_status=$?
-          set -e
-
-          if [[ ${merge_status} -ne 0 ]]; then
-            mapfile -t conflicts < <(git diff --name-only --diff-filter=U | sort)
-            printf 'Conflicts: %s\n' "${conflicts[*]}"
-            expected=(
-              ".github/workflows/cloud-run-development-deploy.yml"
-              "PROJECT_STATUS.md"
-            )
-            if [[ "${conflicts[*]}" != "${expected[*]}" ]]; then
-              echo "Unexpected merge conflicts; refusing automatic resolution."
-              exit 1
-            fi
-            git checkout --theirs -- .github/workflows/cloud-run-development-deploy.yml PROJECT_STATUS.md
-            git add .github/workflows/cloud-run-development-deploy.yml PROJECT_STATUS.md
-            git commit --no-edit
-          fi
-
-          test -z "$(git status --porcelain)"
-          git push origin HEAD:build/android-v1
+      - name: Show failure
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run view 29627582756 --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 80
