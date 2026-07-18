@@ -1,4 +1,4 @@
-name: Phase 10 staging diagnostic
+name: Phase 10 managed restore diagnostic
 
 on:
   pull_request:
@@ -14,10 +14,10 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Show migration error
+      - name: Show managed restore error
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh run view 29634809995 --repo "$GITHUB_REPOSITORY" --log-failed \
-            | grep -E 'ERROR:|Error:|error:|failed|Failed|permission denied|does not exist|syntax error|Process completed' \
-            | tail -n 80
+          gh run view 29635408329 --repo "$GITHUB_REPOSITORY" --log-failed \
+            | grep -E 'ERROR:|Error:|error:|failed|Failed|permission denied|does not exist|syntax error|Process completed|psql:' \
+            | tail -n 100
