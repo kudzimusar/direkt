@@ -1,4 +1,4 @@
-name: Restore error
+name: Restore final error
 on:
   pull_request:
     branches: [build/android-v1]
@@ -12,4 +12,4 @@ jobs:
     steps:
       - env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run view 29628637442 --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 45
+        run: gh run view 29628637442 --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 12
