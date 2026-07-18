@@ -1,0 +1,41 @@
+name: Supabase activation check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/ops-supabase-activation-check.yml
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  activate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Dispatch reviewed workflow
+        id: start
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          gh workflow run supabase-development-activate.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f confirmation=ACTIVATE-DIREKT-DEVELOPMENT \
+            -f source_sha=7ac464055b18cb66b871eaa935e9f0f9903b6f94
+
+      - name: Wait for result
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STARTED: ${{ steps.start.outputs.started }}
+        run: |
+          for attempt in $(seq 1 60); do
+            RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow supabase-development-activate.yml --branch main --event workflow_dispatch --limit 20 --json databaseId,createdAt --jq "map(select(.createdAt >= \"$STARTED\")) | sort_by(.createdAt) | last | .databaseId // empty")
+            test -n "$RUN_ID" && break
+            sleep 5
+          done
+          test -n "$RUN_ID"
+          gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status
