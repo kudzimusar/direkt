@@ -1,0 +1,42 @@
+name: Cloud Run API recovery check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/ops-cloud-run-api-recovery.yml
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Dispatch reviewed workflow
+        id: start
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          gh workflow run cloud-run-development-deploy.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f confirmation=DEPLOY-DIREKT-DEVELOPMENT \
+            -f source_sha=1d6b7158338e14dc1c3ecd14455df0a4d4847a5b
+
+      - name: Wait for result
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STARTED: ${{ steps.start.outputs.started }}
+        run: |
+          for attempt in $(seq 1 60); do
+            RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow cloud-run-development-deploy.yml --branch main --event workflow_dispatch --limit 20 --json databaseId,createdAt --jq "map(select(.createdAt >= \"$STARTED\")) | sort_by(.createdAt) | last | .databaseId // empty")
+            test -n "$RUN_ID" && break
+            sleep 5
+          done
+          test -n "$RUN_ID"
+          echo "Cloud Run deployment run ID: $RUN_ID"
+          gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status
