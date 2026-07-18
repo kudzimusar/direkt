@@ -28,7 +28,8 @@ jobs:
     timeout-minutes: 35
     env:
       PROJECT_REF: aeeuscifrxcjmnswqwnq
-      SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       POSTGRES_USER: direkt
       POSTGRES_PASSWORD: direkt_restore
       RESTORE_DB: direkt_managed_restore
@@ -55,12 +56,10 @@ jobs:
           set -euo pipefail
           test "${{ inputs.confirmation }}" = "RESTORE-DIREKT-MANAGED"
           [[ "${{ inputs.source_sha }}" =~ ^[0-9a-f]{40}$ ]]
-          test -n "${SUPABASE_DATABASE_URL}"
-          case "${SUPABASE_DATABASE_URL}" in
-            postgres://*|postgresql://*) ;;
-            *) echo "Invalid managed database URL." >&2; exit 1 ;;
-          esac
-          echo "::add-mask::${SUPABASE_DATABASE_URL}"
+          test -n "${SUPABASE_ACCESS_TOKEN}"
+          test -n "${SUPABASE_DB_PASSWORD}"
+          echo "::add-mask::${SUPABASE_ACCESS_TOKEN}"
+          echo "::add-mask::${SUPABASE_DB_PASSWORD}"
           RESTORE_DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${RESTORE_DB}"
           echo "::add-mask::${RESTORE_DATABASE_URL}"
           echo "RESTORE_DATABASE_URL=${RESTORE_DATABASE_URL}" >> "${GITHUB_ENV}"
@@ -78,6 +77,69 @@ jobs:
           test "$(git rev-parse HEAD)" = "${{ inputs.source_sha }}"
           git fetch origin main --no-tags
           git merge-base --is-ancestor "${{ inputs.source_sha }}" origin/main
+
+      - name: Set up Node.js 24 LTS
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Resolve current Supabase Session pooler connection
+        shell: bash
+        run: |
+          set -euo pipefail
+          POOLER_RESPONSE="${RUNNER_TEMP}/supabase-pooler.json"
+          HTTP_STATUS="$(curl --silent --show-error \
+            --output "${POOLER_RESPONSE}" \
+            --write-out '%{http_code}' \
+            "https://api.supabase.com/v1/projects/${PROJECT_REF}/config/database/pooler" \
+            --header "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+            --header "Content-Type: application/json")"
+          if [[ "${HTTP_STATUS}" != "200" ]]; then
+            echo "::error title=Supabase pooler configuration unavailable::Management API returned HTTP ${HTTP_STATUS}."
+            exit 1
+          fi
+
+          POOLER_ROW="$(jq -c '[.[] | select(.database_type == "PRIMARY")] | (map(select(.db_port == 5432 or .pool_mode == "session"))[0] // .[0] // empty)' "${POOLER_RESPONSE}")"
+          test -n "${POOLER_ROW}"
+          RAW_CONNECTION_STRING="$(jq -r '.connection_string // .connectionString // empty' <<<"${POOLER_ROW}")"
+          DB_USER="$(jq -r '.db_user // empty' <<<"${POOLER_ROW}")"
+          DB_HOST="$(jq -r '.db_host // empty' <<<"${POOLER_ROW}")"
+          DB_NAME="$(jq -r '.db_name // "postgres"' <<<"${POOLER_ROW}")"
+
+          export RAW_CONNECTION_STRING DB_USER DB_HOST DB_NAME
+          SUPABASE_DATABASE_URL="$(node <<'NODE'
+          const password = process.env.SUPABASE_DB_PASSWORD;
+          const raw = process.env.RAW_CONNECTION_STRING;
+          let url;
+          if (raw) {
+            const normalized = raw
+              .replace(/\[YOUR-PASSWORD\]/g, 'placeholder')
+              .replace(/\[YOUR_PASSWORD\]/g, 'placeholder');
+            url = new URL(normalized);
+          } else {
+            if (!process.env.DB_USER || !process.env.DB_HOST) {
+              throw new Error('Supabase pooler response did not include usable connection details.');
+            }
+            url = new URL('postgresql://localhost/postgres');
+            url.username = process.env.DB_USER;
+            url.hostname = process.env.DB_HOST;
+            url.pathname = `/${process.env.DB_NAME || 'postgres'}`;
+          }
+          url.protocol = 'postgresql:';
+          url.password = password;
+          url.port = '5432';
+          url.searchParams.set('uselibpqcompat', 'true');
+          url.searchParams.set('sslmode', 'require');
+          process.stdout.write(url.toString());
+          NODE
+          )"
+          case "${SUPABASE_DATABASE_URL}" in
+            postgresql://*) ;;
+            *) echo "Invalid resolved Supabase database URL." >&2; exit 1 ;;
+          esac
+          echo "::add-mask::${SUPABASE_DATABASE_URL}"
+          echo "SUPABASE_DATABASE_URL=${SUPABASE_DATABASE_URL}" >> "${GITHUB_ENV}"
+          rm -f "${POOLER_RESPONSE}"
 
       - name: Capture sanitized live metadata
         shell: bash
@@ -228,6 +290,7 @@ jobs:
             echo "### DIREKT managed Supabase restore exercise"
             echo "- Source: \`${{ inputs.source_sha }}\`"
             echo "- Project ref: \`${PROJECT_REF}\`"
+            echo "- Managed connection: resolved from the current Supabase Session pooler configuration"
             echo "- Scope: all 13 DIREKT application schemas plus the application migration ledger"
             echo "- Supabase platform schemas: excluded from the application dump"
             echo "- Storage metadata: verified independently; object count remains zero"
