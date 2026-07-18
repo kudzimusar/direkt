@@ -26,7 +26,7 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --ref main \
             -f confirmation=RESTORE-DIREKT-MANAGED \
-            -f source_sha=477cceeac52b5609d022da95fee3613950207aac
+            -f source_sha=ffc0275b94f06e13b1a5a5a8fa8238bd18432d01
 
       - name: Require managed restore success
         env:
