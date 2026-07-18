@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
-      SOURCE_SHA: f97196e492c803bc4d68bcad2cf329340b2b6e45
+      SOURCE_SHA: b1e980e8f2f913228bd5053ec8d8380ab3bcc391
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Deploy private staging from exact current main
