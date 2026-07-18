@@ -14,10 +14,10 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Print failed preflight lines
+      - name: Print secret-version sync failure lines
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh run view 29623925889 --repo "$GITHUB_REPOSITORY" --log-failed \
-            | grep -E 'Missing pinned secret version|must be a positive|::error|Process completed' \
-            | tail -n 40
+          gh run view 29624111883 --repo "$GITHUB_REPOSITORY" --log-failed \
+            | grep -Ei 'permission|denied|forbidden|enabled secret|secretmanager|variables|403|404|error|process completed' \
+            | tail -n 80
