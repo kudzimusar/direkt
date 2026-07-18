@@ -17,8 +17,10 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Print prior managed operations failure tail
+      - name: Print kill-switch failure message
         shell: bash
         run: |
           set -euo pipefail
-          gh run view 29642190204 --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 220
+          gh run view 29642190204 --repo "$GITHUB_REPOSITORY" --log-failed \
+            | grep -E 'Portal remained|ERROR|Error|error:|exit code|HTTP|policy|binding|curl:' \
+            | tail -n 80 || true
