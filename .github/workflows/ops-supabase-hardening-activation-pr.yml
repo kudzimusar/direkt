@@ -1,0 +1,58 @@
+name: DIREKT Supabase hardening activation PR bridge
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/ops-supabase-hardening-activation-pr.yml
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Dispatch protected activation
+        id: dispatch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "${GITHUB_OUTPUT}"
+          gh api --method POST \
+            "repos/${REPOSITORY}/actions/workflows/supabase-development-activate.yml/dispatches" \
+            -f ref=main \
+            -f 'inputs[confirmation]=ACTIVATE-DIREKT-DEVELOPMENT' \
+            -f 'inputs[source_sha]=2d516ce485df06345a965663f81c388e1da719c4'
+
+      - name: Require protected activation success
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          STARTED_AT: ${{ steps.dispatch.outputs.started_at }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUN_ID=""
+          for attempt in $(seq 1 60); do
+            RUN_ID="$(gh api "repos/${REPOSITORY}/actions/workflows/supabase-development-activate.yml/runs?event=workflow_dispatch&branch=main&per_page=20" --jq ".workflow_runs | map(select(.created_at >= \"${STARTED_AT}\")) | sort_by(.created_at) | last | .id // empty")"
+            [[ -n "${RUN_ID}" ]] && break
+            sleep 5
+          done
+          [[ -n "${RUN_ID}" ]]
+          for attempt in $(seq 1 180); do
+            STATUS="$(gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}" --jq .status)"
+            CONCLUSION="$(gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}" --jq '.conclusion // ""')"
+            if [[ "${STATUS}" == "completed" ]]; then
+              [[ "${CONCLUSION}" == "success" ]]
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1
