@@ -1,61 +1,57 @@
-# Phase 11 Handoff from Phase 10 — Blocked Draft
+# Phase 11 Handoff from Phase 10 — Entry-Gated
 
 **Prepared:** 2026-07-18  
 **Planned next phase:** Phase 11 — Controlled Zambia pilot validation  
 **Predecessor:** Phase 10 — Security, privacy, legal and reliability hardening  
-**Authorization state:** **BLOCKED. Phase 11 has not started.**
+**Authorization state:** **Phase 10 handoff is ready. Real-participant Phase 11 activity remains blocked until the Phase 11 entry checklist is explicitly satisfied.**
 
 ## Purpose
 
-This draft defines the entry contract for Phase 11 without claiming that Phase 10 is complete. It must not be converted to an active handoff until the Phase 10 exit gate is evidence-backed on one exact reviewed commit and the checkpoint is promoted.
+Phase 10 technical and managed private-staging exit evidence is complete. This handoff defines the next-phase entry contract without treating Phase 10 completion as automatic authorization to recruit participants, process real evidence/location/contact data, activate production providers or move real money.
 
 Phase 11 is the first phase that may involve a tightly controlled cohort of consenting real participants. It is not a public launch, unrestricted beta or production release.
 
-## Current stop decision
+## Phase 10 evidence transferred
 
-Phase 11 remains blocked because the repository does not yet contain all required managed-environment and external-approval evidence:
+Final managed source: `5d9313333c49d6501944e6ddba4cd408c540ff47`.
 
-- exact-project Supabase activation for project ref `aeeuscifrxcjmnswqwnq` has not passed in the currently connected environment;
-- a manually approved immutable private Cloud Run staging deployment and private smoke result are not recorded on the final Phase 10 source;
-- protected Vercel Preview/Staging evidence is not recorded where that portal binding is to be used;
-- final Firebase internal distribution evidence is not recorded for the Phase 10 Android source;
-- qualified Zambia legal and authority-access evidence remains absent or explicitly stop-gated;
-- map, OTP/communications, payment and registry providers remain disabled pending approval;
-- the Phase 10 checkpoint PR is not reviewed, merged and synchronized.
+- Exact Supabase project `aeeuscifrxcjmnswqwnq` verified with 37 migrations, 13 application schemas and four private Storage buckets.
+- Managed Supabase restore run `29641165494`: passed.
+- Private Cloud Run API + portal deployment run `29647717734`: passed.
+- Independent staging inspection run `29647798494`: passed.
+- Managed rollback/kill-switch/idle/monitoring run `29647821458`: passed.
+- Firebase internal distribution run `29635486574`: passed for internal debug distribution only.
+- Cloud Run `direkt-operations-portal-staging` is the authoritative private portal staging target for this entry path.
+- Vercel Preview/Staging is explicitly excluded from the current entry path by programme decision.
+- Unapproved maps/geocoding, OTP/communications, registry and payment adapters remain disabled.
 
-No unrelated Supabase project, public Cloud Run mode or placeholder approval may be used to bypass these gates.
+See `../phase10/PHASE10_CLOSEOUT_2026-07-18.md`.
 
 ## Phase 11 entry checklist
 
-Phase 11 may be claimed only after all items below are true.
+Phase 11 may be claimed for real-participant pilot execution only after all applicable items below are true.
 
 ### Phase 10 checkpoint
 
-- [ ] Stages 10A–10I are complete against the authoritative plan.
-- [ ] All permanent backend, Android, portal, documentation, container, staging-readiness, recovery/reliability and supply-chain workflows pass on one exact reviewed head.
-- [ ] No unresolved critical or high security, privacy, legal or reliability defect remains.
-- [ ] PR #42 is approved and merged.
-- [ ] Issue #41 is closed as completed.
-- [ ] `PROJECT_STATUS.md`, `WORKSTREAM_LOCK.md`, decision records and risk records are synchronized without force-pushing.
-
-### Managed environment
-
-- [ ] Supabase project identity is verified as exactly `aeeuscifrxcjmnswqwnq`.
-- [ ] All migrations, PostGIS and required private buckets pass verification.
-- [ ] Private storage signed-grant expiry, revocation, redaction, retention and deletion evidence passes.
-- [ ] Private Cloud Run API and portal revisions deploy from one immutable reviewed source.
-- [ ] Public IAM invocation members are absent.
-- [ ] Runtime identities, secret allowlists and pinned secret versions are verified.
-- [ ] Readiness, rollback, scale-to-zero and kill-switch exercises pass.
-- [ ] Protected portal staging and Firebase internal distribution evidence is recorded where applicable.
+- [x] Stages 10A–10I are complete against the authoritative Phase 10 plan.
+- [x] Exact-project Supabase managed activation/restore evidence passes.
+- [x] Private Cloud Run API and portal deploy from one immutable reviewed source and pass independent inspection.
+- [x] Public IAM invocation members are absent; runtime identities and pinned secret boundaries are verified.
+- [x] Readiness, rollback, floating-LATEST recovery, kill-switch, IAM restoration, scale-to-zero/post-idle readiness and Monitoring evidence pass.
+- [x] Firebase internal distribution evidence is recorded where applicable.
+- [x] Vercel is explicitly excluded from the current protected staging entry path by the authoritative decision record.
+- [x] No unresolved critical/high Phase 10 implementation or managed-reliability blocker remains.
+- [ ] Final Phase 10 documentation promotion, Issue #41 closure and long-lived branch synchronization are completed.
 
 ### Legal, privacy and providers
 
-- [ ] Qualified Zambia privacy, consumer, payments, tax, invoicing and AML findings are recorded.
-- [ ] Controller/processor responsibilities and authority-access boundaries are approved.
-- [ ] Pilot privacy notice, consent language, participant agreement and data-retention rules are approved.
-- [ ] Any map, OTP/communications, registry or payment provider used in the pilot has approved terms, privacy, abuse, quota, cost and operational evidence.
-- [ ] Providers not approved remain technically disabled with tested kill switches.
+These are Phase 11 entry prerequisites for any real participant or real provider processing; Phase 10 recorded them as explicit stop gates rather than assuming approval.
+
+- [ ] Qualified Zambia privacy, consumer, payments, tax/invoicing and other applicable legal findings are recorded.
+- [ ] Controller/processor responsibilities, cross-border/transfer requirements and authority-access boundaries are approved as applicable.
+- [ ] Pilot privacy notice, consent language, participant agreement, retention/deletion and withdrawal rules are approved.
+- [ ] Any map, OTP/communications, registry or payment provider actually used in the pilot has approved terms, privacy, abuse, quota, cost and operational evidence.
+- [x] Providers not approved remain technically disabled; payments remain disabled and no real-money movement is authorized.
 
 ### Pilot operations
 
@@ -64,20 +60,20 @@ Phase 11 may be claimed only after all items below are true.
 - [ ] Inclusion/exclusion criteria and consent withdrawal procedure are documented.
 - [ ] Support hours, escalation channels and stop criteria are approved.
 - [ ] Representative Zambia devices, connectivity conditions and operational scenarios are selected.
-- [ ] Data minimization, exact-location handling and private evidence rules are understood by the pilot team.
+- [ ] Data minimization, exact-location handling and private evidence rules are approved for the pilot team.
 - [ ] No production claim, search indexing, unrestricted invitation or public promotion is enabled.
 
-## Phase 11 authorized validation scope after entry
+## Authorized validation scope after explicit Phase 11 entry
 
-After the checklist is satisfied and Phase 11 is explicitly claimed, the controlled pilot may validate:
+After the remaining checklist is satisfied and Phase 11 is explicitly claimed, the controlled pilot may validate:
 
 - comprehension of verification, publication and accountability language;
 - provider and customer task completion on representative devices and networks;
 - private evidence submission with explicit consent and restricted access;
 - enquiries, interactions, reviews and complaints under real operational timing;
-- support workload, moderation workload and queue ageing;
+- support/moderation workload and queue ageing;
 - location privacy and fallback behavior;
-- willingness to pay without enabling uncontrolled production payments;
+- willingness to pay without uncontrolled production payments;
 - pilot costs, operational bottlenecks and stop criteria.
 
 ## Boundaries retained in Phase 11
@@ -85,7 +81,7 @@ After the checklist is satisfied and Phase 11 is explicitly claimed, the control
 Even after Phase 11 entry:
 
 - the pilot cohort must remain named, bounded and consented;
-- public signup and unrestricted invitations remain prohibited;
+- public signup and unrestricted invitations remain prohibited unless separately approved by a later gate;
 - real evidence is limited to approved pilot examples and access roles;
 - payments remain synthetic or separately approved and tightly bounded;
 - external adapters without approval remain disabled;
@@ -94,19 +90,8 @@ Even after Phase 11 entry:
 
 ## Required Phase 11 evidence
 
-The active Phase 11 plan must define and record:
-
-- participant count and consent status;
-- device/network matrix;
-- task completion, error and abandonment rates;
-- trust-language comprehension results;
-- support and moderation response times;
-- incident, privacy and withdrawal events;
-- operating cost and staff effort;
-- provider/customer willingness-to-pay evidence;
-- defects and stop decisions;
-- an explicit recommendation to stop, repeat, narrow or proceed to Phase 12.
+The active Phase 11 plan must record participant/consent status, device/network matrix, task completion and abandonment, trust-language comprehension, support/moderation timing, incident/privacy/withdrawal events, operating cost/staff effort, willingness-to-pay evidence, defects/stop decisions and an explicit recommendation to stop, repeat, narrow or proceed.
 
 ## Activation rule
 
-This file remains a blocked draft until the Phase 10 checkpoint records all entry evidence. Merely creating this document does not start Phase 11, authorize real data or authorize participant recruitment.
+Phase 10 completion permits Phase 11 entry preparation. It does **not** by itself authorize real data, participant recruitment, real provider credentials, public promotion or real-money activity. Those begin only after the remaining Phase 11 entry checklist is explicitly reviewed and satisfied.
