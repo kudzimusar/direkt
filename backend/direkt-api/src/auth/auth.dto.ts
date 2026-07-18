@@ -40,7 +40,9 @@ export class VerifyChallengeDto {
 }
 
 export class FirebaseSessionExchangeDto {
-  @ApiProperty({ description: 'Firebase Authentication ID token obtained after phone verification.' })
+  @ApiProperty({
+    description: 'Firebase Authentication ID token obtained after phone verification.',
+  })
   @IsString()
   @MinLength(100)
   @MaxLength(8192)
