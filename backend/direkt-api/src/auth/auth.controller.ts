@@ -11,6 +11,7 @@ import { PublicRoute } from '../authorization/public.decorator';
 import { RequirePermission } from '../authorization/require-permission.decorator';
 import type { DirektRequest } from '../platform/http/request-context';
 import {
+  FirebaseSessionExchangeDto,
   RequestChallengeDto,
   RevokeSessionDto,
   RotateSessionDto,
@@ -46,6 +47,23 @@ export class AuthController {
     @Req() request: DirektRequest,
   ): ReturnType<AuthService['verifyChallenge']> {
     return this.authService.verifyChallenge(dto, this.securityContext(request));
+  }
+
+  @PublicRoute()
+  @Post('firebase/exchange')
+  @HttpCode(200)
+  @ApiOkResponse({
+    description:
+      'Verifies a recent Firebase phone ID token and exchanges it for a DIREKT rotating session.',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'The Firebase token or external identity binding is invalid or unsafe.',
+  })
+  exchangeFirebaseSession(
+    @Body() dto: FirebaseSessionExchangeDto,
+    @Req() request: DirektRequest,
+  ): ReturnType<AuthService['exchangeFirebaseSession']> {
+    return this.authService.exchangeFirebaseSession(dto, this.securityContext(request));
   }
 
   @PublicRoute()
