@@ -11,7 +11,8 @@
         android:label="@string/app_name"
         android:roundIcon="@drawable/ic_direkt"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Direkt">
+        android:theme="@style/Theme.Direkt"
+        android:usesCleartextTraffic="false">
         <activity
             android:name=".MainActivity"
             android:exported="true">
