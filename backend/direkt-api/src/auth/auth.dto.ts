@@ -39,6 +39,20 @@ export class VerifyChallengeDto {
   deviceLabel?: string;
 }
 
+export class FirebaseSessionExchangeDto {
+  @ApiProperty({ description: 'Firebase Authentication ID token obtained after phone verification.' })
+  @IsString()
+  @MinLength(100)
+  @MaxLength(8192)
+  idToken!: string;
+
+  @ApiPropertyOptional({ example: 'Android pilot device' })
+  @IsOptional()
+  @IsString()
+  @Length(3, 100)
+  deviceLabel?: string;
+}
+
 export class RotateSessionDto {
   @ApiProperty({ description: 'Opaque rotating refresh token.' })
   @IsString()
