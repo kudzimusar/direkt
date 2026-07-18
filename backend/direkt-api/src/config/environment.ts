@@ -172,15 +172,20 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
       custom: 'Public synthetic traffic requires DIREKT_DATA_MODE=synthetic-only.',
     });
   }
-  if (value.PILOT_ENTRY_APPROVED && value.DIREKT_DATA_MODE !== 'controlled-pilot') {
+  if (
+    value.PILOT_ENTRY_APPROVED &&
+    value.DIREKT_DATA_MODE !== 'controlled-pilot'
+  ) {
     return helpers.message({
-      custom: 'PILOT_ENTRY_APPROVED may be true only with DIREKT_DATA_MODE=controlled-pilot.',
+      custom:
+        'PILOT_ENTRY_APPROVED may be true only with DIREKT_DATA_MODE=controlled-pilot.',
     });
   }
   if (value.DIREKT_DATA_MODE === 'controlled-pilot') {
     if (!value.PILOT_ENTRY_APPROVED) {
       return helpers.message({
-        custom: 'Controlled-pilot data mode requires the explicit PILOT_ENTRY_APPROVED technical latch.',
+        custom:
+          'Controlled-pilot data mode requires the explicit PILOT_ENTRY_APPROVED technical latch.',
       });
     }
     if (value.DIREKT_ENVIRONMENT !== 'pilot') {
@@ -190,7 +195,8 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     }
     if (value.EVIDENCE_STORAGE_PROVIDER !== 'supabase') {
       return helpers.message({
-        custom: 'Controlled-pilot data mode requires the approved private Supabase storage boundary.',
+        custom:
+          'Controlled-pilot data mode requires the approved private Supabase storage boundary.',
       });
     }
     if (value.AUTH_CHALLENGE_MODE !== 'disabled') {
@@ -200,12 +206,14 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     }
     if (value.PAYMENT_PROVIDER_MODE !== 'disabled') {
       return helpers.message({
-        custom: 'Controlled-pilot data mode requires payments to remain disabled until separately approved.',
+        custom:
+          'Controlled-pilot data mode requires payments to remain disabled until separately approved.',
       });
     }
     if (value.DIREKT_TRAFFIC_MODE !== 'disabled') {
       return helpers.message({
-        custom: 'Controlled-pilot data mode remains traffic-disabled until an approved participant access and authentication path is implemented.',
+        custom:
+          'Controlled-pilot data mode remains traffic-disabled until an approved participant access and authentication path is implemented.',
       });
     }
   }
