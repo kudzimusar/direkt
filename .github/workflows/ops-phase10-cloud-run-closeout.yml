@@ -17,10 +17,11 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Print exact-main deployment revision evidence
+      - name: Print Cloud Run API deploy result only
         shell: bash
         run: |
           set -euo pipefail
           gh run view 29645721465 --repo "$GITHUB_REPOSITORY" --log \
-            | grep -E 'Deploy private API revision|direkt-api-00009|direkt-api-00008|Revision|revision|Ready|ready|Traffic|traffic|Service \[direkt-api\]' \
-            | tail -n 180 || true
+            | grep 'Deploy private API revision' \
+            | grep -v '36;1m' \
+            | tail -n 100 || true
