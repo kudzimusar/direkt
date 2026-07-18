@@ -1,0 +1,157 @@
+name: DIREKT controlled Cloud Run staging inspection
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type INSPECT-DIREKT-STAGING to continue
+        required: true
+        type: string
+      source_sha:
+        description: Expected immutable DIREKT source SHA deployed to staging
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: direkt-cloud-run-staging-inspection
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    name: Inspect private DIREKT API and portal staging
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_REGION: asia-northeast1
+      GCP_ARTIFACT_REGISTRY: direkt-containers
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_API_SERVICE: direkt-api
+      GCP_PORTAL_SERVICE: direkt-operations-portal-staging
+      GCP_API_RUNTIME_SERVICE_ACCOUNT: direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_PORTAL_RUNTIME_SERVICE_ACCOUNT: direkt-portal-runtime@direkt-dev-502701.iam.gserviceaccount.com
+
+    steps:
+      - name: Validate inspection controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ inputs.confirmation }}" = "INSPECT-DIREKT-STAGING"
+          [[ "${{ inputs.source_sha }}" =~ ^[0-9a-f]{40}$ ]]
+          echo "EXPECTED_API_IMAGE=${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/${GCP_API_SERVICE}:${{ inputs.source_sha }}" >> "${GITHUB_ENV}"
+          echo "EXPECTED_PORTAL_IMAGE=${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/${GCP_PORTAL_SERVICE}:${{ inputs.source_sha }}" >> "${GITHUB_ENV}"
+
+      - name: Authenticate to Google Cloud through GitHub OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Inspect services, revisions, scaling and IAM
+        shell: bash
+        run: |
+          set -euo pipefail
+          api_file="${RUNNER_TEMP}/api-service.json"
+          portal_file="${RUNNER_TEMP}/portal-service.json"
+          api_iam="${RUNNER_TEMP}/api-iam.json"
+          portal_iam="${RUNNER_TEMP}/portal-iam.json"
+
+          gcloud run services describe "${GCP_API_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${api_file}"
+          gcloud run services describe "${GCP_PORTAL_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${portal_file}"
+          gcloud run services get-iam-policy "${GCP_API_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${api_iam}"
+          gcloud run services get-iam-policy "${GCP_PORTAL_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${portal_iam}"
+
+          API_URL="$(jq -r '.status.url' "${api_file}")"
+          PORTAL_URL="$(jq -r '.status.url' "${portal_file}")"
+          API_READY_REVISION="$(jq -r '.status.latestReadyRevisionName' "${api_file}")"
+          PORTAL_READY_REVISION="$(jq -r '.status.latestReadyRevisionName' "${portal_file}")"
+
+          test "$(jq -r '.status.latestCreatedRevisionName' "${api_file}")" = "${API_READY_REVISION}"
+          test "$(jq -r '.status.latestCreatedRevisionName' "${portal_file}")" = "${PORTAL_READY_REVISION}"
+          jq -e --arg image "${EXPECTED_API_IMAGE}" '.spec.template.spec.containers[0].image == $image' "${api_file}" >/dev/null
+          jq -e --arg image "${EXPECTED_PORTAL_IMAGE}" '.spec.template.spec.containers[0].image == $image' "${portal_file}" >/dev/null
+          jq -e --arg identity "${GCP_API_RUNTIME_SERVICE_ACCOUNT}" '.spec.template.spec.serviceAccountName == $identity' "${api_file}" >/dev/null
+          jq -e --arg identity "${GCP_PORTAL_RUNTIME_SERVICE_ACCOUNT}" '.spec.template.spec.serviceAccountName == $identity' "${portal_file}" >/dev/null
+
+          jq -e '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef != null)] | length == 7 and all(.valueFrom.secretKeyRef.key | test("^[1-9][0-9]*$"))' "${api_file}" >/dev/null
+          jq -e '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef != null)] | length == 1 and all(.valueFrom.secretKeyRef.key | test("^[1-9][0-9]*$"))' "${portal_file}" >/dev/null
+          jq -e '.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] == "0" and .spec.template.metadata.annotations["autoscaling.knative.dev/maxScale"] == "1"' "${api_file}" >/dev/null
+          jq -e '.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] == "0" and .spec.template.metadata.annotations["autoscaling.knative.dev/maxScale"] == "1"' "${portal_file}" >/dev/null
+
+          jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' "${api_iam}" >/dev/null
+          jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' "${portal_iam}" >/dev/null
+          jq -e --arg expected "serviceAccount:${GCP_PORTAL_RUNTIME_SERVICE_ACCOUNT}" '[.bindings[]? | select(.role == "roles/run.invoker") | .members[]?] | index($expected) != null' "${api_iam}" >/dev/null
+
+          echo "API_URL=${API_URL}" >> "${GITHUB_ENV}"
+          echo "PORTAL_URL=${PORTAL_URL}" >> "${GITHUB_ENV}"
+          echo "API_READY_REVISION=${API_READY_REVISION}" >> "${GITHUB_ENV}"
+          echo "PORTAL_READY_REVISION=${PORTAL_READY_REVISION}" >> "${GITHUB_ENV}"
+
+      - name: Mint private API inspection token
+        id: api-auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
+          token_format: id_token
+          id_token_audience: ${{ env.API_URL }}
+          id_token_include_email: true
+
+      - name: Mint private portal inspection token
+        id: portal-auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
+          token_format: id_token
+          id_token_audience: ${{ env.PORTAL_URL }}
+          id_token_include_email: true
+
+      - name: Verify private readiness
+        shell: bash
+        env:
+          API_ID_TOKEN: ${{ steps.api-auth.outputs.id_token }}
+          PORTAL_ID_TOKEN: ${{ steps.portal-auth.outputs.id_token }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::${API_ID_TOKEN}"
+          echo "::add-mask::${PORTAL_ID_TOKEN}"
+          curl --fail --silent --show-error --retry 4 --retry-delay 3 --retry-all-errors \
+            --header "X-Serverless-Authorization: Bearer ${API_ID_TOKEN}" \
+            "${API_URL}/api/v1/health/ready" > "${RUNNER_TEMP}/api-health.json"
+          jq -e '.status == "ok" and .database.status == "ready"' "${RUNNER_TEMP}/api-health.json" >/dev/null
+          curl --fail --silent --show-error --retry 4 --retry-delay 3 --retry-all-errors \
+            --header "X-Serverless-Authorization: Bearer ${PORTAL_ID_TOKEN}" \
+            "${PORTAL_URL}/api/health" > "${RUNNER_TEMP}/portal-health.json"
+          jq -e '.status == "ready" and .portal == "ready" and .api == "ready"' "${RUNNER_TEMP}/portal-health.json" >/dev/null
+
+      - name: Publish sanitized inspection summary
+        shell: bash
+        run: |
+          {
+            echo "### DIREKT controlled staging inspection"
+            echo "- Expected source: \`${{ inputs.source_sha }}\`"
+            echo "- API ready revision: \`${API_READY_REVISION}\`"
+            echo "- Portal ready revision: \`${PORTAL_READY_REVISION}\`"
+            echo "- Runtime identities: bounded"
+            echo "- Secret references: seven API plus one portal numeric version"
+            echo "- Scaling: minimum 0, maximum 1"
+            echo "- Public invocation bindings: absent"
+            echo "- Portal-to-API invoker: present"
+            echo "- Readiness: passed"
+          } >> "${GITHUB_STEP_SUMMARY}"
