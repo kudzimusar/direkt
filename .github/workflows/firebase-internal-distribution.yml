@@ -29,6 +29,7 @@ jobs:
     timeout-minutes: 35
     env:
       GCP_PROJECT_ID: direkt-dev-502701
+      GCP_PROJECT_NUMBER: "264358173369"
       GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
       GCP_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
       FIREBASE_PACKAGE_NAME: com.kudzimusar.direkt.debug
@@ -133,10 +134,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npx --yes "firebase-tools@${FIREBASE_TOOLS_VERSION}" appdistribution:groups:list \
-            --project "${GCP_PROJECT_ID}" \
-            --json > "${RUNNER_TEMP}/firebase-groups.json"
-          jq -e --arg alias "${FIREBASE_TESTER_GROUP}" '[.result[]? | select(.alias == $alias)] | length == 1' "${RUNNER_TEMP}/firebase-groups.json" >/dev/null
+          token="$(gcloud auth print-access-token)"
+          echo "::add-mask::${token}"
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer ${token}" \
+            --header "x-goog-user-project: ${GCP_PROJECT_ID}" \
+            "https://firebaseappdistribution.googleapis.com/v1/projects/${GCP_PROJECT_NUMBER}/groups?pageSize=1000" \
+            > "${RUNNER_TEMP}/firebase-groups.json"
+          jq -e --arg alias "${FIREBASE_TESTER_GROUP}" \
+            'any(.groups[]?; (.name | split("/") | last) == $alias)' \
+            "${RUNNER_TEMP}/firebase-groups.json" >/dev/null
 
       - name: Distribute APK to internal group only
         shell: bash
