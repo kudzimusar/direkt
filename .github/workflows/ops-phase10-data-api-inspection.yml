@@ -1,4 +1,4 @@
-name: Phase 10 Data API inspection cleanup
+name: Phase 10 backend formatting diagnostic
 
 on:
   pull_request:
@@ -7,18 +7,18 @@ on:
       - .github/workflows/ops-phase10-data-api-inspection.yml
 
 permissions:
-  actions: write
+  actions: read
   contents: read
 
 jobs:
-  cleanup:
+  inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Remove secret-bearing inspection run and artifacts
+      - name: Show failed backend formatting output
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh api --method DELETE \
-            "repos/${GITHUB_REPOSITORY}/actions/runs/29634133092"
-          echo "Removed secret-bearing inspection run 29634133092 and its artifacts."
+          gh run view 29634377401 --repo "$GITHUB_REPOSITORY" --log-failed \
+            | grep -A20 -B5 -E 'prettier|Prettier|format|check-supabase|Code style issues' \
+            | tail -n 120
