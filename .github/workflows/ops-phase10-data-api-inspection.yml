@@ -1,0 +1,52 @@
+name: Phase 10 Data API inspection bridge
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/ops-phase10-data-api-inspection.yml
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Dispatch protected Data API inspection
+        id: dispatch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          gh workflow run supabase-postgrest-inspect.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f confirmation=INSPECT-DIREKT-DATA-API \
+            -f source_sha=32141e896ab7fa3ce1d5b6705859f352fabc61c4
+
+      - name: Wait for inspection
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STARTED: ${{ steps.dispatch.outputs.started }}
+        run: |
+          set -euo pipefail
+          RUN_ID=""
+          for attempt in $(seq 1 60); do
+            RUN_ID=$(gh run list \
+              --repo "$GITHUB_REPOSITORY" \
+              --workflow supabase-postgrest-inspect.yml \
+              --branch main \
+              --event workflow_dispatch \
+              --limit 20 \
+              --json databaseId,createdAt \
+              --jq "map(select(.createdAt >= \"$STARTED\")) | sort_by(.createdAt) | last | .databaseId // empty")
+            test -n "$RUN_ID" && break
+            sleep 3
+          done
+          test -n "$RUN_ID"
+          echo "Data API inspection run ID: $RUN_ID"
+          gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status
