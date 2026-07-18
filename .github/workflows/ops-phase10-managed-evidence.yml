@@ -14,11 +14,9 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Print staging failure lines
+      - name: Print final staging failure tail
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh run view 29628140844 --repo "$GITHUB_REPOSITORY" --log-failed \
-            | grep -E 'PERMISSION_DENIED|NOT_FOUND|Permission|permission|secret|Secret|ERROR|Error|error|HTTP [0-9]{3}|exit code' \
-            | tail -n 60
+          gh run view 29628140844 --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 35
