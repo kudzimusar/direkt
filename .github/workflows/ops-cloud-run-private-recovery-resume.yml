@@ -1,4 +1,4 @@
-name: Cloud Run deployment check
+name: Cloud Run inspection check
 
 on:
   pull_request:
@@ -13,20 +13,21 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 25
     steps:
-      - name: Start reviewed deployment
+      - name: Start reviewed inspection
         id: start
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           echo "time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
-          gh workflow run cloud-run-development-deploy.yml --repo "$GITHUB_REPOSITORY" --ref main -f confirmation=DEPLOY-DIREKT-DEVELOPMENT -f source_sha=c6530f18792b498d5603885d5871f4ecdf91979d
-      - name: Verify deployment
+          gh workflow run cloud-run-development-inspect.yml --repo "$GITHUB_REPOSITORY" --ref main -f confirmation=INSPECT-DIREKT-DEVELOPMENT -f source_sha=c6530f18792b498d5603885d5871f4ecdf91979d
+      - name: Verify inspection
         env:
           GH_TOKEN: ${{ github.token }}
           START: ${{ steps.start.outputs.time }}
         run: |
           sleep 5
-          RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow cloud-run-development-deploy.yml --branch main --event workflow_dispatch --limit 20 --json databaseId,createdAt --jq "map(select(.createdAt >= \"$START\")) | sort_by(.createdAt) | last | .databaseId")
+          RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow cloud-run-development-inspect.yml --branch main --event workflow_dispatch --limit 20 --json databaseId,createdAt --jq "map(select(.createdAt >= \"$START\")) | sort_by(.createdAt) | last | .databaseId")
+          echo "Inspection run ID: $RUN_ID"
           gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status
