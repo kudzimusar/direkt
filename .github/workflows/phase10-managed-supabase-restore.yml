@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   restore:
-    name: Dump, restore and verify managed Supabase application schema
+    name: Dump, restore and verify managed Supabase application schemas
     if: github.ref == 'refs/heads/main'
     environment: development
     runs-on: ubuntu-latest
@@ -29,7 +29,9 @@ jobs:
     env:
       PROJECT_REF: aeeuscifrxcjmnswqwnq
       SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
-      RESTORE_DATABASE_URL: postgresql://direkt:direkt_restore@localhost:5432/direkt_managed_restore
+      POSTGRES_USER: direkt
+      POSTGRES_PASSWORD: direkt_restore
+      RESTORE_DB: direkt_managed_restore
 
     services:
       postgres:
@@ -59,6 +61,9 @@ jobs:
             *) echo "Invalid managed database URL." >&2; exit 1 ;;
           esac
           echo "::add-mask::${SUPABASE_DATABASE_URL}"
+          RESTORE_DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${RESTORE_DB}"
+          echo "::add-mask::${RESTORE_DATABASE_URL}"
+          echo "RESTORE_DATABASE_URL=${RESTORE_DATABASE_URL}" >> "${GITHUB_ENV}"
 
       - name: Check out exact reviewed source
         uses: actions/checkout@v6
@@ -80,14 +85,19 @@ jobs:
           set -euo pipefail
           mkdir -p artifacts/phase10-managed-restore
           docker run --rm --network host \
-            -e DATABASE_URL="${SUPABASE_DATABASE_URL}" \
             -v "${PWD}:/work:ro" \
             postgres:17-alpine \
             psql "${SUPABASE_DATABASE_URL}" \
               -v ON_ERROR_STOP=1 \
               -Atf /work/.github/scripts/phase10-managed-live-metadata.sql \
             > artifacts/phase10-managed-restore/live-metadata.json
-          jq -e '.migration_count >= 34 and .private_bucket_count == 4 and .storage_object_count == 0' artifacts/phase10-managed-restore/live-metadata.json >/dev/null
+          jq -e '
+            .application_schema_count == 13
+            and .application_table_count > 0
+            and .migration_count >= 34
+            and .private_bucket_count == 4
+            and .storage_object_count == 0
+          ' artifacts/phase10-managed-restore/live-metadata.json >/dev/null
 
       - name: Create managed application-schema backup
         shell: bash
@@ -100,32 +110,66 @@ jobs:
               pg_dump \
                 --dbname="$DATABASE_URL" \
                 --format=custom \
-                --file=/work/direkt-managed-public.dump \
-                --schema=public \
-                --exclude-table=public.spatial_ref_sys \
+                --file=/work/direkt-managed-application.dump \
+                --schema=platform \
+                --schema=account \
+                --schema=authz \
+                --schema=provider \
+                --schema=catalog \
+                --schema=evidence \
+                --schema=verification \
+                --schema=discovery \
+                --schema=provider_workspace \
+                --schema=operations \
+                --schema=interaction \
+                --schema=commercial \
+                --schema=security \
+                --no-owner \
+                --no-acl
+              pg_dump \
+                --dbname="$DATABASE_URL" \
+                --format=custom \
+                --file=/work/direkt-managed-ledger.dump \
+                --table=public.direkt_schema_migrations \
                 --no-owner \
                 --no-acl
             '
-          test -s direkt-managed-public.dump
+          test -s direkt-managed-application.dump
+          test -s direkt-managed-ledger.dump
 
       - name: Restore into clean PostGIS database
         shell: bash
         run: |
           set -euo pipefail
-          docker run --rm --network host postgres:17-alpine \
-            psql "postgresql://direkt:direkt_restore@localhost:5432/postgres" \
-            -v ON_ERROR_STOP=1 \
-            -c 'CREATE DATABASE direkt_managed_restore;'
-          docker run --rm --network host postgres:17-alpine \
-            psql "${RESTORE_DATABASE_URL}" -v ON_ERROR_STOP=1 \
-            -c 'CREATE EXTENSION IF NOT EXISTS postgis;'
-          docker run --rm --network host -v "${PWD}:/work" postgres:17-alpine \
-            pg_restore \
-              --dbname="${RESTORE_DATABASE_URL}" \
-              --exit-on-error \
-              --no-owner \
-              --no-acl \
-              /work/direkt-managed-public.dump
+          docker run --rm --network host \
+            -e PGPASSWORD="${POSTGRES_PASSWORD}" \
+            postgres:17-alpine \
+            psql -h 127.0.0.1 -p 5432 -U "${POSTGRES_USER}" -d postgres \
+              -v ON_ERROR_STOP=1 \
+              -c "CREATE DATABASE ${RESTORE_DB};"
+          docker run --rm --network host \
+            -e PGPASSWORD="${POSTGRES_PASSWORD}" \
+            postgres:17-alpine \
+            psql -h 127.0.0.1 -p 5432 -U "${POSTGRES_USER}" -d "${RESTORE_DB}" \
+              -v ON_ERROR_STOP=1 \
+              -c 'CREATE EXTENSION IF NOT EXISTS postgis;'
+          docker run --rm --network host \
+            -e DATABASE_URL="${RESTORE_DATABASE_URL}" \
+            -v "${PWD}:/work:ro" \
+            postgres:17-alpine sh -ceu '
+              pg_restore \
+                --dbname="$DATABASE_URL" \
+                --exit-on-error \
+                --no-owner \
+                --no-acl \
+                /work/direkt-managed-application.dump
+              pg_restore \
+                --dbname="$DATABASE_URL" \
+                --exit-on-error \
+                --no-owner \
+                --no-acl \
+                /work/direkt-managed-ledger.dump
+            '
 
       - name: Verify restored integrity and forward migrations
         shell: bash
@@ -140,8 +184,10 @@ jobs:
             > artifacts/phase10-managed-restore/restored-metadata.json
 
           jq -e --slurpfile live artifacts/phase10-managed-restore/live-metadata.json '
-            .public_table_count == $live[0].public_table_count
+            .application_table_count == $live[0].application_table_count
+            and .application_schema_count == $live[0].application_schema_count
             and .migration_count == $live[0].migration_count
+            and .seed_state == $live[0].seed_state
             and (.postgis_version | length > 0)
           ' artifacts/phase10-managed-restore/restored-metadata.json >/dev/null
 
@@ -173,21 +219,24 @@ jobs:
           done
           jq -e '.status == "ok" and .database.status == "ready"' "${RUNNER_TEMP}/managed-restore-health.json" >/dev/null
 
-      - name: Remove temporary backup and publish summary
+      - name: Remove temporary backups and publish summary
         if: always()
         shell: bash
         run: |
-          rm -f direkt-managed-public.dump
+          rm -f direkt-managed-application.dump direkt-managed-ledger.dump
           {
             echo "### DIREKT managed Supabase restore exercise"
             echo "- Source: \`${{ inputs.source_sha }}\`"
             echo "- Project ref: \`${PROJECT_REF}\`"
-            echo "- Scope: managed public application schema plus independent storage metadata verification"
+            echo "- Scope: all 13 DIREKT application schemas plus the application migration ledger"
+            echo "- Supabase platform schemas: excluded from the application dump"
+            echo "- Storage metadata: verified independently; object count remains zero"
+            echo "- PostgreSQL client: pinned container version 17"
             echo "- Restore target: clean disposable PostGIS 17 database"
+            echo "- Application table count and seed-state sentinels: matched"
             echo "- Migration ledger: preserved and forward-checked"
             echo "- API readiness against restored data: passed"
-            echo "- Storage objects: zero"
-            echo "- Backup artifact retained: no"
+            echo "- Backup artifacts retained: no"
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload sanitized restore evidence
