@@ -71,8 +71,8 @@ jobs:
           LATEST_REVISION="$(jq -r '.status.latestReadyRevisionName' "${RUNNER_TEMP}/api-service.json")"
           DEPLOYED_IMAGE="$(jq -r '.spec.template.spec.containers[0].image' "${RUNNER_TEMP}/api-service.json")"
           test "${DEPLOYED_IMAGE}" = "${EXPECTED_API_IMAGE}"
-          jq -e '.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] == "0" and .spec.template.metadata.annotations["autoscaling.knative.dev/maxScale"] == "1"' "${RUNNER_TEMP}/api-service.json" >/dev/null
-          jq -e '.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] == "0" and .spec.template.metadata.annotations["autoscaling.knative.dev/maxScale"] == "1"' "${RUNNER_TEMP}/portal-service.json" >/dev/null
+          jq -e '(.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] // "0") == "0" and .spec.template.metadata.annotations["autoscaling.knative.dev/maxScale"] == "1"' "${RUNNER_TEMP}/api-service.json" >/dev/null
+          jq -e '(.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] // "0") == "0" and .spec.template.metadata.annotations["autoscaling.knative.dev/maxScale"] == "1"' "${RUNNER_TEMP}/portal-service.json" >/dev/null
 
           mapfile -t revisions < <(gcloud run revisions list \
             --service "${GCP_API_SERVICE}" \
@@ -325,7 +325,7 @@ jobs:
             echo "- Source: \`${{ inputs.source_sha }}\`"
             echo "- API latest revision: \`${LATEST_REVISION:-unresolved}\`"
             echo "- API prior revision: \`${PRIOR_REVISION:-unresolved}\`"
-            echo "- Scaling contract: minimum 0, maximum 1"
+            echo "- Scaling contract: effective minimum 0, maximum 1"
             echo "- Rollback and forward recovery: exercised"
             echo "- Portal-to-API kill switch: exercised and restored"
             echo "- Post-idle readiness: exercised"
