@@ -1,15 +1,29 @@
-name: Restore final error
+name: Firebase internal distribution bridge
 on:
   pull_request:
     branches: [build/android-v1]
     paths: [.github/workflows/ops-sync-main-into-phase10.yml]
 permissions:
-  actions: read
+  actions: write
   contents: read
 jobs:
-  inspect:
+  distribute:
     runs-on: ubuntu-latest
+    timeout-minutes: 50
     steps:
-      - env:
+      - name: Dispatch Firebase distribution
+        id: dispatch
+        env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run view 29628637442 --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 12
+        run: |
+          echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          gh workflow run firebase-internal-distribution.yml --repo "$GITHUB_REPOSITORY" --ref main -f confirmation=DISTRIBUTE-DIREKT-INTERNAL -f source_sha=ca1b4154deb9494e514ccfd4c24b3b439d52ee2b
+      - name: Wait for Firebase distribution
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STARTED: ${{ steps.dispatch.outputs.started }}
+        run: |
+          sleep 5
+          RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow firebase-internal-distribution.yml --branch main --event workflow_dispatch --limit 20 --json databaseId,createdAt --jq "map(select(.createdAt >= \"$STARTED\")) | sort_by(.createdAt) | last | .databaseId")
+          echo "Firebase run ID: $RUN_ID"
+          gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status
