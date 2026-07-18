@@ -1,0 +1,39 @@
+name: Patch managed restore libpq URL
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/ops-patch-managed-restore-libpq.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/phase10-managed-restore-libpq-url
+          fetch-depth: 0
+      - name: Remove Node-only pooler query parameter and remove bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/workflows/phase10-managed-supabase-restore.yml')
+          text = path.read_text()
+          needle = "          url.searchParams.set('uselibpqcompat', 'true');\n"
+          if needle not in text:
+              raise SystemExit('expected uselibpqcompat line not found')
+          path.write_text(text.replace(needle, '', 1))
+          PY
+          rm .github/workflows/ops-patch-managed-restore-libpq.yml
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/phase10-managed-supabase-restore.yml .github/workflows/ops-patch-managed-restore-libpq.yml
+          git commit -m "fix(recovery): use native libpq-compatible pooler URL"
+          git push origin HEAD:fix/phase10-managed-restore-libpq-url
