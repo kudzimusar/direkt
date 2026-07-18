@@ -7,20 +7,40 @@ on:
       - .github/workflows/ops-phase10-cloud-run-closeout.yml
 
 permissions:
-  actions: read
+  actions: write
   contents: read
 
 jobs:
   closeout:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 70
     env:
+      SOURCE_SHA: f40dcfa700a7ccecdca520b4420aaa5aff17478c
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Print kill-switch failure message
+      - name: Exercise rollback kill switch scaling and monitoring
         shell: bash
         run: |
           set -euo pipefail
-          gh run view 29642190204 --repo "$GITHUB_REPOSITORY" --log-failed \
-            | grep -E 'Portal remained|ERROR|Error|error:|exit code|HTTP|policy|binding|curl:' \
-            | tail -n 80 || true
+          started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          gh workflow run phase10-managed-cloud-run-operations.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f confirmation=EXERCISE-DIREKT-OPERATIONS \
+            -f source_sha="$SOURCE_SHA"
+          run_id=""
+          for attempt in $(seq 1 60); do
+            run_id=$(gh run list --repo "$GITHUB_REPOSITORY" \
+              --workflow phase10-managed-cloud-run-operations.yml \
+              --branch main --event workflow_dispatch --limit 20 \
+              --json databaseId,createdAt \
+              --jq "map(select(.createdAt >= \"$started\")) | sort_by(.createdAt) | last | .databaseId // empty")
+            test -n "$run_id" && break
+            sleep 5
+          done
+          test -n "$run_id"
+          echo "Managed Cloud Run operations run ID: $run_id"
+          if ! gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status; then
+            gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 240 || true
+            exit 1
+          fi
