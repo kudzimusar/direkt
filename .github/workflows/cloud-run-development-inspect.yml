@@ -1,0 +1,150 @@
+name: DIREKT Cloud Run development inspection
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type INSPECT-DIREKT-DEVELOPMENT to continue
+        required: true
+        type: string
+      source_sha:
+        description: Expected immutable DIREKT source SHA deployed to Cloud Run
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: direkt-cloud-run-development-inspection
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    name: Inspect private DIREKT development API
+    if: github.ref == 'refs/heads/main'
+    environment: development
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_REGION: asia-northeast1
+      GCP_ARTIFACT_REGISTRY: direkt-containers
+      GCP_CLOUD_RUN_SERVICE: direkt-api
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_RUNTIME_SERVICE_ACCOUNT: direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com
+
+    steps:
+      - name: Validate inspection controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ inputs.confirmation }}" = "INSPECT-DIREKT-DEVELOPMENT"
+          [[ "${{ inputs.source_sha }}" =~ ^[0-9a-f]{40}$ ]]
+          echo "EXPECTED_IMAGE=${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/${GCP_CLOUD_RUN_SERVICE}:${{ inputs.source_sha }}" >> "${GITHUB_ENV}"
+
+      - name: Authenticate to Google Cloud with GitHub OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Inspect service, revision and IAM
+        shell: bash
+        run: |
+          set -euo pipefail
+          service_file="${RUNNER_TEMP}/direkt-api-service.json"
+          iam_file="${RUNNER_TEMP}/direkt-api-iam.json"
+
+          gcloud run services describe "${GCP_CLOUD_RUN_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --format=json > "${service_file}"
+          gcloud run services get-iam-policy "${GCP_CLOUD_RUN_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --format=json > "${iam_file}"
+
+          SERVICE_URL="$(jq -r '.status.url' "${service_file}")"
+          READY_REVISION="$(jq -r '.status.latestReadyRevisionName' "${service_file}")"
+          CREATED_REVISION="$(jq -r '.status.latestCreatedRevisionName' "${service_file}")"
+          DEPLOYED_IMAGE="$(jq -r '.spec.template.spec.containers[0].image' "${service_file}")"
+          RUNTIME_IDENTITY="$(jq -r '.spec.template.spec.serviceAccountName' "${service_file}")"
+
+          test -n "${SERVICE_URL}"
+          test -n "${READY_REVISION}"
+          test "${READY_REVISION}" = "${CREATED_REVISION}"
+          test "${DEPLOYED_IMAGE}" = "${EXPECTED_IMAGE}"
+          test "${RUNTIME_IDENTITY}" = "${GCP_RUNTIME_SERVICE_ACCOUNT}"
+
+          jq -e '
+            [.spec.template.spec.containers[0].env[]?
+              | select(.valueFrom.secretKeyRef != null)
+              | .valueFrom.secretKeyRef.key]
+            | length == 6
+              and all(test("^[1-9][0-9]*$"))
+          ' "${service_file}" >/dev/null
+          jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' \
+            "${iam_file}" >/dev/null
+
+          echo "SERVICE_URL=${SERVICE_URL}" >> "${GITHUB_ENV}"
+          echo "READY_REVISION=${READY_REVISION}" >> "${GITHUB_ENV}"
+          echo "DEPLOYED_IMAGE=${DEPLOYED_IMAGE}" >> "${GITHUB_ENV}"
+          echo "RUNTIME_IDENTITY=${RUNTIME_IDENTITY}" >> "${GITHUB_ENV}"
+
+          echo "Service URL: ${SERVICE_URL}"
+          echo "Ready revision: ${READY_REVISION}"
+          echo "Image: ${DEPLOYED_IMAGE}"
+          echo "Runtime identity: ${RUNTIME_IDENTITY}"
+          echo "Secret references: six numeric versions"
+          echo "Public invocation bindings: absent"
+
+      - name: Mint private readiness ID token
+        id: readiness-auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+          token_format: id_token
+          id_token_audience: ${{ env.SERVICE_URL }}
+          id_token_include_email: true
+
+      - name: Verify private readiness
+        shell: bash
+        env:
+          CLOUD_RUN_ID_TOKEN: ${{ steps.readiness-auth.outputs.id_token }}
+        run: |
+          set -euo pipefail
+          test -n "${CLOUD_RUN_ID_TOKEN}"
+          echo "::add-mask::${CLOUD_RUN_ID_TOKEN}"
+          curl --fail --silent --show-error \
+            --retry 4 --retry-delay 3 --retry-all-errors \
+            --header "X-Serverless-Authorization: Bearer ${CLOUD_RUN_ID_TOKEN}" \
+            "${SERVICE_URL}/api/v1/health/ready" \
+            > "${RUNNER_TEMP}/direkt-health.json"
+          jq -e '.status == "ok" and .database.status == "ready"' "${RUNNER_TEMP}/direkt-health.json" >/dev/null
+          echo "Readiness: passed"
+
+      - name: Publish sanitized inspection summary
+        shell: bash
+        run: |
+          {
+            echo "### DIREKT Cloud Run development inspection"
+            echo "- Expected source: \`${{ inputs.source_sha }}\`"
+            echo "- Ready revision: \`${READY_REVISION}\`"
+            echo "- Image: \`${DEPLOYED_IMAGE}\`"
+            echo "- Runtime identity: \`${RUNTIME_IDENTITY}\`"
+            echo "- Invocation: IAM-private"
+            echo "- Secret references: six numeric versions"
+            echo "- Public invocation bindings: absent"
+            echo "- Readiness: passed"
+          } >> "${GITHUB_STEP_SUMMARY}"
