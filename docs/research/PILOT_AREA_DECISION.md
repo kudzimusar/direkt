@@ -1,7 +1,8 @@
 # DIREKT Pilot Area Decision
 
-**Decision status:** OPEN — Phase 1A evidence required  
-**Provisional candidate:** A tightly bounded Lusaka area may be operationally attractive, but Lusaka is not approved by default.
+**Decision status:** OPEN — Phase 11 primary evidence and owner approval required  
+**Provisional candidate:** A tightly bounded Lusaka area may be operationally attractive, but Lusaka is not approved by default.  
+**Current effect:** Lusaka District remains a design/seed context only; it is not an authorized real-pilot boundary.
 
 ## Decision question
 
@@ -104,9 +105,11 @@ Do not use exact private provider coordinates as public boundary data.
 
 This document remains `OPEN` until:
 
-1. at least two candidates are scored;
+1. at least two candidates are scored using Phase 11 primary/operational evidence;
 2. field-route and recruitment feasibility are tested;
-3. privacy and support constraints are documented;
+3. privacy and support constraints are documented and entry-approved;
 4. the area is narrow enough for controlled operations;
 5. the owner records approval;
 6. `DECISION_LOG.md` is updated.
+
+No participant may be recruited merely to fill this scorecard before the separate Phase 11 legal/privacy/consent entry gate is satisfied.
