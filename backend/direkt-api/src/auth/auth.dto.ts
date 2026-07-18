@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  Equals,
   IsIn,
   IsOptional,
   IsString,
@@ -47,6 +48,15 @@ export class FirebaseSessionExchangeDto {
   @MinLength(100)
   @MaxLength(8192)
   idToken!: string;
+
+  @ApiProperty({ example: 'pilot-notice-v1' })
+  @IsString()
+  @Length(3, 120)
+  noticeVersion!: string;
+
+  @ApiProperty({ example: true, description: 'Must be true after explicit notice acceptance.' })
+  @Equals(true)
+  consentAccepted!: boolean;
 
   @ApiPropertyOptional({ example: 'Android pilot device' })
   @IsOptional()
