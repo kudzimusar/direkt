@@ -256,6 +256,7 @@ jobs:
           cd backend/direkt-api
           npm ci --ignore-scripts
           DATABASE_URL="${RESTORE_DATABASE_URL}" DIRECT_DATABASE_URL="${RESTORE_DATABASE_URL}" NODE_ENV=test npm run migration:check
+          npm run build
 
       - name: Verify API readiness against restored database
         working-directory: backend/direkt-api
