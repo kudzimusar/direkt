@@ -1,6 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { runMigrations } from '../../scripts/migration-lib';
@@ -15,7 +15,7 @@ function sessionInput(subjectHash: string, contactHash: string) {
     displayHint: '+260***567',
     sessionId: randomUUID(),
     familyId: randomUUID(),
-    refreshTokenHash: 'f'.repeat(64),
+    refreshTokenHash: createHash('sha256').update(randomUUID()).digest('hex'),
     sessionExpiresAt: new Date(Date.now() + 60_000),
     deviceLabel: 'Phase 11 binding test',
     userAgentHash: null,
