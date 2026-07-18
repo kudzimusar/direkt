@@ -69,6 +69,19 @@ jobs:
           api_iam="${RUNNER_TEMP}/api-iam.json"
           portal_iam="${RUNNER_TEMP}/portal-iam.json"
 
+          fail() {
+            echo "INSPECTION ASSERTION FAILED: $1" >&2
+            exit 1
+          }
+
+          check_jq() {
+            local label="$1"
+            local expression="$2"
+            local file="$3"
+            jq -e "${expression}" "${file}" >/dev/null || fail "${label}"
+            echo "PASS: ${label}"
+          }
+
           gcloud run services describe "${GCP_API_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${api_file}"
           gcloud run services describe "${GCP_PORTAL_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${portal_file}"
           gcloud run services get-iam-policy "${GCP_API_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${api_iam}"
@@ -78,24 +91,47 @@ jobs:
           PORTAL_URL="$(jq -r '.status.url' "${portal_file}")"
           API_READY_REVISION="$(jq -r '.status.latestReadyRevisionName' "${api_file}")"
           PORTAL_READY_REVISION="$(jq -r '.status.latestReadyRevisionName' "${portal_file}")"
+          API_CREATED_REVISION="$(jq -r '.status.latestCreatedRevisionName' "${api_file}")"
+          PORTAL_CREATED_REVISION="$(jq -r '.status.latestCreatedRevisionName' "${portal_file}")"
 
-          test "$(jq -r '.status.latestCreatedRevisionName' "${api_file}")" = "${API_READY_REVISION}"
-          test "$(jq -r '.status.latestCreatedRevisionName' "${portal_file}")" = "${PORTAL_READY_REVISION}"
-          jq -e --arg image "${EXPECTED_API_IMAGE}" '.spec.template.spec.containers[0].image == $image' "${api_file}" >/dev/null
-          jq -e --arg image "${EXPECTED_PORTAL_IMAGE}" '.spec.template.spec.containers[0].image == $image' "${portal_file}" >/dev/null
-          jq -e --arg identity "${GCP_API_RUNTIME_SERVICE_ACCOUNT}" '.spec.template.spec.serviceAccountName == $identity' "${api_file}" >/dev/null
-          jq -e --arg identity "${GCP_PORTAL_RUNTIME_SERVICE_ACCOUNT}" '.spec.template.spec.serviceAccountName == $identity' "${portal_file}" >/dev/null
+          echo "Sanitized staging structure:"
+          echo "- API revisions: created=${API_CREATED_REVISION}, ready=${API_READY_REVISION}"
+          echo "- Portal revisions: created=${PORTAL_CREATED_REVISION}, ready=${PORTAL_READY_REVISION}"
+          echo "- API image matches expected source: $(jq -r --arg image "${EXPECTED_API_IMAGE}" '.spec.template.spec.containers[0].image == $image' "${api_file}")"
+          echo "- Portal image matches expected source: $(jq -r --arg image "${EXPECTED_PORTAL_IMAGE}" '.spec.template.spec.containers[0].image == $image' "${portal_file}")"
+          echo "- API runtime identity: $(jq -r '.spec.template.spec.serviceAccountName' "${api_file}")"
+          echo "- Portal runtime identity: $(jq -r '.spec.template.spec.serviceAccountName' "${portal_file}")"
+          echo "- API secret-reference count: $(jq '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef != null)] | length' "${api_file}")"
+          echo "- Portal secret-reference count: $(jq '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef != null)] | length' "${portal_file}")"
+          echo "- API scaling effective min/max: $(jq -r '[(.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] // "0"), (.spec.template.metadata.annotations["autoscaling.knative.dev/maxScale"] // "unset")] | join("/")' "${api_file}")"
+          echo "- Portal scaling effective min/max: $(jq -r '[(.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] // "0"), (.spec.template.metadata.annotations["autoscaling.knative.dev/maxScale"] // "unset")] | join("/")' "${portal_file}")"
 
-          jq -e '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef != null)] | length == 7 and all(.valueFrom.secretKeyRef.key | test("^[1-9][0-9]*$"))' "${api_file}" >/dev/null
-          jq -e '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef != null)] | length == 1 and all(.valueFrom.secretKeyRef.key | test("^[1-9][0-9]*$"))' "${portal_file}" >/dev/null
-          jq -e '(.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] // "0") == "0" and .spec.template.metadata.annotations["autoscaling.knative.dev/maxScale"] == "1"' "${api_file}" >/dev/null
-          jq -e '(.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] // "0") == "0" and .spec.template.metadata.annotations["autoscaling.knative.dev/maxScale"] == "1"' "${portal_file}" >/dev/null
+          test "${API_CREATED_REVISION}" = "${API_READY_REVISION}" || fail "API latest-created revision must equal latest-ready revision"
+          echo "PASS: API latest-created revision equals latest-ready revision"
+          test "${PORTAL_CREATED_REVISION}" = "${PORTAL_READY_REVISION}" || fail "Portal latest-created revision must equal latest-ready revision"
+          echo "PASS: Portal latest-created revision equals latest-ready revision"
+          jq -e --arg image "${EXPECTED_API_IMAGE}" '.spec.template.spec.containers[0].image == $image' "${api_file}" >/dev/null || fail "API image must match exact requested source SHA"
+          echo "PASS: API image matches exact requested source SHA"
+          jq -e --arg image "${EXPECTED_PORTAL_IMAGE}" '.spec.template.spec.containers[0].image == $image' "${portal_file}" >/dev/null || fail "Portal image must match exact requested source SHA"
+          echo "PASS: Portal image matches exact requested source SHA"
+          jq -e --arg identity "${GCP_API_RUNTIME_SERVICE_ACCOUNT}" '.spec.template.spec.serviceAccountName == $identity' "${api_file}" >/dev/null || fail "API runtime identity must match bounded service account"
+          echo "PASS: API runtime identity is bounded"
+          jq -e --arg identity "${GCP_PORTAL_RUNTIME_SERVICE_ACCOUNT}" '.spec.template.spec.serviceAccountName == $identity' "${portal_file}" >/dev/null || fail "Portal runtime identity must match bounded service account"
+          echo "PASS: Portal runtime identity is bounded"
 
-          jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' "${api_iam}" >/dev/null
-          jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' "${portal_iam}" >/dev/null
-          jq -e --arg expected "serviceAccount:${GCP_PORTAL_RUNTIME_SERVICE_ACCOUNT}" '[.bindings[]? | select(.role == "roles/run.invoker") | .members[]?] | index($expected) != null' "${api_iam}" >/dev/null
-          jq -e --arg deployer "serviceAccount:${GCP_SERVICE_ACCOUNT}" '[.bindings[]? | select(.role == "roles/run.invoker") | .members[]?] | index($deployer) == null' "${api_iam}" >/dev/null
-          jq -e --arg deployer "serviceAccount:${GCP_SERVICE_ACCOUNT}" '[.bindings[]? | select(.role == "roles/run.invoker") | .members[]?] | index($deployer) == null' "${portal_iam}" >/dev/null
+          check_jq "API has exactly seven numeric-version secret references" '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef != null)] | length == 7 and all(.valueFrom.secretKeyRef.key | test("^[1-9][0-9]*$"))' "${api_file}"
+          check_jq "Portal has exactly one numeric-version secret reference" '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef != null)] | length == 1 and all(.valueFrom.secretKeyRef.key | test("^[1-9][0-9]*$"))' "${portal_file}"
+          check_jq "API effective scaling is min 0 max 1" '(.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] // "0") == "0" and .spec.template.metadata.annotations["autoscaling.knative.dev/maxScale"] == "1"' "${api_file}"
+          check_jq "Portal effective scaling is min 0 max 1" '(.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] // "0") == "0" and .spec.template.metadata.annotations["autoscaling.knative.dev/maxScale"] == "1"' "${portal_file}"
+
+          check_jq "API has no public Cloud Run invoker" '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' "${api_iam}"
+          check_jq "Portal has no public Cloud Run invoker" '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' "${portal_iam}"
+          jq -e --arg expected "serviceAccount:${GCP_PORTAL_RUNTIME_SERVICE_ACCOUNT}" '[.bindings[]? | select(.role == "roles/run.invoker") | .members[]?] | index($expected) != null' "${api_iam}" >/dev/null || fail "API must grant Invoker to portal runtime"
+          echo "PASS: API grants Invoker to portal runtime"
+          jq -e --arg deployer "serviceAccount:${GCP_SERVICE_ACCOUNT}" '[.bindings[]? | select(.role == "roles/run.invoker") | .members[]?] | index($deployer) == null' "${api_iam}" >/dev/null || fail "API must not retain deployer Invoker outside bounded inspection window"
+          echo "PASS: API does not retain deployer Invoker"
+          jq -e --arg deployer "serviceAccount:${GCP_SERVICE_ACCOUNT}" '[.bindings[]? | select(.role == "roles/run.invoker") | .members[]?] | index($deployer) == null' "${portal_iam}" >/dev/null || fail "Portal must not retain deployer Invoker outside bounded inspection window"
+          echo "PASS: Portal does not retain deployer Invoker"
 
           echo "API_URL=${API_URL}" >> "${GITHUB_ENV}"
           echo "PORTAL_URL=${PORTAL_URL}" >> "${GITHUB_ENV}"
