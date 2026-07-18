@@ -21,15 +21,15 @@ The first production client is a **native Android application**. A web operation
 
 ## Repository status
 
-The repository contains the authoritative product, design, architecture, trust, security, testing and operations specifications for DIREKT.
+The repository contains the authoritative product, design, architecture, trust, security, testing and operations specifications plus the native Android, NestJS API, PostgreSQL/PostGIS migrations and internal operations portal implementation.
 
-- **Phase 0:** complete
-- **Phase 1A:** complete with accepted limitations using an official and credible secondary-research baseline
-- **Phase 1B:** authorized — synthetic interactive prototype
-- **Android product code:** begins in Phase 2 after the Phase 1B design checkpoint
-- **Public pilot:** not authorized
+- **Phases 0–9:** complete and promoted.
+- **Phase 10:** security/privacy/legal/reliability hardening and managed synthetic/private-staging activation complete; final promotion merged through PR #111 at `369fc72581b3ed27920b8fc949e32cfedf1ad8d9` and Issue #41 is closed.
+- **Phase 11:** repository-side controlled Zambia pilot entry preparation is active under Issue #112.
+- **Real participant pilot:** not yet authorized; legal/privacy/provider/operational entry gates remain open.
+- **Phase 12 production release:** not authorized before actual Phase 11 primary evidence and an explicit evidence-backed proceed decision.
 
-Primary Zambia interviews and real operational validation have been deferred to later prototype, legal-hardening and controlled-pilot gates. They have not been fabricated or treated as completed.
+Primary Zambia interviews, real provider evidence and field validation have not been fabricated or treated as complete. The historical secondary-research assumptions remain provisional where Phase 11 primary evidence is required.
 
 ### Mandatory reading order
 
@@ -39,9 +39,10 @@ Primary Zambia interviews and real operational validation have been deferred to 
 4. [`WORKSTREAM_LOCK.md`](WORKSTREAM_LOCK.md)
 5. [`DEFINITION_OF_DONE.md`](DEFINITION_OF_DONE.md)
 6. [`docs/INDEX.md`](docs/INDEX.md)
-7. [`docs/research/SECONDARY_RESEARCH_BASELINE.md`](docs/research/SECONDARY_RESEARCH_BASELINE.md)
+7. [`docs/phase11/HANDOFF_FROM_PHASE10.md`](docs/phase11/HANDOFF_FROM_PHASE10.md)
+8. [`docs/phase11/PHASE11_EXECUTION_AND_ENTRY_CONTROL.md`](docs/phase11/PHASE11_EXECUTION_AND_ENTRY_CONTROL.md)
 
-## Planned repository layout
+## Repository layout
 
 ```text
 android/direkt-app/              Native Kotlin/Jetpack Compose application
@@ -52,31 +53,35 @@ prototype/                       Synthetic browser prototype for Pages
 infrastructure/                  Deployment and environment definitions
 docs/                            Authoritative planning and operating documents
 scripts/                         Validation, packaging and maintenance scripts
-.github/workflows/               Documentation, Pages and product CI
+.github/workflows/               Documentation, product, security and deployment CI
 ```
 
 ## Branch and workflow policy
 
 DIREKT uses one controlled implementation stream:
 
-- `main` is the stable checkpoint and GitHub Pages source.
+- `main` is the stable promoted checkpoint and GitHub Pages source.
 - `build/android-v1` is the sequential implementation branch.
 - One active owner or agent controls writes to a workstream.
 - Every material task ends with checks, documentation, an atomic commit and a status update.
 - Force-pushing is prohibited.
 - The active repository agent creates, verifies and merges routine checkpoint pull requests automatically when safe.
-- Completed linked issues are closed automatically when their acceptance evidence exists.
-- External credentials, legal approval and real-world evidence are never fabricated.
+- Completed linked issues are closed automatically only when their acceptance evidence exists.
+- External credentials, qualified legal approval, participant results and field evidence are never fabricated.
 
 See [`docs/operations/AGENT_WORKFLOW.md`](docs/operations/AGENT_WORKFLOW.md).
 
-## Build and remote testing
+## Build, managed staging and remote testing
 
-The repository has three remote collaboration channels:
+Current controlled collaboration/testing channels include:
 
-- **GitHub Pages** publishes documentation and synthetic browser prototypes.
-- **DIREKT Android CI** tests, lints and builds a debug APK after the Gradle project is scaffolded.
-- **Firebase App Distribution** will deliver approved test builds to named Android testers after Firebase configuration.
+- **GitHub Pages** for documentation and fictional/non-sensitive prototypes only;
+- **GitHub Actions** for backend, Android, portal, documentation, security/supply-chain and managed-infrastructure verification;
+- **Supabase development** project `aeeuscifrxcjmnswqwnq` for the protected PostgreSQL/PostGIS/private-storage development boundary;
+- **Google Cloud** project `direkt-dev-502701` for Artifact Registry and IAM-private Cloud Run staging;
+- **Firebase App Distribution** for approved internal Android debug distribution to named testers.
+
+Managed Phase 10 staging is synthetic/private and is not the real Phase 11 participant-access path. An internet-addressable Cloud Run URL does not imply public pilot access when IAM denies unauthenticated invocation.
 
 GitHub Pages cannot execute the native Android application. See [`docs/operations/REMOTE_ANDROID_TESTING.md`](docs/operations/REMOTE_ANDROID_TESTING.md).
 
@@ -86,10 +91,10 @@ The Pages workflow publishes:
 
 - product and technical documentation;
 - fictional, non-sensitive interactive prototypes;
-- test instructions and pilot material;
+- test instructions and approved pilot material;
 - release notes and approved reports.
 
-Pages must not host the production API, authenticated operations, secrets, real verification documents, personal data or private location evidence.
+Pages must not host the production API, authenticated operations, secrets, real verification documents, personal data, participant linkage keys or private location evidence.
 
 Public site:
 
@@ -99,11 +104,22 @@ Public site:
 
 [Download the generated DIREKT planning pack](https://kudzimusar.github.io/direkt/downloads/DIREKT_PLANNING_PACK.zip)
 
-## Current next workstream
+## Current workstream
 
-The active next workstream is **Phase 1B — build and publish a synthetic interactive DIREKT prototype through GitHub Pages**.
+The active workstream is **Phase 11 — controlled Zambia pilot and primary validation**, beginning with the entry gate rather than real recruitment.
 
-The prototype will cover customer discovery, provider trust details, provider evidence progress and operations review using fictional Zambia-oriented data. It will not claim that the backend, verification engine or production integrations already exist.
+Current repository priorities are:
+
+1. preserve the Phase 10 stable baseline and permanent regressions;
+2. satisfy/document qualified legal, privacy, processor and provider entry gates;
+3. approve a tightly bounded pilot area/categories/cohort and named operational owners;
+4. reconcile external Maps/Sentry setup with actual runtime source/configuration evidence;
+5. establish a safe participant access/authentication path without exposing privileged infrastructure;
+6. execute the real controlled pilot only after entry authorization;
+7. apply evidence-led corrections to the same production codebase;
+8. make the Phase 11 `STOP / REPEAT / NARROW / PROCEED` exit decision before Phase 12.
+
+See [`PROJECT_STATUS.md`](PROJECT_STATUS.md) for the live checkpoint and blockers.
 
 ## Rights and contribution status
 
