@@ -6,6 +6,11 @@ on:
       - ops/supabase-activation-20260718
     paths:
       - .github/workflows/ops-supabase-activation-bridge.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/ops-supabase-activation-bridge.yml
 
 permissions:
   actions: write
@@ -53,7 +58,7 @@ jobs:
           RUN_ID=""
           for attempt in $(seq 1 60); do
             RESPONSE="$(gh api "repos/${REPOSITORY}/actions/workflows/${WORKFLOW_FILE}/runs?event=workflow_dispatch&branch=main&per_page=20")"
-            RUN_ID="$(jq -r --arg started "${STARTED_AT}" --arg sha "${SOURCE_SHA}" '
+            RUN_ID="$(jq -r --arg started "${STARTED_AT}" '
               [.workflow_runs[]
                 | select(.created_at >= $started)
                 | select(.head_branch == "main")
