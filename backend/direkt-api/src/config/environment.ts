@@ -34,7 +34,7 @@ export interface DirektEnvironment {
   ACCESS_TOKEN_SECRET: string;
   CONTACT_HASH_PEPPER: string;
   CHALLENGE_HASH_PEPPER: string;
-  EXTERNAL_SUBJECT_HASH_PEPPER: string;
+  EXTERNAL_SUBJECT_HASH_PEPPER?: string;
   ACCESS_TOKEN_TTL_SECONDS: number;
   REFRESH_TOKEN_TTL_DAYS: number;
   CHALLENGE_TTL_SECONDS: number;
@@ -130,12 +130,10 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
       'direkt-development-challenge-hash-pepper-not-for-production-0000001',
     ),
   }),
-  EXTERNAL_SUBJECT_HASH_PEPPER: longSecret.when('NODE_ENV', {
-    is: 'production',
+  EXTERNAL_SUBJECT_HASH_PEPPER: longSecret.when('FIREBASE_AUTH_MODE', {
+    is: 'firebase',
     then: longSecret.required(),
-    otherwise: longSecret.default(
-      'direkt-development-external-subject-hash-pepper-not-for-production-0001',
-    ),
+    otherwise: Joi.optional(),
   }),
   ACCESS_TOKEN_TTL_SECONDS: Joi.number().integer().min(60).max(900).default(600),
   REFRESH_TOKEN_TTL_DAYS: Joi.number().integer().min(1).max(90).default(30),
