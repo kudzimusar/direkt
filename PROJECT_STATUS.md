@@ -34,7 +34,7 @@ Stage 10A security architecture and the Stage 10B route/permission baseline are 
 
 ### Infrastructure activation correction
 
-Phase 10 now explicitly permits:
+Phase 10 explicitly permits:
 
 - synthetic-only managed development infrastructure;
 - protected staging infrastructure using synthetic or separately approved non-personal fixtures;
@@ -43,7 +43,7 @@ Phase 10 now explicitly permits:
 - protected, no-index Vercel Preview/Staging portal deployment;
 - Firebase internal tester distribution.
 
-This corrects the previous over-broad deployment prohibition. It does **not** authorize real participant/evidence data, unrestricted public invitations, a Zambia pilot, public promotion or production release.
+This does **not** authorize real participant/evidence data, unrestricted public invitations, a Zambia pilot, public promotion or production release.
 
 ## Bound infrastructure
 
@@ -56,19 +56,27 @@ This corrects the previous over-broad deployment prohibition. It does **not** au
 | Firebase | project `direkt-dev-502701`, tester group `direkt-internal-testers` |
 | Vercel | protected Preview/Staging project still requires owner-side project binding and identifiers |
 
-### Supabase activation state
+### Supabase activation state — complete
 
-The active Supabase connection now exposes only the correct DIREKT project. Protected activation from reviewed `main` source `47ec3e6d44055be76d7902971173b5797056aad3` completed successfully and independent inspection confirmed:
+Protected activation and independent inspection confirm:
 
 - PostGIS is installed and `PostGIS_Version()` succeeds;
-- 33 checksummed DIREKT migrations are recorded through `202607171050_commercial_adjustment_integrity.sql`;
+- 34 checksummed DIREKT migrations are recorded through `202607180925_supabase_exposed_schema_hardening.sql`;
 - the required DIREKT schemas and platform tables exist;
 - all four required Storage buckets exist and are private;
-- the Storage object count is zero.
+- the Storage object count is zero;
+- RLS is enabled on the DIREKT migration ledger;
+- browser-facing roles have no table privileges on that ledger.
 
-A follow-up hardening migration is being corrected to respect Supabase's managed ownership of `public.spatial_ref_sys`. The DIREKT-owned migration ledger will receive RLS and browser-role privilege revocation. The platform-owned PostGIS table remains a documented managed-service exception pending a supported Supabase relocation/support action. See `docs/phase10/SUPABASE_DEVELOPMENT_ACTIVATION.md`.
+The remaining `public.spatial_ref_sys` advisor finding is a documented Supabase-managed PostGIS exception. See `docs/phase10/SUPABASE_DEVELOPMENT_ACTIVATION.md`.
 
-Cloud Run must not be rerun until the ownership-safe hardening migration is merged, activated from the exact merged `main` SHA, and independently verified.
+### Cloud Run recovery state — external IAM gate
+
+The API deployment workflow is private-only, immutable-source controlled, and rejects Secret Manager `:latest` references. The recovery deployment failed closed before any build, image push, or Cloud Run mutation because numeric secret-version metadata was unavailable.
+
+GitHub-to-Google OIDC succeeds. The deployer identity currently lacks the metadata permissions required to resolve the six pinned runtime secret versions. No secret payload was read and no version number was guessed.
+
+The exact external configuration and recovery sequence are documented in `docs/phase10/CLOUD_RUN_DEVELOPMENT_RECOVERY.md`. Cloud Run is not yet accepted as recovered.
 
 ## Phase boundaries
 
