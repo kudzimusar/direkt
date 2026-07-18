@@ -34,6 +34,7 @@ jobs:
       FIREBASE_PACKAGE_NAME: com.kudzimusar.direkt.debug
       FIREBASE_TESTER_GROUP: direkt-internal-testers
       FIREBASE_TOOLS_VERSION: 15.23.0
+      DIREKT_GRADLE_VERSION: "9.4.0"
 
     steps:
       - name: Validate distribution controls
@@ -63,8 +64,23 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v5
+      - name: Configure pinned Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ env.DIREKT_GRADLE_VERSION }}
+
+      - name: Bootstrap standard Gradle wrapper JAR
+        working-directory: android/direkt-app
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -f gradle/wrapper/gradle-wrapper.jar ]]; then
+            gradle wrapper \
+              --gradle-version "${DIREKT_GRADLE_VERSION}" \
+              --distribution-type bin
+          fi
+          chmod +x gradlew
+          ./gradlew --version
 
       - name: Build exact debug APK
         working-directory: android/direkt-app
