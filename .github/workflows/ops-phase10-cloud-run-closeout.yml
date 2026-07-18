@@ -17,8 +17,8 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Print exact-main inspection failed log tail
+      - name: Print concise exact-main inspection failure
         shell: bash
         run: |
           set -euo pipefail
-          gh run view 29645801091 --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 180
+          gh run view 29645801091 --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 45
