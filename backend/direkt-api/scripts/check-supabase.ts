@@ -101,9 +101,15 @@ async function main(): Promise<void> {
 
     const exposedDatabaseSurfaces = [
       ['anon application schema usage', databaseState.anon_application_schema_usage],
-      ['authenticated application schema usage', databaseState.authenticated_application_schema_usage],
+      [
+        'authenticated application schema usage',
+        databaseState.authenticated_application_schema_usage,
+      ],
       ['anon quarantine schema usage', databaseState.anon_quarantine_schema_usage],
-      ['authenticated quarantine schema usage', databaseState.authenticated_quarantine_schema_usage],
+      [
+        'authenticated quarantine schema usage',
+        databaseState.authenticated_quarantine_schema_usage,
+      ],
       ['anon migration ledger', databaseState.anon_migration_ledger_access],
       ['authenticated migration ledger', databaseState.authenticated_migration_ledger_access],
     ]
