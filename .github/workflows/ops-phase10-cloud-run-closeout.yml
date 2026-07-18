@@ -17,10 +17,10 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Print sanitized named inspection evidence
+      - name: Print exact-main deployment revision evidence
         shell: bash
         run: |
           set -euo pipefail
-          gh run view 29646134202 --repo "$GITHUB_REPOSITORY" --log-failed \
-            | grep -E 'Sanitized staging structure|API revisions:|Portal revisions:|image matches expected source:|runtime identity:|secret-reference count:|scaling effective min/max:|PASS:|INSPECTION ASSERTION FAILED' \
-            | tail -n 100 || true
+          gh run view 29645721465 --repo "$GITHUB_REPOSITORY" --log \
+            | grep -E 'Deploy private API revision|direkt-api-00009|direkt-api-00008|Revision|revision|Ready|ready|Traffic|traffic|Service \[direkt-api\]' \
+            | tail -n 180 || true
