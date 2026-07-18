@@ -45,12 +45,21 @@ jobs:
             [[ -n "${RUN_ID}" ]] && break
             sleep 5
           done
-          [[ -n "${RUN_ID}" ]]
+          if [[ -z "${RUN_ID}" ]]; then
+            echo "Protected activation run was not found."
+            exit 1
+          fi
+          echo "Protected activation run ID: ${RUN_ID}"
           for attempt in $(seq 1 180); do
             STATUS="$(gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}" --jq .status)"
             CONCLUSION="$(gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}" --jq '.conclusion // ""')"
+            URL="$(gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}" --jq .html_url)"
+            echo "status=${STATUS} conclusion=${CONCLUSION:-pending} url=${URL}"
             if [[ "${STATUS}" == "completed" ]]; then
-              [[ "${CONCLUSION}" == "success" ]]
+              if [[ "${CONCLUSION}" != "success" ]]; then
+                gh run view "${RUN_ID}" --repo "${REPOSITORY}" --log-failed || true
+                exit 1
+              fi
               exit 0
             fi
             sleep 10
