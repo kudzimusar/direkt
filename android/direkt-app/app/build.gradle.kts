@@ -3,6 +3,30 @@ plugins {
     alias(libs.plugins.compose)
 }
 
+fun quotedBuildConfig(value: String): String =
+    "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
+val pilotApiBaseUrl = providers.gradleProperty("DIREKT_PILOT_API_BASE_URL")
+    .orElse(providers.environmentVariable("DIREKT_PILOT_API_BASE_URL"))
+    .orElse("")
+    .get()
+val firebaseApiKey = providers.gradleProperty("DIREKT_FIREBASE_API_KEY")
+    .orElse(providers.environmentVariable("DIREKT_FIREBASE_API_KEY"))
+    .orElse("")
+    .get()
+val firebaseAppId = providers.gradleProperty("DIREKT_FIREBASE_APP_ID")
+    .orElse(providers.environmentVariable("DIREKT_FIREBASE_APP_ID"))
+    .orElse("")
+    .get()
+val firebaseProjectId = providers.gradleProperty("DIREKT_FIREBASE_PROJECT_ID")
+    .orElse(providers.environmentVariable("DIREKT_FIREBASE_PROJECT_ID"))
+    .orElse("")
+    .get()
+val pilotNoticeVersion = providers.gradleProperty("DIREKT_PILOT_NOTICE_VERSION")
+    .orElse(providers.environmentVariable("DIREKT_PILOT_NOTICE_VERSION"))
+    .orElse("")
+    .get()
+
 android {
     namespace = "com.kudzimusar.direkt"
     compileSdk = 36
@@ -16,6 +40,12 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+
+        buildConfigField("String", "DIREKT_PILOT_API_BASE_URL", quotedBuildConfig(pilotApiBaseUrl))
+        buildConfigField("String", "DIREKT_FIREBASE_API_KEY", quotedBuildConfig(firebaseApiKey))
+        buildConfigField("String", "DIREKT_FIREBASE_APP_ID", quotedBuildConfig(firebaseAppId))
+        buildConfigField("String", "DIREKT_FIREBASE_PROJECT_ID", quotedBuildConfig(firebaseProjectId))
+        buildConfigField("String", "DIREKT_PILOT_NOTICE_VERSION", quotedBuildConfig(pilotNoticeVersion))
     }
 
     buildTypes {
@@ -72,6 +102,9 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
 
     testImplementation(libs.junit)
 
