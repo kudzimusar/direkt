@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  Equals,
   IsIn,
   IsOptional,
   IsString,
@@ -33,6 +34,31 @@ export class VerifyChallengeDto {
   code!: string;
 
   @ApiPropertyOptional({ example: 'Synthetic Android device' })
+  @IsOptional()
+  @IsString()
+  @Length(3, 100)
+  deviceLabel?: string;
+}
+
+export class FirebaseSessionExchangeDto {
+  @ApiProperty({
+    description: 'Firebase Authentication ID token obtained after phone verification.',
+  })
+  @IsString()
+  @MinLength(100)
+  @MaxLength(8192)
+  idToken!: string;
+
+  @ApiProperty({ example: 'pilot-notice-v1' })
+  @IsString()
+  @Length(3, 120)
+  noticeVersion!: string;
+
+  @ApiProperty({ example: true, description: 'Must be true after explicit notice acceptance.' })
+  @Equals(true)
+  consentAccepted!: boolean;
+
+  @ApiPropertyOptional({ example: 'Android pilot device' })
   @IsOptional()
   @IsString()
   @Length(3, 100)

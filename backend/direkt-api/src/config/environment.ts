@@ -3,7 +3,8 @@ import * as Joi from 'joi';
 export type NodeEnvironment = 'development' | 'test' | 'production';
 export type EvidenceStorageProvider = 'synthetic' | 'supabase';
 export type PaymentProviderMode = 'synthetic' | 'disabled';
-export type DirektTrafficMode = 'disabled' | 'internal' | 'synthetic-public';
+export type FirebaseAuthMode = 'disabled' | 'firebase';
+export type DirektTrafficMode = 'disabled' | 'internal' | 'synthetic-public' | 'controlled-pilot';
 export type DirektDataMode = 'synthetic-only' | 'controlled-pilot' | 'production';
 export type DirektDeploymentEnvironment =
   'local' | 'development' | 'staging' | 'pilot' | 'production';
@@ -20,12 +21,17 @@ export interface DirektEnvironment {
   DIREKT_DATA_MODE: DirektDataMode;
   DIREKT_TRAFFIC_MODE: DirektTrafficMode;
   PILOT_ENTRY_APPROVED: boolean;
+  PILOT_NOTICE_VERSION?: string;
   RATE_LIMITS_ENABLED: boolean;
   RATE_LIMIT_HASH_PEPPER: string;
   AUTH_CHALLENGE_MODE: 'synthetic' | 'disabled';
+  FIREBASE_AUTH_MODE: FirebaseAuthMode;
+  FIREBASE_PROJECT_ID?: string;
+  FIREBASE_MAX_AUTH_AGE_SECONDS: number;
   ACCESS_TOKEN_SECRET: string;
   CONTACT_HASH_PEPPER: string;
   CHALLENGE_HASH_PEPPER: string;
+  EXTERNAL_SUBJECT_HASH_PEPPER?: string;
   ACCESS_TOKEN_TTL_SECONDS: number;
   REFRESH_TOKEN_TTL_DAYS: number;
   CHALLENGE_TTL_SECONDS: number;
@@ -45,6 +51,7 @@ const databaseUrlSchema = Joi.string().uri({ scheme: ['postgresql', 'postgres'] 
 const longSecret = Joi.string().min(64).max(512);
 const supabaseServerKey = Joi.string().min(20).max(2048);
 const bucketName = Joi.string().pattern(/^[a-z0-9][a-z0-9-]{1,62}$/);
+const firebaseProjectId = Joi.string().pattern(/^[a-z][a-z0-9-]{4,29}$/);
 
 export const environmentSchema = Joi.object<DirektEnvironment>({
   NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
@@ -66,10 +73,17 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     .default('synthetic-only'),
   DIREKT_TRAFFIC_MODE: Joi.string().when('NODE_ENV', {
     is: 'production',
-    then: Joi.valid('disabled').default('disabled'),
-    otherwise: Joi.valid('disabled', 'internal', 'synthetic-public').default('internal'),
+    then: Joi.valid('disabled', 'controlled-pilot').default('disabled'),
+    otherwise: Joi.valid('disabled', 'internal', 'synthetic-public', 'controlled-pilot').default(
+      'internal',
+    ),
   }),
   PILOT_ENTRY_APPROVED: Joi.boolean().truthy('true').falsy('false').default(false),
+  PILOT_NOTICE_VERSION: Joi.string().trim().min(3).max(120).when('FIREBASE_AUTH_MODE', {
+    is: 'firebase',
+    then: Joi.required(),
+    otherwise: Joi.optional(),
+  }),
   RATE_LIMITS_ENABLED: Joi.boolean()
     .truthy('true')
     .falsy('false')
@@ -90,6 +104,13 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     then: Joi.valid('disabled').default('disabled'),
     otherwise: Joi.valid('synthetic', 'disabled').default('synthetic'),
   }),
+  FIREBASE_AUTH_MODE: Joi.string().valid('disabled', 'firebase').default('disabled'),
+  FIREBASE_PROJECT_ID: firebaseProjectId.when('FIREBASE_AUTH_MODE', {
+    is: 'firebase',
+    then: firebaseProjectId.required(),
+    otherwise: firebaseProjectId.optional(),
+  }),
+  FIREBASE_MAX_AUTH_AGE_SECONDS: Joi.number().integer().min(60).max(900).default(300),
   ACCESS_TOKEN_SECRET: longSecret.when('NODE_ENV', {
     is: 'production',
     then: longSecret.required(),
@@ -110,6 +131,11 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     otherwise: longSecret.default(
       'direkt-development-challenge-hash-pepper-not-for-production-0000001',
     ),
+  }),
+  EXTERNAL_SUBJECT_HASH_PEPPER: longSecret.when('FIREBASE_AUTH_MODE', {
+    is: 'firebase',
+    then: longSecret.required(),
+    otherwise: Joi.optional(),
   }),
   ACCESS_TOKEN_TTL_SECONDS: Joi.number().integer().min(60).max(900).default(600),
   REFRESH_TOKEN_TTL_DAYS: Joi.number().integer().min(1).max(90).default(30),
@@ -159,11 +185,6 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
       custom: 'Production payment provider mode must remain disabled until a later approval gate.',
     });
   }
-  if (value.NODE_ENV === 'production' && value.DIREKT_TRAFFIC_MODE !== 'disabled') {
-    return helpers.message({
-      custom: 'Production traffic must remain disabled until the Phase 12 release gate.',
-    });
-  }
   if (
     value.DIREKT_TRAFFIC_MODE === 'synthetic-public' &&
     value.DIREKT_DATA_MODE !== 'synthetic-only'
@@ -171,6 +192,31 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     return helpers.message({
       custom: 'Public synthetic traffic requires DIREKT_DATA_MODE=synthetic-only.',
     });
+  }
+  if (value.FIREBASE_AUTH_MODE === 'firebase') {
+    if (
+      value.DIREKT_ENVIRONMENT !== 'pilot' ||
+      value.DIREKT_DATA_MODE !== 'controlled-pilot' ||
+      !value.PILOT_ENTRY_APPROVED
+    ) {
+      return helpers.message({
+        custom:
+          'Firebase authentication may be enabled only for the explicitly approved controlled-pilot environment.',
+      });
+    }
+  }
+  if (value.DIREKT_TRAFFIC_MODE === 'controlled-pilot') {
+    if (
+      value.DIREKT_ENVIRONMENT !== 'pilot' ||
+      value.DIREKT_DATA_MODE !== 'controlled-pilot' ||
+      !value.PILOT_ENTRY_APPROVED ||
+      value.FIREBASE_AUTH_MODE !== 'firebase'
+    ) {
+      return helpers.message({
+        custom:
+          'Controlled-pilot traffic requires the pilot environment, controlled-pilot data mode, explicit entry approval and Firebase authentication.',
+      });
+    }
   }
   if (value.PILOT_ENTRY_APPROVED && value.DIREKT_DATA_MODE !== 'controlled-pilot') {
     return helpers.message({
@@ -206,12 +252,22 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
           'Controlled-pilot data mode requires payments to remain disabled until separately approved.',
       });
     }
-    if (value.DIREKT_TRAFFIC_MODE !== 'disabled') {
+    if (!['disabled', 'controlled-pilot'].includes(value.DIREKT_TRAFFIC_MODE)) {
       return helpers.message({
         custom:
           'Controlled-pilot data mode remains traffic-disabled until an approved participant access and authentication path is implemented.',
       });
     }
+  }
+  if (value.DIREKT_TRAFFIC_MODE === 'controlled-pilot' && !value.FIREBASE_PROJECT_ID) {
+    return helpers.message({
+      custom: 'Controlled-pilot traffic requires an approved Firebase project binding.',
+    });
+  }
+  if (value.DIREKT_DATA_MODE === 'production' && value.DIREKT_TRAFFIC_MODE !== 'disabled') {
+    return helpers.message({
+      custom: 'Production traffic must remain disabled until the Phase 12 release gate.',
+    });
   }
   return value;
 });

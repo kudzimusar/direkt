@@ -11,11 +11,14 @@ import type {
   SessionView,
 } from './auth.types';
 import type {
+  FirebaseSessionExchangeDto,
   RequestChallengeDto,
   RevokeSessionDto,
   RotateSessionDto,
   VerifyChallengeDto,
 } from './auth.dto';
+import { FirebaseIdTokenVerifier } from './firebase-id-token-verifier';
+import { FirebaseSessionRepository } from './firebase-session.repository';
 import { SyntheticChallengeService } from './synthetic-challenge.service';
 import { TokenService } from './token.service';
 
@@ -29,15 +32,19 @@ export interface RequestSecurityContext {
 export class AuthService {
   private readonly challengeTtlSeconds: number;
   private readonly refreshTokenTtlDays: number;
+  private readonly pilotNoticeVersion: string | undefined;
 
   constructor(
     private readonly repository: AuthRepository,
+    private readonly firebaseSessions: FirebaseSessionRepository,
+    private readonly firebaseVerifier: FirebaseIdTokenVerifier,
     private readonly tokens: TokenService,
     private readonly challengeSender: SyntheticChallengeService,
     config: ConfigService,
   ) {
     this.challengeTtlSeconds = config.getOrThrow<number>('CHALLENGE_TTL_SECONDS');
     this.refreshTokenTtlDays = config.getOrThrow<number>('REFRESH_TOKEN_TTL_DAYS');
+    this.pilotNoticeVersion = config.get<string>('PILOT_NOTICE_VERSION');
   }
 
   async requestChallenge(
@@ -109,6 +116,59 @@ export class AuthService {
       ),
       contact: {
         channel: result.channel,
+        displayHint: result.displayHint,
+        verified: true,
+      },
+    };
+  }
+
+  async exchangeFirebaseSession(
+    dto: FirebaseSessionExchangeDto,
+    context: RequestSecurityContext,
+  ): Promise<AuthenticatedSession> {
+    if (
+      !dto.consentAccepted ||
+      !this.pilotNoticeVersion ||
+      dto.noticeVersion !== this.pilotNoticeVersion
+    ) {
+      throw new UnauthorizedException('The approved pilot notice must be accepted before sign-in.');
+    }
+    const verified = await this.firebaseVerifier.verify(dto.idToken);
+    const contact = normalizeContact('phone', verified.phoneNumber);
+    const sessionId = randomUUID();
+    const familyId = randomUUID();
+    const refreshToken = this.tokens.issueRefreshToken();
+    const refreshExpiresAt = this.refreshExpiry();
+    const result = await this.firebaseSessions.createSession({
+      subjectHash: this.tokens.hashExternalSubject('firebase', verified.subject),
+      contactHash: this.tokens.hashContact(contact.value),
+      displayHint: contact.displayHint,
+      noticeVersion: dto.noticeVersion,
+      sessionId,
+      familyId,
+      refreshTokenHash: this.tokens.hashRefreshToken(refreshToken),
+      sessionExpiresAt: refreshExpiresAt,
+      deviceLabel: dto.deviceLabel ?? 'Firebase Android pilot device',
+      userAgentHash: this.tokens.hashOptionalFingerprint(context.userAgent),
+      ipHash: this.tokens.hashOptionalFingerprint(context.ip),
+      ...(context.requestId ? { requestId: context.requestId } : {}),
+    });
+
+    if (result.kind !== 'success') {
+      throw new UnauthorizedException('The external identity is not admitted to the pilot.');
+    }
+
+    return {
+      identityId: result.identityId,
+      sessionId: result.sessionId,
+      ...this.buildTokens(
+        result.identityId,
+        result.sessionId,
+        refreshToken,
+        result.sessionExpiresAt,
+      ),
+      contact: {
+        channel: 'phone',
         displayHint: result.displayHint,
         verified: true,
       },

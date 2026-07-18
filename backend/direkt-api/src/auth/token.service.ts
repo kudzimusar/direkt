@@ -22,12 +22,14 @@ export class TokenService {
   private readonly accessTokenSecret: string;
   private readonly contactHashPepper: string;
   private readonly challengeHashPepper: string;
+  private readonly externalSubjectHashPepper: string | undefined;
   private readonly accessTokenTtlSeconds: number;
 
   constructor(config: ConfigService) {
     this.accessTokenSecret = config.getOrThrow<string>('ACCESS_TOKEN_SECRET');
     this.contactHashPepper = config.getOrThrow<string>('CONTACT_HASH_PEPPER');
     this.challengeHashPepper = config.getOrThrow<string>('CHALLENGE_HASH_PEPPER');
+    this.externalSubjectHashPepper = config.get<string>('EXTERNAL_SUBJECT_HASH_PEPPER');
     this.accessTokenTtlSeconds = config.getOrThrow<number>('ACCESS_TOKEN_TTL_SECONDS');
   }
 
@@ -55,7 +57,6 @@ export class TokenService {
     if (prefix !== 'dat1' || !payload || !providedSignature || extra) {
       throw new UnauthorizedException('The access token is invalid.');
     }
-
     const expectedSignature = this.sign(payload);
     const expectedBytes = Buffer.from(expectedSignature);
     const providedBytes = Buffer.from(providedSignature);
@@ -65,14 +66,12 @@ export class TokenService {
     ) {
       throw new UnauthorizedException('The access token is invalid.');
     }
-
     let claims: AccessTokenClaims;
     try {
       claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as AccessTokenClaims;
     } catch {
       throw new UnauthorizedException('The access token is invalid.');
     }
-
     const nowSeconds = Math.floor(now.getTime() / 1000);
     if (
       claims.version !== 1 ||
@@ -87,7 +86,6 @@ export class TokenService {
     ) {
       throw new UnauthorizedException('The access token is invalid or expired.');
     }
-
     return claims;
   }
 
@@ -102,6 +100,15 @@ export class TokenService {
   hashContact(normalizedValue: string): string {
     return createHmac('sha256', this.contactHashPepper)
       .update(normalizedValue, 'utf8')
+      .digest('hex');
+  }
+
+  hashExternalSubject(provider: string, subject: string): string {
+    if (!this.externalSubjectHashPepper) {
+      throw new Error('External subject hashing is not configured.');
+    }
+    return createHmac('sha256', this.externalSubjectHashPepper)
+      .update(`${provider}:${subject}`, 'utf8')
       .digest('hex');
   }
 

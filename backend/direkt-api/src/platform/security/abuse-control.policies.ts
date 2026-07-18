@@ -22,6 +22,13 @@ const POLICIES: readonly AbuseControlPolicy[] = [
     windowSeconds: 300,
   },
   {
+    key: 'auth_firebase_exchange',
+    method: 'POST',
+    pathPattern: /^\/api\/v1\/auth\/firebase\/exchange$/,
+    requestLimit: 10,
+    windowSeconds: 300,
+  },
+  {
     key: 'auth_session_rotate',
     method: 'POST',
     pathPattern: /^\/api\/v1\/auth\/sessions\/rotate$/,

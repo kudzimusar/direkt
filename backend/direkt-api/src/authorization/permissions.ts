@@ -1,6 +1,7 @@
 export const PERMISSIONS = {
   ACCOUNT_SESSIONS_MANAGE: 'account.sessions.manage',
   ACCOUNT_PROFILE_MANAGE: 'account.profile.manage',
+  PILOT_INVITATIONS_MANAGE: 'pilot.invitations.manage',
   OPERATIONS_PORTAL_ACCESS: 'operations.portal.access',
   OPERATIONS_PROVIDERS_READ: 'operations.providers.read',
   OPERATIONS_TRIAGE_READ: 'operations.triage.read',
