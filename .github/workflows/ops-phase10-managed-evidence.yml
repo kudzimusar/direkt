@@ -1,33 +1,19 @@
-name: Phase 10 managed restore bridge
-
+name: Firebase active run diagnostic
 on:
   pull_request:
     branches: [main]
-    paths:
-      - .github/workflows/ops-phase10-managed-evidence.yml
-
+    paths: [.github/workflows/ops-phase10-managed-evidence.yml]
 permissions:
-  actions: write
+  actions: read
   contents: read
-
 jobs:
-  restore:
+  inspect:
     runs-on: ubuntu-latest
-    timeout-minutes: 50
     steps:
-      - name: Dispatch managed restore
-        id: dispatch
+      - name: Show active Firebase run
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
-          gh workflow run phase10-managed-supabase-restore.yml --repo "$GITHUB_REPOSITORY" --ref main -f confirmation=RESTORE-DIREKT-MANAGED -f source_sha=bced994ba66fc1a9919797641ba87d9c8ec7d4a6
-      - name: Wait for managed restore
-        env:
-          GH_TOKEN: ${{ github.token }}
-          STARTED: ${{ steps.dispatch.outputs.started }}
-        run: |
-          sleep 5
-          RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow phase10-managed-supabase-restore.yml --branch main --event workflow_dispatch --limit 20 --json databaseId,createdAt --jq "map(select(.createdAt >= \"$STARTED\")) | sort_by(.createdAt) | last | .databaseId")
-          echo "Managed restore run ID: $RUN_ID"
-          gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status
+          RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow firebase-internal-distribution.yml --branch main --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId')
+          echo "Firebase run ID: $RUN_ID"
+          gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --json status,conclusion,jobs
