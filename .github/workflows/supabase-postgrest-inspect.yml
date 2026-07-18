@@ -1,0 +1,91 @@
+name: DIREKT Supabase Data API inspection
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type INSPECT-DIREKT-DATA-API to continue
+        required: true
+        type: string
+      source_sha:
+        description: Exact reviewed DIREKT commit already merged to main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-supabase-data-api-inspection
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    name: Inspect Supabase PostgREST configuration
+    if: github.ref == 'refs/heads/main'
+    environment: development
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PROJECT_REF: aeeuscifrxcjmnswqwnq
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+    steps:
+      - name: Validate inspection controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ inputs.confirmation }}" = "INSPECT-DIREKT-DATA-API"
+          [[ "${{ inputs.source_sha }}" =~ ^[0-9a-f]{40}$ ]]
+          test -n "${SUPABASE_ACCESS_TOKEN}"
+          echo "::add-mask::${SUPABASE_ACCESS_TOKEN}"
+
+      - name: Check out exact reviewed source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify source identity and main ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ inputs.source_sha }}"
+          git fetch origin main --no-tags
+          git merge-base --is-ancestor "${{ inputs.source_sha }}" origin/main
+
+      - name: Read PostgREST configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/supabase-data-api
+          HTTP_STATUS="$(curl --silent --show-error \
+            --output artifacts/supabase-data-api/postgrest-config.json \
+            --write-out '%{http_code}' \
+            "https://api.supabase.com/v1/projects/${PROJECT_REF}/postgrest" \
+            --header "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+            --header "Content-Type: application/json")"
+          test "${HTTP_STATUS}" = "200"
+          jq -e 'type == "object"' artifacts/supabase-data-api/postgrest-config.json >/dev/null
+
+      - name: Publish sanitized configuration summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "### DIREKT Supabase Data API inspection"
+            echo "- Source: \`${{ inputs.source_sha }}\`"
+            echo "- Project ref: \`${PROJECT_REF}\`"
+            echo "- PostgREST configuration:"
+            echo '```json'
+            jq . artifacts/supabase-data-api/postgrest-config.json
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload sanitized PostgREST configuration
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-supabase-data-api-${{ github.run_number }}-${{ inputs.source_sha }}
+          path: artifacts/supabase-data-api/postgrest-config.json
+          if-no-files-found: error
+          retention-days: 14
