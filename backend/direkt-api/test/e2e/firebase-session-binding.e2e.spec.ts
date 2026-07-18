@@ -78,4 +78,28 @@ describe('Phase 11 Firebase external identity binding', () => {
     );
     expect(recycledNumberAttempt).toEqual({ kind: 'identity_conflict' });
   });
+
+  it('serializes simultaneous first exchanges into one DIREKT identity', async () => {
+    const subjectHash = 'f'.repeat(64);
+    const contactHash = '1'.repeat(64);
+    const [first, second] = await Promise.all([
+      repository.createSession(sessionInput(subjectHash, contactHash)),
+      repository.createSession(sessionInput(subjectHash, contactHash)),
+    ]);
+
+    expect(first.kind).toBe('success');
+    expect(second.kind).toBe('success');
+    if (first.kind !== 'success' || second.kind !== 'success') {
+      throw new Error('Expected both serialized exchanges to create valid sessions.');
+    }
+    expect(second.identityId).toBe(first.identityId);
+
+    const identities = await pool.query<{ identity_id: string }>(
+      `SELECT identity_id
+       FROM account.external_identities
+       WHERE provider = 'firebase' AND subject_hash = $1`,
+      [subjectHash],
+    );
+    expect(identities.rows).toEqual([{ identity_id: first.identityId }]);
+  });
 });
