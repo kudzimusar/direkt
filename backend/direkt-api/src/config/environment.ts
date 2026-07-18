@@ -3,6 +3,10 @@ import * as Joi from 'joi';
 export type NodeEnvironment = 'development' | 'test' | 'production';
 export type EvidenceStorageProvider = 'synthetic' | 'supabase';
 export type PaymentProviderMode = 'synthetic' | 'disabled';
+export type DirektTrafficMode = 'disabled' | 'internal' | 'synthetic-public';
+export type DirektDataMode = 'synthetic-only' | 'controlled-pilot' | 'production';
+export type DirektDeploymentEnvironment =
+  'local' | 'development' | 'staging' | 'pilot' | 'production';
 
 export interface DirektEnvironment {
   NODE_ENV: NodeEnvironment;
@@ -11,6 +15,12 @@ export interface DirektEnvironment {
   DATABASE_URL: string;
   DIRECT_DATABASE_URL?: string;
   CORS_ORIGINS: string;
+  TRUST_PROXY_HOPS: number;
+  DIREKT_ENVIRONMENT: DirektDeploymentEnvironment;
+  DIREKT_DATA_MODE: DirektDataMode;
+  DIREKT_TRAFFIC_MODE: DirektTrafficMode;
+  RATE_LIMITS_ENABLED: boolean;
+  RATE_LIMIT_HASH_PEPPER: string;
   AUTH_CHALLENGE_MODE: 'synthetic' | 'disabled';
   ACCESS_TOKEN_SECRET: string;
   CONTACT_HASH_PEPPER: string;
@@ -46,6 +56,33 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
   }),
   DIRECT_DATABASE_URL: databaseUrlSchema.optional(),
   CORS_ORIGINS: Joi.string().allow('').default(''),
+  TRUST_PROXY_HOPS: Joi.number().integer().min(0).max(2).default(0),
+  DIREKT_ENVIRONMENT: Joi.string()
+    .valid('local', 'development', 'staging', 'pilot', 'production')
+    .default('local'),
+  DIREKT_DATA_MODE: Joi.string()
+    .valid('synthetic-only', 'controlled-pilot', 'production')
+    .default('synthetic-only'),
+  DIREKT_TRAFFIC_MODE: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.valid('disabled').default('disabled'),
+    otherwise: Joi.valid('disabled', 'internal', 'synthetic-public').default('internal'),
+  }),
+  RATE_LIMITS_ENABLED: Joi.boolean()
+    .truthy('true')
+    .falsy('false')
+    .when('NODE_ENV', {
+      is: 'test',
+      then: Joi.boolean().default(false),
+      otherwise: Joi.boolean().default(true),
+    }),
+  RATE_LIMIT_HASH_PEPPER: longSecret.when('NODE_ENV', {
+    is: 'production',
+    then: longSecret.required(),
+    otherwise: longSecret.default(
+      'direkt-development-rate-limit-hash-pepper-not-for-production-000001',
+    ),
+  }),
   AUTH_CHALLENGE_MODE: Joi.string().when('NODE_ENV', {
     is: 'production',
     then: Joi.valid('disabled').default('disabled'),
@@ -118,6 +155,19 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
   if (value.NODE_ENV === 'production' && value.PAYMENT_PROVIDER_MODE !== 'disabled') {
     return helpers.message({
       custom: 'Production payment provider mode must remain disabled until a later approval gate.',
+    });
+  }
+  if (value.NODE_ENV === 'production' && value.DIREKT_TRAFFIC_MODE !== 'disabled') {
+    return helpers.message({
+      custom: 'Production traffic must remain disabled until the Phase 12 release gate.',
+    });
+  }
+  if (
+    value.DIREKT_TRAFFIC_MODE === 'synthetic-public' &&
+    value.DIREKT_DATA_MODE !== 'synthetic-only'
+  ) {
+    return helpers.message({
+      custom: 'Public synthetic traffic requires DIREKT_DATA_MODE=synthetic-only.',
     });
   }
   return value;

@@ -1,0 +1,136 @@
+name: DIREKT Phase 10 Android performance budget
+
+on:
+  push:
+    branches:
+      - main
+      - build/android-v1
+    paths:
+      - "android/direkt-app/**"
+      - ".github/scripts/phase10-android-performance.sh"
+      - ".github/workflows/phase10-android-performance-ci.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "android/direkt-app/**"
+      - ".github/scripts/phase10-android-performance.sh"
+      - ".github/workflows/phase10-android-performance-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-phase10-android-performance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cold-launch:
+    name: Debug artifact and cold-launch budget
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ANDROID_PROJECT_DIR: android/direkt-app
+      DIREKT_GRADLE_VERSION: "9.4.0"
+      DIREKT_DEBUG_PACKAGE: com.kudzimusar.direkt.debug
+      DIREKT_MAIN_ACTIVITY: com.kudzimusar.direkt.MainActivity
+      APK_SIZE_BUDGET_BYTES: "52428800"
+      # Calibrated from repeated API 35 x86_64 debug-emulator runs after the
+      # first-frame startup optimization. These are regression gates, not
+      # production-device targets. The p95 ceiling remains below the measured
+      # pre-optimization baseline of 6,876 ms while allowing bounded runner
+      # variance observed in a single 6,148 ms outlier.
+      COLD_LAUNCH_MEDIAN_BUDGET_MS: "4500"
+      COLD_LAUNCH_P95_BUDGET_MS: "6500"
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ env.DIREKT_GRADLE_VERSION }}
+
+      - name: Bootstrap pinned Gradle wrapper
+        working-directory: android/direkt-app
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -f gradle/wrapper/gradle-wrapper.jar ]]; then
+            gradle wrapper \
+              --gradle-version "${DIREKT_GRADLE_VERSION}" \
+              --distribution-type bin
+          fi
+          chmod +x ./gradlew
+          ./gradlew --version
+
+      - name: Build debug APK and enforce artifact budget
+        working-directory: android/direkt-app
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUILD_STARTED_AT="$(date +%s)"
+          ./gradlew --no-daemon --stacktrace testDebugUnitTest assembleDebug
+          BUILD_DURATION_SECONDS="$(( $(date +%s) - BUILD_STARTED_AT ))"
+
+          APK_RELATIVE_PATH="app/build/outputs/apk/debug/app-debug.apk"
+          test -f "${APK_RELATIVE_PATH}"
+          APK_SIZE_BYTES="$(stat --format='%s' "${APK_RELATIVE_PATH}")"
+          test "${APK_SIZE_BYTES}" -le "${APK_SIZE_BUDGET_BYTES}"
+
+          mkdir -p "${GITHUB_WORKSPACE}/artifacts/phase10"
+          {
+            echo "APK_PATH=${GITHUB_WORKSPACE}/${ANDROID_PROJECT_DIR}/${APK_RELATIVE_PATH}"
+            echo "APK_SIZE_BYTES=${APK_SIZE_BYTES}"
+            echo "ANDROID_BUILD_DURATION_SECONDS=${BUILD_DURATION_SECONDS}"
+          } >> "${GITHUB_ENV}"
+
+      - name: Install Android emulator runtime libraries
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends libpulse0
+
+      - name: Enable KVM access
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          test -e /dev/kvm
+
+      - name: Provision emulator and measure bounded cold launches
+        shell: bash
+        run: bash .github/scripts/phase10-android-performance.sh
+
+      - name: Publish Android performance summary
+        shell: bash
+        run: |
+          EVIDENCE="artifacts/phase10/android-performance-evidence.json"
+          {
+            echo "### DIREKT Phase 10 Android performance budget"
+            echo "- Package: \`${DIREKT_DEBUG_PACKAGE}\`"
+            echo "- Debug APK: $(jq -r '.apk.sizeBytes' "${EVIDENCE}") bytes"
+            echo "- Build duration: $(jq -r '.apk.buildDurationSeconds' "${EVIDENCE}")s"
+            echo "- Cold-launch median: $(jq -r '.coldLaunch.medianMs' "${EVIDENCE}")ms"
+            echo "- Cold-launch p95: $(jq -r '.coldLaunch.p95Ms' "${EVIDENCE}")ms"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload sanitized Android performance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-phase10-android-performance-${{ github.run_number }}-${{ github.sha }}
+          path: |
+            artifacts/phase10/android-performance-evidence.json
+            artifacts/phase10/android-performance-debug.txt
+          if-no-files-found: warn
+          retention-days: 30

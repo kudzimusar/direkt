@@ -35,6 +35,37 @@ describe('OperationsApiClient', () => {
     );
   });
 
+  it('preserves DIREKT authorization and adds the Cloud Run platform token separately', async () => {
+    const fetchImplementation = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ synthetic: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+    const platformIdentityTokenProvider = vi
+      .fn<() => Promise<string | null>>()
+      .mockResolvedValue('header.payload.signature');
+    const client = new OperationsApiClient({
+      baseUrl: 'https://api.synthetic.invalid',
+      accessToken: 'direkt-application-token',
+      fetchImplementation,
+      platformIdentityTokenProvider,
+    });
+
+    await client.get(operationsEndpoints.triage);
+
+    expect(platformIdentityTokenProvider).toHaveBeenCalledOnce();
+    expect(fetchImplementation).toHaveBeenCalledWith(
+      'https://api.synthetic.invalid/api/v1/operations/verification-queue',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          authorization: 'Bearer direkt-application-token',
+          'x-serverless-authorization': 'Bearer header.payload.signature',
+        }),
+      }),
+    );
+  });
+
   it('encodes verification, Stage 8 and Stage 9 identifiers in route builders', () => {
     expect(operationsEndpoints.reviewWorkspace('case/one')).toBe(
       '/api/v1/verification-cases/case%2Fone/review-workspace',
@@ -82,7 +113,6 @@ describe('OperationsApiClient', () => {
       reason: 'Synthetic reasoned commercial transition for API boundary testing.',
       policyVersion: 'phase9-v1',
     });
-
     expect(fetchImplementation).toHaveBeenCalledWith(
       'https://api.synthetic.invalid/api/v1/operations/commercial/reconciliation/case-id/transitions',
       expect.objectContaining({

@@ -1,7 +1,7 @@
 .git
 .github
+.next
 node_modules
-dist
 coverage
 artifacts
 test

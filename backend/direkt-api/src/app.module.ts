@@ -12,6 +12,7 @@ import { DatabaseModule } from './platform/database/database.module';
 import { HealthModule } from './platform/health/health.module';
 import { CorrelationIdMiddleware } from './platform/http/correlation-id.middleware';
 import { RequestLoggingMiddleware } from './platform/http/request-logging.middleware';
+import { AbuseControlMiddleware } from './platform/security/abuse-control.middleware';
 import { ProviderModule } from './provider-core/provider.module';
 import { ProviderWorkspaceModule } from './provider-workspace/provider-workspace.module';
 import { VerificationEvidenceModule } from './verification-evidence/verification-evidence.module';
@@ -44,7 +45,7 @@ import { VerificationEvidenceModule } from './verification-evidence/verification
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     consumer
-      .apply(CorrelationIdMiddleware, RequestLoggingMiddleware)
+      .apply(CorrelationIdMiddleware, RequestLoggingMiddleware, AbuseControlMiddleware)
       .forRoutes({ path: '*path', method: RequestMethod.ALL });
   }
 }

@@ -1,15 +1,25 @@
 import { ValidationPipe, type INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
-import { parseCorsOrigins } from './config/environment';
+import { parseCorsOrigins, type NodeEnvironment } from './config/environment';
 import { ProblemDetailsFilter } from './platform/http/problem-details.filter';
+import { applySecurityHeaders } from './platform/http/security-headers';
 import { createOpenApiDocument } from './platform/openapi/openapi';
+
+interface ExpressApplicationLike {
+  set?: (setting: string, value: unknown) => void;
+}
 
 export function configureApplication(app: INestApplication): OpenAPIObject {
   const configService = app.get(ConfigService);
   const origins = parseCorsOrigins(configService.get<string>('CORS_ORIGINS'));
+  const environment = configService.getOrThrow<NodeEnvironment>('NODE_ENV');
+  const trustProxyHops = configService.getOrThrow<number>('TRUST_PROXY_HOPS');
+  const expressApplication = app.getHttpAdapter().getInstance() as ExpressApplicationLike;
 
+  expressApplication.set?.('trust proxy', trustProxyHops);
   app.setGlobalPrefix('api/v1');
+  applySecurityHeaders(app, environment);
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
@@ -26,7 +36,13 @@ export function configureApplication(app: INestApplication): OpenAPIObject {
       credentials: false,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['content-type', 'authorization', 'x-request-id', 'idempotency-key'],
-      exposedHeaders: ['x-request-id'],
+      exposedHeaders: [
+        'x-request-id',
+        'ratelimit-limit',
+        'ratelimit-remaining',
+        'ratelimit-reset',
+        'retry-after',
+      ],
       maxAge: 600,
     });
   }

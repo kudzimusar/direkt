@@ -1,0 +1,59 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /backend/direkt-api
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:00"
+      timezone: Africa/Lusaka
+    target-branch: main
+    open-pull-requests-limit: 5
+    groups:
+      backend-runtime:
+        dependency-type: production
+      backend-development:
+        dependency-type: development
+
+  - package-ecosystem: npm
+    directory: /admin/direkt-operations-portal
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:20"
+      timezone: Africa/Lusaka
+    target-branch: main
+    open-pull-requests-limit: 5
+    groups:
+      portal-runtime:
+        dependency-type: production
+      portal-development:
+        dependency-type: development
+
+  - package-ecosystem: gradle
+    directory: /android/direkt-app
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:40"
+      timezone: Africa/Lusaka
+    target-branch: main
+    open-pull-requests-limit: 5
+    groups:
+      android-dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Africa/Lusaka
+    target-branch: main
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns:
+          - "*"
