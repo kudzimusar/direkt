@@ -7,79 +7,23 @@ on:
       - .github/workflows/ops-phase10-cloud-run-closeout.yml
 
 permissions:
-  actions: write
+  actions: read
   contents: read
 
 jobs:
   closeout:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 10
     env:
-      SOURCE_SHA: 5d9313333c49d6501944e6ddba4cd408c540ff47
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Deploy final exact main to private staging
+      - name: Print final Phase 10 managed run identifiers
         shell: bash
         run: |
           set -euo pipefail
-          started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          gh workflow run cloud-run-staging-deploy-v2.yml --repo "$GITHUB_REPOSITORY" --ref main \
-            -f confirmation=DEPLOY-DIREKT-STAGING -f source_sha="$SOURCE_SHA"
-          run_id=""
-          for attempt in $(seq 1 60); do
-            run_id=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow cloud-run-staging-deploy-v2.yml \
-              --branch main --event workflow_dispatch --limit 20 --json databaseId,createdAt \
-              --jq "map(select(.createdAt >= \"$started\")) | sort_by(.createdAt) | last | .databaseId // empty")
-            test -n "$run_id" && break
-            sleep 5
+          for workflow in cloud-run-staging-deploy-v2.yml cloud-run-staging-inspect.yml phase10-managed-cloud-run-operations.yml; do
+            echo "--- ${workflow} ---"
+            gh run list --repo "$GITHUB_REPOSITORY" --workflow "${workflow}" --branch main --event workflow_dispatch --limit 5 \
+              --json databaseId,createdAt,status,conclusion,headSha \
+              --jq '.[] | [.databaseId,.createdAt,.status,(.conclusion // ""),.headSha] | @tsv'
           done
-          test -n "$run_id"
-          echo "Final exact-main deploy run ID: $run_id"
-          if ! gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status; then
-            gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 240 || true
-            exit 1
-          fi
-
-      - name: Inspect final exact main staging
-        shell: bash
-        run: |
-          set -euo pipefail
-          started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          gh workflow run cloud-run-staging-inspect.yml --repo "$GITHUB_REPOSITORY" --ref main \
-            -f confirmation=INSPECT-DIREKT-STAGING -f source_sha="$SOURCE_SHA"
-          run_id=""
-          for attempt in $(seq 1 60); do
-            run_id=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow cloud-run-staging-inspect.yml \
-              --branch main --event workflow_dispatch --limit 20 --json databaseId,createdAt \
-              --jq "map(select(.createdAt >= \"$started\")) | sort_by(.createdAt) | last | .databaseId // empty")
-            test -n "$run_id" && break
-            sleep 5
-          done
-          test -n "$run_id"
-          echo "Final exact-main inspection run ID: $run_id"
-          if ! gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status; then
-            gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 260 || true
-            exit 1
-          fi
-
-      - name: Exercise final exact main managed operations
-        shell: bash
-        run: |
-          set -euo pipefail
-          started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          gh workflow run phase10-managed-cloud-run-operations.yml --repo "$GITHUB_REPOSITORY" --ref main \
-            -f confirmation=EXERCISE-DIREKT-OPERATIONS -f source_sha="$SOURCE_SHA"
-          run_id=""
-          for attempt in $(seq 1 60); do
-            run_id=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow phase10-managed-cloud-run-operations.yml \
-              --branch main --event workflow_dispatch --limit 20 --json databaseId,createdAt \
-              --jq "map(select(.createdAt >= \"$started\")) | sort_by(.createdAt) | last | .databaseId // empty")
-            test -n "$run_id" && break
-            sleep 5
-          done
-          test -n "$run_id"
-          echo "Final exact-main managed operations run ID: $run_id"
-          if ! gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status; then
-            gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 320 || true
-            exit 1
-          fi
