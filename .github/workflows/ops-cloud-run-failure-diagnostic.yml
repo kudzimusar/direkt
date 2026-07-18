@@ -14,10 +14,8 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Print secret-version sync failure lines
+      - name: Print final Secret Manager sync failure tail
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh run view 29624111883 --repo "$GITHUB_REPOSITORY" --log-failed \
-            | grep -Ei 'permission|denied|forbidden|enabled secret|secretmanager|variables|403|404|error|process completed' \
-            | tail -n 80
+          gh run view 29624111883 --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 45
