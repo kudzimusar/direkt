@@ -1,0 +1,52 @@
+name: Phase 10 managed staging evidence bridge
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/ops-phase10-managed-evidence.yml
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - name: Dispatch controlled staging deployment
+        id: dispatch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          gh workflow run cloud-run-staging-deploy-v2.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f confirmation=DEPLOY-DIREKT-STAGING \
+            -f source_sha=bced994ba66fc1a9919797641ba87d9c8ec7d4a6
+
+      - name: Wait for controlled staging deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STARTED: ${{ steps.dispatch.outputs.started }}
+        run: |
+          set -euo pipefail
+          RUN_ID=""
+          for attempt in $(seq 1 60); do
+            RUN_ID=$(gh run list \
+              --repo "$GITHUB_REPOSITORY" \
+              --workflow cloud-run-staging-deploy-v2.yml \
+              --branch main \
+              --event workflow_dispatch \
+              --limit 20 \
+              --json databaseId,createdAt \
+              --jq "map(select(.createdAt >= \"$STARTED\")) | sort_by(.createdAt) | last | .databaseId // empty")
+            test -n "$RUN_ID" && break
+            sleep 5
+          done
+          test -n "$RUN_ID"
+          echo "Staging deployment run ID: $RUN_ID"
+          gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status
