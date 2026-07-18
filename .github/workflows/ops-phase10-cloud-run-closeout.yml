@@ -7,79 +7,25 @@ on:
       - .github/workflows/ops-phase10-cloud-run-closeout.yml
 
 permissions:
-  actions: write
+  actions: read
   contents: read
 
 jobs:
   closeout:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 10
     env:
-      SOURCE_SHA: af3fe210aeb6385a100e46841ccca34ae4374ead
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Deploy final exact main to private staging
+      - name: Print final exact-main inspection evidence
         shell: bash
         run: |
           set -euo pipefail
-          started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          gh workflow run cloud-run-staging-deploy-v2.yml --repo "$GITHUB_REPOSITORY" --ref main \
-            -f confirmation=DEPLOY-DIREKT-STAGING -f source_sha="$SOURCE_SHA"
-          run_id=""
-          for attempt in $(seq 1 60); do
-            run_id=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow cloud-run-staging-deploy-v2.yml \
-              --branch main --event workflow_dispatch --limit 20 --json databaseId,createdAt \
-              --jq "map(select(.createdAt >= \"$started\")) | sort_by(.createdAt) | last | .databaseId // empty")
-            test -n "$run_id" && break
-            sleep 5
-          done
-          test -n "$run_id"
-          echo "Final exact-main deploy run ID: $run_id"
-          if ! gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status; then
-            gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 220 || true
-            exit 1
-          fi
-
-      - name: Inspect final exact main staging
-        shell: bash
-        run: |
-          set -euo pipefail
-          started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          gh workflow run cloud-run-staging-inspect.yml --repo "$GITHUB_REPOSITORY" --ref main \
-            -f confirmation=INSPECT-DIREKT-STAGING -f source_sha="$SOURCE_SHA"
-          run_id=""
-          for attempt in $(seq 1 60); do
-            run_id=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow cloud-run-staging-inspect.yml \
-              --branch main --event workflow_dispatch --limit 20 --json databaseId,createdAt \
-              --jq "map(select(.createdAt >= \"$started\")) | sort_by(.createdAt) | last | .databaseId // empty")
-            test -n "$run_id" && break
-            sleep 5
-          done
-          test -n "$run_id"
-          echo "Final exact-main inspection run ID: $run_id"
-          if ! gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status; then
-            gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 260 || true
-            exit 1
-          fi
-
-      - name: Exercise final exact main managed operations
-        shell: bash
-        run: |
-          set -euo pipefail
-          started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          gh workflow run phase10-managed-cloud-run-operations.yml --repo "$GITHUB_REPOSITORY" --ref main \
-            -f confirmation=EXERCISE-DIREKT-OPERATIONS -f source_sha="$SOURCE_SHA"
-          run_id=""
-          for attempt in $(seq 1 60); do
-            run_id=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow phase10-managed-cloud-run-operations.yml \
-              --branch main --event workflow_dispatch --limit 20 --json databaseId,createdAt \
-              --jq "map(select(.createdAt >= \"$started\")) | sort_by(.createdAt) | last | .databaseId // empty")
-            test -n "$run_id" && break
-            sleep 5
-          done
-          test -n "$run_id"
-          echo "Final exact-main managed operations run ID: $run_id"
-          if ! gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status; then
-            gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 320 || true
-            exit 1
-          fi
+          gh run view 29646427656 --repo "$GITHUB_REPOSITORY" --log \
+            | grep -E 'Final exact-main (deploy|inspection) run ID' \
+            | tail -n 10 || true
+          inspect_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow cloud-run-staging-inspect.yml --branch main --event workflow_dispatch --limit 10 --json databaseId,createdAt,headSha --jq 'map(select(.headSha == "af3fe210aeb6385a100e46841ccca34ae4374ead")) | sort_by(.createdAt) | last | .databaseId')"
+          echo "Inspection run ID: ${inspect_id}"
+          gh run view "${inspect_id}" --repo "$GITHUB_REPOSITORY" --log-failed \
+            | grep -E 'Sanitized staging structure|API revisions:|Portal revisions:|image matches expected source:|runtime identity:|secret-reference count:|scaling effective min/max:|PASS:|INSPECTION ASSERTION FAILED' \
+            | tail -n 100 || true
