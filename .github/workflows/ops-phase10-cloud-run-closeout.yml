@@ -7,23 +7,53 @@ on:
       - .github/workflows/ops-phase10-cloud-run-closeout.yml
 
 permissions:
-  actions: read
+  actions: write
   contents: read
 
 jobs:
   closeout:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 120
     env:
+      FINAL_SHA: 369fc72581b3ed27920b8fc949e32cfedf1ad8d9
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Print final Phase 10 managed run identifiers
+      - name: Dispatch and verify nine permanent workflows on final Phase 10 head
         shell: bash
         run: |
           set -euo pipefail
-          for workflow in cloud-run-staging-deploy-v2.yml cloud-run-staging-inspect.yml phase10-managed-cloud-run-operations.yml; do
-            echo "--- ${workflow} ---"
-            gh run list --repo "$GITHUB_REPOSITORY" --workflow "${workflow}" --branch main --event workflow_dispatch --limit 5 \
-              --json databaseId,createdAt,status,conclusion,headSha \
-              --jq '.[] | [.databaseId,.createdAt,.status,(.conclusion // ""),.headSha] | @tsv'
-          done
+
+          run_gate() {
+            local workflow="$1"
+            local label="$2"
+            local started run_id run_sha
+            started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "=== ${label} (${workflow}) ==="
+            gh workflow run "${workflow}" --repo "$GITHUB_REPOSITORY" --ref main
+            run_id=""
+            for attempt in $(seq 1 90); do
+              run_id=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "${workflow}" --branch main --event workflow_dispatch --limit 20 \
+                --json databaseId,createdAt,headSha \
+                --jq "map(select(.createdAt >= \"$started\" and .headSha == \"$FINAL_SHA\")) | sort_by(.createdAt) | last | .databaseId // empty")
+              test -n "$run_id" && break
+              sleep 4
+            done
+            test -n "$run_id"
+            run_sha=$(gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --json headSha --jq '.headSha')
+            test "$run_sha" = "$FINAL_SHA"
+            echo "${label} run ID: ${run_id}"
+            if ! gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status; then
+              gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 240 || true
+              exit 1
+            fi
+          }
+
+          run_gate docs-quality.yml "Documentation quality"
+          run_gate backend-ci.yml "Backend CI"
+          run_gate backend-container-ci.yml "Backend container CI"
+          run_gate admin-ci.yml "Operations portal CI"
+          run_gate android-ci.yml "Android CI"
+          run_gate staging-container-readiness.yml "Controlled staging container readiness"
+          run_gate phase10-recovery-reliability-ci.yml "Recovery and reliability exercise"
+          run_gate phase10-supply-chain-ci.yml "Supply-chain security"
+          run_gate phase10-android-performance-ci.yml "Android performance budget"
