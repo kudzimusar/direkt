@@ -21,6 +21,7 @@ export interface DirektEnvironment {
   DIREKT_DATA_MODE: DirektDataMode;
   DIREKT_TRAFFIC_MODE: DirektTrafficMode;
   PILOT_ENTRY_APPROVED: boolean;
+  PILOT_NOTICE_VERSION?: string;
   RATE_LIMITS_ENABLED: boolean;
   RATE_LIMIT_HASH_PEPPER: string;
   AUTH_CHALLENGE_MODE: 'synthetic' | 'disabled';
@@ -78,6 +79,11 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     ),
   }),
   PILOT_ENTRY_APPROVED: Joi.boolean().truthy('true').falsy('false').default(false),
+  PILOT_NOTICE_VERSION: Joi.string().trim().min(3).max(120).when('FIREBASE_AUTH_MODE', {
+    is: 'firebase',
+    then: Joi.required(),
+    otherwise: Joi.optional(),
+  }),
   RATE_LIMITS_ENABLED: Joi.boolean()
     .truthy('true')
     .falsy('false')
@@ -186,6 +192,18 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     return helpers.message({
       custom: 'Public synthetic traffic requires DIREKT_DATA_MODE=synthetic-only.',
     });
+  }
+  if (value.FIREBASE_AUTH_MODE === 'firebase') {
+    if (
+      value.DIREKT_ENVIRONMENT !== 'pilot' ||
+      value.DIREKT_DATA_MODE !== 'controlled-pilot' ||
+      !value.PILOT_ENTRY_APPROVED
+    ) {
+      return helpers.message({
+        custom:
+          'Firebase authentication may be enabled only for the explicitly approved controlled-pilot environment.',
+      });
+    }
   }
   if (value.DIREKT_TRAFFIC_MODE === 'controlled-pilot') {
     if (
