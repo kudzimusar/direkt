@@ -14,8 +14,8 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Print final Secret Manager sync failure tail
+      - name: Print final narrowed metadata sync failure tail
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh run view 29624111883 --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 45
+          gh run view 29624290983 --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 35
