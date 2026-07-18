@@ -33,6 +33,7 @@ export class FirebaseSessionRepository {
 
   createSession(input: CreateFirebaseSessionInput): Promise<CreateFirebaseSessionResult> {
     return this.database.transaction(async (client) => {
+      await this.lockIdentityBinding(client, input.subjectHash, input.contactHash);
       const boundIdentity = await client.query<{
         identity_id: string;
         status: string;
@@ -204,6 +205,17 @@ export class FirebaseSessionRepository {
         displayHint: input.displayHint,
       };
     });
+  }
+
+  private async lockIdentityBinding(
+    client: PoolClient,
+    subjectHash: string,
+    contactHash: string,
+  ): Promise<void> {
+    const lockKeys = [`firebase:${subjectHash}`, `phone:${contactHash}`].sort();
+    for (const lockKey of lockKeys) {
+      await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [lockKey]);
+    }
   }
 
   private insertDeniedAudit(
