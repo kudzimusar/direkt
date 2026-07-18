@@ -109,7 +109,9 @@ internal class PilotAuthenticationCoordinator(
     }
 
     fun signOut() {
-        runCatching { firebaseAuth().signOut() }
+        if (enabled) {
+            runCatching { firebaseAuth().signOut() }
+        }
         sessionStore.clear()
         verificationId = null
     }
@@ -121,15 +123,25 @@ internal class PilotAuthenticationCoordinator(
         onResult: (PilotAuthResult) -> Unit,
     ) {
         auth.signInWithCredential(credential).addOnCompleteListener(activity) { signInTask ->
+            if (!signInTask.isSuccessful) {
+                auth.signOut()
+                onResult(PilotAuthResult.Error("Phone verification could not be completed."))
+                return@addOnCompleteListener
+            }
             val user = signInTask.result?.user
-            if (!signInTask.isSuccessful || user == null) {
+            if (user == null) {
                 auth.signOut()
                 onResult(PilotAuthResult.Error("Phone verification could not be completed."))
                 return@addOnCompleteListener
             }
             user.getIdToken(true).addOnCompleteListener(activity) { tokenTask ->
+                if (!tokenTask.isSuccessful) {
+                    auth.signOut()
+                    onResult(PilotAuthResult.Error("A secure pilot session could not be created."))
+                    return@addOnCompleteListener
+                }
                 val idToken = tokenTask.result?.token
-                if (!tokenTask.isSuccessful || idToken.isNullOrBlank()) {
+                if (idToken.isNullOrBlank()) {
                     auth.signOut()
                     onResult(PilotAuthResult.Error("A secure pilot session could not be created."))
                     return@addOnCompleteListener
