@@ -1,4 +1,4 @@
-name: Phase 10 managed staging diagnostic
+name: Phase 10 managed restore bridge
 
 on:
   pull_request:
@@ -7,16 +7,27 @@ on:
       - .github/workflows/ops-phase10-managed-evidence.yml
 
 permissions:
-  actions: read
+  actions: write
   contents: read
 
 jobs:
-  inspect:
+  restore:
     runs-on: ubuntu-latest
+    timeout-minutes: 50
     steps:
-      - name: Print final staging failure tail
+      - name: Dispatch managed restore
+        id: dispatch
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-          gh run view 29628140844 --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 35
+          echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          gh workflow run phase10-managed-supabase-restore.yml --repo "$GITHUB_REPOSITORY" --ref main -f confirmation=RESTORE-DIREKT-MANAGED -f source_sha=bced994ba66fc1a9919797641ba87d9c8ec7d4a6
+      - name: Wait for managed restore
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STARTED: ${{ steps.dispatch.outputs.started }}
+        run: |
+          sleep 5
+          RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow phase10-managed-supabase-restore.yml --branch main --event workflow_dispatch --limit 20 --json databaseId,createdAt --jq "map(select(.createdAt >= \"$STARTED\")) | sort_by(.createdAt) | last | .databaseId")
+          echo "Managed restore run ID: $RUN_ID"
+          gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status
