@@ -21,70 +21,70 @@ The original `503 Database or PostGIS is not ready` cause is resolved in Supabas
 The `DIREKT Cloud Run development deployment` workflow is private-only and requires:
 
 - an exact source SHA already merged to `main`;
-- a full backend migration, test, build, and OpenAPI checkpoint;
+- a full backend migration, test, build and OpenAPI checkpoint;
 - immutable Artifact Registry image tagging by source SHA;
 - the bounded `direkt-api-runtime` service account;
-- six pinned Secret Manager version numbers;
+- six enabled Secret Manager versions resolved to numeric references in-memory;
 - zero `allUsers` or `allAuthenticatedUsers` invoker bindings;
 - an audience-bound ID token and `X-Serverless-Authorization` readiness smoke test.
 
-The workflow no longer permits `:latest` Secret Manager references.
+The deployer has metadata-only `roles/secretmanager.viewer` bindings on the six allowlisted secrets. The runtime identity, not the deployer, has payload access required by Cloud Run. The deployment workflow does not use Secret Manager `:latest` references in the deployed service configuration.
 
-## Fail-closed deployment evidence
+## Fail-closed history
 
-Deployment run `29623925889` stopped at the pinned-secret preflight before checkout, build, Google authentication, image push, or Cloud Run mutation because `DIREKT_DATABASE_URL_SECRET_VERSION` was unset.
+Deployment run `29623925889` stopped before checkout, build, image push or Cloud Run mutation because the previous workflow required unset GitHub repository variables.
 
-The version synchronization workflow then confirmed:
+A temporary synchronization workflow then established two facts:
 
-- GitHub-to-Google OIDC authentication succeeds;
-- the deployer identity is `direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com`;
-- `secretmanager.versions.list` is not granted;
-- the narrower `secretmanager.versions.get` permission is also not granted;
-- no secret payload was read;
-- no numeric version was guessed or written.
+1. Google OIDC and per-secret metadata inspection worked after the external IAM grant;
+2. the built-in GitHub Actions token could not create repository variables and returned `Resource not accessible by integration (HTTP 403)`.
 
-## Required external IAM action
+No secret payload was read, no numeric version was guessed, and no personal access token was introduced. The unsupported repository-variable path was removed. Numeric versions are now resolved after Google OIDC authentication and retained only within the deployment job.
 
-Grant `roles/secretmanager.viewer` to the deployer on only these six secrets:
+## Successful recovery checkpoint
 
-- `direkt-database-url`
-- `direkt-supabase-url`
-- `direkt-supabase-secret-key`
-- `direkt-access-token-secret`
-- `direkt-contact-hash-pepper`
-- `direkt-challenge-hash-pepper`
+The protected deployment completed successfully:
 
-The role is metadata-only. It permits version metadata inspection but does not include secret payload access.
+| Evidence | Verified value |
+|---|---|
+| Deployment run | `29625346221` |
+| Deployment job | `88028515197` |
+| Application source | `c6530f18792b498d5603885d5871f4ecdf91979d` |
+| Immutable image | `asia-northeast1-docker.pkg.dev/direkt-dev-502701/direkt-containers/direkt-api:c6530f18792b498d5603885d5871f4ecdf91979d` |
+| Image digest | `sha256:1236ff6449d8d1cd5287bd451984ae604b872373a71e6a3a88ce42552bb8c4b9` |
+| Ready revision | `direkt-api-00003-g9d` |
+| Private service URL | `https://direkt-api-6cvw322xxq-an.a.run.app` |
+| Runtime identity | `direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com` |
+| Invocation | IAM-private |
+| Public invokers | absent |
+| Readiness | passed |
 
-An authorized Google Cloud administrator can apply the binding with:
+All six runtime references resolved to enabled numeric version `1`:
 
-```bash
-PROJECT_ID="direkt-dev-502701"
-DEPLOYER="direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com"
+- `direkt-database-url`;
+- `direkt-supabase-url`;
+- `direkt-supabase-secret-key`;
+- `direkt-access-token-secret`;
+- `direkt-contact-hash-pepper`;
+- `direkt-challenge-hash-pepper`.
 
-for SECRET in \
-  direkt-database-url \
-  direkt-supabase-url \
-  direkt-supabase-secret-key \
-  direkt-access-token-secret \
-  direkt-contact-hash-pepper \
-  direkt-challenge-hash-pepper
-do
-  gcloud secrets add-iam-policy-binding "${SECRET}" \
-    --project "${PROJECT_ID}" \
-    --member "serviceAccount:${DEPLOYER}" \
-    --role "roles/secretmanager.viewer"
-done
-```
+The deployment workflow successfully completed the full backend gate, image build and push, private Cloud Run deployment, public-IAM rejection, runtime identity and numeric-secret verification, audience-bound token minting, and database readiness smoke test.
 
-Do not grant `roles/secretmanager.secretAccessor` to the deployer.
+## Independent read-only inspection
 
-## Recovery sequence after IAM is granted
+The permanent `DIREKT Cloud Run development inspection` workflow was merged at `ec39be6abb79ec12db4ecc114e3d062b197cdcca` and run as inspection `29625635650`.
 
-1. Run `DIREKT Secret Manager version sync` from `main` with confirmation `SYNC-DIREKT-SECRET-VERSIONS`.
-2. Confirm all six GitHub repository variables contain positive numeric versions.
-3. Run `DIREKT Cloud Run development deployment` from the exact current `main` SHA with confirmation `DEPLOY-DIREKT-DEVELOPMENT`.
-4. Require private IAM verification and database readiness success.
-5. Record the deployed revision, source SHA, image URI, runtime identity, pinned versions, and sanitized readiness evidence.
+It independently confirmed:
 
-Cloud Run is not yet accepted as recovered. Phase 11 remains blocked.
+- `direkt-api-00003-g9d` is both the latest created and latest ready revision;
+- the deployed image exactly matches source `c6530f18792b498d5603885d5871f4ecdf91979d`;
+- the runtime identity is the bounded API service account;
+- exactly six Secret Manager references use positive numeric versions;
+- no public Cloud Run invoker binding exists;
+- the authenticated readiness endpoint reports the database ready.
+
+## Promotion result
+
+The Cloud Run development API recovery gate is complete for Phase 10 synthetic-only infrastructure. The original database/PostGIS `503` is resolved.
+
+This does not complete Phase 10 as a whole and does not authorize Phase 11, real participant data, public access, pilot recruitment or payments. Remaining Phase 10 gates include controlled staging/portal evidence, managed recovery and rollback exercises, external approvals and final checkpoint promotion.
