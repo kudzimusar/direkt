@@ -4,11 +4,7 @@ export type NodeEnvironment = 'development' | 'test' | 'production';
 export type EvidenceStorageProvider = 'synthetic' | 'supabase';
 export type PaymentProviderMode = 'synthetic' | 'disabled';
 export type FirebaseAuthMode = 'disabled' | 'firebase';
-export type DirektTrafficMode =
-  | 'disabled'
-  | 'internal'
-  | 'synthetic-public'
-  | 'controlled-pilot';
+export type DirektTrafficMode = 'disabled' | 'internal' | 'synthetic-public' | 'controlled-pilot';
 export type DirektDataMode = 'synthetic-only' | 'controlled-pilot' | 'production';
 export type DirektDeploymentEnvironment =
   'local' | 'development' | 'staging' | 'pilot' | 'production';
