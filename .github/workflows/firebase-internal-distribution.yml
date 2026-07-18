@@ -75,9 +75,12 @@ jobs:
         run: |
           set -euo pipefail
           if [[ ! -f gradle/wrapper/gradle-wrapper.jar ]]; then
+            wrapper_checksum="$(sed -n 's/^distributionSha256Sum=//p' gradle/wrapper/gradle-wrapper.properties)"
+            [[ "${wrapper_checksum}" =~ ^[0-9a-f]{64}$ ]]
             gradle wrapper \
               --gradle-version "${DIREKT_GRADLE_VERSION}" \
-              --distribution-type bin
+              --distribution-type bin \
+              --gradle-distribution-sha256-sum "${wrapper_checksum}"
           fi
           chmod +x gradlew
           ./gradlew --version
@@ -152,11 +155,11 @@ jobs:
         run: |
           {
             echo "### DIREKT Firebase internal distribution"
-            echo "- Source: \`${{ inputs.source_sha }}\`"
-            echo "- Package: \`${FIREBASE_PACKAGE_NAME}\`"
-            echo "- Tester group: \`${FIREBASE_TESTER_GROUP}\`"
-            echo "- APK bytes: \`${APK_BYTES}\`"
-            echo "- APK SHA-256: \`${APK_SHA256}\`"
+            echo "- Source: `${{ inputs.source_sha }}`"
+            echo "- Package: `${FIREBASE_PACKAGE_NAME}`"
+            echo "- Tester group: `${FIREBASE_TESTER_GROUP}`"
+            echo "- APK bytes: `${APK_BYTES}`"
+            echo "- APK SHA-256: `${APK_SHA256}`"
             echo "- Distribution: internal only"
             echo "- Public release: disabled"
           } >> "${GITHUB_STEP_SUMMARY}"
