@@ -1,135 +1,165 @@
 # DIREKT Pilot Category Decision
 
-**Decision status:** OPEN — Phase 11 primary evidence and owner approval required  
-**Current effect:** Plumbing/water repairs, electrical repairs, motor mechanics and appliance/electronics repair remain provisional design/seed categories only; they are not automatically approved for a real pilot.
+**Decision status:** APPROVED FOR CONTROLLED PHASE 11 ENTRY — first-wave primary revalidation still required  
+**Approved categories:** plumbing/water repair, electrical repair/services, motor-vehicle mechanics, appliance/electronics repair  
+**Decision date:** 2026-07-19 (Asia/Tokyo programme timezone)  
+**Owner approval:** Shadreck Kudzanai Musarurwa
 
-## Decision question
+## Decision
 
-Which limited set of service categories can demonstrate DIREKT’s discovery and trust model while remaining verifiable, operationally manageable and safe for a controlled pilot?
+The controlled Phase 11 pilot will use four categories only:
 
-## Candidate categories
+1. plumbing and water-repair services;
+2. electrical repair/services;
+3. motor-vehicle mechanics;
+4. appliance/electronics repair.
 
-Initial research candidates:
+No additional category may enter the first pilot without a separate decision and evidence review.
 
-1. plumbers;
-2. electricians;
-3. motor mechanics;
-4. builders/renovation trades;
-5. appliance repair technicians;
-6. cleaning services;
-7. tailors;
-8. borehole, pump and water-system services.
+## Why these four categories
 
-This list is a research starting point, not the approved marketplace taxonomy.
+The decision retains the established Phase 1–10 DIREKT baseline because it is now supported by current official evidence pathways rather than only founder preference:
 
-## Selection rules
+- current Ministry/TEVETA programme listings include trade/craft pathways for plumbing/sheet metal, electrical engineering, automotive mechanics and electronics systems maintenance/repair;
+- PACRA provides the official business-registration source when a provider claims a registered business;
+- the categories exercise fixed-premises, mobile and hybrid operating models;
+- they cover urgent household/service needs and workshop/premises-based services;
+- they fit the existing provider-pathway, evidence-requirement, verification, discovery, enquiry and review architecture without introducing a new domain model.
 
-The first pilot should contain no more than four categories unless the owner accepts a documented operational reason. A category should enter only when:
-
-- recurring customer demand is evidenced;
-- location and availability materially affect selection;
-- provider recruitment is feasible;
-- the evidence model can be explained honestly;
-- verification cost and turnaround are proportionate;
-- serious safety risks have controls;
-- customer complaints can be triaged;
-- DIREKT can distinguish checked facts from unassessed competence;
-- informal and formally qualified providers can be represented without deception;
-- there is enough category supply for meaningful search results.
+This is an **entry-scope approval**, not proof that customers prefer these categories or that provider supply is sufficient. Those remain first-wave measurements.
 
 ## Category scorecard
 
-Score 1–5 and link every score to evidence IDs.
+Scores are directional secondary-evidence scores from 1–5. They are used only to bound entry scope and must be replaced/revalidated with primary evidence.
 
-| Criterion | Weight | Plumbing | Electrical | Mechanics | Building | Appliance repair | Cleaning | Tailoring | Water systems |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Customer demand | 15 |  |  |  |  |  |  |  |  |
-| Trust/scam problem | 15 |  |  |  |  |  |  |  |  |
-| Provider recruitment | 10 |  |  |  |  |  |  |  |  |
-| Evidence availability | 15 |  |  |  |  |  |  |  |  |
-| Issuer confirmation feasibility | 10 |  |  |  |  |  |  |  |  |
-| Field-verification feasibility | 10 |  |  |  |  |  |  |  |  |
-| Safety/liability manageability | 10 |  |  |  |  |  |  |  |  |
-| Repeat-use potential | 5 |  |  |  |  |  |  |  |  |
-| Location relevance | 5 |  |  |  |  |  |  |  |  |
-| Operational learning value | 5 |  |  |  |  |  |  |  |  |
+| Criterion | Weight | Plumbing | Electrical | Mechanics | Appliance/electronics |
+|---|---:|---:|---:|---:|---:|
+| Customer/use-case relevance | 15 | 4 | 4 | 4 | 4 |
+| Trust/evidence learning value | 15 | 4 | 5 | 4 | 4 |
+| Provider recruitment feasibility | 10 | 4 | 4 | 4 | 4 |
+| Evidence availability | 15 | 4 | 5 | 5 | 4 |
+| Issuer confirmation feasibility | 10 | 4 | 4 | 4 | 4 |
+| Field-verification feasibility | 10 | 4 | 4 | 4 | 4 |
+| Safety/liability manageability | 10 | 4 | 3 | 4 | 4 |
+| Repeat-use potential | 5 | 4 | 4 | 4 | 4 |
+| Location relevance | 5 | 4 | 4 | 5 | 4 |
+| Operational learning value | 5 | 5 | 5 | 5 | 5 |
+| **Directional weighted score** | **100** | **81** | **85** | **84** | **80** |
 
-## Evidence model test
+The scores are not population statistics and do not replace pilot measurement.
 
-For each category determine:
+## Provider cohort target
 
-- minimum identity/contact requirements;
-- whether business registration is applicable or optional;
-- common qualification and trade-test evidence;
-- category-specific statutory or professional registration;
-- work-history or reference evidence;
-- premises evidence;
-- mobile-provider representation;
-- expiry and renewal behaviour;
-- authoritative source or issuer;
-- what DIREKT cannot assess;
-- safety warning or escalation need.
+Maximum 24 providers, six per category.
 
-## Important category cautions
+Target pathway mix per category:
 
-### Electrical services
+- 2 registered businesses;
+- 2 qualified individuals;
+- 2 experienced informal providers where lawful and where the displayed trust claims do not imply a qualification/licence that has not been checked.
 
-Do not approve an electrical verification claim until the relevant statutory, professional, energy, utility and local requirements are confirmed. An educational certificate may not authorize every installation activity.
+Minimum demand-entry rule:
 
-### Construction and building
+> Do not recruit customer demand for a category until at least 3 eligible discoverable providers are available for the approved pilot area.
 
-NCC registration appears relevant to some contractors, suppliers and manufacturers, but it must not be automatically applied to every artisan or small repair provider. Grades, project values and legal scope require confirmation.
+## Evidence model by category
 
-### Mechanics
+### Plumbing and water repair
 
-Distinguish training/qualification evidence, workshop location, business identity and customer work history. Do not imply that a location visit proves diagnostic competence or vehicle safety.
+Potential evidence layers:
 
-### Plumbing and water systems
+- identity/contact;
+- business registration where claimed;
+- TEVETA/trade/craft plumbing or related qualification where claimed;
+- service area / fixed-mobile-hybrid operating model;
+- premises/location evidence where applicable;
+- work history/references where included in approved requirements.
 
-Determine whether formal trade evidence is common, what issuer pathways exist and whether water/borehole activities have additional regulatory or safety requirements.
+Do not imply that a trade qualification proves every borehole, utility, civil-works or regulated water activity.
 
-### Cleaning and tailoring
+### Electrical repair/services
 
-These categories may have lower formal-credential availability. Research whether identity, premises, experience, references and tracked interactions provide useful partial trust without creating unfair exclusion.
+Potential evidence layers:
 
-## Pilot cohort feasibility
+- identity/contact;
+- business registration where claimed;
+- TEVETA/trade/craft electrical qualification where claimed;
+- exact ERB/NCC/other statutory registration only when that specific registration is applicable and checked;
+- service area/location evidence.
 
-For each shortlisted category estimate:
+An educational/trade certificate does **not** automatically mean the provider holds every licence required for electricity-sector enterprise work. Public claim copy must remain check-specific.
 
-- recruitable providers;
-- providers likely to complete checks;
-- fixed/mobile/hybrid mix;
-- expected evidence rejection rate;
-- field visits required;
-- reviewer hours;
-- customer search demand;
-- complaint types;
-- minimum number needed to avoid empty search results.
+### Motor-vehicle mechanics
 
-## Decision record
+Potential evidence layers:
 
-| Field | Decision |
-|---|---|
-| Approved categories | Pending |
-| Excluded categories | Pending |
-| Decision date | Pending |
-| Owner approval | Pending |
-| Evidence IDs | Pending |
-| Category-specific risks | Pending |
-| Verification cost band | Pending |
-| Review/expansion date | Pending |
+- identity/contact;
+- business registration where claimed;
+- TEVETA/trade/craft automotive-mechanics or automotive-electrical qualification where claimed;
+- workshop/public-premises evidence where applicable;
+- mobile-service area for mobile mechanics;
+- work-history/reference evidence where approved.
 
-## Approval gate
+A premises visit or training certificate must not be represented as a guarantee of vehicle safety or diagnostic competence.
 
-No category is approved until:
+### Appliance/electronics repair
 
-1. Phase 11 entry authorization permits primary research/pilot activity;
-2. customers and providers have been interviewed;
-3. real evidence types have been privately walked through under approved handling rules;
-4. issuing-body and legal questions are recorded;
-5. the category evidence matrix is complete enough for pilot trust copy and operations;
-6. safety and complaint handling are viable;
-7. the owner approves the limited set;
-8. `DECISION_LOG.md` is updated.
+Potential evidence layers:
 
-The provisional four-category design baseline must be narrowed or changed when primary evidence contradicts it.
+- identity/contact;
+- business registration where claimed;
+- TEVETA electronics-systems maintenance/repair or relevant electrical/electronic qualification where claimed;
+- workshop/premises or mobile service-area evidence;
+- work-history/reference evidence where approved.
+
+## Excluded first-wave categories
+
+The following remain out of scope for the first controlled pilot:
+
+- builders/renovation contractors beyond the four approved categories;
+- cleaning services;
+- tailoring;
+- borehole/pump/water-system specialist services beyond ordinary plumbing/water repair;
+- healthcare, financial, legal, security, childcare and other higher-regulatory/safety categories;
+- any category requiring a new verification model not already supported by the canonical architecture.
+
+## Safety and claim controls
+
+- verification claims remain separate: identity, contact, business, qualification, location/field evidence;
+- no blanket “verified professional” claim;
+- provider pathway is context, not ranking/quality score;
+- payment cannot affect verification/publication/ranking;
+- high-risk category ambiguity triggers manual review or claim refusal, not an inferred approval;
+- field-visit claims remain disabled in Wave 1 until a Zambia-based field operator/lead is appointed and trained.
+
+## Primary evidence still required
+
+During the real pilot measure per category:
+
+- recruited/eligible provider count;
+- onboarding completion/abandonment;
+- evidence rejection/resubmission;
+- verification time/cost;
+- customer search/no-result behavior;
+- enquiry volume and response;
+- complaint/safety patterns;
+- comprehension of exact claim wording;
+- differences between registered-business, qualified-individual and experienced-informal pathways.
+
+Any category may be `NARROW`ed or removed when primary evidence contradicts this entry decision.
+
+## Evidence sources
+
+Current official sources used for entry approval include:
+
+- Ministry/TEVETA current training/certification programme listings;
+- PACRA official business registry/service information;
+- National Council for Construction contractor-registration resources where applicable;
+- Energy Regulation Board licensing guidance where applicable;
+- existing DIREKT category evidence and verification architecture.
+
+## Approval gate result
+
+The **limited-category decision gate is cleared for controlled-pilot entry preparation**.
+
+The decision does not clear DPC/legal/provider approvals or constitute primary customer/provider validation. The four categories are approved to enter the bounded pilot, subject to first-wave evidence and immediate narrowing when legal or operational evidence requires it.

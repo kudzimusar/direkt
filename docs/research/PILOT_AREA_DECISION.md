@@ -1,115 +1,105 @@
 # DIREKT Pilot Area Decision
 
-**Decision status:** OPEN — Phase 11 primary evidence and owner approval required  
-**Provisional candidate:** A tightly bounded Lusaka area may be operationally attractive, but Lusaka is not approved by default.  
-**Current effect:** Lusaka District remains a design/seed context only; it is not an authorized real-pilot boundary.
+**Decision status:** APPROVED FOR CONTROLLED PHASE 11 ENTRY — first-wave primary revalidation still required  
+**Approved initial area:** Kabwata Ward + Chilenje Ward, Kabwata Constituency, Lusaka District  
+**Decision date:** 2026-07-19 (Asia/Tokyo programme timezone)  
+**Owner approval:** Shadreck Kudzanai Musarurwa
 
-## Decision question
+## Decision
 
-Which single city, district or tightly defined operating zone gives DIREKT the best opportunity to test local discovery, check-specific verification, provider recruitment and field operations without creating an unmanageable or unrepresentative pilot?
+The first controlled Zambia pilot is geographically limited to:
 
-## Candidate requirements
+- **Kabwata Ward**;
+- **Chilenje Ward**.
 
-A pilot area must have:
+Explicitly excluded from the initial cohort:
 
-- enough customers with recurring local-service demand;
-- enough providers in the candidate categories;
-- meaningful trust and location problems;
-- practical recruitment channels;
-- manageable field-verification travel;
-- safe operating conditions;
-- sufficient device and connectivity diversity;
-- a mix of fixed-premises, mobile and hybrid providers;
-- potential partners or authorities;
-- boundaries that support clear entry, support and stop criteria.
+- Kamwala Ward;
+- Libala Ward;
+- Kamulanga Ward;
+- all other Lusaka wards/constituencies unless a later controlled expansion decision is recorded.
 
-## Candidate scorecard
+The Electoral Commission/National Assembly record identifies Kabwata Constituency’s five wards as Kamwala, Kabwata, Libala, Chilenje and Kamulanga. The selected pair creates a clear administrative boundary instead of treating the whole of Lusaka as one pilot market.
 
-Score each item from 1 (poor) to 5 (strong). Every score must link to evidence IDs.
+## Why this boundary
 
-| Criterion | Weight | Candidate A | Candidate B | Candidate C | Evidence/notes |
-|---|---:|---:|---:|---:|---|
-| Customer demand and recruitment feasibility | 15 |  |  |  |  |
-| Provider density across candidate categories | 15 |  |  |  |  |
-| Severity of discovery/trust problem | 15 |  |  |  |  |
-| Location and addressing test value | 10 |  |  |  |  |
-| Field-agent travel time and cost | 10 |  |  |  |  |
-| Safety and operational control | 10 |  |  |  |  |
-| Authority/partner access | 5 |  |  |  |  |
-| Device/connectivity diversity | 5 |  |  |  |  |
-| Inclusion beyond affluent/central users | 5 |  |  |  |  |
-| Ability to support complaints and incidents | 5 |  |  |  |  |
-| Expansion learning value | 5 |  |  |  |  |
-| **Weighted total** | **100** |  |  |  |  |
+The decision is based on the existing DIREKT research plus current official secondary/operational evidence:
 
-## Lusaka questions
+- Lusaka is Zambia’s largest urban/commercial concentration and reduces initial operating dispersion;
+- Kabwata Constituency has active local-government road/community investment and recognizable administrative boundaries;
+- Chilenje has an active market/community-services context;
+- the two wards allow fixed-premises, mobile and hybrid providers to be tested without a city-wide field/support burden;
+- the boundary works with DIREKT’s existing manual area/landmark/Plus Code path and does not require exact public coordinates.
 
-Research must avoid treating “Lusaka” as one uniform market. Determine:
+This is sufficient for an owner-approved **entry boundary**. It is not evidence that customer demand, provider density, trust comprehension or field cost have already been validated by real participants.
 
-- which compounds, townships, neighbourhoods or corridors are operationally reachable;
-- whether central and peripheral areas use location tools differently;
-- where providers are concentrated versus where customers request service;
-- whether traffic and travel costs make city-wide verification impractical;
-- whether a smaller zone would create clearer pilot operations;
-- whether a Lusaka-only sample would hide constraints relevant elsewhere.
+## Candidate comparison
 
-## Alternative-area requirement
+| Criterion | Weight | Kabwata + Chilenje | Matero comparison | Evidence/notes |
+|---|---:|---:|---:|---|
+| Customer demand/recruitment feasibility | 15 | 4 | 4 | both are substantial Lusaka urban markets; exact demand remains primary-pilot evidence |
+| Provider/category feasibility | 15 | 4 | 4 | urban mixed-service context; exact supply counts remain to be measured |
+| Discovery/trust problem learning | 15 | 4 | 4 | both support local-service trust/location testing |
+| Location/addressing test value | 10 | 4 | 5 | Matero offers a stronger later stress test; Kabwata/Chilenje is lower-dispersion first entry |
+| Field travel/cost control | 10 | 4 | 3 | two adjacent wards are deliberately narrower than a full alternative constituency |
+| Safety/operational control | 10 | 4 | 3 | smaller first boundary reduces field/support exposure |
+| Authority/community reference points | 5 | 4 | 4 | current LCC/National Assembly records exist for both |
+| Device/connectivity diversity | 5 | 3 | 4 | both require real measurement; Matero retained as later stress test |
+| Inclusion beyond affluent/central users | 5 | 4 | 5 | Chilenje/Kabwata gives mixed context; Matero would broaden inclusion later |
+| Complaint/support manageability | 5 | 4 | 3 | smaller selected area is easier for first-wave support |
+| Expansion learning value | 5 | 4 | 5 | Matero is retained as second-area comparator |
+| **Weighted total** | **100** | **79/100** | **78/100** | directional secondary-evidence score, not a statistical result |
 
-At least one non-identical candidate must be evaluated. It may be another Lusaka zone or another city/urban area, but it must provide a real comparison rather than a token alternative.
+## Alternative-area decision
 
-## Required evidence
+**Matero Constituency** is the selected comparison/expansion candidate, not the first entry area.
 
-- customer and provider interview distribution;
-- observed direction and pin-sharing behaviour;
-- field-route simulations;
-- provider recruitment feasibility;
-- local partner/authority availability;
-- network and device observations;
-- estimated support and verification workload;
-- major safety and privacy concerns;
-- expected pilot cohort size;
-- cost band.
+Official sources describe active civic investment plus water/sanitation, drainage/flood and service-access challenges. That makes Matero valuable for a later robustness/inclusion test, but it would broaden the first pilot’s operational burden before DIREKT has measured verification, support and incident capacity.
 
-## Pilot boundary definition
+## Pilot boundary behavior
 
-The approved decision must specify:
+- customer invitations require declared residence/use in Kabwata or Chilenje or a service need occurring there;
+- providers must actively serve at least one approved ward;
+- fixed, mobile and hybrid providers are eligible;
+- private provider bases remain private;
+- customer location permission is optional;
+- manual area/landmark/Plus Code discovery remains available at all times;
+- public precise coordinates are allowed only for explicitly consented customer-facing fixed premises;
+- service-area matching near the edge may include a provider located elsewhere only when that provider explicitly serves an approved ward.
 
-- public name of the pilot area;
-- operational boundary definition;
-- areas explicitly excluded;
-- service-area search behaviour near the boundary;
-- field-agent coverage zones;
-- provider eligibility by operating model;
-- customer invitation rules;
-- support hours;
-- maximum pilot cohort;
-- review date and expansion criteria.
+## Cohort and support boundary
 
-Do not use exact private provider coordinates as public boundary data.
+- maximum provider cohort: 24;
+- maximum customer cohort: 60;
+- three invite waves, each capped at 8 providers and 20 customers;
+- support hours: Monday–Friday 08:00–16:00 CAT; Saturday 09:00–12:00 CAT;
+- field-verification claims remain disabled in Wave 1 until a Zambia-based field operator/lead is appointed and trained.
 
-## Decision record
+See `../phase11/PHASE11A_REAL_PILOT_ENTRY_DECISION_2026-07-19.md`.
 
-| Field | Decision |
-|---|---|
-| Approved area | Pending |
-| Boundary | Pending |
-| Decision date | Pending |
-| Owner approval | Pending |
-| Evidence IDs | Pending |
-| Main reason | Pending |
-| Rejected alternatives | Pending |
-| Key risks | Pending |
-| Reversal conditions | Pending |
+## Revalidation and reversal conditions
 
-## Approval gate
+The boundary must be narrowed, changed or stopped when primary evidence shows any of the following:
 
-This document remains `OPEN` until:
+- insufficient provider supply (fewer than 3 eligible discoverable providers in a category after supply onboarding);
+- support or verification queues exceed approved thresholds;
+- travel/safety burden is not manageable;
+- device/connectivity conditions materially invalidate the current workflow;
+- participant recruitment is strongly biased or excludes intended provider pathways;
+- legal/privacy/provider approval does not permit the intended data flow;
+- another area materially outperforms the selected boundary on verified operational evidence.
 
-1. at least two candidates are scored using Phase 11 primary/operational evidence;
-2. field-route and recruitment feasibility are tested;
-3. privacy and support constraints are documented and entry-approved;
-4. the area is narrow enough for controlled operations;
-5. the owner records approval;
-6. `DECISION_LOG.md` is updated.
+## Evidence sources
 
-No participant may be recruited merely to fill this scorecard before the separate Phase 11 legal/privacy/consent entry gate is satisfied.
+Current official sources used for entry selection include:
+
+- Zambia Statistics Agency 2022 Census and population/social statistics resources;
+- Lusaka City Council Kabwata and Matero constituency/community records;
+- Electoral Commission of Zambia / National Assembly records identifying the five Kabwata Constituency wards;
+- existing DIREKT secondary research and location architecture.
+
+## Approval gate result
+
+The **geography decision gate is cleared for controlled-pilot entry preparation**.
+
+It does not clear the separate gates for DPC registration/overseas transfer authorization, qualified legal review, participant consent, real provider recruitment or primary validation. The first real cohort must revalidate this choice and may trigger a `NARROW` or area-change decision.
