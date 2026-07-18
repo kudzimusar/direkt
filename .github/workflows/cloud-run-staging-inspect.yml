@@ -91,7 +91,7 @@ jobs:
               --region "${GCP_REGION}" \
               --format=json > "${revision_file}"; then
               echo "- ${label} latest-created timestamp: $(jq -r '.metadata.creationTimestamp // "unknown"' "${revision_file}")"
-              jq -r --arg label "${label}" '.status.conditions[]? | "- \($label) condition \(.type): status=\(.status // \"unknown\"), reason=\(.reason // \"none\")"' "${revision_file}"
+              jq -r --arg label "${label}" '.status.conditions[]? | "- \($label) condition \(.type): status=\(.status // "unknown"), reason=\(.reason // "none")"' "${revision_file}"
             else
               echo "- ${label} latest-created revision diagnostics unavailable"
             fi
