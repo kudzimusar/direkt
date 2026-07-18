@@ -3,7 +3,9 @@
 **Status:** ENTRY PREPARATION ACTIVE — REAL PARTICIPANT PILOT BLOCKED  
 **Governing issue:** #112  
 **Stable predecessor:** `369fc72581b3ed27920b8fc949e32cfedf1ad8d9`  
-**Date:** 2026-07-19
+**Date (Asia/Tokyo programme timezone):** 2026-07-19
+
+Repository checkpoint dates use the programme operating timezone, `Asia/Tokyo`. GitHub commit metadata is displayed in UTC and may therefore show the previous calendar date for work performed after midnight in Japan.
 
 ## Purpose
 
