@@ -88,8 +88,8 @@ jobs:
 
           jq -e '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef != null)] | length == 7 and all(.valueFrom.secretKeyRef.key | test("^[1-9][0-9]*$"))' "${api_file}" >/dev/null
           jq -e '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef != null)] | length == 1 and all(.valueFrom.secretKeyRef.key | test("^[1-9][0-9]*$"))' "${portal_file}" >/dev/null
-          jq -e '.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] == "0" and .spec.template.metadata.annotations["autoscaling.knative.dev/maxScale"] == "1"' "${api_file}" >/dev/null
-          jq -e '.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] == "0" and .spec.template.metadata.annotations["autoscaling.knative.dev/maxScale"] == "1"' "${portal_file}" >/dev/null
+          jq -e '(.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] // "0") == "0" and .spec.template.metadata.annotations["autoscaling.knative.dev/maxScale"] == "1"' "${api_file}" >/dev/null
+          jq -e '(.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] // "0") == "0" and .spec.template.metadata.annotations["autoscaling.knative.dev/maxScale"] == "1"' "${portal_file}" >/dev/null
 
           jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' "${api_iam}" >/dev/null
           jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' "${portal_iam}" >/dev/null
@@ -190,7 +190,7 @@ jobs:
             echo "- Portal ready revision: \`${PORTAL_READY_REVISION}\`"
             echo "- Runtime identities: bounded"
             echo "- Secret references: seven API plus one portal numeric version"
-            echo "- Scaling: minimum 0, maximum 1"
+            echo "- Scaling: effective minimum 0, maximum 1"
             echo "- Public invocation bindings: absent"
             echo "- Portal-to-API invoker: present"
             echo "- Temporary inspection invoker: removed after readiness"
