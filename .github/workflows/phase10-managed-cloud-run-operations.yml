@@ -148,7 +148,7 @@ jobs:
             gcloud run services update-traffic "${GCP_API_SERVICE}" \
               --project "${GCP_PROJECT_ID}" \
               --region "${GCP_REGION}" \
-              --to-revisions "${LATEST_REVISION}=100" \
+              --to-latest \
               --quiet >/dev/null 2>&1 || true
           }
           trap restore_latest EXIT
@@ -175,7 +175,7 @@ jobs:
           forward_seconds="$(( $(date +%s) - started ))"
 
           jq -n --argjson rollback "${rollback_seconds}" --argjson forward "${forward_seconds}" \
-            '{rollback_seconds:$rollback,forward_recovery_seconds:$forward,readiness_passed:true}' \
+            '{rollback_seconds:$rollback,forward_recovery_seconds:$forward,readiness_passed:true,traffic_restored_to_latest:true}' \
             > artifacts/phase10-managed-operations/rollback.json
 
       - name: Exercise portal-to-API invocation kill switch
@@ -366,7 +366,7 @@ jobs:
             echo "- API latest revision: \`${LATEST_REVISION:-unresolved}\`"
             echo "- API prior revision: \`${PRIOR_REVISION:-unresolved}\`"
             echo "- Scaling contract: effective minimum 0, maximum 1"
-            echo "- Rollback and forward recovery: exercised"
+            echo "- Rollback and forward recovery: exercised; traffic restored to floating LATEST"
             echo "- Portal-to-API kill switch: service binding removed, expected upstream 403 observed, bounded restoration observed, and binding restored without broadening deployer IAM"
             echo "- Post-idle readiness: exercised"
             echo "- Cloud Monitoring 5xx policy: created or verified"
