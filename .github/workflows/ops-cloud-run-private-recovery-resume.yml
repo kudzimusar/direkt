@@ -1,0 +1,32 @@
+name: Cloud Run deployment check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/ops-cloud-run-private-recovery-resume.yml
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Start reviewed deployment
+        id: start
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          gh workflow run cloud-run-development-deploy.yml --repo "$GITHUB_REPOSITORY" --ref main -f confirmation=DEPLOY-DIREKT-DEVELOPMENT -f source_sha=c6530f18792b498d5603885d5871f4ecdf91979d
+      - name: Verify deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          START: ${{ steps.start.outputs.time }}
+        run: |
+          sleep 5
+          RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow cloud-run-development-deploy.yml --branch main --event workflow_dispatch --limit 20 --json databaseId,createdAt --jq "map(select(.createdAt >= \"$START\")) | sort_by(.createdAt) | last | .databaseId")
+          gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status
