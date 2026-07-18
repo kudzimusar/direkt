@@ -1,0 +1,25 @@
+name: DIREKT Supabase activation diagnostics
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/ops-supabase-activation-diagnostics.yml
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print failed migration tail
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -o pipefail
+          gh run view 29623276323 --repo "${REPOSITORY}" --log-failed | tail -n 160
