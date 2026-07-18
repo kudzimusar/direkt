@@ -63,7 +63,12 @@ export class FirebaseSessionRepository {
           [identityId, input.contactHash],
         );
         if (!matchingContact.rows[0]) {
-          await this.insertDeniedAudit(client, input, identityId, 'firebase_subject_phone_mismatch');
+          await this.insertDeniedAudit(
+            client,
+            input,
+            identityId,
+            'firebase_subject_phone_mismatch',
+          );
           return { kind: 'identity_conflict' };
         }
         await client.query(
