@@ -1,29 +1,15 @@
-name: Managed restore rerun
+name: Restore error
 on:
   pull_request:
     branches: [build/android-v1]
     paths: [.github/workflows/ops-sync-main-into-phase10.yml]
 permissions:
-  actions: write
+  actions: read
   contents: read
 jobs:
-  restore:
+  inspect:
     runs-on: ubuntu-latest
-    timeout-minutes: 50
     steps:
-      - name: Dispatch corrected restore
-        id: dispatch
-        env:
+      - env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
-          gh workflow run phase10-managed-supabase-restore.yml --repo "$GITHUB_REPOSITORY" --ref main -f confirmation=RESTORE-DIREKT-MANAGED -f source_sha=ca1b4154deb9494e514ccfd4c24b3b439d52ee2b
-      - name: Wait for corrected restore
-        env:
-          GH_TOKEN: ${{ github.token }}
-          STARTED: ${{ steps.dispatch.outputs.started }}
-        run: |
-          sleep 5
-          RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow phase10-managed-supabase-restore.yml --branch main --event workflow_dispatch --limit 20 --json databaseId,createdAt --jq "map(select(.createdAt >= \"$STARTED\")) | sort_by(.createdAt) | last | .databaseId")
-          echo "Managed restore run ID: $RUN_ID"
-          gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status
+        run: gh run view 29628637442 --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 45
