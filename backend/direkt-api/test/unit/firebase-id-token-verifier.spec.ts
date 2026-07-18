@@ -7,12 +7,18 @@ const PROJECT_ID = 'direkt-dev-502701';
 const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
 const publicPem = publicKey.export({ type: 'spki', format: 'pem' }).toString();
 
-function buildVerifier(mode: 'disabled' | 'firebase' = 'firebase'): FirebaseIdTokenVerifier {
+function buildVerifier(
+  mode: 'disabled' | 'firebase' = 'firebase',
+  entryApproved = true,
+): FirebaseIdTokenVerifier {
   return new FirebaseIdTokenVerifier(
     new ConfigService({
       FIREBASE_AUTH_MODE: mode,
       FIREBASE_PROJECT_ID: PROJECT_ID,
       FIREBASE_MAX_AUTH_AGE_SECONDS: 300,
+      DIREKT_ENVIRONMENT: 'pilot',
+      DIREKT_DATA_MODE: 'controlled-pilot',
+      PILOT_ENTRY_APPROVED: entryApproved,
     }),
   );
 }
@@ -75,7 +81,7 @@ afterEach(() => {
 });
 
 describe('FirebaseIdTokenVerifier', () => {
-  it('accepts a recent signed Zambia phone token for the configured project', async () => {
+  it('accepts a recent signed Zambia phone token for the configured approved pilot', async () => {
     installCertificateFetch();
     const now = new Date('2026-07-19T00:00:00.000Z');
     await expect(buildVerifier().verify(token({}, now), now)).resolves.toEqual({
@@ -121,6 +127,15 @@ describe('FirebaseIdTokenVerifier', () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal('fetch', fetchSpy);
     await expect(buildVerifier('disabled').verify('not-a-token')).rejects.toThrow(
+      'Pilot authentication is not enabled',
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('fails closed before certificate lookup when pilot entry is not approved', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+    await expect(buildVerifier('firebase', false).verify('not-a-token')).rejects.toThrow(
       'Pilot authentication is not enabled',
     );
     expect(fetchSpy).not.toHaveBeenCalled();
