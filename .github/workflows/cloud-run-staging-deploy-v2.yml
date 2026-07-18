@@ -276,6 +276,19 @@ jobs:
           jq -e '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef != null) | .valueFrom.secretKeyRef.key] | all(test("^[1-9][0-9]*$"))' "${RUNNER_TEMP}/api-service.json" >/dev/null
           jq -e '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef != null) | .valueFrom.secretKeyRef.key] | all(test("^[1-9][0-9]*$"))' "${RUNNER_TEMP}/portal-service.json" >/dev/null
 
+      - name: Grant temporary deployer invocation for smoke tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          for service in "${GCP_API_SERVICE}" "${GCP_PORTAL_SERVICE}"; do
+            gcloud run services add-iam-policy-binding "${service}" \
+              --project "${GCP_PROJECT_ID}" \
+              --region "${GCP_REGION}" \
+              --member "serviceAccount:${GCP_SERVICE_ACCOUNT}" \
+              --role roles/run.invoker \
+              --quiet
+          done
+
       - name: Mint private API smoke-test ID token
         id: api-smoke-auth
         uses: google-github-actions/auth@v3
@@ -317,6 +330,53 @@ jobs:
             "${PORTAL_URL}/api/health" > "${RUNNER_TEMP}/portal-health.json"
           jq -e '.status == "ready" and .portal == "ready" and .api == "ready"' "${RUNNER_TEMP}/portal-health.json" >/dev/null
 
+      - name: Remove temporary deployer invocation and verify final IAM boundary
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          deployer_member="serviceAccount:${GCP_SERVICE_ACCOUNT}"
+          portal_member="serviceAccount:${GCP_PORTAL_RUNTIME_SERVICE_ACCOUNT}"
+
+          for service in "${GCP_API_SERVICE}" "${GCP_PORTAL_SERVICE}"; do
+            if ! gcloud run services describe "${service}" \
+              --project "${GCP_PROJECT_ID}" \
+              --region "${GCP_REGION}" \
+              --format='value(metadata.name)' >/dev/null 2>&1; then
+              continue
+            fi
+
+            gcloud run services remove-iam-policy-binding "${service}" \
+              --project "${GCP_PROJECT_ID}" \
+              --region "${GCP_REGION}" \
+              --member "${deployer_member}" \
+              --role roles/run.invoker \
+              --quiet >/dev/null 2>&1 || true
+
+            policy_file="${RUNNER_TEMP}/${service}-final-iam.json"
+            gcloud run services get-iam-policy "${service}" \
+              --project "${GCP_PROJECT_ID}" \
+              --region "${GCP_REGION}" \
+              --format=json > "${policy_file}"
+
+            jq -e --arg deployer "${deployer_member}" '
+              [.bindings[]?.members[]?
+                | select(. == $deployer or . == "allUsers" or . == "allAuthenticatedUsers")]
+              | length == 0
+            ' "${policy_file}" >/dev/null
+          done
+
+          if gcloud run services describe "${GCP_API_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --format='value(metadata.name)' >/dev/null 2>&1; then
+            api_policy="${RUNNER_TEMP}/${GCP_API_SERVICE}-final-iam.json"
+            jq -e --arg expected "${portal_member}" '
+              [.bindings[]? | select(.role == "roles/run.invoker") | .members[]?] as $members
+              | ($members | index($expected)) != null
+            ' "${api_policy}" >/dev/null
+          fi
+
       - name: Publish sanitized staging summary
         shell: bash
         run: |
@@ -332,5 +392,6 @@ jobs:
             echo "- Data mode: \`synthetic-only\`"
             echo "- Secret references: eight enabled numeric versions"
             echo "- Public invocation bindings: absent"
+            echo "- Temporary smoke-test invoker: removed"
             echo "- Smoke tests: passed"
           } >> "${GITHUB_STEP_SUMMARY}"
