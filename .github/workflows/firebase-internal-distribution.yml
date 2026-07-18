@@ -136,14 +136,14 @@ jobs:
           set -euo pipefail
           token="$(gcloud auth print-access-token)"
           echo "::add-mask::${token}"
-          curl --fail --silent --show-error \
+          curl --fail-with-body --silent --show-error \
             --header "Authorization: Bearer ${token}" \
-            --header "x-goog-user-project: ${GCP_PROJECT_ID}" \
-            "https://firebaseappdistribution.googleapis.com/v1/projects/${GCP_PROJECT_NUMBER}/groups?pageSize=1000" \
-            > "${RUNNER_TEMP}/firebase-groups.json"
-          jq -e --arg alias "${FIREBASE_TESTER_GROUP}" \
-            'any(.groups[]?; (.name | split("/") | last) == $alias)' \
-            "${RUNNER_TEMP}/firebase-groups.json" >/dev/null
+            "https://firebaseappdistribution.googleapis.com/v1/projects/${GCP_PROJECT_NUMBER}/groups/${FIREBASE_TESTER_GROUP}" \
+            > "${RUNNER_TEMP}/firebase-group.json"
+          jq -e \
+            --arg expected "projects/${GCP_PROJECT_NUMBER}/groups/${FIREBASE_TESTER_GROUP}" \
+            '.name == $expected' \
+            "${RUNNER_TEMP}/firebase-group.json" >/dev/null
 
       - name: Distribute APK to internal group only
         shell: bash
