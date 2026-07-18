@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  environmentSchema,
-  type DirektEnvironment,
-} from '../../src/config/environment';
+import { environmentSchema, type DirektEnvironment } from '../../src/config/environment';
 
 const approvedPilotConfig = {
   NODE_ENV: 'test',
