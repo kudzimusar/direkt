@@ -102,6 +102,19 @@ jobs:
             '{source_sha:$source,latest_revision:$latest,prior_revision:$prior,image:$image,min_scale:0,max_scale:1}' \
             > artifacts/phase10-managed-operations/starting-state.json
 
+      - name: Grant temporary deployer invocation for operations exercise
+        shell: bash
+        run: |
+          set -euo pipefail
+          for service in "${GCP_API_SERVICE}" "${GCP_PORTAL_SERVICE}"; do
+            gcloud run services add-iam-policy-binding "${service}" \
+              --project "${GCP_PROJECT_ID}" \
+              --region "${GCP_REGION}" \
+              --member "serviceAccount:${GCP_SERVICE_ACCOUNT}" \
+              --role roles/run.invoker \
+              --quiet >/dev/null
+          done
+
       - name: Mint API operations token
         id: api-auth
         uses: google-github-actions/auth@v3
@@ -279,6 +292,30 @@ jobs:
             '{policy_name:$name,display_name:$display_name,enabled:true}' \
             > artifacts/phase10-managed-operations/alerting.json
 
+      - name: Remove temporary deployer invocation and verify final IAM boundary
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          for service in "${GCP_API_SERVICE}" "${GCP_PORTAL_SERVICE}"; do
+            gcloud run services remove-iam-policy-binding "${service}" \
+              --project "${GCP_PROJECT_ID}" \
+              --region "${GCP_REGION}" \
+              --member "serviceAccount:${GCP_SERVICE_ACCOUNT}" \
+              --role roles/run.invoker \
+              --quiet >/dev/null 2>&1 || true
+          done
+
+          api_iam="${RUNNER_TEMP}/api-final-iam.json"
+          portal_iam="${RUNNER_TEMP}/portal-final-iam.json"
+          gcloud run services get-iam-policy "${GCP_API_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${api_iam}"
+          gcloud run services get-iam-policy "${GCP_PORTAL_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${portal_iam}"
+          jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' "${api_iam}" >/dev/null
+          jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' "${portal_iam}" >/dev/null
+          jq -e --arg deployer "serviceAccount:${GCP_SERVICE_ACCOUNT}" '[.bindings[]? | select(.role == "roles/run.invoker") | .members[]?] | index($deployer) == null' "${api_iam}" >/dev/null
+          jq -e --arg deployer "serviceAccount:${GCP_SERVICE_ACCOUNT}" '[.bindings[]? | select(.role == "roles/run.invoker") | .members[]?] | index($deployer) == null' "${portal_iam}" >/dev/null
+          jq -e --arg expected "serviceAccount:${GCP_PORTAL_RUNTIME_SERVICE_ACCOUNT}" '[.bindings[]? | select(.role == "roles/run.invoker") | .members[]?] | index($expected) != null' "${api_iam}" >/dev/null
+
       - name: Publish sanitized operations summary
         if: always()
         shell: bash
@@ -293,6 +330,7 @@ jobs:
             echo "- Portal-to-API kill switch: exercised and restored"
             echo "- Post-idle readiness: exercised"
             echo "- Cloud Monitoring 5xx policy: created or verified"
+            echo "- Temporary operations invoker: removed after exercise"
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload sanitized managed-operations evidence
