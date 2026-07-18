@@ -1,6 +1,6 @@
 # DIREKT Project Status
 
-**Updated:** 2026-07-17  
+**Updated:** 2026-07-18  
 **Stable branch:** `main`  
 **Implementation branch:** `build/android-v1`  
 **Programme state:** Phase 9 is complete and stable. Phase 10 is active under Issue #41 and checkpoint PR #42.
@@ -49,14 +49,26 @@ This corrects the previous over-broad deployment prohibition. It does **not** au
 
 | Service | Development binding |
 |---|---|
-| Supabase | project ref `aeeuscifrxcjmnswqwnq`, region `ap-northeast-1` |
+| Supabase | project `direct-app`, ref `aeeuscifrxcjmnswqwnq`, region `ap-northeast-1` |
 | Google Cloud | project `direkt-dev-502701`, region `asia-northeast1` |
 | Artifact Registry | `direkt-containers` |
 | Cloud Run | `direkt-api` |
 | Firebase | project `direkt-dev-502701`, tester group `direkt-internal-testers` |
 | Vercel | protected Preview/Staging project still requires owner-side project binding and identifiers |
 
-The workspace Supabase connector currently exposes only unrelated CarUp projects, so it cannot independently inspect the DIREKT project. The existing protected GitHub activation workflow remains the exact-project migration and verification authority; no unrelated project may be mutated.
+### Supabase activation state
+
+The active Supabase connection now exposes only the correct DIREKT project. Protected activation from reviewed `main` source `47ec3e6d44055be76d7902971173b5797056aad3` completed successfully and independent inspection confirmed:
+
+- PostGIS is installed and `PostGIS_Version()` succeeds;
+- 33 checksummed DIREKT migrations are recorded through `202607171050_commercial_adjustment_integrity.sql`;
+- the required DIREKT schemas and platform tables exist;
+- all four required Storage buckets exist and are private;
+- the Storage object count is zero.
+
+A follow-up hardening migration is being corrected to respect Supabase's managed ownership of `public.spatial_ref_sys`. The DIREKT-owned migration ledger will receive RLS and browser-role privilege revocation. The platform-owned PostGIS table remains a documented managed-service exception pending a supported Supabase relocation/support action. See `docs/phase10/SUPABASE_DEVELOPMENT_ACTIVATION.md`.
+
+Cloud Run must not be rerun until the ownership-safe hardening migration is merged, activated from the exact merged `main` SHA, and independently verified.
 
 ## Phase boundaries
 
