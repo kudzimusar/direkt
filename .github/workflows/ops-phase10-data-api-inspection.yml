@@ -14,10 +14,10 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Show managed restore error
+      - name: Show managed restore SQL error
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh run view 29635408329 --repo "$GITHUB_REPOSITORY" --log-failed \
+          gh run view 29635670905 --repo "$GITHUB_REPOSITORY" --log-failed \
             | grep -E 'ERROR:|Error:|error:|failed|Failed|permission denied|does not exist|syntax error|Process completed|psql:' \
             | tail -n 100
