@@ -49,9 +49,7 @@ describe('Phase 11 controlled-pilot configuration', () => {
   });
 
   it('rejects synthetic evidence storage for controlled-pilot data', () => {
-    expect(
-      validationMessage({ EVIDENCE_STORAGE_PROVIDER: 'synthetic' }),
-    ).toContain(
+    expect(validationMessage({ EVIDENCE_STORAGE_PROVIDER: 'synthetic' })).toContain(
       'Controlled-pilot data mode requires the approved private Supabase storage boundary.',
     );
   });
