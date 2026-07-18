@@ -13,7 +13,7 @@ permissions:
 jobs:
   closeout:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 65
     env:
       SOURCE_SHA: f40dcfa700a7ccecdca520b4420aaa5aff17478c
       GH_TOKEN: ${{ github.token }}
