@@ -14,7 +14,10 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Show failure tail
+      - name: Show migration error
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run view 29634809995 --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 100
+        run: |
+          gh run view 29634809995 --repo "$GITHUB_REPOSITORY" --log-failed \
+            | grep -E 'ERROR:|Error:|error:|failed|Failed|permission denied|does not exist|syntax error|Process completed' \
+            | tail -n 80
