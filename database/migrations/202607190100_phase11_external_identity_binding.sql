@@ -22,6 +22,7 @@ COMMENT ON COLUMN account.external_identities.subject_hash IS
 CREATE TABLE account.pilot_invitations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   contact_hash character(64) NOT NULL,
+  display_hint text NOT NULL,
   participant_type text NOT NULL,
   cohort_wave smallint NOT NULL,
   policy_version_id uuid NOT NULL REFERENCES account.policy_versions(id) ON DELETE RESTRICT,
@@ -34,6 +35,7 @@ CREATE TABLE account.pilot_invitations (
   revoked_at timestamptz,
   revocation_reason text,
   CONSTRAINT pilot_invitations_contact_hash_format CHECK (contact_hash ~ '^[0-9a-f]{64}$'),
+  CONSTRAINT pilot_invitations_display_hint_not_blank CHECK (length(btrim(display_hint)) BETWEEN 3 AND 120),
   CONSTRAINT pilot_invitations_participant_type_allowed CHECK (
     participant_type IN ('customer', 'provider')
   ),
@@ -60,7 +62,7 @@ CREATE INDEX pilot_invitations_claimed_identity_idx
   WHERE claimed_identity_id IS NOT NULL;
 
 COMMENT ON TABLE account.pilot_invitations IS
-  'Invite-only admission records for the bounded Phase 11 cohort. Contact identifiers are stored only as server-HMAC digests and each invite is bound to an approved canonical policy version.';
+  'Invite-only admission records for the bounded Phase 11 cohort. Contact identifiers are stored as server-HMAC digests plus masked display hints and each invite is bound to an approved canonical policy version.';
 
 INSERT INTO authz.permissions (permission_key, description)
 VALUES (
