@@ -17,10 +17,10 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: List workflow activity after exact-main deploy
+      - name: List recent staging deploy runs
         shell: bash
         run: |
           set -euo pipefail
-          gh run list --repo "$GITHUB_REPOSITORY" --limit 50 \
-            --json databaseId,name,createdAt,event,headSha,status,conclusion \
-            --jq 'map(select(.createdAt >= "2026-07-18T13:13:45Z")) | sort_by(.createdAt)[] | [.createdAt,.databaseId,.name,.event,.headSha,.status,(.conclusion // "")] | @tsv'
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow cloud-run-staging-deploy-v2.yml --limit 20 \
+            --json databaseId,createdAt,headSha,status,conclusion,event \
+            --jq '.[] | [.createdAt,.databaseId,.headSha,.event,.status,(.conclusion // "")] | @tsv'
