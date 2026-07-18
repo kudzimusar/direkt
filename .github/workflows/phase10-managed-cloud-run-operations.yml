@@ -1,0 +1,305 @@
+name: DIREKT Phase 10 managed Cloud Run operations exercise
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type EXERCISE-DIREKT-OPERATIONS to continue
+        required: true
+        type: string
+      source_sha:
+        description: Exact reviewed DIREKT source deployed to staging
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: direkt-phase10-managed-cloud-run-operations
+  cancel-in-progress: false
+
+jobs:
+  exercise:
+    name: Verify rollback, scale-to-zero, kill switch and alerting
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_REGION: asia-northeast1
+      GCP_ARTIFACT_REGISTRY: direkt-containers
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_API_SERVICE: direkt-api
+      GCP_PORTAL_SERVICE: direkt-operations-portal-staging
+      GCP_PORTAL_RUNTIME_SERVICE_ACCOUNT: direkt-portal-runtime@direkt-dev-502701.iam.gserviceaccount.com
+
+    steps:
+      - name: Validate exercise controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ inputs.confirmation }}" = "EXERCISE-DIREKT-OPERATIONS"
+          [[ "${{ inputs.source_sha }}" =~ ^[0-9a-f]{40}$ ]]
+          echo "EXPECTED_API_IMAGE=${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/${GCP_API_SERVICE}:${{ inputs.source_sha }}" >> "${GITHUB_ENV}"
+
+      - name: Authenticate to Google Cloud through GitHub OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Capture starting state and verify scaling contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/phase10-managed-operations
+          gcloud run services describe "${GCP_API_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${RUNNER_TEMP}/api-service.json"
+          gcloud run services describe "${GCP_PORTAL_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${RUNNER_TEMP}/portal-service.json"
+
+          API_URL="$(jq -r '.status.url' "${RUNNER_TEMP}/api-service.json")"
+          PORTAL_URL="$(jq -r '.status.url' "${RUNNER_TEMP}/portal-service.json")"
+          LATEST_REVISION="$(jq -r '.status.latestReadyRevisionName' "${RUNNER_TEMP}/api-service.json")"
+          DEPLOYED_IMAGE="$(jq -r '.spec.template.spec.containers[0].image' "${RUNNER_TEMP}/api-service.json")"
+          test "${DEPLOYED_IMAGE}" = "${EXPECTED_API_IMAGE}"
+          jq -e '.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] == "0" and .spec.template.metadata.annotations["autoscaling.knative.dev/maxScale"] == "1"' "${RUNNER_TEMP}/api-service.json" >/dev/null
+          jq -e '.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] == "0" and .spec.template.metadata.annotations["autoscaling.knative.dev/maxScale"] == "1"' "${RUNNER_TEMP}/portal-service.json" >/dev/null
+
+          mapfile -t revisions < <(gcloud run revisions list \
+            --service "${GCP_API_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --sort-by='~metadata.creationTimestamp' \
+            --limit=10 \
+            --format='value(metadata.name)')
+          PRIOR_REVISION=""
+          for revision in "${revisions[@]}"; do
+            if [[ "${revision}" != "${LATEST_REVISION}" ]]; then
+              PRIOR_REVISION="${revision}"
+              break
+            fi
+          done
+          test -n "${PRIOR_REVISION}"
+
+          echo "API_URL=${API_URL}" >> "${GITHUB_ENV}"
+          echo "PORTAL_URL=${PORTAL_URL}" >> "${GITHUB_ENV}"
+          echo "LATEST_REVISION=${LATEST_REVISION}" >> "${GITHUB_ENV}"
+          echo "PRIOR_REVISION=${PRIOR_REVISION}" >> "${GITHUB_ENV}"
+          jq -n \
+            --arg source "${{ inputs.source_sha }}" \
+            --arg latest "${LATEST_REVISION}" \
+            --arg prior "${PRIOR_REVISION}" \
+            --arg image "${DEPLOYED_IMAGE}" \
+            '{source_sha:$source,latest_revision:$latest,prior_revision:$prior,image:$image,min_scale:0,max_scale:1}' \
+            > artifacts/phase10-managed-operations/starting-state.json
+
+      - name: Mint API operations token
+        id: api-auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
+          token_format: id_token
+          id_token_audience: ${{ env.API_URL }}
+          id_token_include_email: true
+
+      - name: Mint portal operations token
+        id: portal-auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
+          token_format: id_token
+          id_token_audience: ${{ env.PORTAL_URL }}
+          id_token_include_email: true
+
+      - name: Exercise API rollback and forward recovery
+        shell: bash
+        env:
+          API_ID_TOKEN: ${{ steps.api-auth.outputs.id_token }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::${API_ID_TOKEN}"
+          restore_latest() {
+            gcloud run services update-traffic "${GCP_API_SERVICE}" \
+              --project "${GCP_PROJECT_ID}" \
+              --region "${GCP_REGION}" \
+              --to-revisions "${LATEST_REVISION}=100" \
+              --quiet >/dev/null 2>&1 || true
+          }
+          trap restore_latest EXIT
+
+          started="$(date +%s)"
+          gcloud run services update-traffic "${GCP_API_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --to-revisions "${PRIOR_REVISION}=100" \
+            --quiet
+          curl --fail --silent --show-error --retry 8 --retry-delay 3 --retry-all-errors \
+            --header "X-Serverless-Authorization: Bearer ${API_ID_TOKEN}" \
+            "${API_URL}/api/v1/health/ready" > "${RUNNER_TEMP}/rollback-health.json"
+          jq -e '.status == "ok" and .database.status == "ready"' "${RUNNER_TEMP}/rollback-health.json" >/dev/null
+          rollback_seconds="$(( $(date +%s) - started ))"
+
+          started="$(date +%s)"
+          restore_latest
+          trap - EXIT
+          curl --fail --silent --show-error --retry 8 --retry-delay 3 --retry-all-errors \
+            --header "X-Serverless-Authorization: Bearer ${API_ID_TOKEN}" \
+            "${API_URL}/api/v1/health/ready" > "${RUNNER_TEMP}/forward-health.json"
+          jq -e '.status == "ok" and .database.status == "ready"' "${RUNNER_TEMP}/forward-health.json" >/dev/null
+          forward_seconds="$(( $(date +%s) - started ))"
+
+          jq -n --argjson rollback "${rollback_seconds}" --argjson forward "${forward_seconds}" \
+            '{rollback_seconds:$rollback,forward_recovery_seconds:$forward,readiness_passed:true}' \
+            > artifacts/phase10-managed-operations/rollback.json
+
+      - name: Exercise portal-to-API invocation kill switch
+        shell: bash
+        env:
+          PORTAL_ID_TOKEN: ${{ steps.portal-auth.outputs.id_token }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::${PORTAL_ID_TOKEN}"
+          restore_invoker() {
+            gcloud run services add-iam-policy-binding "${GCP_API_SERVICE}" \
+              --project "${GCP_PROJECT_ID}" \
+              --region "${GCP_REGION}" \
+              --member "serviceAccount:${GCP_PORTAL_RUNTIME_SERVICE_ACCOUNT}" \
+              --role roles/run.invoker \
+              --quiet >/dev/null 2>&1 || true
+          }
+          trap restore_invoker EXIT
+
+          gcloud run services remove-iam-policy-binding "${GCP_API_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --member "serviceAccount:${GCP_PORTAL_RUNTIME_SERVICE_ACCOUNT}" \
+            --role roles/run.invoker \
+            --quiet
+
+          status="$(curl --silent --output "${RUNNER_TEMP}/portal-killed.json" --write-out '%{http_code}' \
+            --header "X-Serverless-Authorization: Bearer ${PORTAL_ID_TOKEN}" \
+            "${PORTAL_URL}/api/health")"
+          if [[ "${status}" == "200" ]] && jq -e '.api == "ready"' "${RUNNER_TEMP}/portal-killed.json" >/dev/null 2>&1; then
+            echo "Portal remained API-ready after invocation grant removal." >&2
+            exit 1
+          fi
+
+          restore_invoker
+          trap - EXIT
+          curl --fail --silent --show-error --retry 8 --retry-delay 3 --retry-all-errors \
+            --header "X-Serverless-Authorization: Bearer ${PORTAL_ID_TOKEN}" \
+            "${PORTAL_URL}/api/health" > "${RUNNER_TEMP}/portal-restored.json"
+          jq -e '.status == "ready" and .api == "ready"' "${RUNNER_TEMP}/portal-restored.json" >/dev/null
+          jq -n --arg disabled_status "${status}" '{kill_switch_blocked:true,disabled_http_status:$disabled_status,restored:true}' \
+            > artifacts/phase10-managed-operations/kill-switch.json
+
+      - name: Verify cold readiness with scale-to-zero configuration
+        shell: bash
+        env:
+          API_ID_TOKEN: ${{ steps.api-auth.outputs.id_token }}
+        run: |
+          set -euo pipefail
+          sleep 300
+          started_ms="$(date +%s%3N)"
+          curl --fail --silent --show-error --retry 8 --retry-delay 3 --retry-all-errors \
+            --header "X-Serverless-Authorization: Bearer ${API_ID_TOKEN}" \
+            "${API_URL}/api/v1/health/ready" > "${RUNNER_TEMP}/cold-health.json"
+          elapsed_ms="$(( $(date +%s%3N) - started_ms ))"
+          jq -e '.status == "ok" and .database.status == "ready"' "${RUNNER_TEMP}/cold-health.json" >/dev/null
+          jq -n --argjson idle_seconds 300 --argjson readiness_ms "${elapsed_ms}" \
+            '{min_scale:0,max_scale:1,idle_seconds:$idle_seconds,post_idle_readiness_ms:$readiness_ms,passed:true}' \
+            > artifacts/phase10-managed-operations/scale-to-zero.json
+
+      - name: Create or verify Cloud Monitoring alert policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(gcloud auth print-access-token)"
+          echo "::add-mask::${token}"
+          policies_url="https://monitoring.googleapis.com/v3/projects/${GCP_PROJECT_ID}/alertPolicies"
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer ${token}" \
+            "${policies_url}?filter=display_name%3D%22DIREKT%20staging%20API%205xx%22" \
+            > "${RUNNER_TEMP}/alert-policies.json"
+          policy_name="$(jq -r '.alertPolicies[0].name // empty' "${RUNNER_TEMP}/alert-policies.json")"
+
+          if [[ -z "${policy_name}" ]]; then
+            cat > "${RUNNER_TEMP}/alert-policy.json" <<'JSON'
+          {
+            "displayName": "DIREKT staging API 5xx",
+            "combiner": "OR",
+            "enabled": true,
+            "documentation": {
+              "content": "Phase 10 synthetic-only staging alert. Investigate Cloud Run 5xx responses and apply the documented kill switch when required.",
+              "mimeType": "text/markdown"
+            },
+            "conditions": [
+              {
+                "displayName": "DIREKT API 5xx responses",
+                "conditionThreshold": {
+                  "filter": "resource.type=\"cloud_run_revision\" AND resource.label.\"service_name\"=\"direkt-api\" AND metric.type=\"run.googleapis.com/request_count\" AND metric.label.\"response_code_class\"=\"5xx\"",
+                  "comparison": "COMPARISON_GT",
+                  "thresholdValue": 0,
+                  "duration": "0s",
+                  "aggregations": [
+                    {
+                      "alignmentPeriod": "300s",
+                      "perSeriesAligner": "ALIGN_SUM"
+                    }
+                  ],
+                  "trigger": {"count": 1}
+                }
+              }
+            ]
+          }
+          JSON
+            curl --fail --silent --show-error \
+              --request POST \
+              --header "Authorization: Bearer ${token}" \
+              --header "Content-Type: application/json" \
+              --data-binary @"${RUNNER_TEMP}/alert-policy.json" \
+              "${policies_url}" > "${RUNNER_TEMP}/created-alert-policy.json"
+            policy_name="$(jq -r '.name' "${RUNNER_TEMP}/created-alert-policy.json")"
+          fi
+          test -n "${policy_name}"
+          jq -n --arg name "${policy_name}" --arg display_name "DIREKT staging API 5xx" \
+            '{policy_name:$name,display_name:$display_name,enabled:true}' \
+            > artifacts/phase10-managed-operations/alerting.json
+
+      - name: Publish sanitized operations summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### DIREKT Phase 10 managed operations exercise"
+            echo "- Source: \`${{ inputs.source_sha }}\`"
+            echo "- API latest revision: \`${LATEST_REVISION:-unresolved}\`"
+            echo "- API prior revision: \`${PRIOR_REVISION:-unresolved}\`"
+            echo "- Scaling contract: minimum 0, maximum 1"
+            echo "- Rollback and forward recovery: exercised"
+            echo "- Portal-to-API kill switch: exercised and restored"
+            echo "- Post-idle readiness: exercised"
+            echo "- Cloud Monitoring 5xx policy: created or verified"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload sanitized managed-operations evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-managed-operations-${{ github.run_number }}-${{ inputs.source_sha }}
+          path: artifacts/phase10-managed-operations/*.json
+          if-no-files-found: warn
+          retention-days: 30

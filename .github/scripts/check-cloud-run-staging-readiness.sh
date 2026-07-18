@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-workflow=".github/workflows/cloud-run-staging-deploy.yml"
+workflow=".github/workflows/cloud-run-staging-deploy-v2.yml"
+inspection_workflow=".github/workflows/cloud-run-staging-inspect.yml"
 api_dockerfile="backend/direkt-api/Dockerfile"
 portal_dockerfile="admin/direkt-operations-portal/Dockerfile"
 
@@ -13,6 +14,7 @@ required_files=(
   "admin/direkt-operations-portal/src/lib/cloud-run-identity.ts"
   "admin/direkt-operations-portal/src/lib/server-operations-api.ts"
   "${workflow}"
+  "${inspection_workflow}"
 )
 
 for file in "${required_files[@]}"; do
@@ -31,16 +33,20 @@ grep -q "USER node" "${portal_dockerfile}"
 grep -q 'CMD \["node", "server.js"\]' "${portal_dockerfile}"
 grep -q "output: 'standalone'" admin/direkt-operations-portal/next.config.ts
 
-grep -q "workflow_dispatch:" "${workflow}"
-if grep -Eq '^  (push|pull_request):' "${workflow}"; then
-  echo "The staging deployment workflow must remain manual-only." >&2
-  exit 1
-fi
+for checked_workflow in "${workflow}" "${inspection_workflow}"; do
+  grep -q "workflow_dispatch:" "${checked_workflow}"
+  if grep -Eq '^  (push|pull_request):' "${checked_workflow}"; then
+    echo "Managed staging workflows must remain manual-only." >&2
+    exit 1
+  fi
+  grep -q "contents: read" "${checked_workflow}"
+  grep -q "id-token: write" "${checked_workflow}"
+done
 
-grep -q "contents: read" "${workflow}"
-grep -q "id-token: write" "${workflow}"
-grep -q '\${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}' "${workflow}"
-grep -q '\${{ vars.GCP_SERVICE_ACCOUNT }}' "${workflow}"
+grep -q "projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main" "${workflow}"
+grep -q "direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com" "${workflow}"
+grep -q "direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com" "${workflow}"
+grep -q "direkt-portal-runtime@direkt-dev-502701.iam.gserviceaccount.com" "${workflow}"
 grep -q -- "--no-allow-unauthenticated" "${workflow}"
 grep -q -- "--min-instances 0" "${workflow}"
 grep -q -- "--max-instances 1" "${workflow}"
@@ -55,11 +61,7 @@ if grep -q "direkt-direct-database-url" "${workflow}"; then
   exit 1
 fi
 if grep -qE ':[[:space:]]*latest([,\"]|$)' "${workflow}"; then
-  echo "Secret Manager environment references must use pinned versions." >&2
-  exit 1
-fi
-if grep -Eq 'direkt-(api|portal)-runtime@|direkt-github-deployer@|projects/[0-9]+/locations/global/workloadIdentityPools' "${workflow}"; then
-  echo "Deployment identities must come from repository variables." >&2
+  echo "Secret Manager environment references must use numeric versions." >&2
   exit 1
 fi
 if grep -Eq '^[[:space:]]+PORT:[[:space:]]*' "${workflow}" || grep -q 'PORT=8080' "${workflow}"; then
@@ -82,6 +84,18 @@ if [[ "${token_format_count}" -ne 2 || "${token_audience_count}" -ne 2 || "${ser
   echo "Both private staging services require separate audience-bound OIDC smoke tokens." >&2
   exit 1
 fi
+
+for secret in \
+  direkt-database-url \
+  direkt-supabase-url \
+  direkt-supabase-secret-key \
+  direkt-access-token-secret \
+  direkt-contact-hash-pepper \
+  direkt-challenge-hash-pepper \
+  direkt-rate-limit-hash-pepper \
+  direkt-portal-cookie-secret; do
+  grep -q "${secret}" "${workflow}"
+done
 
 grep -q "x-serverless-authorization" admin/direkt-operations-portal/src/lib/operations-api.ts
 grep -q "Metadata-Flavor" admin/direkt-operations-portal/src/lib/cloud-run-identity.ts
