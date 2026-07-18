@@ -1,0 +1,96 @@
+name: DIREKT Supabase activation bridge
+
+on:
+  push:
+    branches:
+      - ops/supabase-activation-20260718
+    paths:
+      - .github/workflows/ops-supabase-activation-bridge.yml
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: direkt-supabase-activation-bridge
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    name: Dispatch reviewed Supabase activation
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Dispatch protected main-branch workflow
+        id: dispatch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          SOURCE_SHA: 47ec3e6d44055be76d7902971173b5797056aad3
+          WORKFLOW_FILE: supabase-development-activate.yml
+        shell: bash
+        run: |
+          set -euo pipefail
+          STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          PAYLOAD="$(jq -nc --arg sha "${SOURCE_SHA}" '{ref:"main",inputs:{confirmation:"ACTIVATE-DIREKT-DEVELOPMENT",source_sha:$sha}}')"
+          gh api \
+            --method POST \
+            "repos/${REPOSITORY}/actions/workflows/${WORKFLOW_FILE}/dispatches" \
+            --input - <<<"${PAYLOAD}"
+          echo "started_at=${STARTED_AT}" >> "${GITHUB_OUTPUT}"
+
+      - name: Wait for protected activation result
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          STARTED_AT: ${{ steps.dispatch.outputs.started_at }}
+          SOURCE_SHA: 47ec3e6d44055be76d7902971173b5797056aad3
+          WORKFLOW_FILE: supabase-development-activate.yml
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          RUN_ID=""
+          for attempt in $(seq 1 60); do
+            RESPONSE="$(gh api "repos/${REPOSITORY}/actions/workflows/${WORKFLOW_FILE}/runs?event=workflow_dispatch&branch=main&per_page=20")"
+            RUN_ID="$(jq -r --arg started "${STARTED_AT}" --arg sha "${SOURCE_SHA}" '
+              [.workflow_runs[]
+                | select(.created_at >= $started)
+                | select(.head_branch == "main")
+                | select(.event == "workflow_dispatch")
+              ]
+              | sort_by(.created_at)
+              | last
+              | .id // empty
+            ' <<<"${RESPONSE}")"
+            if [[ -n "${RUN_ID}" ]]; then
+              break
+            fi
+            sleep 5
+          done
+
+          if [[ -z "${RUN_ID}" ]]; then
+            echo "::error title=Activation run not found::The protected Supabase workflow was dispatched but no matching run appeared."
+            exit 1
+          fi
+
+          echo "Protected activation run: ${RUN_ID}"
+          for attempt in $(seq 1 180); do
+            RUN="$(gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}")"
+            STATUS="$(jq -r '.status' <<<"${RUN}")"
+            CONCLUSION="$(jq -r '.conclusion // empty' <<<"${RUN}")"
+            URL="$(jq -r '.html_url' <<<"${RUN}")"
+            echo "status=${STATUS} conclusion=${CONCLUSION:-pending} url=${URL}"
+            if [[ "${STATUS}" == "completed" ]]; then
+              if [[ "${CONCLUSION}" != "success" ]]; then
+                echo "::error title=Supabase activation failed::Protected workflow conclusion: ${CONCLUSION}. Run: ${URL}"
+                exit 1
+              fi
+              echo "Supabase activation succeeded: ${URL}"
+              exit 0
+            fi
+            sleep 10
+          done
+
+          echo "::error title=Activation timed out::The protected Supabase workflow did not complete within the bridge timeout."
+          exit 1
