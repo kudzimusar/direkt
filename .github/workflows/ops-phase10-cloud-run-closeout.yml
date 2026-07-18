@@ -18,7 +18,7 @@ jobs:
       SOURCE_SHA: 4d33e8542434596375a32c55ef67c272bf00262f
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Reinspect settled exact latest main staging
+      - name: Run instrumented exact-main staging inspection
         shell: bash
         run: |
           set -euo pipefail
@@ -34,13 +34,13 @@ jobs:
             sleep 5
           done
           test -n "$run_id"
-          echo "Settled exact-main inspection run ID: $run_id"
+          echo "Instrumented exact-main inspection run ID: $run_id"
           if ! gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status; then
-            gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 160 || true
+            gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 220 || true
             exit 1
           fi
 
-      - name: Exercise exact latest main operations after inspection
+      - name: Exercise exact-main operations after passing inspection
         shell: bash
         run: |
           set -euo pipefail
@@ -58,6 +58,6 @@ jobs:
           test -n "$run_id"
           echo "Exact-main managed operations run ID: $run_id"
           if ! gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status; then
-            gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 240 || true
+            gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --log-failed | tail -n 260 || true
             exit 1
           fi
