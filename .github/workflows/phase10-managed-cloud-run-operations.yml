@@ -195,6 +195,7 @@ jobs:
           }
           trap restore_invoker EXIT
 
+          started="$(date +%s)"
           gcloud run services remove-iam-policy-binding "${GCP_API_SERVICE}" \
             --project "${GCP_PROJECT_ID}" \
             --region "${GCP_REGION}" \
@@ -202,13 +203,23 @@ jobs:
             --role roles/run.invoker \
             --quiet
 
-          status="$(curl --silent --output "${RUNNER_TEMP}/portal-killed.json" --write-out '%{http_code}' \
-            --header "X-Serverless-Authorization: Bearer ${PORTAL_ID_TOKEN}" \
-            "${PORTAL_URL}/api/health")"
-          if [[ "${status}" == "200" ]] && jq -e '.api == "ready"' "${RUNNER_TEMP}/portal-killed.json" >/dev/null 2>&1; then
-            echo "Portal remained API-ready after invocation grant removal." >&2
+          disabled_observed=false
+          status=""
+          for attempt in $(seq 1 20); do
+            status="$(curl --silent --output "${RUNNER_TEMP}/portal-killed.json" --write-out '%{http_code}' \
+              --header "X-Serverless-Authorization: Bearer ${PORTAL_ID_TOKEN}" \
+              "${PORTAL_URL}/api/health")"
+            if [[ "${status}" != "200" ]] || ! jq -e '.api == "ready"' "${RUNNER_TEMP}/portal-killed.json" >/dev/null 2>&1; then
+              disabled_observed=true
+              break
+            fi
+            sleep 3
+          done
+          if [[ "${disabled_observed}" != "true" ]]; then
+            echo "Portal remained API-ready after bounded invocation-grant removal window." >&2
             exit 1
           fi
+          propagation_seconds="$(( $(date +%s) - started ))"
 
           restore_invoker
           trap - EXIT
@@ -216,7 +227,8 @@ jobs:
             --header "X-Serverless-Authorization: Bearer ${PORTAL_ID_TOKEN}" \
             "${PORTAL_URL}/api/health" > "${RUNNER_TEMP}/portal-restored.json"
           jq -e '.status == "ready" and .api == "ready"' "${RUNNER_TEMP}/portal-restored.json" >/dev/null
-          jq -n --arg disabled_status "${status}" '{kill_switch_blocked:true,disabled_http_status:$disabled_status,restored:true}' \
+          jq -n --arg disabled_status "${status}" --argjson propagation_seconds "${propagation_seconds}" \
+            '{kill_switch_blocked:true,disabled_http_status:$disabled_status,propagation_seconds:$propagation_seconds,restored:true}' \
             > artifacts/phase10-managed-operations/kill-switch.json
 
       - name: Verify cold readiness with scale-to-zero configuration
@@ -327,7 +339,7 @@ jobs:
             echo "- API prior revision: \`${PRIOR_REVISION:-unresolved}\`"
             echo "- Scaling contract: effective minimum 0, maximum 1"
             echo "- Rollback and forward recovery: exercised"
-            echo "- Portal-to-API kill switch: exercised and restored"
+            echo "- Portal-to-API kill switch: exercised with bounded IAM propagation and restored"
             echo "- Post-idle readiness: exercised"
             echo "- Cloud Monitoring 5xx policy: created or verified"
             echo "- Temporary operations invoker: removed after exercise"
