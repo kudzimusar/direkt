@@ -17,11 +17,10 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Print Cloud Run API deploy result only
+      - name: List workflow activity after exact-main deploy
         shell: bash
         run: |
           set -euo pipefail
-          gh run view 29645721465 --repo "$GITHUB_REPOSITORY" --log \
-            | grep 'Deploy private API revision' \
-            | grep -v '36;1m' \
-            | tail -n 100 || true
+          gh run list --repo "$GITHUB_REPOSITORY" --limit 50 \
+            --json databaseId,name,createdAt,event,headSha,status,conclusion \
+            --jq 'map(select(.createdAt >= "2026-07-18T13:13:45Z")) | sort_by(.createdAt)[] | [.createdAt,.databaseId,.name,.event,.headSha,.status,(.conclusion // "")] | @tsv'
