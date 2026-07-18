@@ -1,9 +1,5 @@
 import { createPublicKey, verify as verifySignature } from 'node:crypto';
-import {
-  Injectable,
-  ServiceUnavailableException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { FirebaseAuthMode } from '../config/environment';
 
@@ -155,15 +151,21 @@ export class FirebaseIdTokenVerifier {
         signal: AbortSignal.timeout(5_000),
       });
     } catch {
-      throw new ServiceUnavailableException('Authentication verification is temporarily unavailable.');
+      throw new ServiceUnavailableException(
+        'Authentication verification is temporarily unavailable.',
+      );
     }
     if (!response.ok) {
-      throw new ServiceUnavailableException('Authentication verification is temporarily unavailable.');
+      throw new ServiceUnavailableException(
+        'Authentication verification is temporarily unavailable.',
+      );
     }
 
     const body = (await response.json()) as unknown;
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
-      throw new ServiceUnavailableException('Authentication verification is temporarily unavailable.');
+      throw new ServiceUnavailableException(
+        'Authentication verification is temporarily unavailable.',
+      );
     }
     const certificates = Object.fromEntries(
       Object.entries(body).filter(
@@ -172,7 +174,9 @@ export class FirebaseIdTokenVerifier {
       ),
     );
     if (Object.keys(certificates).length === 0) {
-      throw new ServiceUnavailableException('Authentication verification is temporarily unavailable.');
+      throw new ServiceUnavailableException(
+        'Authentication verification is temporarily unavailable.',
+      );
     }
 
     const cacheControl = response.headers.get('cache-control') ?? '';
