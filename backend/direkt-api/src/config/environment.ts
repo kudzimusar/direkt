@@ -234,11 +234,6 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
         custom: 'Controlled-pilot data mode cannot use synthetic authentication challenges.',
       });
     }
-    if (value.FIREBASE_AUTH_MODE !== 'firebase') {
-      return helpers.message({
-        custom: 'Controlled-pilot data mode requires the approved Firebase authentication boundary.',
-      });
-    }
     if (value.PAYMENT_PROVIDER_MODE !== 'disabled') {
       return helpers.message({
         custom:
@@ -248,9 +243,14 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     if (!['disabled', 'controlled-pilot'].includes(value.DIREKT_TRAFFIC_MODE)) {
       return helpers.message({
         custom:
-          'Controlled-pilot data mode permits only disabled pre-entry traffic or explicitly approved controlled-pilot traffic.',
+          'Controlled-pilot data mode remains traffic-disabled until an approved participant access and authentication path is implemented.',
       });
     }
+  }
+  if (value.DIREKT_TRAFFIC_MODE === 'controlled-pilot' && !value.FIREBASE_PROJECT_ID) {
+    return helpers.message({
+      custom: 'Controlled-pilot traffic requires an approved Firebase project binding.',
+    });
   }
   if (value.DIREKT_DATA_MODE === 'production' && value.DIREKT_TRAFFIC_MODE !== 'disabled') {
     return helpers.message({
