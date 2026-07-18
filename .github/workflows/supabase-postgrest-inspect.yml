@@ -54,19 +54,28 @@ jobs:
           git fetch origin main --no-tags
           git merge-base --is-ancestor "${{ inputs.source_sha }}" origin/main
 
-      - name: Read PostgREST configuration
+      - name: Read and sanitize PostgREST configuration
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p artifacts/supabase-data-api
+          RAW_CONFIG="${RUNNER_TEMP}/postgrest-config-raw.json"
           HTTP_STATUS="$(curl --silent --show-error \
-            --output artifacts/supabase-data-api/postgrest-config.json \
+            --output "${RAW_CONFIG}" \
             --write-out '%{http_code}' \
             "https://api.supabase.com/v1/projects/${PROJECT_REF}/postgrest" \
             --header "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
             --header "Content-Type: application/json")"
           test "${HTTP_STATUS}" = "200"
-          jq -e 'type == "object"' artifacts/supabase-data-api/postgrest-config.json >/dev/null
+          jq -e 'type == "object"' "${RAW_CONFIG}" >/dev/null
+          jq '{db_schema, max_rows, db_extra_search_path, db_pool, db_pool_acquisition_timeout}' \
+            "${RAW_CONFIG}" \
+            > artifacts/supabase-data-api/postgrest-config.json
+          rm -f "${RAW_CONFIG}"
+          if grep -Eq 'jwt|secret|token' artifacts/supabase-data-api/postgrest-config.json; then
+            echo "Sanitized PostgREST artifact contains a prohibited sensitive field." >&2
+            exit 1
+          fi
 
       - name: Publish sanitized configuration summary
         shell: bash
@@ -76,9 +85,9 @@ jobs:
             echo "### DIREKT Supabase Data API inspection"
             echo "- Source: \`${{ inputs.source_sha }}\`"
             echo "- Project ref: \`${PROJECT_REF}\`"
-            echo "- PostgREST configuration:"
+            echo "- PostgREST configuration (sensitive fields removed):"
             echo '```json'
-            jq . artifacts/supabase-data-api/postgrest-config.json
+            cat artifacts/supabase-data-api/postgrest-config.json
             echo '```'
           } >> "${GITHUB_STEP_SUMMARY}"
 
