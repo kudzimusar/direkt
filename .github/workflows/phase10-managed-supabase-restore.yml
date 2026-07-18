@@ -213,7 +213,8 @@ jobs:
             postgres:17-alpine \
             psql -h 127.0.0.1 -p 5432 -U "${POSTGRES_USER}" -d "${RESTORE_DB}" \
               -v ON_ERROR_STOP=1 \
-              -c 'CREATE EXTENSION IF NOT EXISTS postgis;'
+              -c 'CREATE EXTENSION IF NOT EXISTS postgis;' \
+              -c 'CREATE EXTENSION IF NOT EXISTS btree_gist;'
           docker run --rm --network host \
             -e DATABASE_URL="${RESTORE_DATABASE_URL}" \
             -v "${PWD}:/work:ro" \
