@@ -21,15 +21,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          path = Path('.github/workflows/phase10-managed-supabase-restore.yml')
-          text = path.read_text()
-          needle = "          url.searchParams.set('uselibpqcompat', 'true');\n"
-          if needle not in text:
-              raise SystemExit('expected uselibpqcompat line not found')
-          path.write_text(text.replace(needle, '', 1))
-          PY
+          target=.github/workflows/phase10-managed-supabase-restore.yml
+          grep -F "url.searchParams.set('uselibpqcompat', 'true');" "$target"
+          sed -i "/url\.searchParams\.set('uselibpqcompat', 'true');/d" "$target"
+          ! grep -F "uselibpqcompat" "$target"
           rm .github/workflows/ops-patch-managed-restore-libpq.yml
           git diff --check
           git config user.name "github-actions[bot]"
