@@ -139,28 +139,37 @@ jobs:
 
       - name: Restore into clean PostGIS database
         shell: bash
-        env:
-          PGPASSWORD: ${{ env.POSTGRES_PASSWORD }}
         run: |
           set -euo pipefail
-          psql -h 127.0.0.1 -p 5432 -U "${POSTGRES_USER}" -d postgres \
-            -v ON_ERROR_STOP=1 \
-            -c "CREATE DATABASE ${RESTORE_DB};"
-          psql -h 127.0.0.1 -p 5432 -U "${POSTGRES_USER}" -d "${RESTORE_DB}" \
-            -v ON_ERROR_STOP=1 \
-            -c 'CREATE EXTENSION IF NOT EXISTS postgis;'
-          pg_restore \
-            --dbname="${RESTORE_DATABASE_URL}" \
-            --exit-on-error \
-            --no-owner \
-            --no-acl \
-            direkt-managed-application.dump
-          pg_restore \
-            --dbname="${RESTORE_DATABASE_URL}" \
-            --exit-on-error \
-            --no-owner \
-            --no-acl \
-            direkt-managed-ledger.dump
+          docker run --rm --network host \
+            -e PGPASSWORD="${POSTGRES_PASSWORD}" \
+            postgres:17-alpine \
+            psql -h 127.0.0.1 -p 5432 -U "${POSTGRES_USER}" -d postgres \
+              -v ON_ERROR_STOP=1 \
+              -c "CREATE DATABASE ${RESTORE_DB};"
+          docker run --rm --network host \
+            -e PGPASSWORD="${POSTGRES_PASSWORD}" \
+            postgres:17-alpine \
+            psql -h 127.0.0.1 -p 5432 -U "${POSTGRES_USER}" -d "${RESTORE_DB}" \
+              -v ON_ERROR_STOP=1 \
+              -c 'CREATE EXTENSION IF NOT EXISTS postgis;'
+          docker run --rm --network host \
+            -e DATABASE_URL="${RESTORE_DATABASE_URL}" \
+            -v "${PWD}:/work:ro" \
+            postgres:17-alpine sh -ceu '
+              pg_restore \
+                --dbname="$DATABASE_URL" \
+                --exit-on-error \
+                --no-owner \
+                --no-acl \
+                /work/direkt-managed-application.dump
+              pg_restore \
+                --dbname="$DATABASE_URL" \
+                --exit-on-error \
+                --no-owner \
+                --no-acl \
+                /work/direkt-managed-ledger.dump
+            '
 
       - name: Verify restored integrity and forward migrations
         shell: bash
@@ -222,6 +231,7 @@ jobs:
             echo "- Scope: all 13 DIREKT application schemas plus the application migration ledger"
             echo "- Supabase platform schemas: excluded from the application dump"
             echo "- Storage metadata: verified independently; object count remains zero"
+            echo "- PostgreSQL client: pinned container version 17"
             echo "- Restore target: clean disposable PostGIS 17 database"
             echo "- Application table count and seed-state sentinels: matched"
             echo "- Migration ledger: preserved and forward-checked"
