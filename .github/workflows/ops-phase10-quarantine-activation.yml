@@ -1,0 +1,55 @@
+name: Phase 10 quarantine activation bridge
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/ops-phase10-quarantine-activation.yml
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  activate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Dispatch protected Supabase activation
+        id: dispatch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          gh workflow run supabase-development-activate.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f confirmation=ACTIVATE-DIREKT-DEVELOPMENT \
+            -f source_sha=a9ccdfb5442e1233bc7ded2019554637950f473a
+
+      - name: Wait for protected activation and record expected boundary failure
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STARTED: ${{ steps.dispatch.outputs.started }}
+        run: |
+          set -euo pipefail
+          RUN_ID=""
+          for attempt in $(seq 1 60); do
+            RUN_ID=$(gh run list \
+              --repo "$GITHUB_REPOSITORY" \
+              --workflow supabase-development-activate.yml \
+              --branch main \
+              --event workflow_dispatch \
+              --limit 20 \
+              --json databaseId,createdAt \
+              --jq "map(select(.createdAt >= \"$STARTED\")) | sort_by(.createdAt) | last | .databaseId // empty")
+            test -n "$RUN_ID" && break
+            sleep 5
+          done
+          test -n "$RUN_ID"
+          echo "Supabase activation run ID: $RUN_ID"
+          gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" || true
+          CONCLUSION=$(gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --json conclusion --jq .conclusion)
+          echo "Activation conclusion before hosted PostgREST quarantine: ${CONCLUSION}"
+          test "${CONCLUSION}" = "failure"
