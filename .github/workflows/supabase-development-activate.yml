@@ -236,7 +236,10 @@ jobs:
 
       - name: Verify PostGIS and private Storage buckets
         working-directory: backend/direkt-api
-        run: npm run supabase:check | tee ../../artifacts/supabase/integration-check.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run supabase:check | tee ../../artifacts/supabase/integration-check.json
 
       - name: Capture database inspection report
         shell: bash
