@@ -1,0 +1,72 @@
+name: Patch Phase 10 managed restore scope
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/ops-patch-phase10-managed-restore-scope.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/phase10-managed-backend-gates
+          fetch-depth: 0
+      - name: Expand managed restore to all DIREKT schemas
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/phase10-managed-supabase-restore.yml')
+          text = path.read_text()
+          old_scope = '''                --schema=public \\
+                --exclude-table=public.spatial_ref_sys \\
+'''
+          new_scope = '''                --schema=platform \\
+                --schema=account \\
+                --schema=authz \\
+                --schema=provider \\
+                --schema=catalog \\
+                --schema=evidence \\
+                --schema=verification \\
+                --schema=discovery \\
+                --schema=provider_workspace \\
+                --schema=operations \\
+                --schema=interaction \\
+                --schema=commercial \\
+                --schema=security \\
+                --table=public.direkt_schema_migrations \\
+'''
+          if old_scope not in text:
+              raise SystemExit('expected managed restore dump scope not found')
+          text = text.replace(old_scope, new_scope, 1)
+          text = text.replace(
+              "jq -e '.migration_count >= 34 and .private_bucket_count == 4 and .storage_object_count == 0' artifacts/phase10-managed-restore/live-metadata.json >/dev/null",
+              "jq -e '.application_schema_count == 13 and .application_table_count > 0 and .migration_count >= 34 and .private_bucket_count == 4 and .storage_object_count == 0' artifacts/phase10-managed-restore/live-metadata.json >/dev/null",
+              1,
+          )
+          text = text.replace(
+              ".public_table_count == $live[0].public_table_count\n            and .migration_count == $live[0].migration_count",
+              ".application_table_count == $live[0].application_table_count\n            and .application_schema_count == $live[0].application_schema_count\n            and .migration_count == $live[0].migration_count\n            and .seed_state == $live[0].seed_state",
+              1,
+          )
+          text = text.replace(
+              'echo "- Scope: managed public application schema plus independent storage metadata verification"',
+              'echo "- Scope: all 13 DIREKT application schemas plus the application migration ledger; Supabase platform schemas remain excluded"',
+              1,
+          )
+          path.write_text(text)
+          PY
+          rm .github/workflows/ops-patch-phase10-managed-restore-scope.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/phase10-managed-supabase-restore.yml .github/workflows/ops-patch-phase10-managed-restore-scope.yml
+          git commit -m "fix(recovery): restore all DIREKT application schemas"
+          git push origin HEAD:fix/phase10-managed-backend-gates
