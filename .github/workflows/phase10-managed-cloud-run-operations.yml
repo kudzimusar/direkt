@@ -218,14 +218,14 @@ jobs:
             status="$(curl --silent --output "${RUNNER_TEMP}/portal-killed.json" --write-out '%{http_code}' \
               --header "X-Serverless-Authorization: Bearer ${PORTAL_ID_TOKEN}" \
               "${PORTAL_URL}/api/health")"
-            if [[ "${status}" != "200" ]] || ! jq -e '.api == "ready"' "${RUNNER_TEMP}/portal-killed.json" >/dev/null 2>&1; then
+            if [[ "${status}" == "503" ]] && jq -e '.status == "not_ready" and .portal == "ready" and .api == "unreachable" and .upstreamStatus == 403' "${RUNNER_TEMP}/portal-killed.json" >/dev/null 2>&1; then
               disabled_observed=true
               break
             fi
             sleep 3
           done
           if [[ "${disabled_observed}" != "true" ]]; then
-            echo "Portal remained API-ready after verified service-binding removal and bounded effective-revocation window." >&2
+            echo "Expected portal-ready/API-403 kill-switch denial was not observed after verified service-binding removal." >&2
             exit 1
           fi
           propagation_seconds="$(( $(date +%s) - started ))"
@@ -237,7 +237,7 @@ jobs:
             "${PORTAL_URL}/api/health" > "${RUNNER_TEMP}/portal-restored.json"
           jq -e '.status == "ready" and .api == "ready"' "${RUNNER_TEMP}/portal-restored.json" >/dev/null
           jq -n --arg disabled_status "${status}" --argjson propagation_seconds "${propagation_seconds}" \
-            '{kill_switch_blocked:true,service_binding_removed:true,effective_revocation_observed:true,disabled_http_status:$disabled_status,propagation_seconds:$propagation_seconds,restored:true}' \
+            '{kill_switch_blocked:true,service_binding_removed:true,effective_revocation_observed:true,expected_upstream_status:403,disabled_http_status:$disabled_status,propagation_seconds:$propagation_seconds,restored:true}' \
             > artifacts/phase10-managed-operations/kill-switch.json
 
       - name: Verify cold readiness with scale-to-zero configuration
@@ -348,7 +348,7 @@ jobs:
             echo "- API prior revision: \`${PRIOR_REVISION:-unresolved}\`"
             echo "- Scaling contract: effective minimum 0, maximum 1"
             echo "- Rollback and forward recovery: exercised"
-            echo "- Portal-to-API kill switch: service binding removed, effective revocation observed, and binding restored without broadening deployer IAM"
+            echo "- Portal-to-API kill switch: service binding removed, expected upstream 403 observed through portal health, and binding restored without broadening deployer IAM"
             echo "- Post-idle readiness: exercised"
             echo "- Cloud Monitoring 5xx policy: created or verified"
             echo "- Temporary operations invoker: removed after exercise"
