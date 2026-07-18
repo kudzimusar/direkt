@@ -17,7 +17,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
-          gh workflow run firebase-internal-distribution.yml --repo "$GITHUB_REPOSITORY" --ref main -f confirmation=DISTRIBUTE-DIREKT-INTERNAL -f source_sha=ca1b4154deb9494e514ccfd4c24b3b439d52ee2b
+          gh workflow run firebase-internal-distribution.yml --repo "$GITHUB_REPOSITORY" --ref main -f confirmation=DISTRIBUTE-DIREKT-INTERNAL -f source_sha=82a8f8e2e1e29e789052c6d605a3aa03a20b14a9
       - name: Wait for Firebase distribution
         env:
           GH_TOKEN: ${{ github.token }}
