@@ -22,14 +22,14 @@ export class TokenService {
   private readonly accessTokenSecret: string;
   private readonly contactHashPepper: string;
   private readonly challengeHashPepper: string;
-  private readonly externalSubjectHashPepper: string;
+  private readonly externalSubjectHashPepper: string | undefined;
   private readonly accessTokenTtlSeconds: number;
 
   constructor(config: ConfigService) {
     this.accessTokenSecret = config.getOrThrow<string>('ACCESS_TOKEN_SECRET');
     this.contactHashPepper = config.getOrThrow<string>('CONTACT_HASH_PEPPER');
     this.challengeHashPepper = config.getOrThrow<string>('CHALLENGE_HASH_PEPPER');
-    this.externalSubjectHashPepper = config.getOrThrow<string>('EXTERNAL_SUBJECT_HASH_PEPPER');
+    this.externalSubjectHashPepper = config.get<string>('EXTERNAL_SUBJECT_HASH_PEPPER');
     this.accessTokenTtlSeconds = config.getOrThrow<number>('ACCESS_TOKEN_TTL_SECONDS');
   }
 
@@ -104,6 +104,9 @@ export class TokenService {
   }
 
   hashExternalSubject(provider: string, subject: string): string {
+    if (!this.externalSubjectHashPepper) {
+      throw new Error('External subject hashing is not configured.');
+    }
     return createHmac('sha256', this.externalSubjectHashPepper)
       .update(`${provider}:${subject}`, 'utf8')
       .digest('hex');
