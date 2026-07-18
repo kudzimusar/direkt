@@ -81,17 +81,12 @@ jobs:
           mkdir -p artifacts/phase10-managed-restore
           docker run --rm --network host \
             -e DATABASE_URL="${SUPABASE_DATABASE_URL}" \
-            postgres:17-alpine sh -ceu '
-              psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -Atc "
-                SELECT json_build_object(
-                  '\''project_ref'\'', '\''aeeuscifrxcjmnswqwnq'\'',
-                  '\''public_table_count'\'', (SELECT count(*) FROM information_schema.tables WHERE table_schema = '\''public'\'' AND table_type = '\''BASE TABLE'\'' AND table_name <> '\''spatial_ref_sys'\''),
-                  '\''migration_count'\'', (SELECT count(*) FROM public.direkt_schema_migrations),
-                  '\''postgis_version'\'', PostGIS_Version(),
-                  '\''storage_object_count'\'', (SELECT count(*) FROM storage.objects),
-                  '\''private_bucket_count'\'', (SELECT count(*) FROM storage.buckets WHERE id IN ('\''provider-evidence'\','\''provider-media-private'\','\''provider-media-public'\','\''system-exports'\') AND public = false)
-                );"
-            ' > artifacts/phase10-managed-restore/live-metadata.json
+            -v "${PWD}:/work:ro" \
+            postgres:17-alpine \
+            psql "${SUPABASE_DATABASE_URL}" \
+              -v ON_ERROR_STOP=1 \
+              -Atf /work/.github/scripts/phase10-managed-live-metadata.sql \
+            > artifacts/phase10-managed-restore/live-metadata.json
           jq -e '.migration_count >= 34 and .private_bucket_count == 4 and .storage_object_count == 0' artifacts/phase10-managed-restore/live-metadata.json >/dev/null
 
       - name: Create managed application-schema backup
@@ -137,15 +132,12 @@ jobs:
         run: |
           set -euo pipefail
           docker run --rm --network host \
-            -e DATABASE_URL="${RESTORE_DATABASE_URL}" \
-            postgres:17-alpine sh -ceu '
-              psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -Atc "
-                SELECT json_build_object(
-                  '\''public_table_count'\'', (SELECT count(*) FROM information_schema.tables WHERE table_schema = '\''public'\'' AND table_type = '\''BASE TABLE'\'' AND table_name <> '\''spatial_ref_sys'\''),
-                  '\''migration_count'\'', (SELECT count(*) FROM public.direkt_schema_migrations),
-                  '\''postgis_version'\'', PostGIS_Version()
-                );"
-            ' > artifacts/phase10-managed-restore/restored-metadata.json
+            -v "${PWD}:/work:ro" \
+            postgres:17-alpine \
+            psql "${RESTORE_DATABASE_URL}" \
+              -v ON_ERROR_STOP=1 \
+              -Atf /work/.github/scripts/phase10-managed-restored-metadata.sql \
+            > artifacts/phase10-managed-restore/restored-metadata.json
 
           jq -e --slurpfile live artifacts/phase10-managed-restore/live-metadata.json '
             .public_table_count == $live[0].public_table_count
