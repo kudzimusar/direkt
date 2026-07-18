@@ -1,6 +1,7 @@
 # DIREKT Pilot Category Decision
 
-**Decision status:** OPEN — Phase 1A evidence required
+**Decision status:** OPEN — Phase 11 primary evidence and owner approval required  
+**Current effect:** Plumbing/water repairs, electrical repairs, motor mechanics and appliance/electronics repair remain provisional design/seed categories only; they are not automatically approved for a real pilot.
 
 ## Decision question
 
@@ -122,10 +123,13 @@ For each shortlisted category estimate:
 
 No category is approved until:
 
-1. customers and providers have been interviewed;
-2. real evidence types have been privately walked through;
-3. issuing-body and legal questions are recorded;
-4. the category evidence matrix is complete enough for prototype copy;
-5. safety and complaint handling are viable;
-6. the owner approves the limited set;
-7. `DECISION_LOG.md` is updated.
+1. Phase 11 entry authorization permits primary research/pilot activity;
+2. customers and providers have been interviewed;
+3. real evidence types have been privately walked through under approved handling rules;
+4. issuing-body and legal questions are recorded;
+5. the category evidence matrix is complete enough for pilot trust copy and operations;
+6. safety and complaint handling are viable;
+7. the owner approves the limited set;
+8. `DECISION_LOG.md` is updated.
+
+The provisional four-category design baseline must be narrowed or changed when primary evidence contradicts it.

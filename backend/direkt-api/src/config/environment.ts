@@ -19,6 +19,7 @@ export interface DirektEnvironment {
   DIREKT_ENVIRONMENT: DirektDeploymentEnvironment;
   DIREKT_DATA_MODE: DirektDataMode;
   DIREKT_TRAFFIC_MODE: DirektTrafficMode;
+  PILOT_ENTRY_APPROVED: boolean;
   RATE_LIMITS_ENABLED: boolean;
   RATE_LIMIT_HASH_PEPPER: string;
   AUTH_CHALLENGE_MODE: 'synthetic' | 'disabled';
@@ -68,6 +69,7 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     then: Joi.valid('disabled').default('disabled'),
     otherwise: Joi.valid('disabled', 'internal', 'synthetic-public').default('internal'),
   }),
+  PILOT_ENTRY_APPROVED: Joi.boolean().truthy('true').falsy('false').default(false),
   RATE_LIMITS_ENABLED: Joi.boolean()
     .truthy('true')
     .falsy('false')
@@ -169,6 +171,47 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     return helpers.message({
       custom: 'Public synthetic traffic requires DIREKT_DATA_MODE=synthetic-only.',
     });
+  }
+  if (value.PILOT_ENTRY_APPROVED && value.DIREKT_DATA_MODE !== 'controlled-pilot') {
+    return helpers.message({
+      custom: 'PILOT_ENTRY_APPROVED may be true only with DIREKT_DATA_MODE=controlled-pilot.',
+    });
+  }
+  if (value.DIREKT_DATA_MODE === 'controlled-pilot') {
+    if (!value.PILOT_ENTRY_APPROVED) {
+      return helpers.message({
+        custom:
+          'Controlled-pilot data mode requires the explicit PILOT_ENTRY_APPROVED technical latch.',
+      });
+    }
+    if (value.DIREKT_ENVIRONMENT !== 'pilot') {
+      return helpers.message({
+        custom: 'Controlled-pilot data mode requires DIREKT_ENVIRONMENT=pilot.',
+      });
+    }
+    if (value.EVIDENCE_STORAGE_PROVIDER !== 'supabase') {
+      return helpers.message({
+        custom:
+          'Controlled-pilot data mode requires the approved private Supabase storage boundary.',
+      });
+    }
+    if (value.AUTH_CHALLENGE_MODE !== 'disabled') {
+      return helpers.message({
+        custom: 'Controlled-pilot data mode cannot use synthetic authentication challenges.',
+      });
+    }
+    if (value.PAYMENT_PROVIDER_MODE !== 'disabled') {
+      return helpers.message({
+        custom:
+          'Controlled-pilot data mode requires payments to remain disabled until separately approved.',
+      });
+    }
+    if (value.DIREKT_TRAFFIC_MODE !== 'disabled') {
+      return helpers.message({
+        custom:
+          'Controlled-pilot data mode remains traffic-disabled until an approved participant access and authentication path is implemented.',
+      });
+    }
   }
   return value;
 });
