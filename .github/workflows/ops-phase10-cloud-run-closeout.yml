@@ -7,25 +7,37 @@ on:
       - .github/workflows/ops-phase10-cloud-run-closeout.yml
 
 permissions:
-  actions: read
+  actions: write
   contents: read
 
 jobs:
   closeout:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     env:
+      SOURCE_SHA: af3fe210aeb6385a100e46841ccca34ae4374ead
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Print final exact-main inspection evidence
+      - name: Dispatch revision-health inspection
         shell: bash
         run: |
           set -euo pipefail
-          gh run view 29646427656 --repo "$GITHUB_REPOSITORY" --log \
-            | grep -E 'Final exact-main (deploy|inspection) run ID' \
-            | tail -n 10 || true
-          inspect_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow cloud-run-staging-inspect.yml --branch main --event workflow_dispatch --limit 10 --json databaseId,createdAt,headSha --jq 'map(select(.headSha == "af3fe210aeb6385a100e46841ccca34ae4374ead")) | sort_by(.createdAt) | last | .databaseId')"
-          echo "Inspection run ID: ${inspect_id}"
-          gh run view "${inspect_id}" --repo "$GITHUB_REPOSITORY" --log-failed \
-            | grep -E 'Sanitized staging structure|API revisions:|Portal revisions:|image matches expected source:|runtime identity:|secret-reference count:|scaling effective min/max:|PASS:|INSPECTION ASSERTION FAILED' \
-            | tail -n 100 || true
+          started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          gh workflow run cloud-run-staging-inspect.yml --repo "$GITHUB_REPOSITORY" --ref main \
+            -f confirmation=INSPECT-DIREKT-STAGING -f source_sha="$SOURCE_SHA"
+          run_id=""
+          for attempt in $(seq 1 60); do
+            run_id=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow cloud-run-staging-inspect.yml \
+              --branch main --event workflow_dispatch --limit 20 --json databaseId,createdAt \
+              --jq "map(select(.createdAt >= \"$started\")) | sort_by(.createdAt) | last | .databaseId // empty")
+            test -n "$run_id" && break
+            sleep 5
+          done
+          test -n "$run_id"
+          echo "Revision-health inspection run ID: $run_id"
+          if ! gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status; then
+            gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --log-failed \
+              | grep -E 'Sanitized staging structure|revisions: created=|latest-created timestamp|condition .*status=|INSPECTION ASSERTION FAILED|PASS:' \
+              | tail -n 140 || true
+            exit 1
+          fi
