@@ -24,7 +24,7 @@ CREATE TABLE account.pilot_invitations (
   contact_hash character(64) NOT NULL,
   participant_type text NOT NULL,
   cohort_wave smallint NOT NULL,
-  notice_version text NOT NULL,
+  policy_version_id uuid NOT NULL REFERENCES account.policy_versions(id) ON DELETE RESTRICT,
   status text NOT NULL DEFAULT 'pending',
   expires_at timestamptz NOT NULL,
   created_by_identity_id uuid NOT NULL REFERENCES account.identities(id) ON DELETE RESTRICT,
@@ -38,7 +38,6 @@ CREATE TABLE account.pilot_invitations (
     participant_type IN ('customer', 'provider')
   ),
   CONSTRAINT pilot_invitations_wave_valid CHECK (cohort_wave BETWEEN 1 AND 3),
-  CONSTRAINT pilot_invitations_notice_not_blank CHECK (length(btrim(notice_version)) BETWEEN 3 AND 120),
   CONSTRAINT pilot_invitations_status_allowed CHECK (
     status IN ('pending', 'claimed', 'revoked', 'expired')
   ),
@@ -61,7 +60,7 @@ CREATE INDEX pilot_invitations_claimed_identity_idx
   WHERE claimed_identity_id IS NOT NULL;
 
 COMMENT ON TABLE account.pilot_invitations IS
-  'Invite-only admission records for the bounded Phase 11 cohort. Contact identifiers are stored only as server-HMAC digests.';
+  'Invite-only admission records for the bounded Phase 11 cohort. Contact identifiers are stored only as server-HMAC digests and each invite is bound to an approved canonical policy version.';
 
 INSERT INTO authz.permissions (permission_key, description)
 VALUES (
