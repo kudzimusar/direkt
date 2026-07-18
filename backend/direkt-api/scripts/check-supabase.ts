@@ -126,12 +126,13 @@ async function main(): Promise<void> {
     if (!serverKey.startsWith('sb_secret_')) {
       headers.authorization = `Bearer ${serverKey}`;
     }
-    const response = await fetch(`${supabaseUrl}/storage/v1/bucket`, { headers });
-    if (!response.ok) {
-      throw new Error(`Supabase bucket inspection failed with HTTP ${response.status}.`);
+
+    const storageResponse = await fetch(`${supabaseUrl}/storage/v1/bucket`, { headers });
+    if (!storageResponse.ok) {
+      throw new Error(`Supabase bucket inspection failed with HTTP ${storageResponse.status}.`);
     }
 
-    const buckets = (await response.json()) as StorageBucket[];
+    const buckets = (await storageResponse.json()) as StorageBucket[];
     const byName = new Map(buckets.map((bucket) => [bucket.name, bucket]));
     const missing = REQUIRED_BUCKETS.filter((name) => !byName.has(name));
     const unexpectedlyPublic = REQUIRED_BUCKETS.filter((name) => byName.get(name)?.public === true);
@@ -141,6 +142,16 @@ async function main(): Promise<void> {
     }
     if (unexpectedlyPublic.length > 0) {
       throw new Error(`Buckets must remain private: ${unexpectedlyPublic.join(', ')}.`);
+    }
+
+    const postgisDataApiProbe = await fetch(
+      `${supabaseUrl}/rest/v1/spatial_ref_sys?select=srid&limit=1`,
+      { headers },
+    );
+    if (postgisDataApiProbe.ok) {
+      throw new Error(
+        'Supabase Data API still exposes public.spatial_ref_sys. Quarantine PostgREST before Phase 10 promotion.',
+      );
     }
 
     const projectRef = new URL(supabaseUrl).hostname.split('.')[0] ?? 'unknown';
@@ -154,6 +165,7 @@ async function main(): Promise<void> {
           applicationSchemas: [...APPLICATION_SCHEMAS],
           browserDatabaseSurface: 'application schemas and migration ledger private',
           dataApiQuarantineSchema: 'direkt_api_disabled',
+          publicPostgisDataApiProbeStatus: postgisDataApiProbe.status,
           serverKeyType: serverKey.startsWith('sb_secret_') ? 'secret' : 'legacy_service_role',
         },
         null,
