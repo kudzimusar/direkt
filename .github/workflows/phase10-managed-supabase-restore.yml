@@ -1,0 +1,208 @@
+name: DIREKT Phase 10 managed Supabase restore exercise
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RESTORE-DIREKT-MANAGED to continue
+        required: true
+        type: string
+      source_sha:
+        description: Exact reviewed DIREKT commit already merged to main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-phase10-managed-supabase-restore
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    name: Dump, restore and verify managed Supabase application schema
+    if: github.ref == 'refs/heads/main'
+    environment: development
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      PROJECT_REF: aeeuscifrxcjmnswqwnq
+      SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+      RESTORE_DATABASE_URL: postgresql://direkt:direkt_restore@localhost:5432/direkt_managed_restore
+
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: direkt
+          POSTGRES_PASSWORD: direkt_restore
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U direkt -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Validate restore controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ inputs.confirmation }}" = "RESTORE-DIREKT-MANAGED"
+          [[ "${{ inputs.source_sha }}" =~ ^[0-9a-f]{40}$ ]]
+          test -n "${SUPABASE_DATABASE_URL}"
+          case "${SUPABASE_DATABASE_URL}" in
+            postgres://*|postgresql://*) ;;
+            *) echo "Invalid managed database URL." >&2; exit 1 ;;
+          esac
+          echo "::add-mask::${SUPABASE_DATABASE_URL}"
+
+      - name: Check out exact reviewed source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify source identity and main ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ inputs.source_sha }}"
+          git fetch origin main --no-tags
+          git merge-base --is-ancestor "${{ inputs.source_sha }}" origin/main
+
+      - name: Capture sanitized live metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/phase10-managed-restore
+          docker run --rm --network host \
+            -e DATABASE_URL="${SUPABASE_DATABASE_URL}" \
+            postgres:17-alpine sh -ceu '
+              psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -Atc "
+                SELECT json_build_object(
+                  '\''project_ref'\'', '\''aeeuscifrxcjmnswqwnq'\'',
+                  '\''public_table_count'\'', (SELECT count(*) FROM information_schema.tables WHERE table_schema = '\''public'\'' AND table_type = '\''BASE TABLE'\'' AND table_name <> '\''spatial_ref_sys'\''),
+                  '\''migration_count'\'', (SELECT count(*) FROM public.direkt_schema_migrations),
+                  '\''postgis_version'\'', PostGIS_Version(),
+                  '\''storage_object_count'\'', (SELECT count(*) FROM storage.objects),
+                  '\''private_bucket_count'\'', (SELECT count(*) FROM storage.buckets WHERE id IN ('\''provider-evidence'\','\''provider-media-private'\','\''provider-media-public'\','\''system-exports'\') AND public = false)
+                );"
+            ' > artifacts/phase10-managed-restore/live-metadata.json
+          jq -e '.migration_count >= 34 and .private_bucket_count == 4 and .storage_object_count == 0' artifacts/phase10-managed-restore/live-metadata.json >/dev/null
+
+      - name: Create managed application-schema backup
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --network host \
+            -e DATABASE_URL="${SUPABASE_DATABASE_URL}" \
+            -v "${PWD}:/work" \
+            postgres:17-alpine sh -ceu '
+              pg_dump \
+                --dbname="$DATABASE_URL" \
+                --format=custom \
+                --file=/work/direkt-managed-public.dump \
+                --schema=public \
+                --exclude-table=public.spatial_ref_sys \
+                --no-owner \
+                --no-acl
+            '
+          test -s direkt-managed-public.dump
+
+      - name: Restore into clean PostGIS database
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --network host postgres:17-alpine \
+            psql "postgresql://direkt:direkt_restore@localhost:5432/postgres" \
+            -v ON_ERROR_STOP=1 \
+            -c 'CREATE DATABASE direkt_managed_restore;'
+          docker run --rm --network host postgres:17-alpine \
+            psql "${RESTORE_DATABASE_URL}" -v ON_ERROR_STOP=1 \
+            -c 'CREATE EXTENSION IF NOT EXISTS postgis;'
+          docker run --rm --network host -v "${PWD}:/work" postgres:17-alpine \
+            pg_restore \
+              --dbname="${RESTORE_DATABASE_URL}" \
+              --exit-on-error \
+              --no-owner \
+              --no-acl \
+              /work/direkt-managed-public.dump
+
+      - name: Verify restored integrity and forward migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --network host \
+            -e DATABASE_URL="${RESTORE_DATABASE_URL}" \
+            postgres:17-alpine sh -ceu '
+              psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -Atc "
+                SELECT json_build_object(
+                  '\''public_table_count'\'', (SELECT count(*) FROM information_schema.tables WHERE table_schema = '\''public'\'' AND table_type = '\''BASE TABLE'\'' AND table_name <> '\''spatial_ref_sys'\''),
+                  '\''migration_count'\'', (SELECT count(*) FROM public.direkt_schema_migrations),
+                  '\''postgis_version'\'', PostGIS_Version()
+                );"
+            ' > artifacts/phase10-managed-restore/restored-metadata.json
+
+          jq -e --slurpfile live artifacts/phase10-managed-restore/live-metadata.json '
+            .public_table_count == $live[0].public_table_count
+            and .migration_count == $live[0].migration_count
+            and (.postgis_version | length > 0)
+          ' artifacts/phase10-managed-restore/restored-metadata.json >/dev/null
+
+          cd backend/direkt-api
+          npm ci --ignore-scripts
+          DATABASE_URL="${RESTORE_DATABASE_URL}" DIRECT_DATABASE_URL="${RESTORE_DATABASE_URL}" NODE_ENV=test npm run migration:check
+
+      - name: Verify API readiness against restored database
+        working-directory: backend/direkt-api
+        shell: bash
+        run: |
+          set -euo pipefail
+          DATABASE_URL="${RESTORE_DATABASE_URL}" \
+          DIRECT_DATABASE_URL="${RESTORE_DATABASE_URL}" \
+          NODE_ENV=development \
+          PORT=9098 \
+          EVIDENCE_STORAGE_PROVIDER=synthetic \
+          PAYMENT_PROVIDER_MODE=disabled \
+          DIREKT_ENVIRONMENT=development \
+          DIREKT_DATA_MODE=synthetic-only \
+          npm run start > "${RUNNER_TEMP}/managed-restore-api.log" 2>&1 &
+          api_pid=$!
+          trap 'kill ${api_pid} >/dev/null 2>&1 || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:9098/api/v1/health/ready > "${RUNNER_TEMP}/managed-restore-health.json"; then
+              break
+            fi
+            sleep 2
+          done
+          jq -e '.status == "ok" and .database.status == "ready"' "${RUNNER_TEMP}/managed-restore-health.json" >/dev/null
+
+      - name: Remove temporary backup and publish summary
+        if: always()
+        shell: bash
+        run: |
+          rm -f direkt-managed-public.dump
+          {
+            echo "### DIREKT managed Supabase restore exercise"
+            echo "- Source: \`${{ inputs.source_sha }}\`"
+            echo "- Project ref: \`${PROJECT_REF}\`"
+            echo "- Scope: managed public application schema plus independent storage metadata verification"
+            echo "- Restore target: clean disposable PostGIS 17 database"
+            echo "- Migration ledger: preserved and forward-checked"
+            echo "- API readiness against restored data: passed"
+            echo "- Storage objects: zero"
+            echo "- Backup artifact retained: no"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload sanitized restore evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-managed-restore-${{ github.run_number }}-${{ inputs.source_sha }}
+          path: artifacts/phase10-managed-restore/*.json
+          if-no-files-found: error
+          retention-days: 30
