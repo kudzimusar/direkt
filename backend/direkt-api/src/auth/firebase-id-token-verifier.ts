@@ -1,7 +1,11 @@
 import { createPublicKey, verify as verifySignature } from 'node:crypto';
 import { Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { FirebaseAuthMode } from '../config/environment';
+import type {
+  DirektDataMode,
+  DirektDeploymentEnvironment,
+  FirebaseAuthMode,
+} from '../config/environment';
 
 const FIREBASE_CERT_URL =
   'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com';
@@ -33,6 +37,9 @@ export class FirebaseIdTokenVerifier {
   private readonly mode: FirebaseAuthMode;
   private readonly projectId: string | undefined;
   private readonly maxAuthAgeSeconds: number;
+  private readonly environment: DirektDeploymentEnvironment;
+  private readonly dataMode: DirektDataMode;
+  private readonly entryApproved: boolean;
   private certificates: Record<string, string> = {};
   private certificatesExpireAt = 0;
 
@@ -40,10 +47,19 @@ export class FirebaseIdTokenVerifier {
     this.mode = config.getOrThrow<FirebaseAuthMode>('FIREBASE_AUTH_MODE');
     this.projectId = config.get<string>('FIREBASE_PROJECT_ID');
     this.maxAuthAgeSeconds = config.getOrThrow<number>('FIREBASE_MAX_AUTH_AGE_SECONDS');
+    this.environment = config.getOrThrow<DirektDeploymentEnvironment>('DIREKT_ENVIRONMENT');
+    this.dataMode = config.getOrThrow<DirektDataMode>('DIREKT_DATA_MODE');
+    this.entryApproved = config.getOrThrow<boolean>('PILOT_ENTRY_APPROVED');
   }
 
   async verify(idToken: string, now = new Date()): Promise<VerifiedFirebasePhoneIdentity> {
-    if (this.mode !== 'firebase' || !this.projectId) {
+    if (
+      this.mode !== 'firebase' ||
+      !this.projectId ||
+      this.environment !== 'pilot' ||
+      this.dataMode !== 'controlled-pilot' ||
+      !this.entryApproved
+    ) {
       throw new ServiceUnavailableException('Pilot authentication is not enabled.');
     }
 
