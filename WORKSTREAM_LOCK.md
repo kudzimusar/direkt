@@ -6,64 +6,67 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | RELEASED ON PROMOTION — Phase 10 managed closeout complete |
-| Owner/agent | OpenAI GPT-5.6 Thinking — Phase 10 hardening agent |
-| Phase | Phase 10 — Security, privacy, legal and reliability hardening |
-| Task | Final documentation promotion, Issue #41 closure and long-lived branch synchronization |
+| Status | CLAIMED — Phase 11 entry preparation and controlled-pilot readiness |
+| Owner/agent | OpenAI GPT-5.5 Thinking — Phase 11 controlled-pilot agent |
+| Phase | Phase 11 — Controlled Zambia pilot and primary validation |
+| Task | Complete every repository-side Phase 11 entry/readiness requirement, reconcile Maps/Sentry truth, prepare production-shaped pilot controls, and preserve explicit external stop gates until real pilot evidence exists |
 | Modules/paths | `database`, `backend/direkt-api`, `android/direkt-app`, `admin/direkt-operations-portal`, `docs`, `.github`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `RISK_REGISTER.md` |
-| Claimed at | 2026-07-17 after stable Phase 9 promotion and branch synchronization |
-| Last reviewed | 2026-07-18 after final managed deploy/inspection/operations evidence |
-| Final managed source | `5d9313333c49d6501944e6ddba4cd408c540ff47` |
-| Expected handoff | Phase 11 may be claimed for entry preparation only after this closeout is promoted; real pilot activity remains separately entry-gated |
-| Governing issue | Issue #41 — close as completed after promotion |
-| Checkpoint PR | PR #42 plus managed closeout fixes through PR #110 |
+| Claimed at | 2026-07-19 after Phase 10 PR #111 promotion, Issue #41 closure and exact long-lived branch synchronization |
+| Stable baseline | `369fc72581b3ed27920b8fc949e32cfedf1ad8d9` |
+| Governing issue | Issue #112 |
+| Real-pilot authorization | BLOCKED until the explicit legal/privacy/provider/ownership/cohort/consent/support/device/stop gates in `docs/phase11/HANDOFF_FROM_PHASE10.md` are satisfied |
+| Expected handoff | Phase 11 may close only after an actually executed controlled pilot produces the required evidence and an explicit STOP / REPEAT / NARROW / PROCEED decision |
 
 ## Stable predecessor
 
-Phase 9 completed through PR #35 and Issue #34.
+Phase 10 completed through PR #111 and Issue #41.
 
 ```text
-Phase 9 exact reviewed head: 4a2694351b6c0fc03c63a1c97f463e0cb1d96e78
-Phase 9 merge commit:       4c78e2419aa4eca225495acaac8e7e0ee81903f1
-Issue #34:                  closed as completed
+Phase 10 final managed source: 5d9313333c49d6501944e6ddba4cd408c540ff47
+Phase 10 promotion merge:       369fc72581b3ed27920b8fc949e32cfedf1ad8d9
+Issue #41:                      closed as completed
+main/build/android-v1:          synchronized at promotion merge
 ```
 
-## Phase 10 delivery stages
+## Phase 11 workstream
 
-- 10A — threat model and security architecture;
-- 10B — authorization and tenant-isolation review;
-- 10C — privacy, retention and legal controls;
-- 10D — private storage and evidence-access validation;
-- 10E — abuse, rate limiting and operational safeguards;
-- 10F — reliability, recovery and performance;
-- 10G — supply-chain, secret and configuration hardening;
-- 10H — provider and authority approval package;
-- 10I — validation, review and checkpoint promotion.
+- 11A — entry gate, legal/privacy/consent/ownership and pilot control plane;
+- Maps/Sentry — reconcile claimed external setup with the actual repository/runtime implementation;
+- 11B — production-shaped pilot backend/data readiness without duplicate domain models;
+- 11C — provider cohort/onboarding/real-evidence validation after entry authorization;
+- 11D — customer discovery, location/Maps and trust-comprehension validation;
+- 11E — enquiries, consented contact handoff, reviews and complaints;
+- 11F — field verification and operations capacity;
+- 11G — real-device/connectivity/reliability matrix;
+- 11H — pricing and unit economics without premature real payments;
+- 11I — evidence-led corrections in the canonical production codebase;
+- 11J — exit evidence and STOP / REPEAT / NARROW / PROCEED Phase 12 decision.
 
-All nine stages are complete for the Phase 10 synthetic/private-staging scope. External approvals needed for real participant processing remain explicit Phase 11 entry stop gates rather than unresolved Phase 10 implementation work.
+## Entry boundary
 
-## Final managed evidence
+Repository-side engineering, documentation, synthetic regression and protected-staging preparation are authorized.
 
-- Supabase exact project `aeeuscifrxcjmnswqwnq`: healthy; 37 migrations, 13 DIREKT schemas and four private buckets verified.
-- Managed restore run `29641165494`: passed.
-- Final private Cloud Run deploy run `29647717734`: passed on `5d9313333c49d6501944e6ddba4cd408c540ff47`.
-- Independent staging inspection run `29647798494`: passed on the same source.
-- Managed operations run `29647821458`: passed rollback, floating-LATEST recovery, kill switch/restoration, post-idle readiness, Monitoring and final IAM cleanup.
-- Firebase internal distribution run `29635486574`: passed for internal debug distribution only.
-- Vercel: explicitly excluded from the current protected staging/Phase 11-entry path by the documented programme decision.
+The following remain prohibited until their explicit gates are evidenced:
 
-See `docs/phase10/PHASE10_CLOSEOUT_2026-07-18.md`.
+- recruitment or processing of real pilot participants;
+- real identity, qualification, contact, precise-location or evidence collection;
+- unrestricted signup/invitations, public pilot promotion or production claims;
+- unapproved Maps/geocoding, OTP/communications, registry or payment-provider operation;
+- real-money movement;
+- treating provisional Lusaka/category assumptions as approved pilot scope;
+- claiming primary validation, legal sign-off, owner assignments or field results that have not actually occurred.
 
-## Non-negotiable boundaries retained after Phase 10
+## Non-negotiable implementation controls
 
-- No real participant/evidence data, real money movement, public pilot or production release is authorized by Phase 10 completion.
-- Phase 11 owns any consenting real-participant pilot and must satisfy its explicit legal/privacy/consent/ownership/provider entry checklist first.
 - Preserve all Phase 4–10 verification, publication, privacy, interaction, accountability, commercial, security and recovery invariants.
-- Production configuration must fail closed.
-- Client state or supplied identifiers never establish authorization.
-- Protected values must remain absent from source, logs, artifacts and clients.
-- Unapproved external adapters remain disabled.
+- Android and the operations portal use the canonical REST/OpenAPI backend; no client-only authorization or direct privileged database access.
+- Reuse canonical provider, verification, discovery, enquiry, interaction, review, complaint and subscription entities.
+- Add only production-compatible pilot controls that are genuinely required; no pilot-only duplicate business logic.
+- Database changes are forward-only and checksummed; applied migrations are never edited.
+- Exact private coordinates, real evidence, protected contact data and secrets never enter public repository artifacts or telemetry.
+- Unapproved adapters fail closed and remain kill-switchable.
+- Phase 12 production release is not authorized until Phase 11 real evidence and the global release gates support it.
 
 ## Conflict rule
 
-With Phase 10 promoted, this lock is released. A Phase 11 agent must explicitly claim a new lock before modifying Phase 11 implementation paths. Read-only review remains allowed.
+No second agent may write to the listed Phase 11 paths while this lock is claimed. Read-only investigation is allowed. A stale or ambiguous lock must be resolved explicitly rather than overwritten by assumption.
