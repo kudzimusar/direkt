@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import styles from "./share-profile-action.module.css";
 
 export function ShareProfileAction({
   title,
@@ -41,8 +42,8 @@ export function ShareProfileAction({
   }
 
   return (
-    <div className="share-profile-action">
-      <button type="button" onClick={share}>
+    <div>
+      <button className={styles.action} type="button" onClick={share}>
         Share profile
       </button>
       <span className="sr-only" aria-live="polite">
