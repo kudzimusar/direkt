@@ -1,0 +1,83 @@
+name: DIREKT Phase 11 synthetic controlled pilot
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "backend/direkt-api/**"
+      - "database/**"
+      - ".github/workflows/phase11-synthetic-pilot.yml"
+  push:
+    branches:
+      - main
+      - build/android-v1
+    paths:
+      - "backend/direkt-api/**"
+      - "database/**"
+      - ".github/workflows/phase11-synthetic-pilot.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-phase11-synthetic-pilot-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_ENV: test
+  DATABASE_URL: postgresql://direkt:direkt_ci@localhost:5432/direkt_phase11_synthetic
+  DIREKT_DATA_MODE: synthetic-only
+  PILOT_ENTRY_APPROVED: "false"
+  PHASE11_SYNTHETIC_PILOT_ACTIVATION: "true"
+
+jobs:
+  activate-and-verify:
+    name: Activate and verify bounded synthetic cohort
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgis/postgis:18-3.6
+        env:
+          POSTGRES_DB: direkt_phase11_synthetic
+          POSTGRES_USER: direkt
+          POSTGRES_PASSWORD: direkt_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U direkt -d direkt_phase11_synthetic"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    defaults:
+      run:
+        working-directory: backend/direkt-api
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run migration:check
+      - name: Activate synthetic Phase 11 cohort
+        shell: bash
+        run: |
+          mkdir -p artifacts/phase11
+          set -o pipefail
+          npm run seed:phase11:synthetic 2>&1 | tee artifacts/phase11/synthetic-pilot-report.json
+      - name: Assert no real-pilot latch or production payment mode
+        shell: bash
+        run: |
+          test "$DIREKT_DATA_MODE" = "synthetic-only"
+          test "$PILOT_ENTRY_APPROVED" = "false"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-phase11-synthetic-${{ github.run_number }}-${{ github.sha }}
+          path: backend/direkt-api/artifacts/phase11/**
+          if-no-files-found: error
+          retention-days: 14
