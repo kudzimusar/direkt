@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "status": "preauthorization-candidate-requires-final-release-candidate-revalidation",
+  "artifact_scope": {
+    "application_id": "com.kudzimusar.direkt",
+    "release_channel": "preauthorization",
+    "version_name": "0.12.0-preauth.1",
+    "note": "This inventory describes the current Android code path plus Firebase Authentication usage. Synthetic preview content that is never transmitted is not treated as collected user data."
+  },
+  "sdk_inventory": [
+    {
+      "sdk": "Firebase Authentication",
+      "dependency": "com.google.firebase:firebase-auth",
+      "active_use": "Phone authentication only when all protected pilot bindings are configured.",
+      "automatic_processing": [
+        "IP address for security and abuse prevention",
+        "Firebase user agent/device metadata and SDK/platform version information",
+        "authentication user-agent strings",
+        "Firebase Android App ID"
+      ],
+      "usage_dependent_processing": [
+        "Phone number",
+        "Firebase Authentication user ID",
+        "Play Integrity or anti-abuse tokens used by the phone-auth flow when applicable"
+      ],
+      "sharing_assessment": "service-provider-processing-not-declared-as-third-party-sharing-under-current-model; final Play form must be rechecked against the exact SDK/version and contracts"
+    }
+  ],
+  "play_data_types": [
+    {
+      "play_category": "Personal info / Phone number",
+      "collected": true,
+      "shared": false,
+      "collection_condition": "Only when protected Firebase phone authentication is enabled and the invited user starts verification.",
+      "required_or_optional": "required for the current approved phone-auth sign-in method",
+      "purposes": [
+        "app functionality",
+        "account management",
+        "fraud prevention, security and compliance"
+      ],
+      "retention_and_deletion": "Firebase/provider and DIREKT account lifecycle controls apply. Final deletion fulfillment, legal-hold rules and public deletion request path remain release blockers pending qualified review and implementation evidence."
+    },
+    {
+      "play_category": "Device or other IDs / User IDs",
+      "collected": true,
+      "shared": false,
+      "collection_condition": "Firebase creates an authentication user ID; DIREKT exchanges it into server-authoritative identity/session identifiers and stores only a protected digest of the external subject server-side.",
+      "required_or_optional": "required for authenticated account/session operation",
+      "purposes": [
+        "app functionality",
+        "account management",
+        "fraud prevention, security and compliance"
+      ],
+      "retention_and_deletion": "Session identifiers expire/revoke; account identity retention/deletion follows the approved rights and legal schedule, which is not yet final for real production data."
+    },
+    {
+      "play_category": "Device or other IDs / Device metadata and network identifiers",
+      "collected": true,
+      "shared": false,
+      "collection_condition": "Firebase Authentication automatically processes IP address, user-agent/platform metadata and Firebase app metadata for service operation, security and abuse prevention.",
+      "required_or_optional": "automatic when Firebase Authentication is used",
+      "purposes": [
+        "app functionality",
+        "fraud prevention, security and compliance"
+      ],
+      "retention_and_deletion": "Provider-controlled service retention applies; exact final form mapping must be revalidated using the Firebase Android data-disclosure guidance for the exact shipped SDK version."
+    },
+    {
+      "play_category": "App activity / Consent and authentication events",
+      "collected": true,
+      "shared": false,
+      "collection_condition": "DIREKT records the approved notice version, affirmative acceptance and bounded authentication/session security metadata during successful admission.",
+      "required_or_optional": "required for controlled admission and accountability",
+      "purposes": [
+        "app functionality",
+        "account management",
+        "fraud prevention, security and compliance"
+      ],
+      "retention_and_deletion": "Bounded consent/audit history is retained according to the approved policy/legal schedule; final real-data schedule remains subject to qualified review."
+    }
+  ],
+  "not_collected_by_current_android_release_path": [
+    "precise or approximate device location",
+    "contacts/address book",
+    "SMS or call logs",
+    "camera/audio capture",
+    "broad photos or media library access",
+    "health or fitness data",
+    "financial account/card/PIN credentials",
+    "advertising identifiers",
+    "analytics events through an analytics SDK",
+    "crash data through Sentry or Crashlytics",
+    "real provider evidence bytes through an Android upload flow",
+    "real enquiry/review/complaint text through the current synthetic preview interaction surfaces"
+  ],
+  "future_or_blocked_product_data": [
+    {
+      "data": "provider profile, evidence, location, enquiries, contact handoff, reviews, complaints, subscription/payment records",
+      "status": "backend contracts exist but the current Android production-capable release path must not declare these as active collection until the exact release candidate actually transmits them and the approved privacy/legal basis is live",
+      "source_register": "docs/legal/DATA_PROCESSING_REGISTER.md"
+    }
+  ],
+  "security_answers_candidate": {
+    "encrypted_in_transit": true,
+    "request_account_deletion_supported_end_to_end": false,
+    "request_account_deletion_blocker": "Google Play requires an in-app path and public web request route when account creation is supported. DIREKT has sign-out/session revocation but the final account deletion request/fulfillment workflow and public route are not yet production-approved.",
+    "independent_security_review": false,
+    "notes": "Do not claim optional Play security badges or deletion support until evidence exists."
+  },
+  "submission_boundary": "The Play developer is responsible for the final declaration. Revalidate this inventory against the exact release candidate, merged manifest, SDK versions, backend behavior, approved privacy policy and live account-deletion flow before submitting any closed/open/production release."
+}
