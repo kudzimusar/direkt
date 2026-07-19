@@ -44,6 +44,7 @@ export function getPublicRuntimeCapabilities() {
   return {
     apiMode,
     publicDiscoveryEnabled: apiMode === "public" || apiMode === "authenticated-bff",
-    authenticatedBrowserEnabled: apiMode === "authenticated-bff",
+    privateApiInvocationEnabled: apiMode === "authenticated-bff",
+    participantAuthenticationEnabled: false,
   } as const;
 }
