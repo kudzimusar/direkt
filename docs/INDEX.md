@@ -1,6 +1,6 @@
 # DIREKT Documentation Index
 
-This index lists the authoritative planning and operating documents. Agents must follow the reading order in `AGENTS.md` and the active phase in `PROJECT_STATUS.md`.
+This index lists the authoritative planning and operating documents. Agents must follow the reading order in `AGENTS.md`, the active phase/status in `PROJECT_STATUS.md`, and the current-state reconciliation/integration evidence documents where older plans conflict with newer runtime truth.
 
 ## Mandatory control set
 
@@ -11,6 +11,7 @@ This index lists the authoritative planning and operating documents. Agents must
 - [`WORKSTREAM_LOCK.md`](../WORKSTREAM_LOCK.md)
 - [`DEFINITION_OF_DONE.md`](../DEFINITION_OF_DONE.md)
 - [`design.md`](../design.md)
+- [Repository and Documentation Reconciliation — 2026-07-19](REPOSITORY_RECONCILIATION_2026-07-19.md)
 
 ## Analytics
 
@@ -40,6 +41,7 @@ This index lists the authoritative planning and operating documents. Agents must
 
 - [Admin Portal Architecture](architecture/ADMIN_PORTAL_ARCHITECTURE.md)
 - [Android Architecture](architecture/ANDROID_ARCHITECTURE.md)
+- [Customer/Provider PWA Architecture](architecture/PWA_ARCHITECTURE.md)
 - [API Contract](architecture/API_CONTRACT.md)
 - [Architecture Decisions](architecture/ARCHITECTURE_DECISIONS.md)
 - [Backend Architecture](architecture/BACKEND_ARCHITECTURE.md)
@@ -76,6 +78,7 @@ This index lists the authoritative planning and operating documents. Agents must
 - [Phase 1B Prototype Specification](design/PHASE_1B_PROTOTYPE_SPEC.md)
 - [Accessibility](design/ACCESSIBILITY.md)
 - [Android UI Specification](design/ANDROID_UI_SPECIFICATION.md)
+- [PWA UI Specification](design/PWA_UI_SPECIFICATION.md)
 - [Content and Microcopy](design/CONTENT_AND_MICROCOPY.md)
 - [Design System](design/DESIGN_SYSTEM.md)
 - [Information Architecture](design/INFORMATION_ARCHITECTURE.md)
@@ -106,6 +109,7 @@ This index lists the authoritative planning and operating documents. Agents must
 
 ## Integrations
 
+- [Current Integration Status Register](integrations/CURRENT_INTEGRATION_STATUS.md)
 - [Integration and Secrets Plan](integrations/INTEGRATION_AND_SECRETS_PLAN.md)
 - [Supabase Development Integration](integrations/SUPABASE_DEVELOPMENT_INTEGRATION.md)
 
@@ -131,6 +135,7 @@ This index lists the authoritative planning and operating documents. Agents must
 - [Phase Completion Template](operations/PHASE_COMPLETION_TEMPLATE.md)
 - [Release Versioning](operations/RELEASE_VERSIONING.md)
 - [Remote Android Testing](operations/REMOTE_ANDROID_TESTING.md)
+- [Remote UI Testing](operations/REMOTE_UI_TESTING.md)
 - [Service Level Objectives](operations/SERVICE_LEVEL_OBJECTIVES.md)
 - [Support Operations](operations/SUPPORT_OPERATIONS.md)
 - [Verification Operations](operations/VERIFICATION_OPERATIONS.md)
@@ -197,6 +202,7 @@ This index lists the authoritative planning and operating documents. Agents must
 
 - [Acceptance Tests](testing/ACCEPTANCE_TESTS.md)
 - [Android Test Plan](testing/ANDROID_TEST_PLAN.md)
+- [PWA Test Plan](testing/PWA_TEST_PLAN.md)
 - [Backend Test Plan](testing/BACKEND_TEST_PLAN.md)
 - [Bug Severity Model](testing/BUG_SEVERITY_MODEL.md)
 - [Device Test Matrix](testing/DEVICE_TEST_MATRIX.md)
