@@ -1,3 +1,5 @@
+import "./offline.css";
+
 export default function OfflinePage() {
   return (
     <main className="offline-page" id="main-content">
