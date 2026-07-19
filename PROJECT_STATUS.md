@@ -3,7 +3,7 @@
 **Updated (Asia/Tokyo):** 2026-07-19  
 **Stable branch:** `main`  
 **Implementation branch:** `build/android-v1` — history-preserving synchronization maintained; no force-push or history rewrite permitted  
-**Programme state:** Phases 0–10 are complete and stable. Phase 11 internal/synthetic readiness is complete, but real-participant pilot evidence 11C–11H and the 11J exit decision remain pending. Phase 12 preauthorization foundation, Phase 12A, Phase 12B and all other currently repository-clearable Phase 12 release-readiness engineering are complete and promoted. **Formal Phase 12 production release is not authorized.**
+**Programme state:** Phases 0–10 are complete and stable. Phase 11 internal/synthetic readiness is complete, but real-participant pilot evidence 11C–11H and the 11J exit decision remain pending. Phase 12 preauthorization foundation, Phase 12A, Phase 12B, the late release-policy hardening and all other currently repository-clearable Phase 12 release-readiness engineering are complete and promoted. **Formal Phase 12 production release is not authorized.** Issue #133 is the active repository/integration reconciliation and synthetic customer/provider PWA workstream.
 
 ## Stable checkpoints
 
@@ -26,6 +26,7 @@
 | Phase 12A Android release/versioning/reproducibility/signing contract | #129 | `48f6d2d212d64192819d76d67e157b25f8a5e98b` | complete |
 | Phase 12B Play listing/permissions/Data Safety preparation | #134 | `b876c499aed0f135feec39601b58f22c734879cc` | complete; post-merge review fixes promoted in #136 |
 | Remaining clearable Phase 12 release-readiness controls | #136 | `c6bb694046b2fe8e82d3f745330447632169355c` | complete |
+| Late Phase 12 release-policy hardening | #140 | `8363e2196739f5bad2393eaa8896d4c43bd64e0f` | complete; implementation lane synchronized in #143 |
 
 ## Current Phase 11 truth
 
@@ -63,17 +64,20 @@ Issue #112 remains the active Phase 11 tracker and must stay open until those ex
 - [x] Merged-release-manifest permission inventory.
 - [x] Current merged permission baseline: `android.permission.INTERNET` only.
 - [x] No current location/camera/contacts/SMS/call-log/broad-storage/media/microphone/notification runtime permission is declared.
-- [x] Android `implementation(...)` dependency surface is allowlisted so unreviewed SDK additions cannot silently invalidate Data Safety.
+- [x] Android release dependency surface is allowlisted so unreviewed SDK additions cannot silently invalidate Data Safety.
 - [x] Firebase Authentication Data Safety inventory prepared from current source/provider behavior.
 - [x] No Analytics, Crashlytics, Sentry, FCM, Maps, ads, billing or payment SDK is claimed active in the current Android release dependency surface.
 - [x] Content-rating questionnaire facts prepared without fabricating an IARC rating.
 - [x] Target-audience/country/device/developer-account/testing prerequisites documented.
 - [x] Store-copy validator rejects blanket trust/approval overclaims.
-- [x] Phase 12B CI builds and inspects the merged release manifest, not only the source manifest.
+- [x] Phase 12B CI builds and inspects the merged release manifest, including `uses-permission` and `uses-permission-sdk-23` declarations.
+- [x] Release SDK/Data Safety inspection uses the resolved `releaseRuntimeClasspath`, not a source-only dependency approximation.
 - [x] Phase 12B policy-document-only changes trigger the readiness gate.
 - [ ] Public support/privacy/account-deletion URLs and final Play forms remain real release prerequisites.
 
-A late Codex review of PR #134 found four valid gaps: unreviewed SDK additions, source-manifest-only permission inspection, missing banned store-claim checks and an incomplete workflow path trigger. All four were corrected and exact-head validated in PR #136 before the final Phase 12 preauthorization promotion.
+A late Codex review of PR #134 found four valid gaps: unreviewed SDK additions, source-manifest-only permission inspection, missing banned store-claim checks and an incomplete workflow path trigger. All four were corrected and exact-head validated in PR #136.
+
+A later post-closeout review found three additional P1 bypasses: formal release eligibility could be excluded from the Gradle task graph, SDK/Data Safety inspection did not use the resolved release runtime configuration, and merged-manifest permission inventory omitted `uses-permission-sdk-23`. PR #140 corrected all three, added negative/non-excludable release-eligibility coverage, passed the exact-head documentation, Android, performance, Phase 12A/12B/final-readiness and supply-chain gates, and was promoted at `8363e2196739f5bad2393eaa8896d4c43bd64e0f`.
 
 ### Formal release eligibility latches
 
@@ -85,7 +89,7 @@ Five source-controlled latches now guard release-candidate/production packaging:
 - `DIREKT_PRODUCTION_OPERATIONS_READY=false`
 - `DIREKT_PLAY_RELEASE_READY=false`
 
-Preauthorization requires all five to remain false. Release-candidate/production packaging requires all five to be true, and the Gradle release task graph depends on the eligibility verification task. These latches are evidence assertions and may be changed only with the matching reviewed evidence; they do not themselves authorize signing or publishing.
+Preauthorization requires all five to remain false. Release-candidate/production packaging requires all five to be true, and release packaging enforces non-excludable eligibility validation. These latches are evidence assertions and may be changed only with the matching reviewed evidence; they do not themselves authorize signing or publishing.
 
 ### Production backend/operations readiness
 
@@ -158,27 +162,35 @@ This remains a release blocker and is not overclaimed as complete.
 
 ## Final exact-head verification for clearable Phase 12 work
 
-Exact source head before PR #136 promotion:
+PR #136 exact source before promotion was `a22153d8aaa3c12acff04fdf8fa6953981e5b5a2` and passed documentation, supply-chain/security, Android CI, Android performance, Phase 12A reproducibility, hardened Phase 12B and the final preauthorization truth-boundary gate.
 
-`a22153d8aaa3c12acff04fdf8fa6953981e5b5a2`
+The later PR #140 hardening was exact-head validated at `5cfaa6a1f4382e1fe0fad98480da7ead70037cab` across the same relevant permanent gates, including the non-excludable formal eligibility and resolved release-runtime/merged-manifest policy corrections, before merge to `8363e2196739f5bad2393eaa8896d4c43bd64e0f`.
 
-Passed on that exact source:
+The Android performance gate during the earlier checkpoint initially recorded one cold-launch outlier while artifact size remained within budget. Because that checkpoint did not change Android runtime behavior, the exact same source was retried once and passed. No performance waiver was used.
 
-- [x] Documentation quality;
-- [x] Phase 10 supply-chain/security;
-- [x] Android CI;
-- [x] Android performance budget;
-- [x] Phase 12A release readiness/reproducibility;
-- [x] hardened Phase 12B Play readiness using the merged release manifest;
-- [x] Phase 12 final preauthorization truth-boundary gate.
-
-The Android performance gate initially recorded one cold-launch outlier while artifact size remained within budget. Because the checkpoint did not change Android runtime behavior, the exact same source was retried once; the retry passed. No performance waiver was used.
-
-Latest short-lived exact-head evidence includes:
+Latest short-lived preauthorization evidence includes:
 
 - Play-readiness artifact archive digest: `sha256:aca3d0d318128ca5dc51726eaf1c8abd56d95522be5b5f8dccf7a024284d4840`;
 - final Phase 12 preauthorization truth-boundary archive digest: `sha256:e226fec4773ca9d39ac29c2178495f7cf72ecbcc3fed3ae78cd20c1e0fca240e`;
 - reproducible AAB evidence archive digest: `sha256:de3f258978316e6c61abb8bef23f4a9134e66f22333de6710f99aaf75e8bf041`.
+
+## Issue #133 — current-state reconciliation and remote customer/provider PWA
+
+The owner authorized a repository/documentation reconciliation plus an Android-first browser companion so current progress can be inspected remotely instead of inferred only from backend code and CI.
+
+Current workstream requirements:
+
+- [x] preserve the detailed historical plans rather than deleting them during reconciliation;
+- [x] add an evidence hierarchy and explicit supersession overlay for stale current-state claims;
+- [x] add a canonical integration status taxonomy and register;
+- [x] record `direkt.forum` as the canonical public domain and distinguish Vercel registrar, Cloudflare DNS/email edge, GitHub Pages static origin and Cloud Run protected runtime roles;
+- [x] distinguish Resend/Maps/Sentry external provisioning from runtime application activation;
+- [x] add an installable responsive customer/provider PWA with Android-aligned trust semantics;
+- [x] keep the public PWA synthetic-only with no protected API credentials, private evidence, real submissions or participant data;
+- [x] add a permanent PWA/Pages validation gate and static-shell-only service-worker caching;
+- [ ] promote PR #142, verify the deployed `https://direkt.forum/app/` route, synchronize the long-lived implementation branch and close Issue #133 with evidence.
+
+The PWA is an additive Version 1 companion; Android remains the primary client/Play target. Future live PWA API mode requires a separately reviewed browser authentication/session/gateway, origin/request-integrity, caching/privacy and abuse-control gate. The IAM-private API must not be made public merely to connect the PWA.
 
 ## Remaining gates — genuine external/real-world work only
 
@@ -203,6 +215,12 @@ No additional repository-only document, toggle, synthetic dataset or unsigned ar
 
 ## Current source documents
 
+- `docs/REPOSITORY_RECONCILIATION_2026-07-19.md`
+- `docs/integrations/CURRENT_INTEGRATION_STATUS.md`
+- `docs/architecture/PWA_ARCHITECTURE.md`
+- `docs/design/PWA_UI_SPECIFICATION.md`
+- `docs/testing/PWA_TEST_PLAN.md`
+- `docs/operations/REMOTE_UI_TESTING.md`
 - `docs/phase11/PHASE11_EXECUTION_AND_ENTRY_CONTROL.md`
 - `docs/phase11/PHASE11_SYNTHETIC_CONTROLLED_PILOT_ACTIVATION_2026-07-19.md`
 - `docs/phase11/PILOT_VALIDATION_EVIDENCE_REGISTER.md`
@@ -226,7 +244,9 @@ No additional repository-only document, toggle, synthetic dataset or unsigned ar
 - Phase 12 preauthorization foundation: complete.
 - Phase 12A: complete.
 - Phase 12B: complete for repository preparation; Play submission/execution remains gated.
+- Late Phase 12 release-policy hardening: complete and promoted in PR #140.
 - All other currently repository-clearable Phase 12 release-readiness engineering: complete.
+- Customer/provider PWA: authorized for synthetic remote review; live API/production browser mode separately gated.
 - **Formal Phase 12 production release: not authorized until actual Phase 11 exit evidence supports `PROCEED` and every global release gate passes.**
 
-Issue #5 remains the historical deferred real-world validation obligation. Issue #112 remains open as the active controlled-pilot execution tracker.
+Issue #5 remains the historical deferred real-world validation obligation. Issue #112 remains open as the active controlled-pilot execution tracker. Issue #133 remains open until the reconciliation/PWA deployment is promoted and remotely verified.
