@@ -2,8 +2,8 @@
 
 **Updated (Asia/Tokyo):** 2026-07-19  
 **Stable branch:** `main`  
-**Implementation branch:** `build/android-v1` — history-preserving synchronization completed through PR #122 / merge `b25e0a387fa7abf8f2285b21eaad89a20169955f`; 0 commits behind `main` and zero file diff  
-**Programme state:** Phases 0–10 are complete and stable. Phase 11A internal scope/operations decisions, Phase 11 synthetic functional readiness and the managed synthetic controlled-pilot activation are complete. The real-participant pilot remains externally gated; 11C–11H `PRIMARY-PILOT` evidence and the 11J exit decision remain pending.
+**Implementation branch:** `build/android-v1` — history-preserving synchronization completed through the promoted Phase 12 preauthorization checkpoint; no force-push or history rewrite permitted  
+**Programme state:** Phases 0–10 are complete and stable. Phase 11A internal scope/operations decisions, Phase 11 synthetic functional readiness and the managed synthetic controlled-pilot activation are complete. Phase 12 release-readiness engineering is now preauthorized and the unsigned/non-publishing release AAB gate is proven, but formal Phase 12 remains blocked. The real-participant pilot, 11C–11H `PRIMARY-PILOT` evidence and the 11J exit decision remain pending.
 
 ## Stable checkpoints
 
@@ -21,6 +21,8 @@
 | Phase 11 synthetic controlled-pilot implementation | #119 | `7b886b9bee91c1337f4e4ad43f71afa4389644de` | #112 |
 | Phase 11 managed synthetic activation record | #120 | `06ade25b92bdb1dc310b88ed64626037671683c4` | #112 |
 | Phase 11 current external-entry package | #121 | `e24c41944675d1f31d4466127902917419e37fce` | #112 |
+| Phase 11 final synthetic/status checkpoint | #123 | `25c445f4e33073d1f174b0a30ea5ca50d838859e` | #112 |
+| Phase 12 preauthorization release-readiness gate | #125 | `7b23d812b751345a740a34b77ad1b7890ed15cd1` | #112 remains open |
 
 ## Managed infrastructure retained for Phase 11
 
@@ -73,7 +75,22 @@ Phase 10 managed evidence remains valid. Phase 11 did not make Cloud Run public,
 - [x] 24 interaction-eligible reviews and 6 synthetic complaints created.
 - [x] Privacy/runtime invariants verified: 0 contacts, 0 external Firebase identities, 0 real pilot invitations, 0 Storage objects, 0 field visits, 0 payment intents.
 - [x] Post-activation Supabase security advisor showed no new Phase 11 table/cohort exposure finding; existing project-wide advisories remain tracked hardening debt.
-- [x] `build/android-v1` synchronized without force-push; current effective tree is zero-diff against `main` and 0 commits behind.
+- [x] `build/android-v1` synchronized without force-push; stale divergent Phase 11 documentation history cannot override the promoted current tree.
+
+### Phase 12 preauthorization release readiness completed
+
+- [x] Current Android release surface audited against the repository release plan.
+- [x] Production application ID remains `com.kudzimusar.direkt`.
+- [x] `compileSdk` and `targetSdk` are both API 36.
+- [x] Existing stale release version (`versionCode = 8`, `versionName = 0.8.0-phase8`) identified as a formal-release task rather than silently changed early.
+- [x] Permanent `.github/workflows/phase12-release-readiness.yml` gate promoted through PR #125.
+- [x] Gate refuses committed signing-key material, `google-services.json` and premature production signing configuration.
+- [x] Exact PR #125 head passed `lintRelease` and `bundleRelease` with no production signing or publishing action.
+- [x] Short-lived CI AAB evidence produced and labelled `PREAUTHORIZATION / NOT FOR DISTRIBUTION` with SHA-256 evidence.
+- [x] Documentation quality and Phase 10 supply-chain/security passed on the same exact head.
+- [x] Release-readiness decision and scope explicitly preserve the Phase 11 real-evidence and legal stop gates.
+
+This checkpoint proves Android release-variant buildability only. It does not authorize a signed production artifact, Play upload, public backend traffic, unrestricted signup, real Firebase participant use, real verification claims or real-money activity.
 
 ### Remaining real-entry gates
 
@@ -112,7 +129,7 @@ The managed synthetic environment is now populated and functional, but the real 
 - no real evidence file was uploaded for the synthetic verification metadata;
 - no field-visited claim was created.
 
-No environment-variable change, synthetic result or demo dataset can authorize the real pilot by itself.
+No environment-variable change, synthetic result, demo dataset or unsigned AAB can authorize the real pilot or formal Phase 12 by itself.
 
 ## Current source documents
 
@@ -124,6 +141,8 @@ No environment-variable change, synthetic result or demo dataset can authorize t
 - `docs/phase11/SECONDARY_EVIDENCE_SUBSTITUTION_MATRIX.md`
 - `docs/phase11/PILOT_VALIDATION_EVIDENCE_REGISTER.md`
 - `docs/phase11/PHASE11_SYNTHETIC_CONTROLLED_PILOT_ACTIVATION_2026-07-19.md`
+- `docs/phase12/PHASE12_PREAUTHORIZATION_RELEASE_READINESS_2026-07-19.md`
+- `docs/architecture/PHASE12_PREAUTHORIZATION_RELEASE_READINESS_DECISION.md`
 
 ## Phase boundaries
 
@@ -131,9 +150,10 @@ No environment-variable change, synthetic result or demo dataset can authorize t
 - Phase 11A internal decisions: complete.
 - Phase 11 synthetic functional readiness: complete.
 - Phase 11 managed synthetic activation: complete.
-- Phase 11 repository-control housekeeping: complete; long-lived implementation branch is synchronized to the current promoted tree.
+- Phase 11 repository-control housekeeping: complete.
+- Phase 12 preauthorization release-readiness engineering: complete for the current unsigned/non-publishing scope; the release variant builds successfully under a permanent fail-closed CI gate.
 - Phase 11 real-participant entry and 11C–11H primary evidence: pending external gates and actual Zambia pilot.
 - Phase 11J: pending.
-- Phase 12: not formally authorized until actual Phase 11 exit evidence supports `PROCEED` and the global release gates pass.
+- Formal Phase 12 production release: not authorized until actual Phase 11 exit evidence supports `PROCEED` and the global release gates pass.
 
-Issue #5 remains the historical deferred real-world validation obligation; Issue #112 remains the active Phase 11 execution tracker.
+Issue #5 remains the historical deferred real-world validation obligation; Issue #112 remains the active Phase 11 execution tracker and must remain open until the real controlled-pilot exit criteria are actually met.
