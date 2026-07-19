@@ -1,4 +1,4 @@
-name: DIREKT Phase 12 preauthorization release readiness
+name: DIREKT Phase 12A preauthorization release readiness
 
 on:
   push:
@@ -19,25 +19,38 @@ permissions:
   contents: read
 
 concurrency:
-  group: direkt-phase12-preauth-release-${{ github.ref }}
+  group: direkt-phase12a-preauth-release-${{ github.ref }}
   cancel-in-progress: true
 
 env:
   ANDROID_PROJECT_DIR: android/direkt-app
   DIREKT_GRADLE_VERSION: "9.4.0"
+  DIREKT_RELEASE_SIGNING_ENABLED: "false"
+  SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
 jobs:
   release-readiness:
-    name: Build non-publishable release AAB
+    name: Verify reproducible non-publishable release AAB
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
     defaults:
       run:
         working-directory: android/direkt-app
 
     steps:
-      - name: Check out repository
+      - name: Check out exact evidence source
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ env.SOURCE_SHA }}
+
+      - name: Verify exact checkout provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHECKED_OUT_SHA="$(git rev-parse HEAD)"
+          test "${CHECKED_OUT_SHA}" = "${SOURCE_SHA}"
+          echo "Evidence source: ${CHECKED_OUT_SHA}"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
@@ -53,6 +66,7 @@ jobs:
       - name: Bootstrap standard Gradle wrapper JAR
         shell: bash
         run: |
+          set -euo pipefail
           if [[ ! -f gradle/wrapper/gradle-wrapper.jar ]]; then
             gradle wrapper \
               --gradle-version "${DIREKT_GRADLE_VERSION}" \
@@ -61,7 +75,8 @@ jobs:
           chmod +x gradlew
           ./gradlew --version
 
-      - name: Enforce preauthorization release boundary
+      - name: Enforce Phase 12A release and signing boundary
+        id: contract
         shell: bash
         run: |
           set -euo pipefail
@@ -74,73 +89,204 @@ jobs:
           test ! -f google-services.json
 
           if find . -type f \( -name '*.jks' -o -name '*.keystore' -o -name '*.p12' -o -name '*.pfx' \) -print -quit | grep -q .; then
-            echo "Signing key material must not be committed to the public repository." >&2
+            echo "Signing key material must not exist in the public-repository checkout." >&2
             exit 1
           fi
 
-          if grep -Eq 'signingConfigs|signingConfig[[:space:]]*=' app/build.gradle.kts; then
-            echo "Production signing configuration is not authorized in the preauthorization readiness workflow." >&2
-            exit 1
-          fi
+          for name in \
+            DIREKT_UPLOAD_KEYSTORE_PATH \
+            DIREKT_UPLOAD_KEYSTORE_PASSWORD \
+            DIREKT_UPLOAD_KEY_ALIAS \
+            DIREKT_UPLOAD_KEY_PASSWORD; do
+            if [[ -n "${!name:-}" ]]; then
+              echo "Protected signing input ${name} must not be exposed to the preauthorization workflow." >&2
+              exit 1
+            fi
+          done
 
-          VERSION_CODE="$(sed -n 's/^[[:space:]]*versionCode = \([0-9][0-9]*\).*/\1/p' app/build.gradle.kts | head -n1)"
-          VERSION_NAME="$(sed -n 's/^[[:space:]]*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n1)"
+          bash scripts/verify-release-contract.sh | tee release-contract.txt
+
+          VERSION_CODE="$(awk -F= '$1 == "release_version_code" { print $2 }' release-contract.txt)"
+          VERSION_NAME="$(awk -F= '$1 == "release_version_name" { print $2 }' release-contract.txt)"
+          RELEASE_CHANNEL="$(awk -F= '$1 == "release_channel" { print $2 }' release-contract.txt)"
 
           test -n "${VERSION_CODE}"
           test -n "${VERSION_NAME}"
+          test "${RELEASE_CHANNEL}" = "preauthorization"
+
+          echo "version_code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
+          echo "version_name=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
+          echo "release_channel=${RELEASE_CHANNEL}" >> "$GITHUB_OUTPUT"
 
           {
-            echo "### Phase 12 preauthorization release boundary"
+            echo "### Phase 12A preauthorization release contract"
+            echo "- Source commit: \`${SOURCE_SHA}\`"
             echo "- Application ID: \`com.kudzimusar.direkt\`"
             echo "- targetSdk: \`36\`"
             echo "- versionCode: \`${VERSION_CODE}\`"
             echo "- versionName: \`${VERSION_NAME}\`"
-            echo "- Signing: deliberately absent"
-            echo "- Distribution: prohibited; readiness artifact only"
+            echo "- Channel: \`${RELEASE_CHANNEL}\`"
+            echo "- Signing latch: \`false\`"
+            echo "- Distribution: prohibited; readiness evidence only"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Run release lint and build unsigned Android App Bundle
-        run: ./gradlew --no-daemon --stacktrace lintRelease bundleRelease
+      - name: Prove signing bypasses fail closed
+        shell: bash
+        run: |
+          set -euo pipefail
 
-      - name: Package non-publishable readiness evidence
+          set +e
+          ./gradlew --no-daemon --no-configuration-cache help \
+            -Pandroid.injected.signing.store.file=/tmp/forbidden-upload.jks \
+            > "${RUNNER_TEMP}/agp-injected-signing.log" 2>&1
+          INJECTED_STATUS=$?
+          set -e
+          if [[ "${INJECTED_STATUS}" -eq 0 ]]; then
+            echo "AGP injected signing override unexpectedly passed the DIREKT contract." >&2
+            exit 1
+          fi
+          grep -F 'AGP android.injected.signing.* overrides are prohibited' \
+            "${RUNNER_TEMP}/agp-injected-signing.log"
+
+          VERSION_BACKUP="${RUNNER_TEMP}/version.properties.phase12a"
+          cp release/version.properties "${VERSION_BACKUP}"
+          trap 'cp "${VERSION_BACKUP}" release/version.properties' EXIT
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("release/version.properties")
+          text = path.read_text()
+          text = text.replace(
+              "DIREKT_RELEASE_VERSION_NAME=0.12.0-preauth.1",
+              "DIREKT_RELEASE_VERSION_NAME=0.12.0-rc.1",
+          )
+          text = text.replace(
+              "DIREKT_RELEASE_CHANNEL=preauthorization",
+              "DIREKT_RELEASE_CHANNEL=release-candidate",
+          )
+          path.write_text(text)
+          PY
+
+          set +e
+          DIREKT_RELEASE_SIGNING_ENABLED=true \
+            ./gradlew --no-daemon help \
+            > "${RUNNER_TEMP}/signed-config-cache.log" 2>&1
+          CACHE_STATUS=$?
+          set -e
+          if [[ "${CACHE_STATUS}" -eq 0 ]]; then
+            echo "Signed release configuration unexpectedly accepted active configuration cache." >&2
+            exit 1
+          fi
+          grep -F 'Signed DIREKT release builds require --no-configuration-cache' \
+            "${RUNNER_TEMP}/signed-config-cache.log"
+
+          cp "${VERSION_BACKUP}" release/version.properties
+          trap - EXIT
+          git diff --exit-code -- release/version.properties
+
+      - name: Run release lint independently
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon --stacktrace --no-build-cache clean
+          ./gradlew --no-daemon --stacktrace --no-build-cache --rerun-tasks lintRelease
+
+      - name: Build first clean unsigned release AAB
+        id: first_build
+        shell: bash
+        run: |
+          set -euo pipefail
+          export SOURCE_DATE_EPOCH="$(git show -s --format=%ct "${SOURCE_SHA}")"
+
+          ./gradlew --no-daemon --stacktrace --no-build-cache clean
+          ./gradlew --no-daemon --stacktrace --no-build-cache --rerun-tasks bundleRelease
+
+          AAB="$(find app/build/outputs/bundle/release -maxdepth 1 -type f -name '*.aab' -print -quit)"
+          if [[ -z "${AAB}" || ! -f "${AAB}" ]]; then
+            echo "First release AAB was not produced." >&2
+            exit 1
+          fi
+
+          mkdir -p "${RUNNER_TEMP}/direkt-reproducibility"
+          cp "${AAB}" "${RUNNER_TEMP}/direkt-reproducibility/first.aab"
+          FIRST_SHA256="$(sha256sum "${RUNNER_TEMP}/direkt-reproducibility/first.aab" | cut -d' ' -f1)"
+          echo "sha256=${FIRST_SHA256}" >> "$GITHUB_OUTPUT"
+
+      - name: Rebuild from clean state and prove byte reproducibility
+        id: reproducibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          export SOURCE_DATE_EPOCH="$(git show -s --format=%ct "${SOURCE_SHA}")"
+
+          ./gradlew --no-daemon --stacktrace --no-build-cache clean
+          ./gradlew --no-daemon --stacktrace --no-build-cache --rerun-tasks bundleRelease
+
+          AAB="$(find app/build/outputs/bundle/release -maxdepth 1 -type f -name '*.aab' -print -quit)"
+          if [[ -z "${AAB}" || ! -f "${AAB}" ]]; then
+            echo "Second release AAB was not produced." >&2
+            exit 1
+          fi
+
+          cp "${AAB}" "${RUNNER_TEMP}/direkt-reproducibility/second.aab"
+          SECOND_SHA256="$(sha256sum "${RUNNER_TEMP}/direkt-reproducibility/second.aab" | cut -d' ' -f1)"
+          FIRST_SHA256="${{ steps.first_build.outputs.sha256 }}"
+
+          if [[ "${FIRST_SHA256}" != "${SECOND_SHA256}" ]]; then
+            echo "Release AAB is not byte-for-byte reproducible from the same source and release contract." >&2
+            echo "First SHA-256:  ${FIRST_SHA256}" >&2
+            echo "Second SHA-256: ${SECOND_SHA256}" >&2
+            exit 1
+          fi
+
+          cmp --silent \
+            "${RUNNER_TEMP}/direkt-reproducibility/first.aab" \
+            "${RUNNER_TEMP}/direkt-reproducibility/second.aab"
+
+          echo "sha256=${SECOND_SHA256}" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Reproducibility proof"
+            echo "- Build 1 SHA-256: \`${FIRST_SHA256}\`"
+            echo "- Build 2 SHA-256: \`${SECOND_SHA256}\`"
+            echo "- Result: **byte-for-byte identical**"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Package deterministic non-publishable release evidence
         id: package
         shell: bash
         run: |
           set -euo pipefail
 
-          AAB="$(find app/build/outputs/bundle/release -maxdepth 1 -type f -name '*.aab' -print -quit)"
-          if [[ -z "${AAB}" || ! -f "${AAB}" ]]; then
-            echo "Release AAB was not produced." >&2
-            exit 1
-          fi
+          VERSION_CODE="${{ steps.contract.outputs.version_code }}"
+          VERSION_NAME="${{ steps.contract.outputs.version_name }}"
+          RELEASE_CHANNEL="${{ steps.contract.outputs.release_channel }}"
+          SHA256="${{ steps.reproducibility.outputs.sha256 }}"
 
           mkdir -p release-readiness
-          DEST="release-readiness/direkt-PREAUTHORIZATION-NOT-FOR-DISTRIBUTION-${GITHUB_SHA}.aab"
-          cp "${AAB}" "${DEST}"
-          sha256sum "${DEST}" > "${DEST}.sha256"
+          DEST="release-readiness/direkt-${VERSION_NAME}-PREAUTHORIZATION-NOT-FOR-DISTRIBUTION-${SOURCE_SHA}.aab"
+          cp "${RUNNER_TEMP}/direkt-reproducibility/second.aab" "${DEST}"
+          printf '%s  %s\n' "${SHA256}" "$(basename "${DEST}")" > "${DEST}.sha256"
 
-          cat > release-readiness/README.txt <<EOF
-          DIREKT Phase 12 preauthorization release-readiness artifact
-          Commit: ${GITHUB_SHA}
-          Status: NOT FOR DISTRIBUTION OR PLAY UPLOAD
-          Signing: production signing intentionally absent
-          Purpose: prove that the release variant can lint and build before formal Phase 12 authorization
+          cat > release-readiness/RELEASE_METADATA.txt <<EOF
+          DIREKT Phase 12A preauthorization release-readiness evidence
+          source_commit=${SOURCE_SHA}
+          application_id=com.kudzimusar.direkt
+          target_sdk=36
+          version_code=${VERSION_CODE}
+          version_name=${VERSION_NAME}
+          release_channel=${RELEASE_CHANNEL}
+          signing=disabled
+          artifact_sha256=${SHA256}
+          reproducibility=byte-for-byte-identical-across-two-clean-builds
+          distribution=NOT_FOR_DISTRIBUTION_OR_PLAY_UPLOAD
           EOF
 
-          SHA256="$(cut -d' ' -f1 "${DEST}.sha256")"
           echo "sha256=${SHA256}" >> "$GITHUB_OUTPUT"
 
-          {
-            echo "### Release-readiness artifact"
-            echo "- Commit: \`${GITHUB_SHA}\`"
-            echo "- SHA-256: \`${SHA256}\`"
-            echo "- Status: **PREAUTHORIZATION / NOT FOR DISTRIBUTION**"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload non-publishable release-readiness artifact
+      - name: Upload non-publishable Phase 12A evidence
         uses: actions/upload-artifact@v4
         with:
-          name: direkt-phase12-preauthorization-aab-${{ github.run_number }}-${{ github.sha }}
+          name: direkt-phase12a-preauthorization-aab-${{ github.run_number }}-${{ env.SOURCE_SHA }}
           path: android/direkt-app/release-readiness/**
           if-no-files-found: error
           retention-days: 7

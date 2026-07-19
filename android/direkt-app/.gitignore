@@ -6,3 +6,10 @@ local.properties
 captures/
 .externalNativeBuild/
 .cxx/
+
+# Release signing material must never be committed. CI materializes any future
+# protected upload keystore outside the repository working tree.
+*.jks
+*.keystore
+*.p12
+*.pfx

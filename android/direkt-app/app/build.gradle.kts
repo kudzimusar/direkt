@@ -1,10 +1,128 @@
+import java.io.StringReader
+import java.util.Properties
+import org.gradle.api.DefaultTask
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.TaskAction
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose)
 }
 
+abstract class VerifyReleaseArtifactSigningContract : DefaultTask() {
+    @get:Input
+    abstract val configuredReleaseChannel: Property<String>
+
+    @get:Input
+    abstract val configuredSigningEnabled: Property<Boolean>
+
+    @TaskAction
+    fun verifyContract() {
+        val channel = configuredReleaseChannel.get()
+        val signingEnabled = configuredSigningEnabled.get()
+
+        if (channel == "preauthorization") {
+            require(!signingEnabled) {
+                "Preauthorization release artifacts must remain unsigned"
+            }
+        } else {
+            require(signingEnabled) {
+                "Release-candidate and production artifacts require DIREKT_RELEASE_SIGNING_ENABLED=true"
+            }
+        }
+    }
+}
+
 fun quotedBuildConfig(value: String): String =
     "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
+val releaseVersionFile = rootProject.layout.projectDirectory.file("release/version.properties")
+val releaseVersionContents = providers.fileContents(releaseVersionFile).asText.get()
+val releaseVersionProperties = Properties().apply {
+    load(StringReader(releaseVersionContents))
+}
+
+fun requiredReleaseProperty(name: String): String =
+    releaseVersionProperties.getProperty(name)
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+        ?: error("Missing required release property: $name")
+
+val releaseVersionCodeRaw = requiredReleaseProperty("DIREKT_RELEASE_VERSION_CODE")
+val releaseVersionCode = releaseVersionCodeRaw.toIntOrNull()
+    ?.takeIf { it in 1..2_100_000_000 }
+    ?: error("DIREKT_RELEASE_VERSION_CODE must be an integer from 1 to 2100000000")
+val releaseVersionName = requiredReleaseProperty("DIREKT_RELEASE_VERSION_NAME")
+val releaseChannel = requiredReleaseProperty("DIREKT_RELEASE_CHANNEL")
+
+require(Regex("""[0-9]+(?:\.[0-9]+){2}(?:-[0-9A-Za-z][0-9A-Za-z.-]*)?""").matches(releaseVersionName)) {
+    "DIREKT_RELEASE_VERSION_NAME must be a SemVer-like Android version name"
+}
+require(releaseChannel in setOf("preauthorization", "release-candidate", "production")) {
+    "DIREKT_RELEASE_CHANNEL must be preauthorization, release-candidate, or production"
+}
+require(releaseChannel != "preauthorization" || "preauth" in releaseVersionName) {
+    "Preauthorization builds must be explicitly labelled in DIREKT_RELEASE_VERSION_NAME"
+}
+require(releaseChannel != "release-candidate" || "rc" in releaseVersionName) {
+    "Release-candidate builds must be explicitly labelled in DIREKT_RELEASE_VERSION_NAME"
+}
+require(releaseChannel != "production" || ("preauth" !in releaseVersionName && "rc" !in releaseVersionName)) {
+    "Production builds must not carry preauthorization or release-candidate labels"
+}
+
+val releaseSigningEnabled = providers.environmentVariable("DIREKT_RELEASE_SIGNING_ENABLED")
+    .orElse("false")
+    .map { raw ->
+        raw.toBooleanStrictOrNull()
+            ?: error("DIREKT_RELEASE_SIGNING_ENABLED must be exactly 'true' or 'false'")
+    }
+    .get()
+
+val injectedSigningOverrides = providers
+    .gradlePropertiesPrefixedBy("android.injected.signing.")
+    .get()
+require(injectedSigningOverrides.isEmpty()) {
+    "AGP android.injected.signing.* overrides are prohibited; use the DIREKT protected signing contract"
+}
+
+require(!releaseSigningEnabled || releaseChannel != "preauthorization") {
+    "Signing is prohibited while DIREKT_RELEASE_CHANNEL=preauthorization"
+}
+
+@Suppress("DEPRECATION")
+val configurationCacheRequested = gradle.startParameter.isConfigurationCacheRequested
+require(!releaseSigningEnabled || !configurationCacheRequested) {
+    "Signed DIREKT release builds require --no-configuration-cache before protected signing inputs are read"
+}
+
+fun requiredSigningEnvironment(name: String): String =
+    providers.environmentVariable(name)
+        .orNull
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+        ?: error("Signing is enabled but required protected input $name is missing")
+
+val releaseUploadKeystore = if (releaseSigningEnabled) {
+    val configuredPath = requiredSigningEnvironment("DIREKT_UPLOAD_KEYSTORE_PATH")
+    val configuredFile = file(configuredPath)
+    require(configuredFile.isAbsolute) {
+        "DIREKT_UPLOAD_KEYSTORE_PATH must point to an absolute protected-runner path"
+    }
+    require(configuredFile.isFile) {
+        "DIREKT_UPLOAD_KEYSTORE_PATH does not point to a readable file"
+    }
+
+    val repositoryRoot = rootProject.rootDir.canonicalFile.toPath()
+    val canonicalKeystore = configuredFile.canonicalFile
+    require(!canonicalKeystore.toPath().startsWith(repositoryRoot)) {
+        "DIREKT_UPLOAD_KEYSTORE_PATH must be outside the repository checkout"
+    }
+    canonicalKeystore
+} else {
+    null
+}
 
 val pilotApiBaseUrl = providers.gradleProperty("DIREKT_PILOT_API_BASE_URL")
     .orElse(providers.environmentVariable("DIREKT_PILOT_API_BASE_URL"))
@@ -31,16 +149,28 @@ android {
     namespace = "com.kudzimusar.direkt"
     compileSdk = 36
 
+    signingConfigs {
+        if (releaseSigningEnabled) {
+            create("direktReleaseUpload") {
+                storeFile = releaseUploadKeystore
+                storePassword = requiredSigningEnvironment("DIREKT_UPLOAD_KEYSTORE_PASSWORD")
+                keyAlias = requiredSigningEnvironment("DIREKT_UPLOAD_KEY_ALIAS")
+                keyPassword = requiredSigningEnvironment("DIREKT_UPLOAD_KEY_PASSWORD")
+            }
+        }
+    }
+
     defaultConfig {
         applicationId = "com.kudzimusar.direkt"
         minSdk = 23
         targetSdk = 36
-        versionCode = 8
-        versionName = "0.8.0-phase8"
+        versionCode = releaseVersionCode
+        versionName = releaseVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
 
+        buildConfigField("String", "DIREKT_RELEASE_CHANNEL", quotedBuildConfig(releaseChannel))
         buildConfigField("String", "DIREKT_PILOT_API_BASE_URL", quotedBuildConfig(pilotApiBaseUrl))
         buildConfigField("String", "DIREKT_FIREBASE_API_KEY", quotedBuildConfig(firebaseApiKey))
         buildConfigField("String", "DIREKT_FIREBASE_APP_ID", quotedBuildConfig(firebaseAppId))
@@ -60,6 +190,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            if (releaseSigningEnabled) {
+                signingConfig = signingConfigs.getByName("direktReleaseUpload")
+            }
         }
     }
 
@@ -88,6 +221,21 @@ android {
         htmlReport = true
         xmlReport = true
     }
+}
+
+val verifyReleaseArtifactSigningContract = tasks.register<VerifyReleaseArtifactSigningContract>(
+    "verifyReleaseArtifactSigningContract",
+) {
+    group = "verification"
+    description = "Prevents release-capable artifacts from bypassing the DIREKT signing contract."
+    configuredReleaseChannel.set(releaseChannel)
+    configuredSigningEnabled.set(releaseSigningEnabled)
+}
+
+tasks.matching {
+    it.name in setOf("bundleRelease", "assembleRelease", "packageReleaseBundle", "signReleaseBundle")
+}.configureEach {
+    dependsOn(verifyReleaseArtifactSigningContract)
 }
 
 dependencies {
