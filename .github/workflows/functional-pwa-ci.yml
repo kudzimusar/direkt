@@ -1,0 +1,108 @@
+name: DIREKT functional customer-provider web PWA CI
+
+on:
+  push:
+    branches:
+      - main
+      - build/android-v1
+    paths:
+      - "web/direkt-app/**"
+      - "docs/web/**"
+      - "docs/architecture/FUNCTIONAL_PWA_ARCHITECTURE_DECISION.md"
+      - "docs/testing/FUNCTIONAL_PWA_NO_REGRESSION_TEST_PLAN.md"
+      - "README.md"
+      - "PROJECT_STATUS.md"
+      - "WORKSTREAM_LOCK.md"
+      - ".github/workflows/functional-pwa-ci.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "web/direkt-app/**"
+      - "docs/web/**"
+      - "docs/architecture/FUNCTIONAL_PWA_ARCHITECTURE_DECISION.md"
+      - "docs/testing/FUNCTIONAL_PWA_NO_REGRESSION_TEST_PLAN.md"
+      - "README.md"
+      - "PROJECT_STATUS.md"
+      - "WORKSTREAM_LOCK.md"
+      - ".github/workflows/functional-pwa-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-functional-pwa-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  functional-web:
+    name: Typecheck, static contract and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: web/direkt-app
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      - name: Verify exact checkout
+        working-directory: .
+        run: test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Install exact direct dependency set
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Typecheck functional web client
+        run: npm run typecheck
+      - name: Verify responsive, PWA and privilege boundary contract
+        run: npm run verify:static
+      - name: Build functional web client
+        env:
+          DIREKT_WEB_API_MODE: disabled
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: npm run build
+      - name: Ensure build did not rewrite tracked source
+        working-directory: .
+        run: git diff --exit-code -- web/direkt-app
+
+  android-protected-path:
+    name: Prove Android protected surface is unchanged
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      - name: Resolve comparison base
+        id: base
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base_sha="${{ github.event.pull_request.base.sha }}"
+          else
+            git fetch --no-tags origin main
+            base_sha="$(git merge-base HEAD origin/main)"
+          fi
+          test -n "${base_sha}"
+          echo "base_sha=${base_sha}" >> "${GITHUB_OUTPUT}"
+      - name: Fail on Android changes in functional PWA foundation
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! git diff --quiet "${{ steps.base.outputs.base_sha }}" "${SOURCE_SHA}" -- android/direkt-app; then
+            echo "Functional PWA W0/W1 must not modify android/direkt-app/**" >&2
+            git diff --name-status "${{ steps.base.outputs.base_sha }}" "${SOURCE_SHA}" -- android/direkt-app >&2
+            exit 1
+          fi
+      - name: Record protected Android baseline
+        run: |
+          printf 'Android protected path unchanged for functional PWA W0/W1 at %s\n' "${SOURCE_SHA}"
