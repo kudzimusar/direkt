@@ -1,0 +1,146 @@
+name: DIREKT Phase 12 preauthorization release readiness
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - "android/direkt-app/**"
+      - ".github/workflows/phase12-release-readiness.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "android/direkt-app/**"
+      - ".github/workflows/phase12-release-readiness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-phase12-preauth-release-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ANDROID_PROJECT_DIR: android/direkt-app
+  DIREKT_GRADLE_VERSION: "9.4.0"
+
+jobs:
+  release-readiness:
+    name: Build non-publishable release AAB
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: android/direkt-app
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Configure pinned Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ env.DIREKT_GRADLE_VERSION }}
+
+      - name: Bootstrap standard Gradle wrapper JAR
+        shell: bash
+        run: |
+          if [[ ! -f gradle/wrapper/gradle-wrapper.jar ]]; then
+            gradle wrapper \
+              --gradle-version "${DIREKT_GRADLE_VERSION}" \
+              --distribution-type bin
+          fi
+          chmod +x gradlew
+          ./gradlew --version
+
+      - name: Enforce preauthorization release boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          grep -F 'applicationId = "com.kudzimusar.direkt"' app/build.gradle.kts
+          grep -F 'targetSdk = 36' app/build.gradle.kts
+          grep -F 'compileSdk = 36' app/build.gradle.kts
+
+          test ! -f app/google-services.json
+          test ! -f google-services.json
+
+          if find . -type f \( -name '*.jks' -o -name '*.keystore' -o -name '*.p12' -o -name '*.pfx' \) -print -quit | grep -q .; then
+            echo "Signing key material must not be committed to the public repository." >&2
+            exit 1
+          fi
+
+          if grep -Eq 'signingConfigs|signingConfig[[:space:]]*=' app/build.gradle.kts; then
+            echo "Production signing configuration is not authorized in the preauthorization readiness workflow." >&2
+            exit 1
+          fi
+
+          VERSION_CODE="$(sed -n 's/^[[:space:]]*versionCode = \([0-9][0-9]*\).*/\1/p' app/build.gradle.kts | head -n1)"
+          VERSION_NAME="$(sed -n 's/^[[:space:]]*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n1)"
+
+          test -n "${VERSION_CODE}"
+          test -n "${VERSION_NAME}"
+
+          {
+            echo "### Phase 12 preauthorization release boundary"
+            echo "- Application ID: \`com.kudzimusar.direkt\`"
+            echo "- targetSdk: \`36\`"
+            echo "- versionCode: \`${VERSION_CODE}\`"
+            echo "- versionName: \`${VERSION_NAME}\`"
+            echo "- Signing: deliberately absent"
+            echo "- Distribution: prohibited; readiness artifact only"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run release lint and build unsigned Android App Bundle
+        run: ./gradlew --no-daemon --stacktrace lintRelease bundleRelease
+
+      - name: Package non-publishable readiness evidence
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          AAB="$(find app/build/outputs/bundle/release -maxdepth 1 -type f -name '*.aab' -print -quit)"
+          if [[ -z "${AAB}" || ! -f "${AAB}" ]]; then
+            echo "Release AAB was not produced." >&2
+            exit 1
+          fi
+
+          mkdir -p release-readiness
+          DEST="release-readiness/direkt-PREAUTHORIZATION-NOT-FOR-DISTRIBUTION-${GITHUB_SHA}.aab"
+          cp "${AAB}" "${DEST}"
+          sha256sum "${DEST}" > "${DEST}.sha256"
+
+          cat > release-readiness/README.txt <<EOF
+          DIREKT Phase 12 preauthorization release-readiness artifact
+          Commit: ${GITHUB_SHA}
+          Status: NOT FOR DISTRIBUTION OR PLAY UPLOAD
+          Signing: production signing intentionally absent
+          Purpose: prove that the release variant can lint and build before formal Phase 12 authorization
+          EOF
+
+          SHA256="$(cut -d' ' -f1 "${DEST}.sha256")"
+          echo "sha256=${SHA256}" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Release-readiness artifact"
+            echo "- Commit: \`${GITHUB_SHA}\`"
+            echo "- SHA-256: \`${SHA256}\`"
+            echo "- Status: **PREAUTHORIZATION / NOT FOR DISTRIBUTION**"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload non-publishable release-readiness artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-phase12-preauthorization-aab-${{ github.run_number }}-${{ github.sha }}
+          path: android/direkt-app/release-readiness/**
+          if-no-files-found: error
+          retention-days: 7
