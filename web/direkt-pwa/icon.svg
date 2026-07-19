@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">DIREKT</title>
+  <rect width="512" height="512" rx="112" fill="#087A55"/>
+  <path d="M137 112h112c92 0 153 55 153 144s-61 144-153 144H137V112zm102 220c52 0 82-28 82-76s-30-76-82-76h-26v152h26z" fill="#fff"/>
+  <circle cx="382" cy="130" r="30" fill="#F2A900"/>
+</svg>

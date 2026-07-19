@@ -1,0 +1,119 @@
+name: DIREKT Customer Provider PWA CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "web/direkt-pwa/**"
+      - "docs/**"
+      - "README.md"
+      - "AGENTS.md"
+      - "PROJECT_STATUS.md"
+      - "WORKSTREAM_LOCK.md"
+      - "DECISION_LOG.md"
+      - "mkdocs.yml"
+      - "requirements-docs.txt"
+      - "scripts/build_pages_source.py"
+      - "scripts/validate_docs.py"
+      - ".github/workflows/pwa-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "web/direkt-pwa/**"
+      - "docs/**"
+      - "README.md"
+      - "AGENTS.md"
+      - "PROJECT_STATUS.md"
+      - "WORKSTREAM_LOCK.md"
+      - "DECISION_LOG.md"
+      - "mkdocs.yml"
+      - "requirements-docs.txt"
+      - "scripts/build_pages_source.py"
+      - "scripts/validate_docs.py"
+      - ".github/workflows/pwa-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-pwa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-pwa:
+    name: Validate public synthetic PWA and Pages artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Validate JavaScript syntax
+        run: node --check web/direkt-pwa/app.js && node --check web/direkt-pwa/sw.js
+
+      - name: Validate manifest and static review contract
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          manifest = json.loads(Path("web/direkt-pwa/manifest.webmanifest").read_text())
+          assert manifest["display"] == "standalone"
+          assert manifest["scope"] == "./"
+          assert manifest["start_url"].startswith("./")
+          html = Path("web/direkt-pwa/index.html").read_text()
+          assert "Synthetic remote UI review" in html
+          assert "No real submissions" in html
+          assert "noindex,nofollow,noarchive" in html
+          print("PWA manifest/static contract passed")
+
+      - name: Install documentation dependencies
+        run: python -m pip install --requirement requirements-docs.txt
+
+      - name: Run documentation and PWA validator
+        run: python scripts/validate_docs.py
+
+      - name: Build public Pages source
+        run: python scripts/build_pages_source.py
+
+      - name: Build MkDocs strictly
+        run: mkdocs build --strict
+
+      - name: Verify packaged PWA route
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f site/app/index.html
+          test -f site/app/app.js
+          test -f site/app/styles.css
+          test -f site/app/sw.js
+          test -f site/app/manifest.webmanifest
+          grep -q "Synthetic remote UI review" site/app/index.html
+          grep -q "Launch the DIREKT customer/provider PWA" site/index.html
+          if grep -REn "postgres(ql)?://|SUPABASE_(SECRET|SERVICE)|BEGIN .*PRIVATE KEY" site/app; then
+            echo "Public PWA contains prohibited privileged material" >&2
+            exit 1
+          fi
+
+      - name: Package review evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-pwa-review-${{ github.run_number }}-${{ github.sha }}
+          path: |
+            site/app/**
+            docs/REPOSITORY_RECONCILIATION_2026-07-19.md
+            docs/integrations/CURRENT_INTEGRATION_STATUS.md
+            docs/architecture/PWA_ARCHITECTURE.md
+            docs/testing/PWA_TEST_PLAN.md
+          if-no-files-found: error
+          retention-days: 7
