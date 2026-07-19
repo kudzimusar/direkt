@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "status": "verified-against-current-main-manifest",
+  "manifest_path": "android/direkt-app/app/src/main/AndroidManifest.xml",
+  "declared_permissions": [
+    {
+      "name": "android.permission.INTERNET",
+      "classification": "normal",
+      "runtime_prompt": false,
+      "play_sensitive_permission_declaration_expected": false,
+      "purpose": "HTTPS access to DIREKT API and approved authentication services."
+    }
+  ],
+  "explicitly_absent": [
+    "android.permission.ACCESS_FINE_LOCATION",
+    "android.permission.ACCESS_COARSE_LOCATION",
+    "android.permission.ACCESS_BACKGROUND_LOCATION",
+    "android.permission.CAMERA",
+    "android.permission.READ_CONTACTS",
+    "android.permission.WRITE_CONTACTS",
+    "android.permission.READ_SMS",
+    "android.permission.RECEIVE_SMS",
+    "android.permission.READ_CALL_LOG",
+    "android.permission.WRITE_CALL_LOG",
+    "android.permission.MANAGE_EXTERNAL_STORAGE",
+    "android.permission.READ_MEDIA_IMAGES",
+    "android.permission.READ_MEDIA_VIDEO",
+    "android.permission.RECORD_AUDIO",
+    "android.permission.POST_NOTIFICATIONS"
+  ],
+  "current_play_declaration_assessment": {
+    "sensitive_or_high_risk_permission_form_expected": false,
+    "reason": "The current manifest declares only INTERNET. Any future permission addition must update this inventory and pass review before a release-capable artifact can be accepted."
+  },
+  "planned_feature_rule": {
+    "location": "Manual area search remains the required fallback. Do not add background location. Foreground location requires a separate evidence-backed change and Play review.",
+    "camera_and_media": "Prefer system photo/file pickers and scoped access rather than broad storage permissions.",
+    "phone_sms": "Do not request SMS or call-log permissions for OTP or contact handoff.",
+    "contacts": "Not required for MVP. Use minimum-scope platform picker if a future approved feature genuinely needs contacts.",
+    "notifications": "Add POST_NOTIFICATIONS only when production notification delivery is implemented and the user-facing rationale/fallback is tested."
+  },
+  "submission_boundary": "Play Console makes the final permissions determination from the uploaded AAB. This inventory must be regenerated/rechecked against the exact release candidate before submission."
+}

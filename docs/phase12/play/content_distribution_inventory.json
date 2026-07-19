@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "status": "preauthorization-candidate",
+  "application_id": "com.kudzimusar.direkt",
+  "content_rating": {
+    "iarc_required": true,
+    "questionnaire_status": "manual-play-console-submission-required",
+    "candidate_answers": {
+      "app_type": "utility/local-services-marketplace",
+      "violence": false,
+      "sexual_content": false,
+      "gambling": false,
+      "controlled_substances": false,
+      "real_money_gambling_or_prizes": false,
+      "ads": false,
+      "user_generated_content": "yes-limited-marketplace-reviews-enquiries-complaints-when-production-connected",
+      "user_to_user_communication": "yes-bounded-service-enquiry-and-consented-external-contact-handoff-when-production-connected",
+      "location_sharing": "no-background-sharing; public provider locality/service-area only under approved rules",
+      "purchases": "provider subscriptions are architected but real payments remain disabled in preauthorization"
+    },
+    "rating_claim": "none-until-IARC-generates-the-rating"
+  },
+  "target_audience": {
+    "children_targeted": false,
+    "candidate_age_groups": [
+      "18+"
+    ],
+    "reason": "The marketplace involves service contracting, provider evidence, complaints and potential commercial subscriptions; it is not designed for children.",
+    "final_status": "manual-Play-Console-confirmation-required"
+  },
+  "countries": {
+    "initial_candidate": [
+      "Zambia"
+    ],
+    "production_scope_status": "must-match-final-approved-launch-geography-and-Phase11-exit",
+    "other_countries": "not-approved-by-this-preauthorization-package"
+  },
+  "devices": {
+    "min_sdk": 23,
+    "target_sdk": 36,
+    "compile_sdk": 36,
+    "required_hardware_features": [],
+    "candidate_form_factors": [
+      "Android phones"
+    ],
+    "tablet_distribution": "manual-device-catalog-review-required-before-enabling; no tablet-specific Play claim is made",
+    "wear_tv_auto_xr": false
+  },
+  "testing_tracks": {
+    "internal": "planned-first-Play-track-after-formal-release-activity-is-authorized",
+    "closed": "required-before-production-rollout; actual tester rules depend on developer-account type and current Play requirements",
+    "open": "not-required-for-initial-controlled-release",
+    "production": "blocked-until-Phase11-11J-PROCEED-global-gates-and-Play-access"
+  },
+  "developer_account": {
+    "account_type": null,
+    "status": "external-manual-verification-required",
+    "required_checks": [
+      "verified developer identity/contact details",
+      "correct Personal versus Organization account type for the operating entity",
+      "organization D-U-N-S and organization verification if an Organization account is used",
+      "physical Android device verification if required for the account",
+      "closed-testing eligibility rules if the account is a newly created Personal account"
+    ]
+  },
+  "submission_boundary": "This inventory prepares answers; it does not submit an IARC questionnaire, declare a target audience in Play Console, verify a developer account, create a testing track or grant production access."
+}

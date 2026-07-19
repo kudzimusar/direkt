@@ -1,0 +1,66 @@
+name: DIREKT Phase 12B Play readiness
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - "android/direkt-app/**"
+      - "docs/phase12/play/**"
+      - "scripts/verify-phase12-play-readiness.py"
+      - ".github/workflows/phase12-play-readiness.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "android/direkt-app/**"
+      - "docs/phase12/play/**"
+      - "scripts/verify-phase12-play-readiness.py"
+      - ".github/workflows/phase12-play-readiness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-phase12b-play-readiness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  play-readiness:
+    name: Validate Play listing, permissions and Data Safety sources
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Validate Phase 12B repository sources
+        run: python scripts/verify-phase12-play-readiness.py | tee phase12b-play-readiness.txt
+
+      - name: Package non-submission readiness evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p phase12b-evidence/play
+          cp docs/phase12/play/*.json phase12b-evidence/play/
+          cp phase12b-play-readiness.txt phase12b-evidence/
+          cat > phase12b-evidence/BOUNDARY.txt <<'EOF'
+          DIREKT Phase 12B preauthorization evidence only.
+          No Play Console form was submitted.
+          No testing track was created or activated.
+          No production signing, upload or publication is authorized by this artifact.
+          EOF
+
+      - name: Upload short-lived readiness evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-phase12b-play-readiness-${{ github.run_number }}-${{ github.sha }}
+          path: phase12b-evidence/**
+          if-no-files-found: error
+          retention-days: 7
