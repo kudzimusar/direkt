@@ -36,6 +36,7 @@ ALLOWED_RELEASE_DIRECT_MODULES = {
     "androidx.navigation:navigation-compose",
     "com.google.firebase:firebase-auth",
     "com.google.firebase:firebase-bom",
+    "org.jetbrains.kotlin:kotlin-stdlib",
 }
 
 PROHIBITED_STORE_CLAIMS = {
@@ -236,9 +237,6 @@ def main() -> None:
             f"manifest={manifest_permissions}, inventory={inventory_permissions}, path={inspected_manifest}"
         )
 
-    # The reviewed inventory is authoritative. Library/platform manifest merging can add
-    # non-runtime declarations that are not present in src/main/AndroidManifest.xml. Any
-    # future change still fails above until the inventory and policy assessment are reviewed.
     if any(item.get("runtime_prompt") is not False for item in permissions.get("declared_permissions", [])):
         fail("current preauthorization permission inventory must not contain a runtime-prompt permission")
     if permissions.get("current_play_declaration_assessment", {}).get(
