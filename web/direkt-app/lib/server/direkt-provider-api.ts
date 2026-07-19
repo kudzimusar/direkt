@@ -28,6 +28,7 @@ type RequestOptions = {
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
   accessToken: string;
+  idempotencyKey?: string;
 };
 
 export class DirektProviderApi {
@@ -61,11 +62,7 @@ export class DirektProviderApi {
       experienceSummary: string;
     }>,
   ): Promise<ProviderWorkspaceSummary> {
-    return this.request("/api/v1/provider-workspace/me/profile", {
-      method: "PATCH",
-      accessToken,
-      body,
-    });
+    return this.request("/api/v1/provider-workspace/me/profile", { method: "PATCH", accessToken, body });
   }
 
   updateLocation(
@@ -80,25 +77,15 @@ export class DirektProviderApi {
       serviceAreaWkt: string;
     },
   ): Promise<ProviderWorkspaceSummary> {
-    return this.request("/api/v1/provider-workspace/me/location", {
-      method: "PUT",
-      accessToken,
-      body,
-    });
+    return this.request("/api/v1/provider-workspace/me/location", { method: "PUT", accessToken, body });
   }
 
   selectService(accessToken: string, categoryKey: string): Promise<ProviderWorkspaceSummary> {
-    return this.request(
-      `/api/v1/provider-workspace/me/services/${encodeURIComponent(categoryKey)}`,
-      { method: "PUT", accessToken },
-    );
+    return this.request(`/api/v1/provider-workspace/me/services/${encodeURIComponent(categoryKey)}`, { method: "PUT", accessToken });
   }
 
   removeService(accessToken: string, categoryKey: string, reason: string): Promise<ProviderWorkspaceSummary> {
-    return this.request(
-      `/api/v1/provider-workspace/me/services/${encodeURIComponent(categoryKey)}`,
-      { method: "DELETE", accessToken, body: { reason } },
-    );
+    return this.request(`/api/v1/provider-workspace/me/services/${encodeURIComponent(categoryKey)}`, { method: "DELETE", accessToken, body: { reason } });
   }
 
   updateAvailability(
@@ -106,10 +93,7 @@ export class DirektProviderApi {
     categoryKey: string,
     body: { state: "available" | "limited" | "unavailable" | "unknown"; nextAvailableAt?: string },
   ): Promise<ProviderWorkspaceSummary> {
-    return this.request(
-      `/api/v1/provider-workspace/me/availability/${encodeURIComponent(categoryKey)}`,
-      { method: "PUT", accessToken, body },
-    );
+    return this.request(`/api/v1/provider-workspace/me/availability/${encodeURIComponent(categoryKey)}`, { method: "PUT", accessToken, body });
   }
 
   listUploadIntents(accessToken: string): Promise<ProviderUploadIntent[]> {
@@ -129,32 +113,19 @@ export class DirektProviderApi {
       replacementForEvidenceId?: string;
     },
   ): Promise<ProviderUploadGrant | ProviderUploadIntent> {
-    return this.request("/api/v1/provider-workspace/me/upload-intents", {
-      method: "POST",
-      accessToken,
-      body,
-    });
+    return this.request("/api/v1/provider-workspace/me/upload-intents", { method: "POST", accessToken, body });
   }
 
   uploadIntent(accessToken: string, uploadIntentId: string): Promise<ProviderUploadIntent> {
-    return this.request(
-      `/api/v1/provider-workspace/me/upload-intents/${encodeURIComponent(uploadIntentId)}`,
-      { accessToken },
-    );
+    return this.request(`/api/v1/provider-workspace/me/upload-intents/${encodeURIComponent(uploadIntentId)}`, { accessToken });
   }
 
   retryUploadIntent(accessToken: string, uploadIntentId: string): Promise<ProviderUploadGrant> {
-    return this.request(
-      `/api/v1/provider-workspace/me/upload-intents/${encodeURIComponent(uploadIntentId)}/retry`,
-      { method: "POST", accessToken },
-    );
+    return this.request(`/api/v1/provider-workspace/me/upload-intents/${encodeURIComponent(uploadIntentId)}/retry`, { method: "POST", accessToken });
   }
 
   markUploadInterrupted(accessToken: string, uploadIntentId: string, errorCode: string): Promise<ProviderUploadIntent> {
-    return this.request(
-      `/api/v1/provider-workspace/me/upload-intents/${encodeURIComponent(uploadIntentId)}/interrupted`,
-      { method: "PUT", accessToken, body: { errorCode } },
-    );
+    return this.request(`/api/v1/provider-workspace/me/upload-intents/${encodeURIComponent(uploadIntentId)}/interrupted`, { method: "PUT", accessToken, body: { errorCode } });
   }
 
   confirmUploadIntent(
@@ -170,17 +141,11 @@ export class DirektProviderApi {
       retentionClass: "short" | "standard" | "regulated" | "legal_hold";
     },
   ): Promise<ProviderUploadIntent> {
-    return this.request(
-      `/api/v1/provider-workspace/me/upload-intents/${encodeURIComponent(uploadIntentId)}/confirm`,
-      { method: "POST", accessToken, body },
-    );
+    return this.request(`/api/v1/provider-workspace/me/upload-intents/${encodeURIComponent(uploadIntentId)}/confirm`, { method: "POST", accessToken, body });
   }
 
   cancelUploadIntent(accessToken: string, uploadIntentId: string, reason: string): Promise<ProviderUploadIntent> {
-    return this.request(
-      `/api/v1/provider-workspace/me/upload-intents/${encodeURIComponent(uploadIntentId)}`,
-      { method: "DELETE", accessToken, body: { reason } },
-    );
+    return this.request(`/api/v1/provider-workspace/me/upload-intents/${encodeURIComponent(uploadIntentId)}`, { method: "DELETE", accessToken, body: { reason } });
   }
 
   listEnquiries(accessToken: string): Promise<ProviderEnquiryListView> {
@@ -188,10 +153,7 @@ export class DirektProviderApi {
   }
 
   enquiry(accessToken: string, enquiryId: string): Promise<ProviderEnquiry> {
-    return this.request(
-      `/api/v1/provider-workspace/me/enquiries/${encodeURIComponent(enquiryId)}`,
-      { accessToken },
-    );
+    return this.request(`/api/v1/provider-workspace/me/enquiries/${encodeURIComponent(enquiryId)}`, { accessToken });
   }
 
   transitionEnquiry(
@@ -204,10 +166,7 @@ export class DirektProviderApi {
       policyVersion: string;
     },
   ): Promise<ProviderEnquiry> {
-    return this.request(
-      `/api/v1/provider-workspace/me/enquiries/${encodeURIComponent(enquiryId)}/transitions`,
-      { method: "POST", accessToken, body },
-    );
+    return this.request(`/api/v1/provider-workspace/me/enquiries/${encodeURIComponent(enquiryId)}/transitions`, { method: "POST", accessToken, body });
   }
 
   interactions(accessToken: string): Promise<ProviderInteractionListView> {
@@ -215,56 +174,76 @@ export class DirektProviderApi {
   }
 
   currentHandoff(accessToken: string, enquiryId: string): Promise<ProviderContactHandoff> {
-    return this.request(
-      `/api/v1/provider-workspace/me/enquiries/${encodeURIComponent(enquiryId)}/handoff`,
-      { accessToken },
-    );
+    return this.request(`/api/v1/provider-workspace/me/enquiries/${encodeURIComponent(enquiryId)}/handoff`, { accessToken });
   }
 
   listReviews(accessToken: string): Promise<ProviderReviewListView> {
     return this.request("/api/v1/provider-workspace/me/reviews", { accessToken });
   }
 
-  respondToReview(
-    accessToken: string,
-    reviewId: string,
-    body: { body: string; policyVersion: string },
-  ): Promise<Record<string, unknown>> {
-    return this.request(
-      `/api/v1/provider-workspace/me/reviews/${encodeURIComponent(reviewId)}/response`,
-      { method: "POST", accessToken, body },
-    );
+  respondToReview(accessToken: string, reviewId: string, body: { body: string; policyVersion: string }): Promise<Record<string, unknown>> {
+    return this.request(`/api/v1/provider-workspace/me/reviews/${encodeURIComponent(reviewId)}/response`, { method: "POST", accessToken, body });
   }
 
-  appealReview(
-    accessToken: string,
-    reviewId: string,
-    body: { reason: string; policyVersion: string },
-  ): Promise<Record<string, unknown>> {
-    return this.request(
-      `/api/v1/provider-workspace/me/reviews/${encodeURIComponent(reviewId)}/appeals`,
-      { method: "POST", accessToken, body },
-    );
+  appealReview(accessToken: string, reviewId: string, body: { reason: string; policyVersion: string }): Promise<Record<string, unknown>> {
+    return this.request(`/api/v1/provider-workspace/me/reviews/${encodeURIComponent(reviewId)}/appeals`, { method: "POST", accessToken, body });
   }
 
   commercial(accessToken: string): Promise<ProviderCommercialWorkspace> {
     return this.request("/api/v1/provider-workspace/me/commercial", { accessToken });
   }
 
+  createSubscription(
+    accessToken: string,
+    body: { productKey: string; priceKey: string; policyVersion: string },
+    idempotencyKey: string,
+  ): Promise<Record<string, unknown>> {
+    return this.request("/api/v1/provider-workspace/me/subscriptions", { method: "POST", accessToken, body, idempotencyKey });
+  }
+
+  cancelSubscription(
+    accessToken: string,
+    subscriptionId: string,
+    body: { expectedRevision: number; reason: string; policyVersion: string },
+  ): Promise<Record<string, unknown>> {
+    return this.request(`/api/v1/provider-workspace/me/subscriptions/${encodeURIComponent(subscriptionId)}/cancel`, { method: "POST", accessToken, body });
+  }
+
+  issueInvoice(accessToken: string, subscriptionId: string, policyVersion: string): Promise<Record<string, unknown>> {
+    return this.request(`/api/v1/provider-workspace/me/subscriptions/${encodeURIComponent(subscriptionId)}/invoices`, { method: "POST", accessToken, body: { policyVersion } });
+  }
+
+  createPaymentIntent(
+    accessToken: string,
+    invoiceId: string,
+    policyVersion: string,
+    idempotencyKey: string,
+  ): Promise<Record<string, unknown>> {
+    return this.request(`/api/v1/provider-workspace/me/invoices/${encodeURIComponent(invoiceId)}/payment-intents`, { method: "POST", accessToken, body: { policyVersion }, idempotencyKey });
+  }
+
+  cancelPaymentIntent(
+    accessToken: string,
+    paymentIntentId: string,
+    expectedRevision: number,
+    policyVersion: string,
+  ): Promise<Record<string, unknown>> {
+    return this.request(`/api/v1/provider-workspace/me/payment-intents/${encodeURIComponent(paymentIntentId)}/cancel`, { method: "POST", accessToken, body: { expectedRevision, policyVersion } });
+  }
+
   private async request<T>(path: string, options: RequestOptions): Promise<T> {
     const url = new URL(path, this.baseUrl);
-    if (url.origin !== this.baseUrl.origin) {
-      throw new Error("DIREKT provider request path escaped the configured API origin");
-    }
+    if (url.origin !== this.baseUrl.origin) throw new Error("DIREKT provider request path escaped the configured API origin");
 
     const infrastructureToken = await getCloudRunIdentityToken(this.baseUrl);
     const headers: Record<string, string> = {
       accept: "application/json",
       authorization: `Bearer ${options.accessToken}`,
-      "user-agent": "direkt-functional-web/0.5",
+      "user-agent": "direkt-functional-web/0.6",
       "X-Serverless-Authorization": `Bearer ${infrastructureToken}`,
     };
     if (options.body !== undefined) headers["content-type"] = "application/json";
+    if (options.idempotencyKey) headers["idempotency-key"] = options.idempotencyKey;
 
     const response = await fetch(url, {
       method: options.method ?? "GET",
@@ -277,11 +256,7 @@ export class DirektProviderApi {
 
     if (!response.ok) {
       let problem: Record<string, unknown> | undefined;
-      try {
-        problem = (await response.json()) as Record<string, unknown>;
-      } catch {
-        problem = undefined;
-      }
+      try { problem = (await response.json()) as Record<string, unknown>; } catch { problem = undefined; }
       const title = typeof problem?.title === "string" ? problem.title : undefined;
       throw new DirektProviderApiError(
         title || `DIREKT provider API request failed with status ${response.status}`,
