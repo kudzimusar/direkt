@@ -6,53 +6,53 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | RELEASED — Phase 12A preauthorization checkpoint complete |
-| Owner/agent | None — implementation lane available for the next explicitly authorized task |
-| Formal programme phase | Phase 11 — Controlled Zambia pilot and primary validation remains open |
-| Completed engineering scope | Phase 12A preauthorization — production-safe Android release configuration, versioning, reproducible unsigned AAB packaging and protected-signing contract |
-| Stable promotion | PR #129 merged to `main` at `48f6d2d212d64192819d76d67e157b25f8a5e98b` |
-| Branch synchronization | PR #130 forward-synchronized `main` to `build/android-v1` without file changes |
-| Governing issue | Issue #112 remains open; Phase 12A does not close Phase 11 |
-| Real-pilot authorization | BLOCKED until the explicit legal/privacy/provider/ownership/cohort/consent/support/device/stop gates are satisfied |
-| Production-release authorization | BLOCKED until real 11C–11H evidence, 11J `PROCEED`, and global release gates authorize formal Phase 12 |
-| Next safe engineering candidate | Phase 12B preauthorization preparation of Play listing, permissions and Data Safety inventory; no Play submission or production activation without the governing gates |
+| Status | CLAIMED — Phase 12B through all currently clearable Phase 12 preauthorization work |
+| Owner/agent | OpenAI GPT-5.5 Thinking — Phase 12 release-readiness agent |
+| Formal programme phase | Phase 11 remains open; formal Phase 12 production release is not authorized |
+| Authorized engineering scope | Complete every Phase 12 deliverable that can be made repository-complete without real pilot evidence, qualified legal approval, real signing keys, Play Console publication, production traffic activation, or staffing claims |
+| Immediate task | Phase 12B Play listing, permissions declarations and Data Safety inventory; then continue through production-readiness, monitoring/rollback/staged-rollout/release-package preparation that can be proven safely |
+| Modules/paths | `android/direkt-app`, `.github/workflows`, `docs/android`, `docs/operations`, `docs/phase12`, `docs/legal`, `docs/architecture`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `WORKSTREAM_LOCK.md` |
+| Claimed at | 2026-07-19 after Phase 12A closure and branch synchronization |
+| Stable baseline | `main` at `7ce215979e1c585c107cee5c4b078010f05ecc28`; `build/android-v1` effective tree identical and 0 behind before this claim |
+| Governing issue | Issue #112 remains open; Phase 12 work is preauthorization engineering only until Phase 11 exit supports `PROCEED` |
+| Real-pilot authorization | BLOCKED pending external/legal gates and actual controlled Zambia pilot evidence |
+| Production-release authorization | BLOCKED pending real 11C–11H evidence, 11J `PROCEED`, global release gates, signing/Play approvals and operational staffing |
+| Expected handoff | Promote all safely clearable Phase 12 engineering checkpoints, document the exact residual external blockers, release this lock, and do not overclaim production authorization |
 
-## Phase 12A completion evidence
+## Authorized work now
 
-- Source-controlled Android preauthorization identity: `12` / `0.12.0-preauth.1` / `preauthorization`.
-- Current preauthorization source cannot enable release signing.
-- Future release-candidate/production packaging is fail-closed unless the protected DIREKT signing contract is explicitly enabled.
-- Alternate Android Gradle Plugin injected-signing overrides are rejected.
-- Protected signing requires configuration cache to be disabled before signing credentials are consumed.
-- Keystore material must remain external to git and resolve outside the repository checkout.
-- Exact source provenance is verified before release evidence is built.
-- CI proves two clean release AAB builds are byte-for-byte identical.
-- Verified unsigned AAB SHA-256: `890b710f18ad7208b6db0e5668193a739052e010462d0beeddb8f752c14dd169`.
-- Exact Phase 12A head `468ab708b41b4b9ebcc0b6b007b613454caaee89` passed Android CI, Android performance, supply-chain/security, documentation and Phase 12A release-readiness gates.
-- No real signing key was configured; no signed AAB, Play upload, public traffic change or real-participant activation occurred.
+- repository-controlled Play store listing package and review instructions;
+- Android permission inventory reconciled against the manifest and runtime implementation;
+- Data Safety inventory mapped to actual app/backend/SDK behavior and privacy documentation;
+- content-rating, target-audience, country/device and developer-account readiness checklists;
+- account-deletion/privacy-policy readiness requirements without fabricating a public deletion endpoint;
+- production backend/configuration readiness checks that do not change public traffic;
+- release monitoring, rollback, incident, staged-rollout and stop-criteria preparation;
+- support/verification staffing role and shift requirements as an unfilled readiness matrix, not a staffing claim;
+- release notes/tagging/checksum/provenance templates and non-publishing CI validation;
+- exact blocker matrix separating completed engineering from external/manual/legal/real-world requirements.
 
-## Phase 11 workstream still pending externally
+## Not authorized
 
-- 11C — provider cohort/onboarding/real-evidence validation after entry authorization;
-- 11D — customer discovery, location/Maps and trust-comprehension validation;
-- 11E — enquiries, consented contact handoff, reviews and complaints;
-- 11F — field verification and operations capacity;
-- 11G — real-device/connectivity/reliability matrix;
-- 11H — pricing and unit economics without premature real payments;
-- 11I — evidence-led corrections in the canonical production codebase;
-- 11J — exit evidence and STOP / REPEAT / NARROW / PROCEED Phase 12 decision.
+- real upload-key material or production signing credentials;
+- signed/distributed production AAB;
+- Play Console internal, closed, open or production publication;
+- public Cloud Run/backend traffic or unrestricted signup;
+- real participant Firebase/OTP activation;
+- real-money payment activation;
+- claims that support/verification staffing is operational without named real staff/evidence;
+- completion of 11C–11H or 11J without real Zambia pilot evidence;
+- closure of Issue #112 or declaration that formal Phase 12 is complete.
 
-## Non-negotiable implementation controls
+## Non-negotiable controls
 
-- Preserve all Phase 4–10 verification, publication, privacy, interaction, accountability, commercial, security and recovery invariants.
-- Android and the operations portal use the canonical REST/OpenAPI backend; no client-only authorization or direct privileged database access.
-- Database changes are forward-only and checksummed; applied migrations are never edited.
-- Exact private coordinates, real evidence, protected contact data and secrets never enter public repository artifacts or telemetry.
-- Release signing remains fail-closed and must never silently fall back to an unintended signed or unsigned artifact.
-- Public-repository CI must remain capable of proving the unsigned release contract with no production credentials.
-- No preauthorization workflow may publish to Play or change production traffic.
-- Phase 12 production release is not authorized until Phase 11 real evidence and the global release gates support it.
+- Preserve all Phase 4–10 trust, privacy, security, commercial and recovery invariants.
+- Android and portal remain on the canonical REST/OpenAPI backend; no privileged client/database shortcut.
+- No secrets, real personal data, exact private coordinates or real evidence in public repository artifacts.
+- Release signing remains fail-closed and publishing remains separately gated.
+- Current Google Play requirements must be rechecked against official sources before any actual submission.
+- Every promoted checkpoint requires exact-head tests, documentation, review, merge and history-preserving branch synchronization.
 
 ## Conflict rule
 
-A new agent may claim the implementation lane only for an explicitly authorized next task and must update this file before making overlapping writes. Read-only investigation remains allowed.
+No second agent may write to the listed Phase 12 paths while this lock is claimed. Read-only investigation is allowed. A stale or ambiguous lock must be resolved explicitly rather than overwritten by assumption.
