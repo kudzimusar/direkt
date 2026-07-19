@@ -74,11 +74,15 @@ if [[ "${SIGNING_ENABLED}" == "true" ]]; then
   [[ "${DIREKT_UPLOAD_KEYSTORE_PATH}" = /* ]] || fail "DIREKT_UPLOAD_KEYSTORE_PATH must be absolute"
   [[ -f "${DIREKT_UPLOAD_KEYSTORE_PATH}" ]] || fail "protected upload keystore path is not a readable file"
 
-  KEYSTORE_PARENT="$(cd "$(dirname "${DIREKT_UPLOAD_KEYSTORE_PATH}")" && pwd -P)"
-  KEYSTORE_REAL="${KEYSTORE_PARENT}/$(basename "${DIREKT_UPLOAD_KEYSTORE_PATH}")"
+  KEYSTORE_REAL="$(python3 - "${DIREKT_UPLOAD_KEYSTORE_PATH}" <<'PY'
+import os
+import sys
+print(os.path.realpath(sys.argv[1]))
+PY
+)"
   case "${KEYSTORE_REAL}" in
     "${REPO_ROOT}"|"${REPO_ROOT}"/*)
-      fail "protected upload keystore must be outside the repository checkout"
+      fail "protected upload keystore must resolve outside the repository checkout"
       ;;
   esac
 fi
