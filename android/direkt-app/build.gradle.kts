@@ -11,14 +11,6 @@ plugins {
     alias(libs.plugins.compose) apply false
 }
 
-val formalEligibilityKeys = listOf(
-    "DIREKT_FORMAL_PHASE12_AUTHORIZED",
-    "DIREKT_PRODUCTION_CLIENT_READY",
-    "DIREKT_ACCOUNT_DELETION_READY",
-    "DIREKT_PRODUCTION_OPERATIONS_READY",
-    "DIREKT_PLAY_RELEASE_READY",
-)
-
 fun parseTrackedProperties(text: String, source: String): Map<String, String> {
     val result = linkedMapOf<String, String>()
     text.lineSequence().forEachIndexed { index, raw ->
@@ -34,13 +26,20 @@ fun parseTrackedProperties(text: String, source: String): Map<String, String> {
     return result
 }
 
-fun validateFormalReleaseEligibility(
+fun validateTrackedFormalEligibility(
     version: Map<String, String>,
     eligibility: Map<String, String>,
 ) {
     val channel = version["DIREKT_RELEASE_CHANNEL"]
         ?: error("DIREKT_RELEASE_CHANNEL is missing")
-    val values = formalEligibilityKeys.associateWith { key ->
+    val keys = listOf(
+        "DIREKT_FORMAL_PHASE12_AUTHORIZED",
+        "DIREKT_PRODUCTION_CLIENT_READY",
+        "DIREKT_ACCOUNT_DELETION_READY",
+        "DIREKT_PRODUCTION_OPERATIONS_READY",
+        "DIREKT_PLAY_RELEASE_READY",
+    )
+    val values = keys.associateWith { key ->
         eligibility[key] ?: error("$key is missing from release/eligibility.properties")
     }
     values.forEach { (key, value) ->
@@ -72,7 +71,7 @@ val trackedVersionText = providers.fileContents(
 val trackedEligibilityText = providers.fileContents(
     layout.projectDirectory.file("release/eligibility.properties"),
 ).asText.get()
-validateFormalReleaseEligibility(
+validateTrackedFormalEligibility(
     parseTrackedProperties(trackedVersionText, "release/version.properties"),
     parseTrackedProperties(trackedEligibilityText, "release/eligibility.properties"),
 )
@@ -94,10 +93,34 @@ abstract class VerifyFormalReleaseEligibility : DefaultTask() {
         val eligibility = Properties().apply {
             eligibilityFile.get().asFile.inputStream().use(::load)
         }
-        validateFormalReleaseEligibility(
-            version.stringPropertyNames().associateWith { version.getProperty(it).trim() },
-            eligibility.stringPropertyNames().associateWith { eligibility.getProperty(it).trim() },
+        val channel = version.getProperty("DIREKT_RELEASE_CHANNEL")?.trim()
+            ?: error("DIREKT_RELEASE_CHANNEL is missing")
+        val keys = listOf(
+            "DIREKT_FORMAL_PHASE12_AUTHORIZED",
+            "DIREKT_PRODUCTION_CLIENT_READY",
+            "DIREKT_ACCOUNT_DELETION_READY",
+            "DIREKT_PRODUCTION_OPERATIONS_READY",
+            "DIREKT_PLAY_RELEASE_READY",
         )
+        val values = keys.associateWith { key ->
+            eligibility.getProperty(key)?.trim()
+                ?: error("$key is missing from release/eligibility.properties")
+        }
+        values.forEach { (key, value) ->
+            require(value == "true" || value == "false") {
+                "$key must be exactly true or false"
+            }
+        }
+        if (channel == "preauthorization") {
+            require(values.values.all { it == "false" }) {
+                "All formal release eligibility latches must remain false during preauthorization"
+            }
+        } else {
+            val blocked = values.filterValues { it != "true" }.keys
+            require(blocked.isEmpty()) {
+                "Release-capable packaging is blocked until all formal Phase 12 eligibility latches are true: ${blocked.joinToString()}"
+            }
+        }
     }
 }
 
