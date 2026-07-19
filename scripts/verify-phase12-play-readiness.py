@@ -2,8 +2,9 @@
 """Fail-closed repository checks for Phase 12B Google Play preparation.
 
 This validator does not contact Play Console and cannot authorize release. It proves that
-repository-controlled listing, merged release permissions, release runtime dependencies
-and Data Safety inventories remain internally consistent with the current Android source.
+repository-controlled listing, merged release permissions, selected release runtime
+dependencies and Data Safety inventories remain internally consistent with the current
+Android source.
 """
 
 from __future__ import annotations
@@ -104,20 +105,53 @@ def merged_manifest_permissions(path: pathlib.Path) -> list[str]:
     return sorted(names)
 
 
+def _module_from_token(token: str, raw: str) -> str:
+    token = token.strip()
+    if token.startswith("project"):
+        fail(f"unexpected project dependency on releaseRuntimeClasspath: {raw}")
+    parts = token.split(":")
+    if len(parts) < 2:
+        fail(f"could not parse direct release dependency: {raw}")
+    return f"{parts[0]}:{parts[1]}"
+
+
+def selected_direct_module(raw: str) -> str | None:
+    """Return the selected group:name for one root dependency-report line.
+
+    Gradle may print `requested -> selected`. A selected target can be a different module
+    (dependency substitution) or only a selected version. We must validate the actual
+    selected module when group:name is present and reject selected project targets.
+    """
+    match = re.match(r"^(?:\+---|\\---)\s+(.+)$", raw)
+    if not match:
+        return None
+
+    body = match.group(1).strip()
+    requested_text, separator, selected_text = body.partition(" -> ")
+    requested_token = requested_text.split()[0]
+
+    if not separator:
+        return _module_from_token(requested_token, raw)
+
+    selected_text = selected_text.strip()
+    if selected_text.startswith("project ") or selected_text == "project":
+        fail(f"unexpected selected project dependency on releaseRuntimeClasspath: {raw}")
+
+    selected_token = selected_text.split()[0]
+    # Gradle commonly renders a version-only selection (`group:name:old -> new`). In that
+    # case the selected module identity is unchanged. A coordinate-like selected token
+    # (`group:name:version`) represents substitution and must replace the requested module.
+    if ":" in selected_token:
+        return _module_from_token(selected_token, raw)
+    return _module_from_token(requested_token, raw)
+
+
 def direct_release_modules_from_report(path: pathlib.Path) -> set[str]:
     modules: set[str] = set()
-    root_dependency = re.compile(r"^(?:\+---|\\---)\s+([^\s]+)")
     for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
-        match = root_dependency.match(raw)
-        if not match:
-            continue
-        token = match.group(1)
-        if token.startswith("project"):
-            fail(f"unexpected project dependency on releaseRuntimeClasspath: {raw}")
-        parts = token.split(":")
-        if len(parts) < 2:
-            fail(f"could not parse direct release dependency: {raw}")
-        modules.add(f"{parts[0]}:{parts[1]}")
+        module = selected_direct_module(raw)
+        if module is not None:
+            modules.add(module)
     if not modules:
         fail(f"no direct modules parsed from release runtime dependency report: {path}")
     return modules
@@ -228,7 +262,7 @@ def main() -> None:
     missing = sorted(ALLOWED_RELEASE_DIRECT_MODULES - release_modules)
     if unexpected or missing:
         fail(
-            "releaseRuntimeClasspath direct dependency surface changed without a reviewed Play/Data Safety update: "
+            "selected releaseRuntimeClasspath direct dependency surface changed without a reviewed Play/Data Safety update: "
             f"unexpected={unexpected}, missing={missing}"
         )
 
@@ -286,7 +320,7 @@ def main() -> None:
     print(f"release_channel={release.get('DIREKT_RELEASE_CHANNEL')}")
     print(f"manifest_source={inspected_manifest}")
     print(f"manifest_permissions={','.join(manifest_permissions)}")
-    print("release_direct_modules=" + ",".join(sorted(release_modules)))
+    print("release_selected_direct_modules=" + ",".join(sorted(release_modules)))
     print("play_sensitive_permission_form_expected=false")
     print("data_safety_inventory_present=true")
     print("account_deletion_end_to_end=false")
