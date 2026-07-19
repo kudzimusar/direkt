@@ -19,35 +19,50 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Resolve associated trigger PR
-        id: trigger
-        shell: bash
-        run: |
-          set -euo pipefail
-          pr_number="$(jq -r '.workflow_run.pull_requests[0].number // empty' "${GITHUB_EVENT_PATH}")"
-          [[ "${pr_number}" =~ ^[1-9][0-9]*$ ]]
-          echo "pr_number=${pr_number}" >> "${GITHUB_OUTPUT}"
-
-      - name: Download exact canary evidence artifact
-        if: github.event.workflow_run.conclusion == 'success'
+      - name: Download exact canary artifact
         uses: actions/download-artifact@v4
         with:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
           pattern: direkt-functional-web-w2-canary-*
           merge-multiple: true
-          path: ${{ runner.temp }}/w2-canary-evidence
+          path: ${{ runner.temp }}/w2-canary-artifact
+
+      - name: Resolve trusted trigger metadata
+        id: trigger
+        shell: bash
+        run: |
+          set -euo pipefail
+          metadata="${RUNNER_TEMP}/w2-canary-artifact/w2-canary-trigger.json"
+          test -f "${metadata}"
+          jq -e '
+            (.triggerPrNumber | type == "number")
+            and (.triggerPrNumber > 0)
+            and (.source | test("^[0-9a-f]{40}$"))
+            and .event == "pull_request_target"
+          ' "${metadata}" >/dev/null
+          echo "pr_number=$(jq -r '.triggerPrNumber' "${metadata}")" >> "${GITHUB_OUTPUT}"
+          echo "source=$(jq -r '.source' "${metadata}")" >> "${GITHUB_OUTPUT}"
 
       - name: Validate sanitized successful evidence
         id: evidence
         if: github.event.workflow_run.conclusion == 'success'
+        env:
+          EXPECTED_SOURCE: ${{ steps.trigger.outputs.source }}
+          EXPECTED_PR_NUMBER: ${{ steps.trigger.outputs.pr_number }}
         shell: bash
         run: |
           set -euo pipefail
-          evidence="${RUNNER_TEMP}/w2-canary-evidence/w2-canary-evidence.json"
+          evidence="${RUNNER_TEMP}/w2-canary-artifact/w2-canary-evidence.json"
           test -f "${evidence}"
-          jq -e '
-            .apiToBffParity == true
+          jq -e \
+            --arg expectedSource "${EXPECTED_SOURCE}" \
+            --argjson expectedPrNumber "${EXPECTED_PR_NUMBER}" '
+            .source == $expectedSource
+            and .triggerPrNumber == $expectedPrNumber
+            and .webService == "direkt-customer-provider-web-staging"
+            and .apiService == "direkt-api"
+            and .apiToBffParity == true
             and .profileBundleParity == true
             and .privateFieldScan == true
             and .renderedShell == true
@@ -57,22 +72,21 @@ jobs:
             and (.categories > 0)
             and (.searchResults | type == "number")
             and (.searchResults > 0)
-            and (.source | test("^[0-9a-f]{40}$"))
           ' "${evidence}" >/dev/null
-          echo "source=$(jq -r '.source' "${evidence}")" >> "${GITHUB_OUTPUT}"
           echo "categories=$(jq -r '.categories' "${evidence}")" >> "${GITHUB_OUTPUT}"
           echo "search_results=$(jq -r '.searchResults' "${evidence}")" >> "${GITHUB_OUTPUT}"
           echo "web_service=$(jq -r '.webService' "${evidence}")" >> "${GITHUB_OUTPUT}"
           echo "api_service=$(jq -r '.apiService' "${evidence}")" >> "${GITHUB_OUTPUT}"
 
       - name: Publish result to trigger PR
-        if: always()
+        if: always() && steps.trigger.outputs.pr_number != ''
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ steps.trigger.outputs.pr_number }}
           CANARY_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
-          SOURCE_SHA: ${{ steps.evidence.outputs.source }}
+          SOURCE_SHA: ${{ steps.trigger.outputs.source }}
+          EVIDENCE_OUTCOME: ${{ steps.evidence.outcome }}
           CATEGORY_COUNT: ${{ steps.evidence.outputs.categories }}
           SEARCH_RESULT_COUNT: ${{ steps.evidence.outputs.search_results }}
           WEB_SERVICE: ${{ steps.evidence.outputs.web_service }}
@@ -80,9 +94,10 @@ jobs:
         run: |
           set -euo pipefail
           [[ "${PR_NUMBER}" =~ ^[1-9][0-9]*$ ]]
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
           run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${{ github.event.workflow_run.id }}"
 
-          if [[ "${CANARY_CONCLUSION}" == "success" && -n "${SOURCE_SHA}" ]]; then
+          if [[ "${CANARY_CONCLUSION}" == "success" && "${EVIDENCE_OUTCOME}" == "success" ]]; then
             body=$(cat <<EOF
           <!-- direkt-w2-canary-result -->
           ## W2 managed canary: PASS
@@ -108,7 +123,11 @@ jobs:
           <!-- direkt-w2-canary-result -->
           ## W2 managed canary: FAIL / INCOMPLETE
 
-          The trusted managed canary did not produce validated PASS evidence. W2 remains open and no public cutover or W3 advancement is authorized from this run.
+          - Exact merged source: \`${SOURCE_SHA}\`
+          - Managed canary conclusion: \`${CANARY_CONCLUSION}\`
+          - Sanitized evidence validation: \`${EVIDENCE_OUTCOME:-not-run}\`
+
+          W2 remains open. No public cutover or W3 advancement is authorized from this run.
 
           Managed run: ${run_url}
           EOF
