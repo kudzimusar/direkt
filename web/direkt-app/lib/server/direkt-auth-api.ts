@@ -220,11 +220,13 @@ export class DirektAuthApi {
     accessToken: string,
     interactionId: string,
     input: { complaintType: ComplaintView["complaintType"]; summary: string; policyVersion: string },
+    idempotencyKey: string,
   ): Promise<ComplaintView> {
     return this.request(`/api/v1/interactions/${encodeURIComponent(interactionId)}/complaints`, {
       method: "POST",
       accessToken,
       body: input,
+      idempotencyKey,
     });
   }
 
