@@ -1,6 +1,6 @@
 # DIREKT
 
-**DIREKT is an Android-first, verification-led local service marketplace for Zambia.**
+**DIREKT is an Android-first, verification-led local service marketplace for Zambia with an installable customer/provider PWA companion.**
 
 It helps customers discover nearby providers—such as plumbers, electricians, mechanics and repair technicians—using evidence-backed business, identity, qualification and location information. Providers do not receive a generic “verified” label merely for registering or paying. Each public trust claim is tied to a specific check, status, evidence scope and validity period.
 
@@ -17,19 +17,18 @@ DIREKT is not another open business directory. Its differentiator is a controlle
 - certificate expiry and renewal controls;
 - platform-tracked enquiries, complaints and reviews.
 
-The first production client is a **native Android application**. A web operations portal supports verification, moderation, support and administration. iOS is deferred, while backend and API boundaries remain portable enough to support it later.
+The first production client remains the **native Android application**. A responsive installable **customer/provider PWA** is now an approved companion for desktop, tablet and mobile remote testing and future browser use through the same canonical API boundaries. A separate web operations portal supports verification, moderation, support and administration. iOS is deferred.
 
 ## Repository status
 
-The repository contains the authoritative product, design, architecture, trust, security, testing and operations specifications plus the native Android, NestJS API, PostgreSQL/PostGIS migrations and internal operations portal implementation.
+The repository contains the authoritative product, design, architecture, trust, security, testing and operations specifications plus the native Android, customer/provider PWA, NestJS API, PostgreSQL/PostGIS migrations and internal operations portal implementation.
 
-- **Phases 0–9:** complete and promoted.
-- **Phase 10:** security/privacy/legal/reliability hardening and managed synthetic/private-staging activation complete; final promotion merged through PR #111 at `369fc72581b3ed27920b8fc949e32cfedf1ad8d9` and Issue #41 is closed.
-- **Phase 11:** repository-side controlled Zambia pilot entry preparation is active under Issue #112.
-- **Real participant pilot:** not yet authorized; legal/privacy/provider/operational entry gates remain open.
-- **Phase 12 production release:** not authorized before actual Phase 11 primary evidence and an explicit evidence-backed proceed decision.
+- **Phases 0–10:** complete and promoted.
+- **Phase 11:** internal/synthetic readiness is complete; real participant 11C–11H evidence, external legal/privacy gates and 11J remain pending under Issue #112.
+- **Phase 12:** preauthorization release engineering has advanced substantially, but formal production release remains blocked until Phase 11 exit and the global release gates genuinely pass.
+- **Issue #133:** reconciles current repository/integration truth and adds the remote customer/provider PWA without bypassing Phase 11/12 gates.
 
-Primary Zambia interviews, real provider evidence and field validation have not been fabricated or treated as complete. The historical secondary-research assumptions remain provisional where Phase 11 primary evidence is required.
+Primary Zambia interviews, real provider evidence and field validation have not been fabricated or treated as complete. Historical secondary-research assumptions remain provisional where Phase 11 primary evidence is required.
 
 ### Mandatory reading order
 
@@ -38,18 +37,20 @@ Primary Zambia interviews, real provider evidence and field validation have not 
 3. [`PROJECT_STATUS.md`](PROJECT_STATUS.md)
 4. [`WORKSTREAM_LOCK.md`](WORKSTREAM_LOCK.md)
 5. [`DEFINITION_OF_DONE.md`](DEFINITION_OF_DONE.md)
-6. [`docs/INDEX.md`](docs/INDEX.md)
-7. [`docs/phase11/HANDOFF_FROM_PHASE10.md`](docs/phase11/HANDOFF_FROM_PHASE10.md)
-8. [`docs/phase11/PHASE11_EXECUTION_AND_ENTRY_CONTROL.md`](docs/phase11/PHASE11_EXECUTION_AND_ENTRY_CONTROL.md)
+6. [`docs/REPOSITORY_RECONCILIATION_2026-07-19.md`](docs/REPOSITORY_RECONCILIATION_2026-07-19.md)
+7. [`docs/integrations/CURRENT_INTEGRATION_STATUS.md`](docs/integrations/CURRENT_INTEGRATION_STATUS.md)
+8. [`docs/INDEX.md`](docs/INDEX.md)
+9. relevant phase-specific control documents referenced by `PROJECT_STATUS.md`.
 
 ## Repository layout
 
 ```text
 android/direkt-app/              Native Kotlin/Jetpack Compose application
+web/direkt-pwa/                  Responsive installable customer/provider PWA
 backend/direkt-api/              TypeScript/NestJS modular backend
 admin/direkt-operations-portal/ Internal web operations portal
 database/                        Migrations, seeds and database policies
-prototype/                       Synthetic browser prototype for Pages
+prototype/                       Historical synthetic browser prototype for Pages
 infrastructure/                  Deployment and environment definitions
 docs/                            Authoritative planning and operating documents
 scripts/                         Validation, packaging and maintenance scripts
@@ -60,9 +61,9 @@ scripts/                         Validation, packaging and maintenance scripts
 
 DIREKT uses one controlled implementation stream:
 
-- `main` is the stable promoted checkpoint and GitHub Pages source.
-- `build/android-v1` is the sequential implementation branch.
-- One active owner or agent controls writes to a workstream.
+- `main` is the stable promoted checkpoint and public Pages source.
+- `build/android-v1` is the long-lived sequential implementation branch; the historical branch name does not make the PWA a second product line.
+- One active owner or agent controls overlapping writes to a workstream.
 - Every material task ends with checks, documentation, an atomic commit and a status update.
 - Force-pushing is prohibited.
 - The active repository agent creates, verifies and merges routine checkpoint pull requests automatically when safe.
@@ -75,51 +76,49 @@ See [`docs/operations/AGENT_WORKFLOW.md`](docs/operations/AGENT_WORKFLOW.md).
 
 Current controlled collaboration/testing channels include:
 
-- **GitHub Pages** for documentation and fictional/non-sensitive prototypes only;
-- **GitHub Actions** for backend, Android, portal, documentation, security/supply-chain and managed-infrastructure verification;
+- **`direkt.forum` / GitHub Pages** for public documentation, the synthetic customer/provider PWA and other fictional/non-sensitive review content;
+- **GitHub Actions** for backend, Android, PWA, portal, documentation, security/supply-chain and managed-infrastructure verification;
 - **Supabase development** project `aeeuscifrxcjmnswqwnq` for the protected PostgreSQL/PostGIS/private-storage development boundary;
 - **Google Cloud** project `direkt-dev-502701` for Artifact Registry and IAM-private Cloud Run staging;
 - **Firebase App Distribution** for approved internal Android debug distribution to named testers.
 
-Managed Phase 10 staging is synthetic/private and is not the real Phase 11 participant-access path. An internet-addressable Cloud Run URL does not imply public pilot access when IAM denies unauthenticated invocation.
+Managed staging is synthetic/private and is not the real Phase 11 participant-access path. An internet-addressable Cloud Run URL does not imply public pilot access when IAM denies unauthenticated invocation.
 
-GitHub Pages cannot execute the native Android application. See [`docs/operations/REMOTE_ANDROID_TESTING.md`](docs/operations/REMOTE_ANDROID_TESTING.md).
+GitHub Pages cannot execute the native Android application. The PWA is a separate browser client/synthetic review surface, not an Android emulator. See [`docs/operations/REMOTE_UI_TESTING.md`](docs/operations/REMOTE_UI_TESTING.md) and [`docs/operations/REMOTE_ANDROID_TESTING.md`](docs/operations/REMOTE_ANDROID_TESTING.md).
 
-## GitHub Pages
+## Public web
 
-The Pages workflow publishes:
+Canonical public site:
 
-- product and technical documentation;
-- fictional, non-sensitive interactive prototypes;
-- test instructions and approved pilot material;
-- release notes and approved reports.
+`https://direkt.forum/`
 
-Pages must not host the production API, authenticated operations, secrets, real verification documents, personal data, participant linkage keys or private location evidence.
+Remote customer/provider PWA after promotion:
 
-Public site:
+`https://direkt.forum/app/`
 
-`https://kudzimusar.github.io/direkt/`
+The public PWA is deliberately synthetic-only during pre-release review: no real submissions, participant data, private evidence, privileged credentials or protected API calls.
+
+The historical `https://kudzimusar.github.io/direkt/` project address is not the owner-facing canonical URL.
+
+Public Pages/PWA content must not host the production API, authenticated operations, secrets, real verification documents, personal data, participant linkage keys or private location evidence.
 
 ## Download the planning pack
 
-[Download the generated DIREKT planning pack](https://kudzimusar.github.io/direkt/downloads/DIREKT_PLANNING_PACK.zip)
+[Download the generated DIREKT planning pack](https://direkt.forum/downloads/DIREKT_PLANNING_PACK.zip)
 
-## Current workstream
+## Current workstreams
 
-The active workstream is **Phase 11 — controlled Zambia pilot and primary validation**, beginning with the entry gate rather than real recruitment.
+The formal programme remains in **Phase 11 — controlled Zambia pilot and primary validation** until genuine real-participant evidence and 11J complete. In parallel, repository-safe Phase 12 preauthorization work may proceed only within its documented fail-closed boundaries.
 
-Current repository priorities are:
+Issue #133 additionally addresses the owner-visible product/testing gap by:
 
-1. preserve the Phase 10 stable baseline and permanent regressions;
-2. satisfy/document qualified legal, privacy, processor and provider entry gates;
-3. approve a tightly bounded pilot area/categories/cohort and named operational owners;
-4. reconcile external Maps/Sentry setup with actual runtime source/configuration evidence;
-5. establish a safe participant access/authentication path without exposing privileged infrastructure;
-6. execute the real controlled pilot only after entry authorization;
-7. apply evidence-led corrections to the same production codebase;
-8. make the Phase 11 `STOP / REPEAT / NARROW / PROCEED` exit decision before Phase 12.
+1. reconciling current integration/domain/provider truth against source and managed evidence;
+2. preserving detailed historical plans while explicitly superseding stale current-state assertions;
+3. publishing an Android-aligned desktop/tablet/mobile customer/provider PWA for synthetic remote testing;
+4. retaining the canonical REST/OpenAPI boundary for any future live PWA mode;
+5. keeping real pilot, private evidence, production providers, money movement, signing and Play release gated.
 
-See [`PROJECT_STATUS.md`](PROJECT_STATUS.md) for the live checkpoint and blockers.
+See [`PROJECT_STATUS.md`](PROJECT_STATUS.md) for the live checkpoint and [`docs/integrations/CURRENT_INTEGRATION_STATUS.md`](docs/integrations/CURRENT_INTEGRATION_STATUS.md) for integration status.
 
 ## Rights and contribution status
 
