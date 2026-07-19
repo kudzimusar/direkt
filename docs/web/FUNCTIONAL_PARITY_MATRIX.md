@@ -2,7 +2,7 @@
 
 **Status:** Active implementation control  
 **Owner:** Functional PWA parity workstream  
-**Baseline:** W0/W1 stable checkpoint merged through PR #153 and synchronized by PR #154
+**Baseline:** W2 closed on exact managed source `4b892b90c42239c81c4f9c6f8c9f5447519dd6f6`; managed run `29694862350` PASS
 
 ## Status legend
 
@@ -22,9 +22,9 @@
 | Responsive desktop/tablet/mobile | Android native phone/tablet behavior | N/A | Required | PASS |
 | Installable PWA | N/A | N/A | Required | PASS |
 | Offline-safe static shell | Android native app shell | N/A | Required; no fake offline mutation success | PASS |
-| Canonical REST/OpenAPI boundary | Partial client integration; canonical backend exists | Active | Required | PASS foundation; W2+ capabilities staged incrementally |
+| Canonical REST/OpenAPI boundary | Partial client integration; canonical backend exists | Active | Required | PASS foundation; W2 managed private invocation evidenced |
 | Direct privileged Supabase access | Prohibited | Prohibited | Prohibited | PASS |
-| Backend-authoritative roles/provider scope | Required | Active | Required | API_READY |
+| Backend-authoritative roles/provider scope | Required | Active | Required | API_READY — W3 target |
 
 ## Authentication and account
 
@@ -46,20 +46,20 @@
 
 | Capability | Android current truth | Canonical backend/API | Functional Web/PWA target | Status |
 |---|---|---|---|---|
-| Category list | Implemented/preview-backed depending path | `/public/categories` | Real API-backed | IMPLEMENTING |
-| Manual area selection | Product requirement; active fallback | search/location contracts | Required | IMPLEMENTING |
-| Provider search | Implemented/preview-backed depending path | `/public/providers/search` | Real API-backed | IMPLEMENTING |
-| Search filters | Product requirement | canonical query contract | Required | IMPLEMENTING |
-| Provider result cards | Implemented | public provider projection | Required | IMPLEMENTING |
-| Provider profile | Implemented | `/public/providers/{id}` | Required | IMPLEMENTING |
-| Scoped trust claims | Implemented semantics | `/public/providers/{id}/claims` | Required | IMPLEMENTING |
-| Availability | Implemented | `/public/providers/{id}/availability` | Required | IMPLEMENTING |
-| Public reviews | Implemented semantics | `/public/providers/{id}/reviews` | Required | IMPLEMENTING |
-| Share projection | Contract exists | `/public/providers/{id}/share` | Required where UX supports it | IMPLEMENTING |
+| Category list | Implemented/preview-backed depending path | `/public/categories` | Real API-backed | PASS |
+| Manual area selection | Product requirement; active fallback | search/location contracts | Required | PASS |
+| Provider search | Implemented/preview-backed depending path | `/public/providers/search` | Real API-backed | PASS |
+| Search filters | Product requirement | canonical query contract | Required | PASS |
+| Provider result cards | Implemented | public provider projection | Required | PASS |
+| Provider profile | Implemented | `/public/providers/{id}` | Required | PASS |
+| Scoped trust claims | Implemented semantics | `/public/providers/{id}/claims` | Required | PASS |
+| Availability | Implemented | `/public/providers/{id}/availability` | Required | PASS |
+| Public reviews | Implemented semantics | `/public/providers/{id}/reviews` | Required | PASS |
+| Share projection | Contract exists | `/public/providers/{id}/share` | Required where UX supports it | PASS |
 | Saved providers | Android UX exists | canonical save contract | Required | PREVIEW_ONLY |
 | Map view | Synthetic/privacy-safe | Maps runtime unproven | Preserve list/manual fallback; no Maps activation in this workstream | GATED |
 
-W2 repository implementation for the `IMPLEMENTING` rows above is recorded in `docs/web/W2_PUBLIC_DISCOVERY_CHECKPOINT.md`. They remain `IMPLEMENTING`, not `PASS`, until managed IAM-private runtime/canary evidence proves backend state changes are observable through the web client without privacy leakage.
+W2 closure is recorded in `docs/web/W2_PUBLIC_DISCOVERY_CHECKPOINT.md`. Managed run `29694862350` on exact source `4b892b90c42239c81c4f9c6f8c9f5447519dd6f6` proved API↔BFF discovery/profile parity, managed synthetic observability, privacy-safe projections, rendered shell/security headers, unauthenticated denial and temporary Invoker cleanup.
 
 ## Customer enquiries and interactions
 
@@ -160,11 +160,11 @@ W2 repository implementation for the `IMPLEMENTING` rows above is recorded in `d
 - manual/list fallback remains first-class;
 - exact-head CI/review and managed IAM-private canary evidence pass.
 
-**Status:** repository implementation active; managed runtime/canary evidence pending.
+**Status:** CLOSED — managed run `29694862350` PASS on exact source `4b892b90c42239c81c4f9c6f8c9f5447519dd6f6`.
 
 ### W3–W6 complete when
 
-Each capability moves from `API_READY`/`GATED`/`PREVIEW_ONLY` to `PASS` only with backend-observable evidence and applicable security tests.
+Each capability moves from `API_READY`/`GATED`/`PREVIEW_ONLY` to `PASS` only with backend-observable evidence and applicable security tests. Gated external/real-participant capabilities remain explicitly `GATED`; they are not fabricated as active.
 
 ### W7 complete when
 

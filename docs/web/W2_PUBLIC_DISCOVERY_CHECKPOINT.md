@@ -1,6 +1,6 @@
 # W2 — Functional Web/PWA Public Discovery Checkpoint
 
-**Status:** Repository implementation merged through PR #155; private managed canary infrastructure is the active W2 task and must pass before W2 exit is declared  
+**Status:** CLOSED — repository implementation, exact-head regression gates and managed IAM-private canary evidence passed  
 **Workstream:** Functional Android/Web parity  
 **Governing plan:** `docs/web/FUNCTIONAL_PWA_PARITY_IMPLEMENTATION_PLAN.md`
 
@@ -10,7 +10,7 @@ W2 replaces the browser preview-only discovery surface with a real implementatio
 
 ## Implemented slice
 
-The functional client under `web/direkt-app/` now implements:
+The functional client under `web/direkt-app/` implements:
 
 - canonical public category loading;
 - provider search through the backend `DiscoverySearchDto` query contract;
@@ -28,7 +28,7 @@ No provider fixture is invented by the W2 UI when the canonical API is enabled. 
 
 ## Browser/API boundary
 
-The browser calls only specific same-origin routes such as:
+The browser calls only specific same-origin routes:
 
 ```text
 /api/discovery/search
@@ -50,34 +50,35 @@ For IAM-private Cloud Run invocation, `authenticated-bff` mode obtains a short-l
 - `backend/direkt-api/src/discovery/discovery.dto.ts`;
 - `backend/direkt-api/src/interaction/review.types.ts`.
 
-The check fails if:
+The permanent functional-PWA workflow fails if required provider/search/review fields drift, obsolete provisional names return, query allowlists diverge, a generic proxy appears, the private API URL/token becomes browser-visible, production unauthenticated API mode is allowed, or upstream server-error detail is blindly relayed.
 
-- required provider/search/review fields drift;
-- obsolete provisional field names return;
-- discovery query allowlists diverge;
-- a generic proxy appears;
-- Cloud Run identity markers disappear;
-- the private API URL/token becomes browser-visible;
-- production unauthenticated API mode is allowed;
-- upstream server-error details are blindly relayed.
+## Managed closure evidence
 
-The permanent functional-PWA workflow runs this contract check alongside locked dependency installation, TypeScript, static security/PWA checks, the production build and Android protected-path verification.
+The final trusted canary ran from exact reviewed `main` source:
 
-## Managed W2 canary design
+```text
+source: 4b892b90c42239c81c4f9c6f8c9f5447519dd6f6
+managed run: 29694862350
+data mode: synthetic-only
+categories observed: 4
+provider search results observed: 20
+result: PASS
+```
 
-The managed canary is intentionally separate from public cutover.
+Sanitized evidence was posted by `github-actions[bot]` to Issue #133.
 
-- `web/direkt-app/Dockerfile` produces a non-root standalone Next.js image from the locked npm dependency graph.
-- `.github/workflows/functional-pwa-managed-canary.yml` deploys an immutable image to `direkt-customer-provider-web-staging` in the existing `direkt-dev-502701` project.
-- The canary service is **IAM-private**, scale-to-zero capable and labelled `synthetic-only`.
-- For this bounded private W2 canary only, it reuses the already-approved `direkt-portal-runtime` identity because that identity already has the exact Cloud Run Invoker relationship required to call the private `direkt-api` service. The canary does not bind the portal cookie secret or any other secret.
-- The workflow must verify that the API remains free of `allUsers`/`allAuthenticatedUsers`, that the bounded runtime identity already has API Invoker, and that the web service itself has no public Invoker.
-- The deployer receives temporary service-level Invoker on the API and canary web service only for direct comparison/smoke evidence; the workflow removes those grants in an `always()` cleanup and verifies the final IAM state.
-- A dedicated least-privilege customer/provider web runtime identity is still mandatory before any public W8 cutover. The private W2 canary identity reuse is not approval to expose the operations runtime identity publicly.
+The managed exercise proved:
 
-The canary compares canonical API output with the web BFF for categories, provider search and a complete public-provider bundle (profile, claims, availability, reviews and share), scans for prohibited private fields, verifies the server-rendered DIREKT discovery shell and confirms unauthenticated API/web requests are denied.
+1. the functional Next.js runtime invoked the IAM-private `direkt-api` service through the reviewed server-side identity boundary;
+2. canonical categories and provider search returned backend-managed synthetic state through the browser-facing BFF;
+3. API and BFF category/search/profile/claims/availability/reviews/share projections matched;
+4. the public projection scan found no prohibited private evidence/contact/provider-base fields;
+5. the rendered DIREKT discovery shell and security headers responded from the managed web service;
+6. unauthenticated API and web requests were denied;
+7. the API and web services remained free of public Invoker bindings;
+8. temporary deployer Invoker grants were removed and final IAM cleanup passed.
 
-The canary workflow is installed first. A later one-file trigger PR is permitted only after the workflow is merged to `main`; the workflow then checks out the already-merged base SHA and rejects any trigger PR that changes more than `docs/web/W2_MANAGED_CANARY_TRIGGER.md`. This prevents unmerged application code from being deployed merely to obtain evidence.
+The canary service remains a private synthetic staging control. It does not authorize a public route, real participants, production traffic, or reuse of the operations runtime identity for W8.
 
 ## Privacy and trust invariants preserved
 
@@ -90,30 +91,27 @@ W2 does not expose:
 - privileged Supabase/database credentials;
 - blanket “verified”, “safe” or guarantee claims.
 
-Mobile providers continue to be described by public service area semantics rather than distance from a private base. Trust copy remains scoped to individual backend-derived claims and limitations.
+Mobile providers continue to be described by public service-area semantics rather than distance from a private base. Trust copy remains scoped to individual backend-derived claims and limitations. Manual/list discovery remains first-class; Google Maps activation is not required for W2 closure.
 
 ## Android no-regression boundary
 
-W2 intentionally changes no file under `android/direkt-app/**`. It introduces no Kotlin Multiplatform conversion, Gradle/dependency upgrade, Android UI refactor, release/signing change or Play-policy bypass.
+W2 changed no file under `android/direkt-app/**`. It introduced no Kotlin Multiplatform conversion, Gradle/dependency upgrade, Android UI refactor, release/signing change or Play-policy bypass.
 
-The W2 checkpoint must not merge unless the exact PR head proves the Android protected path unchanged and all applicable repository security/documentation checks are green.
+Exact-head functional web checks repeatedly proved the Android protected surface unchanged, and the trigger checkpoint passed functional web typecheck, static/PWA security, discovery-contract parity, production build, documentation and public synthetic-PWA packaging before the managed exercise.
 
-## W2 exit evidence still required
+## W2 exit decision
 
-Repository implementation alone is not enough to mark the public discovery parity rows `PASS`.
+All W2 exit conditions are satisfied:
 
-Before W2 exit is declared, managed test evidence must prove:
+- canonical public categories/search/results/profile/claims/availability/reviews/share use managed backend state;
+- backend-managed synthetic publication state is observable through the web BFF;
+- public projections remain privacy-safe;
+- manual/list fallback remains first-class;
+- exact-head regression gates passed;
+- managed IAM-private canary evidence passed with cleanup verified.
 
-1. the functional web runtime can invoke the IAM-private DIREKT API without making that API public;
-2. backend-managed synthetic/test publication state is observable through the browser-facing BFF;
-3. category/search/profile/claim/availability/review/share projections match managed backend state;
-4. public responses contain no private evidence, contact data or private coordinates;
-5. manual/list fallback remains usable without Google Maps activation;
-6. the rendered web service responds from the exact reviewed deployment source;
-7. temporary canary Invoker privileges are removed and both API/web remain IAM-private after the exercise.
-
-Until that managed canary exists, the W2 matrix rows remain `IMPLEMENTING`, even though the repository implementation is present.
+**Decision: W2 CLOSED.**
 
 ## Next task
 
-Merge and verify the managed-canary deployment mechanism, run the bounded trigger against the exact merged source, record sanitized canary evidence, and only then close W2 and advance to W3 browser authentication/session implementation. W3 must not be used to bypass the still-open real Phase 11 participant gate.
+Proceed to W3 browser authentication/account/session implementation on the same `build/android-v1` lane. W3 must preserve DIREKT backend authorization, server-resolved provider scope, secure HttpOnly browser session handling, CSRF/origin/replay/expiry controls, and the still-open Phase 11 real-participant gate.
