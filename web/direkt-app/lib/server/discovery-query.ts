@@ -1,4 +1,4 @@
-import type { PublicAvailability, PublicOperatingModel } from "./direkt-api-client";
+import type { PublicAvailability, PublicOperatingModel } from "../contracts/discovery";
 
 const CATEGORY_OR_CLAIM = /^[a-z][a-z0-9_]{2,63}$/;
 const OPERATING_MODELS = new Set<PublicOperatingModel>(["fixed_premises", "mobile", "hybrid"]);
