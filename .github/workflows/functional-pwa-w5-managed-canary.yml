@@ -1,0 +1,304 @@
+name: DIREKT functional web W5 managed provider canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN-DIREKT-W5-CANARY to continue
+        required: true
+        type: string
+      source_sha:
+        description: Exact reviewed DIREKT commit already merged to main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: direkt-functional-web-w5-managed-canary
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    name: Deploy and verify private W5 provider canary
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_REGION: asia-northeast1
+      GCP_ARTIFACT_REGISTRY: direkt-containers
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_API_SERVICE: direkt-api
+      GCP_WEB_SERVICE: direkt-customer-provider-web-staging
+      GCP_WEB_RUNTIME_SERVICE_ACCOUNT: direkt-portal-runtime@direkt-dev-502701.iam.gserviceaccount.com
+    steps:
+      - name: Validate immutable main source
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ inputs.confirmation }}" = "RUN-DIREKT-W5-CANARY"
+          source_sha="${{ inputs.source_sha }}"
+          [[ "${source_sha}" =~ ^[0-9a-f]{40}$ ]]
+          echo "source_sha=${source_sha}" >> "${GITHUB_OUTPUT}"
+
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.source.outputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify exact reviewed source
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          test "${SOURCE_SHA}" = "${{ steps.source.outputs.source_sha }}"
+          git fetch origin main --no-tags
+          git merge-base --is-ancestor "${SOURCE_SHA}" origin/main
+          echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
+          echo "WEB_IMAGE_URI=${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/${GCP_WEB_SERVICE}:w5-${SOURCE_SHA}" >> "${GITHUB_ENV}"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/direkt-app/package-lock.json
+
+      - name: Verify exact W5 web source
+        working-directory: web/direkt-app
+        env:
+          DIREKT_WEB_API_MODE: disabled
+          DIREKT_WEB_AUTH_MODE: disabled
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run typecheck
+          npm run verify:static
+          npm run verify:discovery
+          npm run verify:auth
+          npm run verify:customer
+          npm run verify:provider
+          npm run build
+
+      - name: Authenticate to Google Cloud through approved staging identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Verify private API boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          API_URL="$(gcloud run services describe "${GCP_API_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format='value(status.url)')"
+          test -n "${API_URL}"
+          echo "API_URL=${API_URL}" >> "${GITHUB_ENV}"
+          gcloud run services get-iam-policy "${GCP_API_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${RUNNER_TEMP}/api-iam.json"
+          jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' "${RUNNER_TEMP}/api-iam.json" >/dev/null
+          jq -e --arg expected "serviceAccount:${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}" '[.bindings[]? | select(.role == "roles/run.invoker") | .members[]?] | index($expected) != null' "${RUNNER_TEMP}/api-iam.json" >/dev/null
+
+      - name: Build and push immutable W5 web image
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+          docker build -f web/direkt-app/Dockerfile -t "${WEB_IMAGE_URI}" web/direkt-app
+          docker push "${WEB_IMAGE_URI}"
+
+      - name: Deploy IAM-private synthetic W5 web canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run deploy "${GCP_WEB_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --platform managed \
+            --image "${WEB_IMAGE_URI}" --service-account "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}" \
+            --port 8080 --cpu 1 --memory 512Mi --min-instances 0 --max-instances 1 \
+            --concurrency 20 --timeout 60 --ingress all \
+            --labels "direkt-environment=staging,direkt-data-mode=synthetic-only,direkt-workstream=w5-canary" \
+            --set-env-vars "NODE_ENV=production,HOSTNAME=0.0.0.0,DIREKT_WEB_API_MODE=authenticated-bff,DIREKT_API_BASE_URL=${API_URL},DIREKT_WEB_AUTH_MODE=synthetic,DIREKT_WEB_ALLOW_SYNTHETIC_AUTH=true,DIREKT_WEB_PILOT_NOTICE_VERSION=synthetic-canary-v1,DIREKT_WEB_INTERACTION_POLICY_VERSION=synthetic-demo-v1" \
+            --no-allow-unauthenticated --quiet
+          WEB_URL="$(gcloud run services describe "${GCP_WEB_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format='value(status.url)')"
+          test -n "${WEB_URL}"
+          echo "WEB_URL=${WEB_URL}" >> "${GITHUB_ENV}"
+
+      - name: Verify private web deployment and grant bounded invocation
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run services describe "${GCP_WEB_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${RUNNER_TEMP}/web-service.json"
+          jq -e --arg image "${WEB_IMAGE_URI}" '.spec.template.spec.containers[0].image == $image' "${RUNNER_TEMP}/web-service.json" >/dev/null
+          jq -e --arg identity "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}" '.spec.template.spec.serviceAccountName == $identity' "${RUNNER_TEMP}/web-service.json" >/dev/null
+          gcloud run services get-iam-policy "${GCP_WEB_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${RUNNER_TEMP}/web-iam.json"
+          jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' "${RUNNER_TEMP}/web-iam.json" >/dev/null
+          for service in "${GCP_API_SERVICE}" "${GCP_WEB_SERVICE}"; do
+            gcloud run services add-iam-policy-binding "${service}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --member "serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}" --role roles/run.invoker --quiet
+          done
+
+      - name: Mint private API canary token
+        id: api-auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+          token_format: id_token
+          id_token_audience: ${{ env.API_URL }}
+          id_token_include_email: true
+
+      - name: Mint private web canary token
+        id: web-auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+          token_format: id_token
+          id_token_audience: ${{ env.WEB_URL }}
+          id_token_include_email: true
+
+      - name: Exercise managed W5 provider lifecycle
+        id: exercise
+        shell: bash
+        env:
+          API_ID_TOKEN: ${{ steps.api-auth.outputs.id_token }}
+          WEB_ID_TOKEN: ${{ steps.web-auth.outputs.id_token }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::${API_ID_TOKEN}"
+          echo "::add-mask::${WEB_ID_TOKEN}"
+          ah="X-Serverless-Authorization: Bearer ${API_ID_TOKEN}"
+          wh="X-Serverless-Authorization: Bearer ${WEB_ID_TOKEN}"
+          suffix="${SOURCE_SHA:0:10}"
+          contact="w5-${suffix}@example.invalid"
+          jar="${RUNNER_TEMP}/w5-cookies.txt"
+
+          unauth_api="$(curl -sS -o /dev/null -w '%{http_code}' "${API_URL}/api/v1/health/ready" || true)"
+          unauth_web="$(curl -sS -o /dev/null -w '%{http_code}' "${WEB_URL}/" || true)"
+          test "${unauth_api}" = "403"
+          test "${unauth_web}" = "403"
+
+          curl --fail --silent --show-error -H "${ah}" -X POST -H 'content-type: application/json' \
+            --data "$(jq -n --arg contact "${contact}" '{channel:"email",contact:$contact}')" \
+            "${API_URL}/api/v1/auth/challenges" > "${RUNNER_TEMP}/api-challenge.json"
+          API_CHALLENGE="$(jq -r '.challengeId' "${RUNNER_TEMP}/api-challenge.json")"
+          API_CODE="$(jq -r '.synthetic.code' "${RUNNER_TEMP}/api-challenge.json")"
+          curl --fail --silent --show-error -H "${ah}" -X POST -H 'content-type: application/json' \
+            --data "$(jq -n --arg challengeId "${API_CHALLENGE}" --arg code "${API_CODE}" '{challengeId:$challengeId,code:$code,deviceLabel:"W5 fixture provisioner"}')" \
+            "${API_URL}/api/v1/auth/challenges/verify" > "${RUNNER_TEMP}/api-session.json"
+          ACCESS="$(jq -r '.accessToken' "${RUNNER_TEMP}/api-session.json")"
+          [[ "${ACCESS}" == *.*.* ]]
+          echo "::add-mask::${ACCESS}"
+          apph="Authorization: Bearer ${ACCESS}"
+
+          jq -n --arg suffix "${suffix}" '{pathway:"experienced_informal",displayName:("W5 Synthetic Provider " + $suffix),operatingModel:"mobile",localitySummary:"Kabwata, Lusaka",serviceAreaSummary:"Kabwata and nearby Lusaka neighbourhoods",experienceSummary:"Synthetic provider experience record for W5 managed browser verification only."}' > "${RUNNER_TEMP}/provider-create.json"
+          curl --fail --silent --show-error -H "${ah}" -H "${apph}" -X POST -H 'content-type: application/json' --data @"${RUNNER_TEMP}/provider-create.json" "${API_URL}/api/v1/providers" > "${RUNNER_TEMP}/provider.json"
+          PROVIDER_ID="$(jq -r '.id' "${RUNNER_TEMP}/provider.json")"
+          [[ "${PROVIDER_ID}" =~ ^[0-9a-fA-F-]{36}$ ]]
+
+          curl --fail --silent --show-error -H "${ah}" "${API_URL}/api/v1/public/categories" > "${RUNNER_TEMP}/categories.json"
+          CATEGORY="$(jq -r '.[0].key' "${RUNNER_TEMP}/categories.json")"
+          test -n "${CATEGORY}"
+          curl --fail --silent --show-error -H "${ah}" -H "${apph}" -X PUT "${API_URL}/api/v1/providers/${PROVIDER_ID}/categories/${CATEGORY}" > "${RUNNER_TEMP}/provider-category.json"
+
+          transition_status="$(curl -sS -o "${RUNNER_TEMP}/provider-ready.json" -w '%{http_code}' -H "${ah}" -H "${apph}" -X POST -H 'content-type: application/json' --data '{"targetStatus":"ready_for_verification","reason":"Synthetic W5 provider prepared for managed parity canary"}' "${API_URL}/api/v1/providers/${PROVIDER_ID}/state-transitions")"
+          if [[ "${transition_status}" != "200" && "${transition_status}" != "201" ]]; then
+            echo "Provider remained draft; evidence case path may be not-applicable for this fixture."
+          fi
+
+          curl --fail --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors -H "${wh}" -c "${jar}" "${WEB_URL}/api/auth/bootstrap" > "${RUNNER_TEMP}/bootstrap.json"
+          CSRF="$(jq -r '.csrfToken' "${RUNNER_TEMP}/bootstrap.json")"
+          test -n "${CSRF}"
+          curl --fail --silent --show-error -H "${wh}" -H "Origin: ${WEB_URL}" -H "x-direkt-csrf: ${CSRF}" -b "${jar}" -c "${jar}" -X POST -H 'content-type: application/json' \
+            --data "$(jq -n --arg contact "${contact}" '{channel:"email",contact:$contact}')" "${WEB_URL}/api/auth/challenge" > "${RUNNER_TEMP}/web-challenge.json"
+          CHALLENGE="$(jq -r '.challengeId' "${RUNNER_TEMP}/web-challenge.json")"
+          CODE="$(jq -r '.synthetic.code' "${RUNNER_TEMP}/web-challenge.json")"
+          curl --fail --silent --show-error -H "${wh}" -H "Origin: ${WEB_URL}" -H "x-direkt-csrf: ${CSRF}" -b "${jar}" -c "${jar}" -X POST -H 'content-type: application/json' \
+            --data "$(jq -n --arg challengeId "${CHALLENGE}" --arg code "${CODE}" '{challengeId:$challengeId,code:$code,deviceLabel:"W5 managed provider canary"}')" "${WEB_URL}/api/auth/verify" > "${RUNNER_TEMP}/web-verify.json"
+          CSRF="$(jq -r '.csrfToken' "${RUNNER_TEMP}/web-verify.json")"
+
+          curl --fail --silent --show-error -H "${wh}" -b "${jar}" "${WEB_URL}/api/provider/state" > "${RUNNER_TEMP}/state-before.json"
+          jq -e --arg id "${PROVIDER_ID}" '.workspace.providerId == $id and .enquiries.providerScope == "actor_resolved" and .interactions.providerScope == "actor_resolved" and .reviews.providerScope == "actor_resolved"' "${RUNNER_TEMP}/state-before.json" >/dev/null
+          jq -e '(.timeline|type)=="array" and (.uploads|type)=="array" and (.handoffs|type)=="object" and (.commercial.providerScope)=="actor_resolved"' "${RUNNER_TEMP}/state-before.json" >/dev/null
+          ! grep -Eqi 'privateBaseLatitude|privateBaseLongitude|privateObjectKey|objectKey|rawContact|normalized_value|service_role|sb_secret_' "${RUNNER_TEMP}/state-before.json"
+
+          jq -n --arg suffix "${suffix}" '{action:"update-profile",displayName:("W5 Managed Provider " + $suffix),operatingModel:"mobile",localitySummary:"Kabwata, Lusaka",serviceAreaSummary:"Kabwata and surrounding Lusaka neighbourhoods"}' > "${RUNNER_TEMP}/profile-action.json"
+          curl --fail --silent --show-error -H "${wh}" -H "Origin: ${WEB_URL}" -H "x-direkt-csrf: ${CSRF}" -b "${jar}" -X POST -H 'content-type: application/json' --data @"${RUNNER_TEMP}/profile-action.json" "${WEB_URL}/api/provider/action" > "${RUNNER_TEMP}/profile-result.json"
+
+          jq -n --arg category "${CATEGORY}" '{action:"update-availability",categoryKey:$category,state:"available",nextAvailableAt:""}' > "${RUNNER_TEMP}/availability-action.json"
+          curl --fail --silent --show-error -H "${wh}" -H "Origin: ${WEB_URL}" -H "x-direkt-csrf: ${CSRF}" -b "${jar}" -X POST -H 'content-type: application/json' --data @"${RUNNER_TEMP}/availability-action.json" "${WEB_URL}/api/provider/action" > "${RUNNER_TEMP}/availability-result.json"
+
+          curl --fail --silent --show-error -H "${wh}" -b "${jar}" "${WEB_URL}/api/provider/state" > "${RUNNER_TEMP}/state-after.json"
+          jq -e --arg suffix "${suffix}" '.workspace.provider.displayName == ("W5 Managed Provider " + $suffix)' "${RUNNER_TEMP}/state-after.json" >/dev/null
+          jq -e --arg category "${CATEGORY}" '.workspace.availability | any(.categoryKey == $category and .state == "available")' "${RUNNER_TEMP}/state-after.json" >/dev/null
+
+          EVIDENCE_MODE="not_applicable_no_verification_case"
+          CASE_ID="$(jq -r '.timeline[0].caseId // empty' "${RUNNER_TEMP}/state-after.json")"
+          if [[ "${CASE_ID}" =~ ^[0-9a-fA-F-]{36}$ ]]; then
+            EVIDENCE_MODE="recoverable_intent_verified"
+            CLIENT_KEY="web-w5-${suffix}-$(date +%s)"
+            jq -n --arg caseId "${CASE_ID}" --arg clientIntentKey "${CLIENT_KEY}" '{action:"create-upload-intent",caseId:$caseId,clientIntentKey:$clientIntentKey,evidenceClass:"experience",documentType:"supporting_document",contentType:"application/pdf",maxBytes:1024,consentConfirmed:true}' > "${RUNNER_TEMP}/intent-action.json"
+            curl --fail --silent --show-error -H "${wh}" -H "Origin: ${WEB_URL}" -H "x-direkt-csrf: ${CSRF}" -b "${jar}" -X POST -H 'content-type: application/json' --data @"${RUNNER_TEMP}/intent-action.json" "${WEB_URL}/api/provider/action" > "${RUNNER_TEMP}/intent-one.json"
+            curl --fail --silent --show-error -H "${wh}" -H "Origin: ${WEB_URL}" -H "x-direkt-csrf: ${CSRF}" -b "${jar}" -X POST -H 'content-type: application/json' --data @"${RUNNER_TEMP}/intent-action.json" "${WEB_URL}/api/provider/action" > "${RUNNER_TEMP}/intent-two.json"
+            INTENT="$(jq -r '.uploadIntentId' "${RUNNER_TEMP}/intent-one.json")"
+            test "${INTENT}" = "$(jq -r '.uploadIntentId' "${RUNNER_TEMP}/intent-two.json")"
+            ! grep -Eqi 'objectKey|privateObjectKey' "${RUNNER_TEMP}/intent-one.json"
+            jq -n --arg id "${INTENT}" '{action:"interrupt-upload",uploadIntentId:$id,errorCode:"W5_CANARY_INTERRUPTED"}' > "${RUNNER_TEMP}/interrupt.json"
+            curl --fail --silent --show-error -H "${wh}" -H "Origin: ${WEB_URL}" -H "x-direkt-csrf: ${CSRF}" -b "${jar}" -X POST -H 'content-type: application/json' --data @"${RUNNER_TEMP}/interrupt.json" "${WEB_URL}/api/provider/action" > "${RUNNER_TEMP}/interrupted.json"
+            jq -e '.state == "retryable" or .state == "interrupted"' "${RUNNER_TEMP}/interrupted.json" >/dev/null
+            jq -n --arg id "${INTENT}" '{action:"retry-upload",uploadIntentId:$id}' > "${RUNNER_TEMP}/retry.json"
+            curl --fail --silent --show-error -H "${wh}" -H "Origin: ${WEB_URL}" -H "x-direkt-csrf: ${CSRF}" -b "${jar}" -X POST -H 'content-type: application/json' --data @"${RUNNER_TEMP}/retry.json" "${WEB_URL}/api/provider/action" > "${RUNNER_TEMP}/retried.json"
+            jq -e '.upload.uploadUrl | startswith("https://")' "${RUNNER_TEMP}/retried.json" >/dev/null
+            ! grep -Eqi 'objectKey|privateObjectKey' "${RUNNER_TEMP}/retried.json"
+            jq -n --arg id "${INTENT}" '{action:"cancel-upload",uploadIntentId:$id,reason:"Synthetic W5 canary cleanup after retry verification"}' > "${RUNNER_TEMP}/cancel-intent.json"
+            curl --fail --silent --show-error -H "${wh}" -H "Origin: ${WEB_URL}" -H "x-direkt-csrf: ${CSRF}" -b "${jar}" -X POST -H 'content-type: application/json' --data @"${RUNNER_TEMP}/cancel-intent.json" "${WEB_URL}/api/provider/action" >/dev/null
+          fi
+
+          ENQUIRY_MODE="$(jq -r 'if (.enquiries.items|length)>0 then "fixture_available" else "not_applicable_no_provider_enquiry_fixture" end' "${RUNNER_TEMP}/state-after.json")"
+          REVIEW_MODE="$(jq -r 'if (.reviews.items|length)>0 then "fixture_available" else "not_applicable_no_provider_review_fixture" end' "${RUNNER_TEMP}/state-after.json")"
+
+          curl -sS -o /dev/null -H "${ah}" -H "${apph}" -X POST -H 'content-type: application/json' --data '{"targetStatus":"archived","reason":"Synthetic W5 managed canary fixture archived after verification"}' "${API_URL}/api/v1/providers/${PROVIDER_ID}/state-transitions" || true
+
+          jq -n --arg source "${SOURCE_SHA}" --arg provider "${PROVIDER_ID}" --arg evidence "${EVIDENCE_MODE}" --arg enquiry "${ENQUIRY_MODE}" --arg review "${REVIEW_MODE}" '{source:$source,providerId:$provider,dataMode:"synthetic-only",actorResolvedProvider:true,profileDurable:true,availabilityDurable:true,privateProjectionScan:true,interactionsAndMaskedHandoffs:true,evidenceMode:$evidence,enquiryMode:$enquiry,reviewMode:$review,unauthenticatedDenied:true}' > "${RUNNER_TEMP}/w5-canary-evidence.json"
+
+      - name: Remove temporary deployer invocation and verify final IAM
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          deployer="serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}"
+          for service in "${GCP_API_SERVICE}" "${GCP_WEB_SERVICE}"; do
+            if ! gcloud run services describe "${service}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format='value(metadata.name)' >/dev/null 2>&1; then continue; fi
+            gcloud run services remove-iam-policy-binding "${service}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --member "${deployer}" --role roles/run.invoker --quiet >/dev/null 2>&1 || true
+            policy="${RUNNER_TEMP}/${service}-w5-final-iam.json"
+            gcloud run services get-iam-policy "${service}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${policy}"
+            jq -e --arg deployer "${deployer}" '[.bindings[]?.members[]? | select(. == $deployer or . == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' "${policy}" >/dev/null
+          done
+
+      - name: Upload sanitized W5 canary evidence
+        if: always() && hashFiles(format('{0}/w5-canary-evidence.json', runner.temp)) != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-w5-provider-canary-${{ steps.source.outputs.source_sha }}
+          path: ${{ runner.temp }}/w5-canary-evidence.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish W5 canary summary
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f "${RUNNER_TEMP}/w5-canary-evidence.json" ]]; then
+            jq . "${RUNNER_TEMP}/w5-canary-evidence.json" >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo 'W5 managed canary did not produce PASS evidence.' >> "${GITHUB_STEP_SUMMARY}"
+          fi
