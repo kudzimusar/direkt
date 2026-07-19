@@ -1,0 +1,47 @@
+name: DIREKT functional web W4 customer contract
+
+on:
+  push:
+    branches: [main, build/android-v1]
+    paths:
+      - "web/direkt-app/**"
+      - "backend/direkt-api/src/account-contact/**"
+      - "backend/direkt-api/src/interaction/**"
+      - "backend/direkt-api/src/app.module.ts"
+      - ".github/workflows/functional-pwa-w4-contract.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "web/direkt-app/**"
+      - "backend/direkt-api/src/account-contact/**"
+      - "backend/direkt-api/src/interaction/**"
+      - "backend/direkt-api/src/app.module.ts"
+      - ".github/workflows/functional-pwa-w4-contract.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify-w4:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/direkt-app/package-lock.json
+      - working-directory: web/direkt-app
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - working-directory: web/direkt-app
+        run: npm run typecheck
+      - working-directory: web/direkt-app
+        run: npm run verify:customer
+      - name: Prove Android protected surface unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          base_sha="$(git merge-base HEAD origin/main)"
+          git diff --quiet "${base_sha}" HEAD -- android/direkt-app
