@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Validate DIREKT planning documentation."""
+"""Validate DIREKT planning documentation and the public synthetic PWA contract."""
 from pathlib import Path
+import json
 import re
 import sys
 
@@ -16,6 +17,12 @@ REQUIRED = [
     "docs/testing/QUALITY_GATES.md",
     "docs/operations/AGENT_WORKFLOW.md",
     "docs/operations/PAGES_USAGE.md",
+    "docs/REPOSITORY_RECONCILIATION_2026-07-19.md",
+    "docs/integrations/CURRENT_INTEGRATION_STATUS.md",
+    "docs/architecture/PWA_ARCHITECTURE.md",
+    "docs/design/PWA_UI_SPECIFICATION.md",
+    "docs/testing/PWA_TEST_PLAN.md",
+    "docs/operations/REMOTE_UI_TESTING.md",
 ]
 errors = []
 
@@ -37,10 +44,57 @@ for path in sorted(list(ROOT.glob("*.md")) + list((ROOT / "docs").rglob("*.md"))
     if re.search(r"(?i)(api[_-]?key|secret|password)\s*[:=]\s*['\"][A-Za-z0-9_\-]{12,}", text):
         errors.append(f"{rel}: possible committed secret")
 
+pwa = ROOT / "web" / "direkt-pwa"
+for rel in ("index.html", "styles.css", "app.js", "manifest.webmanifest", "sw.js", "icon.svg"):
+    if not (pwa / rel).is_file():
+        errors.append(f"Missing PWA file: web/direkt-pwa/{rel}")
+
+if (pwa / "manifest.webmanifest").is_file():
+    try:
+        manifest = json.loads((pwa / "manifest.webmanifest").read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        errors.append(f"PWA manifest invalid JSON: {exc}")
+    else:
+        if manifest.get("display") != "standalone":
+            errors.append("PWA manifest must use standalone display")
+        if not str(manifest.get("start_url", "")).startswith("./"):
+            errors.append("PWA start_url must remain inside the static app path")
+        if manifest.get("scope") != "./":
+            errors.append("PWA scope must be ./")
+
+if (pwa / "index.html").is_file():
+    html = (pwa / "index.html").read_text(encoding="utf-8")
+    for required_text in (
+        "Synthetic remote UI review",
+        "No real submissions",
+        "manifest.webmanifest",
+        "noindex,nofollow,noarchive",
+        'id="main-content"',
+    ):
+        if required_text not in html:
+            errors.append(f"PWA index missing required contract text: {required_text}")
+
+if pwa.is_dir():
+    public_text = "\n".join(
+        path.read_text(encoding="utf-8", errors="ignore")
+        for path in pwa.rglob("*")
+        if path.is_file()
+    )
+    prohibited_patterns = {
+        "database URL": r"postgres(?:ql)?://",
+        "Supabase privileged key marker": r"(?i)(SUPABASE_(?:SECRET|SERVICE)|service_role)",
+        "Google private key": r"-----BEGIN (?:RSA |EC )?PRIVATE KEY-----",
+        "credential-bearing URL": r"https?://[^\s/:]+:[^\s/@]+@",
+    }
+    for label, pattern in prohibited_patterns.items():
+        if re.search(pattern, public_text):
+            errors.append(f"Public PWA contains prohibited {label}")
+
 if errors:
     print("Documentation validation failed:")
     for e in errors:
         print(f"- {e}")
     sys.exit(1)
 
-print(f"Documentation validation passed ({len(list(ROOT.glob('*.md')))+len(list((ROOT/'docs').rglob('*.md')))} Markdown files).")
+count = len(list(ROOT.glob("*.md"))) + len(list((ROOT / "docs").rglob("*.md")))
+print(f"Documentation/PWA validation passed ({count} Markdown files + public synthetic PWA contract).")
