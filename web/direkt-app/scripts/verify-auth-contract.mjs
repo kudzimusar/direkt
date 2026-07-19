@@ -14,6 +14,7 @@ const files = {
   api: "web/direkt-app/lib/server/direkt-auth-api.ts",
   verifyRoute: "web/direkt-app/app/api/auth/verify/route.ts",
   firebaseRoute: "web/direkt-app/app/api/auth/firebase-exchange/route.ts",
+  refreshRoute: "web/direkt-app/app/api/auth/refresh/route.ts",
   summaryRoute: "web/direkt-app/app/api/account/summary/route.ts",
   accountUi: "web/direkt-app/components/account-experience.tsx",
 };
@@ -56,8 +57,8 @@ requireMarkers(source.runtime, [
 requireMarkers(source.cookies, [
   "httpOnly: true",
   'sameSite: "strict"',
-  "rotateSession(current.refreshToken)",
   "timingSafeEqual",
+  "Arbitrary concurrent BFF reads must never race the one-time",
 ]);
 requireMarkers(source.security, [
   "assertSameOrigin",
@@ -80,6 +81,14 @@ requireMarkers(source.firebaseRoute, [
   "consentAccepted: true",
   "establishBrowserSession(session)",
 ]);
+requireMarkers(source.refreshRoute, [
+  "assertSecureMutation(request)",
+  "accessTokenNeedsRefresh(current)",
+  "rotateSession(current.refreshToken)",
+  "rotateBrowserSession(rotated)",
+  "error.status === 401",
+  "clearBrowserSession()",
+]);
 requireMarkers(source.summaryRoute, [
   "withAuthenticatedSession",
   "api.listSessions",
@@ -97,13 +106,14 @@ for (const [name, text] of Object.entries({
   accountUi: source.accountUi,
   verifyRoute: source.verifyRoute,
   firebaseRoute: source.firebaseRoute,
+  refreshRoute: source.refreshRoute,
 })) {
   if (/localStorage|sessionStorage|indexedDB/i.test(text)) {
     throw new Error(`${name} must not persist DIREKT session material in browser-readable storage`);
   }
 }
 
-for (const text of [source.verifyRoute, source.firebaseRoute]) {
+for (const text of [source.verifyRoute, source.firebaseRoute, source.refreshRoute]) {
   const returnedBody = text.slice(text.indexOf("return noStoreJson"));
   if (/accessToken\s*:|refreshToken\s*:/.test(returnedBody)) {
     throw new Error("Auth exchange routes must not return DIREKT access/refresh tokens to browser JSON");
@@ -122,6 +132,7 @@ process.stdout.write(
     privateApiBoundary: true,
     providerScopeServerDerived: true,
     firebaseExchangeGated: true,
+    refreshRotationMutationOnly: true,
   })}\n`,
 );
 
