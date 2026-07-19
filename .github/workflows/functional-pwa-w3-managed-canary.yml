@@ -1,0 +1,398 @@
+name: DIREKT functional web W3 managed auth canary
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "docs/web/W3_MANAGED_CANARY_TRIGGER.md"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: direkt-functional-web-w3-managed-canary
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    name: Deploy and verify private W3 auth/session canary
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_REGION: asia-northeast1
+      GCP_ARTIFACT_REGISTRY: direkt-containers
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_API_SERVICE: direkt-api
+      GCP_WEB_SERVICE: direkt-customer-provider-web-staging
+      GCP_WEB_RUNTIME_SERVICE_ACCOUNT: direkt-portal-runtime@direkt-dev-502701.iam.gserviceaccount.com
+
+    steps:
+      - name: Resolve immutable merged source
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.event.pull_request.head.repo.full_name }}" = "${{ github.repository }}"
+          source_sha="${{ github.event.pull_request.base.sha }}"
+          head_sha="${{ github.event.pull_request.head.sha }}"
+          [[ "${source_sha}" =~ ^[0-9a-f]{40}$ ]]
+          [[ "${head_sha}" =~ ^[0-9a-f]{40}$ ]]
+          echo "source_sha=${source_sha}" >> "${GITHUB_OUTPUT}"
+          echo "head_sha=${head_sha}" >> "${GITHUB_OUTPUT}"
+
+      - name: Check out exact merged source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.source.outputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify source ancestry and one-file trigger
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          test "${SOURCE_SHA}" = "${{ steps.source.outputs.source_sha }}"
+          git fetch origin main --no-tags
+          git merge-base --is-ancestor "${SOURCE_SHA}" origin/main
+          git fetch --no-tags origin "${{ steps.source.outputs.head_sha }}"
+          mapfile -t changed < <(git diff --name-only "${SOURCE_SHA}" "${{ steps.source.outputs.head_sha }}")
+          test "${#changed[@]}" -eq 1
+          test "${changed[0]}" = "docs/web/W3_MANAGED_CANARY_TRIGGER.md"
+          echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
+          echo "WEB_IMAGE_URI=${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/${GCP_WEB_SERVICE}:w3-${SOURCE_SHA}" >> "${GITHUB_ENV}"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/direkt-app/package-lock.json
+
+      - name: Verify exact W3 source
+        working-directory: web/direkt-app
+        env:
+          DIREKT_WEB_API_MODE: disabled
+          NEXT_TELEMETRY_DISABLED: "1"
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run typecheck
+          npm run verify:static
+          npm run verify:discovery
+          npm run verify:auth
+          npm run build
+
+      - name: Authenticate to Google Cloud through GitHub OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Verify existing private API and bounded web runtime identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run services describe "${GCP_API_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json \
+            > "${RUNNER_TEMP}/api-service.json"
+          API_URL="$(jq -r '.status.url' "${RUNNER_TEMP}/api-service.json")"
+          test -n "${API_URL}"
+          echo "API_URL=${API_URL}" >> "${GITHUB_ENV}"
+
+          gcloud run services get-iam-policy "${GCP_API_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json \
+            > "${RUNNER_TEMP}/api-iam-before.json"
+          jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' \
+            "${RUNNER_TEMP}/api-iam-before.json" >/dev/null
+          jq -e --arg expected "serviceAccount:${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}" '
+            [.bindings[]? | select(.role == "roles/run.invoker") | .members[]?] | index($expected) != null
+          ' "${RUNNER_TEMP}/api-iam-before.json" >/dev/null
+
+      - name: Configure Artifact Registry authentication
+        run: gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+
+      - name: Build and push immutable W3 web image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build \
+            --file web/direkt-app/Dockerfile \
+            --tag "${WEB_IMAGE_URI}" \
+            web/direkt-app
+          docker push "${WEB_IMAGE_URI}"
+
+      - name: Deploy IAM-private synthetic W3 web canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run deploy "${GCP_WEB_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --platform managed \
+            --image "${WEB_IMAGE_URI}" \
+            --service-account "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}" \
+            --port 8080 \
+            --cpu 1 \
+            --memory 512Mi \
+            --min-instances 0 \
+            --max-instances 1 \
+            --concurrency 20 \
+            --timeout 60 \
+            --ingress all \
+            --labels "direkt-environment=staging,direkt-data-mode=synthetic-only,direkt-workstream=w3-canary" \
+            --set-env-vars "NODE_ENV=production,HOSTNAME=0.0.0.0,DIREKT_WEB_API_MODE=authenticated-bff,DIREKT_API_BASE_URL=${API_URL},DIREKT_WEB_AUTH_MODE=synthetic,DIREKT_WEB_ALLOW_SYNTHETIC_AUTH=true,DIREKT_WEB_PILOT_NOTICE_VERSION=synthetic-canary-v1" \
+            --no-allow-unauthenticated \
+            --quiet
+
+          WEB_URL="$(gcloud run services describe "${GCP_WEB_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format='value(status.url)')"
+          test -n "${WEB_URL}"
+          echo "WEB_URL=${WEB_URL}" >> "${GITHUB_ENV}"
+
+      - name: Verify deployed image, identity, configuration and private IAM
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run services describe "${GCP_WEB_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json \
+            > "${RUNNER_TEMP}/web-service.json"
+          jq -e --arg identity "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}" '.spec.template.spec.serviceAccountName == $identity' \
+            "${RUNNER_TEMP}/web-service.json" >/dev/null
+          jq -e --arg image "${WEB_IMAGE_URI}" '.spec.template.spec.containers[0].image == $image' \
+            "${RUNNER_TEMP}/web-service.json" >/dev/null
+          jq -e '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef != null)] | length == 0' \
+            "${RUNNER_TEMP}/web-service.json" >/dev/null
+          jq -e '[.spec.template.spec.containers[0].env[]? | {(.name): .value}] | add
+            | .DIREKT_WEB_API_MODE == "authenticated-bff"
+            and .DIREKT_WEB_AUTH_MODE == "synthetic"
+            and .DIREKT_WEB_ALLOW_SYNTHETIC_AUTH == "true"' \
+            "${RUNNER_TEMP}/web-service.json" >/dev/null
+
+          for member in allUsers allAuthenticatedUsers; do
+            gcloud run services remove-iam-policy-binding "${GCP_WEB_SERVICE}" \
+              --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" \
+              --member "${member}" --role roles/run.invoker --quiet >/dev/null 2>&1 || true
+          done
+          gcloud run services get-iam-policy "${GCP_WEB_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json \
+            > "${RUNNER_TEMP}/web-iam-private.json"
+          jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' \
+            "${RUNNER_TEMP}/web-iam-private.json" >/dev/null
+
+      - name: Grant temporary deployer invocation for bounded canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          for service in "${GCP_API_SERVICE}" "${GCP_WEB_SERVICE}"; do
+            gcloud run services add-iam-policy-binding "${service}" \
+              --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" \
+              --member "serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}" \
+              --role roles/run.invoker --quiet
+          done
+
+      - name: Mint private API canary ID token
+        id: api-auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+          token_format: id_token
+          id_token_audience: ${{ env.API_URL }}
+          id_token_include_email: true
+
+      - name: Mint private web canary ID token
+        id: web-auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+          token_format: id_token
+          id_token_audience: ${{ env.WEB_URL }}
+          id_token_include_email: true
+
+      - name: Exercise managed W3 browser authentication and session lifecycle
+        shell: bash
+        env:
+          API_ID_TOKEN: ${{ steps.api-auth.outputs.id_token }}
+          WEB_ID_TOKEN: ${{ steps.web-auth.outputs.id_token }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::${API_ID_TOKEN}"
+          echo "::add-mask::${WEB_ID_TOKEN}"
+          api_header="X-Serverless-Authorization: Bearer ${API_ID_TOKEN}"
+          web_header="X-Serverless-Authorization: Bearer ${WEB_ID_TOKEN}"
+          jar="${RUNNER_TEMP}/w3-cookies.txt"
+
+          curl --fail --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors \
+            --header "${web_header}" --cookie-jar "${jar}" \
+            "${WEB_URL}/api/auth/bootstrap" > "${RUNNER_TEMP}/bootstrap.json"
+          jq -e '.authMode == "synthetic" and .syntheticAuthenticationEnabled == true and .hasSession == false and (.csrfToken | test("^[A-Za-z0-9_-]{32,}$"))' \
+            "${RUNNER_TEMP}/bootstrap.json" >/dev/null
+          jq -e 'has("accessToken") or has("refreshToken") | not' "${RUNNER_TEMP}/bootstrap.json" >/dev/null
+          CSRF="$(jq -r '.csrfToken' "${RUNNER_TEMP}/bootstrap.json")"
+          grep -q '__Host-direkt-csrf' "${jar}"
+          ! grep -q '__Host-direkt-access' "${jar}"
+          ! grep -q '__Host-direkt-refresh' "${jar}"
+
+          missing_origin="$(curl --silent --output "${RUNNER_TEMP}/missing-origin.json" --write-out '%{http_code}' \
+            --header "${web_header}" --header "x-direkt-csrf: ${CSRF}" \
+            --cookie "${jar}" --request POST --header 'content-type: application/json' \
+            --data '{"channel":"email","contact":"w3-canary@example.invalid"}' \
+            "${WEB_URL}/api/auth/challenge")"
+          test "${missing_origin}" = "403"
+
+          wrong_csrf="$(curl --silent --output "${RUNNER_TEMP}/wrong-csrf.json" --write-out '%{http_code}' \
+            --header "${web_header}" --header "Origin: ${WEB_URL}" --header 'x-direkt-csrf: wrong-token' \
+            --cookie "${jar}" --request POST --header 'content-type: application/json' \
+            --data '{"channel":"email","contact":"w3-canary@example.invalid"}' \
+            "${WEB_URL}/api/auth/challenge")"
+          test "${wrong_csrf}" = "403"
+
+          curl --fail --silent --show-error \
+            --header "${web_header}" --header "Origin: ${WEB_URL}" --header "x-direkt-csrf: ${CSRF}" \
+            --cookie "${jar}" --cookie-jar "${jar}" --request POST --header 'content-type: application/json' \
+            --data '{"channel":"email","contact":"w3-canary@example.invalid"}' \
+            "${WEB_URL}/api/auth/challenge" > "${RUNNER_TEMP}/challenge.json"
+          jq -e '.status == "accepted" and (.challengeId | test("^[0-9a-fA-F-]{36}$")) and (.synthetic.code | test("^[0-9]{6}$"))' \
+            "${RUNNER_TEMP}/challenge.json" >/dev/null
+          CHALLENGE_ID="$(jq -r '.challengeId' "${RUNNER_TEMP}/challenge.json")"
+          CODE="$(jq -r '.synthetic.code' "${RUNNER_TEMP}/challenge.json")"
+
+          curl --fail --silent --show-error \
+            --header "${web_header}" --header "Origin: ${WEB_URL}" --header "x-direkt-csrf: ${CSRF}" \
+            --cookie "${jar}" --cookie-jar "${jar}" --request POST --header 'content-type: application/json' \
+            --data "$(jq -n --arg challengeId "${CHALLENGE_ID}" --arg code "${CODE}" '{challengeId:$challengeId,code:$code,deviceLabel:"DIREKT W3 managed canary"}')" \
+            "${WEB_URL}/api/auth/verify" > "${RUNNER_TEMP}/verify.json"
+          jq -e '.authenticated == true and (.identityId | test("^[0-9a-fA-F-]{36}$")) and (.sessionId | test("^[0-9a-fA-F-]{36}$")) and (.csrfToken | test("^[A-Za-z0-9_-]{32,}$"))' \
+            "${RUNNER_TEMP}/verify.json" >/dev/null
+          jq -e 'has("accessToken") or has("refreshToken") | not' "${RUNNER_TEMP}/verify.json" >/dev/null
+          SESSION_ID="$(jq -r '.sessionId' "${RUNNER_TEMP}/verify.json")"
+          CSRF="$(jq -r '.csrfToken' "${RUNNER_TEMP}/verify.json")"
+          grep -q '#HttpOnly_.*__Host-direkt-access' "${jar}"
+          grep -q '#HttpOnly_.*__Host-direkt-refresh' "${jar}"
+
+          curl --fail --silent --show-error \
+            --header "${web_header}" --cookie "${jar}" \
+            "${WEB_URL}/api/account/summary" > "${RUNNER_TEMP}/summary.json"
+          jq -e --arg sessionId "${SESSION_ID}" '
+            .authenticated == true
+            and .sessionId == $sessionId
+            and (.sessions | map(.id) | index($sessionId) != null)
+            and (.modes.customer == true)
+            and (.modes.provider | type == "boolean")
+          ' "${RUNNER_TEMP}/summary.json" >/dev/null
+          jq -e 'has("accessToken") or has("refreshToken") or has("providerId") | not' "${RUNNER_TEMP}/summary.json" >/dev/null
+
+          python3 - "${jar}" <<'PY'
+          from pathlib import Path
+          import sys
+          path = Path(sys.argv[1])
+          lines = path.read_text().splitlines()
+          output = []
+          found = False
+          for line in lines:
+              if line and not line.startswith('#') and '\t__Host-direkt-access-exp\t' in line:
+                  parts = line.split('\t')
+                  parts[-1] = '1970-01-01T00%3A00%3A00.000Z'
+                  line = '\t'.join(parts)
+                  found = True
+              elif line.startswith('#HttpOnly_') and '\t__Host-direkt-access-exp\t' in line:
+                  parts = line.split('\t')
+                  parts[-1] = '1970-01-01T00%3A00%3A00.000Z'
+                  line = '\t'.join(parts)
+                  found = True
+              output.append(line)
+          if not found:
+              raise SystemExit('access-exp cookie not found')
+          path.write_text('\n'.join(output) + '\n')
+          PY
+
+          curl --fail --silent --show-error \
+            --header "${web_header}" --header "Origin: ${WEB_URL}" --header "x-direkt-csrf: ${CSRF}" \
+            --cookie "${jar}" --cookie-jar "${jar}" --request POST \
+            "${WEB_URL}/api/auth/refresh" > "${RUNNER_TEMP}/refresh.json"
+          jq -e '.refreshed == true and (.sessionId | test("^[0-9a-fA-F-]{36}$"))' "${RUNNER_TEMP}/refresh.json" >/dev/null
+
+          curl --fail --silent --show-error \
+            --header "${web_header}" --header "Origin: ${WEB_URL}" --header "x-direkt-csrf: ${CSRF}" \
+            --cookie "${jar}" --cookie-jar "${jar}" --request POST \
+            "${WEB_URL}/api/auth/logout" > "${RUNNER_TEMP}/logout.json"
+          jq -e '.signedOut == true and (.csrfToken | test("^[A-Za-z0-9_-]{32,}$"))' "${RUNNER_TEMP}/logout.json" >/dev/null
+
+          post_logout="$(curl --silent --output "${RUNNER_TEMP}/post-logout.json" --write-out '%{http_code}' \
+            --header "${web_header}" --cookie "${jar}" "${WEB_URL}/api/account/summary")"
+          test "${post_logout}" = "401"
+          jq -e '.authenticated == false' "${RUNNER_TEMP}/post-logout.json" >/dev/null
+
+          unauth_api="$(curl --silent --output /dev/null --write-out '%{http_code}' "${API_URL}/api/v1/health/ready")"
+          unauth_web="$(curl --silent --output /dev/null --write-out '%{http_code}' "${WEB_URL}/")"
+          test "${unauth_api}" = "403"
+          test "${unauth_web}" = "403"
+
+          jq -n \
+            --arg source "${SOURCE_SHA}" \
+            --arg sessionId "${SESSION_ID}" \
+            '{source:$source,sessionId:$sessionId,dataMode:"synthetic-only",csrfOriginNegatives:true,httpOnlyCookies:true,backendSessionObservable:true,providerModeServerDerived:true,idleRefreshRotation:true,logoutRevocation:true,unauthenticatedDenied:true}' \
+            > "${RUNNER_TEMP}/w3-canary-evidence.json"
+
+      - name: Remove temporary deployer invocation and verify final IAM
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          deployer="serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}"
+          for service in "${GCP_API_SERVICE}" "${GCP_WEB_SERVICE}"; do
+            if ! gcloud run services describe "${service}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format='value(metadata.name)' >/dev/null 2>&1; then
+              continue
+            fi
+            gcloud run services remove-iam-policy-binding "${service}" \
+              --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" \
+              --member "${deployer}" --role roles/run.invoker --quiet >/dev/null 2>&1 || true
+            policy="${RUNNER_TEMP}/${service}-w3-final-iam.json"
+            gcloud run services get-iam-policy "${service}" \
+              --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${policy}"
+            jq -e --arg deployer "${deployer}" '[.bindings[]?.members[]? | select(. == $deployer or . == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' \
+              "${policy}" >/dev/null
+          done
+
+      - name: Upload sanitized W3 canary evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-functional-web-w3-canary-${{ steps.source.outputs.source_sha }}
+          path: ${{ runner.temp }}/w3-canary-evidence.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish W3 canary summary
+        if: success()
+        shell: bash
+        run: |
+          {
+            echo "### DIREKT functional web W3 managed canary"
+            echo "- Source: \`${SOURCE_SHA}\`"
+            echo "- Invocation: IAM-private API and web"
+            echo "- Authentication: controlled synthetic DIREKT challenge"
+            echo "- Session credentials: HttpOnly cookies only"
+            echo "- CSRF/origin negatives: passed"
+            echo "- Backend-observable session/account summary: passed"
+            echo "- Provider mode: actor-resolved by backend"
+            echo "- Idle access-expiry refresh rotation: passed"
+            echo "- Logout/revocation and post-logout denial: passed"
+            echo "- Unauthenticated Cloud Run invocation: denied"
+            echo "- Temporary deployer Invoker grants: removed"
+            echo "- Firebase Web phone auth: remains gated"
+            echo "- Real participant/public cutover: not authorized"
+          } >> "${GITHUB_STEP_SUMMARY}"
