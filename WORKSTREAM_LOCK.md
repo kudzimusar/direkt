@@ -6,34 +6,51 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | RELEASED — Phase 0–12 integration/runtime audit and all currently repository-clearable Phase 12 work complete |
-| Owner/agent | None — lane available for the next explicitly authorized task |
-| Formal programme phase | Phase 11 remains open; formal Phase 12 production release is not authorized |
-| Final implementation checkpoint | PR #149 merged to `main` at `25deaae72ca2974c5560a8059a50fce37c810f63` |
-| Exact audited implementation head | `e3cddf7645e514d9a6254fff86283d4055d745c4` |
-| Managed Supabase hardening | migration `202607191200_integration_runtime_privilege_hardening.sql`, checksum `e02d1be228a992b7541db92328e9528b8fe0e184660fb78206ca405e9c7b2372`, migration count `39` |
-| Governing issue | Issue #112 remains open for real pilot evidence/exit |
+| Status | CLAIMED — functional customer/provider web/PWA parity implementation |
+| Owner/agent | Active repository agent — functional PWA parity workstream |
+| Authorized scope | Document and implement the real customer/provider web/PWA companion using the same canonical REST/OpenAPI backend, identity, authorization, trust, enquiry, review and commercial rules as Android; desktop replaces bottom navigation with side navigation while mobile retains bottom navigation |
+| Protected surface | `android/direkt-app/**` is regression-protected; no Android architecture, dependency, Gradle, release/signing or UI refactor is authorized by this workstream unless a separately reviewed compatibility fix is strictly required |
+| Implementation lane | `build/android-v1` — historical name retained; single sequential product lane |
+| Baseline | current synchronized `main` checkpoint after PR #152 (`885eb72dcda12be8c23c4068dec138562af5888a`) |
+| Governing plan | `docs/web/FUNCTIONAL_PWA_PARITY_IMPLEMENTATION_PLAN.md` |
+| Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized |
+| Governing issues | Issue #133 for customer/provider PWA/reconciliation; Issue #112 remains open for real pilot evidence/exit |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates |
 
-## Final integration truth
+## Workstream contract
 
-Active managed boundaries include Supabase PostgreSQL/PostGIS/private Storage, canonical REST/OpenAPI backend, Artifact Registry, private Cloud Run staging, Secret Manager, GitHub WIF/Actions, Cloud Logging/Monitoring and Firebase App Distribution.
+1. The existing synthetic `web/direkt-pwa/` remains a preserved review surface until the functional web client passes the documented parity and security gates.
+2. The real browser client is additive under `web/direkt-app/`; it must not be created by refactoring Android into Kotlin Multiplatform/Compose Web.
+3. Android and web share product semantics through the canonical NestJS REST/OpenAPI boundary, not shared UI binaries.
+4. A live browser client must use a reviewed browser session/BFF/gateway boundary. The IAM-private API must not be made public merely to support the web client.
+5. No direct privileged Supabase/database/Storage credentials or authority may enter browser code.
+6. Every shared backend/OpenAPI change must remain backward compatible with Android and pass Android regression gates.
+7. Mobile web uses bottom navigation aligned to Android. Desktop uses persistent side navigation with the same destinations and capabilities; desktop is a layout adaptation, not a different product.
+8. No synthetic fixture or preview-only behavior may be counted as functional parity when a canonical backend capability exists.
 
-Firebase phone authentication is implemented but gated. Maps, Sentry and Resend remain externally provisioned/runtime-unproven. Crashlytics, FCM, Test Lab automation, Turnstile, production WhatsApp, real payment providers and automated registry access remain planned/disabled. No inactive provider was promoted merely because an account or credential exists.
+## Active implementation sequence
 
-The public customer/provider PWA remains synthetic-only for remote UI review. Native Android remains the authoritative native test surface. The operations portal remains IAM-private.
+- W0 — baseline freeze, Android/API/screen inventory, functional parity matrix and project-wide documentation.
+- W1 — additive Next.js/React/TypeScript PWA shell, design system, responsive navigation, manifest/service-worker safety, BFF boundary and typed API foundation.
+- W2 — real public discovery vertical slice through canonical API contracts.
+- W3 — browser authentication/account/session boundary.
+- W4 — complete customer journey parity.
+- W5 — complete provider journey parity.
+- W6 — commercial parity within currently authorized/gated payment boundaries.
+- W7 — cross-client parity, security, accessibility, responsive, offline/network and Android regression closure.
+- W8 — controlled route/deployment cutover only after parity evidence passes; preserve historical preview separately.
 
-## Remaining genuine gates
+## Stop conditions
 
-- real 11C–11H Zambia pilot evidence and 11J `PROCEED`;
-- required regulatory/legal/privacy approvals and final live policy versions;
-- production client cutover from synthetic preview surfaces;
-- end-to-end account deletion;
-- actual production environment and backup restore;
-- operational support/verification/on-call staffing and production monitoring;
-- authorized signed reproducible AAB, final Play declarations/assets/content rating and internal/closed testing;
-- formal go/no-go, staged rollout and final release record.
+Do not merge or promote the functional PWA checkpoint if:
+
+- Android unit/lint/build or release-policy regressions appear;
+- the web client requires weakening Cloud Run IAM or exposing privileged Supabase access;
+- protected API behavior is changed incompatibly for Android;
+- private evidence, contact data or exact provider coordinates can leak into public/browser caches;
+- a real participant, legal, payment, production or release gate would need to be fabricated or bypassed;
+- parity is claimed from static fixtures instead of backend-observable state.
 
 ## Conflict rule
 
-A new agent may claim the lane only for an explicitly authorized next task and must update this file before overlapping writes. Read-only investigation remains allowed.
+No parallel overlapping writes are permitted while this lock is claimed. Read-only investigation is allowed. A subsequent agent must continue this exact workstream or leave a complete handoff before changing overlapping Android, backend/OpenAPI, web/PWA, CI or control-document paths.
