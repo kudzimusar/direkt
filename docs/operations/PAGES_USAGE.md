@@ -1,92 +1,92 @@
-# DIREKT GitHub Pages Usage
+# DIREKT Public Web / GitHub Pages Usage
 
 ## Purpose
 
-GitHub Pages publishes DIREKT documentation, synthetic browser prototypes, test instructions and non-sensitive reports for remote collaboration.
+DIREKT uses GitHub Pages as the **public static origin** for documentation and synthetic/non-sensitive remote-review surfaces. The owner-facing canonical domain is:
 
-Planned URL:
+```text
+https://direkt.forum/
+```
 
-`https://kudzimusar.github.io/direkt/`
+The historical `https://kudzimusar.github.io/direkt/` project URL is no longer the canonical product/documentation entry point and must not be presented as current owner-facing access.
 
-GitHub Pages does **not** execute the native Android application. Android builds are produced by GitHub Actions and installed on Android devices through workflow artifacts or Firebase App Distribution.
+## Current edge topology
 
-See [`REMOTE_ANDROID_TESTING.md`](REMOTE_ANDROID_TESTING.md).
+```text
+Vercel Domains (registrar)
+        ↓
+Cloudflare authoritative DNS
+        ↓
+GitHub Pages public static origin
+        ├─ /          documentation/status/public non-sensitive material
+        ├─ /app/      customer/provider installable synthetic PWA
+        └─ /prototype historical Phase 1B synthetic design artifact
+```
 
-## One-time owner setup
+Cloudflare is the DNS/email edge, not the privileged application backend. IAM-private Cloud Run services must remain protected regardless of public DNS/web changes.
 
-The deployment workflow already exists at `.github/workflows/pages.yml`. The repository owner must complete the GitHub setting that cannot be changed through a documentation commit:
+## Public customer/provider PWA
 
-1. Open repository **Settings**.
-2. Select **Pages** under **Code and automation**.
-3. Under **Build and deployment**, set **Source** to **GitHub Actions**.
-4. Open **Actions**.
-5. Select **Deploy DIREKT documentation to Pages**.
-6. Choose **Run workflow** on `main` if a run is not already active.
-7. Confirm both the `build` and `deploy` jobs succeed.
-8. Open the deployed URL and verify navigation and the planning-pack download.
+`/app/` is authorized for remote visual/product testing using synthetic data only.
 
-The `github-pages` deployment environment is created automatically by the workflow. Only `main` is authorized to trigger the current Pages deployment.
+It may include responsive customer/provider UI, fictional provider/enquiry/evidence-status data, Android-aligned design tokens, installable manifest/service worker, offline static shell and clearly labelled integration/gate explanations.
 
-## Content pipeline
+It must not include real login/session tokens, participant identities/contact data, evidence bytes/object keys/private signed URLs, exact private coordinates, database/Supabase privileged credentials, service-account material, production provider credentials or production-signing material.
 
-`scripts/build_pages_source.py` copies approved root control documents, `docs/` and the planning archive into a generated Pages source directory. MkDocs builds the static site. GitHub Actions uploads and deploys the static artifact from `main`.
+## Why Pages is not the Android runtime
 
-## Role in remote testing
+GitHub Pages serves static HTML/CSS/JavaScript/assets. Native Android remote testing uses GitHub Actions build artifacts, Firebase App Distribution and later Play testing after formal release gates. The PWA provides browser parity for product concepts, not Android runtime equivalence.
 
-Pages supports remote review of:
+## Why Pages is not the operations portal
 
-- product and technical decisions;
-- synthetic clickable interaction prototypes;
-- screenshots and non-sensitive demonstration media;
-- test scripts and structured feedback instructions;
-- approved aggregate pilot findings;
-- build status guidance and links to the appropriate Android distribution channel.
+The operations portal is privileged and remains protected on Cloud Run staging or another explicitly approved protected host. Pages/public PWA must never host authenticated operations or shortcut IAM/private API design.
 
-Pages must not host the live DIREKT backend or simulate a feature in a way that could be confused with implemented Android functionality.
+## Build pipeline
 
-## Allowed
+`.github/workflows/pages.yml` remains the static deployment workflow. It validates documentation/public-PWA contract, packages planning documentation, runs `scripts/build_pages_source.py`, builds MkDocs strictly and deploys the static artifact.
 
-- Markdown documentation;
-- diagrams;
-- synthetic static prototypes;
-- test instructions or forms that do not collect sensitive data;
-- anonymized and aggregate test reports;
-- public release notes;
-- downloadable planning documents;
-- links to authorized Android test-distribution instructions.
+`scripts/build_pages_source.py` copies approved root controls, `docs/`, historical `prototype/`, `web/direkt-pwa/` to `/app/`, and the planning-pack download where present.
 
-## Prohibited
+## Canonical-domain checks
 
-- backend or API hosting;
-- authentication;
-- the operations portal;
-- repository or cloud secrets;
-- real identities or certificates;
-- private coordinates;
-- live complaint cases;
-- production database or API keys;
-- forms that send sensitive data to unapproved services;
-- unrestricted public distribution of internal Android test builds;
-- any claim that the static prototype is the native Android application.
+Repository content must use `https://direkt.forum/` for current public links. Remaining `kudzimusar.github.io/direkt` references must be explicitly historical/technical rather than current product URLs.
 
-## Prototype rules
+Custom-domain/DNS state is external configuration and must be recorded in `docs/integrations/CURRENT_INTEGRATION_STATUS.md` when changed.
 
-Every prototype must:
+## Cloudflare boundary
 
-1. be clearly labelled as a prototype;
-2. use fictional data;
-3. disable real submissions;
-4. identify the tested scenario and version;
-5. include an approved feedback route;
-6. avoid collecting identity, certificate or precise-location evidence.
+Current external provisioning records Cloudflare authoritative DNS for `direkt.forum`, approved Email Routing aliases and DMARC monitoring. Turnstile is **not active** until its failed 403 permission/setup issue, widget creation and source/runtime verification are resolved.
 
-A static prototype is not evidence that backend, verification or security functionality exists.
+Do not claim Cloudflare application-security controls that are not configured and proven.
+
+## Allowed public content
+
+- documentation and diagrams;
+- fictional/synthetic PWA and historical prototype;
+- test instructions;
+- anonymized/aggregate approved reports;
+- release notes and non-sensitive build guidance;
+- links to authorized Android distribution instructions.
+
+## Prohibited public content
+
+- backend/API credentials;
+- privileged operations UI/data;
+- real identities/certificates/evidence;
+- private coordinates/contact linkage;
+- production database/provider secrets;
+- unapproved sensitive-data forms;
+- unrestricted signing material;
+- claims that synthetic content is real pilot/production evidence.
+
+## Public-review labelling rule
+
+Every synthetic PWA/prototype must state synthetic/fictional review mode, no real submissions where applicable, no real participant data and relevant backend/integration limitations.
 
 ## Troubleshooting
 
-- **Workflow not enabled:** complete the Pages Source setting and select GitHub Actions.
-- **Build does not start:** confirm the workflow is on `main` and Actions are enabled for the repository.
-- **Broken links:** run `mkdocs build --strict` and the documentation validator.
-- **Missing page:** check the source generator and MkDocs navigation.
-- **404 after repository rename:** confirm repository name, project-path base URL and Pages settings.
-- **Sensitive material published:** disable Pages, remove the source and artifact, rotate any exposed credential and follow the incident-response process.
+- **Canonical domain does not resolve:** inspect Cloudflare DNS and GitHub Pages custom-domain state; do not edit backend IAM as a DNS fix.
+- **Old GitHub Pages URL appears in docs:** update stale source/config links or label them historical.
+- **PWA route missing:** verify `web/direkt-pwa`, Pages source generation, static validation and deployed artifact.
+- **PWA install/offline issue:** verify manifest scope/start URL/service-worker relative paths under `/app/`.
+- **Sensitive material published:** disable public deployment as necessary, remove/rotate affected material and follow incident response.
