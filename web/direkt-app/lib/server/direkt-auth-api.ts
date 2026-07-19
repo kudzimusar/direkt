@@ -47,18 +47,11 @@ export class DirektAuthApi {
     this.baseUrl = config.apiBaseUrl;
   }
 
-  requestChallenge(input: {
-    channel: "email" | "phone";
-    contact: string;
-  }): Promise<SyntheticChallengeAccepted> {
+  requestChallenge(input: { channel: "email" | "phone"; contact: string }): Promise<SyntheticChallengeAccepted> {
     return this.request("/api/v1/auth/challenges", { method: "POST", body: input });
   }
 
-  verifyChallenge(input: {
-    challengeId: string;
-    code: string;
-    deviceLabel?: string;
-  }): Promise<DirektAuthenticatedSession> {
+  verifyChallenge(input: { challengeId: string; code: string; deviceLabel?: string }): Promise<DirektAuthenticatedSession> {
     return this.request("/api/v1/auth/challenges/verify", { method: "POST", body: input });
   }
 
@@ -72,10 +65,7 @@ export class DirektAuthApi {
   }
 
   rotateSession(refreshToken: string): Promise<DirektRotatedSession> {
-    return this.request("/api/v1/auth/sessions/rotate", {
-      method: "POST",
-      body: { refreshToken },
-    });
+    return this.request("/api/v1/auth/sessions/rotate", { method: "POST", body: { refreshToken } });
   }
 
   listSessions(accessToken: string): Promise<SessionView[]> {
@@ -83,17 +73,10 @@ export class DirektAuthApi {
   }
 
   revokeOtherSessions(accessToken: string): Promise<{ revokedCount: number }> {
-    return this.request("/api/v1/auth/sessions/revoke-others", {
-      method: "POST",
-      accessToken,
-    });
+    return this.request("/api/v1/auth/sessions/revoke-others", { method: "POST", accessToken });
   }
 
-  revokeSession(
-    accessToken: string,
-    sessionId: string,
-    reason?: string,
-  ): Promise<{ revoked: true; sessionId: string }> {
+  revokeSession(accessToken: string, sessionId: string, reason?: string): Promise<{ revoked: true; sessionId: string }> {
     return this.request(`/api/v1/auth/sessions/${encodeURIComponent(sessionId)}/revoke`, {
       method: "POST",
       accessToken,
@@ -110,18 +93,18 @@ export class DirektAuthApi {
   }
 
   listSavedProviders(accessToken: string): Promise<SavedProviderView[]> {
-    return this.request("/api/v1/saved-providers", { accessToken });
+    return this.request("/api/v1/account/saved-providers", { accessToken });
   }
 
   saveProvider(accessToken: string, publicProviderId: string): Promise<SavedProviderView> {
-    return this.request(`/api/v1/saved-providers/${encodeURIComponent(publicProviderId)}`, {
+    return this.request(`/api/v1/account/saved-providers/${encodeURIComponent(publicProviderId)}`, {
       method: "POST",
       accessToken,
     });
   }
 
-  unsaveProvider(accessToken: string, publicProviderId: string): Promise<{ removed: true }> {
-    return this.request(`/api/v1/saved-providers/${encodeURIComponent(publicProviderId)}`, {
+  unsaveProvider(accessToken: string, publicProviderId: string): Promise<unknown> {
+    return this.request(`/api/v1/account/saved-providers/${encodeURIComponent(publicProviderId)}`, {
       method: "DELETE",
       accessToken,
     });
@@ -137,18 +120,14 @@ export class DirektAuthApi {
       publicProviderId: string;
       serviceSummary: string;
       timing: EnquiryTiming;
+      requestedFor?: string;
       localitySummary: string;
       preferredChannel: PreferredChannel;
       policyVersion: string;
     },
     idempotencyKey: string,
   ): Promise<EnquiryView> {
-    return this.request("/api/v1/enquiries", {
-      method: "POST",
-      accessToken,
-      body: input,
-      idempotencyKey,
-    });
+    return this.request("/api/v1/enquiries", { method: "POST", accessToken, body: input, idempotencyKey });
   }
 
   cancelEnquiry(
@@ -164,15 +143,13 @@ export class DirektAuthApi {
   }
 
   listHandoffs(accessToken: string, enquiryId: string): Promise<ContactHandoffView[]> {
-    return this.request(`/api/v1/enquiries/${encodeURIComponent(enquiryId)}/handoffs`, {
-      accessToken,
-    });
+    return this.request(`/api/v1/enquiries/${encodeURIComponent(enquiryId)}/handoffs`, { accessToken });
   }
 
   createHandoff(
     accessToken: string,
     enquiryId: string,
-    input: { channel: PreferredChannel; contactId: string; policyVersion: string },
+    input: { channel: "call" | "whatsapp"; contactId: string; policyVersion: string },
     idempotencyKey: string,
   ): Promise<ContactHandoffView> {
     return this.request(`/api/v1/enquiries/${encodeURIComponent(enquiryId)}/handoffs`, {
@@ -215,11 +192,7 @@ export class DirektAuthApi {
     });
   }
 
-  appealReview(
-    accessToken: string,
-    reviewId: string,
-    input: { reasonCode: string; statement: string; expectedRevision: number; policyVersion: string },
-  ): Promise<ReviewView> {
+  appealReview(accessToken: string, reviewId: string, input: { reason: string; policyVersion: string }): Promise<ReviewView> {
     return this.request(`/api/v1/reviews/${encodeURIComponent(reviewId)}/appeals`, {
       method: "POST",
       accessToken,
@@ -230,8 +203,8 @@ export class DirektAuthApi {
   reportReview(
     accessToken: string,
     reviewId: string,
-    input: { reason: string; policyVersion: string },
-  ): Promise<{ accepted: true }> {
+    input: { reasonCode: "SPAM" | "PRIVACY" | "ABUSE" | "FRAUD" | "OTHER"; detail: string },
+  ): Promise<unknown> {
     return this.request(`/api/v1/reviews/${encodeURIComponent(reviewId)}/reports`, {
       method: "POST",
       accessToken,
@@ -246,7 +219,7 @@ export class DirektAuthApi {
   createComplaint(
     accessToken: string,
     interactionId: string,
-    input: { category: ComplaintView["category"]; summary: string; policyVersion: string },
+    input: { complaintType: ComplaintView["complaintType"]; summary: string; policyVersion: string },
   ): Promise<ComplaintView> {
     return this.request(`/api/v1/interactions/${encodeURIComponent(interactionId)}/complaints`, {
       method: "POST",
@@ -260,18 +233,14 @@ export class DirektAuthApi {
       await this.request("/api/v1/provider-workspace/me", { accessToken });
       return true;
     } catch (error) {
-      if (error instanceof DirektAuthApiError && (error.status === 403 || error.status === 404)) {
-        return false;
-      }
+      if (error instanceof DirektAuthApiError && (error.status === 403 || error.status === 404)) return false;
       throw error;
     }
   }
 
   private async request<T>(path: string, options: RequestOptions = {}): Promise<T> {
     const url = new URL(path, this.baseUrl);
-    if (url.origin !== this.baseUrl.origin) {
-      throw new Error("DIREKT auth request path escaped the configured API origin");
-    }
+    if (url.origin !== this.baseUrl.origin) throw new Error("DIREKT auth request path escaped the configured API origin");
 
     const infrastructureToken = await getCloudRunIdentityToken(this.baseUrl);
     const headers: Record<string, string> = {
@@ -279,15 +248,9 @@ export class DirektAuthApi {
       "user-agent": "direkt-functional-web/0.4",
       "X-Serverless-Authorization": `Bearer ${infrastructureToken}`,
     };
-    if (options.accessToken) {
-      headers.authorization = `Bearer ${options.accessToken}`;
-    }
-    if (options.body !== undefined) {
-      headers["content-type"] = "application/json";
-    }
-    if (options.idempotencyKey) {
-      headers["idempotency-key"] = options.idempotencyKey;
-    }
+    if (options.accessToken) headers.authorization = `Bearer ${options.accessToken}`;
+    if (options.body !== undefined) headers["content-type"] = "application/json";
+    if (options.idempotencyKey) headers["idempotency-key"] = options.idempotencyKey;
 
     const response = await fetch(url, {
       method: options.method ?? "GET",
@@ -313,9 +276,7 @@ export class DirektAuthApi {
       );
     }
 
-    if (response.status === 204) {
-      return undefined as T;
-    }
+    if (response.status === 204) return undefined as T;
     return (await response.json()) as T;
   }
 }
