@@ -91,11 +91,16 @@ export async function POST(request: NextRequest) {
         }
         case "create-complaint": {
           const complaintType = enumValue(body.complaintType, complaintTypes);
-          return api.createComplaint(session.accessToken, uuid(body.interactionId), {
-            complaintType: complaintType as "service_quality" | "contact_privacy" | "provider_conduct" | "other",
-            summary: text(body.summary, 20, 1000),
-            policyVersion: requirePolicy(policyVersion),
-          });
+          return api.createComplaint(
+            session.accessToken,
+            uuid(body.interactionId),
+            {
+              complaintType: complaintType as "service_quality" | "contact_privacy" | "provider_conduct" | "other",
+              summary: text(body.summary, 20, 1000),
+              policyVersion: requirePolicy(policyVersion),
+            },
+            uuid(body.idempotencyKey),
+          );
         }
         default:
           throw new CustomerRequestError("Unsupported customer action.", 400);
