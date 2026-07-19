@@ -1,4 +1,5 @@
-import { getDirektWebRuntimeConfig } from "./runtime-config";
+import { getCloudRunIdentityToken } from "./cloud-run-identity";
+import { getDirektWebRuntimeConfig, type DirektWebApiMode } from "./runtime-config";
 
 export interface ProblemDetails {
   type?: string;
@@ -80,6 +81,53 @@ export interface PublicProviderSearchResponse {
   };
 }
 
+export interface PublicAvailabilityView {
+  publicProviderId: string;
+  state: PublicAvailability;
+  nextAvailableAt: string | null;
+  synthetic: true;
+}
+
+export interface PublicShareView {
+  publicProviderId: string;
+  title: string;
+  text: string;
+  path: string;
+  containsPrivateLocation: false;
+}
+
+export interface ProviderReviewResponseView {
+  responseId: string;
+  body: string;
+  createdAt: string;
+  providerIdentityExposed: false;
+}
+
+/** Mirrors backend/direkt-api/src/interaction/review.types.ts PublicReviewView. */
+export interface PublicReviewView {
+  reviewId: string;
+  publicProviderId: string;
+  providerDisplayName: string;
+  categoryKey: string;
+  rating: number;
+  title: string;
+  body: string;
+  publishedAt: string;
+  providerResponse: ProviderReviewResponseView | null;
+  contactIncluded: false;
+  interactionIdentifierIncluded: false;
+  moderationRationaleIncluded: false;
+  synthetic: true;
+}
+
+export interface PublicProviderBundle {
+  profile: PublicProviderProfile;
+  claims: PublicClaimCard[];
+  availability: PublicAvailabilityView;
+  reviews: PublicReviewView[];
+  share: PublicShareView;
+}
+
 export class DirektApiError extends Error {
   constructor(
     message: string,
@@ -93,6 +141,7 @@ export class DirektApiError extends Error {
 
 export class DirektApiClient {
   private readonly baseUrl: URL;
+  private readonly apiMode: DirektWebApiMode;
 
   constructor() {
     const config = getDirektWebRuntimeConfig();
@@ -100,6 +149,7 @@ export class DirektApiClient {
       throw new Error("DIREKT web API client is disabled by runtime configuration");
     }
     this.baseUrl = config.apiBaseUrl;
+    this.apiMode = config.apiMode;
   }
 
   async getPublicCategories(): Promise<PublicCategory[]> {
@@ -107,9 +157,8 @@ export class DirektApiClient {
   }
 
   async searchPublicProviders(query: URLSearchParams): Promise<PublicProviderSearchResponse> {
-    return this.request<PublicProviderSearchResponse>(
-      `/api/v1/public/providers/search?${query.toString()}`,
-    );
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    return this.request<PublicProviderSearchResponse>(`/api/v1/public/providers/search${suffix}`);
   }
 
   async getPublicProvider(publicProviderId: string): Promise<PublicProviderProfile> {
@@ -118,32 +167,60 @@ export class DirektApiClient {
     );
   }
 
-  async getPublicProviderClaims(publicProviderId: string): Promise<unknown> {
-    return this.request(
+  async getPublicProviderClaims(publicProviderId: string): Promise<PublicClaimCard[]> {
+    return this.request<PublicClaimCard[]>(
       `/api/v1/public/providers/${encodeURIComponent(publicProviderId)}/claims`,
     );
   }
 
-  async getPublicProviderAvailability(publicProviderId: string): Promise<unknown> {
-    return this.request(
+  async getPublicProviderAvailability(publicProviderId: string): Promise<PublicAvailabilityView> {
+    return this.request<PublicAvailabilityView>(
       `/api/v1/public/providers/${encodeURIComponent(publicProviderId)}/availability`,
     );
   }
 
-  async getPublicProviderReviews(publicProviderId: string): Promise<unknown> {
-    return this.request(
+  async getPublicProviderReviews(publicProviderId: string): Promise<PublicReviewView[]> {
+    return this.request<PublicReviewView[]>(
       `/api/v1/public/providers/${encodeURIComponent(publicProviderId)}/reviews`,
     );
   }
 
+  async getPublicProviderShare(publicProviderId: string): Promise<PublicShareView> {
+    return this.request<PublicShareView>(
+      `/api/v1/public/providers/${encodeURIComponent(publicProviderId)}/share`,
+    );
+  }
+
+  async getPublicProviderBundle(publicProviderId: string): Promise<PublicProviderBundle> {
+    const [profile, claims, availability, reviews, share] = await Promise.all([
+      this.getPublicProvider(publicProviderId),
+      this.getPublicProviderClaims(publicProviderId),
+      this.getPublicProviderAvailability(publicProviderId),
+      this.getPublicProviderReviews(publicProviderId),
+      this.getPublicProviderShare(publicProviderId),
+    ]);
+    return { profile, claims, availability, reviews, share };
+  }
+
   private async request<T>(path: string): Promise<T> {
     const url = new URL(path, this.baseUrl);
+    if (url.origin !== this.baseUrl.origin) {
+      throw new Error("DIREKT API request path escaped the configured API origin");
+    }
+
+    const headers: Record<string, string> = {
+      accept: "application/json",
+      "user-agent": "direkt-functional-web/0.2",
+    };
+
+    if (this.apiMode === "authenticated-bff") {
+      const infrastructureToken = await getCloudRunIdentityToken(this.baseUrl);
+      headers["X-Serverless-Authorization"] = `Bearer ${infrastructureToken}`;
+    }
+
     const response = await fetch(url, {
       method: "GET",
-      headers: {
-        accept: "application/json",
-        "user-agent": "direkt-functional-web/0.1",
-      },
+      headers,
       cache: "no-store",
       redirect: "error",
       signal: AbortSignal.timeout(10_000),
