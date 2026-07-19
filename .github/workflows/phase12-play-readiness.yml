@@ -56,7 +56,7 @@ jobs:
         with:
           gradle-version: ${{ env.DIREKT_GRADLE_VERSION }}
 
-      - name: Build merged release manifest
+      - name: Build merged release manifest and resolve release runtime dependencies
         shell: bash
         run: |
           set -euo pipefail
@@ -65,6 +65,7 @@ jobs:
             gradle wrapper --gradle-version "${DIREKT_GRADLE_VERSION}" --distribution-type bin
           fi
           chmod +x gradlew
+
           ./gradlew --no-daemon --no-configuration-cache :app:processReleaseMainManifest
           MERGED_MANIFEST="$(find app/build/intermediates -type f -name AndroidManifest.xml -path '*merged_manifest*release*' -print -quit)"
           if [[ -z "${MERGED_MANIFEST}" ]]; then
@@ -72,8 +73,52 @@ jobs:
             find app/build/intermediates -type f -name AndroidManifest.xml -print || true
             exit 1
           fi
+
+          DEPENDENCY_REPORT="${GITHUB_WORKSPACE}/release-runtime-dependencies.txt"
+          ./gradlew --no-daemon --no-configuration-cache :app:dependencies \
+            --configuration releaseRuntimeClasspath > "${DEPENDENCY_REPORT}"
+          test -s "${DEPENDENCY_REPORT}"
+
           echo "DIREKT_MERGED_MANIFEST_PATH=${GITHUB_WORKSPACE}/android/direkt-app/${MERGED_MANIFEST}" >> "${GITHUB_ENV}"
           echo "DIREKT_REQUIRE_MERGED_MANIFEST=true" >> "${GITHUB_ENV}"
+          echo "DIREKT_RELEASE_RUNTIME_DEPENDENCIES_PATH=${DEPENDENCY_REPORT}" >> "${GITHUB_ENV}"
+          echo "DIREKT_REQUIRE_RELEASE_RUNTIME_DEPENDENCIES=true" >> "${GITHUB_ENV}"
+
+      - name: Prove dependency substitution cannot bypass SDK inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import importlib.util
+          import pathlib
+          import tempfile
+
+          script = pathlib.Path("scripts/verify-phase12-play-readiness.py")
+          spec = importlib.util.spec_from_file_location("phase12_play", script)
+          module = importlib.util.module_from_spec(spec)
+          assert spec.loader is not None
+          spec.loader.exec_module(module)
+
+          with tempfile.TemporaryDirectory() as temp_dir:
+              report = pathlib.Path(temp_dir) / "dependencies.txt"
+              report.write_text(
+                  "+--- androidx.core:core-ktx:1.15.0 -> com.example:tracking-sdk:1.0\n",
+                  encoding="utf-8",
+              )
+              selected = module.direct_release_modules_from_report(report)
+              assert selected == {"com.example:tracking-sdk"}, selected
+
+              report.write_text(
+                  "+--- androidx.core:core-ktx:1.15.0 -> project :fork\n",
+                  encoding="utf-8",
+              )
+              try:
+                  module.direct_release_modules_from_report(report)
+              except SystemExit:
+                  pass
+              else:
+                  raise AssertionError("selected project dependency unexpectedly passed")
+          PY
 
       - name: Validate Phase 12B repository sources
         run: python scripts/verify-phase12-play-readiness.py | tee phase12b-play-readiness.txt
@@ -87,7 +132,9 @@ jobs:
           cp phase12b-play-readiness.txt phase12b-evidence/
           cat > phase12b-evidence/BOUNDARY.txt <<'EOF'
           DIREKT Phase 12B preauthorization evidence only.
-          The gate inspects the merged release manifest and allowlisted implementation dependency surface.
+          The gate inspects the merged release manifest, including SDK-23 permission declarations,
+          and the selected resolved releaseRuntimeClasspath direct dependency surface.
+          Dependency substitutions to unreviewed modules or project targets fail closed.
           No Play Console form was submitted.
           No testing track was created or activated.
           No production signing, upload or publication is authorized by this artifact.
