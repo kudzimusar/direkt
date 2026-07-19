@@ -2,7 +2,7 @@
 
 **Status:** Active implementation control  
 **Owner:** Functional PWA parity workstream  
-**Baseline:** W2 closed on exact managed source `4b892b90c42239c81c4f9c6f8c9f5447519dd6f6`; managed run `29694862350` PASS
+**Baseline:** W3 closed on exact managed source `012a7b9c24e93087d823661298d051c08ea34ec0`; managed run `29703117963` PASS
 
 ## Status legend
 
@@ -22,25 +22,27 @@
 | Responsive desktop/tablet/mobile | Android native phone/tablet behavior | N/A | Required | PASS |
 | Installable PWA | N/A | N/A | Required | PASS |
 | Offline-safe static shell | Android native app shell | N/A | Required; no fake offline mutation success | PASS |
-| Canonical REST/OpenAPI boundary | Partial client integration; canonical backend exists | Active | Required | PASS foundation; W2 managed private invocation evidenced |
+| Canonical REST/OpenAPI boundary | Partial client integration; canonical backend exists | Active | Required | PASS — W2/W3 managed private invocation evidenced |
 | Direct privileged Supabase access | Prohibited | Prohibited | Prohibited | PASS |
-| Backend-authoritative roles/provider scope | Required | Active | Required | API_READY — W3 target |
+| Backend-authoritative roles/provider scope | Required | Active | Required | PASS — W3 managed actor-derived provider-mode evidence |
 
 ## Authentication and account
 
 | Capability | Android current truth | Canonical backend/API | Functional Web/PWA target | Status |
 |---|---|---|---|---|
-| Synthetic/dev auth challenge | Development/test path | `/auth/challenges*` | Test-only where needed | API_READY |
-| Firebase phone-possession proof | Implemented but gated | `/auth/firebase/exchange` | Browser Firebase flow + BFF exchange | GATED |
-| DIREKT session creation | Implemented for pilot flow | Active | Secure browser session | API_READY |
-| Session rotation | Supported | `/auth/sessions/rotate` | Required | API_READY |
-| Session listing | Supported contract | `/auth/sessions` | Required | API_READY |
-| Revoke other sessions | Supported contract | protected route | Required | API_READY |
-| Revoke individual session | Supported contract | protected route | Required | API_READY |
+| Synthetic/dev auth challenge | Development/test path | `/auth/challenges*` | Test-only where needed | PASS — controlled synthetic evidence only |
+| Firebase phone-possession proof | Implemented but gated | `/auth/firebase/exchange` | Browser BFF exchange implemented; real Web Firebase activation separately gated | GATED |
+| DIREKT session creation | Implemented for pilot flow | Active | Secure browser session | PASS |
+| Session rotation | Supported | `/auth/sessions/rotate` | Required | PASS |
+| Session listing | Supported contract | `/auth/sessions` | Required | PASS |
+| Revoke other sessions | Supported contract | protected route | Required | PASS |
+| Revoke individual session | Supported contract | protected route | Required | PASS |
 | Pilot invitation/admission | Implemented/gated | Active | Same backend authority | GATED |
-| Notice/consent version enforcement | Implemented/gated | Active | Same backend authority | GATED |
-| Account profile | Implemented contract | `/account/profile` | Required | API_READY |
-| Logout/expiry UX | Partial/native | session APIs | Required | API_READY |
+| Notice/consent version enforcement | Implemented/gated | Active | BFF exchange preserves server-controlled notice/consent boundary; real admission remains gated | GATED |
+| Account profile | Implemented contract | `/account/profile` | Required | PASS |
+| Logout/expiry UX | Partial/native | session APIs | Required | PASS |
+
+W3 closure is recorded in `docs/web/W3_AUTH_ACCOUNT_CHECKPOINT.md`. Managed run `29703117963` on exact source `012a7b9c24e93087d823661298d051c08ea34ec0` proved HttpOnly credential containment, CSRF/origin negatives, backend-observable account/session state, actor-derived provider mode, idle refresh rotation, logout/revocation, IAM-private denial and temporary Invoker cleanup. Firebase Web phone-possession and real participant admission remain explicitly `GATED`.
 
 ## Customer discovery
 
@@ -162,7 +164,18 @@ W2 closure is recorded in `docs/web/W2_PUBLIC_DISCOVERY_CHECKPOINT.md`. Managed 
 
 **Status:** CLOSED — managed run `29694862350` PASS on exact source `4b892b90c42239c81c4f9c6f8c9f5447519dd6f6`.
 
-### W3–W6 complete when
+### W3 complete when
+
+- secure browser session creation/rotation/logout/revocation are backend-observable;
+- credentials remain HttpOnly and out of browser-readable storage/JSON;
+- CSRF/origin/session expiry controls pass;
+- provider-mode availability is actor-derived server-side;
+- direct API/web IAM privacy and cleanup pass;
+- real Firebase/participant gates remain explicit rather than fabricated.
+
+**Status:** CLOSED — managed run `29703117963` PASS on exact source `012a7b9c24e93087d823661298d051c08ea34ec0`.
+
+### W4–W6 complete when
 
 Each capability moves from `API_READY`/`GATED`/`PREVIEW_ONLY` to `PASS` only with backend-observable evidence and applicable security tests. Gated external/real-participant capabilities remain explicitly `GATED`; they are not fabricated as active.
 
