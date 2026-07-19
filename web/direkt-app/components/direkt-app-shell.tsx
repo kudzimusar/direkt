@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { AccountExperience } from "@/components/account-experience";
 import { CustomerJourneyExperience } from "@/components/customer-journey-experience";
 import { CustomerDiscoveryExperience, type DiscoveryBootstrap } from "@/components/discovery-experience";
+import { ProviderInteractionExperience } from "@/components/provider-interaction-experience";
 import { ProviderJourneyExperience } from "@/components/provider-journey-experience";
 import {
   destinationHeading,
@@ -87,7 +88,7 @@ export function DirektAppShell({ discoveryBootstrap, initialDestination = "disco
           <section className="boundary-banner" aria-label="Implementation boundary"><div className="boundary-icon" aria-hidden="true">✓</div><div><strong>Same DIREKT product. Server authority stays canonical.</strong><p>Discovery, customer lifecycle and provider workspace state use reviewed same-origin BFF routes and the IAM-private API. Provider scope is actor-resolved; real participant admission and production authorization remain separately gated.</p></div></section>
           {showDiscovery ? <CustomerDiscoveryExperience bootstrap={discoveryBootstrap} /> : null}
           {showCustomerJourney ? <CustomerJourneyExperience destination={destination as "saved" | "enquiries"} initialProviderId={initialProviderId} /> : null}
-          {showProviderJourney ? <>{showAccount ? <AccountExperience onProviderAvailabilityChange={updateProviderAvailability} /> : null}<ProviderJourneyExperience destination={destination} /></> : null}
+          {showProviderJourney ? <>{showAccount ? <AccountExperience onProviderAvailabilityChange={updateProviderAvailability} /> : null}<ProviderJourneyExperience destination={destination} />{destination === "enquiries" ? <ProviderInteractionExperience /> : null}</> : null}
           {!showDiscovery && !showCustomerJourney && !showProviderJourney && showAccount ? <AccountExperience onProviderAvailabilityChange={updateProviderAvailability} /> : null}
           {!showDiscovery && !showCustomerJourney && !showProviderJourney && !showAccount ? <FoundationContent headingTitle={heading.title} foundation={foundation} mode={mode} /> : null}
         </main>
