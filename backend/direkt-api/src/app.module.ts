@@ -1,5 +1,6 @@
 import { MiddlewareConsumer, Module, type NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { AccountContactModule } from './account-contact/account-contact.module';
 import { AuthModule } from './auth/auth.module';
 import { AuthorizationModule } from './authorization/authorization.module';
 import { CommercialModule } from './commercial/commercial.module';
@@ -32,6 +33,7 @@ import { VerificationEvidenceModule } from './verification-evidence/verification
     AuditModule,
     AuthModule,
     AuthorizationModule,
+    AccountContactModule,
     HealthModule,
     CommercialModule,
     InteractionModule,

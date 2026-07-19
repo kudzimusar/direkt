@@ -6,24 +6,16 @@ import { getPublicRuntimeCapabilities } from "@/lib/server/runtime-config";
 
 export const dynamic = "force-dynamic";
 
-const allowedDestinations = new Set<DirektDestination>([
-  "discover",
-  "saved",
-  "enquiries",
-  "account",
-]);
+const allowedDestinations = new Set<DirektDestination>(["discover", "saved", "enquiries", "account"]);
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string | string[] }>;
+  searchParams: Promise<{ view?: string | string[]; provider?: string | string[] }>;
 }) {
   const capabilities = getPublicRuntimeCapabilities();
-  const discovery: DiscoveryBootstrap = {
-    enabled: capabilities.publicDiscoveryEnabled,
-    categories: [],
-    error: null,
-  };
+  const discovery: DiscoveryBootstrap = { enabled: capabilities.publicDiscoveryEnabled, categories: [], error: null };
 
   if (capabilities.publicDiscoveryEnabled) {
     try {
@@ -33,17 +25,13 @@ export default async function HomePage({
     }
   }
 
-  const requestedView = (await searchParams).view;
-  const view = Array.isArray(requestedView) ? requestedView[0] : requestedView;
-  const initialDestination =
-    view && allowedDestinations.has(view as DirektDestination)
-      ? (view as DirektDestination)
-      : "discover";
+  const params = await searchParams;
+  const requestedView = Array.isArray(params.view) ? params.view[0] : params.view;
+  const requestedProvider = Array.isArray(params.provider) ? params.provider[0] : params.provider;
+  const initialDestination = requestedView && allowedDestinations.has(requestedView as DirektDestination)
+    ? (requestedView as DirektDestination)
+    : "discover";
+  const initialProviderId = requestedProvider && UUID.test(requestedProvider) ? requestedProvider : null;
 
-  return (
-    <DirektAppShell
-      discoveryBootstrap={discovery}
-      initialDestination={initialDestination}
-    />
-  );
+  return <DirektAppShell discoveryBootstrap={discovery} initialDestination={initialDestination} initialProviderId={initialProviderId} />;
 }

@@ -17,7 +17,8 @@
     "verify:static": "node scripts/verify-static-contract.mjs",
     "verify:discovery": "node scripts/verify-discovery-contract.mjs",
     "verify:auth": "node scripts/verify-auth-contract.mjs",
-    "verify": "npm run typecheck && npm run verify:static && npm run verify:discovery && npm run verify:auth && npm run build"
+    "verify:customer": "node scripts/verify-customer-contract.mjs",
+    "verify": "npm run typecheck && npm run verify:static && npm run verify:discovery && npm run verify:auth && npm run verify:customer && npm run build"
   },
   "dependencies": {
     "next": "16.2.10",
