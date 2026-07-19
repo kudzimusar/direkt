@@ -81,6 +81,8 @@ jobs:
           assert_rejected production NODE_ENV=production
           assert_rejected controlled-pilot DIREKT_DATA_MODE=controlled-pilot
           assert_rejected real-entry-latch PILOT_ENTRY_APPROVED=true
+          assert_rejected missing-data-mode -u DIREKT_DATA_MODE
+          assert_rejected missing-entry-latch -u PILOT_ENTRY_APPROVED
           assert_rejected missing-activation PHASE11_SYNTHETIC_PILOT_ACTIVATION=false
       - name: Activate synthetic Phase 11 cohort
         shell: bash
