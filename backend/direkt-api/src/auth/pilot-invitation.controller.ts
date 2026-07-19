@@ -36,11 +36,6 @@ export class PilotInvitationController {
     @Body() dto: RevokePilotInvitationDto,
     @Req() request: DirektRequest,
   ): ReturnType<PilotInvitationService['revoke']> {
-    return this.invitations.revoke(
-      invitationId,
-      dto,
-      request.actor.identityId,
-      request.requestId,
-    );
+    return this.invitations.revoke(invitationId, dto, request.actor.identityId, request.requestId);
   }
 }

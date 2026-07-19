@@ -1,237 +1,190 @@
-# Phase 11A Zambia DPC Application Field Values — 2026-07-19
+# Phase 11 DPC Application Field Values — 2026-07-19
 
-**Status:** SUBMISSION WORKSHEET — NOT A REGULATOR FILING OR APPROVAL  
-**Use:** Copy the non-sensitive answers below into the applicable Zambia Data Protection Commission registration/authorization process after confirming the current portal/form wording. Fill personal identity/contact fields privately; never commit identity documents, passport/NRC numbers, home address, private email/phone, signatures or regulator credentials to this public repository.
+**Status:** NON-SENSITIVE DRAFT — NOT A REGULATOR SUBMISSION OR APPROVAL  
+**Controller path:** Shadreck Kudzanai Musarurwa — Individual Data Controller  
+**DPC application status:** Draft
 
-## Filing direction
+## Purpose
 
-| Field | Proposed entry / decision |
+Provide truthful, non-sensitive draft wording for the Zambia Data Protection Commission application and related overseas storage/transfer requests. Private identity/contact/document fields stay outside GitHub and must be entered directly in the official process.
+
+## Applicant/controller
+
+| Field | Draft value |
 |---|---|
-| Applicant/controller type | Individual data controller, unless qualified Zambia advice or DPC direction requires a different applicant/entity structure |
-| Controller/operator name | Shadreck Kudzanai Musarurwa |
-| Trading/product name | DIREKT controlled pilot |
-| Country of pilot activity | Zambia |
-| Pilot location | Kabwata Ward + Chilenje Ward, Kabwata Constituency, Lusaka District |
-| Pilot access model | Invite-only, adult participants only |
-| Maximum cohort | 24 providers + 60 customers across three waves; maximum 8 providers + 20 customers per wave |
-| Public launch | No |
-| Payments | Disabled; pricing/willingness-to-pay research only |
+| Applicant type | Individual |
+| Data-service role | Data Controller |
+| Controller | Shadreck Kudzanai Musarurwa |
+| Registered Zambia company/entity | None currently |
+| Joint controller | None planned for bounded pilot |
+| Public privacy contact | `privacy@direkt.forum` once mailbox/alias is operational |
+| Public support contact | `support@direkt.forum` once mailbox/alias is operational |
+| Zambia +260 contact | Available — private value, enter only in official/private system |
+| Zambia physical/correspondence address | Available — private value, enter only in official/private system |
+| NRC/passport | Private document required by official process; never store in repo |
 
-## Applicant fields that must be completed privately
+## System/service description
 
-Do not commit these values:
+**Database/application name:** DIREKT
 
-- applicant residential/business address as legally required;
-- applicant email and phone used for regulator correspondence;
-- passport/NRC/identity number and copy where requested;
-- proof of identity/residence/registration where requested;
-- signature/declaration;
-- DPO/representative personal details if legally required;
-- payment/reference details;
-- portal credentials.
+Suggested service description:
 
-## Nature of processing
+> DIREKT is a controlled local-services discovery, provider-profile, scoped-verification and accountability platform. The bounded Zambia pilot helps adult customers discover service providers while presenting specific verification claims and limitations rather than a blanket guarantee of competence or safety.
 
-Suggested concise description:
+## Pilot scope
 
-> DIREKT is an invite-only controlled pilot of a verification-led local-services marketplace. It authenticates invited customers and service providers, supports check-specific provider verification, bounded local discovery, tracked service enquiries, reviews/complaints, support/security/audit and explicit product-validation research. The pilot is restricted to Kabwata and Chilenje wards in Lusaka and is not a public launch.
+- Geography: Kabwata Ward and Chilenje Ward, Lusaka District.
+- Comparison candidate: Matero; not automatically activated.
+- Categories: plumbing/water repair, electrical repair/services, motor-vehicle mechanics, appliance/electronics repair.
+- Maximum real pilot cohort: 24 providers + 60 customers, plus a small number of authorized operational/review/support users.
+- Recruitment: invite-only.
+- Minors: excluded.
+- Real payments: disabled in Phase 11.
 
-## Categories of data subjects
+## Approximate records
 
-Use only those actually processed:
+For application planning, use a truthful bounded maximum rather than pretending the synthetic cohort represents real people.
 
-- invited adult customer participants;
-- invited adult service-provider participants;
-- authorized pilot support/reviewer/operations personnel;
-- field personnel only if the later field-verification gate is separately activated;
-- complainants/reporters where an approved complaint process requires it.
+Suggested answer:
 
-## Categories of personal data
+> Up to approximately 90 pilot-related identity records, covering a maximum of 24 providers, 60 customers and a small authorized operational/support complement.
 
-### Account/authentication
+Synthetic/demo records do not count as real data subjects.
 
-- phone/contact data;
-- account/session identifiers;
-- authentication/security/audit metadata;
-- policy/consent/withdrawal records.
+## Data-subject categories
 
-### Provider verification
+- adult customers;
+- service providers and provider representatives;
+- authorized reviewers;
+- support personnel;
+- pilot operations/security/incident personnel.
 
-As applicable to the specific approved check:
+## Information processed
 
-- name/identity evidence;
-- business-registration evidence;
-- qualification/trade-test/professional/licence evidence;
-- provider category/service/profile data;
-- operating model/service area;
-- private premises/location evidence where necessary;
-- evidence review/correction/expiry metadata.
+As applicable and minimized:
 
-### Customer/interaction
+- phone/account identifier for approved authentication;
+- display/legal name where required;
+- service category, provider pathway and operating model;
+- service area/locality and optional public premises location where separately allowed;
+- provider identity, business-registration, qualification or claim-specific evidence;
+- verification cases, reviewer recommendations, scoped claims and audit history;
+- enquiries, interactions, reviews and complaints;
+- policy/consent/withdrawal records;
+- limited device/security diagnostics and access logs.
 
-- selected area/landmark or separately approved location input;
-- service-category/enquiry information;
-- enquiry/response/interaction status;
-- separately consented contact-handoff state;
-- review/report/complaint information.
+Not required by default for customers:
 
-### Pilot validation
+- national ID/passport;
+- exact home coordinate;
+- continuous/background location;
+- address book/contacts;
+- payment credentials.
 
-- pseudonymous research code;
-- task/usability observations;
-- device/network context needed for reliability findings;
-- optional interview/recording data only with separate approval/consent.
+## Processing purposes
 
-## Sensitive/high-risk data considerations
+- account authentication and security;
+- controlled pilot participation;
+- provider profile management;
+- local service discovery;
+- verification of specific provider claims;
+- tracked enquiries and accountability;
+- review/complaint/support handling;
+- fraud, abuse and incident prevention/investigation;
+- audit/compliance evidence;
+- controlled pilot measurement and product improvement.
 
-State accurately rather than minimizing the risk:
+## Sensitive/special-category risk answer
 
-- identity/qualification documents may contain sensitive identifiers and photographs;
-- precise premises/location data can create physical-security/privacy risk;
-- phone/contact and account-linkage data can enable identity linkage;
-- complaint/free-text/evidence content may contain unexpectedly sensitive information;
-- security/audit data may reveal device/network/access patterns.
+Do not automatically answer `No` merely because DIREKT does not seek sensitive traits.
 
-Controls:
+Draft position:
 
-- data minimization;
+> Potentially applicable depending on claim-specific evidence or identity documents submitted. DIREKT minimizes requested evidence, stores original provider evidence privately, prohibits unnecessary sensitive data collection and does not expose original evidence publicly.
+
+Final statutory classification and lawful basis require qualified Zambia review.
+
+## Candidate lawful-basis matrix
+
+This is a legal-review draft, not a final legal conclusion.
+
+| Purpose | Candidate basis subject to qualified review |
+|---|---|
+| Voluntary controlled-pilot participation/research | Consent where appropriate |
+| Optional research interview/recording | Separate explicit consent |
+| Optional precise location | Separate permission/consent where required |
+| Contact handoff | Per-interaction consent/authorization |
+| Requested account/service functionality | Contract/service necessity where legally applicable |
+| Security, abuse prevention and audit | Legitimate interest and/or legal obligation where applicable |
+| Required regulatory/legal retention | Legal obligation where applicable |
+
+## Overseas storage/transfer disclosure
+
+Draft answer: **Yes** for the approved real-data topology if it uses the current Supabase/Google/Firebase resources outside Zambia.
+
+Expected real-data processors/sub-processors may include, only when actually activated and approved:
+
+- Supabase/PostgreSQL/private Storage infrastructure;
+- Google Cloud infrastructure;
+- Firebase Authentication for approved phone authentication.
+
+Wave 1 minimization:
+
+- Google Maps not required;
+- Sentry real-participant telemetry disabled;
+- production WhatsApp/call delivery disabled;
+- payments disabled.
+
+Separate DPC overseas storage/transfer authorization remains an external hard gate before real participant data uses the overseas topology.
+
+## Risks
+
+- unauthorized disclosure of identity/provider evidence;
+- raw contact exposure;
+- private/precise location exposure;
+- account takeover/authentication abuse;
+- authorization failure or cross-provider access;
+- fraudulent/misleading trust claims;
+- excessive collection;
+- retention beyond need;
+- unapproved overseas processing;
+- processor compromise;
+- trust wording causing users to overestimate what was checked;
+- enquiry/contact abuse;
+- device/session compromise.
+
+## Mitigations
+
+- data minimization and purpose limitation;
+- check-specific trust claims and explicit limitations;
 - private evidence storage;
-- server-side authorization;
-- no public evidence URLs;
-- reduced-precision public location;
-- HMAC/pseudonymous identifiers where raw values are unnecessary;
-- bounded retention/deletion;
-- audit/access controls;
-- fail-closed provider/runtime activation.
+- backend-owned authorization/state transitions;
+- role/permission controls and four-eyes review where required;
+- audit history;
+- encrypted transport and protected cloud resources;
+- invite-only pilot admission;
+- rotating DIREKT sessions after Firebase exchange;
+- policy-version consent records;
+- withdrawal/deletion controls;
+- reduced public location precision;
+- retention limits and legal-hold controls;
+- immediate-stop incident rules;
+- real payments disabled;
+- Maps/Sentry/production communications minimized out of Wave 1.
 
-## Purposes of processing
+## Fields that must remain private/manual
 
-Suggested purposes:
+Enter only into the official/private process:
 
-1. invite-only participant authentication and account security;
-2. provider onboarding and check-specific verification;
-3. provider discovery/service-area matching;
-4. tracked enquiries/interactions and separately consented contact handoff;
-5. reviews, complaints, corrections and appeals;
-6. support, fraud prevention, security, audit and incident handling;
-7. controlled-pilot usability/reliability/operational research;
-8. legal/regulatory/data-subject request handling.
+- physical address;
+- raw +260 phone number;
+- NRC/passport number and image;
+- signatures/declarations;
+- regulator login/payment data;
+- any private legal opinion or privileged advice.
 
-No data sale or unrelated advertising profiling is authorized for Phase 11.
+## Submission truth rule
 
-## Lawful basis section
+Do not use demo identities, synthetic providers/customers, invented lawyer names, fabricated certificates or fake authorization references in the regulator application.
 
-Do not self-certify a final legal basis from this worksheet. Submit the final basis-by-purpose matrix only after qualified Zambia review.
-
-Working classification for review:
-
-- required account/security/fraud/audit processing may rely on contract/legitimate/legal-obligation bases where counsel confirms;
-- phone authentication/provider processing disclosure must match the approved provider/transfer basis;
-- optional precise location, recording, optional research participation and optional contact handoff should remain separate explicit consent where legally appropriate;
-- provider evidence/check processing must have a specific approved purpose/basis and not rely on blanket consent wording.
-
-## Recipients / processor categories
-
-Disclose only the exact services approved for real Wave 1.
-
-Planned required Wave 1 technology boundaries:
-
-- Supabase managed PostgreSQL/PostGIS/private object storage;
-- Google Cloud managed application/runtime infrastructure;
-- Firebase Authentication for approved phone verification;
-- Firebase App Distribution only where used for restricted pilot artifact distribution.
-
-Not required for Wave 1 real-data processing unless separately approved:
-
-- Google Maps runtime/location APIs;
-- Sentry real-participant telemetry;
-- automated WhatsApp/call delivery;
-- payment providers.
-
-## Overseas storage / transfer
-
-Answer **Yes** where the approved real topology stores/processes personal data outside Zambia.
-
-Current technical plan includes managed infrastructure outside Zambia. Do not answer “No” merely to simplify registration.
-
-Provide the exact approved topology/data-flow document and obtain the required separate authorization/lawful mechanism before real participant processing where the DPC process requires it.
-
-Current planned flows requiring review include:
-
-```text
-Zambia participant Android device
-→ Firebase/Google phone-auth infrastructure
-→ DIREKT backend/runtime on approved Google Cloud boundary
-→ Supabase PostgreSQL/PostGIS/private storage
-→ authorized DIREKT operations users
-```
-
-Optional providers stay out of the flow until separately approved.
-
-## Storage outside Zambia
-
-Answer based on the exact approved environment, not the developer's physical location.
-
-The current managed architecture includes data services outside Zambia. The application should identify:
-
-- provider/service;
-- region/country where known and contractually relevant;
-- data categories;
-- purpose;
-- retention/deletion behavior;
-- subprocessors/authority-request terms as applicable;
-- security controls;
-- transfer/storage authorization reference once issued.
-
-## Joint controllers
-
-Working answer: no joint controller is intentionally designed into the current pilot.
-
-Do not make this final until qualified review confirms whether any partner, verifier, field organization or other party independently determines processing purposes/means.
-
-## Data Protection Officer / representative
-
-Working state: unresolved pending qualified review and DPC direction.
-
-Do not invent a DPO title merely to satisfy the form. Record the actual appointed person/qualification only if required and formally appointed.
-
-## Risks and mitigations
-
-| Risk | Mitigation to declare where accurate |
-|---|---|
-| Identity/evidence exposure | private object storage; restricted server-mediated access; no public URLs; audit |
-| Cross-account authorization | backend-owned roles/scopes; negative-authorization tests; no client-authoritative access |
-| Phone-number recycling/account takeover | Firebase subject HMAC binding; different subject cannot inherit bound phone; legacy/unbound phone requires recovery |
-| Unrestricted pilot signup | HMAC-phone invite required; canonical policy binding; server wave caps |
-| Consent/version drift | canonical `account.policy_versions` + `account.consents`; exact runtime notice version; fresh invite/re-consent after revoked current-policy consent |
-| Precise-location exposure | manual-first Wave 1; no Maps required; reduced public precision; private coordinates not public discovery data |
-| Excessive evidence retention | approved retention schedule; evidence deletion/hold workflow; private storage canary |
-| Provider misuse/fraud | check-specific claims, reviewer workflow, complaints, audit, suspension/expiry controls |
-| OTP/auth abuse | Zambia-only pilot scope, Firebase abuse controls/quotas, backend rate limit, invite required before DIREKT identity/session creation |
-| Public launch before evidence | traffic mode/Phase 12 gates; invite-only distribution; no production payments |
-
-## Data flow documentation to attach/reference
-
-Provide the final approved versions of:
-
-- system/data-flow diagram;
-- data-processing register;
-- processor/subprocessor matrix;
-- retention/deletion schedule;
-- security/privacy controls summary;
-- pilot participation notice;
-- consent/lawful-basis matrix;
-- incident/breach procedure;
-- data-subject rights/request procedure;
-- overseas storage/transfer application/materials.
-
-## Declaration discipline
-
-Before submission:
-
-- compare every answer with the current DPC portal/form;
-- use the exact real processor topology, not planned-but-disabled integrations;
-- do not claim DPC/counsel/provider approval before it exists;
-- do not attach public GitHub links containing unnecessary infrastructure/security details if a private reviewed submission package is more appropriate;
-- keep a private copy of the exact submitted answers/documents and regulator reference;
-- add only safe evidence metadata to `PHASE11A_EXTERNAL_ENTRY_ACTION_REGISTER_2026-07-19.md` after submission/outcome.
+Synthetic system counts may demonstrate technical readiness, but the DPC application must describe actual intended processing and real applicant/controller details truthfully.

@@ -1,328 +1,241 @@
-# DIREKT Controlled Pilot Participation Notice — Candidate
+# DIREKT Phase 11 Pilot Participation Notice — Candidate
 
+**Status:** DRAFT ONLY — NOT APPROVED FOR REAL PARTICIPANT USE  
 **Policy key:** `pilot_participation_notice`  
-**Candidate version:** `2026-07-19-draft-1`  
-**Status:** DRAFT FOR QUALIFIED ZAMBIA LEGAL/PRIVACY REVIEW — NOT APPROVED FOR PARTICIPANT USE  
-**Pilot operator/controller direction:** Shadreck Kudzanai Musarurwa operating the bounded DIREKT controlled pilot, subject to final qualified review and regulator filing outcome.
+**Real participant version:** Pending qualified Zambia review and DPC/external-entry clearance  
+**Synthetic-only version:** `synthetic-demo-v1` — must never be used as the real participant notice
 
-> **Do not display this draft to real participants and do not register it as an active `account.policy_versions` record.** The final approved version must contain the correct participant-facing controller contact details, legal/regulatory wording, processor disclosures and document hash before real recruitment.
+## 1. Who operates the pilot
 
-## 1. What this pilot is
+DIREKT is operated for this bounded pilot under the current controller path of **Shadreck Kudzanai Musarurwa as an Individual Data Controller**, subject to final Zambia regulatory/legal confirmation.
 
-DIREKT is testing a verification-led local-services marketplace in a small, invite-only controlled pilot in Zambia.
+Planned public contact aliases, once operational:
 
-The first approved operating boundary is:
+- privacy: `privacy@direkt.forum`;
+- support: `support@direkt.forum`;
+- security: `security@direkt.forum`;
+- pilot coordination: `pilot@direkt.forum`.
 
-- Kabwata Ward and Chilenje Ward;
-- Kabwata Constituency;
-- Lusaka District;
-- Zambia.
+A final real-participant notice must include the approved controller/contact/address details required by Zambia law and regulator direction. Private identity documents and personal addresses are not published in this repository.
 
-The pilot is not a public launch. Access is limited to invited adult participants and the pilot may be paused, narrowed or stopped at any time for safety, privacy, reliability, legal or operational reasons.
+## 2. What this pilot is
 
-The initial service categories are:
+This is a controlled, invite-only test of DIREKT, not a public production launch.
 
-- plumbing and water repair;
-- electrical repair/services;
-- motor-vehicle mechanics;
-- appliance/electronics repair.
+Initial boundary:
 
-Participation in a category does not mean DIREKT has confirmed that a provider may lawfully perform every regulated activity in that category. DIREKT displays only the specific checks actually completed and approved.
+- Kabwata Ward and Chilenje Ward, Lusaka District;
+- adults only;
+- maximum 24 providers and 60 customers across three bounded waves;
+- four categories: plumbing/water repair, electrical repair/services, motor-vehicle mechanics and appliance/electronics repair.
 
-## 2. Who is responsible for your data
+The pilot may be paused, narrowed or stopped if safety, privacy, security, reliability, capacity or trust thresholds are crossed.
 
-The intended controller/operator for this bounded pilot is:
+## 3. What DIREKT does and does not verify
 
-**Shadreck Kudzanai Musarurwa, operating the DIREKT controlled pilot.**
+DIREKT is designed to present **specific, scoped checks**, not a blanket statement that a provider is safe, competent or guaranteed to perform good work.
 
-Before this notice may be used with real participants, the final approved copy must insert the legally valid participant-facing controller/privacy contact details required by the Zambia Data Protection Commission and qualified legal review.
+Depending on the provider and claim, DIREKT may separately record whether a particular item was checked, such as:
 
-**Controller/privacy contact:** `[TO BE INSERTED IN THE FINAL APPROVED PRIVATE COPY BEFORE USE]`
+- identity;
+- business registration;
+- qualification/trade credential;
+- category-specific licence/registration where applicable;
+- premises/location where separately authorized;
+- current/not checked/pending/expired status.
 
-Do not replace this placeholder with an invented email address, office address, phone number, registration number or company identity.
+A check means only that the stated evidence/source was reviewed according to the applicable process. It does not automatically guarantee quality, safety, honesty, future performance or suitability for every job.
 
-## 3. Why DIREKT processes information
+No `field visited` or equivalent claim is enabled in Wave 1 unless the separate field-operator gate has been satisfied.
 
-Subject to the final approved lawful-basis analysis, DIREKT expects to process only information needed to:
+## 4. Data collected from customers
 
-- authenticate invited pilot participants;
-- create and secure customer/provider accounts;
-- confirm specific provider identity, contact, business, qualification, licence or location facts where a check requires them;
-- allow customers to discover providers within the bounded pilot area;
-- support service enquiries and approved contact handoff;
-- support reviews, complaints, corrections and appeals;
-- operate moderation, security, fraud prevention, audit and incident response;
-- provide participant support;
-- measure whether the pilot is usable, reliable, understandable and operationally viable;
-- respond to valid data-subject, legal or regulatory requirements.
+Minimum data may include:
 
-DIREKT does not authorize the sale of participant personal data, unrelated advertising profiling or unrelated secondary use under this Phase 11 pilot.
+- approved authentication/account identifier;
+- display name or pseudonymous display label;
+- selected pilot area/landmark;
+- service category and enquiry details;
+- interaction, review and complaint records created through DIREKT;
+- policy/consent/withdrawal records;
+- minimized device/security diagnostics needed for reliability and abuse prevention.
 
-## 4. Information that may be processed
+Not required by default:
 
-Only information necessary for the approved journey should be collected.
+- national ID/passport;
+- exact home coordinates;
+- continuous/background location;
+- address-book contacts;
+- marketing profile;
+- payment credentials.
 
-### Account and authentication
+## 5. Data collected from providers
 
-- your phone number for approved phone verification;
-- account and session identifiers;
-- security and audit metadata needed to protect the account;
-- the version/status of notices and consent records applicable to your pilot participation.
+Depending on the provider pathway and specific claim requested, minimum data may include:
 
-### Provider participants
-
-Depending on the specific check requested:
-
+- approved authentication/account identifier;
 - legal/display name;
-- identity evidence;
-- business-registration evidence;
-- qualification, trade-test, professional or licence evidence where applicable;
-- service/category information;
-- operating model and service area;
-- private premises/location evidence where a check requires it;
-- supporting work-history/reference evidence where an approved requirement calls for it;
-- evidence-review, correction, expiry and audit metadata.
+- provider pathway and operating model;
+- category and service area;
+- identity, business-registration, qualification, location or other claim-specific evidence where required;
+- private evidence references and audit history;
+- enquiries, interactions, reviews and complaints;
+- policy/consent/withdrawal records.
 
-DIREKT should not collect a document merely because it is available. Evidence must be tied to a defined check and purpose.
+Only evidence necessary for the requested claim should be collected.
 
-### Customer and service interactions
+## 6. Private evidence and location
 
-- selected area/landmark or other approved location input;
-- service category and bounded enquiry information;
-- enquiry/response/interaction status;
-- separately consented contact-handoff state where enabled;
-- review, report or complaint information.
+Original provider evidence is private and is not part of public discovery output.
 
-### Pilot research and validation
+Exact private home/base coordinates are not published by default.
 
-- pseudonymous research/participant code;
-- task completion and usability observations;
-- device/network condition needed to understand reliability findings;
-- optional interview notes;
-- optional audio/video recording only after separate explicit recording consent.
+For mobile/hybrid providers, public discovery should use a service area rather than an invented exact public pin.
 
-Research participation beyond what is necessary to operate the account/service must remain separately explained and voluntary.
+A precise public premises location may be shown only where it is genuinely customer-facing, useful, separately authorized and safe to publish.
 
-## 5. Phone authentication and Firebase
+## 7. Authentication and Firebase disclosure
 
-If the real pilot authentication gate is approved and activated, DIREKT intends to use Firebase Authentication to verify recent possession of an invited Zambia phone number.
+If Firebase phone authentication is activated for the approved real pilot, the participant's phone number is processed by Google/Firebase for authentication and abuse-prevention purposes according to the approved configuration and processor terms.
 
-The expected flow is:
+The approved real notice must disclose this before an OTP is requested.
 
-```text
-Android participant
-→ Firebase phone verification / OTP
-→ Firebase ID token
-→ DIREKT backend verifies the token
-→ DIREKT creates or resumes the authorized DIREKT session
-```
+Real Firebase authentication remains externally gated until the applicable DPC overseas storage/transfer requirements, qualified legal review, provider configuration and real canary have passed.
 
-Important limits:
+Synthetic/demo identities and fictional test numbers are not real participant consent or real SMS-delivery evidence.
 
-- phone verification proves recent control of the phone number; it does not grant provider, staff, reviewer or administrator authority;
-- DIREKT backend permissions remain authoritative;
-- a phone number already associated with another external identity cannot silently transfer to a different Firebase identity;
-- new DIREKT pilot identities require a current invite tied to the approved notice version;
-- Firebase may process phone-number/authentication/security information under its applicable service terms and abuse-prevention controls;
-- standard SMS/network charges may apply depending on the participant's provider and plan;
-- the exact Google/Firebase processing and overseas transfer/storage disclosure must be approved before this notice is activated.
+## 8. Cloud and overseas processing
 
-## 6. Service providers and overseas processing
+The intended real pilot architecture may use approved Supabase, Google Cloud and Firebase services outside Zambia.
 
-DIREKT's planned pilot architecture may use managed technology providers including:
+Real participant data must not use that overseas topology until the applicable Zambia Data Protection Commission registration and separate overseas storage/transfer authorizations are evidenced and the final participant wording is approved.
 
-- **Supabase** for PostgreSQL/PostGIS and approved private object storage;
-- **Google Cloud** for approved application/runtime infrastructure;
-- **Firebase Authentication** for approved phone verification and identity-token issuance.
+Optional services are minimized out of the first-wave critical path:
 
-The current technical topology includes processing/storage outside Zambia. Real participant data must not be enabled until the applicable Zambia Data Protection Commission registration and overseas storage/transfer requirements have been resolved and the final approved notice accurately describes the authorized topology.
-
-Wave 1 does **not** require the following providers to receive real participant data:
-
-- Google Maps runtime/location APIs;
-- Sentry real-participant error telemetry;
-- automated WhatsApp/call delivery providers;
-- payment providers.
-
-They remain disabled unless separately approved and added to the applicable notice/data-processing records before use.
-
-## 7. Location privacy
-
-DIREKT is designed so core discovery does not require continuous or background location access.
-
-For Wave 1:
-
-- manual area/landmark discovery remains available;
-- Maps runtime is not required;
-- denying device location must not block the core discovery journey;
-- provider fixed, mobile and hybrid operating models must remain representable;
-- exact private provider base coordinates are not public discovery data;
-- precise public premises location may only be used later where it is necessary, appropriate, separately approved and explicitly consented/authorized.
-
-Private location evidence, when required for a defined check, must use restricted evidence handling rather than public profile storage.
-
-## 8. Provider verification and trust claims
-
-DIREKT does not treat payment or registration alone as proof that a provider is safe, competent or trustworthy.
-
-Public/pilot trust information must remain check-specific, for example:
-
-- identity checked;
-- contact checked;
-- business registration checked;
-- qualification/certificate checked;
-- premises/location checked;
-- not checked;
-- pending;
-- expired.
-
-A check indicates only what DIREKT actually assessed under the relevant evidence and policy. It is not a guarantee of future work quality, safety, legality or outcome.
-
-The final participant/provider wording must be approved through qualified Zambia legal/consumer review before real use.
+- Google Maps is not required; manual/list discovery remains authoritative;
+- Sentry real-participant telemetry is disabled unless separately approved and privacy-tested;
+- production WhatsApp/call automation is disabled unless separately approved;
+- real payments are disabled.
 
 ## 9. Consent and choices
 
-The final approved experience must distinguish required pilot processing from optional processing.
+Consent is layered rather than one blanket checkbox.
 
-### Required for pilot account entry
-
-Before requesting real OTP authentication, an invited participant must:
-
-- receive the final approved pilot participation notice;
-- see the exact active notice version;
-- explicitly accept the required account/authentication/pilot-processing terms that qualified review identifies as consent-based or otherwise requires acknowledgement;
-- have a current invite for that same approved policy version.
-
-The backend records the exact policy version and consent/status in the canonical consent model.
-
-### Separate optional choices
-
-The following must not be bundled into general pilot access where separately optional:
-
-- precise device location;
-- research interview participation beyond required operational testing;
-- audio/video recording;
-- optional public quotation/attribution;
-- contact handoff to call/WhatsApp where separate consent is required;
-- any future marketing communication.
-
-Declining an optional item should not automatically remove access to unrelated pilot functionality.
-
-## 10. Withdrawal and changing your mind
-
-Participants may withdraw optional consent and may request to leave the pilot through the final approved privacy/support channel.
-
-Current technical controls are designed so that:
-
-- current-policy consent revocation blocks creation of a new Firebase-backed DIREKT session unless a fresh invitation and explicit re-consent are later approved;
-- contact-handoff consent can be independently revoked where applicable;
-- active sessions may need to be revoked as part of the operational withdrawal procedure;
-- deletion/restriction requests must propagate through approved DIREKT systems and relevant processors subject to lawful retention/hold requirements.
-
-The exact legal effect, response process and retention exceptions must be confirmed in the final approved notice and operating procedure.
-
-## 11. Retention and deletion — candidate maximums
-
-The following are product/operations candidate maximums pending qualified Zambia review and regulator direction:
-
-| Data class | Candidate maximum / action |
+| Purpose | Initial rule |
 |---|---|
-| Failed or incomplete authentication/challenge metadata | target deletion within 7 days unless security investigation requires an approved hold |
-| Original provider verification evidence | target deletion within 30 days after final decision/appeal window unless approved legal/security/complaint hold applies |
-| Interaction/enquiry operational data | generally up to 90 days after closure unless complaint/security/legal need requires a documented hold |
-| Minimized verification/audit/complaint records | generally up to 180 days after relevant closure or pilot close, subject to qualified retention requirements |
-| Raw optional research recordings | delete after validated notes are produced; target 14 days, absolute candidate pilot maximum 30 days |
-| Consent/version/withdrawal receipt | minimized record generally up to 12 months after pilot close, subject to qualified legal requirements |
-| Security/incident data | only as long as required for investigation, legal obligations and approved evidence retention |
+| Controlled pilot participation/account processing | Required before real pilot participation |
+| Firebase phone-auth disclosure | Required before OTP if Firebase is activated |
+| Device precise location | Optional; manual area/landmark path remains available |
+| Public precise provider premises | Optional/separate authorization where applicable |
+| Customer contact handoff | Per interaction, time-limited and revocable |
+| Research interview | Optional and separate from product participation |
+| Audio/video recording | Optional, separate explicit consent |
+| Marketing/promotions | Not part of Phase 11 unless separately introduced and approved |
 
-The final legally approved schedule may change these periods. DIREKT must not promise deletion faster than its approved processors/backups can actually achieve.
+Refusing optional location, interview or recording permission must not by itself block the core manual pilot path.
 
-## 12. Security and access controls
+## 10. Enquiries and off-platform contact
 
-DIREKT's pilot security model includes:
+DIREKT's initial accountability path is:
 
-- server-side authorization as the source of truth;
-- private evidence storage;
-- no public evidence URLs;
-- minimized database references to evidence;
-- encrypted Android DIREKT session storage using Android Keystore controls;
-- rotating DIREKT refresh sessions after Firebase authentication;
-- restricted invitation and operations permissions;
-- masked/HMAC contact handling for pilot invitations;
-- audit logging of sensitive operations;
-- no real payment processing;
-- no unrestricted public pilot access;
-- fail-closed configuration if approvals or required runtime bindings are absent.
+```text
+provider discovery
+→ tracked enquiry
+→ provider response
+→ separately authorized contact handoff where enabled
+→ interaction history
+→ review/complaint eligibility
+```
 
-No system can guarantee absolute security. Any suspected incident should be reported through the final approved support/privacy contact immediately.
+A separate contact handoff should be time-bounded and revocable. Full in-app chat is not assumed necessary unless real pilot evidence demonstrates a validated need.
 
-## 13. Your rights and requests
+## 11. Reviews and complaints
 
-Subject to applicable Zambia law and identity verification, participants may have rights including access, correction, objection/restriction, withdrawal of consent where applicable, deletion/erasure where applicable and complaint/escalation.
+Reviews should be linked to an accountable DIREKT interaction rather than unrestricted anonymous posting.
 
-The final approved notice must provide:
+Participants may raise complaints or concerns through the approved support/privacy channels. The final notice must include the approved Zambia complaint/redress route and any DPC complaint information required by qualified review.
 
-- the controller/privacy contact for rights requests;
-- the support/escalation route;
-- applicable Zambia Data Protection Commission complaint/contact information;
-- the approved identity-verification process for rights requests;
-- any statutory response timelines and lawful exceptions confirmed by qualified review.
+## 12. Candidate retention schedule
 
-This draft deliberately does not invent those personalized/legal contact details.
+These are maximum product/operations candidate periods and remain subject to qualified Zambia review and DPC direction before real participant use.
 
-## 14. Complaints, safety and incidents
+| Data class | Candidate maximum |
+|---|---|
+| Failed/uncompleted auth challenge metadata | 7 days |
+| Active account/contact identifier | Participation period + 30 days after withdrawal/closure |
+| Original provider evidence after final decision | 30 days after final decision/appeal window unless approved hold applies |
+| Minimized verification decision/claim/audit metadata | 180 days after pilot close |
+| Enquiry/interaction data | 90 days after interaction closes |
+| Active contact handoff grant | 24 hours; minimized audit receipt up to 180 days |
+| Review/complaint/appeal data | 180 days after closure |
+| Security/access/audit logs | 180 days |
+| Raw research audio/video | Delete within 14 days after validated notes/transcript; absolute maximum 30 days |
+| Pseudonymous research notes | 180 days after pilot close |
+| Consent/notice/withdrawal receipt | 12 months after pilot close, minimized |
+| Raw device diagnostics | 30 days; non-identifying aggregates may be retained longer |
+| Payment data | None — real payments disabled |
 
-Participants should be able to report:
+A maximum period is not permission to keep data longer than necessary. Approved legal, fraud, security, complaint or dispute holds may require limited retention.
 
-- suspected false identity/credential claims;
-- inappropriate provider/customer conduct;
-- privacy or security concerns;
-- unsafe field activity;
-- misleading trust wording;
-- service/review disputes.
+## 13. Withdrawal and deletion
 
-DIREKT may pause a provider, feature, category, participant cohort or the whole pilot when the approved stop criteria are met.
+A participant may withdraw from the pilot subject to any lawful retention/hold obligations.
 
-Field-visit claims remain disabled until a Zambia-based field operator/lead is appointed, trained and approved under the pilot safety/operations process.
+The approved process should:
 
-## 15. Payments and charges
+1. stop new non-required processing;
+2. revoke active contact-handoff grants;
+3. prevent new public/profile discovery where applicable;
+4. cancel unnecessary pending uploads;
+5. separate research lookup keys from analysis data;
+6. delete or anonymize eligible data according to the approved schedule;
+7. keep only minimized records required to prove the action or satisfy an approved hold;
+8. provide a minimized completion/receipt status.
 
-DIREKT Phase 11 does not authorize real payment collection or money movement.
+Withdrawal must not require more personal information than reasonably necessary to identify the relevant account/research code.
 
-The pilot may ask research questions about pricing or willingness to pay, but:
+## 14. Rights and requests
 
-- participants should not be charged by DIREKT under this Phase 11 notice;
-- synthetic invoice/receipt artifacts are not tax invoices;
-- payment status must not change verification/trust status;
-- any later real payment/subscription activation requires separate legal/provider/tax/invoicing approval and updated participant/provider terms.
+Subject to final Zambia legal wording, participants may have rights relating to access, correction, objection/restriction, deletion/erasure and complaints.
 
-Participants may still incur ordinary telecom/data/SMS costs from their own network/provider when using their device.
+Initial operational targets are:
 
-## 16. Changes to this notice
+- acknowledge a rights request within 2 support days;
+- resolve a simple correction/revocation within 5 support days;
+- escalate deletion/complex requests immediately to the privacy accountable owner where holds or processor propagation are involved.
 
-Every approved notice must have an immutable version and document hash in DIREKT's canonical policy-version register.
+These are internal service targets, not statements of statutory deadlines.
 
-A materially changed notice must not silently inherit prior consent. Where the approved change requires renewed consent/acknowledgement, DIREKT must require the current version before new pilot sessions or processing covered by the change.
+## 15. Security/privacy incidents
 
-## 17. Final approval checklist
+Suspected exposure of identity evidence, private coordinates, raw contact information, authentication tokens or cross-provider data triggers immediate containment and an affected-path freeze.
 
-This draft becomes usable only after all applicable boxes are satisfied:
+The accountable owner must preserve necessary evidence, assess required regulator/data-subject notifications under the approved legal process and document any restart decision.
 
-- [ ] qualified Zambia legal/privacy/consumer review completed;
-- [ ] controller identity/filing structure confirmed;
-- [ ] required Zambia Data Protection Commission registration evidence recorded;
-- [ ] required overseas storage/transfer authorization or lawful mechanism recorded for the exact topology;
-- [ ] processor/service list and data locations confirmed;
-- [ ] lawful basis by purpose confirmed;
-- [ ] controller/privacy/support contact inserted;
-- [ ] rights/complaint wording confirmed;
-- [ ] category-specific legal limitations confirmed;
-- [ ] retention/legal-hold wording approved;
-- [ ] Firebase disclosure and provider configuration approved;
-- [ ] final document version chosen;
-- [ ] final document cryptographic hash generated;
-- [ ] final policy record inserted into `account.policy_versions` under `pilot_participation_notice`;
-- [ ] Android/runtime configured to the exact same final notice version;
-- [ ] managed consent/withdrawal/deletion canaries pass.
+## 16. Payments
 
-Until then, this file is a review instrument only.
+No real payment is required or moved during Phase 11.
+
+Subscription/payment status must remain independent from provider verification, publication, ranking and trust claims.
+
+## 17. Research evidence
+
+Participant research, interviews or recordings are separate from core product participation where applicable.
+
+Repository/public artifacts use pseudonymous evidence IDs and sanitized aggregates only. Real identities, phone numbers, evidence documents, recordings and exact private coordinates remain in approved private systems.
+
+## 18. Approval conditions before real use
+
+This candidate is prohibited from real participant use until all applicable items are complete:
+
+- DPC controller registration evidence;
+- DPC overseas storage/transfer authorization for the actual topology;
+- Zambia-qualified privacy/data-protection/consumer review;
+- final controller/contact/complaint wording;
+- final retention/legal-hold treatment;
+- final processor disclosures;
+- final immutable notice version/hash/effective date;
+- approved Firebase/provider configuration where used;
+- protected real-pilot canaries.
+
+Until then, this document is a drafting artifact only and `synthetic-demo-v1` remains synthetic-only.

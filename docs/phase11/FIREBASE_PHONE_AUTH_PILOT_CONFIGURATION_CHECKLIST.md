@@ -1,63 +1,58 @@
-# Firebase Phone Authentication — Phase 11 Wave 1 Configuration Checklist
+# Firebase Phone Authentication Pilot Configuration Checklist
 
-**Status:** CONFIGURATION CHECKLIST — REAL SMS/OTP ACTIVATION STILL EXTERNAL-GATED  
-**Project direction:** approved Firebase/Google project only; do not create a second identity authority in DIREKT.
+**Status:** CODE PATH IMPLEMENTED — REAL PARTICIPANT CONFIGURATION EXTERNALLY GATED  
+**Applies to:** Phase 11 bounded Zambia pilot
 
-## Architecture invariant
+## Current technical baseline
 
-Firebase is used only to prove recent possession of an invited Zambia phone number.
+The promoted backend/Android implementation already provides:
 
-```text
-Firebase phone OTP
-→ Firebase ID token
-→ DIREKT backend verifies token + pilot latch + invite + notice/consent
-→ DIREKT rotating session
-→ DIREKT roles/scopes/authorization
-```
+- Firebase phone ID-token verification on the backend;
+- Zambia phone-number format enforcement;
+- recent-authentication-age control;
+- invite-only admission;
+- canonical policy-version consent binding;
+- external subject HMAC hashing rather than raw Firebase UID storage;
+- phone-recycling/account-conflict protection;
+- rotating DIREKT application sessions after Firebase exchange;
+- abuse-control integration;
+- fail-closed requirement for pilot environment, controlled-pilot data mode and approved entry latch;
+- Android Keystore-protected DIREKT session storage;
+- participant notice/consent required before OTP initiation.
 
-Never use Firebase custom/client claims as provider/admin/reviewer authorization.
+The managed synthetic cohort contains zero Firebase external identities and zero real invitations.
 
-## Android app identity
+## Real configuration gate
 
-Current repository application IDs:
+Do not activate real phone authentication until DPC/legal/provider entry requirements are satisfied.
 
-```text
-Base/release: com.kudzimusar.direkt
-Debug:        com.kudzimusar.direkt.debug
-```
+Required external evidence:
 
-Wave 1 should use the exact package/application identity of the artifact actually distributed. Do not register one package in Firebase and sign/distribute another.
+- DPC controller registration as applicable;
+- overseas storage/transfer authorization for Firebase/Google real-data processing as applicable;
+- qualified Zambia review of the participant disclosure/consent wording;
+- final approved real notice version;
+- approved real pilot environment and support/incident owners.
 
-Before enabling real phone verification, record privately:
+## Firebase console configuration
 
-- Firebase project ID;
-- Firebase Android app ID;
-- package name;
-- signing certificate SHA-1;
-- signing certificate SHA-256;
-- artifact/release source SHA;
-- distribution group/tester list.
+Before real canary:
 
-The public repository stores no signing private key and no participant phone number.
+- [ ] Confirm exact Firebase project: `direkt-dev-502701`.
+- [ ] Confirm exact Android application/package IDs used for pilot distribution.
+- [ ] Enable Phone sign-in only for the approved environment.
+- [ ] Configure SMS region policy for Zambia as intended; do not leave an unintended global region policy.
+- [ ] Register required SHA-256 signing fingerprints for Play Integrity/app verification.
+- [ ] Register SHA-1 only where required for approved reCAPTCHA fallback.
+- [ ] Confirm Play Integrity/app verification behavior for the exact pilot build.
+- [ ] Confirm reCAPTCHA fallback behavior and approved API-key/domain restrictions if fallback is used.
+- [ ] Configure SMS quotas/budgets/abuse controls.
+- [ ] Separate Firebase fictional test numbers from real participant numbers.
+- [ ] Confirm no test phone number or verification code is hardcoded in the production participant app.
 
-## Provider enablement
+## Android build inputs
 
-- [ ] Phase 11 external/DPC/legal blocking evidence is complete.
-- [ ] `PILOT_ENTRY_APPROVED=true` is authorized for the dedicated pilot environment.
-- [ ] Firebase Authentication phone provider enabled only in the approved project.
-- [ ] exact Android package registered.
-- [ ] exact signing SHA fingerprints registered.
-- [ ] app verification / Play Integrity path configured according to current Firebase Android Phone Auth requirements.
-- [ ] reCAPTCHA fallback behavior tested where applicable.
-- [ ] Firebase test phone numbers used for pre-real canaries where possible.
-- [ ] real SMS region policy restricted to Zambia for Wave 1 where provider controls support it.
-- [ ] conservative SMS/verification quotas configured.
-- [ ] billing/cost alerting and abuse monitoring configured.
-- [ ] support/security owner knows how to disable phone auth immediately.
-
-## Build configuration
-
-Supply through protected Gradle properties/environment variables only:
+Real pilot build inputs remain protected configuration, never source constants:
 
 ```text
 DIREKT_PILOT_API_BASE_URL
@@ -67,136 +62,78 @@ DIREKT_FIREBASE_PROJECT_ID
 DIREKT_PILOT_NOTICE_VERSION
 ```
 
-Repository defaults are empty and therefore fail closed.
+Checklist:
 
-Required checks:
+- [ ] HTTPS API base URL only.
+- [ ] Exact Firebase project/app values injected through approved protected build configuration.
+- [ ] No unrestricted production API key committed to GitHub.
+- [ ] No `google-services.json` containing unmanaged real credentials committed merely to make the pilot work.
+- [ ] Exact signing artifact/fingerprint relationship documented privately.
+- [ ] Restricted distribution remains limited to the approved cohort/testers.
 
-- `DIREKT_PILOT_API_BASE_URL` is HTTPS;
-- `android:usesCleartextTraffic=false` remains present;
-- notice version exactly equals backend `PILOT_NOTICE_VERSION` and active database policy version;
-- no backend access-token secret, Supabase privileged key, external-subject HMAC pepper or service-account private key appears in APK/resources;
-- Firebase client API key is restricted appropriately to the intended app/API boundary and treated as a client identifier rather than a server secret;
-- distribution artifact is restricted to the approved cohort/internal test boundary.
+## Backend activation inputs
 
-## Firebase ID-token backend verification
-
-The promoted backend requires:
-
-- Firebase mode enabled only in approved pilot environment/data mode/latch;
-- RS256 token signature from Google SecureToken certificate;
-- exact configured project audience;
-- exact `https://securetoken.google.com/<project>` issuer;
-- token unexpired;
-- issued/authentication times within policy;
-- recent authentication ceremony (default maximum age 300 seconds);
-- `firebase.sign_in_provider=phone`;
-- Zambia `+260` phone number shape;
-- current configured pilot notice version accepted;
-- current invite/admission requirement satisfied.
-
-A valid Firebase token alone is insufficient for DIREKT admission.
-
-## Invite-only control
-
-Before real OTP distribution to a participant, operations should create a bounded invitation through the protected pilot invitation API.
-
-The backend stores:
-
-- phone HMAC digest;
-- masked display hint;
-- customer/provider participant type;
-- wave number;
-- exact canonical policy version;
-- expiry/status/creator/claim metadata.
-
-It does not store the raw invitation phone value in the invitation row.
-
-Per-wave hard caps:
-
-- 8 providers;
-- 20 customers.
-
-Uninvited verified phones cannot create a new DIREKT identity/session.
-
-## Phone recycling and recovery
-
-Permanent rule:
-
-- same already-bound Firebase subject + same verified phone may re-enter subject to current admission/consent;
-- different Firebase subject for a bound phone is denied;
-- an existing legacy/unbound DIREKT phone contact is never auto-linked to a new Firebase subject;
-- recovery/manual verification is required for those cases.
-
-Do not weaken this to reduce support friction.
-
-## Consent behavior
-
-The Android UI must require active acceptance of the exact injected approved notice version before OTP starts and while code verification is completed.
-
-The backend also requires:
+Real canary requires explicit protected values:
 
 ```text
-noticeVersion == configured PILOT_NOTICE_VERSION
-consentAccepted == true
+DIREKT_ENVIRONMENT=pilot
+DIREKT_DATA_MODE=controlled-pilot
+FIREBASE_AUTH_MODE=firebase
+FIREBASE_PROJECT_ID=<approved project>
+PILOT_NOTICE_VERSION=<approved real version>
+EXTERNAL_SUBJECT_HASH_PEPPER=<server-only secret>
+PILOT_ENTRY_APPROVED=true
 ```
 
-On first/current-policy admission, canonical `account.consents` is written.
+Rules:
 
-If the latest current-policy consent becomes revoked:
+- `PILOT_ENTRY_APPROVED=true` is last, not first.
+- Never use the synthetic notice version as the real participant notice.
+- Never reuse the synthetic activation path to create real identities.
+- Pepper stays server-only and must not appear in Android, logs, GitHub or public artifacts.
 
-- a new Firebase-backed DIREKT session is blocked;
-- fresh current-policy invitation + explicit re-consent is required to re-enter, subject to approved withdrawal/re-entry policy.
+## Real canary sequence
 
-## Abuse and privacy canaries
+Run with cohort traffic still restricted:
 
-Before Wave 1:
+1. create one approved real pilot invitation through the protected operations path;
+2. display the approved notice before OTP request;
+3. obtain participant consent;
+4. request OTP through Firebase;
+5. verify app-verification behavior;
+6. exchange Firebase ID token with DIREKT backend;
+7. confirm exactly one external identity binding and one DIREKT identity;
+8. confirm correct role/permission boundary;
+9. sign out/re-enter and confirm same identity;
+10. confirm different Firebase subject cannot inherit an already-bound phone identity;
+11. confirm withdrawal/revocation blocks re-entry without a fresh approved invitation/consent;
+12. inspect logs/telemetry for raw phone/token leakage;
+13. confirm kill switch disables new entry.
 
-- [ ] invalid/non-Zambia phone cannot pass backend token policy;
-- [ ] wrong Firebase project token rejected;
-- [ ] stale auth ceremony rejected;
-- [ ] uninvited number cannot create identity/session;
-- [ ] invite expiry/revocation blocks admission;
-- [ ] different-subject same-phone attempt blocked;
-- [ ] legacy/unbound phone auto-link blocked;
-- [ ] backend exchange rate limit enforced;
-- [ ] raw Firebase UID absent from DB/logs;
-- [ ] raw invitation phone absent from invitation DB/logs;
-- [ ] ID token not logged;
-- [ ] Android DIREKT refresh/access session encrypted at rest;
-- [ ] Firebase local user signs out after successful DIREKT exchange;
-- [ ] session revocation works;
-- [ ] consent withdrawal/re-entry canary works.
+## Synthetic versus real OTP tests
 
-## SMS/recruitment boundary
+Firebase fictional phone-number tests may validate integration without sending a real SMS, but they do not prove:
 
-The app can only prove invite admission after Firebase verifies the phone and the backend sees the verified number. Therefore operational Wave 1 control also requires:
+- Zambia carrier SMS delivery;
+- delivery latency;
+- real-device Play Integrity behavior across recruited devices;
+- real participant comprehension;
+- cost/quotas under real usage.
 
-- restricted app distribution to named/approved invitees;
-- invitations created before recruitment;
-- Zambia-only SMS policy/quotas where available;
-- no public APK/link promotion;
-- no unrestricted signup messaging;
-- monitoring for unexpected OTP attempts.
+Record fictional-number tests as `SYNTHETIC`/`SYSTEM-METRIC`, never `PRIMARY-PILOT`.
 
-If OTP abuse exceeds the approved threshold, disable phone auth/pilot traffic and investigate before restart.
+## Abuse and privacy checks
 
-## Evidence to retain privately
+- [ ] Rate limits applied before/around exchange path.
+- [ ] No raw Firebase UID persisted.
+- [ ] No raw phone stored in external identity binding.
+- [ ] Invitation storage remains HMAC digest + masked hint.
+- [ ] Firebase phone disclosure included in approved real notice.
+- [ ] Google/Firebase overseas processing included in approved DPC/legal analysis.
+- [ ] No phone number in analytics/Sentry/public CI artifacts.
+- [ ] Session replay/refresh rotation remains enforced.
+- [ ] Revocation/withdrawal path tested.
 
-Evidence ID:
+## Exit condition
 
-```text
-P11A-PROVIDER-FIREBASE-001
-```
-
-Retain privately:
-
-- project/app/provider configuration screenshots/export;
-- package + SHA fingerprint evidence;
-- SMS region/quota/abuse settings;
-- Play Integrity/app-verification evidence;
-- test-number canary output;
-- real first canary delivery result after legal/regulatory approval;
-- billing/quota owner;
-- kill-switch procedure.
-
-Only safe metadata/reference should enter GitHub.
+This checklist is complete for real pilot activation only when configuration evidence, canary results and external approval references are recorded. Code implementation or a Firebase console account alone is not sufficient.

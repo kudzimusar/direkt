@@ -1,23 +1,26 @@
 # Phase 11 Secondary Validation Synthesis — 2026-07-19
 
-**Status:** SECONDARY/ONLINE EVIDENCE SYNTHESIS — NARROWS 11C–11H BUT DOES NOT REPLACE REAL PILOT EVIDENCE  
+**Status:** SECONDARY/ONLINE EVIDENCE SYNTHESIS + SYNTHETIC READINESS CONTEXT — DOES NOT REPLACE PRIMARY PILOT EVIDENCE  
 **Governing issue:** #112
 
 ## Purpose
 
-The Phase 11 plan requires real controlled-pilot evidence. This synthesis uses current official/credible online sources and the repository's prior Zambia research to remove questions that do not need to be rediscovered with participants.
+The Phase 11 plan requires a real controlled Zambia pilot before formal exit. Secondary research is used only to narrow assumptions, lock conservative scope and avoid asking participants to rediscover facts that authoritative sources can establish.
 
-It is valid for:
+Since this synthesis was first prepared, DIREKT has also completed its production-shaped synthetic controlled-pilot activation. That synthetic/system evidence proves current state-machine and integration readiness, but it does not convert any real-world question into a participant result.
+
+This synthesis is valid for:
 
 - locking conservative Wave 1 scope;
-- choosing which claims/features remain disabled;
+- choosing claims/features that remain disabled;
 - defining provider evidence pathways;
-- defining what must be measured rather than guessed;
-- reducing the number of open assumptions entering the real pilot.
+- defining what real participants/operations must still measure;
+- reducing open assumptions before the real pilot;
+- interpreting synthetic readiness without overstating it.
 
-It is **not** valid as a substitute for:
+It is not valid as a substitute for:
 
-- actual onboarding completion/abandonment;
+- actual recruitment/onboarding completion or abandonment;
 - trust-language comprehension;
 - real enquiry/response behavior;
 - field/reviewer/support timing;
@@ -28,169 +31,176 @@ It is **not** valid as a substitute for:
 
 ## Source families used
 
-Authoritative/current source families include:
+Current authoritative/credible source families considered in Phase 11 research include:
 
-- Zambia Data Protection Commission — registration, rights, data-protection framework and overseas storage/transfer questions;
+- Zambia Data Protection Commission — registration, rights, data-protection framework and overseas storage/transfer requirements;
 - Zambia Information and Communications Technology Authority — ICT/mobile/connectivity market evidence;
-- Zambia Statistics Agency where applicable for population/household context;
+- Zambia Statistics Agency — population, labour, device/internet context where applicable;
 - Electoral Commission of Zambia / Lusaka local-government sources — ward/constituency geography;
 - TEVETA — vocational/trade training and qualification pathways;
 - Energy Regulation Board — electrical/energy-sector regulatory boundaries;
 - National Council for Construction — contractor/construction registration boundaries;
-- PACRA — business-registration/identity source;
+- PACRA — business registration/identity source;
 - Bank of Zambia — payment-system/provider boundaries;
 - Competition and Consumer Protection Commission — consumer-protection/redress context;
-- current Firebase/Google official documentation for Android phone authentication and backend ID-token verification.
+- Firebase/Google official documentation — Android phone authentication and backend ID-token verification.
 
-All product claims must still cite the exact authoritative source/issuer relevant to the individual check.
+All real product claims must still use the exact authoritative issuer/source appropriate to the individual check.
 
----
+## 11C — Provider cohort and evidence validation
 
-# 11C — Provider cohort and evidence validation
+### Conclusions locked before primary pilot
 
-## Conclusions that can be locked before primary pilot
+#### Four-category boundary
 
-### 1. Keep the four-category Wave 1 set
-
-Wave 1 remains limited to:
+Keep the approved four-category bounded scope:
 
 1. plumbing/water repair;
 2. electrical repair/services;
 3. motor-vehicle mechanics;
 4. appliance/electronics repair.
 
-Rationale:
+Reasons:
 
-- all four represent practical local-service discovery/use cases;
-- formal vocational/trade evidence pathways exist for at least relevant subsets through TEVETA and related issuers;
-- business-registration evidence can be separately checked through PACRA where applicable;
-- electrical and some construction-related work create a useful test of category-specific statutory boundaries rather than a one-size-fits-all credential model;
-- the four categories create variation between fixed-premises, mobile and hybrid providers.
+- practical local-service discovery/use cases;
+- formal trade/qualification evidence pathways exist for relevant subsets;
+- business-registration evidence can be checked separately where applicable;
+- category-specific statutory boundaries can be tested without assuming one credential fits all providers;
+- the categories naturally include fixed-premises, mobile and hybrid operating models.
 
-Do not add more categories before Wave 1 evidence unless a critical recruitment failure requires a documented substitution.
+Do not add categories merely to make recruitment easier without a documented scope decision.
 
-### 2. Keep three provider pathways
+#### Three provider pathways
 
-Provider recruitment should intentionally include:
+Retain:
 
 - registered businesses;
 - qualified/trade-trained individuals;
-- experienced informal providers where participation and public wording remain lawful and honest.
+- experienced informal providers where participation and public wording remain lawful and accurate.
 
-This is required to test whether DIREKT can create **partial, check-specific trust** without unfairly converting formal business registration into the only path to marketplace visibility.
+This tests whether DIREKT can present partial, check-specific trust without turning formal business registration into the only route to visibility.
 
-### 3. Verification claims remain decomposed
+#### Claims remain decomposed
 
-Never collapse into a blanket `verified provider` state.
+Never collapse trust into a blanket `verified provider` state.
 
-Candidate independent claims:
+Independent claim concepts may include:
 
 - identity checked;
 - phone/contact checked;
 - business registration checked;
 - qualification/trade certificate checked;
 - category-specific licence/registration checked where applicable;
-- premises/location checked;
+- premises/location checked where actually performed and permitted;
 - not checked;
 - pending;
 - expired.
 
-### 4. Electrical category remains high-caution
+#### Electrical category remains high-caution
 
-Do not infer that a general training certificate authorizes every electrical activity.
+A training certificate does not automatically authorize every electrical activity.
 
-Before public qualification/licence claims:
+Before any public qualification/licence claim:
 
 - identify exact issuer;
-- identify exact credential type/scope;
+- identify credential type/scope;
 - identify expiry/revocation where applicable;
-- confirm whether ERB, another statutory body, employer/training issuer or other authority is the authoritative source for the specific activity.
+- identify the authoritative regulator/issuer for the specific activity.
 
-### 5. NCC registration is not a blanket artisan requirement
+#### NCC is not a blanket artisan requirement
 
-NCC evidence may be relevant to particular contractors/projects/entities. Do not require it automatically from every plumber, electrician, mechanic or small repair provider.
+NCC registration may be relevant to certain contractors/projects/entities. Do not automatically require it from every plumber, electrician, mechanic or small repair provider.
 
-### 6. PACRA is a business-registration check, not competence proof
+#### PACRA is registration evidence, not competence proof
 
-A PACRA record can support a business-identity/registration claim. It must not be converted into a competence, safety or work-quality claim.
+A PACRA record may support a business-identity/registration claim. It must not become a competence, safety or work-quality guarantee.
 
-## What still requires Wave 1 primary evidence
+### Synthetic readiness now proven
 
-- provider recruitment acceptance rate;
+The managed synthetic checkpoint contains:
+
+- 24 provider fixtures;
+- exactly 6 per category;
+- exactly 2 registered-business, 2 qualified-individual and 2 experienced-informal fixtures per category;
+- 48 complete evidence/review/recommendation/decision/claim lifecycles;
+- 24 provider/category publications only after required claims existed.
+
+This proves the current architecture can represent the intended mix and verification lifecycle.
+
+### Still requires PRIMARY-PILOT evidence
+
+- recruitment acceptance rate;
 - onboarding completion/abandonment by pathway/category;
-- what evidence providers actually possess and can reasonably submit;
+- evidence real providers actually possess/can submit;
 - rejection/resubmission reasons;
-- comprehension of independent trust claims;
+- trust-claim comprehension;
 - real verification turnaround;
-- perceived fairness for informal versus registered/qualified providers;
-- support burden.
+- perceived fairness across provider pathways;
+- real support burden.
 
-**11C secondary conclusion:** scope/evidence architecture can be locked; performance/usability outcomes remain PRIMARY REQUIRED.
+**11C conclusion:** scope/evidence architecture and synthetic functionality can be locked; real usability/performance outcomes remain primary required.
 
----
+## 11D — Discovery, location and trust comprehension
 
-# 11D — Discovery, location and trust comprehension
+### Manual/list-first remains the entry mode
 
-## Conclusions that can be locked
+Do not make Google Maps a Wave 1 prerequisite.
 
-### 1. Wave 1 remains manual/list-first
-
-Do not make Google Maps a prerequisite for Wave 1.
-
-Required discovery inputs:
+Required discovery inputs remain:
 
 - approved area/ward;
 - landmark/free-text area description where supported;
 - provider service area;
 - fixed/mobile/hybrid operating model.
 
-Location permission denial must not block core discovery.
+Location-permission denial must not block core discovery.
 
-### 2. Kabwata + Chilenje remains the controlled operating boundary
+### Geography remains bounded
 
-This is an operational boundary, not a claim that the two wards are representative of Zambia as a whole.
+Kabwata + Chilenje remains the controlled operating boundary. This does not imply representativeness for Lusaka or Zambia as a whole.
 
-Matero remains a later comparison/expansion candidate; do not expand automatically.
+Matero remains a later comparison/expansion candidate.
 
-### 3. Exact provider base coordinates remain private
+### Exact private provider coordinates remain private
 
-For mobile/hybrid providers, public discovery should be based on service area, not an invented exact public pin.
+For mobile/hybrid providers, discovery should rely on service area rather than inventing an exact public pin.
 
-For fixed premises, precise public location should be enabled only if:
+For fixed premises, public precise location should be enabled only when genuinely customer-facing, useful, separately authorized and safe.
 
-- genuinely customer-facing;
-- necessary/useful;
-- separately approved;
-- provider consent/authorization is clear;
-- privacy/safety controls permit it.
+### Trust must be understood claim by claim
 
-### 4. Trust comprehension must be measured per claim
+Ask real participants what each claim means rather than whether they simply “trust the badge.”
 
-Participants must be asked separately what they think each claim means.
+### Synthetic readiness now proven
 
-Do not ask only whether they “trust the badge.”
+Synthetic providers exercise:
 
-## What still requires Wave 1 primary evidence
+- Kabwata/Chilenje locality labels;
+- mobile/fixed/hybrid operating models;
+- bounded service areas;
+- scoped claims/limitations;
+- publication gating;
+- manual/list-first boundary with Maps disabled.
+
+Synthetic coordinates are fixture values only and are not evidence of real service-area accuracy.
+
+### Still requires PRIMARY-PILOT evidence
 
 - how customers naturally describe/search locations;
-- manual search success/no-result rate;
-- permission-denial recovery;
-- whether provider service areas feel accurate;
-- customer interpretation of identity/business/qualification/location claims;
-- whether `not checked`, `pending` and `expired` are understood;
-- whether a map materially improves discovery enough to justify later provider/privacy cost.
+- manual search success/no-result behavior;
+- permission-denial recovery on real devices;
+- service-area accuracy perception;
+- interpretation of identity/business/qualification/location claims;
+- understanding of `not checked`, `pending` and `expired`;
+- whether a map provides enough incremental value to justify later provider/privacy cost.
 
-**11D secondary conclusion:** manual/list-first and reduced-precision privacy model can be locked; comprehension and discovery effectiveness remain PRIMARY REQUIRED.
+**11D conclusion:** manual/list-first and reduced-precision privacy architecture can be locked; comprehension and discovery effectiveness remain primary required.
 
----
+## 11E — Enquiries, contact handoff, reviews and complaints
 
-# 11E — Enquiries, contact handoff, reviews and complaints
+### Keep tracked enquiry before off-platform contact
 
-## Conclusions that can be locked
-
-### 1. Keep tracked enquiry before off-platform contact
-
-The baseline remains:
+Baseline:
 
 ```text
 provider discovery
@@ -201,128 +211,151 @@ provider discovery
 → review/complaint eligibility
 ```
 
-This preserves accountability without prematurely building full in-app chat.
+This preserves accountability without prematurely building full chat.
 
-### 2. Do not add full chat before evidence
+### Do not add full chat without evidence
 
-A participant request for chat is a feature request, not proof that tracked enquiry + consented handoff fails.
+A request for chat is a feature request, not proof that tracked enquiry + consented handoff fails.
 
-Add chat only if Wave 1 shows a validated problem that cannot be solved safely with the existing model.
+### Automated WhatsApp/call providers remain off
 
-### 3. Automated WhatsApp/call providers remain off in Wave 1
+Wave 1 can test whether participants understand/want contact handoff without activating automated communications delivery.
 
-The product can measure whether participants want/understand call or WhatsApp handoff without activating an automated communications provider.
+Any later provider requires legal/privacy/provider review and updated processing records.
 
-Any later provider requires legal/privacy/provider review and updated data-processing records.
+### Reviews remain interaction-linked
 
-### 4. Reviews remain interaction-linked
+Review eligibility stays tied to an accountable DIREKT interaction rather than unrestricted anonymous creation.
 
-Review eligibility should continue to be tied to an accountable DIREKT interaction rather than unrestricted anonymous review creation.
+### Synthetic readiness now proven
 
-## What still requires Wave 1 primary evidence
+Managed synthetic states include:
 
-- enquiry completion and abandonment;
-- provider response/unanswered rate;
-- response time;
-- whether customers understand the boundary between DIREKT and off-platform contact;
-- consent/revocation comprehension;
+- 60 enquiries;
+- 36 closed;
+- 12 accepted/active;
+- 6 declined;
+- 6 received/unanswered;
+- 48 tracked interactions;
+- 24 interaction-eligible reviews;
+- 6 complaint scenarios.
+
+These distributions are deterministic test scenarios, not observed response or complaint rates.
+
+### Still requires PRIMARY-PILOT evidence
+
+- real enquiry completion/abandonment;
+- response time and unanswered rate;
+- customer understanding of DIREKT versus off-platform contact;
+- contact-consent/revocation comprehension;
 - review completion/moderation burden;
 - complaint rate/type and support workload;
 - whether full chat is actually necessary.
 
-**11E secondary conclusion:** interaction architecture can be locked; response/accountability behavior remains PRIMARY REQUIRED.
+**11E conclusion:** interaction architecture and state-machine readiness can be locked; real response/accountability behavior remains primary required.
 
----
+## 11F — Operations and field capacity
 
-# 11F — Operations and field capacity
+### Field-visit claims remain disabled
 
-## Conclusions that can be locked
-
-### 1. Disable field-visit claims in Wave 1
-
-No public `field checked`/`premises visited` claim should be activated until:
+No public `field checked`, `field visited` or `premises visited` claim until:
 
 - a Zambia-based operator/lead is named;
-- safety and identity procedures are approved;
+- safety/identity procedures are approved;
 - travel/assignment workflow is tested;
 - cost/capacity can be measured honestly.
 
-Wave 1 can still validate document/evidence review, corrections, complaints and queue handling.
+Wave 1 can still validate evidence review, corrections, complaints and queue handling without a field claim.
 
-### 2. Four-eyes/high-risk controls remain necessary
+### Four-eyes/high-risk controls remain necessary
 
-High-impact trust state changes, exceptions and overrides should keep the existing authorization/audit separation. Pilot convenience is not a reason to permit direct DB status fixes.
+High-impact trust changes, exceptions and overrides must preserve authorization/audit separation. Pilot convenience never justifies direct DB status fixes for real cases.
 
-### 3. Operations capacity is a release variable
+### Operations capacity is a release variable
 
-Queue age, support backlog and evidence-review time are not merely analytics. They determine whether the pilot must pause/narrow.
+Queue age, support backlog and review time determine whether the pilot must pause/narrow; they are not merely analytics.
 
-## What still requires Wave 1 primary evidence
+### Synthetic readiness now proven
 
-- reviewer minutes per evidence/case;
+The synthetic run proves:
+
+- reviewer assignments execute;
+- evidence state transitions execute;
+- recommendations and immutable decisions execute;
+- scoped claims and publication gating execute;
+- enquiry/review/complaint state synchronization executes;
+- zero field visits were created.
+
+### Still requires PRIMARY-PILOT evidence
+
+- reviewer minutes per case/evidence item;
 - support contacts per participant;
 - queue ageing;
 - rework/rejection burden;
 - complaint/escalation load;
-- actual field-route/cost data if field checks are later activated;
+- field-route/time/cost if later activated;
 - fraud/collusion indicators.
 
-**11F secondary conclusion:** field claim stays disabled and operations controls remain; capacity/timing remains PRIMARY REQUIRED.
+**11F conclusion:** field claims remain disabled and operations controls stay fixed; real capacity/timing/cost evidence remains primary required.
 
----
+## 11G — Device, connectivity and reliability
 
-# 11G — Device, connectivity and reliability
+### Android-first remains appropriate
 
-## Conclusions that can be locked
+Continue optimizing the native Android participant path rather than introducing another participant client during Phase 11.
 
-### 1. Android-first remains appropriate
+### Design for variable connectivity
 
-The repository should continue to optimize the native Android path rather than introduce an iOS/web participant client during Phase 11.
-
-### 2. Design for variable connectivity, not constant broadband
-
-Wave 1 testing must retain:
+Retain:
 
 - timeouts and safe retry;
-- idempotent mutation behavior;
+- idempotent mutations;
 - interrupted upload recovery;
 - app/process restart recovery;
 - low-bandwidth behavior;
 - manual location fallback;
 - no background-location dependency.
 
-### 3. Repository minimum SDK is not a substitute for real device coverage
+### Repository support is not real device evidence
 
-A technically supported Android version does not prove usable performance on low-memory/low-storage devices.
+A supported Android/API version does not prove usable performance on low-memory/low-storage devices.
 
-The pilot matrix must include actual recruited-device diversity and record device/network context without unnecessarily identifying participants.
+The real pilot must capture recruited-device/network diversity privately/minimally.
 
-## What still requires Wave 1 primary evidence
+### Synthetic/system readiness now proven
 
-- actual Android version distribution in the cohort;
+Before synthetic activation, a broken Android dependency/wrapper bundle was detected through regression-first auditing, repaired and revalidated through:
+
+- Android CI;
+- Android performance budget;
+- supply-chain/security checks.
+
+The backend/container/recovery/openAPI/synthetic gates also passed on the promoted Phase 11 source.
+
+This is valuable `SYSTEM-METRIC` evidence, not a real Zambia device/network result.
+
+### Still requires PRIMARY-PILOT evidence
+
+- actual Android distribution in recruited cohort;
 - low-memory/storage failures;
 - startup/navigation latency on real devices;
-- intermittent-network failure rate;
+- intermittent-network failures;
 - upload retry/recovery behavior;
 - OTP delivery/auth behavior across Zambia networks;
 - font/screen/accessibility issues;
-- crash/ANR rate under real pilot use.
+- real crash/ANR/error rates.
 
-**11G secondary conclusion:** Android/offline-resilient design assumptions are strong enough to retain; real reliability rates remain PRIMARY REQUIRED.
+**11G conclusion:** Android/offline-resilient architecture remains appropriate; real reliability rates remain primary required.
 
----
+## 11H — Pricing and unit economics
 
-# 11H — Pricing and unit economics
+### Keep real payments disabled
 
-## Conclusions that can be locked
+Phase 11 measures value and willingness to pay without moving real money.
 
-### 1. Keep real payments disabled
+This avoids premature payment-provider/legal/tax/reconciliation risk.
 
-Phase 11 should measure willingness to pay without moving real money.
-
-This avoids introducing payment-provider/legal/tax/reconciliation risk before product/trust value is validated.
-
-### 2. Payment must remain independent from trust
+### Payment stays independent from trust
 
 No subscription/payment state may automatically:
 
@@ -330,83 +363,97 @@ No subscription/payment state may automatically:
 - create verification claims;
 - increase trust level;
 - bypass expiry/review;
-- change provider competence/safety wording.
+- change competence/safety wording;
+- unfairly alter ranking.
 
-### 3. Use cost accounting, not guessed profitability
+### Use cost accounting rather than guessed profitability
 
-Measure at minimum:
+Measure later:
 
 ```text
-provider acquisition/recruitment cost
+provider acquisition/recruitment effort
 + evidence review time/cost
 + support/moderation cost
 + infrastructure/auth/SMS cost
 + field cost if activated
-= activation/servicing cost by provider pathway/category
+= activation/servicing cost by pathway/category
 ```
 
-Then compare separately with stated willingness to pay. Do not present hypothetical willingness as revenue.
+Then compare separately against stated willingness to pay.
 
-### 4. Pricing questions should test ranges and trade-offs
+### Pricing questions should test trade-offs
 
-Research should distinguish:
+Distinguish:
 
 - one-time verification/application fee;
 - recurring provider subscription;
-- category/provider-pathway differences;
-- perceived value of visibility versus trust checks;
+- category/pathway differences;
+- value of visibility versus trust checks;
 - willingness to pay for optional features;
-- reasons for refusal.
+- refusal reasons.
 
-No price should be called validated until real provider responses exist.
+### Synthetic assumptions retained
 
-## What still requires Wave 1 primary evidence
+Scenario-only monthly bands:
 
-- provider perceived value;
-- acceptable price ranges;
+- ZMW 50;
+- ZMW 100;
+- ZMW 150;
+- ZMW 250.
+
+No price is validated. Managed synthetic activation created zero payment intents.
+
+### Still requires PRIMARY-PILOT evidence
+
+- perceived provider value;
+- acceptable price bands;
 - billing-cycle preference;
-- willingness-to-pay by category/pathway;
+- willingness to pay by category/pathway;
 - real support/review/infrastructure cost;
 - field cost if activated;
-- conversion/activation friction.
+- acquisition/activation friction.
 
-**11H secondary conclusion:** payment-disabled research model and unit-economics measurement framework can be locked; price/revenue viability remains PRIMARY REQUIRED.
+**11H conclusion:** payment-disabled research model and unit-economics framework can be locked; price/revenue viability remains primary required.
 
----
+## Cross-stage decisions locked for Wave 1
 
-# Cross-stage decisions now locked for Wave 1
-
-| Decision | Status after secondary synthesis |
+| Decision | Current status |
 |---|---|
 | Geography | LOCKED: Kabwata + Chilenje only for Wave 1 |
-| Categories | LOCKED: 4 categories only |
-| Cohort | LOCKED: invite-only, max 8 providers + 20 customers per wave |
+| Comparison area | Matero retained; not automatically activated |
+| Categories | LOCKED: four bounded categories |
+| Cohort | LOCKED: invite-only, maximum 8 providers + 20 customers per wave |
 | Provider pathways | LOCKED: registered + qualified + experienced-informal where lawful/accurate |
 | Android | LOCKED as participant client |
 | Maps | DISABLED / NOT REQUIRED for Wave 1 |
 | Precise location | OPTIONAL/SEPARATE; never required for core discovery |
-| Sentry real-participant telemetry | DISABLED unless separately approved |
+| Sentry real-participant telemetry | DISABLED unless separately approved/privacy-tested |
 | Automated WhatsApp/call provider | DISABLED unless separately approved |
 | Payments | DISABLED; research only |
 | Field-visit trust claim | DISABLED until field gate passes |
 | Full chat | DEFERRED pending evidence |
 | Blanket `verified` badge | PROHIBITED |
-| Invite-only Firebase phone auth | TECHNICAL PATH LOCKED; real activation external-gated |
+| Firebase phone auth | IMPLEMENTED TECHNICALLY; REAL CONFIG/USE EXTERNAL-GATED |
 | Public launch | PROHIBITED |
+| Synthetic functional readiness | COMPLETE |
+| PRIMARY-PILOT validation | PENDING |
 
 ## Effect on Phase 11
 
-Online/secondary evidence has now done everything it can safely do for 11C–11H before real entry:
+Secondary research plus synthetic/system testing has substantially reduced uncertainty about the **shape of the pilot** and the **technical ability of the current architecture to support it**.
 
-- scope is narrow;
-- categories are bounded;
-- provider evidence architecture is defined;
-- high-risk integrations are deliberately removed from Wave 1 dependencies;
-- device/reliability scenarios are defined;
-- interaction architecture is fixed for validation;
-- pricing/payment boundary is fixed;
-- primary questions are explicit and smaller.
+It has not answered the core real-world questions that justify production release.
 
-The remaining 11C–11H metrics are intrinsically behavioral/operational. They can be recorded only after lawful Wave 1 participants actually use the system.
+Therefore:
 
-Do not convert this synthesis into invented percentages, completion rates, willingness-to-pay figures or a Phase 11 `PROCEED` decision.
+```text
+Scope architecture: LOCKED
+Synthetic functional readiness: COMPLETE
+Managed synthetic activation: COMPLETE
+Regulator/legal approvals: PENDING EXTERNAL EVIDENCE
+11C–11H PRIMARY-PILOT evidence: PENDING
+11J decision: PENDING
+Formal Phase 12 authorization: NOT GRANTED
+```
+
+The next real evidence must come from the approved controlled Zambia pilot, not from further relabelling of desk research or synthetic scenarios.
