@@ -1,5 +1,5 @@
-export type EnquiryTiming = "urgent" | "today" | "within_week" | "flexible";
-export type PreferredChannel = "call" | "whatsapp";
+export type EnquiryTiming = "urgent" | "within_week" | "flexible" | "scheduled";
+export type PreferredChannel = "call" | "whatsapp" | "none";
 
 export interface SavedProviderView {
   publicProviderId: string;
@@ -11,55 +11,102 @@ export interface SavedProviderView {
   synthetic: true;
 }
 
+export interface EnquiryEventView {
+  eventId: string;
+  sequence: number;
+  eventType: "created" | "status_changed";
+  fromStatus: EnquiryView["status"] | null;
+  toStatus: EnquiryView["status"];
+  actorKind: "customer" | "provider" | "system";
+  reason: string;
+  policyVersion: string;
+  occurredAt: string;
+  actorIdentityExposed: false;
+}
+
 export interface EnquiryView {
   enquiryId: string;
   publicProviderId: string;
-  providerPublicId: string;
   providerDisplayName: string;
   categoryKey: string;
   categoryName: string;
   serviceSummary: string;
   timing: EnquiryTiming;
+  requestedFor: string | null;
   localitySummary: string;
   preferredChannel: PreferredChannel;
-  status: "received" | "accepted" | "declined" | "closed" | "cancelled";
+  status:
+    | "received"
+    | "acknowledged"
+    | "needs_information"
+    | "accepted"
+    | "declined"
+    | "closed"
+    | "cancelled";
   revision: number;
   createdAt: string;
-  respondedAt: string | null;
-  closedAt: string | null;
   updatedAt: string;
-  policyVersion: string;
-  rawContactIncluded: false;
-  chatIncluded: false;
-  attachmentIncluded: false;
+  terminalAt: string | null;
+  events: EnquiryEventView[];
+  fullChatEnabled: false;
+  privateContactIncluded: false;
   privateEvidenceIncluded: false;
+  internalIdentifiersIncluded: false;
+  synthetic: true;
 }
 
 export interface ContactHandoffView {
   handoffId: string;
-  enquiryId: string;
   interactionId: string;
-  channel: PreferredChannel;
+  enquiryId: string;
+  channel: "call" | "whatsapp";
   contactDisplayHint: string;
-  status: "active" | "revoked" | "expired";
-  createdAt: string;
+  status: "active" | "expired" | "revoked";
+  consentedAt: string;
   expiresAt: string;
   revokedAt: string | null;
-  rawContactIncluded: false;
+  policyVersion: string;
+  deliveryState: "disabled";
   externalDeliveryAttempted: false;
+  rawContactIncluded: false;
+  synthetic: true;
 }
 
 export interface ReviewEligibilityView {
   eligible: boolean;
-  reasonCode: string;
-  evaluatedAt: string;
+  reasonCode:
+    | "INTERACTION_ACTIVE"
+    | "INTERACTION_CANCELLED"
+    | "WINDOW_NOT_OPEN"
+    | "WINDOW_EXPIRED"
+    | "ALREADY_REVIEWED"
+    | "ELIGIBLE";
+  eligibleFrom: string | null;
+  eligibleUntil: string | null;
 }
 
 export interface InteractionEventView {
+  eventId: string;
   sequence: number;
-  eventType: string;
+  eventType:
+    | "accepted"
+    | "handoff_created"
+    | "handoff_revoked"
+    | "completed"
+    | "cancelled"
+    | "review_submitted"
+    | "provider_response_submitted"
+    | "review_moderated"
+    | "appeal_submitted"
+    | "appeal_decided"
+    | "complaint_submitted"
+    | "complaint_linked";
+  actorKind: "customer" | "provider" | "operations" | "system";
+  reason: string;
+  policyVersion: string;
   occurredAt: string;
-  summary: string;
+  actorIdentityExposed: false;
+  privateMetadataIncluded: false;
 }
 
 export interface InteractionView {
@@ -69,51 +116,90 @@ export interface InteractionView {
   providerDisplayName: string;
   categoryKey: string;
   categoryName: string;
-  status: "active" | "closed" | "cancelled";
-  openedAt: string;
-  closedAt: string | null;
+  status: "active" | "completed" | "cancelled";
   revision: number;
+  startedAt: string;
+  completedAt: string | null;
+  cancelledAt: string | null;
   reviewEligibility: ReviewEligibilityView;
   handoffs: ContactHandoffView[];
   events: InteractionEventView[];
-  rawContactIncluded: false;
-  chatIncluded: false;
-  attachmentIncluded: false;
+  customerContactIncluded: false;
   privateEvidenceIncluded: false;
+  internalModerationIncluded: false;
+  synthetic: true;
 }
 
 export interface ReviewView {
   reviewId: string;
   interactionId: string;
-  enquiryId: string;
   publicProviderId: string;
   providerDisplayName: string;
+  categoryKey: string;
+  categoryName: string;
   rating: number;
   title: string;
   body: string;
-  moderationStatus: "pending" | "published" | "hidden" | "removed";
+  moderationStatus: "pending" | "published" | "withheld" | "removed" | "appealed";
   revision: number;
   createdAt: string;
-  updatedAt: string;
-  providerResponse: { body: string; createdAt: string; updatedAt: string } | null;
-  appeals: Array<{ appealId: string; status: string; reasonCode: string; statement: string; createdAt: string }>;
+  publishedAt: string | null;
+  providerResponse: {
+    responseId: string;
+    body: string;
+    createdAt: string;
+    providerIdentityExposed: false;
+  } | null;
+  appeals: Array<{
+    appealId: string;
+    appellantScope: "customer" | "provider";
+    reason: string;
+    status: "submitted" | "upheld" | "denied";
+    createdAt: string;
+    decidedAt: string | null;
+    decisionReasonCode: string | null;
+    decisionReason: string | null;
+    actorIdentityExposed: false;
+  }>;
   reportsCount: number;
+  customerIdentityExposed: false;
+  contactIncluded: false;
+  interactionPrivateDetailIncluded: false;
+  internalRationaleIncluded: false;
+  trustOrRankingMutation: false;
+  synthetic: true;
 }
 
 export interface ComplaintView {
   complaintId: string;
   interactionId: string;
-  enquiryId: string;
   publicProviderId: string;
   providerDisplayName: string;
-  submittedByRole: "customer" | "provider";
-  category: "safety" | "conduct" | "service_dispute" | "privacy" | "other";
+  categoryKey: string;
+  complaintType: "service_quality" | "contact_privacy" | "provider_conduct" | "other";
   summary: string;
-  status: "open" | "triaged" | "awaiting_information" | "resolved" | "dismissed";
+  status: "submitted" | "triaged" | "resolved" | "closed";
   revision: number;
   createdAt: string;
   updatedAt: string;
-  resolvedAt: string | null;
+  terminalAt: string | null;
+  events: Array<{
+    eventId: string;
+    sequence: number;
+    fromStatus: "submitted" | "triaged" | "resolved" | "closed" | null;
+    toStatus: "submitted" | "triaged" | "resolved" | "closed";
+    actorKind: "customer" | "operations";
+    reason: string;
+    policyVersion: string;
+    occurredAt: string;
+    actorIdentityExposed: false;
+  }>;
+  phase7IncidentLinked: false;
+  contactIncluded: false;
+  privateInteractionDetailIncluded: false;
+  actorIdentityExposed: false;
+  trustOrRankingMutation: false;
+  synthetic: true;
 }
 
 export interface AccountContactReference {
