@@ -74,7 +74,13 @@ val releaseUploadKeystore = if (releaseSigningEnabled) {
     require(configuredFile.isFile) {
         "DIREKT_UPLOAD_KEYSTORE_PATH does not point to a readable file"
     }
-    configuredFile
+
+    val repositoryRoot = rootProject.rootDir.canonicalFile.toPath()
+    val canonicalKeystore = configuredFile.canonicalFile
+    require(!canonicalKeystore.toPath().startsWith(repositoryRoot)) {
+        "DIREKT_UPLOAD_KEYSTORE_PATH must be outside the repository checkout"
+    }
+    canonicalKeystore
 } else {
     null
 }
@@ -176,6 +182,29 @@ android {
         htmlReport = true
         xmlReport = true
     }
+}
+
+val verifyReleaseArtifactSigningContract = tasks.register("verifyReleaseArtifactSigningContract") {
+    group = "verification"
+    description = "Prevents release-capable artifacts from bypassing the DIREKT signing contract."
+
+    doLast {
+        if (releaseChannel == "preauthorization") {
+            require(!releaseSigningEnabled) {
+                "Preauthorization release artifacts must remain unsigned"
+            }
+        } else {
+            require(releaseSigningEnabled) {
+                "Release-candidate and production artifacts require DIREKT_RELEASE_SIGNING_ENABLED=true"
+            }
+        }
+    }
+}
+
+tasks.matching {
+    it.name in setOf("bundleRelease", "assembleRelease", "packageReleaseBundle", "signReleaseBundle")
+}.configureEach {
+    dependsOn(verifyReleaseArtifactSigningContract)
 }
 
 dependencies {
