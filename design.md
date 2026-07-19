@@ -1,26 +1,34 @@
 # DIREKT App Design Plan
 
-This is the primary product-design specification for DIREKT Version 1. It controls the native Android experience, trust presentation and relationship with the internal operations portal.
+This is the primary product-design specification for DIREKT Version 1. It controls the **native Android customer/provider experience**, the **responsive customer/provider PWA companion**, trust presentation and the relationship with the privileged operations portal.
 
 ## 1. Design objective
 
-Help a customer answer, quickly and honestly:
+Help a customer answer quickly and honestly:
 
 1. Who provides the service I need near this area?
 2. What exactly has DIREKT checked?
 3. Where does the provider operate?
 4. Is the evidence current?
-5. How do I contact them and preserve accountability?
+5. How do I contact them while preserving accountability?
 
-Help a provider answer:
+Help a provider understand how to establish a credible presence, what evidence is required, the state of each check, how to correct rejected/expired items and how to receive/respond to enquiries.
 
-1. How do I establish a credible presence?
-2. What evidence is required for my category?
-3. What is the status of each check?
-4. How do I correct a rejected or expired item?
-5. How do I receive and respond to customer enquiries?
+## 2. Product surfaces
 
-## 2. Design principles
+### Native Android
+
+Primary Version 1 customer/provider experience. Device-specific permissions, secure session storage, evidence capture, background work, notifications and Play release remain Android-owned concerns.
+
+### Customer/provider PWA
+
+Responsive installable companion for desktop/tablet/mobile. It mirrors product semantics and canonical API contracts, not Android implementation details. Initial public deployment at `https://direkt.forum/app/` is synthetic-only for remote visual review. Live API/auth mode is separately gated.
+
+### Operations portal
+
+Separate privileged browser application for verification, evidence review, field operations, support, trust/safety, finance exceptions and audit. It must never be exposed as public PWA content.
+
+## 3. Design principles
 
 ### Proof before persuasion
 Trust details, check dates and limitations take precedence over promotional language.
@@ -28,170 +36,149 @@ Trust details, check dates and limitations take precedence over promotional lang
 ### Specific, not generic
 Use “Phone confirmed”, “Qualification reviewed” or “Premises visited”, never a context-free “Verified”.
 
-### Map plus list
-Maps provide geographic context; lists provide accessibility, comparison and resilience when maps or location permission are unavailable.
+### Map plus list/manual fallback
+Maps may provide context, but lists/manual-area flows remain first-class for accessibility, low connectivity, permission denial and provider outage.
 
 ### Privacy by precision
-Show only the precision needed for the task. A mobile provider may show a service area and approximate base, while a storefront may consent to an exact public pin.
+Show only precision needed for the task. Mobile-provider private bases are not public pins or public distance origins.
 
 ### Low-bandwidth first
-Text and trust state load before large imagery. Images use multiple sizes, compression and explicit retry.
+Text/trust state loads before imagery; public images use bounded sizes and retry.
 
 ### Actionable states
-Every rejection, expiry, permission denial and empty result explains the next safe action.
+Every rejection, expiry, denial, empty result and recoverable error explains the next safe action.
 
-### Familiar Android behaviour
-Follow Material 3 patterns, system back behaviour, adaptive layouts, edge-to-edge guidance and platform permission conventions.
+### Platform-appropriate behavior
+Android follows Material/system conventions. PWA uses responsive browser conventions while preserving the same information architecture and trust semantics.
 
-## 3. Brand direction
+## 4. Brand direction and palette
 
-DIREKT should feel:
+DIREKT should feel trustworthy without appearing governmental, local and approachable without looking informal, efficient rather than luxurious, transparent rather than sales-heavy and calm during disputes/verification failures.
 
-- trustworthy without appearing governmental;
-- local and approachable without becoming visually informal;
-- efficient rather than luxurious;
-- transparent rather than sales-heavy;
-- calm during disputes and verification failures.
+The implemented baseline palette is:
 
-### Provisional palette
+| Token | Value | Role |
+|---|---|---|
+| Primary green | `#087A55` | primary action, active navigation, current check |
+| Deep green | `#00513A` | high-trust structure/brand depth |
+| Mint | `#D9F5E9` | positive/status containers |
+| Ink | `#16211C` | primary text |
+| Base | `#F8FAF9` | application background |
+| Amber | `#F2A900` | pending/expiry/attention |
+| Red | Material error semantic | rejection/suspension/destructive action |
 
-Final colours require contrast testing and brand approval.
+Colour never carries status alone. Text and iconography are always present.
 
-| Token | Intended role |
-|---|---|
-| Primary green | positive action, active navigation, approved check |
-| Deep ink | body text, high-trust structural elements |
-| Warm amber | pending, expiry warning, attention |
-| Red | rejection, suspension, destructive action |
-| Sky/blue | information and location context |
-| Neutral surfaces | cards, sheets and evidence sections |
+## 5. Typography and density
 
-Colour never carries status alone. Every status also uses text and iconography.
+- system/Roboto-compatible sans serif until final branding;
+- body text generally 16sp/CSS equivalent;
+- critical trust details never tiny captions;
+- Android minimum targets 48dp; PWA targets at least 44–48 CSS px;
+- whitespace/grouping over excessive borders;
+- avoid more than two competing primary actions in one viewport;
+- support font scaling/zoom and reflow.
 
-## 4. Typography and density
+## 6. Navigation model
 
-- Use a modern Android-available sans-serif family; default to system/Roboto until branding is approved.
-- Support Android font scaling without clipping.
-- Body text generally 16sp equivalent; critical trust details must not use tiny captions.
-- Minimum interactive target: 48dp.
-- Use whitespace and grouping rather than many borders.
-- Avoid more than two primary actions in one viewport.
+### Customer
 
-## 5. Navigation model
+1. Discover
+2. Saved
+3. Enquiries
+4. Account
 
-### Customer mode
+Discover contains area, categories/search, map/list abstraction, filters, provider profiles and trust details.
 
-Bottom destinations:
+### Provider
 
-1. **Discover**
-2. **Saved**
-3. **Enquiries**
-4. **Account**
+1. Overview
+2. Evidence/Profile readiness
+3. Enquiries
+4. Account
 
-Discover contains search, category, area, map/list toggle and filters.
+Overview summarizes verification progress, urgent actions, expiry and safe operational/commercial state.
 
-### Provider mode
+### Responsive behavior
 
-Bottom destinations:
+- Android/mobile PWA: four-destination bottom navigation.
+- Desktop PWA: persistent sidebar with wide content workspace.
+- Tablet: adaptive one/two-column flow without stretched phone screens.
+- A user with authorized provider relationship may switch context, but client mode never grants provider scope.
 
-1. **Overview**
-2. **Profile**
-3. **Enquiries**
-4. **Account**
+## 7. Core customer experience
 
-Overview shows verification progress, urgent actions, expiry and performance summaries.
-
-### Role switching
-
-A user with a provider relationship may switch modes from the account area. The app must clearly change context and never expose provider-management actions to an unauthorized customer identity.
-
-## 6. Core customer screens
-
-1. splash/session restore;
-2. introduction and consent;
-3. phone/email sign-in;
+1. splash/session restore where applicable;
+2. introduction/consent;
+3. phone/email access state;
 4. area selection and optional location permission;
-5. Discover home;
-6. search and suggestions;
-7. map/list results;
+5. Discover;
+6. search/categories/suggestions;
+7. map/list/manual fallback results;
 8. filters;
 9. provider profile;
-10. trust details;
-11. service and availability details;
+10. check-specific trust details;
+11. services/availability;
 12. tracked enquiry;
-13. call/message handoff consent;
+13. call/WhatsApp handoff consent;
 14. saved providers;
 15. enquiry history;
-16. review eligibility and submission;
+16. review eligibility/submission;
 17. report/complaint;
-18. notification centre;
-19. account, privacy and help.
+18. notification centre when activated;
+19. account/privacy/help.
 
-## 7. Provider profile hierarchy
+The public synthetic PWA represents these concepts without real submission or protected API access.
 
-The public profile must present:
+## 8. Provider profile hierarchy
 
-1. provider name, category and operating model;
-2. service area or public premises location;
+1. provider name/category/operating model;
+2. service area or consented public premises;
 3. current check-specific trust summary;
 4. primary enquiry/contact action;
-5. services and typical availability;
-6. trust details with dates, scope and limitations;
-7. premises and work imagery, clearly separated from evidence;
-8. reviews from eligible interactions;
-9. provider response statistics when statistically meaningful;
+5. services/availability;
+6. trust details with dates/scope/limitations;
+7. approved public media, clearly separate from evidence;
+8. eligible reviews;
+9. response statistics only when meaningful;
 10. report-information action.
 
-Do not put an overall star rating above more important safety/trust facts without research validation.
+Do not place an overall star rating above more important trust facts without validation.
 
-## 8. Trust-details pattern
+## 9. Trust-details pattern
 
-Each check appears as a row/card:
+Each check shows:
 
 - check name;
 - state;
 - scope;
-- completed/reviewed date;
-- expiry date when applicable;
-- source class, not sensitive evidence;
-- “What this means” explanation;
-- “What DIREKT did not check” limitation.
+- reviewed/completed date;
+- expiry where applicable;
+- source class, not private evidence;
+- “what this means”;
+- “what DIREKT did not check”.
 
-Example:
+Payment/subscription state is visually and logically separate from trust.
 
-> **Plumbing qualification — Current**  
-> DIREKT reviewed a qualification document matching the provider’s submitted identity. Reviewed 12 June 2026; expires 12 June 2027. DIREKT does not guarantee workmanship or the outcome of a future service.
+## 10. Location design
 
-## 9. Location design
-
-The UI must distinguish:
+The UI distinguishes:
 
 - **Use my current area** — temporary search origin;
-- **Choose area manually** — province/district/locality or map;
+- **Choose area manually** — resilient default;
 - **Travels to customers** — provider service area;
-- **Visit business** — consented public premises pin;
-- **Location checked by DIREKT** — private evidence check, without exposing private coordinates.
+- **Visit business** — consented public premises;
+- **Location checked by DIREKT** — private evidence-derived claim without exposing private coordinates.
 
-Customers must not assume a wide service area was physically verified.
+A wide service area is never represented as physically verified merely because it is configured.
 
-## 10. Provider onboarding flow
+## 11. Provider onboarding and evidence
 
-Use a resumable checklist rather than one long form:
+Use resumable steps: account/representative, provider type, category/services, operating model, service area/public location, contact, category-specific evidence, premises evidence where required, declarations/consent, review/submit.
 
-1. account and representative identity;
-2. provider type and legal/business details;
-3. category and services;
-4. operating model;
-5. service area/public location;
-6. contact information;
-7. category-specific evidence;
-8. premises evidence where required;
-9. declarations and consent;
-10. review and submit.
+Drafts and uploads must be recoverable. Public synthetic PWA does not upload real evidence; native/protected live clients use short-lived private storage grants and backend authorization.
 
-Each step saves locally and remotely when acknowledged. The app shows upload progress and recovery after interruption.
-
-## 11. Verification states in UI
+## 12. Verification states
 
 - Not started
 - In progress
@@ -205,78 +192,46 @@ Each step saves locally and remotely when acknowledged. The app shows upload pro
 - Revoked
 - Suspended
 
-A provider sees operational detail. A customer sees only relevant public states and limitations. “Rejected” evidence details are never public.
+Providers see operational detail; customers see only public-safe state/limitations. Rejected evidence details are never public.
 
-## 12. Empty, loading and error states
+## 13. Empty/loading/error/offline states
 
-Every data screen must define:
+Every data screen defines loading/progress, empty next action, recoverable network error, auth/session expiry, permission denial, insufficient privilege, stale cached marker and partial-data behavior.
 
-- skeleton or progress state;
-- empty state with meaningful next action;
-- recoverable network error;
-- authentication/session expiry;
-- permission denial;
-- insufficient privilege;
-- stale cached data marker;
-- partial data when one dependency fails.
+Never use indefinite unexplained spinners. Offline cannot upgrade trust or fabricate a successful write.
 
-Do not use indefinite spinners without explanation.
+## 14. PWA-specific public review rules
 
-## 13. Offline and low-connectivity design
+The public `/app/` build must always show a synthetic-review banner and contain no real participant data, private evidence, auth/session material, private API credentials or protected writes.
 
-- Previously loaded public profiles may be shown with “Last updated”.
-- Search requires connectivity but preserves filters and area.
-- Provider forms save drafts locally.
-- Evidence uploads queue only after explicit user submission.
-- Queued items show pending/failed/retry states.
-- Trust state is never upgraded offline.
-- Contact actions that cannot be tracked show a clear limitation.
+Service worker caches static public shell only. Theme/mode preferences may be local; sensitive domain/session state may not be persisted casually in browser storage.
 
-## 14. Accessibility
+## 15. Accessibility
 
-- TalkBack labels describe status and action, not colour/icon only.
-- Map results have an equivalent ordered list.
-- All dialogs and sheets return focus correctly.
-- Font scaling through at least 200% must be tested for critical flows.
-- Errors are announced and connected to fields.
-- Timeouts are avoidable or extendable.
-- Motion is restrained and respects system preferences.
+- semantic landmarks/skip navigation;
+- TalkBack/screen-reader labels describe status/action, not colour alone;
+- equivalent list for maps;
+- visible keyboard focus;
+- dialogs return/manage focus correctly;
+- zoom/font scaling through at least 200% for critical flows;
+- connected/announced errors;
+- reduced-motion support;
+- timeouts avoidable/extendable where practical.
 
-## 15. Internal operations portal design
+## 16. Internal operations portal
 
-The portal prioritizes queue efficiency and evidence safety:
+The portal prioritizes queue efficiency and evidence safety: role-based dashboard, split view where space allows, private evidence viewer/access banner/audit, structured checklist/reason codes, no download by default, field assignment/escalation, previous/current evidence comparison, four-eyes confirmation and keyboard accessibility.
 
-- role-based dashboard;
-- split-view queue and case detail where screen size allows;
-- evidence viewer with access banner and audit trail;
-- structured checklist, reason codes and notes;
-- no download by default;
-- field assignment and escalation;
-- comparison of previous/current evidence;
-- four-eyes confirmation for specified overrides;
-- keyboard accessibility and responsive layout.
+## 17. Remote UI gates
 
-## 16. Prototype and usability gates
+Before claiming a user-facing milestone complete, provide an owner-visible surface:
 
-Before implementation:
+- native Android through Firebase App Distribution or retained APK artifact;
+- PWA through the canonical public synthetic route when appropriate;
+- operations portal only through protected access.
 
-- test customer discovery and trust comprehension;
-- test provider onboarding and correction flow;
-- test administrator evidence review;
-- use synthetic data only on public Pages;
-- record task success, confusion, trust interpretation and accessibility findings;
-- resolve any case where participants misinterpret “verified”.
+Each screen requires route/role, entry/exit conditions, data contract, loading/empty/error/offline states, analytics intent, accessibility notes, synthetic screenshot/preview capability and acceptance tests.
 
-## 17. Design handoff requirements
+## 18. Production boundary
 
-Each implemented screen requires:
-
-- screen identifier and route;
-- user role;
-- entry/exit conditions;
-- data contract;
-- loading/empty/error/offline states;
-- analytics events;
-- accessibility notes;
-- screenshot or preview using synthetic data;
-- acceptance tests.
+A visually complete PWA/Android screen is not proof that its external providers are active. Email, OTP, Maps, Sentry, Turnstile, WhatsApp, push, payments and registry integrations must be represented according to `docs/integrations/CURRENT_INTEGRATION_STATUS.md` and remain visibly gated where not runtime-proven.
