@@ -2,8 +2,71 @@
 
 **Updated:** 2026-07-19 (Asia/Tokyo)  
 **Stable branch:** `main`  
-**Implementation branch:** `build/android-v1` — history-preserving synchronization only  
+**Implementation branch:** `build/android-v1` — active single-lane functional PWA parity workstream  
 **Programme state:** Phases 0–10 are complete. Phase 11 internal/synthetic readiness is complete; real 11C–11H evidence and 11J remain pending. All currently repository-clearable Phase 12 preauthorization engineering and the Phase 0–12 integration/runtime reconciliation are complete. **Formal Phase 12 production release is not authorized.**
+
+## Active implementation workstream — functional Android/Web parity
+
+The repository owner has authorized the missing functional customer/provider browser client as an additive companion to the native Android application.
+
+Governing controls:
+
+- `docs/web/FUNCTIONAL_PWA_PARITY_IMPLEMENTATION_PLAN.md`;
+- `docs/web/FUNCTIONAL_PARITY_MATRIX.md`;
+- `docs/architecture/FUNCTIONAL_PWA_ARCHITECTURE_DECISION.md`;
+- `docs/testing/FUNCTIONAL_PWA_NO_REGRESSION_TEST_PLAN.md`;
+- active claim in `WORKSTREAM_LOCK.md`.
+
+Architecture:
+
+```text
+                         DIREKT PRODUCT
+                              │
+               ┌──────────────┴──────────────┐
+               │                             │
+        Android Client                Web/PWA Client
+       Jetpack Compose              Next.js / React
+               │                             │
+       bottom navigation             mobile: bottom nav
+                                     desktop: side nav
+               │                             │
+               └──────────────┬──────────────┘
+                              │
+                     Canonical OpenAPI
+                              │
+                     DIREKT NestJS API
+                              │
+              ┌───────────────┼────────────────┐
+              │               │                │
+         PostgreSQL        PostGIS       Private Storage
+              │               │                │
+              └───────────────┴────────────────┘
+                              │
+             Identity / Trust / Enquiries / Reviews
+                   / Commercial / Audit
+```
+
+The workstream is W0–W8:
+
+1. W0 baseline freeze/parity map/project-wide controls;
+2. W1 functional Next.js/React/TypeScript PWA shell, BFF and typed API foundation;
+3. W2 real public discovery vertical slice;
+4. W3 browser authentication/account/session boundary;
+5. W4 customer journey parity;
+6. W5 provider journey parity;
+7. W6 commercial parity within authorized boundaries;
+8. W7 cross-client parity/security/accessibility/resilience plus Android regression closure;
+9. W8 controlled route/deployment cutover.
+
+The current `web/direkt-pwa/` remains a preserved synthetic preview until W7 passes. The new functional client is additive under `web/direkt-app/`.
+
+### Android no-regression rule
+
+`android/direkt-app/**` is protected during the foundation work. The PWA workstream does not authorize Kotlin Multiplatform/Compose Web conversion, Android dependency/Gradle upgrades, release/signing changes or unrelated Android UI refactors. Shared backend/OpenAPI changes must remain backward compatible and pass Android regression gates before merge.
+
+### Browser security rule
+
+Authenticated browser access must preserve the IAM-private API through a reviewed BFF/session/gateway boundary. No direct privileged Supabase/database access is allowed. Firebase may prove phone possession, but DIREKT remains the authorization/provider-scope authority.
 
 ## Current checkpoints
 
@@ -16,7 +79,9 @@
 | Phase 12B Play/Data Safety preparation | #134 | `b876c499aed0f135feec39601b58f22c734879cc` |
 | Remaining clearable Phase 12 controls | #136 | `c6bb694046b2fe8e82d3f745330447632169355c` |
 | Late Phase 12 release-policy hardening | #140 | `8363e2196739f5bad2393eaa8896d4c43bd64e0f` |
+| Reconciled synthetic customer/provider PWA | #142 | `d9ae39963ace0ef99ad744f5615a98dbec058463` |
 | Phase 0–12 integration/runtime audit and corrective hardening | #149 | `25deaae72ca2974c5560a8059a50fce37c810f63` |
+| Integration-audit closeout/status sync | #151/#152 | current synchronized baseline `885eb72dcda12be8c23c4068dec138562af5888a` |
 
 ## Phase 12 and integration audit result
 
@@ -30,7 +95,7 @@ Completed repository-side work now includes:
 - production runtime/staffing/monitoring/rollback/staged-rollout readiness contracts;
 - Phase 0–12 integration status reconciliation;
 - permanent cross-platform integration-runtime truth CI;
-- backend/database/OpenAPI, operations portal, Android and PWA cross-surface regression coverage;
+- backend/database/OpenAPI, operations portal, Android and synthetic PWA cross-surface regression coverage;
 - live Supabase application-function privilege hardening.
 
 Current Android release identity remains `com.kudzimusar.direkt`, version code `12`, version name `0.12.0-preauth.1`, channel `preauthorization`.
@@ -84,7 +149,7 @@ All five formal release eligibility assertions remain false in preauthorization.
 
 Vercel is currently the registrar role, not the protected staging application runtime. Brevo and Twilio are historical/superseded directions unless a later reviewed decision changes them.
 
-OpenAPI generation/drift checking is active. Fully generated Kotlin/TypeScript network-client packages are not falsely claimed as current runtime integrations; current clients preserve the canonical REST/API boundary without privileged Supabase access.
+OpenAPI generation/drift checking is active. The functional web workstream will establish a typed browser client/BFF contract deliberately; no generated client package is falsely claimed active before it is implemented and verified.
 
 ## Live Supabase post-audit checkpoint
 
@@ -108,7 +173,7 @@ Post-apply managed verification:
 
 Supabase advisor warnings about mutable function `search_path`, extension placement and index opportunities remain explicit hardening/performance debt. They were not mass-mutated without workload/regression evidence because the callable browser/PUBLIC application-function surface is now closed.
 
-## Regression findings corrected by this audit
+## Regression findings corrected by the integration audit
 
 The audit found and corrected several real defects before closeout:
 
@@ -138,7 +203,7 @@ Passed on that exact head:
 - recovery checks;
 - Phase 11 synthetic pilot checks;
 - documentation quality;
-- PWA CI;
+- synthetic PWA CI;
 - hardened canonical Phase 12B Play readiness;
 - Phase 12 final truth-boundary gate;
 - consolidated integration runtime audit:
@@ -148,9 +213,11 @@ Passed on that exact head:
   - Android unit/lint/debug assembly;
   - merged release manifest and resolved dependency verification.
 
-## Remaining genuine gates
+The functional PWA workstream must preserve this baseline and add its own web build/type/security/parity gates without weakening any of the above.
 
-No repository-only document, toggle, synthetic dataset or unsigned artifact can clear these:
+## Remaining genuine programme gates
+
+No repository-only document, toggle, synthetic dataset, web UI or unsigned artifact can clear these:
 
 1. actual 11C–11H Zambia pilot evidence;
 2. evidence-backed 11J `PROCEED`;
@@ -165,9 +232,9 @@ No repository-only document, toggle, synthetic dataset or unsigned artifact can 
 
 ## UI testability
 
-The synthetic customer/provider PWA is the immediate owner-facing visual review surface and remains intentionally disconnected from privileged/live backend paths. Native Android remains the correct surface for Firebase phone auth, device storage, native permissions/performance and future Play validation. The operations portal remains IAM-private.
+The existing synthetic customer/provider PWA remains the immediate static visual review surface until the functional `web/direkt-app/` reaches its own testable checkpoints. Native Android remains the correct surface for Firebase phone auth, Android device storage, native permissions/performance and future Play validation. The operations portal remains IAM-private.
 
-See `docs/operations/REMOTE_UI_TESTING.md` and `docs/integrations/PHASE_INTEGRATION_RUNTIME_AUDIT_2026-07-19.md`.
+The functional web/PWA will become the owner-visible desktop/tablet/mobile application only through the W0–W8 controlled implementation and cutover plan. It must provide backend-observable parity rather than static layout-only mimicry.
 
 ## Boundary
 
@@ -176,6 +243,7 @@ See `docs/operations/REMOTE_UI_TESTING.md` and `docs/integrations/PHASE_INTEGRAT
 - Phase 11 real evidence and 11J: pending.
 - Phase 12 repository-clearable/preauthorization engineering: complete.
 - Phase 0–12 integration/runtime reconciliation: complete.
+- Functional customer/provider web/PWA parity workstream: **ACTIVE**.
 - **Formal Phase 12: blocked until Phase 11 supports `PROCEED` and all global release gates pass.**
 
-Issue #112 remains open as the real-pilot tracker.
+Issue #112 remains open as the real-pilot tracker. Issue #133 remains the customer/provider PWA/reconciliation tracker until functional browser acceptance and route verification are genuinely complete.
