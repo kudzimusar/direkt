@@ -25,5 +25,17 @@ jobs:
           cache: npm
           cache-dependency-path: backend/direkt-api/package-lock.json
       - run: npm ci --ignore-scripts --silent
-      - name: List files that differ from Prettier
-        run: npx prettier --list-different "{src,scripts,test}/**/*.ts" "*.{json,js,mjs}"
+      - name: Capture files that differ from Prettier
+        shell: bash
+        run: |
+          mkdir -p artifacts/format-diagnostic
+          npx prettier --list-different "{src,scripts,test}/**/*.ts" "*.{json,js,mjs}" > artifacts/format-diagnostic/files.txt || true
+          cat artifacts/format-diagnostic/files.txt
+          test ! -s artifacts/format-diagnostic/files.txt
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase11-format-diagnostic-${{ github.sha }}
+          path: backend/direkt-api/artifacts/format-diagnostic/files.txt
+          if-no-files-found: error
+          retention-days: 1
