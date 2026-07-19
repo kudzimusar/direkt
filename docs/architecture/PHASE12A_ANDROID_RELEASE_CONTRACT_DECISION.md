@@ -23,16 +23,20 @@ Use `android/direkt-app/release/version.properties` as the sole reviewed source 
 
 The initial Phase 12A identity is `12` / `0.12.0-preauth.1` on channel `preauthorization`.
 
-The Gradle build validates the contract before configuring variants. Preauthorization, release-candidate and production labels have distinct naming rules so an artifact cannot silently present itself as a production release while carrying a preauthorization identity.
+The file is read through Gradle's provider-backed file-content API so release identity is tracked as a configuration input. The Gradle build validates the contract before configuring variants. Preauthorization, release-candidate and production labels have distinct naming rules so an artifact cannot silently present itself as a production release while carrying a preauthorization identity.
 
 ### 2. Fail-closed protected signing contract
 
 Introduce conditional release signing in Gradle, but keep it impossible in the current source state.
 
-Signing requires two independent gates:
+Signing requires independent gates:
 
 1. source-controlled release channel must be `release-candidate` or `production`;
-2. the protected execution environment must explicitly set `DIREKT_RELEASE_SIGNING_ENABLED=true` and provide all required upload-keystore inputs.
+2. the protected execution environment must explicitly set `DIREKT_RELEASE_SIGNING_ENABLED=true`;
+3. configuration cache must be explicitly disabled before protected signing inputs are read;
+4. all required external upload-keystore inputs must be present;
+5. the upload keystore must resolve outside the repository checkout;
+6. Android Gradle Plugin `android.injected.signing.*` overrides must be absent.
 
 The current `preauthorization` channel rejects signing even if signing variables are accidentally supplied.
 
@@ -43,14 +47,19 @@ The protected inputs are:
 - `DIREKT_UPLOAD_KEY_ALIAS`;
 - `DIREKT_UPLOAD_KEY_PASSWORD`.
 
-The keystore path must be absolute and point to a readable file outside the repository checkout. No real signing material is introduced by this decision.
+The keystore path must be absolute and point to a readable file outside the repository checkout after canonical/symlink resolution. No real signing material is introduced by this decision.
+
+AGP injected signing properties are prohibited rather than accepted as an alternate route. This prevents standard `android.injected.signing.*` values from signing independently of the DIREKT latch/channel contract.
+
+Signed builds must run with `--no-configuration-cache`. The refusal is evaluated before upload-key passwords are read, preventing signing secrets from becoming configuration-cache inputs in the DIREKT build path.
 
 ### 3. Reproducibility is proved, not assumed
 
-The Phase 12A readiness workflow must build the unsigned release AAB twice from clean state with build cache disabled, under the same source SHA and release contract.
+The Phase 12A readiness workflow must check out and verify the exact source SHA, then build the unsigned release AAB twice from clean state with build cache disabled under the same release contract.
 
 The checkpoint passes only if:
 
+- the checked-out SHA exactly equals the evidence `SOURCE_SHA`;
 - both AABs exist;
 - both SHA-256 digests are identical;
 - byte comparison confirms exact equality.
@@ -60,6 +69,12 @@ Only the second verified artifact is packaged as short-lived evidence, together 
 ### 4. Preauthorization workflow remains non-publishing
 
 The public-repository readiness workflow always forces signing disabled, maps no upload-key secrets, rejects tracked key material and performs no Play, Firebase distribution or production deployment action.
+
+The workflow contains negative tests that prove:
+
+- AGP injected signing is refused;
+- a simulated release-candidate cannot enable signing while configuration cache is active;
+- the temporary test release identity is restored with zero source diff before the real release lint/build steps.
 
 ## Alternatives considered
 
@@ -74,6 +89,14 @@ Rejected for the baseline. Hidden CI values weaken source-to-artifact traceabili
 ### Configure a real keystore now but keep publishing disabled
 
 Rejected. Real signing capability is not needed to prove Phase 12A engineering and would introduce secret-management and accidental-distribution risk before formal Phase 12 authorization.
+
+### Allow Android Gradle Plugin injected signing properties
+
+Rejected. AGP's injected signing path can configure signing independently of the DIREKT latch and protected-input contract, creating an alternate route that is harder to audit. All `android.injected.signing.*` Gradle properties are therefore prohibited.
+
+### Permit configuration cache during protected signing
+
+Rejected. Protected signing passwords are consumed during Gradle configuration. The signed-build contract requires `--no-configuration-cache` so those credentials are not persisted as part of a cached configuration model by this release path.
 
 ### Continue rejecting all signing configuration until formal Phase 12
 
@@ -90,8 +113,11 @@ Positive controls:
 - real signing keys and passwords remain outside git;
 - common keystore formats are ignored and CI rejects tracked key material;
 - signing cannot activate while the tracked channel is `preauthorization`;
+- release-candidate/production packaging cannot silently fall back to unsigned output;
+- AGP injected signing overrides are rejected;
+- signed builds require configuration cache to be disabled before secret reads;
 - all protected signing inputs are required together when signing is eventually authorized;
-- keystore location must be an absolute protected-runner path;
+- keystore location must be an absolute protected-runner path resolving outside the repository checkout;
 - no service-account or Play publishing credentials are introduced;
 - no real participant data or production environment configuration is required.
 
@@ -111,6 +137,8 @@ Before any authorized Play upload, the release owner must verify the chosen vers
 - minSdk, targetSdk and compileSdk remain unchanged;
 - debug builds retain the `.debug` application ID suffix;
 - no runtime API or database contract changes;
+- normal unsigned builds may continue using configuration cache;
+- protected signed builds deliberately trade configuration-cache speed for secret-safety and must use `--no-configuration-cache`;
 - release minification remains disabled pending a separate evidence-backed decision.
 
 ## Approval and authorization boundary
@@ -138,4 +166,4 @@ Revisit this decision if:
 - the protected signing mechanism requires credentials to enter the repository checkout;
 - a future release system provides a stronger hardware-backed or managed signing boundary.
 
-Any change that weakens the two-gate signing model or introduces publishing capability requires a new reviewed release-workflow decision.
+Any change that weakens the signing gates, re-enables an alternate injected-signing route or introduces publishing capability requires a new reviewed release-workflow decision.
