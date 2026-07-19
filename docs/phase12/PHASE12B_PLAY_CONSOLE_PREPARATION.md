@@ -11,7 +11,7 @@ Prepare the Google Play listing, permissions declaration, Data Safety source inv
 ## Repository-controlled sources
 
 - `docs/phase12/play/store_listing.json` — canonical candidate listing copy and store/contact/asset requirements.
-- `docs/phase12/play/permissions_inventory.json` — exact manifest-permission inventory and future permission rules.
+- `docs/phase12/play/permissions_inventory.json` — exact merged release-manifest permission inventory and future permission rules.
 - `docs/phase12/play/data_safety_inventory.json` — SDK/runtime data collection inventory and candidate Play mappings.
 - `docs/phase12/play/content_distribution_inventory.json` — IARC/target-audience/country/device/testing-account preparation.
 - `scripts/verify-phase12-play-readiness.py` — fail-closed consistency validator.
@@ -19,13 +19,18 @@ Prepare the Google Play listing, permissions declaration, Data Safety source inv
 
 ## Current Android truth
 
-The exact current manifest declares only:
+The source application manifest explicitly requests `android.permission.INTERNET`, but the **merged release manifest** also includes declarations contributed by Android/Firebase/AndroidX dependencies. The exact current merged permission inventory is:
 
 ```text
+android.permission.ACCESS_NETWORK_STATE
 android.permission.INTERNET
+com.google.android.providers.gsf.permission.READ_GSERVICES
+com.kudzimusar.direkt.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ```
 
-No location, background location, contacts, SMS, call-log, broad storage, camera, microphone or notification runtime permission is currently declared. Therefore the current artifact does not need a high-risk/sensitive permission justification based on its manifest. Google Play still makes the final determination from the uploaded AAB, so this must be rechecked on the exact release candidate.
+These declarations do not add a dangerous runtime permission prompt. No location, background location, contacts, SMS, call-log, broad storage, camera, microphone or notification runtime permission is currently declared. Therefore the current artifact does not require a high-risk/sensitive permission justification based on these declarations. Google Play still makes the final determination from the uploaded AAB, so this must be rechecked on the exact release candidate.
+
+The Phase 0–12 integration audit corrected an earlier Phase 12B inventory assumption that inspected the app-authored permission as though it were the complete packaged permission surface. The permanent gate now treats the reviewed merged-manifest inventory as authoritative and fails whenever the actual merged manifest changes without a matching reviewed inventory update.
 
 Firebase Authentication is the only Firebase runtime SDK declared in the Android release dependency surface. When protected phone authentication is enabled, the Data Safety inventory accounts for phone number, authentication/user identifiers and Firebase automatic security/service metadata. No analytics, Crashlytics, Sentry, FCM, Maps, ad or payment SDK is currently activated in the Android release dependency surface.
 
@@ -136,7 +141,7 @@ This blocker is tied to Phase 11/11I because real pilot findings may change the 
 ## What Phase 12B clears
 
 - repository-controlled store listing candidate;
-- exact Android permission inventory;
+- exact merged Android permission inventory;
 - current Data Safety/SDK source inventory;
 - content-rating questionnaire facts without fabricating a rating;
 - target-audience/country/device/testing prerequisites;

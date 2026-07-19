@@ -18,6 +18,8 @@ interface DatabaseCheck {
   quarantine_schema_object_count: string;
   anon_migration_ledger_access: boolean;
   authenticated_migration_ledger_access: boolean;
+  browser_executable_function_count: string;
+  security_definer_function_count: string;
 }
 
 const REQUIRED_BUCKETS = [
@@ -91,7 +93,24 @@ async function main(): Promise<void> {
           has_table_privilege('authenticated', 'public.direkt_schema_migrations', 'INSERT') OR
           has_table_privilege('authenticated', 'public.direkt_schema_migrations', 'UPDATE') OR
           has_table_privilege('authenticated', 'public.direkt_schema_migrations', 'DELETE')
-        ) AS authenticated_migration_ledger_access
+        ) AS authenticated_migration_ledger_access,
+        (
+          SELECT count(*)::text
+          FROM pg_proc AS functions
+          JOIN pg_namespace AS namespaces ON namespaces.oid = functions.pronamespace
+          WHERE namespaces.nspname IN (${schemaList})
+            AND (
+              has_function_privilege('anon', functions.oid, 'EXECUTE') OR
+              has_function_privilege('authenticated', functions.oid, 'EXECUTE')
+            )
+        ) AS browser_executable_function_count,
+        (
+          SELECT count(*)::text
+          FROM pg_proc AS functions
+          JOIN pg_namespace AS namespaces ON namespaces.oid = functions.pronamespace
+          WHERE namespaces.nspname IN (${schemaList})
+            AND functions.prosecdef
+        ) AS security_definer_function_count
     `);
 
     const databaseState = database.rows[0];
@@ -119,6 +138,18 @@ async function main(): Promise<void> {
     if (exposedDatabaseSurfaces.length > 0) {
       throw new Error(
         `Browser-facing Supabase database privileges must remain revoked: ${exposedDatabaseSurfaces.join(', ')}.`,
+      );
+    }
+
+    if (databaseState.browser_executable_function_count !== '0') {
+      throw new Error(
+        `Browser-facing roles must not retain EXECUTE on DIREKT application functions; found ${databaseState.browser_executable_function_count}.`,
+      );
+    }
+
+    if (databaseState.security_definer_function_count !== '0') {
+      throw new Error(
+        `DIREKT application schemas must not introduce SECURITY DEFINER functions without an explicit reviewed allowlist; found ${databaseState.security_definer_function_count}.`,
       );
     }
 
@@ -169,7 +200,8 @@ async function main(): Promise<void> {
           database: databaseState,
           privateBuckets: [...REQUIRED_BUCKETS],
           applicationSchemas: [...APPLICATION_SCHEMAS],
-          browserDatabaseSurface: 'application schemas and migration ledger private',
+          browserDatabaseSurface:
+            'application schemas, functions and migration ledger private; no SECURITY DEFINER functions',
           dataApiQuarantineSchema: 'direkt_api_disabled',
           publicPostgisDataApiProbeStatus: postgisDataApiProbe.status,
           serverKeyType: serverKey.startsWith('sb_secret_') ? 'secret' : 'legacy_service_role',

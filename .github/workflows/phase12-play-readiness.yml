@@ -121,7 +121,10 @@ jobs:
           PY
 
       - name: Validate Phase 12B repository sources
-        run: python scripts/verify-phase12-play-readiness.py | tee phase12b-play-readiness.txt
+        shell: bash
+        run: |
+          set -o pipefail
+          python scripts/verify-phase12-play-readiness.py 2>&1 | tee phase12b-play-readiness.txt
 
       - name: Package non-submission readiness evidence
         shell: bash

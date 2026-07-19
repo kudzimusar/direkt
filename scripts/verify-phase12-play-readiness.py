@@ -36,6 +36,7 @@ ALLOWED_RELEASE_DIRECT_MODULES = {
     "androidx.navigation:navigation-compose",
     "com.google.firebase:firebase-auth",
     "com.google.firebase:firebase-bom",
+    "org.jetbrains.kotlin:kotlin-stdlib",
 }
 
 PROHIBITED_STORE_CLAIMS = {
@@ -116,12 +117,7 @@ def _module_from_token(token: str, raw: str) -> str:
 
 
 def selected_direct_module(raw: str) -> str | None:
-    """Return the selected group:name for one root dependency-report line.
-
-    Gradle may print `requested -> selected`. A selected target can be a different module
-    (dependency substitution) or only a selected version. We must validate the actual
-    selected module when group:name is present and reject selected project targets.
-    """
+    """Return the selected group:name for one root dependency-report line."""
     match = re.match(r"^(?:\+---|\\---)\s+(.+)$", raw)
     if not match:
         return None
@@ -138,9 +134,6 @@ def selected_direct_module(raw: str) -> str | None:
         fail(f"unexpected selected project dependency on releaseRuntimeClasspath: {raw}")
 
     selected_token = selected_text.split()[0]
-    # Gradle commonly renders a version-only selection (`group:name:old -> new`). In that
-    # case the selected module identity is unchanged. A coordinate-like selected token
-    # (`group:name:version`) represents substitution and must replace the requested module.
     if ":" in selected_token:
         return _module_from_token(selected_token, raw)
     return _module_from_token(requested_token, raw)
@@ -174,7 +167,9 @@ def fallback_declared_modules(gradle: str) -> set[str]:
         "libs.firebase.auth": "com.google.firebase:firebase-auth",
     }
     modules: set[str] = set()
-    dependency_call = re.compile(r"^([A-Za-z][A-Za-z0-9]*)Implementation\((.+)\)$|^implementation\((.+)\)$")
+    dependency_call = re.compile(
+        r"^([A-Za-z][A-Za-z0-9]*)Implementation\((.+)\)$|^implementation\((.+)\)$"
+    )
     for raw_line in gradle.splitlines():
         line = raw_line.strip()
         match = dependency_call.fullmatch(line)
@@ -241,11 +236,13 @@ def main() -> None:
             "permissions inventory does not match inspected release manifest including sdk-23 permissions: "
             f"manifest={manifest_permissions}, inventory={inventory_permissions}, path={inspected_manifest}"
         )
-    if manifest_permissions != ["android.permission.INTERNET"]:
-        fail(
-            "Phase 12B baseline expects only INTERNET in the merged release manifest. Any permission "
-            "change requires an explicit inventory/Data Safety/policy update before this gate may pass."
-        )
+
+    if any(item.get("runtime_prompt") is not False for item in permissions.get("declared_permissions", [])):
+        fail("current preauthorization permission inventory must not contain a runtime-prompt permission")
+    if permissions.get("current_play_declaration_assessment", {}).get(
+        "sensitive_or_high_risk_permission_form_expected"
+    ) is not False:
+        fail("current permission inventory unexpectedly requires a sensitive/high-risk permission form")
 
     gradle = BUILD_GRADLE.read_text(encoding="utf-8")
     for required in (
@@ -312,7 +309,9 @@ def main() -> None:
     ]
     synthetic_markers = []
     for path in synthetic_release_sources:
-        if path.is_file() and re.search(r"\bSynthetic|fictional|preview context", path.read_text(encoding="utf-8"), re.I):
+        if path.is_file() and re.search(
+            r"\bSynthetic|fictional|preview context", path.read_text(encoding="utf-8"), re.I
+        ):
             synthetic_markers.append(str(path.relative_to(ROOT)))
 
     print("phase12b_play_readiness=PASS")

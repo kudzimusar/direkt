@@ -1,14 +1,35 @@
 {
-  "schema_version": 1,
-  "status": "verified-against-current-main-manifest",
-  "manifest_path": "android/direkt-app/app/src/main/AndroidManifest.xml",
+  "schema_version": 2,
+  "status": "verified-against-merged-release-manifest",
+  "manifest_source": "Gradle merged release manifest including dependency contributions",
   "declared_permissions": [
     {
+      "name": "android.permission.ACCESS_NETWORK_STATE",
+      "classification": "normal-non-runtime",
+      "runtime_prompt": false,
+      "play_sensitive_permission_declaration_expected": false,
+      "purpose": "Basic network connectivity state used by bundled networking and authentication components."
+    },
+    {
       "name": "android.permission.INTERNET",
-      "classification": "normal",
+      "classification": "normal-non-runtime",
       "runtime_prompt": false,
       "play_sensitive_permission_declaration_expected": false,
       "purpose": "HTTPS access to DIREKT API and approved authentication services."
+    },
+    {
+      "name": "com.google.android.providers.gsf.permission.READ_GSERVICES",
+      "classification": "dependency-contributed-non-runtime",
+      "runtime_prompt": false,
+      "play_sensitive_permission_declaration_expected": false,
+      "purpose": "Google/Firebase service support contributed by the authentication dependency surface."
+    },
+    {
+      "name": "com.kudzimusar.direkt.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
+      "classification": "app-scoped-receiver-protection",
+      "runtime_prompt": false,
+      "play_sensitive_permission_declaration_expected": false,
+      "purpose": "AndroidX-generated protection for non-exported dynamic receivers inside the app boundary."
     }
   ],
   "explicitly_absent": [
@@ -30,7 +51,7 @@
   ],
   "current_play_declaration_assessment": {
     "sensitive_or_high_risk_permission_form_expected": false,
-    "reason": "The current manifest declares only INTERNET. Any future permission addition must update this inventory and pass review before a release-capable artifact can be accepted."
+    "reason": "The merged release manifest contains two normal network permissions plus dependency/app-scoped service and receiver-protection declarations. None adds a dangerous runtime permission. Any future permission change must update this inventory and pass merged-manifest review."
   },
   "planned_feature_rule": {
     "location": "Manual area search remains the required fallback. Do not add background location. Foreground location requires a separate evidence-backed change and Play review.",
@@ -39,5 +60,5 @@
     "contacts": "Not required for MVP. Use minimum-scope platform picker if a future approved feature genuinely needs contacts.",
     "notifications": "Add POST_NOTIFICATIONS only when production notification delivery is implemented and the user-facing rationale/fallback is tested."
   },
-  "submission_boundary": "Play Console makes the final permissions determination from the uploaded AAB. This inventory must be regenerated/rechecked against the exact release candidate before submission."
+  "submission_boundary": "Play Console makes the final permissions determination from the uploaded AAB. Recheck this inventory against the exact release candidate merged manifest before submission."
 }
