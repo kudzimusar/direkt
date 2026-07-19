@@ -181,6 +181,64 @@ export interface ProviderEnquiryListView {
   items: ProviderEnquiry[];
 }
 
+export interface ProviderContactHandoff {
+  handoffId: string;
+  interactionId: string;
+  enquiryId: string;
+  channel: "call" | "whatsapp";
+  contactDisplayHint: string;
+  status: "active" | "expired" | "revoked";
+  consentedAt: string;
+  expiresAt: string;
+  revokedAt: string | null;
+  policyVersion: string;
+  deliveryState: "disabled";
+  externalDeliveryAttempted: false;
+  rawContactIncluded: false;
+  synthetic: true;
+}
+
+export interface ProviderTrackedInteraction {
+  interactionId: string;
+  enquiryId: string;
+  publicProviderId: string;
+  providerDisplayName: string;
+  categoryKey: string;
+  categoryName: string;
+  status: "active" | "completed" | "cancelled";
+  revision: number;
+  startedAt: string;
+  completedAt: string | null;
+  cancelledAt: string | null;
+  reviewEligibility: {
+    eligible: boolean;
+    reasonCode: "INTERACTION_ACTIVE" | "INTERACTION_CANCELLED" | "WINDOW_NOT_OPEN" | "WINDOW_EXPIRED" | "ALREADY_REVIEWED" | "ELIGIBLE";
+    eligibleFrom: string | null;
+    eligibleUntil: string | null;
+  };
+  handoffs: ProviderContactHandoff[];
+  events: Array<{
+    eventId: string;
+    sequence: number;
+    eventType: "accepted" | "handoff_created" | "handoff_revoked" | "completed" | "cancelled" | "review_submitted" | "provider_response_submitted" | "review_moderated" | "appeal_submitted" | "appeal_decided" | "complaint_submitted" | "complaint_linked";
+    actorKind: "customer" | "provider" | "operations" | "system";
+    reason: string;
+    policyVersion: string;
+    occurredAt: string;
+    actorIdentityExposed: false;
+    privateMetadataIncluded: false;
+  }>;
+  customerContactIncluded: false;
+  privateEvidenceIncluded: false;
+  internalModerationIncluded: false;
+  synthetic: true;
+}
+
+export interface ProviderInteractionListView {
+  providerScope: "actor_resolved";
+  items: ProviderTrackedInteraction[];
+}
+
 export interface ProviderReview {
   reviewId: string;
   interactionId: string;
@@ -244,6 +302,8 @@ export interface ProviderStateResponse {
   timeline: ProviderTimelineEvent[];
   uploads: ProviderUploadIntent[];
   enquiries: ProviderEnquiryListView;
+  interactions: ProviderInteractionListView;
+  handoffs: Record<string, ProviderContactHandoff | null>;
   reviews: ProviderReviewListView;
   commercial: ProviderCommercialWorkspace;
 }
