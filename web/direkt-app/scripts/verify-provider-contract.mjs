@@ -104,8 +104,8 @@ requireMarkers(source.providerUi, [
   'crypto.subtle.digest("SHA-256"',
   "grant.upload.uploadUrl",
   'action: "interrupt-upload"',
-  "private base coordinates",
-  "Provider scope is granted only",
+  "Private base coordinates",
+  "Provider mode is granted only",
 ]);
 requireMarkers(source.shell, ["ProviderJourneyExperience", "providerModeAvailable", "W5 provider lifecycle"]);
 
