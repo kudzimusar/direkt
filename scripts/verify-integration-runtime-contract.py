@@ -47,15 +47,35 @@ def dependencies(path: str) -> set[str]:
 
 
 def scan_tree(relative: str, patterns: dict[str, re.Pattern[str]]) -> list[str]:
+    """Scan deployable client source while excluding tests, fixtures and generated output.
+
+    Negative security assertions in tests intentionally contain strings such as
+    `service_role`; those are not credential leaks. Runtime/deployable source remains
+    scanned so an actual privileged reference still fails closed.
+    """
     matches: list[str] = []
     root = ROOT / relative
     if not root.exists():
         return matches
     ignored_suffixes = {".png", ".jpg", ".jpeg", ".webp", ".ico", ".jar", ".aab", ".apk", ".zip"}
+    ignored_parts = {
+        "node_modules",
+        "build",
+        ".next",
+        "coverage",
+        "dist",
+        "test",
+        "tests",
+        "__tests__",
+        "fixtures",
+        "__fixtures__",
+        "snapshots",
+        "__snapshots__",
+    }
     for path in root.rglob("*"):
         if not path.is_file() or path.suffix.lower() in ignored_suffixes:
             continue
-        if any(part in {"node_modules", "build", ".next", "coverage", "dist"} for part in path.parts):
+        if any(part in ignored_parts for part in path.parts):
             continue
         try:
             text = path.read_text(encoding="utf-8")
@@ -114,7 +134,7 @@ def main() -> None:
     for client_root in ("android", "web", "admin"):
         leaked.extend(scan_tree(client_root, privileged_client_patterns))
     if leaked:
-        fail("privileged Supabase material/reference entered a client tree: " + ", ".join(leaked))
+        fail("privileged Supabase material/reference entered a deployable client tree: " + ", ".join(leaked))
 
     # Google Cloud: immutable images, WIF, Secret Manager and private Cloud Run.
     for needle in (
@@ -215,8 +235,22 @@ def main() -> None:
         prohibit(pwa, pattern, f"public PWA {label}")
     require(pwa, "Synthetic preview data", "synthetic PWA marker")
     require(pwa, "No data is submitted", "PWA submission boundary")
-    require(service_worker, "SHELL_ASSETS", "bounded PWA shell cache")
-    prohibit(service_worker, r"cache\.put\s*\([^,]+,\s*response", "arbitrary runtime response caching")
+
+    # Service-worker privacy is behavior-based: only an explicit allowlist may enter Cache Storage.
+    require(service_worker, "const CORE =", "explicit PWA shell asset list")
+    require(service_worker, "const CORE_URLS = new Set", "resolved PWA shell URL allowlist")
+    require(service_worker, "cache.addAll(CORE)", "install-time bounded shell caching")
+    require(service_worker, "if (!CORE_URLS.has(url.href))", "non-shell cache bypass")
+    require(
+        service_worker,
+        "Do not cache arbitrary same-origin GETs",
+        "documented arbitrary-response cache prohibition",
+    )
+    prohibit(
+        service_worker,
+        r"cache\.put\s*\(\s*event\.request\s*,\s*response\s*\)",
+        "unbounded direct runtime response caching",
+    )
 
     print("integration_runtime_contract=PASS")
     print("supabase=active_server_side_only")
