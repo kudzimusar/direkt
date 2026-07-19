@@ -1,8 +1,36 @@
 import java.util.Properties
+import org.gradle.api.DefaultTask
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.TaskAction
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose)
+}
+
+abstract class VerifyReleaseArtifactSigningContract : DefaultTask() {
+    @get:Input
+    abstract val configuredReleaseChannel: Property<String>
+
+    @get:Input
+    abstract val configuredSigningEnabled: Property<Boolean>
+
+    @TaskAction
+    fun verifyContract() {
+        val channel = configuredReleaseChannel.get()
+        val signingEnabled = configuredSigningEnabled.get()
+
+        if (channel == "preauthorization") {
+            require(!signingEnabled) {
+                "Preauthorization release artifacts must remain unsigned"
+            }
+        } else {
+            require(signingEnabled) {
+                "Release-candidate and production artifacts require DIREKT_RELEASE_SIGNING_ENABLED=true"
+            }
+        }
+    }
 }
 
 fun quotedBuildConfig(value: String): String =
@@ -184,21 +212,13 @@ android {
     }
 }
 
-val verifyReleaseArtifactSigningContract = tasks.register("verifyReleaseArtifactSigningContract") {
+val verifyReleaseArtifactSigningContract = tasks.register<VerifyReleaseArtifactSigningContract>(
+    "verifyReleaseArtifactSigningContract",
+) {
     group = "verification"
     description = "Prevents release-capable artifacts from bypassing the DIREKT signing contract."
-
-    doLast {
-        if (releaseChannel == "preauthorization") {
-            require(!releaseSigningEnabled) {
-                "Preauthorization release artifacts must remain unsigned"
-            }
-        } else {
-            require(releaseSigningEnabled) {
-                "Release-candidate and production artifacts require DIREKT_RELEASE_SIGNING_ENABLED=true"
-            }
-        }
-    }
+    configuredReleaseChannel.set(releaseChannel)
+    configuredSigningEnabled.set(releaseSigningEnabled)
 }
 
 tasks.matching {
