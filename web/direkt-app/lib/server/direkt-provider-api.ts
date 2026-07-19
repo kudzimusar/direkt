@@ -1,3 +1,13 @@
+import type {
+  ProviderCommercialWorkspace,
+  ProviderEnquiry,
+  ProviderEnquiryListView,
+  ProviderReviewListView,
+  ProviderTimelineEvent,
+  ProviderUploadGrant,
+  ProviderUploadIntent,
+  ProviderWorkspaceSummary,
+} from "@/lib/contracts/provider";
 import { getCloudRunIdentityToken } from "./cloud-run-identity";
 import { getDirektWebRuntimeConfig } from "./runtime-config";
 
@@ -29,31 +39,61 @@ export class DirektProviderApi {
     this.baseUrl = config.apiBaseUrl;
   }
 
-  workspace(accessToken: string) {
-    return this.request<Record<string, unknown>>("/api/v1/provider-workspace/me", { accessToken });
+  workspace(accessToken: string): Promise<ProviderWorkspaceSummary> {
+    return this.request("/api/v1/provider-workspace/me", { accessToken });
   }
 
-  verificationTimeline(accessToken: string) {
-    return this.request<Record<string, unknown>[]>("/api/v1/provider-workspace/me/verification-timeline", { accessToken });
+  verificationTimeline(accessToken: string): Promise<ProviderTimelineEvent[]> {
+    return this.request("/api/v1/provider-workspace/me/verification-timeline", { accessToken });
   }
 
-  updateProfile(accessToken: string, body: Record<string, unknown>) {
-    return this.request<Record<string, unknown>>("/api/v1/provider-workspace/me/profile", {
+  updateProfile(
+    accessToken: string,
+    body: Partial<{
+      displayName: string;
+      operatingModel: "fixed_premises" | "mobile" | "hybrid";
+      localitySummary: string;
+      serviceAreaSummary: string;
+      registeredBusinessName: string;
+      qualificationSummary: string;
+      experienceSummary: string;
+    }>,
+  ): Promise<ProviderWorkspaceSummary> {
+    return this.request("/api/v1/provider-workspace/me/profile", {
       method: "PATCH",
       accessToken,
       body,
     });
   }
 
-  selectService(accessToken: string, categoryKey: string) {
-    return this.request<Record<string, unknown>>(
+  updateLocation(
+    accessToken: string,
+    body: {
+      privateBaseLatitude?: number;
+      privateBaseLongitude?: number;
+      publicPremisesLatitude?: number;
+      publicPremisesLongitude?: number;
+      publicPremisesConsent: boolean;
+      publicLocality: string;
+      serviceAreaWkt: string;
+    },
+  ): Promise<ProviderWorkspaceSummary> {
+    return this.request("/api/v1/provider-workspace/me/location", {
+      method: "PUT",
+      accessToken,
+      body,
+    });
+  }
+
+  selectService(accessToken: string, categoryKey: string): Promise<ProviderWorkspaceSummary> {
+    return this.request(
       `/api/v1/provider-workspace/me/services/${encodeURIComponent(categoryKey)}`,
       { method: "PUT", accessToken },
     );
   }
 
-  removeService(accessToken: string, categoryKey: string, reason: string) {
-    return this.request<Record<string, unknown>>(
+  removeService(accessToken: string, categoryKey: string, reason: string): Promise<ProviderWorkspaceSummary> {
+    return this.request(
       `/api/v1/provider-workspace/me/services/${encodeURIComponent(categoryKey)}`,
       { method: "DELETE", accessToken, body: { reason } },
     );
@@ -63,84 +103,139 @@ export class DirektProviderApi {
     accessToken: string,
     categoryKey: string,
     body: { state: "available" | "limited" | "unavailable" | "unknown"; nextAvailableAt?: string },
-  ) {
-    return this.request<Record<string, unknown>>(
+  ): Promise<ProviderWorkspaceSummary> {
+    return this.request(
       `/api/v1/provider-workspace/me/availability/${encodeURIComponent(categoryKey)}`,
       { method: "PUT", accessToken, body },
     );
   }
 
-  listUploadIntents(accessToken: string) {
-    return this.request<Record<string, unknown>[]>("/api/v1/provider-workspace/me/upload-intents", { accessToken });
+  listUploadIntents(accessToken: string): Promise<ProviderUploadIntent[]> {
+    return this.request("/api/v1/provider-workspace/me/upload-intents", { accessToken });
   }
 
-  createUploadIntent(accessToken: string, body: Record<string, unknown>) {
-    return this.request<Record<string, unknown>>("/api/v1/provider-workspace/me/upload-intents", {
+  createUploadIntent(
+    accessToken: string,
+    body: {
+      caseId: string;
+      clientIntentKey: string;
+      evidenceClass: "contact" | "identity" | "business" | "qualification" | "licence" | "experience" | "location" | "premises" | "field";
+      documentType: string;
+      contentType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp";
+      maxBytes: number;
+      consentConfirmed: boolean;
+      replacementForEvidenceId?: string;
+    },
+  ): Promise<ProviderUploadGrant | ProviderUploadIntent> {
+    return this.request("/api/v1/provider-workspace/me/upload-intents", {
       method: "POST",
       accessToken,
       body,
     });
   }
 
-  retryUploadIntent(accessToken: string, uploadIntentId: string) {
-    return this.request<Record<string, unknown>>(
+  uploadIntent(accessToken: string, uploadIntentId: string): Promise<ProviderUploadIntent> {
+    return this.request(
+      `/api/v1/provider-workspace/me/upload-intents/${encodeURIComponent(uploadIntentId)}`,
+      { accessToken },
+    );
+  }
+
+  retryUploadIntent(accessToken: string, uploadIntentId: string): Promise<ProviderUploadGrant> {
+    return this.request(
       `/api/v1/provider-workspace/me/upload-intents/${encodeURIComponent(uploadIntentId)}/retry`,
       { method: "POST", accessToken },
     );
   }
 
-  markUploadInterrupted(accessToken: string, uploadIntentId: string, errorCode: string) {
-    return this.request<Record<string, unknown>>(
+  markUploadInterrupted(accessToken: string, uploadIntentId: string, errorCode: string): Promise<ProviderUploadIntent> {
+    return this.request(
       `/api/v1/provider-workspace/me/upload-intents/${encodeURIComponent(uploadIntentId)}/interrupted`,
       { method: "PUT", accessToken, body: { errorCode } },
     );
   }
 
-  confirmUploadIntent(accessToken: string, uploadIntentId: string, body: Record<string, unknown>) {
-    return this.request<Record<string, unknown>>(
+  confirmUploadIntent(
+    accessToken: string,
+    uploadIntentId: string,
+    body: {
+      sha256: string;
+      sizeBytes: number;
+      issuingAuthority?: string;
+      issuedAt?: string;
+      validFrom?: string;
+      expiresAt?: string;
+      retentionClass: "short" | "standard" | "regulated" | "legal_hold";
+    },
+  ): Promise<ProviderUploadIntent> {
+    return this.request(
       `/api/v1/provider-workspace/me/upload-intents/${encodeURIComponent(uploadIntentId)}/confirm`,
       { method: "POST", accessToken, body },
     );
   }
 
-  cancelUploadIntent(accessToken: string, uploadIntentId: string, reason: string) {
-    return this.request<Record<string, unknown>>(
+  cancelUploadIntent(accessToken: string, uploadIntentId: string, reason: string): Promise<ProviderUploadIntent> {
+    return this.request(
       `/api/v1/provider-workspace/me/upload-intents/${encodeURIComponent(uploadIntentId)}`,
       { method: "DELETE", accessToken, body: { reason } },
     );
   }
 
-  listEnquiries(accessToken: string) {
-    return this.request<Record<string, unknown>[]>("/api/v1/provider-workspace/me/enquiries", { accessToken });
+  listEnquiries(accessToken: string): Promise<ProviderEnquiryListView> {
+    return this.request("/api/v1/provider-workspace/me/enquiries", { accessToken });
   }
 
-  transitionEnquiry(accessToken: string, enquiryId: string, body: Record<string, unknown>) {
-    return this.request<Record<string, unknown>>(
+  enquiry(accessToken: string, enquiryId: string): Promise<ProviderEnquiry> {
+    return this.request(
+      `/api/v1/provider-workspace/me/enquiries/${encodeURIComponent(enquiryId)}`,
+      { accessToken },
+    );
+  }
+
+  transitionEnquiry(
+    accessToken: string,
+    enquiryId: string,
+    body: {
+      targetStatus: "acknowledged" | "needs_information" | "accepted" | "declined" | "closed";
+      expectedRevision: number;
+      reason: string;
+      policyVersion: string;
+    },
+  ): Promise<ProviderEnquiry> {
+    return this.request(
       `/api/v1/provider-workspace/me/enquiries/${encodeURIComponent(enquiryId)}/transitions`,
       { method: "POST", accessToken, body },
     );
   }
 
-  listReviews(accessToken: string) {
-    return this.request<Record<string, unknown>[]>("/api/v1/provider-workspace/me/reviews", { accessToken });
+  listReviews(accessToken: string): Promise<ProviderReviewListView> {
+    return this.request("/api/v1/provider-workspace/me/reviews", { accessToken });
   }
 
-  respondToReview(accessToken: string, reviewId: string, body: Record<string, unknown>) {
-    return this.request<Record<string, unknown>>(
+  respondToReview(
+    accessToken: string,
+    reviewId: string,
+    body: { body: string; policyVersion: string },
+  ): Promise<Record<string, unknown>> {
+    return this.request(
       `/api/v1/provider-workspace/me/reviews/${encodeURIComponent(reviewId)}/response`,
       { method: "POST", accessToken, body },
     );
   }
 
-  appealReview(accessToken: string, reviewId: string, body: Record<string, unknown>) {
-    return this.request<Record<string, unknown>>(
+  appealReview(
+    accessToken: string,
+    reviewId: string,
+    body: { reason: string; policyVersion: string },
+  ): Promise<Record<string, unknown>> {
+    return this.request(
       `/api/v1/provider-workspace/me/reviews/${encodeURIComponent(reviewId)}/appeals`,
       { method: "POST", accessToken, body },
     );
   }
 
-  commercial(accessToken: string) {
-    return this.request<Record<string, unknown>>("/api/v1/provider-workspace/me/commercial", { accessToken });
+  commercial(accessToken: string): Promise<ProviderCommercialWorkspace> {
+    return this.request("/api/v1/provider-workspace/me/commercial", { accessToken });
   }
 
   private async request<T>(path: string, options: RequestOptions): Promise<T> {
