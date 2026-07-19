@@ -5,6 +5,7 @@ import "./globals.css";
 import "./discovery.css";
 import "./account.css";
 import "./customer.css";
+import "./provider.css";
 
 export const metadata: Metadata = {
   title: {
