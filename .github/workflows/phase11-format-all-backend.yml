@@ -38,3 +38,5 @@ jobs:
           git add backend/direkt-api
           git commit -m "style: normalize backend formatting"
           git push origin HEAD:phase11/synthetic-controlled-pilot
+
+# Temporary workflow: remove after canonical formatter output is committed.
