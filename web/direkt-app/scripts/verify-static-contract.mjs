@@ -121,7 +121,8 @@ for (const marker of [
 const dockerfile = await readFile(join(root, "Dockerfile"), "utf8");
 for (const marker of [
   "npm ci --ignore-scripts",
-  "npm run verify:discovery",
+  "npm run typecheck",
+  "npm run verify:static",
   "/.next/standalone",
   "USER node",
   'CMD ["node", "server.js"]',
