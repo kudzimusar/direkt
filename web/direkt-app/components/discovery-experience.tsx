@@ -17,7 +17,7 @@ export interface DiscoveryBootstrap {
 export function CustomerDiscoveryExperience({ bootstrap }: { bootstrap: DiscoveryBootstrap }) {
   const [query, setQuery] = useState("");
   const [area, setArea] = useState("");
-  const [category, setCategory] = useState(bootstrap.categories[0]?.key ?? "");
+  const [category, setCategory] = useState("");
   const [availability, setAvailability] = useState("");
   const [results, setResults] = useState<PublicProviderSearchResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -161,7 +161,8 @@ export function CustomerDiscoveryExperience({ bootstrap }: { bootstrap: Discover
             <div>
               <p className="eyebrow">Results</p>
               <h2>
-                {results.searchContext.resultCount} {categoryName.toLowerCase()} provider
+                {results.searchContext.resultCount}{" "}
+                {category ? `${categoryName.toLowerCase()} ` : ""}provider
                 {results.searchContext.resultCount === 1 ? "" : "s"}
               </h2>
             </div>
