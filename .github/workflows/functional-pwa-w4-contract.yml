@@ -6,6 +6,7 @@ on:
     paths:
       - "web/direkt-app/**"
       - "backend/direkt-api/src/account-contact/**"
+      - "backend/direkt-api/src/discovery/**"
       - "backend/direkt-api/src/interaction/**"
       - "backend/direkt-api/src/app.module.ts"
       - ".github/workflows/functional-pwa-w4-contract.yml"
@@ -14,6 +15,7 @@ on:
     paths:
       - "web/direkt-app/**"
       - "backend/direkt-api/src/account-contact/**"
+      - "backend/direkt-api/src/discovery/**"
       - "backend/direkt-api/src/interaction/**"
       - "backend/direkt-api/src/app.module.ts"
       - ".github/workflows/functional-pwa-w4-contract.yml"
@@ -21,12 +23,20 @@ on:
 permissions:
   contents: read
 
+env:
+  SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
 jobs:
   verify-w4:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      - name: Verify exact checkout
+        run: test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
       - uses: actions/setup-node@v6
         with:
           node-version: "24"
@@ -34,14 +44,30 @@ jobs:
           cache-dependency-path: web/direkt-app/package-lock.json
       - working-directory: web/direkt-app
         run: npm ci --ignore-scripts --no-audit --no-fund
-      - working-directory: web/direkt-app
+      - name: Typecheck functional web W4 source
+        working-directory: web/direkt-app
         run: npm run typecheck
-      - working-directory: web/direkt-app
+      - name: Verify W4 customer/backend contract parity
+        working-directory: web/direkt-app
         run: npm run verify:customer
+      - name: Build functional web W4 source
+        working-directory: web/direkt-app
+        env:
+          DIREKT_WEB_API_MODE: disabled
+          DIREKT_WEB_AUTH_MODE: disabled
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: npm run build
+      - name: Ensure build did not rewrite tracked source
+        run: git diff --exit-code -- web/direkt-app
       - name: Prove Android protected surface unchanged
         shell: bash
         run: |
           set -euo pipefail
-          git fetch --no-tags origin main
-          base_sha="$(git merge-base HEAD origin/main)"
-          git diff --quiet "${base_sha}" HEAD -- android/direkt-app
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base_sha="${{ github.event.pull_request.base.sha }}"
+          else
+            git fetch --no-tags origin main
+            base_sha="$(git merge-base HEAD origin/main)"
+          fi
+          test -n "${base_sha}"
+          git diff --quiet "${base_sha}" "${SOURCE_SHA}" -- android/direkt-app
