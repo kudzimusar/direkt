@@ -1,188 +1,156 @@
 # DIREKT Android ↔ Web/PWA Functional Parity Matrix
 
-**Status:** Active implementation control  
+**Status:** W7 cross-client parity/regression closure  
 **Owner:** Functional PWA parity workstream  
-**Baseline:** W3 closed on exact managed source `012a7b9c24e93087d823661298d051c08ea34ec0`; managed run `29703117963` PASS
+**Governing plan:** `docs/web/FUNCTIONAL_PWA_PARITY_IMPLEMENTATION_PLAN.md`
 
 ## Status legend
 
-- `PASS` — implemented and evidenced on both applicable clients against authoritative backend state.
-- `IMPLEMENTING` — active work in current W-stage; repository implementation may exist but required runtime/managed evidence is not yet complete.
-- `API_READY` — canonical backend/OpenAPI capability exists; browser implementation pending.
-- `GATED` — implementation may exist but real activation requires separate legal/provider/production evidence.
-- `PREVIEW_ONLY` — current Android or synthetic PWA presentation exists but is not yet a fully backend-backed equivalent.
-- `N/A` — intentionally client-specific.
+- `PASS` — implemented against canonical backend authority and supported by exact-head and/or managed evidence.
+- `GATED` — intentionally unavailable because a separately controlled external, participant, legal, or runtime gate is not approved; must not be simulated as PASS.
+- `N/A` — not applicable to the browser client or to the current managed synthetic cohort.
+
+A W-stage may close only when every applicable capability is `PASS` or explicitly `GATED` with a concrete reason. Core authorization, privacy, session, evidence, enquiry, review and commercial invariants may not be downgraded to `GATED` to avoid a failing test.
 
 ## Cross-client foundation
 
-| Capability | Android current truth | Canonical backend/API | Functional Web/PWA target | Status |
-|---|---|---|---|---|
-| Product identity/design tokens | Implemented | N/A | Same DIREKT visual language | PASS |
-| Customer/provider navigation | Implemented | N/A | Same destinations; mobile bottom nav, desktop side nav | PASS |
-| Responsive desktop/tablet/mobile | Android native phone/tablet behavior | N/A | Required | PASS |
-| Installable PWA | N/A | N/A | Required | PASS |
-| Offline-safe static shell | Android native app shell | N/A | Required; no fake offline mutation success | PASS |
-| Canonical REST/OpenAPI boundary | Partial client integration; canonical backend exists | Active | Required | PASS — W2/W3 managed private invocation evidenced |
-| Direct privileged Supabase access | Prohibited | Prohibited | Prohibited | PASS |
-| Backend-authoritative roles/provider scope | Required | Active | Required | PASS — W3 managed actor-derived provider-mode evidence |
+| Capability | Android/current product truth | Web/PWA | W7 status |
+|---|---|---|---|
+| DIREKT product identity/design semantics | Compose/product design | Same semantic design tokens/trust language | PASS |
+| Customer destinations | Discover / Saved / Enquiries / Account | Same four destinations | PASS |
+| Provider destinations | Overview / Profile / Enquiries / Account | Same destination model with provider labels | PASS |
+| Mobile/tablet/desktop adaptation | Native/adaptive client | Bottom nav / navigation rail / desktop side nav | PASS |
+| Installable/offline-safe shell | Native app shell | Manifest + service worker + offline shell | PASS |
+| Canonical REST/OpenAPI authority | Active backend; Android integration remains programme-controlled | Reviewed BFF to same API | PASS |
+| Direct privileged Supabase/database/Storage authority in browser | Prohibited | Prohibited | PASS |
+| Backend-authoritative roles/provider scope | Required | Actor-resolved only | PASS |
+| Android source/Gradle/release surface changed by PWA workstream | Must remain stable | No Android refactor | PASS |
+| Live Android-runtime ↔ web-runtime state mutation synchronization | Android runtime network activation remains separately controlled in current programme | Web uses canonical backend | GATED — W7 proves contract compatibility and zero Android regression; it does not fabricate Android runtime writes that the existing protected Android surface does not expose |
 
-## Authentication and account
+## Authentication and account — W3 closed
 
-| Capability | Android current truth | Canonical backend/API | Functional Web/PWA target | Status |
-|---|---|---|---|---|
-| Synthetic/dev auth challenge | Development/test path | `/auth/challenges*` | Test-only where needed | PASS — controlled synthetic evidence only |
-| Firebase phone-possession proof | Implemented but gated | `/auth/firebase/exchange` | Browser BFF exchange implemented; real Web Firebase activation separately gated | GATED |
-| DIREKT session creation | Implemented for pilot flow | Active | Secure browser session | PASS |
-| Session rotation | Supported | `/auth/sessions/rotate` | Required | PASS |
-| Session listing | Supported contract | `/auth/sessions` | Required | PASS |
-| Revoke other sessions | Supported contract | protected route | Required | PASS |
-| Revoke individual session | Supported contract | protected route | Required | PASS |
-| Pilot invitation/admission | Implemented/gated | Active | Same backend authority | GATED |
-| Notice/consent version enforcement | Implemented/gated | Active | BFF exchange preserves server-controlled notice/consent boundary; real admission remains gated | GATED |
-| Account profile | Implemented contract | `/account/profile` | Required | PASS |
-| Logout/expiry UX | Partial/native | session APIs | Required | PASS |
-
-W3 closure is recorded in `docs/web/W3_AUTH_ACCOUNT_CHECKPOINT.md`. Managed run `29703117963` on exact source `012a7b9c24e93087d823661298d051c08ea34ec0` proved HttpOnly credential containment, CSRF/origin negatives, backend-observable account/session state, actor-derived provider mode, idle refresh rotation, logout/revocation, IAM-private denial and temporary Invoker cleanup. Firebase Web phone-possession and real participant admission remain explicitly `GATED`.
-
-## Customer discovery
-
-| Capability | Android current truth | Canonical backend/API | Functional Web/PWA target | Status |
-|---|---|---|---|---|
-| Category list | Implemented/preview-backed depending path | `/public/categories` | Real API-backed | PASS |
-| Manual area selection | Product requirement; active fallback | search/location contracts | Required | PASS |
-| Provider search | Implemented/preview-backed depending path | `/public/providers/search` | Real API-backed | PASS |
-| Search filters | Product requirement | canonical query contract | Required | PASS |
-| Provider result cards | Implemented | public provider projection | Required | PASS |
-| Provider profile | Implemented | `/public/providers/{id}` | Required | PASS |
-| Scoped trust claims | Implemented semantics | `/public/providers/{id}/claims` | Required | PASS |
-| Availability | Implemented | `/public/providers/{id}/availability` | Required | PASS |
-| Public reviews | Implemented semantics | `/public/providers/{id}/reviews` | Required | PASS |
-| Share projection | Contract exists | `/public/providers/{id}/share` | Required where UX supports it | PASS |
-| Saved providers | Android UX exists | canonical save contract | Required | PREVIEW_ONLY |
-| Map view | Synthetic/privacy-safe | Maps runtime unproven | Preserve list/manual fallback; no Maps activation in this workstream | GATED |
-
-W2 closure is recorded in `docs/web/W2_PUBLIC_DISCOVERY_CHECKPOINT.md`. Managed run `29694862350` on exact source `4b892b90c42239c81c4f9c6f8c9f5447519dd6f6` proved API↔BFF discovery/profile parity, managed synthetic observability, privacy-safe projections, rendered shell/security headers, unauthenticated denial and temporary Invoker cleanup.
-
-## Customer enquiries and interactions
-
-| Capability | Android current truth | Canonical backend/API | Functional Web/PWA target | Status |
-|---|---|---|---|---|
-| Create enquiry | Implemented UI/domain | `POST /enquiries` | Required | API_READY |
-| List enquiries | Implemented UI/domain | `GET /enquiries` | Required | API_READY |
-| Enquiry detail | Implemented UI/domain | `GET /enquiries/{id}` | Required | API_READY |
-| Cancel enquiry | Implemented contract | `POST /enquiries/{id}/cancel` | Required | API_READY |
-| Consent-aware contact handoff | Implemented/gated | handoff routes | Required | GATED |
-| List handoffs | Implemented contract | handoff routes | Required | API_READY |
-| Revoke handoff | Implemented contract | revoke route | Required | API_READY |
-| Interaction history | Implemented contract | `/interactions*` | Required | API_READY |
-| Review eligibility | Implemented contract | `/interactions/{id}/review-eligibility` | Required | API_READY |
-| Submit review | Implemented contract | `/interactions/{id}/reviews` | Required | API_READY |
-| List/read own reviews | Implemented contract | `/reviews*` | Required | API_READY |
-| Review appeal | Implemented contract | `/reviews/{id}/appeals` | Required | API_READY |
-| Review report | Implemented contract | `/reviews/{id}/reports` | Required | API_READY |
-| Interaction complaint | Implemented contract | `/interactions/{id}/complaints` | Required | API_READY |
-| Complaint list/detail | Implemented contract | `/complaints*` | Required | API_READY |
-
-## Provider workspace
-
-| Capability | Android current truth | Canonical backend/API | Functional Web/PWA target | Status |
-|---|---|---|---|---|
-| Provider workspace summary | Implemented UI/domain | `/provider-workspace/me` | Required | API_READY |
-| Actor-resolved provider scope | Required | Active server-side rule | Required; no client-selected tenant | PASS boundary/API_READY UI |
-| Profile and operating model | Implemented | provider/workspace contracts | Required | API_READY |
-| Service/category selections | Implemented | provider/category contracts | Required | API_READY |
-| Service area/public locality | Implemented semantics | location/provider contracts | Required | API_READY |
-| Verification/readiness timeline | Implemented | safe aggregate projections | Required | API_READY |
-| Evidence requirements/status | Implemented | verification/evidence contracts | Required | API_READY |
-| Recoverable evidence upload | Implemented domain | short-lived private upload grants | Required | API_READY |
-| Evidence retry/resubmission | Implemented domain | upload intent/version contracts | Required | API_READY |
-| Provider enquiry inbox | Implemented | `/provider-workspace/me/enquiries` | Required | API_READY |
-| Provider enquiry detail | Implemented | provider enquiry detail route | Required | API_READY |
-| Enquiry transitions | Implemented | transitions route | Required | API_READY |
-| Provider contact-handoff view | Implemented contract | provider handoff route | Required | API_READY |
-| Provider interaction history | Implemented contract | provider interactions route | Required | API_READY |
-| Provider reviews | Implemented | provider reviews route | Required | API_READY |
-| Provider response | Implemented | response route | Required | API_READY |
-| Provider appeal | Implemented | provider appeal route | Required | API_READY |
-
-## Commercial
-
-| Capability | Android current truth | Canonical backend/API | Functional Web/PWA target | Status |
-|---|---|---|---|---|
-| Product catalogue | Implemented domain | `/commercial/products` | Required | API_READY |
-| Provider commercial summary | Implemented | `/provider-workspace/me/commercial` | Required | API_READY |
-| Create subscription | Implemented contract | subscriptions route | Required | API_READY |
-| Cancel subscription | Implemented contract | cancel route | Required | API_READY |
-| Invoice creation/state | Implemented contract | invoice route | Required where current product UX exposes it | API_READY |
-| Payment intent lifecycle | Synthetic/disabled provider mode | payment-intent routes | Functional controlled mode only | GATED |
-| Real MTN/Airtel money movement | Disabled | no approved production route | Must remain disabled | GATED |
-| Payment changes trust score/verification | Prohibited | enforced invariant | Prohibited | PASS |
-
-## External-provider/runtime gates
-
-| Integration | Current truth | Web/PWA treatment |
+| Capability | Canonical authority | Web/PWA status |
 |---|---|---|
-| Google Maps | Externally provisioned/runtime unproven | Do not activate; preserve manual/list fallback |
-| Sentry | Externally provisioned/runtime unproven | Do not claim active without separate runtime work |
-| Resend | Externally provisioned/runtime adapter unproven | Do not claim app delivery active |
-| FCM | Planned | No dependency for parity |
-| WhatsApp Cloud API | Planned/disabled | Domain handoff only until separately activated |
-| Turnstile | Planned/not active | Not assumed in auth architecture |
-| MTN MoMo/Airtel Money | Planned/disabled | No real money movement |
+| Controlled synthetic auth challenge/session | DIREKT auth service | PASS |
+| Firebase-to-DIREKT exchange boundary | `/auth/firebase/exchange` | PASS |
+| Real Firebase Web phone-possession activation | Firebase + Phase 11 participant/legal controls | GATED — public Firebase Web configuration/real participant admission not authorized by W7 |
+| HttpOnly rotating session envelope | DIREKT auth/session + BFF | PASS |
+| Session rotation after access expiry | rotating refresh family | PASS |
+| CSRF/same-origin mutation protection | BFF | PASS |
+| Session list/revoke/logout | auth session routes | PASS |
+| Account profile | `/account/profile` | PASS |
+| Provider mode availability | `/provider-workspace/me` | PASS — server-derived; no client provider ID/role |
+| Pilot invitation/admission | participant admission controls | GATED — real Phase 11 participant evidence remains open |
 
-## W-stage completion controls
+**Evidence:** managed W3 run `29703117963` PASS on exact source `012a7b9c24e93087d823661298d051c08ea34ec0`.
 
-### W0 complete when
+## Public discovery — W2 closed
 
-- architecture decision exists;
-- this matrix is present and mapped to canonical contracts;
-- Android protected-path/no-regression contract is documented;
-- workstream lock is claimed;
-- project status/master plan/readme/index point to this workstream.
+| Capability | Canonical authority | Web/PWA status |
+|---|---|---|
+| Categories | `/public/categories` | PASS |
+| Area/manual location fallback | discovery query/location contract | PASS |
+| Provider search/filters | `/public/providers/search` | PASS |
+| Provider cards/profile | public provider projection | PASS |
+| Scoped trust claims | public claim projection | PASS |
+| Availability | public availability projection | PASS |
+| Public reviews | public review projection | PASS |
+| Share-safe profile | public share projection | PASS |
+| Private evidence/contact/private coordinates in public response | Prohibited | PASS — privacy scans/contracts |
+| Map runtime | Google Maps runtime separately unproven | GATED — list/manual fallback remains first-class |
 
-**Status:** complete and merged through PR #153.
+**Evidence:** managed W2 run `29694862350` PASS on exact source `4b892b90c42239c81c4f9c6f8c9f5447519dd6f6`.
 
-### W1 complete when
+## Customer journey — W4 closed
 
-- `web/direkt-app/` builds and typechecks;
-- responsive mobile/tablet/desktop shell exists;
-- mobile bottom nav and desktop side nav are enforced by tests;
-- PWA manifest/service-worker safety exists;
-- typed API/BFF scaffolding exists;
-- no privileged material enters browser output;
-- Android regression gate remains green.
+| Capability | Canonical authority | Web/PWA status |
+|---|---|---|
+| Saved-provider shortlist | customer saved-provider domain | PASS |
+| Create/list/detail/cancel enquiry | enquiry lifecycle | PASS |
+| Enquiry state/history | revisioned enquiry domain | PASS |
+| Consent-aware contact handoff | interaction/handoff domain | PASS |
+| Handoff list/revoke | interaction/handoff domain | PASS |
+| Interaction history | interaction domain | PASS |
+| Review eligibility | interaction/review domain | PASS |
+| Submit/list/read/appeal/report review | review domain | PASS |
+| Interaction complaint/list/detail | complaint domain | PASS |
+| Provider-mediated transitions from customer browser | Provider authority | N/A — customer browser cannot fabricate provider authority; canonical lifecycle tests cover protected transitions |
 
-**Status:** complete and merged through PR #153; branch synchronized by PR #154.
+**Evidence:** managed W4 run `29704996877` PASS on exact source `61a6bce54bffcec545a2009ac353596ee1d69f83`, plus exact-head canonical lifecycle/contract tests for provider-mediated states.
 
-### W2 complete when
+## Provider journey — W5 closed
 
-- public categories/search/results/profile/claims/availability/reviews/share use canonical backend state;
-- backend-managed test publication changes are observable in the browser client;
-- public projections remain privacy-safe;
-- manual/list fallback remains first-class;
-- exact-head CI/review and managed IAM-private canary evidence pass.
+| Capability | Canonical authority | Web/PWA status |
+|---|---|---|
+| Actor-resolved workspace/readiness | `/provider-workspace/me` | PASS |
+| Profile/operating model | provider workspace | PASS |
+| Service/category selection/removal | provider/category domain | PASS |
+| Availability | provider workspace | PASS |
+| Private base/public premises/service area | provider workspace/PostGIS | PASS — private base write-only; public point requires consent |
+| Verification/readiness timeline | safe workspace projection | PASS |
+| Evidence requirements/status | verification/evidence domain | PASS |
+| Recoverable evidence upload/retry/cancel | private upload-intent domain | PASS |
+| Provider enquiry inbox/detail/transitions | provider interaction domain | PASS |
+| Masked consent-scoped handoff | provider handoff projection | PASS |
+| Provider interaction history | interaction domain | PASS |
+| Provider reviews/response/appeal | review domain | PASS |
+| Fixture-dependent provider enquiry/review mutation in generated W5 cohort | Synthetic fixture availability | N/A where fixture absent — not fabricated; permanent canonical lifecycle suites remain required |
 
-**Status:** CLOSED — managed run `29694862350` PASS on exact source `4b892b90c42239c81c4f9c6f8c9f5447519dd6f6`.
+**Evidence:** trusted-main W5 managed provider canary PASS on exact merged source `79228f4bda96106b929aa6183613cb9d2dc127f6`; authoritative bot result on Issue #133 comment `5017630247`.
 
-### W3 complete when
+## Commercial lifecycle — W6 closed
 
-- secure browser session creation/rotation/logout/revocation are backend-observable;
-- credentials remain HttpOnly and out of browser-readable storage/JSON;
-- CSRF/origin/session expiry controls pass;
-- provider-mode availability is actor-derived server-side;
-- direct API/web IAM privacy and cleanup pass;
-- real Firebase/participant gates remain explicit rather than fabricated.
+| Capability | Canonical authority | Web/PWA status |
+|---|---|---|
+| Product catalogue | commercial service | PASS |
+| Entitlements | commercial service | PASS — no verification/publication/ranking effects |
+| Retry-safe subscription creation | provider commercial routes | PASS — idempotency required |
+| Subscription status/cancellation | provider commercial routes | PASS — expected revision |
+| Invoice creation/state | commercial service | PASS |
+| Synthetic payment-intent lifecycle | commercial payment provider | PASS when backend mode is `synthetic` |
+| Disabled payment-provider behavior | commercial payment provider | PASS — initiation fail-closed |
+| Payment-intent cancellation/status | commercial service | PASS |
+| Receipt projection | commercial service | PASS |
+| Browser payment webhook authority | Prohibited | PASS — not exposed/invoked |
+| Commercial state changing verification/publication/ranking | Prohibited | PASS |
+| Real MTN/Airtel credentials and money movement | External provider/production authorization | GATED — not configured or authorized by W6/W7 |
 
-**Status:** CLOSED — managed run `29703117963` PASS on exact source `012a7b9c24e93087d823661298d051c08ea34ec0`.
+**Evidence:** trusted-main W6 managed commercial canary PASS on exact merged source `1b5753002afcf115f6f47334f6588648eca7501d`.
 
-### W4–W6 complete when
+## External/runtime gates retained
 
-Each capability moves from `API_READY`/`GATED`/`PREVIEW_ONLY` to `PASS` only with backend-observable evidence and applicable security tests. Gated external/real-participant capabilities remain explicitly `GATED`; they are not fabricated as active.
+| Integration | Current truth | W7 treatment |
+|---|---|---|
+| Google Maps | Externally provisioned/runtime unproven | GATED; preserve manual/list fallback |
+| Sentry | Externally provisioned/runtime unproven | GATED; no active-runtime claim |
+| Resend | Externally provisioned/runtime adapter unproven | GATED; no delivery claim |
+| FCM | Planned | GATED; not required for current browser parity |
+| WhatsApp Cloud API | Planned/disabled | GATED; domain handoff only |
+| Turnstile | Planned/not active | GATED; not assumed in auth architecture |
+| MTN MoMo/Airtel Money | Planned/disabled | GATED; no real money movement |
+| Real participant admission | Phase 11 evidence incomplete | GATED |
+| Formal Phase 12 production release | Requires 11J PROCEED/global gates | GATED |
 
-### W7 complete when
+## W7 regression acceptance
 
-All applicable rows are `PASS` or explicitly remain `GATED` for external evidence. No required row may remain fixture-only.
+| Control | Required result |
+|---|---|
+| Functional web typecheck + W2–W7 contract verifiers + production build | PASS |
+| Backend migration + full Jest + build + OpenAPI generation/check | PASS |
+| Database Data API/authorization/provider-workspace contract harnesses | PASS |
+| Android debug unit tests | PASS |
+| Android lint | PASS |
+| Android debug assembly | PASS |
+| Android debug/release dependency graph resolution | PASS |
+| Android protected-path diff | PASS |
+| Mobile bottom navigation / tablet rail / desktop side navigation breakpoints | PASS |
+| Keyboard focus / skip-link / reduced-motion semantics | PASS |
+| Service-worker mutation/private no-cache and network-only rules | PASS |
+| No browser-readable DIREKT tokens/private evidence/object keys/service-role credentials | PASS |
+| CSRF/origin/provider-scope/direct-API negative contracts | PASS |
+| W2–W6 managed exact-source evidence chain reconciled | PASS |
+| External/participant/production gates represented honestly | PASS/GATED with reason |
 
-### W8 complete when
+## W8 remains blocked until W7 closes
 
-The functional browser app is promoted through an approved route/runtime without weakening private API/security gates and the old synthetic preview remains explicitly archived.
+W7 closure does not authorize public production release. W8 must separately prove an approved route/domain/runtime-identity cutover, preserve the historical synthetic preview, keep the canonical API IAM-private, and retain Phase 11/Phase 12 gates.
