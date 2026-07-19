@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the MkDocs source tree from repository documentation and prototype assets."""
+"""Build the MkDocs source tree from repository documentation and public synthetic UI assets."""
 from pathlib import Path
 import shutil
 
@@ -22,10 +22,7 @@ for rel in root_docs:
 
 shutil.copytree(ROOT / "docs", OUT / "docs")
 
-# Publish the dependency-free Phase 1B prototype as static Pages content.
-# The repository README documents the prototype source, while index.html is
-# the public route. Excluding README.md prevents both files mapping to the
-# same MkDocs destination under strict mode.
+# Retain the dependency-free Phase 1B prototype as a historical static review artifact.
 prototype_src = ROOT / "prototype"
 if prototype_src.exists():
     shutil.copytree(
@@ -33,6 +30,12 @@ if prototype_src.exists():
         OUT / "prototype",
         ignore=shutil.ignore_patterns("README.md"),
     )
+
+# Publish the current customer/provider PWA as a separate synthetic remote-review surface.
+# It is static and must never contain credentials, private evidence or live participant data.
+pwa_src = ROOT / "web" / "direkt-pwa"
+if pwa_src.exists():
+    shutil.copytree(pwa_src, OUT / "app")
 
 # Repository-relative index link becomes the Pages home link.
 index_path = OUT / "docs" / "INDEX.md"
@@ -42,7 +45,6 @@ if index_path.exists():
         encoding="utf-8",
     )
 
-# Add a direct prototype link to the generated Pages landing document.
 readme = (ROOT / "README.md").read_text(encoding="utf-8")
 prototype_callout = """
 
@@ -53,9 +55,27 @@ prototype_callout = """
 The prototype uses fictional data, makes no real submissions and does not represent an implemented backend or verification service.
 """
 if "## Open the interactive prototype" not in readme:
-    readme = readme.replace("## Download the planning pack", prototype_callout + "\n## Download the planning pack")
+    marker = "## Download the planning pack"
+    if marker in readme:
+        readme = readme.replace(marker, prototype_callout + "\n" + marker, 1)
+    else:
+        readme = readme.rstrip() + prototype_callout + "\n"
 
-# MkDocs expects index.md.
+pwa_callout = """
+
+## Open the remote customer/provider UI
+
+[Launch the DIREKT customer/provider PWA](app/index.html)
+
+The PWA is an installable **synthetic remote-review build** for desktop, tablet and mobile. It contains no real participant data, makes no real submissions and does not bypass the protected backend, pilot or production gates.
+"""
+if "## Open the remote customer/provider UI" not in readme:
+    marker = "## Download the planning pack"
+    if marker in readme:
+        readme = readme.replace(marker, pwa_callout + "\n" + marker, 1)
+    else:
+        readme = readme.rstrip() + pwa_callout + "\n"
+
 (OUT / "index.md").write_text(readme, encoding="utf-8")
 
 download_src = ROOT / "downloads" / "DIREKT_PLANNING_PACK.zip"

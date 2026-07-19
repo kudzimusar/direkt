@@ -1,0 +1,25 @@
+{
+  "name": "DIREKT — Customer & Provider Preview",
+  "short_name": "DIREKT",
+  "description": "Installable remote UI review for the DIREKT Zambia customer and provider experience. Synthetic data only.",
+  "id": "./",
+  "start_url": "./#/discover",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F8FAF9",
+  "theme_color": "#087A55",
+  "orientation": "any",
+  "categories": ["business", "utilities", "lifestyle"],
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {"name": "Discover providers", "short_name": "Discover", "url": "./#/discover"},
+    {"name": "My enquiries", "short_name": "Enquiries", "url": "./#/enquiries"}
+  ]
+}
