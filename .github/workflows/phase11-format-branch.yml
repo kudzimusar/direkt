@@ -1,0 +1,44 @@
+name: DIREKT Phase 11 branch formatter
+
+on:
+  push:
+    branches:
+      - phase11/synthetic-controlled-pilot
+    paths:
+      - "backend/direkt-api/scripts/phase11-synthetic-pilot.ts"
+      - "backend/direkt-api/package.json"
+      - ".github/workflows/phase11-format-branch.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend/direkt-api
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: phase11/synthetic-controlled-pilot
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npx prettier --write scripts/phase11-synthetic-pilot.ts package.json
+      - name: Commit formatting only when needed
+        shell: bash
+        run: |
+          if git diff --quiet -- scripts/phase11-synthetic-pilot.ts package.json; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/phase11-synthetic-pilot.ts package.json
+          git commit -m "style: format Phase 11 synthetic pilot activator"
+          git push origin HEAD:phase11/synthetic-controlled-pilot
