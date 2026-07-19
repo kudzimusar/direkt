@@ -1,0 +1,27 @@
+name: DIREKT Phase 11 format diagnostic
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend/direkt-api
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - run: npm ci --ignore-scripts
+      - name: List files that differ from Prettier
+        run: npx prettier --list-different "{src,scripts,test}/**/*.ts" "*.{json,js,mjs}"
