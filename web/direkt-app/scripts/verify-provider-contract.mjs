@@ -8,6 +8,8 @@ const files = {
   workspaceDto: "backend/direkt-api/src/provider-workspace/provider-workspace.dto.ts",
   workspaceTypes: "backend/direkt-api/src/provider-workspace/provider-workspace.types.ts",
   interactionController: "backend/direkt-api/src/interaction/interaction.controller.ts",
+  handoffController: "backend/direkt-api/src/interaction/interaction-handoff.controller.ts",
+  handoffTypes: "backend/direkt-api/src/interaction/interaction-handoff.types.ts",
   interactionDto: "backend/direkt-api/src/interaction/interaction.dto.ts",
   reviewController: "backend/direkt-api/src/interaction/review.controller.ts",
   reviewDto: "backend/direkt-api/src/interaction/review.dto.ts",
@@ -16,6 +18,7 @@ const files = {
   stateRoute: "web/direkt-app/app/api/provider/state/route.ts",
   actionRoute: "web/direkt-app/app/api/provider/action/route.ts",
   providerUi: "web/direkt-app/components/provider-journey-experience.tsx",
+  interactionUi: "web/direkt-app/components/provider-interaction-experience.tsx",
   shell: "web/direkt-app/components/direkt-app-shell.tsx",
 };
 
@@ -58,6 +61,18 @@ requireMarkers(source.interactionController, [
   "@Post('provider-workspace/me/enquiries/:enquiryId/transitions')",
   "providerFromActor: true",
 ]);
+requireMarkers(source.handoffController, [
+  "@Get('provider-workspace/me/interactions')",
+  "@Get('provider-workspace/me/enquiries/:enquiryId/handoff')",
+  "providerFromActor: true",
+  "masked, consent-scoped contact hint",
+]);
+requireMarkers(source.handoffTypes, [
+  "providerScope: 'actor_resolved'",
+  "rawContactIncluded: false",
+  "customerContactIncluded: false",
+  "privateEvidenceIncluded: false",
+]);
 requireMarkers(source.interactionDto, ["expectedRevision", "policyVersion", "needs_information"]);
 requireMarkers(source.reviewController, [
   "@Get('provider-workspace/me/reviews')",
@@ -74,13 +89,14 @@ requireMarkers(source.providerApi, [
   '"/api/v1/provider-workspace/me/location"',
   '"/api/v1/provider-workspace/me/upload-intents"',
   '"/api/v1/provider-workspace/me/enquiries"',
+  '"/api/v1/provider-workspace/me/interactions"',
   '"/api/v1/provider-workspace/me/reviews"',
   '"/api/v1/provider-workspace/me/commercial"',
   'authorization: `Bearer ${options.accessToken}`',
   '"X-Serverless-Authorization"',
   'cache: "no-store"',
 ]);
-requireMarkers(source.stateRoute, ["withAuthenticatedSession", "api.workspace", "api.verificationTimeline", "api.listUploadIntents", "api.listEnquiries", "api.listReviews", "api.commercial", "noStoreJson"]);
+requireMarkers(source.stateRoute, ["withAuthenticatedSession", "api.workspace", "api.verificationTimeline", "api.listUploadIntents", "api.listEnquiries", "api.interactions", "api.currentHandoff", "api.listReviews", "api.commercial", "noStoreJson"]);
 requireMarkers(source.actionRoute, [
   "assertSecureMutation",
   'case "update-profile"',
@@ -107,22 +123,28 @@ requireMarkers(source.providerUi, [
   "Private base coordinates",
   "Provider mode is granted only",
 ]);
-requireMarkers(source.shell, ["ProviderJourneyExperience", "providerModeAvailable", "W5 provider lifecycle"]);
+requireMarkers(source.interactionUi, [
+  'fetch("/api/provider/state"',
+  "contactDisplayHint",
+  "raw contact",
+  "interaction.events",
+]);
+requireMarkers(source.shell, ["ProviderJourneyExperience", "ProviderInteractionExperience", "providerModeAvailable", "W5 provider lifecycle"]);
 
-for (const [name, text] of Object.entries({ providerUi: source.providerUi, actionRoute: source.actionRoute })) {
+for (const [name, text] of Object.entries({ providerUi: source.providerUi, interactionUi: source.interactionUi, actionRoute: source.actionRoute })) {
   if (/localStorage|sessionStorage|indexedDB/i.test(text)) throw new Error(`${name} must not persist auth or private upload state in browser storage`);
 }
 
 if (/body\.providerId|body\.providerScope|body\.representativeRole/.test(source.actionRoute)) {
   throw new Error("W5 browser actions must not accept provider ownership/scope/role from client input");
 }
-if (/objectKey|privateObjectKey/.test(source.providerUi)) {
+if (/objectKey|privateObjectKey/.test(source.providerUi + source.interactionUi)) {
   throw new Error("W5 provider UI must not consume or render private storage object keys");
 }
 if (!source.providerUi.includes("uploadAndConfirm") || !source.providerUi.includes("await reload()")) {
   throw new Error("W5 upload flow must confirm durable state and reload authoritative backend state");
 }
-if (/fetch\([^\n]+provider-workspace|fetch\([^\n]+api\/v1/.test(source.providerUi)) {
+if (/fetch\([^\n]+provider-workspace|fetch\([^\n]+api\/v1/.test(source.providerUi + source.interactionUi)) {
   throw new Error("Provider UI must use reviewed same-origin BFF routes rather than direct canonical API calls");
 }
 
@@ -132,6 +154,8 @@ process.stdout.write(`${JSON.stringify({
   privateEvidenceBounded: true,
   recoverableUploads: true,
   enquiryRevisionControl: true,
+  maskedHandoffOnly: true,
+  trackedInteractions: true,
   serverPolicyVersion: true,
   commercialReadOnlyInW5: true,
   directApiFromBrowser: false,
