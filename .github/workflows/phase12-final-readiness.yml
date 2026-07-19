@@ -1,0 +1,69 @@
+name: DIREKT Phase 12 final preauthorization readiness
+
+on:
+  push:
+    branches:
+      - build/android-v1
+    paths:
+      - "backend/direkt-api/src/config/environment.ts"
+      - "android/direkt-app/**"
+      - "docs/phase12/**"
+      - "scripts/verify-phase12-final-readiness.py"
+      - ".github/workflows/phase12-final-readiness.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "backend/direkt-api/src/config/environment.ts"
+      - "android/direkt-app/**"
+      - "docs/phase12/**"
+      - "scripts/verify-phase12-final-readiness.py"
+      - ".github/workflows/phase12-final-readiness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-phase12-final-readiness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  truth-boundary:
+    name: Verify all clearable Phase 12 work and residual blockers
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Verify Phase 12 truth boundary
+        run: python scripts/verify-phase12-final-readiness.py | tee phase12-final-readiness.txt
+
+      - name: Package readiness evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p phase12-final-evidence/play phase12-final-evidence/release
+          cp docs/phase12/play/*.json phase12-final-evidence/play/
+          cp docs/phase12/release/*.json phase12-final-evidence/release/
+          cp phase12-final-readiness.txt phase12-final-evidence/
+          cat > phase12-final-evidence/BOUNDARY.txt <<'EOF'
+          DIREKT Phase 12 preauthorization engineering checkpoint.
+          This artifact proves repository readiness controls only.
+          Formal Phase 12 is NOT authorized.
+          No signed production AAB, Play release, production traffic, staffing claim, legal approval or real pilot evidence is created by this workflow.
+          EOF
+
+      - name: Upload short-lived Phase 12 readiness evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-phase12-final-preauthorization-${{ github.run_number }}-${{ github.sha }}
+          path: phase12-final-evidence/**
+          if-no-files-found: error
+          retention-days: 7
