@@ -1,3 +1,4 @@
+import java.io.StringReader
 import java.util.Properties
 import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
@@ -36,13 +37,10 @@ abstract class VerifyReleaseArtifactSigningContract : DefaultTask() {
 fun quotedBuildConfig(value: String): String =
     "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
-val releaseVersionFile = rootProject.file("release/version.properties")
-require(releaseVersionFile.isFile) {
-    "Missing source-controlled release/version.properties"
-}
-
+val releaseVersionFile = rootProject.layout.projectDirectory.file("release/version.properties")
+val releaseVersionContents = providers.fileContents(releaseVersionFile).asText.get()
 val releaseVersionProperties = Properties().apply {
-    releaseVersionFile.inputStream().use(::load)
+    load(StringReader(releaseVersionContents))
 }
 
 fun requiredReleaseProperty(name: String): String =
