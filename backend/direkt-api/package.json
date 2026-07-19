@@ -26,6 +26,7 @@
     "migration:check": "ts-node --project tsconfig.json scripts/check-migrations.ts",
     "supabase:check": "node --env-file-if-exists=.env -r ts-node/register scripts/check-supabase.ts",
     "seed:synthetic": "ts-node --project tsconfig.json scripts/seed-synthetic.ts",
+    "seed:phase11:synthetic": "ts-node --project tsconfig.json scripts/phase11-synthetic-pilot.ts",
     "openapi:generate": "ts-node --project tsconfig.json scripts/generate-openapi.ts",
     "openapi:check": "ts-node --project tsconfig.json scripts/check-openapi.ts",
     "verify": "npm run format:check && npm run lint && npm run typecheck && npm run authorization:check && npm run test && npm run build"
