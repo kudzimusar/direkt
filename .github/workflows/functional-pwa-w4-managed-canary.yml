@@ -1,0 +1,240 @@
+name: DIREKT functional web W4 managed customer canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN-DIREKT-W4-CANARY to continue
+        required: true
+        type: string
+      source_sha:
+        description: Exact reviewed DIREKT commit already merged to main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: direkt-functional-web-w4-managed-canary
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    name: Deploy and verify private W4 customer canary
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_REGION: asia-northeast1
+      GCP_ARTIFACT_REGISTRY: direkt-containers
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_API_SERVICE: direkt-api
+      GCP_WEB_SERVICE: direkt-customer-provider-web-staging
+      GCP_WEB_RUNTIME_SERVICE_ACCOUNT: direkt-portal-runtime@direkt-dev-502701.iam.gserviceaccount.com
+    steps:
+      - name: Validate immutable main source
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ inputs.confirmation }}" = "RUN-DIREKT-W4-CANARY"
+          source_sha="${{ inputs.source_sha }}"
+          [[ "${source_sha}" =~ ^[0-9a-f]{40}$ ]]
+          echo "source_sha=${source_sha}" >> "${GITHUB_OUTPUT}"
+
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.source.outputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify exact reviewed source
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          test "${SOURCE_SHA}" = "${{ steps.source.outputs.source_sha }}"
+          git fetch origin main --no-tags
+          git merge-base --is-ancestor "${SOURCE_SHA}" origin/main
+          echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
+          echo "WEB_IMAGE_URI=${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/${GCP_WEB_SERVICE}:w4-${SOURCE_SHA}" >> "${GITHUB_ENV}"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/direkt-app/package-lock.json
+
+      - name: Verify exact W4 web source
+        working-directory: web/direkt-app
+        env:
+          DIREKT_WEB_API_MODE: disabled
+          DIREKT_WEB_AUTH_MODE: disabled
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run typecheck
+          npm run verify:static
+          npm run verify:discovery
+          npm run verify:auth
+          npm run verify:customer
+          npm run build
+
+      - name: Authenticate to Google Cloud through approved staging identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Verify private API boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          API_URL="$(gcloud run services describe "${GCP_API_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format='value(status.url)')"
+          test -n "${API_URL}"
+          echo "API_URL=${API_URL}" >> "${GITHUB_ENV}"
+          gcloud run services get-iam-policy "${GCP_API_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${RUNNER_TEMP}/api-iam.json"
+          jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' "${RUNNER_TEMP}/api-iam.json" >/dev/null
+          jq -e --arg expected "serviceAccount:${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}" '[.bindings[]? | select(.role == "roles/run.invoker") | .members[]?] | index($expected) != null' "${RUNNER_TEMP}/api-iam.json" >/dev/null
+
+      - name: Build and push immutable W4 web image
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+          docker build -f web/direkt-app/Dockerfile -t "${WEB_IMAGE_URI}" web/direkt-app
+          docker push "${WEB_IMAGE_URI}"
+
+      - name: Deploy IAM-private synthetic W4 web canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run deploy "${GCP_WEB_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --platform managed \
+            --image "${WEB_IMAGE_URI}" --service-account "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}" \
+            --port 8080 --cpu 1 --memory 512Mi --min-instances 0 --max-instances 1 \
+            --concurrency 20 --timeout 60 --ingress all \
+            --labels "direkt-environment=staging,direkt-data-mode=synthetic-only,direkt-workstream=w4-canary" \
+            --set-env-vars "NODE_ENV=production,HOSTNAME=0.0.0.0,DIREKT_WEB_API_MODE=authenticated-bff,DIREKT_API_BASE_URL=${API_URL},DIREKT_WEB_AUTH_MODE=synthetic,DIREKT_WEB_ALLOW_SYNTHETIC_AUTH=true,DIREKT_WEB_PILOT_NOTICE_VERSION=synthetic-canary-v1,DIREKT_WEB_INTERACTION_POLICY_VERSION=synthetic-demo-v1" \
+            --no-allow-unauthenticated --quiet
+          WEB_URL="$(gcloud run services describe "${GCP_WEB_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format='value(status.url)')"
+          test -n "${WEB_URL}"
+          echo "WEB_URL=${WEB_URL}" >> "${GITHUB_ENV}"
+
+      - name: Verify private web deployment and grant bounded invocation
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run services describe "${GCP_WEB_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${RUNNER_TEMP}/web-service.json"
+          jq -e --arg image "${WEB_IMAGE_URI}" '.spec.template.spec.containers[0].image == $image' "${RUNNER_TEMP}/web-service.json" >/dev/null
+          jq -e --arg identity "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}" '.spec.template.spec.serviceAccountName == $identity' "${RUNNER_TEMP}/web-service.json" >/dev/null
+          gcloud run services get-iam-policy "${GCP_WEB_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${RUNNER_TEMP}/web-iam.json"
+          jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' "${RUNNER_TEMP}/web-iam.json" >/dev/null
+          gcloud run services add-iam-policy-binding "${GCP_WEB_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --member "serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}" --role roles/run.invoker --quiet
+
+      - name: Mint private web canary token
+        id: web-auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+          token_format: id_token
+          id_token_audience: ${{ env.WEB_URL }}
+          id_token_include_email: true
+
+      - name: Exercise managed W4 customer lifecycle
+        id: exercise
+        shell: bash
+        env:
+          WEB_ID_TOKEN: ${{ steps.web-auth.outputs.id_token }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::${WEB_ID_TOKEN}"
+          wh="X-Serverless-Authorization: Bearer ${WEB_ID_TOKEN}"
+          jar="${RUNNER_TEMP}/w4-cookies.txt"
+
+          unauth="$(curl -sS -o /dev/null -w '%{http_code}' "${WEB_URL}/api/customer/state" || true)"
+          test "${unauth}" = "403"
+
+          curl --fail --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors -H "${wh}" -c "${jar}" "${WEB_URL}/api/auth/bootstrap" > "${RUNNER_TEMP}/bootstrap.json"
+          CSRF="$(jq -r '.csrfToken' "${RUNNER_TEMP}/bootstrap.json")"
+          test -n "${CSRF}"
+
+          missing_origin="$(curl -sS -o /dev/null -w '%{http_code}' -H "${wh}" -H "x-direkt-csrf: ${CSRF}" -b "${jar}" -X POST -H 'content-type: application/json' --data '{"action":"save-provider","publicProviderId":"00000000-0000-4000-8000-000000000000"}' "${WEB_URL}/api/customer/action")"
+          test "${missing_origin}" = "403"
+
+          curl --fail --silent --show-error -H "${wh}" -H "Origin: ${WEB_URL}" -H "x-direkt-csrf: ${CSRF}" -b "${jar}" -c "${jar}" -X POST -H 'content-type: application/json' --data '{"channel":"email","contact":"w4-canary@example.invalid"}' "${WEB_URL}/api/auth/challenge" > "${RUNNER_TEMP}/challenge.json"
+          CHALLENGE_ID="$(jq -r '.challengeId' "${RUNNER_TEMP}/challenge.json")"
+          CODE="$(jq -r '.synthetic.code' "${RUNNER_TEMP}/challenge.json")"
+          jq -e '.status == "accepted"' "${RUNNER_TEMP}/challenge.json" >/dev/null
+
+          jq -n --arg challengeId "${CHALLENGE_ID}" --arg code "${CODE}" '{challengeId:$challengeId,code:$code,deviceLabel:"W4 managed customer canary"}' > "${RUNNER_TEMP}/verify-body.json"
+          curl --fail --silent --show-error -H "${wh}" -H "Origin: ${WEB_URL}" -H "x-direkt-csrf: ${CSRF}" -b "${jar}" -c "${jar}" -X POST -H 'content-type: application/json' --data @"${RUNNER_TEMP}/verify-body.json" "${WEB_URL}/api/auth/verify" > "${RUNNER_TEMP}/verify.json"
+          CSRF="$(jq -r '.csrfToken' "${RUNNER_TEMP}/verify.json")"
+
+          curl --fail --silent --show-error -H "${wh}" -b "${jar}" "${WEB_URL}/api/discovery/search?limit=1" > "${RUNNER_TEMP}/search.json"
+          PROVIDER="$(jq -r '.items[0].publicProviderId' "${RUNNER_TEMP}/search.json")"
+          [[ "${PROVIDER}" =~ ^[0-9a-f-]{36}$ ]]
+
+          jq -n --arg id "${PROVIDER}" '{action:"save-provider",publicProviderId:$id}' > "${RUNNER_TEMP}/save.json"
+          curl --fail --silent --show-error -H "${wh}" -H "Origin: ${WEB_URL}" -H "x-direkt-csrf: ${CSRF}" -b "${jar}" -X POST -H 'content-type: application/json' --data @"${RUNNER_TEMP}/save.json" "${WEB_URL}/api/customer/action" > "${RUNNER_TEMP}/save-result.json"
+
+          curl --fail --silent --show-error -H "${wh}" -b "${jar}" "${WEB_URL}/api/customer/state" > "${RUNNER_TEMP}/state-saved.json"
+          jq -e --arg id "${PROVIDER}" '.savedProviders | any(.publicProviderId == $id)' "${RUNNER_TEMP}/state-saved.json" >/dev/null
+          jq -e '(.contacts | type) == "array" and (.enquiries | type) == "array" and (.interactions | type) == "array" and (.reviews | type) == "array" and (.complaints | type) == "array"' "${RUNNER_TEMP}/state-saved.json" >/dev/null
+          ! grep -Eqi 'normalized_value|rawContact|privateEvidence|exactCoordinate|service_role|sb_secret_' "${RUNNER_TEMP}/state-saved.json"
+
+          IDEMPOTENCY="$(cat /proc/sys/kernel/random/uuid)"
+          jq -n --arg id "${PROVIDER}" --arg key "${IDEMPOTENCY}" '{action:"create-enquiry",publicProviderId:$id,serviceSummary:"Synthetic W4 managed enquiry for browser parity verification.",timing:"within_week",requestedFor:"",localitySummary:"Kabwata Ward, Lusaka",preferredChannel:"none",idempotencyKey:$key}' > "${RUNNER_TEMP}/enquiry.json"
+          curl --fail --silent --show-error -H "${wh}" -H "Origin: ${WEB_URL}" -H "x-direkt-csrf: ${CSRF}" -b "${jar}" -X POST -H 'content-type: application/json' --data @"${RUNNER_TEMP}/enquiry.json" "${WEB_URL}/api/customer/action" > "${RUNNER_TEMP}/enquiry-created.json"
+          ENQUIRY="$(jq -r '.enquiryId' "${RUNNER_TEMP}/enquiry-created.json")"
+          REVISION="$(jq -r '.revision' "${RUNNER_TEMP}/enquiry-created.json")"
+          test "$(jq -r '.status' "${RUNNER_TEMP}/enquiry-created.json")" = "received"
+
+          curl --fail --silent --show-error -H "${wh}" -H "Origin: ${WEB_URL}" -H "x-direkt-csrf: ${CSRF}" -b "${jar}" -X POST -H 'content-type: application/json' --data @"${RUNNER_TEMP}/enquiry.json" "${WEB_URL}/api/customer/action" > "${RUNNER_TEMP}/enquiry-replay.json"
+          test "$(jq -r '.enquiryId' "${RUNNER_TEMP}/enquiry-replay.json")" = "${ENQUIRY}"
+
+          stale="$(jq -n --arg id "${ENQUIRY}" '{action:"cancel-enquiry",enquiryId:$id,expectedRevision:999999,reason:"Synthetic stale revision rejection check"}')"
+          stale_status="$(curl -sS -o "${RUNNER_TEMP}/stale.json" -w '%{http_code}' -H "${wh}" -H "Origin: ${WEB_URL}" -H "x-direkt-csrf: ${CSRF}" -b "${jar}" -X POST -H 'content-type: application/json' --data "${stale}" "${WEB_URL}/api/customer/action")"
+          test "${stale_status}" = "409"
+
+          cancel="$(jq -n --arg id "${ENQUIRY}" --argjson revision "${REVISION}" '{action:"cancel-enquiry",enquiryId:$id,expectedRevision:$revision,reason:"Synthetic managed customer canary cleanup"}')"
+          curl --fail --silent --show-error -H "${wh}" -H "Origin: ${WEB_URL}" -H "x-direkt-csrf: ${CSRF}" -b "${jar}" -X POST -H 'content-type: application/json' --data "${cancel}" "${WEB_URL}/api/customer/action" > "${RUNNER_TEMP}/cancelled.json"
+          test "$(jq -r '.status' "${RUNNER_TEMP}/cancelled.json")" = "cancelled"
+
+          jq -n --arg id "${PROVIDER}" '{action:"unsave-provider",publicProviderId:$id}' > "${RUNNER_TEMP}/unsave.json"
+          curl --fail --silent --show-error -H "${wh}" -H "Origin: ${WEB_URL}" -H "x-direkt-csrf: ${CSRF}" -b "${jar}" -X POST -H 'content-type: application/json' --data @"${RUNNER_TEMP}/unsave.json" "${WEB_URL}/api/customer/action" > /dev/null
+
+          curl --fail --silent --show-error -H "${wh}" -b "${jar}" "${WEB_URL}/api/customer/state" > "${RUNNER_TEMP}/state-final.json"
+          jq -e --arg id "${ENQUIRY}" '.enquiries | any(.enquiryId == $id and .status == "cancelled")' "${RUNNER_TEMP}/state-final.json" >/dev/null
+          jq -e --arg id "${PROVIDER}" '[.savedProviders[] | select(.publicProviderId == $id)] | length == 0' "${RUNNER_TEMP}/state-final.json" >/dev/null
+
+          jq -n --arg source "${SOURCE_SHA}" --arg enquiry "${ENQUIRY}" '{sourceSha:$source,result:"PASS",auth:true,csrfNegative:true,iamPrivate:true,savedProviderRoundTrip:true,enquiryCreated:true,idempotencyReplay:true,staleRevisionRejected:true,enquiryCancelled:true,privacyScan:true,enquiryId:$enquiry}' > "${RUNNER_TEMP}/w4-canary.json"
+
+      - name: Remove temporary deployer invocation and verify final IAM
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run services remove-iam-policy-binding "${GCP_WEB_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --member "serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}" --role roles/run.invoker --quiet >/dev/null 2>&1 || true
+          gcloud run services get-iam-policy "${GCP_WEB_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${RUNNER_TEMP}/web-iam-final.json"
+          jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' "${RUNNER_TEMP}/web-iam-final.json" >/dev/null
+
+      - name: Upload sanitized W4 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: w4-managed-customer-canary-${{ steps.source.outputs.source_sha }}
+          path: ${{ runner.temp }}/w4-canary.json
+          if-no-files-found: warn
+          retention-days: 30
