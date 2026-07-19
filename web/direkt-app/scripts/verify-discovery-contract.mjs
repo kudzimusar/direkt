@@ -1,4 +1,4 @@
-import { readFile, access } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 const root = process.cwd();
@@ -20,6 +20,8 @@ const webContracts = await readFile(resolve(root, "lib/contracts/discovery.ts"),
 const webQuery = await readFile(resolve(root, "lib/server/discovery-query.ts"), "utf8");
 const apiClient = await readFile(resolve(root, "lib/server/direkt-api-client.ts"), "utf8");
 const cloudRunIdentity = await readFile(resolve(root, "lib/server/cloud-run-identity.ts"), "utf8");
+const runtimeConfig = await readFile(resolve(root, "lib/server/runtime-config.ts"), "utf8");
+const apiResponse = await readFile(resolve(root, "lib/server/api-response.ts"), "utf8");
 
 const providerFields = [
   "publicProviderId",
@@ -124,8 +126,8 @@ for (const prohibitedPath of [
 for (const marker of [
   "X-Serverless-Authorization",
   "getCloudRunIdentityToken",
-  "cache: \"no-store\"",
-  "redirect: \"error\"",
+  'cache: "no-store"',
+  'redirect: "error"',
 ]) {
   requireMarker(apiClient, marker, `private API invocation boundary ${marker}`);
 }
@@ -135,6 +137,20 @@ for (const marker of [
   "audience.origin",
 ]) {
   requireMarker(cloudRunIdentity, marker, `Cloud Run identity boundary ${marker}`);
+}
+for (const marker of [
+  'apiMode === "public" && process.env.NODE_ENV === "production"',
+  "public is prohibited in production",
+  'privateApiInvocationEnabled: apiMode === "authenticated-bff"',
+]) {
+  requireMarker(runtimeConfig, marker, `production fail-closed runtime marker ${marker}`);
+}
+for (const marker of [
+  "if (upstreamStatus >= 500)",
+  'title: "Discovery temporarily unavailable"',
+  'detail: "The discovery service could not complete the request."',
+]) {
+  requireMarker(apiResponse, marker, `upstream server-error redaction marker ${marker}`);
 }
 
 const clientSource = await readFile(resolve(root, "components/discovery-experience.tsx"), "utf8");
@@ -153,6 +169,8 @@ process.stdout.write(
     queryAllowlistFields: queryFields.length,
     genericProxy: false,
     privateApiUrlExposedToClient: false,
+    productionUnauthenticatedApiMode: false,
+    upstreamServerErrorDetailRelayed: false,
   })}\n`,
 );
 
