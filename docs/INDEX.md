@@ -1,222 +1,149 @@
 # DIREKT Documentation Index
 
-This index lists the authoritative planning and operating documents. Agents must follow the reading order in `AGENTS.md` and the active phase in `PROJECT_STATUS.md`.
+This index points to the current authoritative control set and the main product/architecture/operations documents. Agents must follow the reading order in `AGENTS.md`, the active truth in `PROJECT_STATUS.md` and the integration evidence taxonomy in `docs/integrations/CURRENT_INTEGRATION_STATUS.md`.
 
 ## Mandatory control set
 
-- [`README.md`](../README.md)
-- [`AGENTS.md`](../AGENTS.md)
-- [`MASTER_BUILD_PLAN.md`](../MASTER_BUILD_PLAN.md)
-- [`PROJECT_STATUS.md`](../PROJECT_STATUS.md)
-- [`WORKSTREAM_LOCK.md`](../WORKSTREAM_LOCK.md)
-- [`DEFINITION_OF_DONE.md`](../DEFINITION_OF_DONE.md)
-- [`design.md`](../design.md)
+1. [`README.md`](../README.md)
+2. [`AGENTS.md`](../AGENTS.md)
+3. [`MASTER_BUILD_PLAN.md`](../MASTER_BUILD_PLAN.md)
+4. [`PROJECT_STATUS.md`](../PROJECT_STATUS.md)
+5. [`WORKSTREAM_LOCK.md`](../WORKSTREAM_LOCK.md)
+6. [`DECISION_LOG.md`](../DECISION_LOG.md)
+7. [`DEFINITION_OF_DONE.md`](../DEFINITION_OF_DONE.md)
+8. [`design.md`](../design.md)
 
-## Analytics
+## Current integration and remote-UI truth
 
-- [Analytics and Success Metrics](analytics/ANALYTICS_AND_SUCCESS_METRICS.md)
-- [Event Taxonomy](analytics/EVENT_TAXONOMY.md)
-
-## Android
-
-- [Phase 2A Android Foundation](android/PHASE_2A_FOUNDATION.md)
-- [Android Module Map](android/ANDROID_MODULE_MAP.md)
-- [Android Product Specification](android/ANDROID_PRODUCT_SPEC.md)
-- [Device Compatibility](android/DEVICE_COMPATIBILITY.md)
-- [Internationalization and Localization](android/I18N_AND_LOCALIZATION.md)
-- [iOS Future Compatibility](android/IOS_FUTURE_COMPATIBILITY.md)
-- [Local Storage](android/LOCAL_STORAGE.md)
-- [Navigation Specification](android/NAVIGATION_SPEC.md)
-- [Performance Budgets](android/PERFORMANCE_BUDGETS.md)
-- [Permissions](android/PERMISSIONS.md)
-- [Play Store Release](android/PLAY_STORE_RELEASE.md)
-- [State Management](android/STATE_MANAGEMENT.md)
-
-## API
-
-- [Backend/Frontend API Plan](api/BACKEND_FRONTEND_API_PLAN.md)
-
-## Architecture
-
-- [Admin Portal Architecture](architecture/ADMIN_PORTAL_ARCHITECTURE.md)
-- [Android Architecture](architecture/ANDROID_ARCHITECTURE.md)
-- [API Contract](architecture/API_CONTRACT.md)
-- [Architecture Decisions](architecture/ARCHITECTURE_DECISIONS.md)
-- [Backend Architecture](architecture/BACKEND_ARCHITECTURE.md)
-- [Database Design](architecture/DATABASE_DESIGN.md)
-- [Environment and Configuration](architecture/ENVIRONMENT_AND_CONFIGURATION.md)
-- [File Storage Architecture](architecture/FILE_STORAGE_ARCHITECTURE.md)
-- [Integration Architecture](architecture/INTEGRATION_ARCHITECTURE.md)
-- [Location Architecture](architecture/LOCATION_ARCHITECTURE.md)
-- [Notification Architecture](architecture/NOTIFICATION_ARCHITECTURE.md)
-- [Observability](architecture/OBSERVABILITY.md)
-- [Offline and Sync](architecture/OFFLINE_AND_SYNC.md)
-- [System Architecture](architecture/SYSTEM_ARCHITECTURE.md)
-
-## Backend
-
-- [Phase 2B Backend and Data Foundation](backend/PHASE_2B_FOUNDATION.md)
-- [Phase 4 Verification and Private Evidence Engine](backend/PHASE_4_VERIFICATION_EVIDENCE_ENGINE.md)
-- [Audit Logging](backend/AUDIT_LOGGING.md)
-- [Authentication and Authorization](backend/AUTHENTICATION_AND_AUTHORIZATION.md)
-- [Backend Functional Specification](backend/BACKEND_FUNCTIONAL_SPEC.md)
-- [Backup and Recovery](backend/BACKUP_AND_RECOVERY.md)
-- [Booking and Contact Model](backend/BOOKING_AND_CONTACT_MODEL.md)
-- [Data Dictionary](backend/DATA_DICTIONARY.md)
-- [Data Retention](backend/DATA_RETENTION.md)
-- [Job and Queue Design](backend/JOB_AND_QUEUE_DESIGN.md)
-- [Payment Model](backend/PAYMENT_MODEL.md)
-- [Search and Discovery](backend/SEARCH_AND_DISCOVERY.md)
-- [Subscription Model](backend/SUBSCRIPTION_MODEL.md)
-
-## Design
-
-- [Phase 1B Exit Review](design/PHASE_1B_EXIT_REVIEW.md)
-- [Phase 1B Heuristic Review](design/PHASE_1B_HEURISTIC_REVIEW.md)
-- [Phase 1B Prototype Specification](design/PHASE_1B_PROTOTYPE_SPEC.md)
-- [Accessibility](design/ACCESSIBILITY.md)
-- [Android UI Specification](design/ANDROID_UI_SPECIFICATION.md)
-- [Content and Microcopy](design/CONTENT_AND_MICROCOPY.md)
-- [Design System](design/DESIGN_SYSTEM.md)
-- [Information Architecture](design/INFORMATION_ARCHITECTURE.md)
-- [Prototype Testing](design/PROTOTYPE_TESTING.md)
-- [Responsive Admin Design](design/RESPONSIVE_ADMIN_DESIGN.md)
-- [Screen Inventory](design/SCREEN_INVENTORY.md)
-- [User Flow Diagrams](design/USER_FLOW_DIAGRAMS.md)
-
-## General
-
-- [References](REFERENCES.md)
-
-## Phase checkpoints
-
-- [Phase 8 Interaction Trust Contract](phase8/INTERACTION_TRUST_CONTRACT.md)
-- [Phase 8 Validation and Exit Matrix](phase8/VALIDATION_PLAN.md)
-- [Phase 9 Handoff from Phase 8](phase9/HANDOFF_FROM_PHASE8.md)
-- [Phase 9 Commercial Trust Contract](phase9/COMMERCIAL_TRUST_CONTRACT.md)
-- [Phase 9 Validation and Exit Matrix](phase9/VALIDATION_PLAN.md)
-- [Phase 10 Handoff from Phase 9](phase10/HANDOFF_FROM_PHASE9.md)
-- [Phase 10 Infrastructure Activation Contract](phase10/INFRASTRUCTURE_ACTIVATION_CONTRACT.md)
-- [Phase 10 Closeout](phase10/PHASE10_CLOSEOUT_2026-07-18.md)
-- [Phase 11 Handoff from Phase 10](phase11/HANDOFF_FROM_PHASE10.md)
-- [Phase 11 Execution and Entry Control](phase11/PHASE11_EXECUTION_AND_ENTRY_CONTROL.md)
-- [Phase 11 Zambia Legal and Privacy Entry Research](phase11/ZAMBIA_LEGAL_PRIVACY_ENTRY_RESEARCH_2026-07-19.md)
-- [Phase 11 Maps and Sentry Reconciliation](phase11/MAPS_SENTRY_RECONCILIATION_2026-07-19.md)
-- [Phase 11 Pilot Validation Evidence Register](phase11/PILOT_VALIDATION_EVIDENCE_REGISTER.md)
-
-## Integrations
-
-- [Integration and Secrets Plan](integrations/INTEGRATION_AND_SECRETS_PLAN.md)
-- [Supabase Development Integration](integrations/SUPABASE_DEVELOPMENT_INTEGRATION.md)
-
-## Legal
-
-- [Consent and Policy Versioning](legal/CONSENT_AND_POLICY_VERSIONING.md)
-- [Data Processing Register](legal/DATA_PROCESSING_REGISTER.md)
-- [Legal Review Checklist — Zambia](legal/LEGAL_REVIEW_CHECKLIST_ZAMBIA.md)
-
-## Operations
-
-- [Agent Handoff Template](operations/AGENT_HANDOFF_TEMPLATE.md)
-- [Agent Workflow](operations/AGENT_WORKFLOW.md)
-- [Android Release Runbook](operations/ANDROID_RELEASE_RUNBOOK.md)
-- [CI/CD](operations/CI_CD.md)
-- [Cost Guardrails](operations/COST_GUARDRAILS.md)
-- [Deployment Runbook](operations/DEPLOYMENT_RUNBOOK.md)
-- [Disaster Recovery](operations/DISASTER_RECOVERY.md)
-- [Environment Strategy](operations/ENVIRONMENT_STRATEGY.md)
-- [Launch Checklist](operations/LAUNCH_CHECKLIST.md)
-- [Monitoring and Alerting](operations/MONITORING_AND_ALERTING.md)
-- [Pages Usage](operations/PAGES_USAGE.md)
-- [Phase Completion Template](operations/PHASE_COMPLETION_TEMPLATE.md)
-- [Release Versioning](operations/RELEASE_VERSIONING.md)
-- [Remote Android Testing](operations/REMOTE_ANDROID_TESTING.md)
-- [Service Level Objectives](operations/SERVICE_LEVEL_OBJECTIVES.md)
-- [Support Operations](operations/SUPPORT_OPERATIONS.md)
-- [Verification Operations](operations/VERIFICATION_OPERATIONS.md)
+- [Current Integration Status Register](integrations/CURRENT_INTEGRATION_STATUS.md) — authoritative provider/runtime status classification.
+- [Integration and Secrets Plan](integrations/INTEGRATION_AND_SECRETS_PLAN.md) — current provider, secret-placement and activation architecture.
+- [Supabase Development Integration](integrations/SUPABASE_DEVELOPMENT_INTEGRATION.md) — exact managed data/storage integration.
+- [Customer/Provider PWA Architecture](architecture/PWA_ARCHITECTURE.md) — Android-first companion-client boundary.
+- [PWA UI Specification](design/PWA_UI_SPECIFICATION.md) — responsive desktop/tablet/mobile UI contract.
+- [PWA Test Plan](testing/PWA_TEST_PLAN.md) — public synthetic and future live-mode gates.
+- [Remote UI Testing](operations/REMOTE_UI_TESTING.md) — owner-facing Android/PWA/operations testing entry points.
+- [Public Web / GitHub Pages Usage](operations/PAGES_USAGE.md) — `direkt.forum` static publication and safety boundary.
 
 ## Product
 
-- [Business Model](product/BUSINESS_MODEL.md)
-- [Feature Catalog](product/FEATURE_CATALOG.md)
-- [Marketplace Rules](product/MARKETPLACE_RULES.md)
-- [Monetization and Pricing](product/MONETIZATION_AND_PRICING.md)
-- [MVP Scope](product/MVP_SCOPE.md)
 - [Product Requirements](product/PRODUCT_REQUIREMENTS.md)
 - [Product Vision](product/PRODUCT_VISION.md)
+- [MVP Scope](product/MVP_SCOPE.md)
+- [Feature Catalog](product/FEATURE_CATALOG.md)
 - [Roadmap](product/ROADMAP.md)
 - [User Journeys](product/USER_JOURNEYS.md)
 - [User Personas](product/USER_PERSONAS.md)
 - [User Roles and Permissions](product/USER_ROLES_AND_PERMISSIONS.md)
+- [Marketplace Rules](product/MARKETPLACE_RULES.md)
+- [Business Model](product/BUSINESS_MODEL.md)
+- [Monetization and Pricing](product/MONETIZATION_AND_PRICING.md)
 - [Zambia Localization](product/ZAMBIA_LOCALIZATION.md)
 
-## Research
+## Design and clients
 
-### Phase 1A decision set
+- [Design System](design/DESIGN_SYSTEM.md)
+- [Information Architecture](design/INFORMATION_ARCHITECTURE.md)
+- [Screen Inventory](design/SCREEN_INVENTORY.md)
+- [User Flow Diagrams](design/USER_FLOW_DIAGRAMS.md)
+- [Android UI Specification](design/ANDROID_UI_SPECIFICATION.md)
+- [PWA UI Specification](design/PWA_UI_SPECIFICATION.md)
+- [Responsive Admin Design](design/RESPONSIVE_ADMIN_DESIGN.md)
+- [Accessibility](design/ACCESSIBILITY.md)
+- [Content and Microcopy](design/CONTENT_AND_MICROCOPY.md)
+- [Prototype Testing](design/PROTOTYPE_TESTING.md)
 
-- [Phase 1A Research Index](research/INDEX.md)
-- [Zambia Secondary Research Baseline](research/SECONDARY_RESEARCH_BASELINE.md)
-- [Phase 1A Exit Review](research/PHASE_1A_EXIT_REVIEW.md)
-- [Phase 1A Handoff](research/PHASE_1A_HANDOFF.md)
-- [Assumptions Register](research/ASSUMPTIONS_REGISTER.md)
-- [Category Evidence Matrix](research/CATEGORY_EVIDENCE_MATRIX.md)
-- [Desk Research Register](research/DESK_RESEARCH_REGISTER.md)
-- [Legal and Regulatory Research](research/LEGAL_AND_REGULATORY_RESEARCH.md)
-- [Location and Addressing Research](research/LOCATION_AND_ADDRESSING_RESEARCH.md)
-- [Payments and Communication Research](research/PAYMENTS_AND_COMMUNICATION_RESEARCH.md)
-- [Technology and Connectivity Research](research/TECHNOLOGY_AND_CONNECTIVITY_RESEARCH.md)
+Android-specific planning remains under `docs/android/`, including product, navigation, state, offline/storage, permissions, performance, compatibility and Play release documents.
 
-### Retained later-validation instruments
+## API and architecture
 
-- [Pilot Research Plan](research/PILOT_RESEARCH_PLAN.md)
-- [Research Plan](research/RESEARCH_PLAN.md)
-- [Research Ethics and Consent](research/RESEARCH_ETHICS_AND_CONSENT.md)
-- [Customer Interview Guide](research/CUSTOMER_INTERVIEW_GUIDE.md)
-- [Provider Interview Guide](research/PROVIDER_INTERVIEW_GUIDE.md)
-- [Verification Operations Interview Guide](research/VERIFICATION_OPERATIONS_INTERVIEW_GUIDE.md)
-- [Field Observation Guide](research/FIELD_OBSERVATION_GUIDE.md)
-- [Interview Note Template](research/INTERVIEW_NOTE_TEMPLATE.md)
-- [Fieldwork Execution Checklist](research/FIELDWORK_EXECUTION_CHECKLIST.md)
-- [Research Log](research/RESEARCH_LOG.md)
-- [Competitive Positioning](research/COMPETITIVE_POSITIONING.md)
+- [Backend/Frontend API Plan](api/BACKEND_FRONTEND_API_PLAN.md)
+- [System Architecture](architecture/SYSTEM_ARCHITECTURE.md)
+- [Android Architecture](architecture/ANDROID_ARCHITECTURE.md)
+- [PWA Architecture](architecture/PWA_ARCHITECTURE.md)
+- [Admin Portal Architecture](architecture/ADMIN_PORTAL_ARCHITECTURE.md)
+- [Backend Architecture](architecture/BACKEND_ARCHITECTURE.md)
+- [API Contract](architecture/API_CONTRACT.md)
+- [Database Design](architecture/DATABASE_DESIGN.md)
+- [File Storage Architecture](architecture/FILE_STORAGE_ARCHITECTURE.md)
+- [Location Architecture](architecture/LOCATION_ARCHITECTURE.md)
+- [Notification Architecture](architecture/NOTIFICATION_ARCHITECTURE.md)
+- [Integration Architecture](architecture/INTEGRATION_ARCHITECTURE.md)
+- [Environment and Configuration](architecture/ENVIRONMENT_AND_CONFIGURATION.md)
+- [Observability](architecture/OBSERVABILITY.md)
+- [Offline and Sync](architecture/OFFLINE_AND_SYNC.md)
 
-## Security
+## Backend and trust
 
-- [Abuse and Moderation](security/ABUSE_AND_MODERATION.md)
-- [Compliance Checklist](security/COMPLIANCE_CHECKLIST.md)
-- [Incident Response](security/INCIDENT_RESPONSE.md)
-- [Location Privacy](security/LOCATION_PRIVACY.md)
-- [Privacy Model](security/PRIVACY_MODEL.md)
-- [Public Repository Policy](security/PUBLIC_REPOSITORY_POLICY.md)
-- [Secure Document Handling](security/SECURE_DOCUMENT_HANDLING.md)
-- [Security Model](security/SECURITY_MODEL.md)
-- [Terms Requirements](security/TERMS_REQUIREMENTS.md)
-- [Threat Model](security/THREAT_MODEL.md)
+Backend domain documents live under `docs/backend/`, covering authentication/authorization, verification/evidence, search/discovery, booking/contact, subscriptions, payments, audit, retention, jobs and recovery.
+
+Trust documents live under `docs/trust/`, including verification model/levels, evidence requirements, document lifecycle, field workflow, fraud prevention, trust scoring, disputes, safety and review/reputation.
+
+## Security, privacy and legal
+
+- `docs/security/` — threat model, security model, public-repository policy, secure evidence handling, location privacy, abuse/moderation, incident response and compliance.
+- `docs/legal/` — consent/policy versioning, processing register and Zambia legal-review checklist.
+
+Real participant/legal/provider evidence must never be inferred from synthetic readiness.
 
 ## Testing
 
+- [Test Strategy](testing/TEST_STRATEGY.md)
+- [Quality Gates](testing/QUALITY_GATES.md)
 - [Acceptance Tests](testing/ACCEPTANCE_TESTS.md)
 - [Android Test Plan](testing/ANDROID_TEST_PLAN.md)
+- [PWA Test Plan](testing/PWA_TEST_PLAN.md)
 - [Backend Test Plan](testing/BACKEND_TEST_PLAN.md)
-- [Bug Severity Model](testing/BUG_SEVERITY_MODEL.md)
-- [Device Test Matrix](testing/DEVICE_TEST_MATRIX.md)
+- [Security Test Plan](testing/SECURITY_TEST_PLAN.md)
 - [Performance Test Plan](testing/PERFORMANCE_TEST_PLAN.md)
 - [Pilot Test Plan](testing/PILOT_TEST_PLAN.md)
-- [Quality Gates](testing/QUALITY_GATES.md)
-- [Security Test Plan](testing/SECURITY_TEST_PLAN.md)
-- [Test Strategy](testing/TEST_STRATEGY.md)
-- [Verification Test Cases](testing/VERIFICATION_TEST_CASES.md)
+- [Device Test Matrix](testing/DEVICE_TEST_MATRIX.md)
+- [Bug Severity Model](testing/BUG_SEVERITY_MODEL.md)
 
-## Trust
+## Operations
 
-- [Certificate Lifecycle](trust/CERTIFICATE_LIFECYCLE.md)
-- [Dispute Resolution](trust/DISPUTE_RESOLUTION.md)
-- [Document Verification Matrix](trust/DOCUMENT_VERIFICATION_MATRIX.md)
-- [Evidence Requirements](trust/EVIDENCE_REQUIREMENTS.md)
-- [Field Agent Workflow](trust/FIELD_AGENT_WORKFLOW.md)
-- [Fraud Prevention](trust/FRAUD_PREVENTION.md)
-- [Review and Reputation Model](trust/REVIEW_AND_REPUTATION_MODEL.md)
-- [Safety and Incident Response](trust/SAFETY_AND_INCIDENT_RESPONSE.md)
-- [Trust Score Model](trust/TRUST_SCORE_MODEL.md)
-- [Verification Levels](trust/VERIFICATION_LEVELS.md)
-- [Verification Model](trust/VERIFICATION_MODEL.md)
+- [Agent Workflow](operations/AGENT_WORKFLOW.md)
+- [Agent Handoff Template](operations/AGENT_HANDOFF_TEMPLATE.md)
+- [CI/CD](operations/CI_CD.md)
+- [Deployment Runbook](operations/DEPLOYMENT_RUNBOOK.md)
+- [Environment Strategy](operations/ENVIRONMENT_STRATEGY.md)
+- [Remote Android Testing](operations/REMOTE_ANDROID_TESTING.md)
+- [Remote UI Testing](operations/REMOTE_UI_TESTING.md)
+- [Public Web / Pages Usage](operations/PAGES_USAGE.md)
+- [Android Release Runbook](operations/ANDROID_RELEASE_RUNBOOK.md)
+- [Monitoring and Alerting](operations/MONITORING_AND_ALERTING.md)
+- [Disaster Recovery](operations/DISASTER_RECOVERY.md)
+- [Launch Checklist](operations/LAUNCH_CHECKLIST.md)
+- [Support Operations](operations/SUPPORT_OPERATIONS.md)
+- [Verification Operations](operations/VERIFICATION_OPERATIONS.md)
+
+## Phase checkpoints
+
+### Phase 8–10
+
+- `docs/phase8/` — interaction trust contract and validation plan.
+- `docs/phase9/` — commercial trust contract, validation and handoff.
+- `docs/phase10/` — infrastructure activation contract, closeout and Phase 10 handoff.
+
+### Phase 11
+
+- [Handoff from Phase 10](phase11/HANDOFF_FROM_PHASE10.md)
+- [Phase 11 Execution and Entry Control](phase11/PHASE11_EXECUTION_AND_ENTRY_CONTROL.md)
+- [Pilot Validation Evidence Register](phase11/PILOT_VALIDATION_EVIDENCE_REGISTER.md)
+- [Maps and Sentry Reconciliation](phase11/MAPS_SENTRY_RECONCILIATION_2026-07-19.md)
+
+Phase 11 internal/synthetic readiness is not a substitute for 11C–11H primary evidence or 11J.
+
+### Phase 12
+
+Phase 12 documents live under `docs/phase12/` and include Android release contracts, Play-readiness inventories, the clearable release-readiness matrix, production-readiness preparations, monitoring/rollback/staged-rollout controls and the release execution runbook.
+
+These are preauthorization controls until Phase 11 exit and the global release gates authorize production.
+
+## Research and analytics
+
+- `docs/research/` contains the Zambia secondary baseline, assumptions/evidence registers, research ethics/instruments and retained primary-validation plans.
+- `docs/analytics/` contains success metrics and event taxonomy.
+
+## Public-site rule
+
+Current canonical public domain is `https://direkt.forum/`. Public `/app/` is a synthetic customer/provider PWA. Privileged operations, real evidence, protected participant data and secrets are never public-site content.
