@@ -57,7 +57,11 @@ The public PWA is an installable **synthetic remote-review build**. It contains 
 [Open the historical Phase 1B interaction prototype](prototype/index.html)
 """
 if "## Open the remote customer/provider UI" not in readme:
-    readme = readme.replace("## Download the planning pack", ui_callout + "\n## Download the planning pack")
+    marker = "## Planning pack"
+    if marker in readme:
+        readme = readme.replace(marker, ui_callout + "\n" + marker, 1)
+    else:
+        readme = readme.rstrip() + ui_callout + "\n"
 
 (OUT / "index.md").write_text(readme, encoding="utf-8")
 
