@@ -121,6 +121,13 @@ jobs:
             echo "- Distribution: prohibited; readiness evidence only"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Run release lint independently
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon --stacktrace --no-build-cache clean
+          ./gradlew --no-daemon --stacktrace --no-build-cache --rerun-tasks lintRelease
+
       - name: Build first clean unsigned release AAB
         id: first_build
         shell: bash
@@ -129,7 +136,7 @@ jobs:
           export SOURCE_DATE_EPOCH="$(git show -s --format=%ct "${SOURCE_SHA}")"
 
           ./gradlew --no-daemon --stacktrace --no-build-cache clean
-          ./gradlew --no-daemon --stacktrace --no-build-cache --rerun-tasks lintRelease bundleRelease
+          ./gradlew --no-daemon --stacktrace --no-build-cache --rerun-tasks bundleRelease
 
           AAB="$(find app/build/outputs/bundle/release -maxdepth 1 -type f -name '*.aab' -print -quit)"
           if [[ -z "${AAB}" || ! -f "${AAB}" ]]; then
