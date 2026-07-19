@@ -3,12 +3,13 @@
 
 This validator does not contact Play Console and cannot authorize release. It proves that
 repository-controlled listing, permissions and Data Safety inventories remain internally
-consistent with the current Android source.
+consistent with the current Android source and, in CI, the merged release manifest.
 """
 
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import re
 import sys
@@ -16,10 +17,36 @@ import xml.etree.ElementTree as ET
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PLAY = ROOT / "docs" / "phase12" / "play"
-MANIFEST = ROOT / "android" / "direkt-app" / "app" / "src" / "main" / "AndroidManifest.xml"
+SOURCE_MANIFEST = ROOT / "android" / "direkt-app" / "app" / "src" / "main" / "AndroidManifest.xml"
 BUILD_GRADLE = ROOT / "android" / "direkt-app" / "app" / "build.gradle.kts"
 VERSION_FILE = ROOT / "android" / "direkt-app" / "release" / "version.properties"
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
+
+ALLOWED_IMPLEMENTATIONS = {
+    "libs.androidx.core.ktx",
+    "libs.androidx.lifecycle.runtime.ktx",
+    "libs.androidx.lifecycle.viewmodel.compose",
+    "libs.androidx.activity.compose",
+    "libs.androidx.navigation.compose",
+    "platform(libs.androidx.compose.bom)",
+    "libs.androidx.compose.ui",
+    "libs.androidx.compose.ui.graphics",
+    "libs.androidx.compose.ui.tooling.preview",
+    "libs.androidx.compose.material3",
+    "platform(libs.firebase.bom)",
+    "libs.firebase.auth",
+}
+
+PROHIBITED_STORE_CLAIMS = {
+    "100% verified": re.compile(r"\b100\s*%\s*verified\b", re.I),
+    "fully verified": re.compile(r"\bfully\s+verified\b", re.I),
+    "guaranteed": re.compile(r"\bguaranteed\b", re.I),
+    "safe": re.compile(r"\bsafe\b", re.I),
+    "government approved": re.compile(r"\bgovernment[-\s]+approved\b", re.I),
+    "Play approved": re.compile(r"\b(?:google\s+)?play[-\s]+approved\b", re.I),
+    "legally approved": re.compile(r"\blegally?[-\s]+approved\b", re.I),
+    "DPC approved": re.compile(r"\bDPC[-\s]+approved\b", re.I),
+}
 
 
 def fail(message: str) -> None:
@@ -50,6 +77,34 @@ def release_properties() -> dict[str, str]:
     return values
 
 
+def manifest_path() -> pathlib.Path:
+    merged = os.environ.get("DIREKT_MERGED_MANIFEST_PATH", "").strip()
+    require_merged = os.environ.get("DIREKT_REQUIRE_MERGED_MANIFEST", "false") == "true"
+    if merged:
+        path = pathlib.Path(merged)
+        if not path.is_absolute():
+            path = ROOT / path
+        path = path.resolve()
+        if not path.is_file():
+            fail(f"configured merged manifest does not exist: {path}")
+        return path
+    if require_merged:
+        fail("CI requires DIREKT_MERGED_MANIFEST_PATH from the release manifest-merge task")
+    return SOURCE_MANIFEST
+
+
+def release_implementations(gradle: str) -> set[str]:
+    result: set[str] = set()
+    for raw_line in gradle.splitlines():
+        line = raw_line.strip()
+        if not line.startswith("implementation("):
+            continue
+        match = re.fullmatch(r"implementation\((.+)\)", line)
+        if match:
+            result.add(match.group(1).strip())
+    return result
+
+
 def main() -> None:
     store = load_json("store_listing.json")
     permissions = load_json("permissions_inventory.json")
@@ -67,7 +122,15 @@ def main() -> None:
     if store.get("contains_ads") is not False:
         fail("current repository source must not claim ads")
 
-    manifest_root = ET.parse(MANIFEST).getroot()
+    listing_text = "\n".join(
+        str(store.get(key, "")) for key in ("app_name", "short_description", "full_description")
+    )
+    for label, pattern in PROHIBITED_STORE_CLAIMS.items():
+        if pattern.search(listing_text):
+            fail(f"Play listing contains prohibited trust/approval overclaim: {label}")
+
+    inspected_manifest = manifest_path()
+    manifest_root = ET.parse(inspected_manifest).getroot()
     manifest_permissions = sorted(
         node.attrib.get(f"{ANDROID_NS}name", "")
         for node in manifest_root.findall("uses-permission")
@@ -78,13 +141,14 @@ def main() -> None:
     )
     if manifest_permissions != inventory_permissions:
         fail(
-            "permissions inventory does not match AndroidManifest.xml: "
-            f"manifest={manifest_permissions}, inventory={inventory_permissions}"
+            "permissions inventory does not match inspected release manifest: "
+            f"manifest={manifest_permissions}, inventory={inventory_permissions}, "
+            f"path={inspected_manifest}"
         )
     if manifest_permissions != ["android.permission.INTERNET"]:
         fail(
-            "Phase 12B baseline expects only INTERNET. Any permission change requires an explicit "
-            "inventory/policy decision before this gate may be updated."
+            "Phase 12B baseline expects only INTERNET in the merged release manifest. Any permission "
+            "change requires an explicit inventory/Data Safety/policy update before this gate may pass."
         )
 
     gradle = BUILD_GRADLE.read_text(encoding="utf-8")
@@ -96,6 +160,15 @@ def main() -> None:
     ):
         if required not in gradle:
             fail(f"Android release source missing required invariant: {required}")
+
+    implementations = release_implementations(gradle)
+    unexpected = sorted(implementations - ALLOWED_IMPLEMENTATIONS)
+    missing = sorted(ALLOWED_IMPLEMENTATIONS - implementations)
+    if unexpected or missing:
+        fail(
+            "Android implementation dependency surface changed without a reviewed Play/Data Safety update: "
+            f"unexpected={unexpected}, missing={missing}"
+        )
 
     release = release_properties()
     if data_safety.get("artifact_scope", {}).get("application_id") != store["application_id"]:
@@ -149,7 +222,9 @@ def main() -> None:
     print("phase12b_play_readiness=PASS")
     print(f"application_id={store['application_id']}")
     print(f"release_channel={release.get('DIREKT_RELEASE_CHANNEL')}")
+    print(f"manifest_source={inspected_manifest}")
     print(f"manifest_permissions={','.join(manifest_permissions)}")
+    print("implementation_dependencies=" + ",".join(sorted(implementations)))
     print("play_sensitive_permission_form_expected=false")
     print("data_safety_inventory_present=true")
     print("account_deletion_end_to_end=false")
