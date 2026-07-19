@@ -33,11 +33,13 @@ const providerFoundation = [
 
 export function DirektAppShell({
   discoveryBootstrap,
+  initialDestination = "discover",
 }: {
   discoveryBootstrap: DiscoveryBootstrap;
+  initialDestination?: DirektDestination;
 }) {
   const [mode, setMode] = useState<DirektMode>("customer");
-  const [destination, setDestination] = useState<DirektDestination>("discover");
+  const [destination, setDestination] = useState<DirektDestination>(initialDestination);
 
   const heading = useMemo(
     () => destinationHeading(mode, destination),
