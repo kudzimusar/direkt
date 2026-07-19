@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "status": "plan-defined-production-activation-blocked",
+  "preproduction_evidence": {
+    "managed_rollback_killswitch_monitoring_run": "29647821458",
+    "result": "PASS",
+    "proved": [
+      "Cloud Run rollback and forward recovery",
+      "floating LATEST traffic restoration",
+      "portal-to-API kill switch and bounded IAM restoration",
+      "staging API 5xx alert policy presence",
+      "scale-to-zero readiness after idle"
+    ]
+  },
+  "required_production_monitors": [
+    "API availability and 5xx rate",
+    "authentication success and abuse-control failures",
+    "database/storage health and queue/job failures",
+    "Android crash and ANR health after Play telemetry is available",
+    "verification queue age and approval-without-evidence invariants",
+    "evidence access anomalies",
+    "expired/revoked claims remaining public",
+    "enquiry delivery/response and support backlog",
+    "privacy/security incident indicators"
+  ],
+  "immediate_stop_conditions": [
+    "any unauthorized personal-data, evidence or private-location disclosure",
+    "any authentication or authorization bypass or cross-provider access",
+    "any release artifact/signature/source provenance mismatch",
+    "any evidence-backed claim published without required current evidence",
+    "any production secret or signing material exposure"
+  ],
+  "candidate_technical_pause_thresholds": [
+    {"metric":"API 5xx rate","threshold":">=1% for 15 continuous minutes or >=5% in any 5-minute window","action":"pause rollout and investigate; rollback if release-correlated"},
+    {"metric":"core task blocking/failure rate","threshold":">10% over any rolling 20 completed/attempted production tasks","action":"pause affected journey/rollout"},
+    {"metric":"verification queue age","threshold":">25% of active cases older than 48 hours","action":"freeze new provider intake"},
+    {"metric":"support backlog","threshold":">10 unresolved normal cases or oldest normal case >24 support hours during bounded launch","action":"pause expansion"},
+    {"metric":"accepted enquiries unanswered after 24 hours","threshold":">40% in a rollout cohort/category","action":"pause demand expansion for affected scope"}
+  ],
+  "staged_rollout_candidate": [
+    {"stage":"internal","audience":"approved internal testers only","minimum_observation":"one complete regression/install-update cycle","promotion_gate":"all mandatory gates green; no P0/P1 blocker"},
+    {"stage":"closed","audience":"approved bounded testers","minimum_observation":"at least one full support/verification operating cycle and current Play eligibility requirements","promotion_gate":"structured feedback reviewed; crash/ANR/pre-launch findings acceptable; support capacity proven"},
+    {"stage":"production_5_percent","audience":"approved initial public scope only","minimum_observation":"24 hours minimum","promotion_gate":"no stop condition; monitoring/support staffed"},
+    {"stage":"production_10_percent","audience":"approved scope","minimum_observation":"24 hours minimum","promotion_gate":"no regression or capacity breach"},
+    {"stage":"production_25_percent","audience":"approved scope","minimum_observation":"24 hours minimum","promotion_gate":"no regression or capacity breach"},
+    {"stage":"production_50_percent","audience":"approved scope","minimum_observation":"48 hours minimum","promotion_gate":"no regression or capacity breach"},
+    {"stage":"production_100_percent","audience":"only geography/categories authorized by launch decision","minimum_observation":"ongoing","promotion_gate":"formal release owner approval"
+    }
+  ],
+  "rollback_order": [
+    "stop/pause Play rollout when available",
+    "disable new admissions/intake using approved kill switches",
+    "rollback Android release where Play supports it by halting rollout and issuing a corrected higher-version release; never decrement versionCode",
+    "rollback backend traffic to last known-good immutable revision using floating-LATEST-safe procedure",
+    "revoke or rotate compromised secrets/keys if applicable",
+    "record incident, affected source/artifacts, decisions and recovery evidence"
+  ],
+  "production_evidence_missing": [
+    "production alert policies and notification routes active",
+    "real Android vitals baseline from internal/closed testing",
+    "production incident escalation exercise",
+    "named launch coverage roster",
+    "actual Play staged-rollout controls exercised"
+  ],
+  "boundary": "Thresholds and stages are a release plan, not evidence that production monitoring, staffing or rollout has been activated."
+}

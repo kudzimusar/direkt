@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "status": "preauthorization-engineering-complete-production-activation-blocked",
+  "evidence_date": "2026-07-19",
+  "backend_contract": {
+    "production_environment_supported": true,
+    "production_data_mode_supported": true,
+    "production_traffic_currently_forced_disabled": true,
+    "production_payment_mode_forced_disabled": true,
+    "production_evidence_storage_provider": "supabase",
+    "rate_limits_default_enabled_outside_tests": true,
+    "required_production_secrets": [
+      "DATABASE_URL",
+      "RATE_LIMIT_HASH_PEPPER",
+      "ACCESS_TOKEN_SECRET",
+      "CONTACT_HASH_PEPPER",
+      "CHALLENGE_HASH_PEPPER",
+      "SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY when Supabase storage is active"
+    ],
+    "activation_rule": "A future reviewed release change must deliberately introduce an authorized production traffic mode. The current environment schema correctly refuses production traffic."
+  },
+  "managed_preproduction_evidence": {
+    "supabase_project_ref": "aeeuscifrxcjmnswqwnq",
+    "supabase_region": "ap-northeast-1",
+    "database_restore_exercise": {
+      "run": "29641165494",
+      "result": "PASS",
+      "scope": "managed synthetic/private development boundary, clean PostgreSQL 17/PostGIS restore, migration ledger/integrity/API readiness"
+    },
+    "cloud_run": {
+      "project": "direkt-dev-502701",
+      "region": "asia-northeast1",
+      "private_deploy_run": "29647717734",
+      "inspection_run": "29647798494",
+      "rollback_killswitch_monitoring_run": "29647821458",
+      "result": "PASS",
+      "public_invocation": false,
+      "floating_latest_rollback_recovery": true,
+      "staging_api_5xx_alert_verified": true
+    },
+    "firebase_internal_distribution_run": {
+      "run": "29635486574",
+      "result": "PASS",
+      "scope": "debug application and named internal tester group only"
+    }
+  },
+  "production_activation_gates": [
+    {
+      "id": "P12-RUNTIME-01",
+      "gate": "Phase 11 11C-11H primary pilot completed and 11J decision is PROCEED",
+      "status": "blocked-external-real-evidence"
+    },
+    {
+      "id": "P12-RUNTIME-02",
+      "gate": "Qualified Zambia legal/privacy/consumer sign-off and applicable DPC registration/transfer evidence",
+      "status": "blocked-external"
+    },
+    {
+      "id": "P12-RUNTIME-03",
+      "gate": "Approved production privacy notice, terms, retention/deletion and account-deletion workflow are live",
+      "status": "blocked-mixed-engineering-legal"
+    },
+    {
+      "id": "P12-RUNTIME-04",
+      "gate": "Production Cloud Run/API/portal environment created with least-privilege identities, numeric secret versions and zero public traffic before go-live approval",
+      "status": "not-activated-by-design"
+    },
+    {
+      "id": "P12-RUNTIME-05",
+      "gate": "Actual production backup is restored into isolation and application/storage authorization integrity is recorded",
+      "status": "blocked-until-production-backup-exists"
+    },
+    {
+      "id": "P12-RUNTIME-06",
+      "gate": "Release-candidate Android no longer exposes synthetic/preview marketplace surfaces in the production path",
+      "status": "blocked-phase11-evidence-led-client-cutover"
+    },
+    {
+      "id": "P12-RUNTIME-07",
+      "gate": "Production traffic mode is introduced through a separate reviewed authorization change only after all release gates pass",
+      "status": "blocked-by-current-fail-closed-schema"
+    },
+    {
+      "id": "P12-RUNTIME-08",
+      "gate": "Real payment activation",
+      "status": "out-of-scope-disabled"
+    }
+  ],
+  "claims": {
+    "production_backend_ready_to_accept_public_traffic": false,
+    "production_environment_deployed": false,
+    "production_backup_restore_proven": false,
+    "staging_restore_and_rollback_patterns_proven": true,
+    "formal_phase12_authorized": false
+  }
+}
