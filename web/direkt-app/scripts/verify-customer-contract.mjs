@@ -41,7 +41,6 @@ requireMarkers(source.action, [
   'case "create-complaint"',
   "DIREKT_WEB_INTERACTION_POLICY_VERSION",
   "requirePolicy(policyVersion)",
-  "uuid(body.idempotencyKey)",
 ]);
 requireMarkers(source.state, ["withAuthenticatedSession", "api.listAccountContacts", "api.listSavedProviders", "api.listEnquiries", "api.listInteractions", "api.listReviews", "api.listComplaints"]);
 requireMarkers(source.api, [
@@ -67,7 +66,7 @@ requireMarkers(source.handoffTypes, ["rawContactIncluded: false", "externalDeliv
 requireMarkers(source.reviewController, ["interactions/:interactionId/reviews", "reviews/:reviewId/appeals", "reviews/:reviewId/reports"]);
 requireMarkers(source.reviewDto, ["@Length(5, 120)", "@Length(20, 2000)", "class CreateReviewAppealDto", "reason!: string", "class ReportReviewDto", "reasonCode!:", "detail!: string"]);
 requireMarkers(source.reviewTypes, ["customerIdentityExposed: false", "contactIncluded: false", "trustOrRankingMutation: false"]);
-requireMarkers(source.complaintController, ["@Post('interactions/:interactionId/complaints')", "@Get('complaints')"]);
+requireMarkers(source.complaintController, ["@Post('interactions/:interactionId/complaints')", "@Get('complaints')", "@Headers('idempotency-key')"]);
 requireMarkers(source.complaintDto, ["['service_quality', 'contact_privacy', 'provider_conduct', 'other']", "@Length(20, 1000)"]);
 requireMarkers(source.complaintTypes, ["phase7IncidentLinked: false", "contactIncluded: false", "trustOrRankingMutation: false"]);
 requireMarkers(source.ui, ["CustomerJourneyExperience", "Saved providers", "Enquiries & interactions", "Consent-scoped contact handoff", "Reviews, reports & complaints", "crypto.randomUUID()"]);
@@ -78,6 +77,9 @@ for (const [name, text] of Object.entries({ action: source.action, state: source
 }
 if (/body\.(path|url|endpoint)/.test(source.action)) throw new Error("W4 action BFF must not proxy arbitrary browser-selected backend paths");
 if (/DIREKT_API_BASE_URL|X-Serverless-Authorization/.test(source.ui)) throw new Error("Customer UI must not receive private API infrastructure details");
+if ((source.action.match(/uuid\(body\.idempotencyKey\)/g) || []).length < 3) throw new Error("Enquiry, handoff and complaint creation must each validate an idempotency UUID");
+if ((source.ui.match(/crypto\.randomUUID\(\)/g) || []).length < 4) throw new Error("Customer UI must generate idempotency UUIDs for enquiry, both handoff actions and complaints");
+if (!/createComplaint\([\s\S]*idempotencyKey[\s\S]*?this\.request\([\s\S]*?idempotencyKey/.test(source.api)) throw new Error("Complaint creation must pass the idempotency key to the canonical HTTP header transport");
 
 process.stdout.write(`${JSON.stringify({event:"w4_customer_contract_passed",csrfProtected:true,idempotencyProtected:true,maskedContactReferences:true,privateApiBoundary:true,arbitraryProxyProhibited:true,androidUntouched:true})}\n`);
 
