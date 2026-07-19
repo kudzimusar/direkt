@@ -1,7 +1,9 @@
 import type {
   ProviderCommercialWorkspace,
+  ProviderContactHandoff,
   ProviderEnquiry,
   ProviderEnquiryListView,
+  ProviderInteractionListView,
   ProviderReviewListView,
   ProviderTimelineEvent,
   ProviderUploadGrant,
@@ -205,6 +207,17 @@ export class DirektProviderApi {
     return this.request(
       `/api/v1/provider-workspace/me/enquiries/${encodeURIComponent(enquiryId)}/transitions`,
       { method: "POST", accessToken, body },
+    );
+  }
+
+  interactions(accessToken: string): Promise<ProviderInteractionListView> {
+    return this.request("/api/v1/provider-workspace/me/interactions", { accessToken });
+  }
+
+  currentHandoff(accessToken: string, enquiryId: string): Promise<ProviderContactHandoff> {
+    return this.request(
+      `/api/v1/provider-workspace/me/enquiries/${encodeURIComponent(enquiryId)}/handoff`,
+      { accessToken },
     );
   }
 
