@@ -1,0 +1,127 @@
+name: DIREKT functional web W7 trusted-main canary trigger
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/web/W7_MANAGED_CANARY_MAIN_TRIGGER.md"
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+
+concurrency:
+  group: direkt-functional-web-w7-main-trigger
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    name: Validate main trigger, dispatch W7 canary and report
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+
+      - name: Validate trusted one-file main trigger
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF}" = "refs/heads/main"
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          parent="$(git rev-parse HEAD^1)"
+          mapfile -t changed < <(git diff --name-only "${parent}" "${SOURCE_SHA}")
+          test "${#changed[@]}" -eq 1
+          test "${changed[0]}" = "docs/web/W7_MANAGED_CANARY_MAIN_TRIGGER.md"
+          echo "source_sha=${SOURCE_SHA}" >> "${GITHUB_OUTPUT}"
+
+      - name: Dispatch reviewed W7 canary on main
+        id: dispatch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          dispatched_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          gh api --method POST -H "Accept: application/vnd.github+json" \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/functional-pwa-w7-managed-canary.yml/dispatches" \
+            -f ref=main -f inputs[confirmation]=RUN-DIREKT-W7-CANARY -f inputs[source_sha]="${SOURCE_SHA}"
+          echo "dispatched_at=${dispatched_at}" >> "${GITHUB_OUTPUT}"
+
+      - name: Resolve dispatched W7 run
+        id: run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DISPATCHED_AT: ${{ steps.dispatch.outputs.dispatched_at }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_id=""
+          for attempt in $(seq 1 30); do
+            runs="$(gh api -H "Accept: application/vnd.github+json" "repos/${GITHUB_REPOSITORY}/actions/workflows/functional-pwa-w7-managed-canary.yml/runs?event=workflow_dispatch&branch=main&per_page=20")"
+            run_id="$(jq -r --arg dispatched_at "${DISPATCHED_AT}" '[.workflow_runs[] | select(.created_at >= $dispatched_at)] | sort_by(.created_at) | last | .id // empty' <<< "${runs}")"
+            [[ "${run_id}" =~ ^[1-9][0-9]*$ ]] && break
+            sleep 4
+          done
+          [[ "${run_id}" =~ ^[1-9][0-9]*$ ]]
+          echo "run_id=${run_id}" >> "${GITHUB_OUTPUT}"
+          echo "run_url=https://github.com/${GITHUB_REPOSITORY}/actions/runs/${run_id}" >> "${GITHUB_OUTPUT}"
+
+      - name: Wait for W7 canary completion
+        id: result
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ steps.run.outputs.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          status=""; conclusion=""
+          for attempt in $(seq 1 180); do
+            record="$(gh api -H "Accept: application/vnd.github+json" "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}")"
+            status="$(jq -r '.status' <<< "${record}")"
+            conclusion="$(jq -r '.conclusion // empty' <<< "${record}")"
+            [[ "${status}" == "completed" ]] && break
+            sleep 15
+          done
+          test "${status}" = "completed"
+          test -n "${conclusion}"
+          echo "conclusion=${conclusion}" >> "${GITHUB_OUTPUT}"
+          test "${conclusion}" = "success"
+
+      - name: Publish W7 result to Issue 133
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+          RUN_URL: ${{ steps.run.outputs.run_url }}
+          CONCLUSION: ${{ steps.result.outputs.conclusion }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          result="${CONCLUSION:-incomplete}"
+          if [[ "${result}" == "success" ]]; then
+            heading="PASS"
+            detail="W7 managed final browser canary passed. W7 may close after evidence reconciliation."
+          else
+            heading="FAIL / INCOMPLETE"
+            detail="W7 managed final browser canary did not pass. W7 remains open and W8 must not start."
+          fi
+          body=$(cat <<EOF
+          <!-- direkt-w7-main-canary-result -->
+          ## W7 managed final browser canary: ${heading}
+
+          - Exact merged source: \`${SOURCE_SHA}\`
+          - Execution: trusted \`main\` push → reviewed \`workflow_dispatch\`
+          - Conclusion: \`${result}\`
+          - Managed run: ${RUN_URL}
+
+          ${detail}
+          EOF
+          )
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/133/comments" -f body="${body}" >/dev/null
