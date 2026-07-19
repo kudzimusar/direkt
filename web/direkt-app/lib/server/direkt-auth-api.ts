@@ -4,6 +4,17 @@ import type {
   SessionView,
   SyntheticChallengeAccepted,
 } from "@/lib/contracts/auth";
+import type {
+  AccountContactReference,
+  ComplaintView,
+  ContactHandoffView,
+  EnquiryTiming,
+  EnquiryView,
+  InteractionView,
+  PreferredChannel,
+  ReviewView,
+  SavedProviderView,
+} from "@/lib/contracts/customer";
 import { getCloudRunIdentityToken } from "./cloud-run-identity";
 import { getDirektWebRuntimeConfig } from "./runtime-config";
 
@@ -19,9 +30,10 @@ export class DirektAuthApiError extends Error {
 }
 
 type RequestOptions = {
-  method?: "GET" | "POST" | "PATCH";
+  method?: "GET" | "POST" | "PATCH" | "DELETE";
   body?: unknown;
   accessToken?: string;
+  idempotencyKey?: string;
 };
 
 export class DirektAuthApi {
@@ -93,6 +105,156 @@ export class DirektAuthApi {
     return this.request("/api/v1/account/profile", { accessToken });
   }
 
+  listAccountContacts(accessToken: string): Promise<AccountContactReference[]> {
+    return this.request("/api/v1/account/contacts", { accessToken });
+  }
+
+  listSavedProviders(accessToken: string): Promise<SavedProviderView[]> {
+    return this.request("/api/v1/saved-providers", { accessToken });
+  }
+
+  saveProvider(accessToken: string, publicProviderId: string): Promise<SavedProviderView> {
+    return this.request(`/api/v1/saved-providers/${encodeURIComponent(publicProviderId)}`, {
+      method: "POST",
+      accessToken,
+    });
+  }
+
+  unsaveProvider(accessToken: string, publicProviderId: string): Promise<{ removed: true }> {
+    return this.request(`/api/v1/saved-providers/${encodeURIComponent(publicProviderId)}`, {
+      method: "DELETE",
+      accessToken,
+    });
+  }
+
+  listEnquiries(accessToken: string): Promise<EnquiryView[]> {
+    return this.request("/api/v1/enquiries", { accessToken });
+  }
+
+  createEnquiry(
+    accessToken: string,
+    input: {
+      publicProviderId: string;
+      serviceSummary: string;
+      timing: EnquiryTiming;
+      localitySummary: string;
+      preferredChannel: PreferredChannel;
+      policyVersion: string;
+    },
+    idempotencyKey: string,
+  ): Promise<EnquiryView> {
+    return this.request("/api/v1/enquiries", {
+      method: "POST",
+      accessToken,
+      body: input,
+      idempotencyKey,
+    });
+  }
+
+  cancelEnquiry(
+    accessToken: string,
+    enquiryId: string,
+    input: { expectedRevision: number; reason: string; policyVersion: string },
+  ): Promise<EnquiryView> {
+    return this.request(`/api/v1/enquiries/${encodeURIComponent(enquiryId)}/cancel`, {
+      method: "POST",
+      accessToken,
+      body: input,
+    });
+  }
+
+  listHandoffs(accessToken: string, enquiryId: string): Promise<ContactHandoffView[]> {
+    return this.request(`/api/v1/enquiries/${encodeURIComponent(enquiryId)}/handoffs`, {
+      accessToken,
+    });
+  }
+
+  createHandoff(
+    accessToken: string,
+    enquiryId: string,
+    input: { channel: PreferredChannel; contactId: string; policyVersion: string },
+    idempotencyKey: string,
+  ): Promise<ContactHandoffView> {
+    return this.request(`/api/v1/enquiries/${encodeURIComponent(enquiryId)}/handoffs`, {
+      method: "POST",
+      accessToken,
+      body: input,
+      idempotencyKey,
+    });
+  }
+
+  revokeHandoff(
+    accessToken: string,
+    enquiryId: string,
+    handoffId: string,
+    input: { reason: string; policyVersion: string },
+  ): Promise<ContactHandoffView> {
+    return this.request(
+      `/api/v1/enquiries/${encodeURIComponent(enquiryId)}/handoffs/${encodeURIComponent(handoffId)}/revoke`,
+      { method: "POST", accessToken, body: input },
+    );
+  }
+
+  listInteractions(accessToken: string): Promise<InteractionView[]> {
+    return this.request("/api/v1/interactions", { accessToken });
+  }
+
+  listReviews(accessToken: string): Promise<ReviewView[]> {
+    return this.request("/api/v1/reviews", { accessToken });
+  }
+
+  createReview(
+    accessToken: string,
+    interactionId: string,
+    input: { rating: number; title: string; body: string; policyVersion: string },
+  ): Promise<ReviewView> {
+    return this.request(`/api/v1/interactions/${encodeURIComponent(interactionId)}/reviews`, {
+      method: "POST",
+      accessToken,
+      body: input,
+    });
+  }
+
+  appealReview(
+    accessToken: string,
+    reviewId: string,
+    input: { reasonCode: string; statement: string; expectedRevision: number; policyVersion: string },
+  ): Promise<ReviewView> {
+    return this.request(`/api/v1/reviews/${encodeURIComponent(reviewId)}/appeals`, {
+      method: "POST",
+      accessToken,
+      body: input,
+    });
+  }
+
+  reportReview(
+    accessToken: string,
+    reviewId: string,
+    input: { reason: string; policyVersion: string },
+  ): Promise<{ accepted: true }> {
+    return this.request(`/api/v1/reviews/${encodeURIComponent(reviewId)}/reports`, {
+      method: "POST",
+      accessToken,
+      body: input,
+    });
+  }
+
+  listComplaints(accessToken: string): Promise<ComplaintView[]> {
+    return this.request("/api/v1/complaints", { accessToken });
+  }
+
+  createComplaint(
+    accessToken: string,
+    interactionId: string,
+    input: { category: ComplaintView["category"]; summary: string; policyVersion: string },
+  ): Promise<ComplaintView> {
+    return this.request(`/api/v1/interactions/${encodeURIComponent(interactionId)}/complaints`, {
+      method: "POST",
+      accessToken,
+      body: input,
+    });
+  }
+
   async hasProviderWorkspace(accessToken: string): Promise<boolean> {
     try {
       await this.request("/api/v1/provider-workspace/me", { accessToken });
@@ -114,7 +276,7 @@ export class DirektAuthApi {
     const infrastructureToken = await getCloudRunIdentityToken(this.baseUrl);
     const headers: Record<string, string> = {
       accept: "application/json",
-      "user-agent": "direkt-functional-web/0.3",
+      "user-agent": "direkt-functional-web/0.4",
       "X-Serverless-Authorization": `Bearer ${infrastructureToken}`,
     };
     if (options.accessToken) {
@@ -122,6 +284,9 @@ export class DirektAuthApi {
     }
     if (options.body !== undefined) {
       headers["content-type"] = "application/json";
+    }
+    if (options.idempotencyKey) {
+      headers["idempotency-key"] = options.idempotencyKey;
     }
 
     const response = await fetch(url, {
@@ -142,9 +307,9 @@ export class DirektAuthApi {
       }
       const title = typeof problem?.title === "string" ? problem.title : undefined;
       throw new DirektAuthApiError(
-        title || `DIREKT auth API request failed with status ${response.status}`,
+        title || `DIREKT API request failed with status ${response.status}`,
         response.status,
-        problem,
+        response.status >= 500 ? undefined : problem,
       );
     }
 
