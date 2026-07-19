@@ -1,13 +1,18 @@
 import { noStoreJson, authRouteError } from "@/lib/server/auth-route-response";
 import { withAuthenticatedSession } from "@/lib/server/authenticated-session";
+import { DirektAuthApiError } from "@/lib/server/direkt-auth-api";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
     const state = await withAuthenticatedSession(async (session, api) => {
+      const contactsPromise = api.listAccountContacts(session.accessToken).catch((error) => {
+        if (error instanceof DirektAuthApiError && error.status === 404) return [];
+        throw error;
+      });
       const [contacts, savedProviders, enquiries, interactions, reviews, complaints] = await Promise.all([
-        api.listAccountContacts(session.accessToken),
+        contactsPromise,
         api.listSavedProviders(session.accessToken),
         api.listEnquiries(session.accessToken),
         api.listInteractions(session.accessToken),
