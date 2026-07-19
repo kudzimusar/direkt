@@ -21,8 +21,10 @@ export async function POST(request: NextRequest) {
       switch (action) {
         case "save-provider":
           return api.saveProvider(session.accessToken, uuid(body.publicProviderId));
-        case "unsave-provider":
-          return api.unsaveProvider(session.accessToken, uuid(body.publicProviderId));
+        case "unsave-provider": {
+          await api.unsaveProvider(session.accessToken, uuid(body.publicProviderId));
+          return { removed: true as const };
+        }
         case "create-enquiry": {
           const timing = enumValue(body.timing, timings);
           const preferredChannel = enumValue(body.preferredChannel, enquiryChannels);
