@@ -33,10 +33,18 @@ describe('Phase 11 pilot invitation operations', () => {
          policy_key,
          version,
          document_hash,
+         published_at,
          effective_at
-       ) VALUES ('pilot_participation_notice', $1, $2, now() - interval '1 minute')
+       ) VALUES (
+         'pilot_participation_notice',
+         $1,
+         $2,
+         now() - interval '1 minute',
+         now() - interval '1 minute'
+       )
        ON CONFLICT (policy_key, version) DO UPDATE
        SET document_hash = EXCLUDED.document_hash,
+           published_at = EXCLUDED.published_at,
            effective_at = EXCLUDED.effective_at,
            retired_at = NULL`,
       [NOTICE_VERSION, '9'.repeat(64)],
