@@ -5,7 +5,6 @@ import type {
   DirektAuthenticatedSession,
   DirektRotatedSession,
 } from "@/lib/contracts/auth";
-import { DirektAuthApi, DirektAuthApiError } from "./direkt-auth-api";
 
 const COOKIE_PREFIX = process.env.NODE_ENV === "production" ? "__Host-direkt-" : "direkt-";
 const cookieName = (suffix: string) => `${COOKIE_PREFIX}${suffix}`;
@@ -46,7 +45,10 @@ export async function establishBrowserSession(session: DirektAuthenticatedSessio
 
 export async function rotateBrowserSession(session: DirektRotatedSession): Promise<void> {
   const current = await readBrowserSession();
-  await writeSessionCookies(session, current?.contact ?? { channel: "unknown", displayHint: "Verified contact" });
+  await writeSessionCookies(
+    session,
+    current?.contact ?? { channel: "unknown", displayHint: "Verified contact" },
+  );
 }
 
 export async function readBrowserSession(): Promise<BrowserSessionMaterial | null> {
@@ -94,22 +96,14 @@ export async function getUsableBrowserSession(): Promise<BrowserSessionMaterial 
     return null;
   }
 
-  const accessExpiry = Date.parse(current.accessTokenExpiresAt);
-  if (Number.isFinite(accessExpiry) && accessExpiry > Date.now() + 30_000) {
-    return current;
-  }
+  // Do not rotate here. Arbitrary concurrent BFF reads must never race the one-time
+  // refresh token and accidentally trigger backend family-reuse revocation.
+  return current;
+}
 
-  try {
-    const rotated = await new DirektAuthApi().rotateSession(current.refreshToken);
-    await rotateBrowserSession(rotated);
-    return await readBrowserSession();
-  } catch (error) {
-    if (error instanceof DirektAuthApiError && error.status === 401) {
-      await clearBrowserSession();
-      return null;
-    }
-    throw error;
-  }
+export function accessTokenNeedsRefresh(session: BrowserSessionMaterial): boolean {
+  const accessExpiry = Date.parse(session.accessTokenExpiresAt);
+  return !Number.isFinite(accessExpiry) || accessExpiry <= Date.now() + 30_000;
 }
 
 export async function clearBrowserSession(): Promise<void> {
