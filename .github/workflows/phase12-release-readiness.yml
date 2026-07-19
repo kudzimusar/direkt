@@ -130,6 +130,60 @@ jobs:
             echo "- Distribution: prohibited; readiness evidence only"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Prove signing bypasses fail closed
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          set +e
+          ./gradlew --no-daemon --no-configuration-cache help \
+            -Pandroid.injected.signing.store.file=/tmp/forbidden-upload.jks \
+            > "${RUNNER_TEMP}/agp-injected-signing.log" 2>&1
+          INJECTED_STATUS=$?
+          set -e
+          if [[ "${INJECTED_STATUS}" -eq 0 ]]; then
+            echo "AGP injected signing override unexpectedly passed the DIREKT contract." >&2
+            exit 1
+          fi
+          grep -F 'AGP android.injected.signing.* overrides are prohibited' \
+            "${RUNNER_TEMP}/agp-injected-signing.log"
+
+          VERSION_BACKUP="${RUNNER_TEMP}/version.properties.phase12a"
+          cp release/version.properties "${VERSION_BACKUP}"
+          trap 'cp "${VERSION_BACKUP}" release/version.properties' EXIT
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("release/version.properties")
+          text = path.read_text()
+          text = text.replace(
+              "DIREKT_RELEASE_VERSION_NAME=0.12.0-preauth.1",
+              "DIREKT_RELEASE_VERSION_NAME=0.12.0-rc.1",
+          )
+          text = text.replace(
+              "DIREKT_RELEASE_CHANNEL=preauthorization",
+              "DIREKT_RELEASE_CHANNEL=release-candidate",
+          )
+          path.write_text(text)
+          PY
+
+          set +e
+          DIREKT_RELEASE_SIGNING_ENABLED=true \
+            ./gradlew --no-daemon help \
+            > "${RUNNER_TEMP}/signed-config-cache.log" 2>&1
+          CACHE_STATUS=$?
+          set -e
+          if [[ "${CACHE_STATUS}" -eq 0 ]]; then
+            echo "Signed release configuration unexpectedly accepted active configuration cache." >&2
+            exit 1
+          fi
+          grep -F 'Signed DIREKT release builds require --no-configuration-cache' \
+            "${RUNNER_TEMP}/signed-config-cache.log"
+
+          cp "${VERSION_BACKUP}" release/version.properties
+          trap - EXIT
+          git diff --exit-code -- release/version.properties
+
       - name: Run release lint independently
         shell: bash
         run: |
