@@ -4,9 +4,11 @@ import { withAuthenticatedSession } from "@/lib/server/authenticated-session";
 import { assertSecureMutation } from "@/lib/server/request-security";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const timings = new Set(["urgent", "today", "within_week", "flexible"]);
-const channels = new Set(["call", "whatsapp"]);
-const complaintCategories = new Set(["safety", "conduct", "service_dispute", "privacy", "other"]);
+const timings = new Set(["urgent", "within_week", "flexible", "scheduled"]);
+const enquiryChannels = new Set(["call", "whatsapp", "none"]);
+const handoffChannels = new Set(["call", "whatsapp"]);
+const complaintTypes = new Set(["service_quality", "contact_privacy", "provider_conduct", "other"]);
+const reportReasons = new Set(["SPAM", "PRIVACY", "ABUSE", "FRAUD", "OTHER"]);
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,30 +24,31 @@ export async function POST(request: NextRequest) {
         case "unsave-provider":
           return api.unsaveProvider(session.accessToken, uuid(body.publicProviderId));
         case "create-enquiry": {
-          const policy = requirePolicy(policyVersion);
           const timing = enumValue(body.timing, timings);
-          const preferredChannel = enumValue(body.preferredChannel, channels);
+          const preferredChannel = enumValue(body.preferredChannel, enquiryChannels);
+          const requestedFor = optionalDate(body.requestedFor);
           return api.createEnquiry(
             session.accessToken,
             {
               publicProviderId: uuid(body.publicProviderId),
-              serviceSummary: text(body.serviceSummary, 10, 800),
-              timing: timing as "urgent" | "today" | "within_week" | "flexible",
-              localitySummary: text(body.localitySummary, 2, 160),
-              preferredChannel: preferredChannel as "call" | "whatsapp",
-              policyVersion: policy,
+              serviceSummary: text(body.serviceSummary, 20, 1000),
+              timing: timing as "urgent" | "within_week" | "flexible" | "scheduled",
+              ...(requestedFor ? { requestedFor } : {}),
+              localitySummary: text(body.localitySummary, 3, 160),
+              preferredChannel: preferredChannel as "call" | "whatsapp" | "none",
+              policyVersion: requirePolicy(policyVersion),
             },
             uuid(body.idempotencyKey),
           );
         }
         case "cancel-enquiry":
           return api.cancelEnquiry(session.accessToken, uuid(body.enquiryId), {
-            expectedRevision: integer(body.expectedRevision, 1),
-            reason: text(body.reason, 3, 300),
+            expectedRevision: integer(body.expectedRevision, 1, 2147483647),
+            reason: text(body.reason, 8, 500),
             policyVersion: requirePolicy(policyVersion),
           });
         case "create-handoff": {
-          const channel = enumValue(body.channel, channels);
+          const channel = enumValue(body.channel, handoffChannels);
           return api.createHandoff(
             session.accessToken,
             uuid(body.enquiryId),
@@ -63,34 +66,34 @@ export async function POST(request: NextRequest) {
             uuid(body.enquiryId),
             uuid(body.handoffId),
             {
-              reason: text(body.reason, 3, 300),
+              reason: text(body.reason, 8, 500),
               policyVersion: requirePolicy(policyVersion),
             },
           );
         case "create-review":
           return api.createReview(session.accessToken, uuid(body.interactionId), {
             rating: integer(body.rating, 1, 5),
-            title: text(body.title, 3, 120),
-            body: text(body.body, 10, 1500),
+            title: text(body.title, 5, 120),
+            body: text(body.body, 20, 2000),
             policyVersion: requirePolicy(policyVersion),
           });
         case "appeal-review":
           return api.appealReview(session.accessToken, uuid(body.reviewId), {
-            reasonCode: text(body.reasonCode, 2, 80),
-            statement: text(body.statement, 10, 1200),
-            expectedRevision: integer(body.expectedRevision, 1),
+            reason: text(body.reason, 20, 1000),
             policyVersion: requirePolicy(policyVersion),
           });
-        case "report-review":
+        case "report-review": {
+          const reasonCode = enumValue(body.reasonCode, reportReasons);
           return api.reportReview(session.accessToken, uuid(body.reviewId), {
-            reason: text(body.reason, 3, 800),
-            policyVersion: requirePolicy(policyVersion),
+            reasonCode: reasonCode as "SPAM" | "PRIVACY" | "ABUSE" | "FRAUD" | "OTHER",
+            detail: text(body.detail, 12, 1000),
           });
+        }
         case "create-complaint": {
-          const category = enumValue(body.category, complaintCategories);
+          const complaintType = enumValue(body.complaintType, complaintTypes);
           return api.createComplaint(session.accessToken, uuid(body.interactionId), {
-            category: category as "safety" | "conduct" | "service_dispute" | "privacy" | "other",
-            summary: text(body.summary, 10, 1200),
+            complaintType: complaintType as "service_quality" | "contact_privacy" | "provider_conduct" | "other",
+            summary: text(body.summary, 20, 1000),
             policyVersion: requirePolicy(policyVersion),
           });
         }
@@ -148,4 +151,12 @@ function enumValue(value: unknown, allowed: Set<string>): string {
     throw new CustomerRequestError("Unsupported enum value.", 400);
   }
   return value;
+}
+
+function optionalDate(value: unknown): string | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  if (typeof value !== "string" || Number.isNaN(Date.parse(value))) {
+    throw new CustomerRequestError("Requested date/time must be a valid date-time.", 400);
+  }
+  return new Date(value).toISOString();
 }
