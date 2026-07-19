@@ -11,8 +11,8 @@ This file prevents overlapping writes in the single-lane build process.
 | Authorized scope | Document and implement the real customer/provider web/PWA companion using the same canonical REST/OpenAPI backend, identity, authorization, trust, enquiry, review and commercial rules as Android; desktop replaces bottom navigation with side navigation while mobile retains bottom navigation |
 | Protected surface | `android/direkt-app/**` is regression-protected; no Android architecture, dependency, Gradle, release/signing or UI refactor is authorized by this workstream unless a separately reviewed compatibility fix is strictly required |
 | Implementation lane | `build/android-v1` — historical name retained; single sequential product lane |
-| Stable checkpoint | W5 closed on exact merged source `79228f4bda96106b929aa6183613cb9d2dc127f6`; trusted-main managed provider canary PASS recorded on Issue #133 comment `5017630247`; exact-head W2–W5 web/build and Android protected-path gates green |
-| Current task | W6 — commercial parity within currently authorized synthetic/disabled payment boundaries; W7 blocked until W6 closure evidence passes |
+| Stable checkpoint | W6 closed on exact merged source `1b5753002afcf115f6f47334f6588648eca7501d`; trusted-main managed commercial canary PASS indexed on Issue #133; exact-head W2–W6 web/build, supply-chain and Android protected-path gates green |
+| Current task | W7 — cross-client parity, security, accessibility, responsive, offline/network and Android regression closure; W8 blocked until W7 closure evidence passes |
 | Governing plan | `docs/web/FUNCTIONAL_PWA_PARITY_IMPLEMENTATION_PLAN.md` |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized |
 | Governing issues | Issue #133 for customer/provider PWA/reconciliation; Issue #112 remains open for real pilot evidence/exit |
@@ -34,7 +34,8 @@ This file prevents overlapping writes in the single-lane build process.
 12. W3 browser authentication keeps session material HttpOnly and server-controlled, enforces CSRF/origin/session rotation/replay/expiry controls, and never derives provider scope or authorization from client-selected state or Firebase claims.
 13. W4 customer actions remain backend-authoritative and use the same enquiry, contact-consent, interaction, review and complaint lifecycle rules as Android. Managed customer evidence covers customer-controlled mutations; provider-mediated states remain protected and are verified by canonical lifecycle suites rather than fabricated authority.
 14. W5 provider workspace access remains actor-resolved server-side. No browser-selected provider identifier grants or widens provider scope. Private evidence upload grants are transient, private object keys remain excluded, and masked handoffs do not expose raw contact.
-15. W6 commercial actions must remain actor-resolved and must never imply verification, publication or ranking effects. Real payment-provider credentials and production money movement remain prohibited until separately authorized.
+15. W6 commercial actions remain actor-resolved, retry-safe and revision-controlled, with no verification/publication/ranking effects. External payment credentials and production money movement remain prohibited until separately authorized.
+16. W7 must close only on combined Android/backend/database/OpenAPI/web regression evidence plus responsive/accessibility/offline/privacy negative controls; unsupported external integrations remain explicitly GATED.
 
 ## Active implementation sequence
 
@@ -44,8 +45,8 @@ This file prevents overlapping writes in the single-lane build process.
 - W3 — browser authentication/account/session boundary. **Closed — managed run `29703117963` PASS on `012a7b9c24e93087d823661298d051c08ea34ec0`.**
 - W4 — complete customer journey parity. **Closed — managed run `29704996877` PASS on `61a6bce54bffcec545a2009ac353596ee1d69f83`, with exact-head lifecycle contract/backend evidence for provider-mediated states.**
 - W5 — complete provider journey parity. **Closed — managed PASS on exact merged source `79228f4bda96106b929aa6183613cb9d2dc127f6`; authoritative bot result is Issue #133 comment `5017630247`.**
-- W6 — commercial parity within currently authorized/gated payment boundaries. **Active; W7 blocked until W6 closure evidence passes.**
-- W7 — cross-client parity, security, accessibility, responsive, offline/network and Android regression closure.
+- W6 — commercial parity within currently authorized/gated payment boundaries. **Closed — trusted-main managed commercial canary PASS on exact merged source `1b5753002afcf115f6f47334f6588648eca7501d`.**
+- W7 — cross-client parity, security, accessibility, responsive, offline/network and Android regression closure. **Active; W8 blocked until W7 closure evidence passes.**
 - W8 — controlled route/deployment cutover only after parity evidence passes; preserve historical preview separately.
 
 ## Stop conditions
@@ -61,7 +62,8 @@ Do not merge or promote the functional PWA checkpoint if:
 - browser authentication would expose session credentials to JavaScript-readable storage, accept client-selected provider scope, skip CSRF/origin protections, or activate real participant access without the separate Phase 11 gates;
 - a customer or provider mutation could report success without authoritative backend acknowledgement or bypass canonical eligibility, consent, revision or idempotency rules;
 - provider mode accepts a provider ID, role or scope selected by the browser;
-- commercial state or payment behavior would be allowed to mutate verification, publication or ranking authority, store production payment credentials, or initiate real money movement before external-provider authorization.
+- commercial state or payment behavior would be allowed to mutate verification, publication or ranking authority, store production payment credentials, or initiate real money movement before external-provider authorization;
+- W7 parity/regression evidence is incomplete, critical/high security findings remain, or Android/backend/database/OpenAPI/web exact-head gates are not all green.
 
 ## Conflict rule
 
