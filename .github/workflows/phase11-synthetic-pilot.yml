@@ -63,17 +63,40 @@ jobs:
           cache-dependency-path: backend/direkt-api/package-lock.json
       - run: npm ci --ignore-scripts
       - run: npm run migration:check
+      - name: Prove synthetic activator fails closed outside its approved boundary
+        shell: bash
+        run: |
+          assert_rejected() {
+            local label="$1"
+            shift
+            local log="artifacts/phase11/guard-${label}.log"
+            mkdir -p artifacts/phase11
+            if env "$@" npm run seed:phase11:synthetic >"$log" 2>&1; then
+              cat "$log"
+              echo "Synthetic activator unexpectedly accepted forbidden boundary: $label" >&2
+              exit 1
+            fi
+          }
+
+          assert_rejected production NODE_ENV=production
+          assert_rejected controlled-pilot DIREKT_DATA_MODE=controlled-pilot
+          assert_rejected real-entry-latch PILOT_ENTRY_APPROVED=true
+          assert_rejected missing-activation PHASE11_SYNTHETIC_PILOT_ACTIVATION=false
       - name: Activate synthetic Phase 11 cohort
         shell: bash
         run: |
           mkdir -p artifacts/phase11
           set -o pipefail
           npm run seed:phase11:synthetic 2>&1 | tee artifacts/phase11/synthetic-pilot-report.json
-      - name: Assert no real-pilot latch or production payment mode
+      - name: Assert synthetic-only runtime boundaries
         shell: bash
         run: |
           test "$DIREKT_DATA_MODE" = "synthetic-only"
           test "$PILOT_ENTRY_APPROVED" = "false"
+          grep -q '"primaryPilotEvidence": false' artifacts/phase11/synthetic-pilot-report.json
+          grep -q '"field_visits": 0' artifacts/phase11/synthetic-pilot-report.json
+          grep -q '"payment_intents": 0' artifacts/phase11/synthetic-pilot-report.json
+          grep -q '"phase12Authorized": false' artifacts/phase11/synthetic-pilot-report.json
       - if: always()
         uses: actions/upload-artifact@v4
         with:
