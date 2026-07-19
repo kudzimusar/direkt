@@ -94,7 +94,11 @@ export class FirebaseSessionRepository {
 
         const admitted = await this.hasCurrentAdmission(client, identityId, policyVersionId);
         if (!admitted) {
-          const invitation = await this.pendingInvitation(client, input.contactHash, policyVersionId);
+          const invitation = await this.pendingInvitation(
+            client,
+            input.contactHash,
+            policyVersionId,
+          );
           if (!invitation) {
             await this.insertDeniedAudit(client, input, identityId, 'current_invitation_required');
             return { kind: 'invite_required' };
