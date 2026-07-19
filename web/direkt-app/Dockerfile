@@ -8,7 +8,8 @@ RUN npm ci --ignore-scripts
 
 FROM dependencies AS build
 ENV NEXT_TELEMETRY_DISABLED=1 \
-    DIREKT_WEB_API_MODE=disabled
+    DIREKT_WEB_API_MODE=disabled \
+    DIREKT_WEB_AUTH_MODE=disabled
 
 COPY . .
 RUN npm run typecheck \
@@ -17,7 +18,7 @@ RUN npm run typecheck \
 
 FROM node:24-bookworm-slim AS runtime
 LABEL org.opencontainers.image.title="DIREKT Customer Provider Web" \
-      org.opencontainers.image.description="IAM-private synthetic-only DIREKT customer/provider W2 canary" \
+      org.opencontainers.image.description="DIREKT customer/provider functional web runtime with private BFF boundaries" \
       org.opencontainers.image.source="https://github.com/kudzimusar/direkt"
 
 ENV NODE_ENV=production \
