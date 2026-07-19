@@ -6,29 +6,34 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED — full integration reconciliation, regression audit and UI-test readiness |
-| Owner/agent | OpenAI GPT-5.5 Thinking |
+| Status | RELEASED — Phase 0–12 integration/runtime audit and all currently repository-clearable Phase 12 work complete |
+| Owner/agent | None — lane available for the next explicitly authorized task |
 | Formal programme phase | Phase 11 remains open; formal Phase 12 production release is not authorized |
-| User-authorized scope | Re-audit all currently clearable Phase 12 work, regressions, and every integration introduced across earlier phases; correct source/runtime mismatches that can be safely cleared; finish with a practical UI-testing path |
-| Stable baseline | `main` at `d9ae39963ace0ef99ad744f5615a98dbec058463`; `build/android-v1` is 0 behind with no file differences before this claim |
-| Governing issues | Issue #112 remains open; Issue #133 reconciliation/PWA checkpoint is already promoted |
-| Release boundary | No real pilot evidence fabrication, production signing, Play publication, public backend traffic, live payments, or bypass of legal/regulatory/Phase 11 gates |
+| Final implementation checkpoint | PR #149 merged to `main` at `25deaae72ca2974c5560a8059a50fce37c810f63` |
+| Exact audited implementation head | `e3cddf7645e514d9a6254fff86283d4055d745c4` |
+| Managed Supabase hardening | migration `202607191200_integration_runtime_privilege_hardening.sql`, checksum `e02d1be228a992b7541db92328e9528b8fe0e184660fb78206ca405e9c7b2372`, migration count `39` |
+| Governing issue | Issue #112 remains open for real pilot evidence/exit |
+| Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates |
 
-## Audit coverage
+## Final integration truth
 
-- Supabase PostgreSQL/PostGIS/Storage and Data API boundary;
-- Cloud Run, Artifact Registry, Secret Manager, WIF, Logging/Monitoring;
-- Firebase App Distribution/Auth/Crashlytics/FCM/Test Lab;
-- domain/DNS/Pages/Cloudflare edge and email routing;
-- Resend/Brevo/OTP/WhatsApp/outbox/asynchronous delivery;
-- Maps/location privacy and fallback;
-- Sentry/telemetry privacy;
-- Vercel versus current Cloud Run portal hosting;
-- OpenAPI/generated client boundaries;
-- payments and verification-authority adapters;
-- Android, operations portal and customer/provider PWA UI testability;
-- regression/security/release gates.
+Active managed boundaries include Supabase PostgreSQL/PostGIS/private Storage, canonical REST/OpenAPI backend, Artifact Registry, private Cloud Run staging, Secret Manager, GitHub WIF/Actions, Cloud Logging/Monitoring and Firebase App Distribution.
+
+Firebase phone authentication is implemented but gated. Maps, Sentry and Resend remain externally provisioned/runtime-unproven. Crashlytics, FCM, Test Lab automation, Turnstile, production WhatsApp, real payment providers and automated registry access remain planned/disabled. No inactive provider was promoted merely because an account or credential exists.
+
+The public customer/provider PWA remains synthetic-only for remote UI review. Native Android remains the authoritative native test surface. The operations portal remains IAM-private.
+
+## Remaining genuine gates
+
+- real 11C–11H Zambia pilot evidence and 11J `PROCEED`;
+- required regulatory/legal/privacy approvals and final live policy versions;
+- production client cutover from synthetic preview surfaces;
+- end-to-end account deletion;
+- actual production environment and backup restore;
+- operational support/verification/on-call staffing and production monitoring;
+- authorized signed reproducible AAB, final Play declarations/assets/content rating and internal/closed testing;
+- formal go/no-go, staged rollout and final release record.
 
 ## Conflict rule
 
-No second agent may write to the audited integration/runtime/UI paths while this lock is claimed. Read-only review is allowed. The lock is released only after corrective PRs are promoted, branches synchronized, final regressions pass and the UI-test handoff is recorded.
+A new agent may claim the lane only for an explicitly authorized next task and must update this file before overlapping writes. Read-only investigation remains allowed.
