@@ -47,11 +47,12 @@ def dependencies(path: str) -> set[str]:
 
 
 def scan_tree(relative: str, patterns: dict[str, re.Pattern[str]]) -> list[str]:
-    """Scan deployable client source while excluding tests, fixtures and generated output.
+    """Scan deployable client source while excluding tests, fixtures and build tooling.
 
-    Negative security assertions in tests intentionally contain strings such as
-    `service_role`; those are not credential leaks. Runtime/deployable source remains
-    scanned so an actual privileged reference still fails closed.
+    Negative security assertions in tests and verifier/build scripts intentionally contain
+    strings such as ``service_role``. Those files are not deployed into the Android, Next.js
+    or static PWA runtime. Runtime/deployable source remains scanned so an actual privileged
+    reference still fails closed.
     """
     matches: list[str] = []
     root = ROOT / relative
@@ -71,6 +72,7 @@ def scan_tree(relative: str, patterns: dict[str, re.Pattern[str]]) -> list[str]:
         "__fixtures__",
         "snapshots",
         "__snapshots__",
+        "scripts",
     }
     for path in root.rglob("*"):
         if not path.is_file() or path.suffix.lower() in ignored_suffixes:
@@ -143,9 +145,9 @@ def main() -> None:
         "direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com",
         "projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main",
         "--no-allow-unauthenticated",
-        "DIREKT_TRAFFIC_MODE: \"internal\"",
-        "DIREKT_DATA_MODE: \"synthetic-only\"",
-        "PAYMENT_PROVIDER_MODE: \"disabled\"",
+        'DIREKT_TRAFFIC_MODE: "internal"',
+        'DIREKT_DATA_MODE: "synthetic-only"',
+        'PAYMENT_PROVIDER_MODE: "disabled"',
     ):
         require(cloud_run, needle, "Cloud Run staging invariant")
     if cloud_run.count("--no-allow-unauthenticated") < 2:
