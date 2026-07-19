@@ -1,0 +1,159 @@
+name: DIREKT functional web W3 canary dispatcher
+
+on:
+  pull_request_target:
+    branches:
+      - main
+    paths:
+      - "docs/web/W3_MANAGED_CANARY_TRIGGER_V3.md"
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+
+concurrency:
+  group: direkt-functional-web-w3-canary-dispatch
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    name: Validate trigger, dispatch trusted main canary and report
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - name: Validate same-repository one-file trigger
+        id: source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "${{ github.event.pull_request.head.repo.full_name }}" = "${{ github.repository }}"
+          source_sha="${{ github.event.pull_request.base.sha }}"
+          head_sha="${{ github.event.pull_request.head.sha }}"
+          pr_number="${{ github.event.pull_request.number }}"
+          [[ "${source_sha}" =~ ^[0-9a-f]{40}$ ]]
+          [[ "${head_sha}" =~ ^[0-9a-f]{40}$ ]]
+          [[ "${pr_number}" =~ ^[1-9][0-9]*$ ]]
+
+          mapfile -t changed < <(gh api \
+            --paginate \
+            -H "Accept: application/vnd.github+json" \
+            "repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/files?per_page=100" \
+            --jq '.[].filename')
+          test "${#changed[@]}" -eq 1
+          test "${changed[0]}" = "docs/web/W3_MANAGED_CANARY_TRIGGER_V3.md"
+
+          main_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
+          [[ "${main_sha}" =~ ^[0-9a-f]{40}$ ]]
+          test "${source_sha}" = "${main_sha}"
+
+          echo "source_sha=${source_sha}" >> "${GITHUB_OUTPUT}"
+          echo "pr_number=${pr_number}" >> "${GITHUB_OUTPUT}"
+
+      - name: Dispatch trusted main W3 canary
+        id: dispatch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          dispatched_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          gh api --method POST \
+            -H "Accept: application/vnd.github+json" \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/functional-pwa-w3-managed-canary-v3.yml/dispatches" \
+            -f ref=main \
+            -f inputs[confirmation]=RUN-DIREKT-W3-CANARY \
+            -f inputs[source_sha]="${SOURCE_SHA}"
+          echo "dispatched_at=${dispatched_at}" >> "${GITHUB_OUTPUT}"
+
+      - name: Resolve dispatched workflow run
+        id: run
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DISPATCHED_AT: ${{ steps.dispatch.outputs.dispatched_at }}
+        run: |
+          set -euo pipefail
+          run_id=""
+          for attempt in $(seq 1 30); do
+            run_id="$(gh api \
+              -H "Accept: application/vnd.github+json" \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/functional-pwa-w3-managed-canary-v3.yml/runs?event=workflow_dispatch&branch=main&per_page=20" \
+              --jq --arg dispatched_at "${DISPATCHED_AT}" '
+                [.workflow_runs[] | select(.created_at >= $dispatched_at)]
+                | sort_by(.created_at)
+                | last
+                | .id // empty')"
+            if [[ "${run_id}" =~ ^[1-9][0-9]*$ ]]; then
+              break
+            fi
+            sleep 4
+          done
+          [[ "${run_id}" =~ ^[1-9][0-9]*$ ]]
+          echo "run_id=${run_id}" >> "${GITHUB_OUTPUT}"
+          echo "run_url=https://github.com/${GITHUB_REPOSITORY}/actions/runs/${run_id}" >> "${GITHUB_OUTPUT}"
+
+      - name: Wait for trusted canary completion
+        id: result
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ steps.run.outputs.run_id }}
+        run: |
+          set -euo pipefail
+          conclusion=""
+          status=""
+          for attempt in $(seq 1 180); do
+            record="$(gh api \
+              -H "Accept: application/vnd.github+json" \
+              "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}")"
+            status="$(jq -r '.status' <<< "${record}")"
+            conclusion="$(jq -r '.conclusion // empty' <<< "${record}")"
+            if [[ "${status}" == "completed" ]]; then
+              break
+            fi
+            sleep 15
+          done
+          test "${status}" = "completed"
+          test -n "${conclusion}"
+          echo "conclusion=${conclusion}" >> "${GITHUB_OUTPUT}"
+          test "${conclusion}" = "success"
+
+      - name: Publish canary result to trigger PR
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.source.outputs.pr_number }}
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+          RUN_URL: ${{ steps.run.outputs.run_url }}
+          CONCLUSION: ${{ steps.result.outputs.conclusion }}
+        run: |
+          set -euo pipefail
+          [[ "${PR_NUMBER}" =~ ^[1-9][0-9]*$ ]]
+          result="${CONCLUSION:-incomplete}"
+          if [[ "${result}" == "success" ]]; then
+            heading="PASS"
+            detail="The trusted main-dispatch W3 managed canary completed successfully. W3 may proceed to documented closeout after evidence inspection."
+          else
+            heading="FAIL / INCOMPLETE"
+            detail="The trusted W3 managed canary did not pass. W3 remains open and W4 must not start from this result."
+          fi
+          body=$(cat <<EOF
+          <!-- direkt-w3-canary-result -->
+          ## W3 managed auth/session canary: ${heading}
+
+          - Exact merged source: \`${SOURCE_SHA}\`
+          - Execution: trusted \`main\` workflow dispatch
+          - Conclusion: \`${result}\`
+          - Managed run: ${RUN_URL}
+
+          ${detail}
+          EOF
+          )
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+            -f body="${body}" >/dev/null
