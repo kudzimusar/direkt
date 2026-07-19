@@ -1,14 +1,15 @@
 # DIREKT Master Build Plan
 
-**Status:** Authoritative  
+**Status:** Authoritative — reconciled 2026-07-19  
 **Product:** DIREKT Zambia  
 **Primary client:** Native Android  
-**Implementation model:** Single sequential build lane with automated checkpoint PR lifecycle  
-**Baseline date:** 2026-07-14
+**Companion client:** Responsive installable customer/provider PWA  
+**Privileged client:** Internal operations web portal  
+**Implementation model:** Controlled sequential implementation lane with automated checkpoint PR lifecycle
 
 ## 1. Objective
 
-Build a trustworthy, usable and operationally sustainable marketplace that allows people in Zambia to discover nearby service providers and inspect evidence-backed trust information before making contact.
+Build a trustworthy, usable and operationally sustainable marketplace that allows people in Zambia to discover nearby service providers, understand exactly what DIREKT checked, contact providers through accountable interactions and operate verification safely.
 
 DIREKT must solve five connected problems:
 
@@ -18,388 +19,249 @@ DIREKT must solve five connected problems:
 4. identity, qualification and operating-location evidence is difficult to inspect consistently;
 5. accountability is often lost when contact moves off-platform.
 
-The MVP is not a directory of unreviewed listings. It is a closed-loop trust and interaction system.
+The MVP is not a directory of unreviewed listings. It is a closed-loop trust, discovery and interaction system.
 
-## 2. Delivery principles
+## 2. Product surfaces
 
-- Native Android Version 1; iOS is deferred.
-- One Android app supports customer and provider modes unless evidence later requires separation.
-- A separate internal web portal supports verification, moderation and operations.
-- Backend begins as a TypeScript/NestJS modular monolith.
+### 2.1 Native Android — primary Version 1 client
+
+One Kotlin/Jetpack Compose application supports customer and provider modes. Android remains the primary release target and the authoritative device-specific experience for permissions, evidence capture, secure local session storage, push integration and Play distribution.
+
+### 2.2 Customer/provider PWA — companion Version 1 client
+
+The owner authorized a responsive installable PWA on 2026-07-19 because the project is developed remotely and needs an immediately visible desktop/tablet/mobile surface.
+
+The PWA reuses canonical REST/OpenAPI/domain contracts, does not create a second backend, initially deploys publicly in synthetic remote-review mode at `https://direkt.forum/app/`, may become API-backed only after browser authentication/session/security gates are approved, and never weakens private evidence, location, authorization, pilot or production boundaries.
+
+### 2.3 Operations portal
+
+A separate Next.js internal web application supports verification, moderation, field operations, support, finance exceptions, audit and controlled configuration. It is privileged and must not be published as public PWA/Pages content.
+
+## 3. Delivery principles
+
+- Android-first, not Android-exclusive: native Android is primary; the PWA is the browser companion.
+- One Android app supports customer/provider modes unless evidence later requires separation.
+- Customer/provider PWA shares product semantics and backend contracts, not privileged client state.
+- Operations portal remains a separate privileged surface.
+- Backend remains a TypeScript/NestJS modular monolith unless evidence justifies decomposition.
 - PostgreSQL/PostGIS is the system of record.
-- Verification is a lifecycle of separate claims, not one generic badge.
-- Payment can never create or improve verification status.
+- Verification is a lifecycle of separate scoped claims, never one generic badge.
+- Payment cannot create/improve verification, publication or ranking.
 - Exact private provider locations and evidence are private by default.
-- Low bandwidth, intermittent connectivity and recoverable uploads are first-class requirements.
-- Public Pages content is synthetic and non-sensitive.
-- Design and scaffolding may proceed on an explicit provisional baseline.
-- Synthetic-only managed development and protected staging deployments may proceed during Phase 10 for integration, security, recovery and performance validation.
-- Primary Zambia validation is mandatory before controlled pilot and production claims, not before prototype design or restricted infrastructure validation.
-- Every phase must remain testable, reversible and documented.
+- Low bandwidth, intermittent connectivity and recoverability are first-class requirements.
+- Public web content before production uses synthetic/non-sensitive data only.
+- Public reachability never equals real-pilot/production authorization.
+- Primary Zambia validation remains mandatory before production claims.
+- Every phase/workstream remains testable, reversible and documented.
+- Integration state must distinguish provisioning, source implementation, runtime binding and managed evidence.
 
-## 3. Target architecture
+## 4. Target architecture
 
 | Layer | Baseline |
 |---|---|
-| Android | Kotlin, Jetpack Compose, Material 3, MVVM/Clean Architecture, Hilt, Coroutines/Flow, Room, WorkManager |
-| Backend | TypeScript, NestJS modular monolith, REST/OpenAPI |
-| Data | PostgreSQL/PostGIS, forward migrations, private object storage |
-| Managed infrastructure | Supabase is the initial candidate; domain rules remain API-owned |
+| Android | Kotlin, Jetpack Compose, Material 3, MVVM/Clean boundaries, Coroutines/Flow, Room/WorkManager where required |
+| Customer/provider PWA | Responsive installable web client; public synthetic static mode first; live mode only through canonical REST/OpenAPI and approved browser-session boundary |
+| Backend | TypeScript/NestJS modular monolith, REST/OpenAPI |
+| Data | PostgreSQL/PostGIS, forward-only checksummed migrations |
+| Managed data/storage | Supabase PostgreSQL/PostGIS + private Storage, backend-only privileged access |
 | Operations portal | Next.js/TypeScript internal web application |
-| Notifications | Firebase Cloud Messaging; provider adapters for approved SMS/email uses |
-| Maps | Provider abstraction; area/landmark/manual pin/Plus Code support |
-| Documentation/prototype | Markdown, MkDocs and GitHub Pages |
+| API runtime | Google Cloud Run, IAM-private staging until release gates |
+| Containers | Google Artifact Registry |
+| Runtime secrets | Google Secret Manager with least-privilege IAM and pinned versions |
+| Deployment identity | GitHub Actions OIDC / Google Workload Identity Federation |
+| Android distribution | GitHub artifacts + Firebase App Distribution; Play later |
+| Authentication | DIREKT sessions/authorization remain authoritative; Firebase phone possession exchange is implemented but real use gated |
+| Notifications | Provider-neutral domain/outbox; FCM/email/WhatsApp adapters only when runtime gates are proven |
+| Maps | PostGIS + manual/list fallback authoritative; Maps provider optional/gated |
+| Public domain | `direkt.forum`; Vercel registrar, Cloudflare authoritative DNS, GitHub Pages static public origin |
+| Observability | Cloud Logging/Monitoring active; Sentry/Crashlytics only after source/privacy/runtime evidence |
 | CI | GitHub Actions |
-| Early Android distribution | GitHub artifacts, then Firebase App Distribution |
-| Observability | Structured logs, audit events, metrics, alerts and error reporting |
 
-## 4. Governance
+## 5. Canonical trust boundaries
 
-A phase is complete only when:
+```text
+Native Android ─┐
+                ├─ HTTPS / REST/OpenAPI ─> DIREKT API ─> PostgreSQL/PostGIS
+Customer PWA ───┘                            │
+                                             ├─ private Storage
+Operations portal ─ protected server path ──┤
+                                             ├─ notifications/provider adapters
+                                             └─ payment/registry adapters when approved
+```
 
-- mandatory deliverables exist;
-- the documented exit decision is met;
-- relevant checks pass;
-- risks and decisions are updated;
-- privacy/security impact is recorded;
-- `PROJECT_STATUS.md` identifies the next authorized task;
-- the stable checkpoint is promoted without force-pushing.
+Clients never receive privileged database/Supabase/service credentials. Backend authorization remains mandatory even when UI hides an action.
 
-Routine checkpoint PR creation, verification, merge and eligible issue closure are handled by the active repository agent. External evidence, credentials, legal approval and material owner decisions are never fabricated.
+## 6. Governance
 
-## 5. Phase plan
+A phase/checkpoint is complete only when mandatory deliverables exist, documented acceptance is met, relevant checks pass on exact source, risks/decisions/integration status are updated, privacy/security impact is recorded, `PROJECT_STATUS.md` identifies truth/next work, stable checkpoint is promoted without history rewrite and external evidence is not fabricated.
 
-### Phase 0 — Repository and planning baseline
+Routine safe PR/check/merge/eligible-issue closure is an agent responsibility. Legal, credentials, participant, provider, field and production decisions remain genuine external gates.
 
-**Goal:** Establish the source of truth, documentation, Pages and agent workflow.
+## 7. Phase plan
 
-Deliverables:
+### Phase 0 — Repository and planning baseline — complete
 
-- complete planning pack;
-- branch and lifecycle policy;
-- GitHub Pages workflow;
-- documentation validation;
-- Android CI and tester-distribution workflows;
-- risk, decision and definition-of-done controls;
-- `build/android-v1` branch.
+Planning pack, branch/lifecycle controls, Pages, CI, Android distribution planning and risk/decision controls established.
 
-**Status:** Complete.
+### Phase 1A — Zambia secondary research/provisional baseline — complete with accepted limitations
 
-### Phase 1A — Zambia secondary research and provisional baseline
+Credible secondary baseline, evidence classifications, provisional geography/categories/trust/location/communications/payment assumptions and retained primary-validation plan. No desk research is treated as real participant evidence.
 
-**Goal:** Establish a credible Zambia-specific design baseline without making unavailable primary fieldwork a permanent blocker.
+### Phase 1B — Interaction design and synthetic prototype — complete
 
-Required evidence:
+Customer/provider/operations flows, trust language, enquiry/contact concept, provider onboarding/evidence correction, responsive synthetic prototype, accessibility/offline/loading/error states and review findings. Historical prototype is a design artifact, not the current implemented product UI.
 
-- current public census and market context;
-- official Zambian authority sources for business, construction and technical-training claims;
-- public mobile, mobile-money, location and fraud context;
-- explicit separation of official evidence, secondary evidence and provisional inference;
-- conservative privacy, connectivity and operational assumptions;
-- retained plan for later real-user and pilot validation.
+### Phase 2 — Technical foundation — complete
 
-Outputs:
+Native Android scaffold, NestJS backend, operations portal, secret/config model, migration framework, OpenAPI, identity/session/authorization, CI and synthetic/audit/logging foundations.
 
-- `docs/research/SECONDARY_RESEARCH_BASELINE.md`;
-- pilot geography and category defaults;
-- provisional trust, location, communication and payment decisions;
-- updated risk and decision logs;
-- accepted-limitations exit review.
+### Phase 3 — Identity, provider and category core — complete
 
-Exit criteria:
+Separate people/provider organizations, representatives, provider pathways, fixed/mobile/hybrid models, categories/immutable requirement versions, drafts, role enforcement and audit.
 
-- every material baseline claim is sourced or marked provisional;
-- no desk research is misrepresented as an interview or field observation;
-- real-data and production restrictions remain explicit;
-- Phase 1B has enough information to design coherent flows;
-- later primary validation gates are recorded.
+### Phase 4 — Verification/private evidence engine — complete
 
-**Status:** Complete with accepted limitations.
+Separate verification cases, private evidence access, document validity/expiry, reviewer queues/reasons, correction/resubmission, renewal/revocation, field assignments, scoped derived public claims and immutable decisions.
 
-### Phase 1B — Interaction design and synthetic prototype
+### Phase 5 — Customer discovery — complete
 
-**Goal:** Convert the product baseline into an interactive, reviewable experience before native implementation.
+Onboarding, manual/current area, filters, list/synthetic-map abstraction, provider profile/trust details, saves/sharing, low-bandwidth/no-location recovery and publication policy requiring current mandatory claims. Manual/list fallback remains first-class.
 
-Deliverables:
+### Phase 6 — Provider workspace — complete
 
-- final information architecture;
-- Android low- and high-fidelity flows;
-- customer onboarding, area selection and discovery;
-- list/map/no-location variants;
-- provider profile and separate trust-detail states;
-- tracked enquiry and call/WhatsApp handoff;
-- provider onboarding and verification progress;
-- evidence rejection and resubmission;
-- internal operations review flow;
-- mobile-responsive synthetic prototype on GitHub Pages;
-- accessibility, offline, loading, empty and error states;
-- structured remote-feedback mechanism;
-- design findings and corrections.
+Provider profile/services/service areas, evidence capture/recoverable uploads, verification timeline, availability and safe workspace projections.
 
-Critical questions:
+### Phase 7 — Operations/field workflow — complete
 
-- Can users distinguish phone, identity, business, qualification, location and field-visit checks?
-- Can users identify what is pending, expired, absent or not checked?
-- Can users understand fixed, mobile and hybrid providers?
-- Can providers understand evidence requirements and correction paths?
-- Can staff review private evidence without exposing it publicly?
+Triage, assignment-scoped evidence review, field workflow, reasoned decisions/escalations, four-eyes overrides, incidents/expiry/reporting and responsive privileged portal.
 
-Exit criteria:
+### Phase 8 — Enquiries/interactions/reviews — complete
 
-- required flows are interactive;
-- Pages deployment is working;
-- screen inventory and prototype agree;
-- trust language exposes limitations;
-- structured review findings are recorded;
-- the permanent or migration-safe Android namespace decision is recorded;
-- Phase 2 is explicitly authorized.
+Bounded enquiries, provider response lifecycle, tracked interactions, time-limited consent-aware contact handoff contract, review eligibility/moderation/appeals/provider response and complaints. Production external delivery remains disabled until provider gates pass.
 
-### Phase 2 — Technical foundation
+### Phase 9 — Subscription/payment foundation — complete
 
-**Goal:** Establish reproducible native, backend and operations builds with clear security boundaries.
+Products/prices/entitlements, subscription lifecycle, invoices/receipts, retry-safe payment intents, webhook/reconciliation/ledger foundations and strict commercial/trust separation. No real payment provider/money movement is active.
+
+### Phase 10 — Security/privacy/legal/reliability + managed infrastructure — complete
+
+Threat/authorization/private-storage/rate-limit/location hardening; backup/restore, rollback, incident/kill-switch/performance/supply-chain exercises; Supabase activation; Artifact Registry/Cloud Run/Secret Manager/WIF; IAM-private API/portal; Firebase internal distribution; Logging/Monitoring. This authorizes synthetic managed development/private staging only.
+
+### Phase 11 — Controlled Zambia pilot and primary validation — formally active, real evidence pending
+
+Internal decisions, synthetic functional readiness and managed synthetic activation are complete. Real-entry gates still include applicable DPC/controller/transfer evidence, qualified legal/privacy/consumer review, final participant/provider notices/consent, real Firebase/private-storage/auth/deletion/withdrawal canaries, operational/field ownership and actual consenting pilot cohorts.
+
+Required evidence stages remain 11C provider onboarding/evidence/comprehension; 11D discovery/location/trust; 11E enquiries/contact/reviews/complaints; 11F operations/capacity/field; 11G Zambia device/connectivity/reliability; 11H willingness-to-pay/unit economics; 11I evidence-led corrections; 11J `STOP / REPEAT / NARROW / PROCEED`.
+
+### Cross-cutting owner-visible UI validation track — authorized 2026-07-19
+
+Purpose: eliminate the visibility gap between extensive backend/integration implementation and product-owner ability to see/test the product remotely.
 
 Deliverables:
 
-- native Android project with build variants;
-- backend and operations workspaces;
-- configuration and secret model;
-- database migration framework;
-- OpenAPI generation;
-- baseline authentication and authorization;
-- Android/backend/admin/docs CI;
-- local bootstrap and synthetic seed data;
-- audit, logging and error foundations.
+- canonical `direkt.forum` documentation/public-review entry;
+- installable responsive customer/provider PWA at `/app/`;
+- Android-aligned palette/navigation/trust semantics;
+- desktop/tablet/mobile adaptive layouts;
+- synthetic representations of implemented Phase 5–9 workflows;
+- service-worker offline shell;
+- public static safety validation;
+- remote UI testing runbook;
+- architecture for future canonical OpenAPI live mode without exposing private backend infrastructure.
 
-Exit criteria:
+Initial public PWA is synthetic only. A live PWA cannot bypass Phase 11/12 gates.
 
-- clean checkout builds and tests;
-- authentication and role boundaries are automated;
-- no credentials are committed;
-- Android CI produces a debug APK;
-- staging architecture is approved before external deployment.
+### Phase 12 — Production release programme — preauthorization engineering substantially prepared, formal authorization blocked
 
-### Phase 3 — Identity, provider and category core
+#### Phase 12A — Android release contract — complete
 
-Deliver:
+Source-controlled release identity, fail-closed signing contract, external keystore boundary, reproducible unsigned AAB proof and release lint/provenance/security gates. No signing key, signed AAB, Play upload or production traffic activation occurred.
 
-- customer/provider accounts;
-- phone/email verification abstractions;
-- provider profile and authorized representatives;
-- fixed/mobile/hybrid operating model;
-- categories and category requirements;
-- profile drafts;
-- role enforcement and audit log.
+#### Phase 12B — Play listing/permissions/Data Safety preparation — complete as repository-controlled preauthorization work
 
-No profile becomes discoverable without approved evidence-derived claims.
+Store listing candidates, permission/Data Safety/content/distribution inventories and permanent non-publishing validation are prepared. No Play Console submission, IARC result, track activation or release authorization is implied.
 
-### Phase 4 — Verification and evidence engine
+#### Additional clearable Phase 12 readiness controls — complete as preauthorization engineering
 
-Deliver:
+Production-runtime readiness matrices, monitoring/rollback/staged-rollout contracts, staffing requirements (without staffing claims), release package/provenance contracts and fail-closed formal release eligibility latches are prepared.
 
-- separate verification cases;
-- private evidence upload and access;
-- document type, validity and expiry modelling;
-- reviewer queues and reason codes;
-- correction, rejection and resubmission;
-- revocation and renewal;
-- optional field-visit assignments;
-- derived public claims;
-- immutable decision history.
+#### Remaining formal Phase 12 deliverables after 11J `PROCEED`
 
-Exit criteria:
-
-- payment or direct database edits cannot create a public claim;
-- evidence access is authorization-tested;
-- invalid state transitions are rejected;
-- expired evidence degrades claims automatically.
-
-### Phase 5 — Android customer discovery
-
-Deliver:
-
-- customer onboarding;
-- permission education;
-- current/manual area selection;
-- category, text, distance, availability and claim filters;
-- list and map presentation;
-- provider profile and trust details;
-- saved providers and sharing;
-- low-bandwidth images;
-- no-location fallback.
-
-### Phase 6 — Android provider workspace
-
-Deliver:
-
-- provider registration and profile;
-- services and service areas;
-- evidence capture;
-- verification timeline;
-- availability;
-- enquiry inbox;
-- review response;
-- subscription status;
-- recoverable interrupted uploads.
-
-### Phase 7 — Operations portal and field workflow
-
-Deliver:
-
-- triage queues;
-- secure evidence review;
-- field-agent assignment where approved;
-- structured inspections;
-- reasoned decisions and escalations;
-- four-eyes approval for high-risk overrides;
-- complaints, incidents and expiry dashboard;
-- operational reporting.
-
-### Phase 8 — Enquiries, interactions and reviews
-
-Deliver:
-
-- structured enquiry;
-- response states;
-- consent-aware call/WhatsApp handoff;
-- interaction history;
-- tracked-interaction review eligibility;
-- review moderation and appeals;
-- complaint linkage.
-
-Full chat remains deferred unless prototype or pilot evidence proves it necessary.
-
-### Phase 9 — Subscription and payment foundation
-
-Deliver:
-
-- provider products and entitlements;
-- subscription lifecycle;
-- invoices and receipts;
-- approved mobile-money adapter;
-- idempotent webhooks;
-- grace periods, reconciliation and audit;
-- explicit separation of commercial and trust status.
-
-No payment provider is integrated before current commercial, technical, settlement and legal approval.
-
-### Phase 10 — Security, privacy, legal and reliability hardening
-
-Deliver:
-
-- completed threat model;
-- authorization review;
-- private-storage and evidence-access testing;
-- rate limits and abuse controls;
-- location-privacy review;
-- backup/restore exercise;
-- incident-response exercise;
-- performance/soak tests;
-- dependency and secret scanning;
-- qualified Zambia legal review;
-- authority-access and data-use approval;
-- approved map, OTP and payment-provider terms;
-- synthetic-only managed development and protected staging deployment evidence for Supabase, Cloud Run, Vercel and Firebase;
-- tested deployment rollback, environment isolation and infrastructure kill-switch procedures.
-
-Phase 10 deployment authorization is limited to synthetic-only development and protected staging. It does not authorize real participants, real evidence, public promotion, a Zambia pilot or a production release.
-
-### Phase 11 — Controlled Zambia pilot and primary validation
-
-This phase now contains the primary research previously treated as a Phase 1A prerequisite.
-
-Required validation:
-
-- consenting customers and providers in the selected Lusaka boundary;
-- real Android device and connectivity matrix;
-- private inspection of real evidence examples;
-- trust-language comprehension;
-- provider onboarding completion and rejection patterns;
-- field-verification timing, safety and cost;
-- customer enquiry and provider response behaviour;
-- willingness to pay and subscription economics;
-- complaint, support and incident operations.
-
-Pilot constraints:
-
-- one tightly defined area;
-- limited categories;
-- verified provider cohort before invitation;
-- approved private data systems;
-- staffed support and escalation;
-- measurable entry, pause and stop criteria.
-
-No production claim may rely on the provisional desk baseline after pilot evidence contradicts it.
-
-### Phase 12 — Android production release
-
-Deliver:
-
-- signed Android App Bundle;
-- Play internal and closed testing;
-- store listing and data-safety declarations;
-- production backend and operations readiness;
-- support and verification staffing;
-- monitoring, rollback and staged rollout;
-- release tag and notes.
-
-Current Play policy and target API requirements must be checked at release time.
+- real production environment and approved production-backup restore;
+- operational support/verification staffing;
+- active/tested production monitoring/escalation;
+- end-to-end account deletion/public deletion route where required;
+- evidence-led removal/isolation of synthetic preview surfaces;
+- production signing/upload key/Play App Signing;
+- signed reproducible AAB;
+- Play internal/closed testing and final forms/assets/policy check;
+- production backend/operations authorization;
+- production PWA live-mode security/auth deployment if included in launch;
+- production communications/maps/payment adapters only where approved/required;
+- release tag/notes/checksums and staged rollout.
 
 ### Phase 13 — Post-launch stabilization
 
-Prioritize reliability, trust, safety, support themes and verified unit economics. Prevent uncontrolled feature expansion.
+Prioritize reliability, trust/safety, support, evidence integrity and verified unit economics. Prevent uncontrolled feature expansion.
 
 ### Phase 14 — iOS decision gate
 
-iOS begins only after Android product, API, verification-operations and funding evidence are reviewed and an iOS-native architecture decision is approved.
+iOS begins only after Android/PWA/API/verification-operations/funding evidence supports a deliberate native-iOS architecture decision.
 
-## 6. Dependency order
+## 8. Dependency order
 
 ```text
 Secondary research baseline
-→ Synthetic interaction prototype
-→ Technical foundation
-→ Identity and category contracts
-→ Authentication and audit
-→ Verification engine
-→ Provider onboarding
-→ Customer discovery
-→ Operations portal
-→ Enquiries and reviews
-→ Subscriptions/payments
-→ Security/legal hardening
-→ Controlled Zambia pilot and primary validation
-→ Production
+→ synthetic interaction design
+→ technical foundation
+→ identity/provider/category
+→ verification/evidence
+→ customer discovery
+→ provider workspace
+→ operations
+→ enquiries/reviews
+→ commercial foundation
+→ security/private managed infrastructure
+→ owner-visible PWA/remote UI validation (synthetic-safe)
+→ controlled Zambia pilot / primary evidence
+→ evidence-led corrections
+→ 11J decision
+→ formal production release
+→ stabilization
 ```
 
-Agents must not bypass trust, privacy or later validation gates merely because Phase 1A no longer requires manual interviews.
+The PWA track is additive and must not be used to skip primary validation.
 
-## 7. MVP definition
+## 9. MVP closed loop
 
-The MVP supports this closed loop:
-
-1. provider creates an account and profile;
-2. provider submits required evidence;
+1. provider creates account/profile;
+2. provider submits category-required evidence;
 3. authorized staff decide each separate check;
-4. approved claims become visible with scope and validity;
+4. approved scoped claims become publishable with validity/limitations;
 5. customer searches an area/category;
-6. customer inspects profile and trust details;
-7. customer sends a tracked enquiry;
-8. provider responds and contact may move to call/WhatsApp;
-9. eligible customer submits a review or complaint;
-10. operations staff inspect the audit trail and act.
+6. customer inspects provider profile/trust details;
+7. customer sends tracked enquiry;
+8. provider responds; contact may move to approved call/WhatsApp handoff after consent;
+9. eligible customer submits review/complaint;
+10. operations staff inspect audit trail and act;
+11. commercial/subscription state remains separate from trust.
 
-## 8. Global release gates
+Android and future live PWA must represent the same backend-owned lifecycle.
 
-No public production launch until:
+## 10. Integration governance
 
-- primary Zambia pilot validation is completed;
-- qualified legal review is signed off;
-- privacy notices and policy versioning are live;
-- production backups have been restored in a test;
-- evidence is private and access-tested;
-- claims are derived, not manually typed;
-- critical and high defects are resolved or formally accepted;
-- accessibility and device matrix pass;
-- support and verification staffing is operational;
-- monitoring and incident escalation are tested;
-- current Play requirements are confirmed.
+`docs/integrations/CURRENT_INTEGRATION_STATUS.md` is the detailed runtime-status authority.
+
+Provider/account setup is not runtime activation. Each external integration moves independently through planned → externally provisioned → source implemented → runtime-bound → managed canary → legal/privacy/operational approval → controlled pilot → production authorization.
+
+Current examples: Supabase/Cloud Run/Secret Manager/WIF/Firebase App Distribution are active managed foundation; Firebase phone auth is implemented but real-use gated; Resend is externally provisioned with runtime adapter/binding not yet proven; Maps/Sentry are externally provisioned/runtime-unproven; Turnstile is not active; real payments/WhatsApp/push remain disabled/planned.
+
+## 11. Global release gates
+
+No public real-user production launch until Phase 11 primary validation is completed; 11J records `PROCEED`; legal/privacy/DPC requirements pass; notices/consent/versioning are live; production restore is proven; evidence/privacy/claims controls pass; high/critical defects are resolved/accepted; accessibility/device/browser matrices pass; staffing/monitoring/incident/rollback are operational; current Play/browser/provider policies are rechecked; launch integrations have approved adapters/terms/kill switches; and any live public PWA has approved browser auth/session/API security rather than exposing private Cloud Run directly.
+
+## 12. Current next-step rule
+
+Safe engineering may continue while real Phase 11 evidence is blocked only when it does not fabricate evidence/approval, enable production traffic/money/signing, or weaken trust/privacy/security. It may improve release readiness, testability and documentation when clearly labelled preauthorization/synthetic.
+
+The owner-visible PWA and documentation/integration reconciliation satisfy this rule because they make existing work inspectable without enabling real participant processing.
