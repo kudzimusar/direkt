@@ -2,8 +2,8 @@
 """Fail-closed repository checks for Phase 12B Google Play preparation.
 
 This validator does not contact Play Console and cannot authorize release. It proves that
-repository-controlled listing, permissions and Data Safety inventories remain internally
-consistent with the current Android source and, in CI, the merged release manifest.
+repository-controlled listing, merged release permissions, release runtime dependencies
+and Data Safety inventories remain internally consistent with the current Android source.
 """
 
 from __future__ import annotations
@@ -22,19 +22,19 @@ BUILD_GRADLE = ROOT / "android" / "direkt-app" / "app" / "build.gradle.kts"
 VERSION_FILE = ROOT / "android" / "direkt-app" / "release" / "version.properties"
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
 
-ALLOWED_IMPLEMENTATIONS = {
-    "libs.androidx.core.ktx",
-    "libs.androidx.lifecycle.runtime.ktx",
-    "libs.androidx.lifecycle.viewmodel.compose",
-    "libs.androidx.activity.compose",
-    "libs.androidx.navigation.compose",
-    "platform(libs.androidx.compose.bom)",
-    "libs.androidx.compose.ui",
-    "libs.androidx.compose.ui.graphics",
-    "libs.androidx.compose.ui.tooling.preview",
-    "libs.androidx.compose.material3",
-    "platform(libs.firebase.bom)",
-    "libs.firebase.auth",
+ALLOWED_RELEASE_DIRECT_MODULES = {
+    "androidx.activity:activity-compose",
+    "androidx.compose:compose-bom",
+    "androidx.compose.material3:material3",
+    "androidx.compose.ui:ui",
+    "androidx.compose.ui:ui-graphics",
+    "androidx.compose.ui:ui-tooling-preview",
+    "androidx.core:core-ktx",
+    "androidx.lifecycle:lifecycle-runtime-ktx",
+    "androidx.lifecycle:lifecycle-viewmodel-compose",
+    "androidx.navigation:navigation-compose",
+    "com.google.firebase:firebase-auth",
+    "com.google.firebase:firebase-bom",
 }
 
 PROHIBITED_STORE_CLAIMS = {
@@ -93,16 +93,84 @@ def manifest_path() -> pathlib.Path:
     return SOURCE_MANIFEST
 
 
-def release_implementations(gradle: str) -> set[str]:
-    result: set[str] = set()
+def merged_manifest_permissions(path: pathlib.Path) -> list[str]:
+    root = ET.parse(path).getroot()
+    names: set[str] = set()
+    for tag in ("uses-permission", "uses-permission-sdk-23"):
+        for node in root.findall(tag):
+            name = node.attrib.get(f"{ANDROID_NS}name", "").strip()
+            if name:
+                names.add(name)
+    return sorted(names)
+
+
+def direct_release_modules_from_report(path: pathlib.Path) -> set[str]:
+    modules: set[str] = set()
+    root_dependency = re.compile(r"^(?:\+---|\\---)\s+([^\s]+)")
+    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        match = root_dependency.match(raw)
+        if not match:
+            continue
+        token = match.group(1)
+        if token.startswith("project"):
+            fail(f"unexpected project dependency on releaseRuntimeClasspath: {raw}")
+        parts = token.split(":")
+        if len(parts) < 2:
+            fail(f"could not parse direct release dependency: {raw}")
+        modules.add(f"{parts[0]}:{parts[1]}")
+    if not modules:
+        fail(f"no direct modules parsed from release runtime dependency report: {path}")
+    return modules
+
+
+def fallback_declared_modules(gradle: str) -> set[str]:
+    """Local fallback only; CI must supply the resolved release runtime report."""
+    alias_to_module = {
+        "libs.androidx.core.ktx": "androidx.core:core-ktx",
+        "libs.androidx.lifecycle.runtime.ktx": "androidx.lifecycle:lifecycle-runtime-ktx",
+        "libs.androidx.lifecycle.viewmodel.compose": "androidx.lifecycle:lifecycle-viewmodel-compose",
+        "libs.androidx.activity.compose": "androidx.activity:activity-compose",
+        "libs.androidx.navigation.compose": "androidx.navigation:navigation-compose",
+        "platform(libs.androidx.compose.bom)": "androidx.compose:compose-bom",
+        "libs.androidx.compose.ui": "androidx.compose.ui:ui",
+        "libs.androidx.compose.ui.graphics": "androidx.compose.ui:ui-graphics",
+        "libs.androidx.compose.ui.tooling.preview": "androidx.compose.ui:ui-tooling-preview",
+        "libs.androidx.compose.material3": "androidx.compose.material3:material3",
+        "platform(libs.firebase.bom)": "com.google.firebase:firebase-bom",
+        "libs.firebase.auth": "com.google.firebase:firebase-auth",
+    }
+    modules: set[str] = set()
+    dependency_call = re.compile(r"^([A-Za-z][A-Za-z0-9]*)Implementation\((.+)\)$|^implementation\((.+)\)$")
     for raw_line in gradle.splitlines():
         line = raw_line.strip()
-        if not line.startswith("implementation("):
+        match = dependency_call.fullmatch(line)
+        if not match:
             continue
-        match = re.fullmatch(r"implementation\((.+)\)", line)
-        if match:
-            result.add(match.group(1).strip())
-    return result
+        configuration = match.group(1)
+        expression = (match.group(2) or match.group(3)).strip()
+        if configuration and configuration.lower().startswith(("debug", "test", "androidtest")):
+            continue
+        module = alias_to_module.get(expression)
+        if module is None:
+            fail(f"unreviewed release-capable dependency declaration: {line}")
+        modules.add(module)
+    return modules
+
+
+def release_runtime_modules(gradle: str) -> set[str]:
+    report = os.environ.get("DIREKT_RELEASE_RUNTIME_DEPENDENCIES_PATH", "").strip()
+    require_report = os.environ.get("DIREKT_REQUIRE_RELEASE_RUNTIME_DEPENDENCIES", "false") == "true"
+    if report:
+        path = pathlib.Path(report)
+        if not path.is_absolute():
+            path = ROOT / path
+        path = path.resolve()
+        if not path.is_file():
+            fail(f"configured release runtime dependency report does not exist: {path}")
+        return direct_release_modules_from_report(path)
+    if require_report:
+        fail("CI requires DIREKT_RELEASE_RUNTIME_DEPENDENCIES_PATH from Gradle releaseRuntimeClasspath")
+    return fallback_declared_modules(gradle)
 
 
 def main() -> None:
@@ -130,20 +198,14 @@ def main() -> None:
             fail(f"Play listing contains prohibited trust/approval overclaim: {label}")
 
     inspected_manifest = manifest_path()
-    manifest_root = ET.parse(inspected_manifest).getroot()
-    manifest_permissions = sorted(
-        node.attrib.get(f"{ANDROID_NS}name", "")
-        for node in manifest_root.findall("uses-permission")
-        if node.attrib.get(f"{ANDROID_NS}name")
-    )
+    manifest_permissions = merged_manifest_permissions(inspected_manifest)
     inventory_permissions = sorted(
         item["name"] for item in permissions.get("declared_permissions", [])
     )
     if manifest_permissions != inventory_permissions:
         fail(
-            "permissions inventory does not match inspected release manifest: "
-            f"manifest={manifest_permissions}, inventory={inventory_permissions}, "
-            f"path={inspected_manifest}"
+            "permissions inventory does not match inspected release manifest including sdk-23 permissions: "
+            f"manifest={manifest_permissions}, inventory={inventory_permissions}, path={inspected_manifest}"
         )
     if manifest_permissions != ["android.permission.INTERNET"]:
         fail(
@@ -161,12 +223,12 @@ def main() -> None:
         if required not in gradle:
             fail(f"Android release source missing required invariant: {required}")
 
-    implementations = release_implementations(gradle)
-    unexpected = sorted(implementations - ALLOWED_IMPLEMENTATIONS)
-    missing = sorted(ALLOWED_IMPLEMENTATIONS - implementations)
+    release_modules = release_runtime_modules(gradle)
+    unexpected = sorted(release_modules - ALLOWED_RELEASE_DIRECT_MODULES)
+    missing = sorted(ALLOWED_RELEASE_DIRECT_MODULES - release_modules)
     if unexpected or missing:
         fail(
-            "Android implementation dependency surface changed without a reviewed Play/Data Safety update: "
+            "releaseRuntimeClasspath direct dependency surface changed without a reviewed Play/Data Safety update: "
             f"unexpected={unexpected}, missing={missing}"
         )
 
@@ -224,7 +286,7 @@ def main() -> None:
     print(f"release_channel={release.get('DIREKT_RELEASE_CHANNEL')}")
     print(f"manifest_source={inspected_manifest}")
     print(f"manifest_permissions={','.join(manifest_permissions)}")
-    print("implementation_dependencies=" + ",".join(sorted(implementations)))
+    print("release_direct_modules=" + ",".join(sorted(release_modules)))
     print("play_sensitive_permission_form_expected=false")
     print("data_safety_inventory_present=true")
     print("account_deletion_end_to_end=false")
