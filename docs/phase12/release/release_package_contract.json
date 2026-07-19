@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "status": "template-ready-no-release-created",
+  "tag_pattern": "android-v<versionName>",
+  "release_record_required_fields": [
+    "approved source commit SHA",
+    "release versionCode and versionName",
+    "release channel",
+    "signed AAB SHA-256",
+    "signing certificate/upload-key fingerprint evidence",
+    "CI exact-head gate results",
+    "Play policy/target API recheck date",
+    "Data Safety and privacy declaration versions",
+    "release notes",
+    "known risks/accepted defects",
+    "backend/API compatibility evidence",
+    "backup/restore evidence",
+    "monitoring and escalation evidence",
+    "support/verification staffing evidence",
+    "Play track and tester cohort",
+    "rollout stage/percentage and observation window",
+    "go/no-go approvers",
+    "rollback target and stop criteria"
+  ],
+  "release_notes_template": {
+    "title": "DIREKT Android <versionName>",
+    "sections": [
+      "What changed",
+      "Trust and privacy behavior",
+      "Known limitations",
+      "Migration or compatibility notes",
+      "Monitoring and rollback notes",
+      "Support and verification readiness"
+    ],
+    "prohibited_claims": [
+      "blanket verified provider claims",
+      "production readiness based only on synthetic evidence",
+      "legal/regulatory approval without evidence",
+      "payment availability while payments remain disabled"
+    ]
+  },
+  "track_sequence": [
+    "internal",
+    "closed",
+    "staged-production"
+  ],
+  "release_candidate_entry_gate": {
+    "phase11_exit_decision": "PROCEED required",
+    "global_release_gates": "all pass or explicitly accepted where plan permits",
+    "release_channel": "release-candidate or production",
+    "signed_aab": "required",
+    "reproducibility": "required for signed exact-source artifact",
+    "play_listing_data_safety": "final and submitted for the exact artifact",
+    "synthetic_preview_release_blocker": false,
+    "account_deletion_end_to_end": true,
+    "production_staffing_operational": true,
+    "production_monitoring_active": true,
+    "production_backup_restore_proven": true
+  },
+  "current_state": {
+    "tag_created": false,
+    "release_notes_published": false,
+    "signed_aab_created": false,
+    "play_track_created": false,
+    "formal_release_candidate_eligible": false
+  },
+  "boundary": "Creating a tag, GitHub release, signed artifact or Play release before the entry gate is satisfied is prohibited."
+}
