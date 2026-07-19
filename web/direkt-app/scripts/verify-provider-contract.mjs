@@ -126,7 +126,7 @@ requireMarkers(source.providerUi, [
 requireMarkers(source.interactionUi, [
   'fetch("/api/provider/state"',
   "contactDisplayHint",
-  "raw contact",
+  "Raw contact",
   "interaction.events",
 ]);
 requireMarkers(source.shell, ["ProviderJourneyExperience", "ProviderInteractionExperience", "providerModeAvailable", "W5 provider lifecycle"]);
