@@ -80,8 +80,21 @@ val releaseSigningEnabled = providers.environmentVariable("DIREKT_RELEASE_SIGNIN
     }
     .get()
 
+val injectedSigningOverrides = providers
+    .gradlePropertiesPrefixedBy("android.injected.signing.")
+    .get()
+require(injectedSigningOverrides.isEmpty()) {
+    "AGP android.injected.signing.* overrides are prohibited; use the DIREKT protected signing contract"
+}
+
 require(!releaseSigningEnabled || releaseChannel != "preauthorization") {
     "Signing is prohibited while DIREKT_RELEASE_CHANNEL=preauthorization"
+}
+
+@Suppress("DEPRECATION")
+val configurationCacheRequested = gradle.startParameter.isConfigurationCacheRequested
+require(!releaseSigningEnabled || !configurationCacheRequested) {
+    "Signed DIREKT release builds require --no-configuration-cache before protected signing inputs are read"
 }
 
 fun requiredSigningEnvironment(name: String): String =
