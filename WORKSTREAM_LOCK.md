@@ -6,51 +6,30 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED — Phase 12A preauthorization release engineering |
-| Owner/agent | OpenAI GPT-5.5 Thinking — Phase 12A release-readiness agent |
+| Status | RELEASED — Phase 12A preauthorization checkpoint complete |
+| Owner/agent | None — implementation lane available for the next explicitly authorized task |
 | Formal programme phase | Phase 11 — Controlled Zambia pilot and primary validation remains open |
-| Authorized engineering scope | Phase 12A preauthorization — production-safe Android release configuration, versioning, reproducible unsigned AAB packaging and protected-signing contract |
-| Task | Replace stale Phase 8 release identity with an auditable source-controlled preauthorization release contract; add strict version/signing validation; prove repeatable unsigned release packaging; keep real signing, Play upload, production traffic and Phase 12 authorization fail-closed |
-| Modules/paths | `android/direkt-app`, `.github/workflows/phase12-release-readiness.yml`, `docs/phase12`, `docs/architecture`, `PROJECT_STATUS.md`, `DECISION_LOG.md`, `WORKSTREAM_LOCK.md` |
-| Claimed at | 2026-07-19 after PR #128 synchronized the final Phase 12 preauthorization-readiness checkpoint |
-| Stable baseline | `f78a151ea77ced886fa3cb7dc3c045c1f8dd3895` on `main`; `build/android-v1` has identical effective tree and is 0 behind |
-| Governing issue | Issue #112 remains open; Phase 12A work is preauthorization engineering only |
+| Completed engineering scope | Phase 12A preauthorization — production-safe Android release configuration, versioning, reproducible unsigned AAB packaging and protected-signing contract |
+| Stable promotion | PR #129 merged to `main` at `48f6d2d212d64192819d76d67e157b25f8a5e98b` |
+| Branch synchronization | PR #130 forward-synchronized `main` to `build/android-v1` without file changes |
+| Governing issue | Issue #112 remains open; Phase 12A does not close Phase 11 |
 | Real-pilot authorization | BLOCKED until the explicit legal/privacy/provider/ownership/cohort/consent/support/device/stop gates are satisfied |
 | Production-release authorization | BLOCKED until real 11C–11H evidence, 11J `PROCEED`, and global release gates authorize formal Phase 12 |
-| Expected handoff | Promote only the bounded Phase 12A engineering checkpoint; do not close Issue #112 or represent the unsigned/preauthorization release artifacts as production-ready distribution evidence |
+| Next safe engineering candidate | Phase 12B preauthorization preparation of Play listing, permissions and Data Safety inventory; no Play submission or production activation without the governing gates |
 
-## Stable predecessor
+## Phase 12A completion evidence
 
-Phase 10 completed through PR #111 and Issue #41. Phase 11 repository-side synthetic/readiness engineering has been promoted through the current stable checkpoint, while real-participant execution remains externally gated.
-
-```text
-Phase 10 final managed source: 5d9313333c49d6501944e6ddba4cd408c540ff47
-Phase 10 promotion merge:       369fc72581b3ed27920b8fc949e32cfedf1ad8d9
-Phase 12A stable baseline:      f78a151ea77ced886fa3cb7dc3c045c1f8dd3895
-Issue #112:                     open — real controlled-pilot evidence pending
-```
-
-## Phase 12A preauthorization workstream
-
-Authorized now:
-
-- replace the stale Phase 8 Android release identity with a deliberate, source-controlled preauthorization version contract;
-- validate release version code/name/channel and package identity before building;
-- define protected signing inputs and an explicit signing enable latch without committing keys, passwords, tokens or service-account material;
-- keep default and PR release builds unsigned and non-publishable;
-- build the release AAB twice from the same source/configuration and require byte-for-byte SHA-256 equality before accepting reproducibility evidence;
-- package deterministic release metadata/checksums as short-lived CI evidence;
-- document the release-workflow decision, security boundary, migration path and formal activation requirements.
-
-Not authorized now:
-
-- injecting a real upload key or production signing secret into repository-visible configuration;
-- signing or distributing a production AAB;
-- Play Console upload or internal/closed/production track activation;
-- public Cloud Run/backend traffic;
-- real Firebase participant invitations/OTP;
-- changing `PILOT_ENTRY_APPROVED` or any production release latch;
-- treating Phase 12A evidence as `PRIMARY-PILOT`, formal Phase 12 authorization or production release evidence.
+- Source-controlled Android preauthorization identity: `12` / `0.12.0-preauth.1` / `preauthorization`.
+- Current preauthorization source cannot enable release signing.
+- Future release-candidate/production packaging is fail-closed unless the protected DIREKT signing contract is explicitly enabled.
+- Alternate Android Gradle Plugin injected-signing overrides are rejected.
+- Protected signing requires configuration cache to be disabled before signing credentials are consumed.
+- Keystore material must remain external to git and resolve outside the repository checkout.
+- Exact source provenance is verified before release evidence is built.
+- CI proves two clean release AAB builds are byte-for-byte identical.
+- Verified unsigned AAB SHA-256: `890b710f18ad7208b6db0e5668193a739052e010462d0beeddb8f752c14dd169`.
+- Exact Phase 12A head `468ab708b41b4b9ebcc0b6b007b613454caaee89` passed Android CI, Android performance, supply-chain/security, documentation and Phase 12A release-readiness gates.
+- No real signing key was configured; no signed AAB, Play upload, public traffic change or real-participant activation occurred.
 
 ## Phase 11 workstream still pending externally
 
@@ -69,11 +48,11 @@ Not authorized now:
 - Android and the operations portal use the canonical REST/OpenAPI backend; no client-only authorization or direct privileged database access.
 - Database changes are forward-only and checksummed; applied migrations are never edited.
 - Exact private coordinates, real evidence, protected contact data and secrets never enter public repository artifacts or telemetry.
-- Release signing remains fail-closed: absence of the explicit enable latch or any required protected input must never silently fall back to a partially signed release.
+- Release signing remains fail-closed and must never silently fall back to an unintended signed or unsigned artifact.
 - Public-repository CI must remain capable of proving the unsigned release contract with no production credentials.
-- No release workflow may publish or change production traffic under the Phase 12A preauthorization label.
+- No preauthorization workflow may publish to Play or change production traffic.
 - Phase 12 production release is not authorized until Phase 11 real evidence and the global release gates support it.
 
 ## Conflict rule
 
-No second agent may write to the listed Phase 12A paths while this lock is claimed. Read-only investigation is allowed. A stale or ambiguous lock must be resolved explicitly rather than overwritten by assumption.
+A new agent may claim the implementation lane only for an explicitly authorized next task and must update this file before making overlapping writes. Read-only investigation remains allowed.
