@@ -47,10 +47,20 @@ Signing requires all of the following conditions simultaneously:
    - `DIREKT_UPLOAD_KEYSTORE_PASSWORD`;
    - `DIREKT_UPLOAD_KEY_ALIAS`;
    - `DIREKT_UPLOAD_KEY_PASSWORD`;
-4. `DIREKT_UPLOAD_KEYSTORE_PATH` is an absolute path to a readable keystore materialized outside the repository checkout;
-5. the protected release workflow has explicit publishing authorization separate from signing authorization.
+4. the Gradle invocation explicitly disables configuration cache with `--no-configuration-cache` before any protected signing input is read;
+5. `DIREKT_UPLOAD_KEYSTORE_PATH` is an absolute path to a readable keystore materialized outside the repository checkout;
+6. no `android.injected.signing.*` Gradle property is present; AGP injected signing is prohibited so it cannot bypass or replace the DIREKT signing contract;
+7. the protected release workflow has explicit publishing authorization separate from signing authorization.
 
 Any missing condition is a hard failure. There is no silent fallback from an intended signed release to an unsigned artifact.
+
+## Configuration-cache boundary
+
+The normal unsigned Android build may continue using the repository's configuration-cache setting.
+
+A signed build is different because signing passwords are sensitive configuration inputs. DIREKT therefore refuses `DIREKT_RELEASE_SIGNING_ENABLED=true` while configuration cache is active. A future protected signing workflow must invoke Gradle with `--no-configuration-cache` for every task that configures or produces a signed release artifact.
+
+The configuration-cache refusal occurs before `DIREKT_UPLOAD_KEYSTORE_PASSWORD` or `DIREKT_UPLOAD_KEY_PASSWORD` is read by the build script.
 
 ## Key ownership model
 
@@ -64,7 +74,17 @@ The public repository must never contain:
 - production environment files;
 - a base64-encoded copy of any signing secret.
 
-A future authorized CI implementation must materialize the upload keystore into an ephemeral protected-runner path, preferably under the runner temporary directory, and remove it when the job ends. Repository checkout paths are prohibited for the protected keystore.
+A future authorized CI implementation must materialize the upload keystore into an ephemeral protected-runner path, preferably under the runner temporary directory, and remove it when the job ends. Repository checkout paths are prohibited for the protected keystore, including symlinked paths that resolve into the checkout.
+
+## Prohibited alternate signing paths
+
+The build rejects all Gradle properties with the prefix:
+
+```text
+android.injected.signing.
+```
+
+This prevents Android Gradle Plugin injected signing overrides from independently supplying a keystore, alias or passwords outside the DIREKT latch/channel contract. A future protected workflow must use only the explicit `DIREKT_*` signing inputs defined above.
 
 ## Preauthorization CI boundary
 
@@ -76,7 +96,13 @@ DIREKT_RELEASE_SIGNING_ENABLED=false
 
 It maps no upload-key secrets and fails if protected signing inputs appear in its environment or key material exists in the checkout. It may only produce an unsigned AAB labelled `PREAUTHORIZATION / NOT FOR DISTRIBUTION`.
 
-The workflow builds twice from a clean state with build cache disabled and accepts the artifact only when both AAB files are byte-for-byte identical and have the same SHA-256 digest.
+The workflow also proves the fail-closed boundary by asserting that:
+
+- an `android.injected.signing.*` override is rejected;
+- a simulated release-candidate with signing enabled is rejected while configuration cache remains active;
+- the source-controlled version file is restored unchanged before release lint/build execution.
+
+The workflow checks out and verifies the exact evidence source SHA, then builds twice from clean state with build cache disabled. It accepts the artifact only when both AAB files are byte-for-byte identical and have the same SHA-256 digest.
 
 ## Future protected workflow requirements
 
@@ -87,8 +113,10 @@ Before it can run, it must require:
 - formal Phase 12 authorization;
 - protected GitHub environment approval or equivalent owner-controlled release approval;
 - upload-key secrets scoped only to that environment;
-- exact source SHA pinning;
+- exact source SHA pinning and checkout verification;
 - source-controlled release identity validation;
+- `--no-configuration-cache` on every protected signed Gradle invocation;
+- rejection of all `android.injected.signing.*` override properties;
 - full mandatory regression/security/documentation gates;
 - signed AAB signature and SHA-256 evidence;
 - Play internal/closed-track authorization before any broader rollout;
