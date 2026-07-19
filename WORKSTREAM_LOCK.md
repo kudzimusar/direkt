@@ -11,8 +11,8 @@ This file prevents overlapping writes in the single-lane build process.
 | Authorized scope | Document and implement the real customer/provider web/PWA companion using the same canonical REST/OpenAPI backend, identity, authorization, trust, enquiry, review and commercial rules as Android; desktop replaces bottom navigation with side navigation while mobile retains bottom navigation |
 | Protected surface | `android/direkt-app/**` is regression-protected; no Android architecture, dependency, Gradle, release/signing or UI refactor is authorized by this workstream unless a separately reviewed compatibility fix is strictly required |
 | Implementation lane | `build/android-v1` — historical name retained; single sequential product lane |
-| Stable checkpoint | W3 closed on exact merged source `012a7b9c24e93087d823661298d051c08ea34ec0`; managed run `29703117963` PASS; Issue #133 contains sanitized evidence |
-| Current task | W4 — complete customer journey parity; W5 blocked until W4 closure evidence passes |
+| Stable checkpoint | W4 closed on exact merged source `61a6bce54bffcec545a2009ac353596ee1d69f83`; managed run `29704996877` PASS; exact-head contract/backend suites cover provider-mediated customer lifecycle states |
+| Current task | W5 — complete provider journey parity; W6 blocked until W5 closure evidence passes |
 | Governing plan | `docs/web/FUNCTIONAL_PWA_PARITY_IMPLEMENTATION_PLAN.md` |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized |
 | Governing issues | Issue #133 for customer/provider PWA/reconciliation; Issue #112 remains open for real pilot evidence/exit |
@@ -32,7 +32,8 @@ This file prevents overlapping writes in the single-lane build process.
 10. W2 managed evidence passed without exposing API/web publicly. The bounded canary reused `direkt-portal-runtime` only for the private synthetic exercise and bound no portal secret; this does not authorize public deployment.
 11. A dedicated least-privilege customer/provider web runtime identity is required before W8 public cutover.
 12. W3 browser authentication keeps session material HttpOnly and server-controlled, enforces CSRF/origin/session rotation/replay/expiry controls, and never derives provider scope or authorization from client-selected state or Firebase claims.
-13. W4 customer actions must remain backend-authoritative and use the same enquiry, contact-consent, interaction, review and complaint lifecycle rules as Android.
+13. W4 customer actions remain backend-authoritative and use the same enquiry, contact-consent, interaction, review and complaint lifecycle rules as Android. Managed customer evidence covers customer-controlled mutations; provider-mediated states remain protected and are verified by canonical lifecycle suites rather than fabricated authority.
+14. W5 provider workspace access must remain actor-resolved server-side. No browser-selected provider identifier may grant or widen provider scope.
 
 ## Active implementation sequence
 
@@ -40,8 +41,8 @@ This file prevents overlapping writes in the single-lane build process.
 - W1 — additive Next.js/React/TypeScript PWA shell, design system, responsive navigation, manifest/service-worker safety, BFF boundary and typed API foundation. **Closed.**
 - W2 — real public discovery vertical slice through canonical API contracts plus managed IAM-private evidence. **Closed — managed run `29694862350` PASS on `4b892b90c42239c81c4f9c6f8c9f5447519dd6f6`.**
 - W3 — browser authentication/account/session boundary. **Closed — managed run `29703117963` PASS on `012a7b9c24e93087d823661298d051c08ea34ec0`.**
-- W4 — complete customer journey parity. **Active; W5 blocked until W4 closure evidence passes.**
-- W5 — complete provider journey parity.
+- W4 — complete customer journey parity. **Closed — managed run `29704996877` PASS on `61a6bce54bffcec545a2009ac353596ee1d69f83`, with exact-head lifecycle contract/backend evidence for provider-mediated states.**
+- W5 — complete provider journey parity. **Active; W6 blocked until W5 closure evidence passes.**
 - W6 — commercial parity within currently authorized/gated payment boundaries.
 - W7 — cross-client parity, security, accessibility, responsive, offline/network and Android regression closure.
 - W8 — controlled route/deployment cutover only after parity evidence passes; preserve historical preview separately.
@@ -57,7 +58,8 @@ Do not merge or promote the functional PWA checkpoint if:
 - a real participant, legal, payment, production or release gate would need to be fabricated or bypassed;
 - parity is claimed from static fixtures instead of backend-observable state;
 - browser authentication would expose session credentials to JavaScript-readable storage, accept client-selected provider scope, skip CSRF/origin protections, or activate real participant access without the separate Phase 11 gates;
-- a W4 customer mutation could report success without authoritative backend acknowledgement or bypass canonical eligibility/consent rules.
+- a customer or provider mutation could report success without authoritative backend acknowledgement or bypass canonical eligibility, consent, revision or idempotency rules;
+- provider mode accepts a provider ID, role or scope selected by the browser.
 
 ## Conflict rule
 
