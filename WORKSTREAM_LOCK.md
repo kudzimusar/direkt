@@ -6,34 +6,35 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | RELEASED — no repository-write workstream currently claimed |
-| Owner/agent | Unclaimed |
-| Phase | Phase 11 remains open for real primary validation; formal Phase 12 remains blocked |
-| Task | No active repository write task |
-| Modules/paths | None claimed |
-| Released after | Final Phase 12 preauthorization closeout and branch synchronization through PRs #140 and #143 |
+| Status | RELEASED — all currently repository-clearable Phase 12 preauthorization work complete |
+| Owner/agent | None — lane available only for a new explicitly authorized task |
+| Formal programme phase | Phase 11 remains open; formal Phase 12 production release is not authorized |
+| Final implementation checkpoint | PR #140 merged to `main` at `8363e2196739f5bad2393eaa8896d4c43bd64e0f` |
+| Branch synchronization | PR #143 history-synchronized `main` to `build/android-v1` after final implementation hardening |
+| Governing issue | Issue #112 remains open |
+| Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates |
+| Further repository-only Phase 12 work | None should be marked complete merely by adding documents, toggling assertions or generating synthetic evidence |
 
-## Latest completed checkpoint
+## Final hardened controls
 
-- Final corrective source: `5cfaa6a1f4382e1fe0fad98480da7ead70037cab`.
-- Main merge: PR #140 at `8363e2196739f5bad2393eaa8896d4c43bd64e0f`.
-- Implementation-lane synchronization: PR #143 merge commit `e1e80df33b2e8d69e281ce6024397b54e2dc9cf5`.
-- Final Phase 12 preauthorization closeout source: `33bb4a6736afffe7fdc0340e7e7c463bf3c6ad45`.
-- Closeout status merge to `main`: `375ae23c10778fb20aa648d0a660874f85d7388f`.
-- `main` and `build/android-v1` are synchronized at the current effective tree.
-- Formal Phase 12 is **not** authorized.
-- Issue #112 remains open.
-
-## Preserved release controls
-
-- release identity remains source-controlled and validated;
+- formal release eligibility is checked during Gradle configuration and cannot be bypassed by excluding the verification task;
+- release runtime dependency inspection uses resolved selected targets and detects substitutions/project targets;
+- merged release permissions include both `uses-permission` and `uses-permission-sdk-23`;
+- permanent regression tests cover the high-risk release-policy bypasses;
 - all five formal release eligibility assertions remain false in preauthorization;
-- formal release eligibility is non-excludable from the protected task graph;
-- protected signing remains external and fail-closed;
-- no production signing key, signed AAB, Play upload or public production traffic was introduced;
-- Android runtime dependency/permission/Data Safety declarations remain current-source derived and CI-validated;
-- actual Phase 11 evidence, legal approval, production environment, account deletion, staffing, monitoring, Play execution and final release authorization remain external gates.
+- no production signing, Play publication, public traffic, participant/payment activation or production staffing claim was created.
+
+## Remaining genuine gates
+
+- real 11C–11H Zambia pilot evidence and 11J `PROCEED`;
+- required regulatory/legal/privacy approvals and final live policy versions;
+- production client cutover removing/isolation of synthetic preview surfaces;
+- end-to-end account deletion;
+- actual production environment and backup restore;
+- operational support/verification/on-call staffing and production monitoring;
+- authorized signed reproducible AAB, final Play declarations/assets/content rating and internal/closed testing;
+- formal go/no-go, staged rollout and final release record.
 
 ## Conflict rule
 
-The next write-capable agent must claim this file before changing source. Read-only investigation does not require a claim. Overlapping writes remain prohibited.
+A new agent may claim the lane only for an explicitly authorized next task and must update this file before overlapping writes. Read-only investigation is allowed.
