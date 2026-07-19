@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "status": "preauthorization-candidate",
+  "application_id": "com.kudzimusar.direkt",
+  "default_locale": "en-ZM",
+  "app_name": "DIREKT Local Services",
+  "short_description": "Find local service providers through clear, evidence-backed trust claims.",
+  "full_description": "DIREKT is a Zambia-focused local services marketplace designed to help customers understand what has actually been checked about a provider before making contact.\n\nSearch by service and area, compare provider profiles, and read scoped trust claims that state what was checked, what the claim means, and when it expires. DIREKT does not use a blanket verified badge simply because a provider registered or paid.\n\nProviders can maintain their service profile and, where the applicable workflow is approved, submit evidence for separate identity, business, qualification, experience or location checks. Authorized operations staff review those checks independently. Public users see only approved, limited claims rather than private source documents.\n\nDIREKT also supports tracked service enquiries, time-limited contact handoff consent, interaction history, eligible reviews, complaints and appeals. Commercial subscription status is kept separate from verification decisions, public trust claims and ranking.\n\nPrivacy is built into the marketplace model. Manual area search remains available, exact private provider locations and evidence are not public by default, and contact details are disclosed only through controlled consent-based flows.\n\nInitial availability is planned for a bounded Zambia launch. Features, areas and provider categories may remain limited while DIREKT completes controlled validation and operational readiness checks.",
+  "category_candidate": "BUSINESS",
+  "tags_candidate": [
+    "local services",
+    "marketplace"
+  ],
+  "contains_ads": false,
+  "monetization_state": "real-payments-disabled-preauthorization",
+  "target_market_initial": [
+    "ZM"
+  ],
+  "support": {
+    "email": null,
+    "email_status": "external-required-before-play-submission",
+    "phone": null,
+    "phone_status": "optional-unless-required-by-developer-account-or-support-model",
+    "website": null,
+    "website_status": "external-required-before-public-production",
+    "privacy_policy_url": null,
+    "privacy_policy_status": "blocked-until-qualified-zambia-review-and-approved-final-policy",
+    "account_deletion_url": null,
+    "account_deletion_status": "blocked-until-final-rights-workflow-and-public-request-route-are-approved"
+  },
+  "app_access": {
+    "restricted": true,
+    "reason": "Current controlled-pilot authentication is invite-only and fail-closed.",
+    "review_access_status": "play-console-test-access-required-before-submission",
+    "credential_rule": "Use dedicated non-production reviewer/test identities only; never provide real participant or operator credentials."
+  },
+  "asset_requirements": {
+    "play_icon": "512x512 32-bit PNG with alpha, maximum 1024 KB",
+    "feature_graphic": "1024x500 JPEG or 24-bit PNG without alpha",
+    "phone_screenshots_minimum": 2,
+    "recommended_phone_screenshots": 4,
+    "screenshot_rule": "Use actual release-candidate UI only, with synthetic or explicitly consented non-sensitive content; do not submit current preview imagery as production behavior if the release UI changes.",
+    "alt_text_required": true
+  },
+  "submission_boundary": "This file is repository-controlled preparation only. It is not evidence of Play Console submission, approval, production access or public release."
+}
