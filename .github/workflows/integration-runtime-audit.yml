@@ -60,7 +60,10 @@ jobs:
         with:
           python-version: "3.12"
       - name: Validate integration runtime contract
-        run: python scripts/verify-integration-runtime-contract.py | tee integration-runtime-contract.txt
+        shell: bash
+        run: |
+          set -o pipefail
+          python scripts/verify-integration-runtime-contract.py 2>&1 | tee integration-runtime-contract.txt
       - name: Validate public PWA JavaScript syntax
         run: |
           node --check web/direkt-pwa/app.js
