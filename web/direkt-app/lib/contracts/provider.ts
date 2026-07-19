@@ -20,8 +20,8 @@ export type EnquiryStatus =
 export interface ProviderWorkspaceCategoryView {
   categoryKey: string;
   categoryName: string;
-  requirementVersionId: string;
   requirementVersion: number;
+  status: "selected" | "removed";
   requiredRequirements: number;
   evidenceSubmitted: number;
   openCases: number;
