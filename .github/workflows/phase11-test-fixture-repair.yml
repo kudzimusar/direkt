@@ -24,8 +24,9 @@ jobs:
           cache: npm
           cache-dependency-path: backend/direkt-api/package-lock.json
       - name: Repair policy-version fixtures to satisfy canonical schema
-        shell: python
+        shell: bash
         run: |
+          python - <<'PY'
           from pathlib import Path
 
           paths = [
@@ -34,23 +35,23 @@ jobs:
               Path('backend/direkt-api/test/e2e/pilot-invitation.e2e.spec.ts'),
           ]
           old_columns = """         document_hash,
-         effective_at
-       ) VALUES ('pilot_participation_notice', $1, $2, now() - interval '1 minute')"""
+                   effective_at
+                 ) VALUES ('pilot_participation_notice', $1, $2, now() - interval '1 minute')"""
           new_columns = """         document_hash,
-         published_at,
-         effective_at
-       ) VALUES (
-         'pilot_participation_notice',
-         $1,
-         $2,
-         now() - interval '1 minute',
-         now() - interval '1 minute'
-       )"""
+                   published_at,
+                   effective_at
+                 ) VALUES (
+                   'pilot_participation_notice',
+                   $1,
+                   $2,
+                   now() - interval '1 minute',
+                   now() - interval '1 minute'
+                 )"""
           old_update = """       SET document_hash = EXCLUDED.document_hash,
-           effective_at = EXCLUDED.effective_at,"""
+                     effective_at = EXCLUDED.effective_at,"""
           new_update = """       SET document_hash = EXCLUDED.document_hash,
-           published_at = EXCLUDED.published_at,
-           effective_at = EXCLUDED.effective_at,"""
+                     published_at = EXCLUDED.published_at,
+                     effective_at = EXCLUDED.effective_at,"""
 
           for path in paths:
               text = path.read_text()
@@ -62,6 +63,7 @@ jobs:
                       raise SystemExit(f'Expected policy fixture update not found in {path}')
                   text = text.replace(old_update, new_update, 1)
               path.write_text(text)
+          PY
       - name: Format repaired fixtures
         working-directory: backend/direkt-api
         run: |
