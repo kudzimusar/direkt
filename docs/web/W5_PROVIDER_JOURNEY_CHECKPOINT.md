@@ -1,12 +1,13 @@
 # W5 — Provider Journey Parity Checkpoint
 
-**Status:** IMPLEMENTING — repository implementation under exact-head verification; managed provider canary required before closure  
+**Status:** CLOSED — managed synthetic provider canary PASS on exact merged source `79228f4bda96106b929aa6183613cb9d2dc127f6`  
+**Evidence:** trusted-main W5 result recorded by GitHub Actions on Issue #133 (`issuecomment-5017630247`); exact managed run link is preserved in that authoritative bot comment  
 **Workstream:** Functional Android/Web parity  
 **Governing plan:** `docs/web/FUNCTIONAL_PWA_PARITY_IMPLEMENTATION_PLAN.md`
 
-## Implemented browser boundary
+## Closed browser boundary
 
-The W5 functional web client now uses only actor-resolved provider APIs and reviewed same-origin BFF routes for:
+The W5 functional web client uses only actor-resolved provider APIs and reviewed same-origin BFF routes for:
 
 - provider workspace/readiness and verification timeline;
 - profile, operating model, service selection/removal, availability and location/service-area configuration;
@@ -18,7 +19,7 @@ The W5 functional web client now uses only actor-resolved provider APIs and revi
 - account/session security inherited from closed W3;
 - actor-resolved commercial/subscription state as read-only W5 context pending W6 commercial mutation closure.
 
-## Security and privacy invariants
+## Security and privacy invariants retained
 
 - No browser action accepts provider ID, representative role or provider scope from client input.
 - Provider ownership/scope is resolved by backend authorization with `providerFromActor: true`.
@@ -31,19 +32,28 @@ The W5 functional web client now uses only actor-resolved provider APIs and revi
 - No provider mutation creates verification, publication or ranking authority in the browser.
 - W5 commercial state remains read-only; real money movement remains disabled.
 
-## Managed W5 closure evidence required
+## Closure evidence reconciliation
 
-W5 is CLOSED only after exact reviewed source proves in managed synthetic staging:
+The trusted-main W5 managed provider canary passed on exact merged source `79228f4bda96106b929aa6183613cb9d2dc127f6`. The managed evidence established:
 
-1. an authenticated provider identity resolves exactly one actor-scoped workspace without a client provider ID;
-2. provider workspace/readiness, timeline, interactions, masked handoff state, reviews and commercial state are readable through the web BFF;
-3. a reversible provider profile or availability mutation is durably observable through the canonical API/web state;
-4. private evidence upload intent creation is idempotent/recoverable and interruption/retry does not leak private object keys;
-5. enquiry transition uses expected revision and remains provider-scoped;
-6. review response/appeal paths preserve moderation/trust boundaries where applicable synthetic fixtures exist;
-7. no raw contact/private evidence/private coordinates appear in browser-safe provider projections;
-8. unauthenticated direct API/web access remains denied by Cloud Run IAM;
-9. temporary canary Invoker grants are removed;
-10. Android protected-path and repository regression gates remain green.
+1. a synthetic authenticated provider identity resolved its own actor-scoped workspace without any browser-supplied provider ID;
+2. workspace/readiness, verification timeline, tracked interactions, masked handoff state, reviews and commercial state were available through the reviewed web BFF projections;
+3. reversible provider profile and availability mutations were durably observable through authoritative backend/web state;
+4. provider projections passed private-field scanning for raw contact, private coordinates, private object keys and privileged literals;
+5. recoverable upload-intent behavior remained idempotent/retryable when an applicable verification case existed, while non-applicable fixture paths were not fabricated as PASS;
+6. enquiry/review mutation coverage remained explicitly fixture-dependent where the generated synthetic provider had no applicable enquiry/review record; canonical exact-head lifecycle suites and static W5 contract checks continue to enforce revision/policy/trust boundaries;
+7. unauthenticated direct API and web access remained denied by Cloud Run IAM;
+8. temporary canary Invoker grants were removed after the run;
+9. exact-head W2–W5 TypeScript/contract/build gates and Android protected-path checks were green before promotion;
+10. no Android source, Gradle, Compose, Firebase Android, signing or release-policy file changed in W5.
 
-Capabilities without an applicable managed synthetic fixture must remain explicitly GATED/NOT-APPLICABLE in the parity evidence rather than being fabricated as PASS.
+## Scope carried forward to W6
+
+W6 may now implement commercial parity only within the currently authorized commercial boundary:
+
+- product catalogue and entitlements;
+- subscription creation/status/cancellation using canonical actor-resolved provider scope;
+- invoice/payment-intent/receipt lifecycle where already supported by the backend;
+- synthetic/disabled payment-provider behavior only.
+
+Real MTN/Airtel money movement, production payment credentials, real participants and formal Phase 12 production release remain separately gated and must not be inferred from W5 closure.
