@@ -1,6 +1,6 @@
 site_name: DIREKT
-site_description: Android-first verified local service marketplace for Zambia
-site_url: https://kudzimusar.github.io/direkt/
+site_description: Android-first verified local service marketplace for Zambia with a responsive customer/provider PWA
+site_url: https://direkt.forum/
 repo_url: https://github.com/kudzimusar/direkt
 repo_name: kudzimusar/direkt
 docs_dir: _pages_src
