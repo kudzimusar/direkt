@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "status": "requirements-defined-not-operational",
+  "production_staffing_claim": false,
+  "required_roles": [
+    {"role":"release_owner","minimum":1,"status":"evidence-pending"},
+    {"role":"incident_on_call_owner","minimum":1,"status":"evidence-pending"},
+    {"role":"support_lead","minimum":1,"status":"evidence-pending"},
+    {"role":"verification_operations_lead","minimum":1,"status":"evidence-pending"},
+    {"role":"independent_verification_reviewers","minimum":2,"status":"evidence-pending"},
+    {"role":"security_privacy_escalation_owner","minimum":1,"status":"evidence-pending"},
+    {"role":"backend_platform_on_call","minimum":1,"status":"evidence-pending"},
+    {"role":"zambia_field_verification_lead","minimum":1,"status":"required-only-if-field-claims-enabled"}
+  ],
+  "operational_requirements": [
+    "named accountable assignees for each required production role",
+    "private contact and escalation roster",
+    "launch observation-window coverage schedule",
+    "least-privilege role access tested",
+    "verification calibration and training evidence",
+    "incident and support exercise evidence",
+    "capacity plan tied to rollout volume",
+    "four-eyes controls preserved for trust-affecting actions"
+  ],
+  "field_rule": "Field-visited or equivalent claims remain disabled until a Zambia-based field lead is formally appointed, trained and access-tested.",
+  "boundary": "This is a readiness contract only. It does not claim that production support or verification staffing is operational."
+}
