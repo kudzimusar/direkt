@@ -2,12 +2,12 @@
 
 **Status:** Active implementation control  
 **Owner:** Functional PWA parity workstream  
-**Baseline:** current synchronized `main` after PR #152
+**Baseline:** W0/W1 stable checkpoint merged through PR #153 and synchronized by PR #154
 
 ## Status legend
 
 - `PASS` — implemented and evidenced on both applicable clients against authoritative backend state.
-- `IMPLEMENTING` — active work in current W-stage.
+- `IMPLEMENTING` — active work in current W-stage; repository implementation may exist but required runtime/managed evidence is not yet complete.
 - `API_READY` — canonical backend/OpenAPI capability exists; browser implementation pending.
 - `GATED` — implementation may exist but real activation requires separate legal/provider/production evidence.
 - `PREVIEW_ONLY` — current Android or synthetic PWA presentation exists but is not yet a fully backend-backed equivalent.
@@ -17,12 +17,12 @@
 
 | Capability | Android current truth | Canonical backend/API | Functional Web/PWA target | Status |
 |---|---|---|---|---|
-| Product identity/design tokens | Implemented | N/A | Same DIREKT visual language | IMPLEMENTING |
-| Customer/provider navigation | Implemented | N/A | Same destinations; mobile bottom nav, desktop side nav | IMPLEMENTING |
-| Responsive desktop/tablet/mobile | Android native phone/tablet behavior | N/A | Required | IMPLEMENTING |
-| Installable PWA | N/A | N/A | Required | IMPLEMENTING |
-| Offline-safe static shell | Android native app shell | N/A | Required; no fake offline mutation success | IMPLEMENTING |
-| Canonical REST/OpenAPI boundary | Partial client integration; canonical backend exists | Active | Required | IMPLEMENTING |
+| Product identity/design tokens | Implemented | N/A | Same DIREKT visual language | PASS |
+| Customer/provider navigation | Implemented | N/A | Same destinations; mobile bottom nav, desktop side nav | PASS |
+| Responsive desktop/tablet/mobile | Android native phone/tablet behavior | N/A | Required | PASS |
+| Installable PWA | N/A | N/A | Required | PASS |
+| Offline-safe static shell | Android native app shell | N/A | Required; no fake offline mutation success | PASS |
+| Canonical REST/OpenAPI boundary | Partial client integration; canonical backend exists | Active | Required | PASS foundation; W2+ capabilities staged incrementally |
 | Direct privileged Supabase access | Prohibited | Prohibited | Prohibited | PASS |
 | Backend-authoritative roles/provider scope | Required | Active | Required | API_READY |
 
@@ -46,18 +46,20 @@
 
 | Capability | Android current truth | Canonical backend/API | Functional Web/PWA target | Status |
 |---|---|---|---|---|
-| Category list | Implemented/preview-backed depending path | `/public/categories` | Real API-backed | API_READY |
-| Manual area selection | Product requirement; active fallback | search/location contracts | Required | API_READY |
-| Provider search | Implemented/preview-backed depending path | `/public/providers/search` | Real API-backed | API_READY |
-| Search filters | Product requirement | canonical query contract | Required | API_READY |
-| Provider result cards | Implemented | public provider projection | Required | API_READY |
-| Provider profile | Implemented | `/public/providers/{id}` | Required | API_READY |
-| Scoped trust claims | Implemented semantics | `/public/providers/{id}/claims` | Required | API_READY |
-| Availability | Implemented | `/public/providers/{id}/availability` | Required | API_READY |
-| Public reviews | Implemented semantics | `/public/providers/{id}/reviews` | Required | API_READY |
-| Share projection | Contract exists | `/public/providers/{id}/share` | Required where UX supports it | API_READY |
-| Saved providers | Android UX exists | verify/extend canonical save contract before mutation | Required | PREVIEW_ONLY |
+| Category list | Implemented/preview-backed depending path | `/public/categories` | Real API-backed | IMPLEMENTING |
+| Manual area selection | Product requirement; active fallback | search/location contracts | Required | IMPLEMENTING |
+| Provider search | Implemented/preview-backed depending path | `/public/providers/search` | Real API-backed | IMPLEMENTING |
+| Search filters | Product requirement | canonical query contract | Required | IMPLEMENTING |
+| Provider result cards | Implemented | public provider projection | Required | IMPLEMENTING |
+| Provider profile | Implemented | `/public/providers/{id}` | Required | IMPLEMENTING |
+| Scoped trust claims | Implemented semantics | `/public/providers/{id}/claims` | Required | IMPLEMENTING |
+| Availability | Implemented | `/public/providers/{id}/availability` | Required | IMPLEMENTING |
+| Public reviews | Implemented semantics | `/public/providers/{id}/reviews` | Required | IMPLEMENTING |
+| Share projection | Contract exists | `/public/providers/{id}/share` | Required where UX supports it | IMPLEMENTING |
+| Saved providers | Android UX exists | canonical save contract | Required | PREVIEW_ONLY |
 | Map view | Synthetic/privacy-safe | Maps runtime unproven | Preserve list/manual fallback; no Maps activation in this workstream | GATED |
+
+W2 repository implementation for the `IMPLEMENTING` rows above is recorded in `docs/web/W2_PUBLIC_DISCOVERY_CHECKPOINT.md`. They remain `IMPLEMENTING`, not `PASS`, until managed IAM-private runtime/canary evidence proves backend state changes are observable through the web client without privacy leakage.
 
 ## Customer enquiries and interactions
 
@@ -136,6 +138,8 @@
 - workstream lock is claimed;
 - project status/master plan/readme/index point to this workstream.
 
+**Status:** complete and merged through PR #153.
+
 ### W1 complete when
 
 - `web/direkt-app/` builds and typechecks;
@@ -146,7 +150,19 @@
 - no privileged material enters browser output;
 - Android regression gate remains green.
 
-### W2–W6 complete when
+**Status:** complete and merged through PR #153; branch synchronized by PR #154.
+
+### W2 complete when
+
+- public categories/search/results/profile/claims/availability/reviews/share use canonical backend state;
+- backend-managed test publication changes are observable in the browser client;
+- public projections remain privacy-safe;
+- manual/list fallback remains first-class;
+- exact-head CI/review and managed IAM-private canary evidence pass.
+
+**Status:** repository implementation active; managed runtime/canary evidence pending.
+
+### W3–W6 complete when
 
 Each capability moves from `API_READY`/`GATED`/`PREVIEW_ONLY` to `PASS` only with backend-observable evidence and applicable security tests.
 
