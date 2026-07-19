@@ -110,8 +110,9 @@ describe('Phase 11 Firebase pilot consent withdrawal', () => {
          identity_id,
          policy_version_id,
          status,
+         revoked_at,
          source
-       ) VALUES ($1, $2, 'revoked', 'phase11_withdrawal_test')`,
+       ) VALUES ($1, $2, 'revoked', now(), 'phase11_withdrawal_test')`,
       [first.identityId, policyVersionId],
     );
 
