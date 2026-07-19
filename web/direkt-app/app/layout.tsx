@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { PwaRegistration } from "@/components/pwa-registration";
 import "./globals.css";
 import "./discovery.css";
+import "./account.css";
 
 export const metadata: Metadata = {
   title: {

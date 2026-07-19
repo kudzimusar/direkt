@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { AccountExperience } from "@/components/account-experience";
 import {
   CustomerDiscoveryExperience,
   type DiscoveryBootstrap,
@@ -40,6 +41,7 @@ export function DirektAppShell({
 }) {
   const [mode, setMode] = useState<DirektMode>("customer");
   const [destination, setDestination] = useState<DirektDestination>(initialDestination);
+  const [providerModeAvailable, setProviderModeAvailable] = useState(false);
 
   const heading = useMemo(
     () => destinationHeading(mode, destination),
@@ -47,50 +49,59 @@ export function DirektAppShell({
   );
   const foundation = mode === "customer" ? customerFoundation : providerFoundation;
   const showDiscovery = mode === "customer" && destination === "discover";
+  const showAccount = destination === "account";
 
   const switchMode = (nextMode: DirektMode) => {
+    if (nextMode === "provider" && !providerModeAvailable) {
+      setDestination("account");
+      return;
+    }
     setMode(nextMode);
     setDestination(nextMode === "customer" ? "discover" : "account");
+  };
+
+  const updateProviderAvailability = (available: boolean) => {
+    setProviderModeAvailable(available);
+    if (!available && mode === "provider") {
+      setMode("customer");
+      setDestination("account");
+    }
   };
 
   return (
     <div className="app-frame" data-mode={mode}>
       <aside className="desktop-side-nav" aria-label="Primary">
         <Brand />
-        <ModeControl mode={mode} onChange={switchMode} compact={false} />
-        <Navigation
+        <ModeControl
           mode={mode}
-          destination={destination}
-          onNavigate={setDestination}
-          surface="side"
+          onChange={switchMode}
+          compact={false}
+          providerEnabled={providerModeAvailable}
         />
+        <Navigation mode={mode} destination={destination} onNavigate={setDestination} surface="side" />
         <div className="side-note">
           <span className="status-dot" aria-hidden="true" />
           <div>
             <strong>Functional PWA workstream</strong>
-            <p>W2 discovery · backend authority unchanged</p>
+            <p>W3 account/session · backend authority unchanged</p>
           </div>
         </div>
       </aside>
 
       <aside className="tablet-rail" aria-label="Primary">
-        <div className="rail-brand" aria-label="DIREKT">
-          D
-        </div>
-        <Navigation
-          mode={mode}
-          destination={destination}
-          onNavigate={setDestination}
-          surface="rail"
-        />
+        <div className="rail-brand" aria-label="DIREKT">D</div>
+        <Navigation mode={mode} destination={destination} onNavigate={setDestination} surface="rail" />
       </aside>
 
       <div className="app-content-column">
         <header className="top-bar">
-          <div className="mobile-brand-row">
-            <Brand compact />
-          </div>
-          <ModeControl mode={mode} onChange={switchMode} compact />
+          <div className="mobile-brand-row"><Brand compact /></div>
+          <ModeControl
+            mode={mode}
+            onChange={switchMode}
+            compact
+            providerEnabled={providerModeAvailable}
+          />
         </header>
 
         <main id="main-content" className="main-content" tabIndex={-1}>
@@ -100,37 +111,34 @@ export function DirektAppShell({
               <h1 id="page-title">{heading.title}</h1>
               <p>{heading.summary}</p>
             </div>
-            <span className="foundation-chip">{showDiscovery ? "W2 discovery" : "Parity foundation"}</span>
+            <span className="foundation-chip">
+              {showDiscovery ? "W2 closed" : showAccount ? "W3 account" : "Parity foundation"}
+            </span>
           </section>
 
           <section className="boundary-banner" aria-label="Implementation boundary">
-            <div className="boundary-icon" aria-hidden="true">
-              ✓
-            </div>
+            <div className="boundary-icon" aria-hidden="true">✓</div>
             <div>
               <strong>Same DIREKT product. Server authority stays canonical.</strong>
               <p>
-                Public discovery can now use canonical backend projections through specific same-origin
-                BFF routes. This browser surface still does not grant roles, provider scope,
-                verification state, participant access or production authorization.
+                Discovery is backend-backed. W3 account sessions use specific same-origin BFF routes,
+                HttpOnly rotating credentials, CSRF/origin checks and backend-resolved provider access.
+                Real participant admission and production authorization remain separately gated.
               </p>
             </div>
           </section>
 
           {showDiscovery ? (
             <CustomerDiscoveryExperience bootstrap={discoveryBootstrap} />
+          ) : showAccount ? (
+            <AccountExperience onProviderAvailabilityChange={updateProviderAvailability} />
           ) : (
             <FoundationContent headingTitle={heading.title} foundation={foundation} mode={mode} />
           )}
         </main>
 
         <nav className="mobile-bottom-nav" aria-label="Primary">
-          <Navigation
-            mode={mode}
-            destination={destination}
-            onNavigate={setDestination}
-            surface="bottom"
-          />
+          <Navigation mode={mode} destination={destination} onNavigate={setDestination} surface="bottom" />
         </nav>
       </div>
     </div>
@@ -150,24 +158,15 @@ function FoundationContent({
     <section className="content-grid" aria-label="Functional parity foundation">
       <article className="surface-card primary-card">
         <div className="card-header">
-          <div>
-            <p className="eyebrow">Parity target</p>
-            <h2>{headingTitle}</h2>
-          </div>
-          <span className="trust-mark" aria-label="Backend-authoritative">
-            API
-          </span>
+          <div><p className="eyebrow">Parity target</p><h2>{headingTitle}</h2></div>
+          <span className="trust-mark" aria-label="Backend-authoritative">API</span>
         </div>
         <p className="card-copy">
-          Public discovery is the first connected vertical slice. Authentication, saved providers,
-          enquiries, evidence and commercial mutations remain fail-closed until their documented stages.
+          W2 discovery is closed with managed evidence. W3 account/session is the active stage;
+          saved providers, enquiries, evidence and commercial mutations remain fail-closed until their stages close.
         </p>
         <div className="progress-row" aria-label="Workstream progress">
-          <span>W2</span>
-          <div className="progress-track" aria-hidden="true">
-            <span className="progress-fill" />
-          </div>
-          <span>W8</span>
+          <span>W3</span><div className="progress-track" aria-hidden="true"><span className="progress-fill" /></div><span>W8</span>
         </div>
       </article>
 
@@ -187,29 +186,22 @@ function FoundationContent({
         <h2>{mode === "customer" ? "Customer journey" : "Provider journey"}</h2>
         <div className="capability-grid">
           {foundation.map((item) => (
-            <div className="capability-item" key={item}>
-              <span aria-hidden="true">→</span>
-              <span>{item}</span>
-            </div>
+            <div className="capability-item" key={item}><span aria-hidden="true">→</span><span>{item}</span></div>
           ))}
         </div>
       </article>
 
       <article className="surface-card wide-card architecture-card">
         <p className="eyebrow">Authority chain</p>
-        <h2>Client → OpenAPI → NestJS → data</h2>
+        <h2>Client → reviewed BFF → NestJS → data</h2>
         <div className="authority-chain" aria-label="DIREKT authority chain">
           <span>{mode === "customer" ? "Customer Web/PWA" : "Provider Web/PWA"}</span>
-          <b aria-hidden="true">→</b>
-          <span>Reviewed BFF</span>
-          <b aria-hidden="true">→</b>
-          <span>Canonical API</span>
-          <b aria-hidden="true">→</b>
-          <span>PostgreSQL / PostGIS / Private Storage</span>
+          <b aria-hidden="true">→</b><span>Reviewed BFF</span>
+          <b aria-hidden="true">→</b><span>Canonical API</span>
+          <b aria-hidden="true">→</b><span>PostgreSQL / PostGIS / Private Storage</span>
         </div>
         <p className="card-copy">
-          The browser never becomes the database, authorization or trust authority and never receives
-          privileged Supabase credentials.
+          The browser never becomes the database, authorization or trust authority and never receives privileged Supabase credentials or DIREKT refresh tokens.
         </p>
       </article>
     </section>
@@ -219,13 +211,8 @@ function FoundationContent({
 function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <div className={compact ? "brand compact" : "brand"} aria-label="DIREKT">
-      <span className="brand-mark" aria-hidden="true">
-        D
-      </span>
-      <span>
-        <strong>DIREKT</strong>
-        {!compact && <small>Evidence-backed local services</small>}
-      </span>
+      <span className="brand-mark" aria-hidden="true">D</span>
+      <span><strong>DIREKT</strong>{!compact && <small>Evidence-backed local services</small>}</span>
     </div>
   );
 }
@@ -234,26 +221,33 @@ function ModeControl({
   mode,
   onChange,
   compact,
+  providerEnabled,
 }: {
   mode: DirektMode;
   onChange: (mode: DirektMode) => void;
   compact: boolean;
+  providerEnabled: boolean;
 }) {
   return (
     <div className={compact ? "mode-control compact" : "mode-control"}>
       {!compact && <span className="mode-label">Surface</span>}
       <div className="segmented-control" role="group" aria-label="Product surface">
-        {(["customer", "provider"] as const).map((value) => (
-          <button
-            key={value}
-            type="button"
-            className={mode === value ? "active" : ""}
-            aria-pressed={mode === value}
-            onClick={() => onChange(value)}
-          >
-            {value === "customer" ? "Customer" : "Provider"}
-          </button>
-        ))}
+        {(["customer", "provider"] as const).map((value) => {
+          const disabled = value === "provider" && !providerEnabled;
+          return (
+            <button
+              key={value}
+              type="button"
+              className={mode === value ? "active" : ""}
+              aria-pressed={mode === value}
+              disabled={disabled}
+              title={disabled ? "Sign in with an authorized provider account to open provider mode" : undefined}
+              onClick={() => onChange(value)}
+            >
+              {value === "customer" ? "Customer" : "Provider"}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -283,9 +277,7 @@ function Navigation({
             aria-current={active ? "page" : undefined}
             onClick={() => onNavigate(item.id)}
           >
-            <span className="nav-glyph" aria-hidden="true">
-              {item.glyph}
-            </span>
+            <span className="nav-glyph" aria-hidden="true">{item.glyph}</span>
             {surface !== "rail" && <span>{surface === "bottom" ? item.shortLabel : label}</span>}
             {surface === "rail" && <span className="sr-only">{label}</span>}
           </button>
