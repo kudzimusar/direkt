@@ -79,17 +79,21 @@ function sha256(value: string): string {
 }
 
 function requireSyntheticActivation(): void {
-  const dataMode = process.env.DIREKT_DATA_MODE ?? 'synthetic-only';
+  const dataMode = process.env.DIREKT_DATA_MODE;
   const activation = process.env.PHASE11_SYNTHETIC_PILOT_ACTIVATION;
-  const pilotEntryApproved = process.env.PILOT_ENTRY_APPROVED?.toLowerCase() === 'true';
+  const pilotEntryApproved = process.env.PILOT_ENTRY_APPROVED;
   if (process.env.NODE_ENV === 'production') {
     throw new Error('Phase 11 synthetic pilot seeding is prohibited in NODE_ENV=production.');
   }
   if (dataMode !== 'synthetic-only') {
-    throw new Error('Phase 11 synthetic pilot seeding requires DIREKT_DATA_MODE=synthetic-only.');
+    throw new Error(
+      'Phase 11 synthetic pilot seeding requires explicit DIREKT_DATA_MODE=synthetic-only.',
+    );
   }
-  if (pilotEntryApproved) {
-    throw new Error('Synthetic pilot seeding refuses PILOT_ENTRY_APPROVED=true.');
+  if (pilotEntryApproved !== 'false') {
+    throw new Error(
+      'Phase 11 synthetic pilot seeding requires explicit PILOT_ENTRY_APPROVED=false.',
+    );
   }
   if (activation !== 'true') {
     throw new Error(
@@ -339,15 +343,22 @@ async function seedProvider(
   }
 
   for (const requirement of requirements.rows) {
-    const caseId = deterministicUuid(
-      '11040000',
-      globalIndex * 10 + requirements.rows.indexOf(requirement) + 1,
+    const lifecycleIndex = globalIndex * 10 + requirements.rows.indexOf(requirement) + 1;
+    const caseId = deterministicUuid('11040000', lifecycleIndex);
+    const uploadSessionId = deterministicUuid('11080000', lifecycleIndex);
+    const evidenceId = deterministicUuid('11081000', lifecycleIndex);
+    const evidenceVersionId = deterministicUuid('11082000', lifecycleIndex);
+    const objectKey = `private/${providerId}/${uploadSessionId}/${evidenceVersionId}`;
+    const evidenceSha256 = sha256(
+      `phase11-synthetic-evidence:${providerId}:${requirement.requirement_key}`,
     );
+    const documentType = `${requirement.requirement_key}_fixture`;
+
     await client.query(
       `INSERT INTO verification.cases (
-         id, provider_id, category_id, requirement_version_id, requirement_id,
-         check_key, check_family, status, policy_version, created_by_identity_id
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'in_review', $8, $9)`,
+       id, provider_id, category_id, requirement_version_id, requirement_id,
+       check_key, check_family, policy_version, created_by_identity_id
+     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [
         caseId,
         providerId,
@@ -363,15 +374,108 @@ async function seedProvider(
       ],
     );
     await client.query(
+      `UPDATE verification.cases
+     SET status = 'awaiting_evidence'
+     WHERE id = $1 AND status = 'draft'`,
+      [caseId],
+    );
+
+    await client.query(
+      `INSERT INTO evidence.upload_sessions (
+       id, provider_id, requirement_id, created_by_identity_id, evidence_class,
+       document_type, object_key, expected_content_type, max_bytes,
+       consent_confirmed, status, expires_at, completed_at
+     ) VALUES (
+       $1, $2, $3, $4, $5, $6, $7, 'application/pdf', 4096,
+       true, 'completed', now() + interval '1 hour', now()
+     )`,
+      [
+        uploadSessionId,
+        providerId,
+        requirement.id,
+        ownerIdentityId,
+        requirement.requirement_kind,
+        documentType,
+        objectKey,
+      ],
+    );
+    await client.query(
+      `INSERT INTO evidence.items (
+       id, provider_id, requirement_id, submitted_by_identity_id, status, retention_class
+     ) VALUES ($1, $2, $3, $4, 'processing', 'short')`,
+      [evidenceId, providerId, requirement.id, ownerIdentityId],
+    );
+    await client.query(
+      `INSERT INTO evidence.versions (
+       id, evidence_id, version_number, upload_session_id, object_key, evidence_class,
+       document_type, content_type, size_bytes, sha256, processing_status,
+       submitted_by_identity_id
+     ) VALUES (
+       $1, $2, 1, $3, $4, $5, $6, 'application/pdf', 2048, $7, 'clean', $8
+     )`,
+      [
+        evidenceVersionId,
+        evidenceId,
+        uploadSessionId,
+        objectKey,
+        requirement.requirement_kind,
+        documentType,
+        evidenceSha256,
+        ownerIdentityId,
+      ],
+    );
+    await client.query(
+      `UPDATE evidence.items
+     SET current_version_id = $2, status = 'ready_for_review'
+     WHERE id = $1 AND status = 'processing'`,
+      [evidenceId, evidenceVersionId],
+    );
+    await client.query(
+      `INSERT INTO verification.case_evidence (case_id, evidence_id, linked_by_identity_id)
+     VALUES ($1, $2, $3)`,
+      [caseId, evidenceId, ownerIdentityId],
+    );
+    await client.query(
+      `UPDATE verification.cases
+     SET status = 'ready_for_review'
+     WHERE id = $1 AND status = 'awaiting_evidence'`,
+      [caseId],
+    );
+    await client.query(
       `INSERT INTO verification.assignments (
-         case_id, assignee_identity_id, assignment_kind, assigned_by_identity_id, reason
-       ) VALUES ($1, $2, 'reviewer', $2, $3)`,
+       case_id, assignee_identity_id, assignment_kind, assigned_by_identity_id, reason
+     ) VALUES ($1, $2, 'reviewer', $2, $3)`,
       [caseId, REVIEWER_ID, 'Independent Phase 11 synthetic review assignment'],
     );
     await client.query(
+      `UPDATE verification.cases
+     SET status = 'assigned'
+     WHERE id = $1 AND status = 'ready_for_review'`,
+      [caseId],
+    );
+    await client.query(
+      `UPDATE verification.cases
+     SET status = 'in_review'
+     WHERE id = $1 AND status = 'assigned'`,
+      [caseId],
+    );
+    await client.query(
+      `INSERT INTO verification.recommendations (
+       case_id, reviewer_identity_id, result, reason_code, rationale,
+       limitation, recommended_valid_until
+     ) VALUES ($1, $2, 'approve', 'CHECK_PASSED', $3, $4, $5)`,
+      [
+        caseId,
+        REVIEWER_ID,
+        `Synthetic reviewer recommendation for ${requirement.requirement_key}; functional validation only.`,
+        'Synthetic-only evidence fixture; no real-world competence, licence, identity or field-visit guarantee.',
+        CLAIM_VALID_UNTIL,
+      ],
+    );
+    await client.query(
       `SELECT verification.record_decision(
-         $1, $2, 'approved', 'CHECK_PASSED', $3, $4, $5, $6, $7, $8
-       )`,
+       $1, $2, 'approved', 'CHECK_PASSED', $3, $4, $5, $6, $7, $8
+     )`,
       [
         caseId,
         REVIEWER_ID,
@@ -576,6 +680,13 @@ async function validateSyntheticCohort(client: PoolClient): Promise<Record<strin
     consents: string;
     publications: string;
     cases: string;
+    approved_cases: string;
+    upload_sessions: string;
+    evidence_items: string;
+    evidence_versions: string;
+    case_evidence_links: string;
+    assignments: string;
+    recommendations: string;
     claims: string;
     enquiries: string;
     completed_interactions: string;
@@ -590,6 +701,13 @@ async function validateSyntheticCohort(client: PoolClient): Promise<Record<strin
        (SELECT count(*) FROM account.consents WHERE policy_version_id = $1 AND status = 'accepted')::text AS consents,
        (SELECT count(*) FROM discovery.publications WHERE policy_version = $2 AND status = 'published')::text AS publications,
        (SELECT count(*) FROM verification.cases WHERE policy_version = $2)::text AS cases,
+       (SELECT count(*) FROM verification.cases WHERE policy_version = $2 AND status = 'approved')::text AS approved_cases,
+       (SELECT count(*) FROM evidence.upload_sessions WHERE status = 'completed' AND object_key LIKE 'private/1102%')::text AS upload_sessions,
+       (SELECT count(*) FROM evidence.items WHERE status = 'approved' AND provider_id::text LIKE '11020000-%')::text AS evidence_items,
+       (SELECT count(*) FROM evidence.versions WHERE processing_status = 'clean' AND object_key LIKE 'private/1102%')::text AS evidence_versions,
+       (SELECT count(*) FROM verification.case_evidence AS links JOIN verification.cases AS cases ON cases.id = links.case_id WHERE cases.policy_version = $2)::text AS case_evidence_links,
+       (SELECT count(*) FROM verification.assignments AS assignments JOIN verification.cases AS cases ON cases.id = assignments.case_id WHERE cases.policy_version = $2 AND assignments.assignment_kind = 'reviewer')::text AS assignments,
+       (SELECT count(*) FROM verification.recommendations AS recommendations JOIN verification.cases AS cases ON cases.id = recommendations.case_id WHERE cases.policy_version = $2 AND recommendations.result = 'approve')::text AS recommendations,
        (SELECT count(*) FROM verification.claims WHERE policy_version = $2 AND status = 'active')::text AS claims,
        (SELECT count(*) FROM interaction.enquiries WHERE policy_version = $2)::text AS enquiries,
        (SELECT count(*) FROM interaction.tracked_interactions WHERE policy_version = $2 AND status = 'completed')::text AS completed_interactions,
@@ -609,6 +727,13 @@ async function validateSyntheticCohort(client: PoolClient): Promise<Record<strin
     consents: 84,
     publications: 24,
     cases: 48,
+    approved_cases: 48,
+    upload_sessions: 48,
+    evidence_items: 48,
+    evidence_versions: 48,
+    case_evidence_links: 48,
+    assignments: 48,
+    recommendations: 48,
     claims: 48,
     enquiries: 60,
     completed_interactions: 36,
