@@ -79,14 +79,15 @@ jobs:
           set -euo pipefail
           run_id=""
           for attempt in $(seq 1 30); do
-            run_id="$(gh api \
+            record="$(gh api \
               -H "Accept: application/vnd.github+json" \
-              "repos/${GITHUB_REPOSITORY}/actions/workflows/functional-pwa-w3-managed-canary-v3.yml/runs?event=workflow_dispatch&branch=main&per_page=20" \
-              --jq --arg dispatched_at "${DISPATCHED_AT}" '
-                [.workflow_runs[] | select(.created_at >= $dispatched_at)]
-                | sort_by(.created_at)
-                | last
-                | .id // empty')"
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/functional-pwa-w3-managed-canary-v3.yml/runs?event=workflow_dispatch&branch=main&per_page=20")"
+            run_id="$(jq -r --arg dispatched_at "${DISPATCHED_AT}" '
+              [.workflow_runs[] | select(.created_at >= $dispatched_at)]
+              | sort_by(.created_at)
+              | last
+              | .id // empty
+            ' <<< "${record}")"
             if [[ "${run_id}" =~ ^[1-9][0-9]*$ ]]; then
               break
             fi
