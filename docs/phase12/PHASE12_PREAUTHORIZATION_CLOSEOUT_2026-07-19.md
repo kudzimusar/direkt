@@ -3,15 +3,13 @@
 **Status:** ALL CURRENTLY CLEARABLE PHASE 12 REPOSITORY/ENGINEERING WORK COMPLETE  
 **Formal Phase 12 production release:** NOT AUTHORIZED  
 **Governing Phase 11 issue:** #112 remains open  
-**Final implementation checkpoint:** PR #136 merged to `main` at `c6bb694046b2fe8e82d3f745330447632169355c`
+**Final corrective implementation checkpoint:** PR #140 merged to `main` at `8363e2196739f5bad2393eaa8896d4c43bd64e0f`
 
 ## Executive conclusion
 
 DIREKT has completed every Phase 12 item that can truthfully be completed from repository engineering, managed preproduction evidence and release planning without inventing real Zambia pilot results, legal/regulatory approvals, operational staffing, production credentials, signed artifacts or Google Play activity.
 
-The remaining gap to formal Phase 12 is no longer hidden implementation work. It is a finite set of real-world release gates that require evidence outside the repository or evidence that can exist only after those external gates authorize the next activity.
-
-This closeout deliberately does **not** mark Phase 12 complete. The master plan requires actual Phase 11 primary validation and an evidence-backed 11J `PROCEED` decision before formal production release work may cross the release boundary.
+This closeout does **not** mark formal Phase 12 complete. The master plan still requires actual Phase 11 primary validation, an evidence-backed 11J `PROCEED` decision and all global release gates before production release execution may cross the boundary.
 
 ## Promoted checkpoints
 
@@ -20,9 +18,10 @@ This closeout deliberately does **not** mark Phase 12 complete. The master plan 
 | Phase 12 preauthorization release-readiness foundation | #125 | `7b23d812b751345a740a34b77ad1b7890ed15cd1` |
 | Phase 12A Android release/versioning/reproducibility/signing contract | #129 | `48f6d2d212d64192819d76d67e157b25f8a5e98b` |
 | Phase 12B Play listing/permissions/Data Safety preparation | #134 | `b876c499aed0f135feec39601b58f22c734879cc` |
-| All remaining clearable Phase 12 release-readiness controls | #136 | `c6bb694046b2fe8e82d3f745330447632169355c` |
+| Remaining clearable Phase 12 release-readiness controls | #136 | `c6bb694046b2fe8e82d3f745330447632169355c` |
+| Late release-policy corrective hardening | #140 | `8363e2196739f5bad2393eaa8896d4c43bd64e0f` |
 
-History-preserving forward synchronization was performed after each promoted checkpoint, including PRs #130, #135 and #137.
+History-preserving branch synchronization followed the promoted checkpoints, including PR #143 after the final corrective hardening.
 
 ## What is now complete
 
@@ -32,13 +31,15 @@ History-preserving forward synchronization was performed after each promoted che
 - `compileSdk` and `targetSdk` remain API 36;
 - release identity is source-controlled at `12 / 0.12.0-preauth.1 / preauthorization`;
 - version/channel rules fail closed;
-- upload signing is protected by explicit external inputs, external keystore location and a signing enable latch;
-- Android Gradle Plugin injected-signing overrides are prohibited;
-- protected signed builds require configuration cache disabled before signing credentials are consumed;
+- protected upload signing requires explicit external inputs and keystore material outside the repository checkout;
+- AGP injected-signing overrides are prohibited;
+- signed builds require configuration cache disabled before protected credentials are consumed;
+- formal release eligibility is checked during Gradle configuration, so `-x verifyFormalReleaseEligibility` cannot bypass false source-controlled release latches;
+- a permanent negative CI test proves the `-x` bypass attempt fails;
 - no real upload key or signing credential exists in the repository or preauthorization workflows;
 - release AAB packaging is reproducible across two independent clean, build-cache-disabled builds.
 
-The latest exact Phase 12 checkpoint retained the verified unsigned AAB SHA-256:
+Verified unsigned AAB SHA-256 remains:
 
 ```text
 890b710f18ad7208b6db0e5668193a739052e010462d0beeddb8f752c14dd169
@@ -48,7 +49,7 @@ This artifact is preauthorization evidence only and is not for Play upload or di
 
 ### 2. Formal release eligibility latches
 
-`android/direkt-app/release/eligibility.properties` now carries five source-controlled evidence assertions, all deliberately `false`:
+`android/direkt-app/release/eligibility.properties` carries five evidence assertions, all deliberately `false` in preauthorization:
 
 - `DIREKT_FORMAL_PHASE12_AUTHORIZED`
 - `DIREKT_PRODUCTION_CLIENT_READY`
@@ -56,30 +57,48 @@ This artifact is preauthorization evidence only and is not for Play upload or di
 - `DIREKT_PRODUCTION_OPERATIONS_READY`
 - `DIREKT_PLAY_RELEASE_READY`
 
-Preauthorization requires every latch to remain false. Release-candidate/production packaging requires every latch to be true in addition to protected signing authorization. Gradle release packaging depends on the formal eligibility task, so the normal release task graph cannot silently bypass these gates.
+Preauthorization requires every latch to remain false. Release-candidate/production source requires every latch to be true before release-capable Gradle configuration may proceed. The latches are evidence assertions, not substitutes for the evidence, and protected signing remains a separate control.
 
-These latches are assertions backed by evidence; they are not substitutes for the evidence and must not be flipped merely to make a build pass.
-
-### 3. Google Play preparation
+### 3. Google Play / Data Safety preparation
 
 Repository-controlled Play preparation now includes:
 
-- store listing candidate copy and asset requirements;
-- app-access/reviewer requirements;
-- exact merged-release-manifest permission inventory;
+- store listing candidate copy, reviewer-access requirements and asset specification;
+- merged release manifest permission inventory covering both `uses-permission` and `uses-permission-sdk-23`;
 - current permission baseline: `android.permission.INTERNET` only;
-- implementation dependency allowlist tied to the Data Safety review boundary;
+- resolved `releaseRuntimeClasspath` direct dependency inspection rather than source-line-only dependency parsing;
+- selected dependency targets after Gradle `requested -> selected` resolution are validated;
+- substitutions to unreviewed modules and project targets fail closed and have permanent regression fixtures;
 - Firebase Authentication Data Safety inventory;
 - content-rating questionnaire facts without fabricating an IARC rating;
 - target-audience, country/device and developer-account readiness facts;
 - account-deletion release blocker;
-- permanent CI that rebuilds the merged release manifest, validates the dependency surface and rejects prohibited blanket trust/approval claims.
+- prohibited blanket trust/approval claims rejected by CI;
+- policy-document-only changes trigger the readiness workflow.
 
-A post-merge Codex review of PR #134 found four valid gaps: unreviewed SDK additions could escape the inventory, the source manifest was insufficient compared with the merged release manifest, banned store trust/approval claims were not blocked, and the policy document itself did not trigger the gate. All four were corrected and revalidated on the PR #136 exact head before final promotion.
+### 4. Review-driven hardening completed
 
-### 4. Production backend and operations readiness
+Reviews discovered valid defects after earlier checkpoints. None were ignored merely because a previous PR had merged.
 
-The repository now records the exact production activation boundary instead of treating staging evidence as production evidence.
+The final corrective programme closed:
+
+- exact-head versus merge-ref evidence provenance;
+- keystore symlink path resolution;
+- configuration-cache-aware release identity input;
+- AGP injected-signing override bypass;
+- protected signing secret/configuration-cache exposure;
+- source-manifest-only permission inspection;
+- unreviewed SDK dependency additions;
+- release-scoped dependency bypass;
+- `uses-permission-sdk-23` permission bypass;
+- Gradle `-x` formal eligibility bypass;
+- Gradle dependency substitution selecting an unreviewed runtime module/project target;
+- missing prohibited store trust/approval claim checks;
+- incomplete Phase 12B policy-document workflow path triggers.
+
+The final exact head includes permanent regression tests for the high-risk bypasses rather than relying only on comments or conventions.
+
+### 5. Production backend and operations readiness
 
 Already proven in managed preproduction/private infrastructure:
 
@@ -91,67 +110,35 @@ Already proven in managed preproduction/private infrastructure:
 - staging API 5xx alert policy verification;
 - internal Firebase App Distribution path.
 
-Still intentionally not claimed:
+Still intentionally **not** claimed:
 
 - production environment deployed/ready for public traffic;
-- production backup restore-tested;
+- actual production backup restore-tested;
 - production traffic enabled;
 - production payment mode enabled.
 
-The backend configuration continues to force production traffic disabled until a future reviewed Phase 12 release gate deliberately authorizes a new production traffic mode.
+The backend remains fail-closed for production traffic until a future reviewed release gate deliberately authorizes a production traffic mode.
 
-### 5. Support and verification staffing
+### 6. Support, verification, monitoring and staged rollout
 
-The required public-production role/capacity contract is defined, including:
+The repository defines:
 
-- release owner;
-- incident/on-call owner;
-- support lead;
-- verification operations lead;
-- at least two independent verification reviewers;
-- security/privacy escalation ownership;
-- backend/platform on-call capability;
-- Zambia field lead if field-visited/equivalent claims are enabled.
-
-The repository does **not** claim these roles are operational. Production readiness requires named/contracted coverage, private escalation contacts, access tests, training/calibration, launch schedule, incident/support exercise evidence and demonstrated capacity.
-
-### 6. Monitoring, rollback and staged rollout
-
-The release contract now defines:
-
-- production monitor classes;
-- immediate stop conditions;
-- numeric pause thresholds;
+- production support/verification/on-call role requirements and four-eyes controls;
+- no claim that production staffing is operational without named/contracted evidence;
+- monitor classes, immediate stop conditions and numeric pause thresholds;
 - staged rollout sequence: internal → closed → 5% → 10% → 25% → 50% → 100% within approved scope;
-- observation windows and promotion rules;
-- backend rollback sequence;
-- Android correction rule using a higher version code rather than version rollback;
-- credential/incident response sequence.
+- observation/promotion rules;
+- backend rollback, kill-switch, Android higher-version correction and credential/incident response sequence;
+- release tag convention, release record/provenance fields, release-note structure and formal execution runbook.
 
-Staging mechanisms are proven. Production alert routes, Android-vitals baseline, escalation exercise, operational staffing and actual Play rollout controls remain real release evidence gates.
+No production tag, signed AAB, Play track, public rollout or staffing claim has been created because the entry gates are not satisfied.
 
-### 7. Release package and execution runbook
+## Definitive exact-head verification
 
-The repository now defines:
-
-- release tag convention;
-- required release record/provenance fields;
-- release-notes structure and prohibited claims;
-- exact source freeze procedure;
-- release-date Play policy recheck;
-- protected signing procedure;
-- internal/closed-test sequence;
-- production pre-traffic activation sequence;
-- staged rollout/go-no-go/rollback sequence.
-
-No actual production tag, release notes publication, signed AAB or Play track has been created because the entry gate is not satisfied.
-
-## Exact final engineering verification
-
-Exact source head before PR #136 promotion:
+Final corrective source head before PR #140 promotion:
 
 ```text
-a22153d8aaa3c12acff04fdf8fa6953981e5b5a2
+5cfaa6a1f4382e1fe0fad98480da7ead70037cab
 ```
 
 The following exact-head gates passed:
@@ -161,20 +148,34 @@ The following exact-head gates passed:
 - Android CI;
 - Android performance budget;
 - Phase 12A release readiness/reproducibility;
-- hardened Phase 12B Play readiness using the merged release manifest;
+- hardened Phase 12B Play readiness using the merged release manifest and selected resolved runtime dependencies;
 - Phase 12 final preauthorization truth-boundary gate.
 
-The Android performance gate initially recorded one cold-launch outlier run while the APK budget passed. Because this checkpoint changed release gating/documentation rather than Android runtime code, the exact same source was retried once. The retry passed the cold-launch budget; no performance waiver was used.
+The exact-head release workflow also proved:
 
-Short-lived evidence tied to the exact head includes:
+- AGP injected-signing bypass fails closed;
+- `-x verifyFormalReleaseEligibility` cannot bypass false formal release latches;
+- signed release configuration cannot proceed with configuration cache active;
+- both clean unsigned release builds are byte-for-byte identical.
 
-- Phase 12B Play-readiness evidence artifact archive digest: `sha256:aca3d0d318128ca5dc51726eaf1c8abd56d95522be5b5f8dccf7a024284d4840`;
-- Phase 12 final preauthorization evidence archive digest: `sha256:e226fec4773ca9d39ac29c2178495f7cf72ecbcc3fed3ae78cd20c1e0fca240e`;
-- Phase 12A reproducible AAB evidence archive digest: `sha256:de3f258978316e6c61abb8bef23f4a9134e66f22333de6710f99aaf75e8bf041`.
+The exact-head Play workflow also proved:
 
-The artifacts expire; the durable evidence is the source, workflow definitions, run records and promoted repository state.
+- selected module substitution to an unreviewed module is detected;
+- selected project substitution is rejected;
+- merged `uses-permission-sdk-23` declarations are included in permission certification;
+- the selected resolved release dependency surface matches the reviewed inventory.
 
-## Remaining blockers — no additional repository-only Phase 12 work can truthfully clear these now
+The Android performance gate recorded one cold-launch outlier run while artifact size remained within budget. Because this corrective head changed release/build-policy controls and not Android runtime behavior, the exact same source was retried once under the established rule; the retry passed. No performance waiver was used.
+
+Latest short-lived exact-head evidence:
+
+- Phase 12A reproducible AAB evidence archive digest: `sha256:2447a7bfbdadddf6277c9ae28fbe69236a24d52aaf076c4e8883701a113d9142`;
+- Phase 12B Play-readiness evidence archive digest: `sha256:26083d3232a63240b5f0c205ad67ecd79061594d722c02af087fdc34466099a3`;
+- Phase 12 final preauthorization truth-boundary evidence archive digest: `sha256:e6772a7c27923f4c040a28d4e7f699c5f767f37da87ec8675b2abfecd8d10c51`.
+
+The artifacts expire; durable evidence is the promoted source, workflow definitions and GitHub run records.
+
+## Remaining blockers — no repository-only Phase 12 work can truthfully clear these now
 
 ### A. Phase 11 evidence and decision
 
@@ -190,7 +191,7 @@ The artifacts expire; the durable evidence is the source, workflow definitions, 
 ### C. Product release blockers
 
 6. Complete evidence-led production Android client cutover so synthetic/fictional/preview marketplace surfaces are removed or isolated from the production path.
-7. Complete end-to-end account deletion: in-app request, public web request resource, backend fulfillment/retention/legal-hold behavior, audit and policy/Data Safety consistency.
+7. Complete end-to-end account deletion: in-app request, public web request resource, backend fulfillment/retention/legal-hold behavior, audit and privacy/Data Safety consistency.
 
 ### D. Production operations
 
@@ -203,14 +204,14 @@ The artifacts expire; the durable evidence is the source, workflow definitions, 
 
 12. Verify the actual Play developer-account status and current account-specific testing requirements.
 13. Recheck current Google Play requirements on the exact release date.
-14. Create the authorized release candidate, set the evidence-backed eligibility latches and protected signing inputs, and build the signed reproducible AAB.
-15. Finalize public support/privacy/deletion URLs, screenshots/feature graphic, Data Safety form, content rating/IARC answers and reviewer credentials.
+14. Create the authorized release candidate, set evidence-backed eligibility latches and protected signing inputs, and build the signed reproducible AAB.
+15. Finalize public support/privacy/deletion URLs, screenshots/feature graphic, Data Safety form, IARC content rating and reviewer credentials.
 16. Execute Play internal testing, then required closed testing and resolve findings.
 17. Perform formal go/no-go and staged production rollout with monitoring/support coverage.
 18. Create the final release tag/notes/record only for the approved artifact and rollout.
 
 ## Final boundary
 
-No more Phase 12 repository-only work should be marked complete merely by adding documents, toggling variables or generating synthetic evidence. The remaining work requires genuine external evidence or release execution that is prohibited until the governing gates authorize it.
+No further Phase 12 repository-only item should be marked complete merely by adding documents, toggling latches or generating synthetic evidence. The remaining work requires genuine external evidence or release execution that is prohibited until the governing gates authorize it.
 
-Issue #112 remains open. Formal Phase 12 remains blocked. The next legitimate progression is to clear the Phase 11 real-entry gates, execute the controlled Zambia pilot, complete 11C–11H and reach the 11J decision; only an evidence-backed `PROCEED` may unlock the formal release-candidate and production sequence.
+Issue #112 remains open. Formal Phase 12 remains blocked. The next legitimate progression is to clear the Phase 11 real-entry gates, execute the controlled Zambia pilot, complete 11C–11H and reach 11J; only an evidence-backed `PROCEED` may unlock formal release-candidate and production execution.
