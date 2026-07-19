@@ -1,120 +1,71 @@
 # DIREKT Backend and Frontend API Plan
 
-**Status:** Planning baseline after the stable Phase 3 checkpoint.  
-**Implementation authority:** This document defines sequencing and boundaries; it does not activate the next phase by itself.
+**Status:** Current reconciled client/API boundary — 2026-07-19  
+**Implementation authority:** canonical REST/OpenAPI contracts are backend-owned; client additions do not activate real participant or production access by themselves.
 
 ## 1. Objectives
 
-The API layer must let the native Android app and the internal operations portal use one authoritative backend while preserving DIREKT's trust model.
+The API layer must let native Android, the customer/provider PWA and the internal operations portal use one authoritative backend while preserving DIREKT trust/privacy rules.
 
 The design must:
 
-- keep PostgreSQL, storage and provider credentials behind NestJS;
-- expose versioned, documented HTTP contracts;
-- support low-bandwidth and interrupted Android sessions;
-- keep provider scope and operator permissions server-enforced;
+- keep PostgreSQL, private Storage and provider secrets behind NestJS;
+- expose versioned documented HTTP contracts;
+- support low-bandwidth/interrupted mobile/browser sessions;
+- keep provider scope/operator permissions server-enforced;
 - separate self-asserted profile data from evidence-derived public claims;
-- make every external delivery idempotent and auditable;
-- support synthetic, development, staging and production environments without changing domain logic;
-- generate Android and TypeScript clients from the same OpenAPI contract.
+- make external delivery idempotent/auditable;
+- support synthetic/development/staging/pilot/production classifications without changing domain rules;
+- generate or contract-check Android and TypeScript clients from the same OpenAPI source.
 
 ## 2. Client architecture
 
 ### 2.1 Native Android
 
-Recommended networking stack:
+Primary Version 1 customer/provider client. Uses typed HTTPS transport, generated/validated API models, durable drafts/caches where appropriate, WorkManager for retryable background work and Android Keystore-backed protected session storage.
 
-- Retrofit or an equivalent typed HTTP client;
-- OkHttp for transport, interceptors, timeouts and certificate-safe HTTPS;
-- Kotlin serialization for API payloads;
-- generated DTOs/models from the committed OpenAPI contract;
-- Room for durable local drafts and bounded cached reads;
-- WorkManager for retryable uploads and synchronization;
-- Android Keystore-backed encrypted refresh-token storage;
-- access tokens held in memory and refreshed through the backend.
+Android never contains database URLs, Supabase privileged keys, OTP/email/WhatsApp/payment provider secrets, server Maps keys or operator credentials.
 
-Android build flavors:
+### 2.2 Customer/provider PWA
 
-```text
-debug      → local or development API
-staging    → controlled Cloud Run staging API
-release    → production API after authorization
-```
+Public synthetic review mode at `https://direkt.forum/app/` is static and makes no protected API calls.
 
-Build configuration values:
+Future live mode must:
 
-```text
-DIREKT_API_BASE_URL
-DIREKT_APP_ENV
-ANDROID_MAPS_API_KEY
-SENTRY_DSN or Firebase identifiers
-```
+- consume the same `/api/v1` REST/OpenAPI semantics as Android;
+- use an approved browser authentication/session/BFF/gateway boundary;
+- avoid storing refresh/session secrets in `localStorage`;
+- use HttpOnly/Secure/SameSite cookies where cookie sessions are chosen;
+- implement CSRF protection for cookie-authenticated writes;
+- enforce strict origin/CORS policy;
+- keep private/authenticated responses out of uncontrolled service-worker/cache storage;
+- never connect directly to Supabase/PostgreSQL/private Storage with privileged credentials;
+- retain server-side provider scope, permission, verification/publication, interaction/review and commercial enforcement.
 
-Android must never contain:
+The PWA may add presentation/view-model/cache adapters but may not duplicate authoritative domain state machines.
 
-- `DATABASE_URL`;
-- Supabase service-role keys;
-- OTP/payment/WhatsApp provider secrets;
-- Google server API keys;
-- operator/admin credentials.
+### 2.3 Operations portal
 
-### 2.2 Operations portal
-
-Preferred request flow:
+Current protected request flow:
 
 ```text
-Browser
-  → Next.js route handler/server action on Vercel
-  → DIREKT NestJS API on Cloud Run
+Authorized browser
+  → Next.js operations portal on IAM-private Cloud Run staging
+  → Google workload identity boundary + DIREKT application session
+  → DIREKT NestJS API on IAM-private Cloud Run
 ```
 
-The portal layer will:
+The portal keeps session material server-side/secure, validates backend responses, renders denied/expired states safely and never imports direct database/Supabase/payment/private-storage clients.
 
-- keep session/refresh material in secure, HttpOnly, same-site cookies;
-- call the backend with server-side credentials/session tokens;
-- validate backend response schemas;
-- render access-denied and session-expired states without exposing internal errors;
-- never import a database, Supabase, payment or storage client.
-
-Portal environment values:
-
-```text
-DIREKT_API_BASE_URL
-PORTAL_COOKIE_SECRET
-PORTAL_SESSION_COOKIE_NAME
-NEXT_PUBLIC_APP_ENV
-NEXT_PUBLIC_SENTRY_DSN
-```
+Earlier Vercel-hosting plans are not the current protected staging runtime. Any future Vercel/browser deployment must preserve a reviewed private API calling pattern rather than making Cloud Run public.
 
 ## 3. Backend architecture
 
 The NestJS modular monolith remains the domain boundary.
 
-Required modules/adapters:
+Core modules/adapters include auth/account, provider/catalog/location/search/storage, verification/trust publication, availability, enquiries/interactions/reviews, notifications, commercial/payment, operations/support and platform audit/outbox/idempotency.
 
-```text
-auth
-account
-provider-core
-catalog
-location
-search
-storage
-verification
-trust-publication
-availability
-interaction-enquiry
-review
-notification
-payment
-operations
-support
-platform/audit
-platform/outbox
-platform/idempotency
-```
-
-External provider interfaces:
+Provider interfaces include:
 
 ```text
 OtpProvider
@@ -129,501 +80,110 @@ PaymentProvider
 RegistryVerificationProvider
 ```
 
-Every adapter must have:
-
-- a disabled implementation;
-- a synthetic/test implementation;
-- a production implementation selected by environment;
-- typed error mapping;
-- timeout and retry policy;
-- circuit-breaker or degradation behavior where appropriate;
-- metrics and audit events;
-- no provider-specific types escaping into domain services.
+Adapters require disabled/test implementations where appropriate, typed errors, timeout/retry/degradation policy, metrics/audit and no provider-specific types leaking into domain services.
 
 ## 4. HTTP contract rules
 
-### 4.1 Base path and versioning
+Base path:
 
 ```text
 /api/v1
 ```
 
-Breaking contract changes require `/api/v2`. Additive fields remain optional until all released clients tolerate them.
+Breaking contract changes require a new major API version. Additive fields remain backward-compatible until all released clients tolerate them.
 
-### 4.2 Common headers
-
-Requests:
+Typical request controls:
 
 ```text
-Authorization: Bearer <access-token>
-X-Request-Id: <client-generated UUID when available>
-Idempotency-Key: <opaque client key for retryable mutations>
-Accept-Language: en-ZM
+Authorization: Bearer <application-access-token>
+X-Request-Id: <client-generated-or-proxy request id>
+Idempotency-Key: <opaque key for retryable mutations>
 ```
 
-Responses:
+Cloud Run infrastructure authorization is a separate platform header/token boundary and never replaces DIREKT application authorization.
+
+Responses use the common JSON/problem-details conventions and must not expose stack traces, object-storage paths, private coordinates, raw provider errors or secrets.
+
+## 5. Client generation and contract validation
+
+OpenAPI is generated/validated in backend CI and is the canonical client contract source.
+
+- Android may use generated Kotlin DTO/client layers or equivalent contract validation.
+- PWA/portal TypeScript clients must be generated or schema-contract-checked against the same source.
+- Generated clients do not own authorization or state-machine decisions.
+- Contract changes require compatibility tests across active clients.
+
+## 6. Authentication and sessions
+
+DIREKT remains authoritative for account/session/role/provider scope.
+
+Firebase phone authentication is an implemented **proof-of-phone-possession exchange**, not an authorization authority. Real participant activation remains gated by pilot/legal/configuration controls.
+
+Browser live-mode design must be reviewed before enabling PWA real sign-in. Public synthetic PWA does not initiate real OTP or create DIREKT sessions.
+
+## 7. Evidence and storage
+
+Private evidence is accessed only through backend-authorized, short-lived scoped storage grants. Public clients never receive broad Storage credentials or private object keys.
+
+The public PWA cannot upload/view real evidence. A future protected PWA upload flow must match Android/backend upload-intent, checksum, MIME/size, retry and authorization contracts.
+
+## 8. Location
+
+PostGIS and manual/list area semantics are authoritative. Maps is an optional provider layer and cannot become a dependency for basic discovery.
+
+Clients must distinguish private provider base, consented public premises and public service areas. Mobile providers are never publicly ranked by private base distance.
+
+## 9. Notifications and external delivery
+
+The transactional outbox/domain event model is the source of truth. Provider delivery is downstream and idempotent.
+
+Current directions:
+
+- Firebase phone auth — implemented but real-use gated;
+- Resend — externally provisioned; runtime email adapter/binding/canary still required;
+- FCM — planned;
+- WhatsApp Cloud API — planned/disabled;
+- contact handoff domain contract — implemented/gated.
+
+Provider state is defined in `docs/integrations/CURRENT_INTEGRATION_STATUS.md`; an account/key existing is not sufficient to call an adapter active.
+
+## 10. Payments and registries
+
+Commercial lifecycle/ledger/reconciliation contracts exist, while real payment providers/money movement remain disabled. Official-registry automation is not assumed; PACRA/NCC/TEVETA remain manual evidence sources unless authorized interfaces/data-use agreements exist.
+
+## 11. Environment sequencing
 
 ```text
-X-Request-Id
-ETag where cacheable
-Retry-After for throttling or temporary unavailability
+public synthetic UI
+  → no protected API calls
+
+managed development/private staging
+  → synthetic/non-personal data + IAM/private service controls
+
+controlled pilot
+  → only after explicit Phase 11 entry gates and participant authorization
+
+production
+  → only after 11J PROCEED + global release gates
 ```
 
-### 4.3 Error format
+No client deployment or public URL may silently advance an environment classification.
 
-Use RFC-style problem details:
+## 12. Failure and privacy rules
 
-```json
-{
-  "type": "https://direkt.example/problems/provider-not-ready",
-  "title": "Provider is not ready for verification",
-  "status": 409,
-  "detail": "Required profile fields are incomplete.",
-  "instance": "/api/v1/providers/...",
-  "requestId": "...",
-  "errors": [
-    { "field": "serviceAreaSummary", "code": "required" }
-  ]
-}
-```
+Every networked integration defines timeout, retry/idempotency, degraded fallback, redaction, telemetry minimization and kill-switch behavior. Never log access tokens, evidence contents, contact values, exact private coordinates or raw third-party payloads unnecessarily.
 
-Do not return stack traces, SQL details, secret names or raw provider responses.
+## 13. Current PWA live-mode gate
 
-### 4.4 Pagination
+Before connecting `direkt.forum/app/` to real managed data, prove:
 
-Use cursor pagination for lists that can grow:
+1. browser auth/session architecture;
+2. private API access/gateway design without weakening Cloud Run IAM;
+3. CORS/origin/CSRF/session/logout/revocation tests;
+4. OpenAPI client compatibility;
+5. private evidence/location non-leakage;
+6. service-worker/cache restrictions for authenticated data;
+7. rate/abuse controls;
+8. controlled test-data classification and rollback.
 
-```text
-?limit=20&cursor=<opaque-cursor>
-```
-
-Response:
-
-```json
-{
-  "items": [],
-  "nextCursor": null
-}
-```
-
-### 4.5 Idempotency
-
-Require `Idempotency-Key` for:
-
-- provider creation;
-- upload-session creation;
-- enquiry submission;
-- payment initiation;
-- webhook replay-sensitive operations;
-- final verification decisions.
-
-Persist only the existing protected hash of the key plus request fingerprint, outcome and expiry.
-
-## 5. API surface by capability
-
-## 5.1 Authentication and sessions
-
-Current synthetic contracts will be extended behind `OtpProvider`.
-
-```text
-POST   /api/v1/auth/challenges
-POST   /api/v1/auth/challenges/{challengeId}/verify
-POST   /api/v1/auth/refresh
-POST   /api/v1/auth/logout
-GET    /api/v1/auth/sessions
-DELETE /api/v1/auth/sessions/{sessionId}
-```
-
-Rules:
-
-- challenge creation responses are enumeration-safe;
-- production uses an approved OTP provider;
-- access tokens contain identity/session references only;
-- roles and permissions are resolved server-side;
-- refresh tokens rotate and family reuse revokes the family;
-- device/session labels are user-visible and revocable.
-
-## 5.2 Account profile
-
-```text
-GET /api/v1/account/profile
-PUT /api/v1/account/profile
-GET /api/v1/account/consents
-PUT /api/v1/account/consents/{policyKey}
-```
-
-The account profile is a human identity profile, not a provider organization.
-
-## 5.3 Provider core and representatives
-
-Existing Phase 3 contracts remain non-public:
-
-```text
-POST   /api/v1/providers
-GET    /api/v1/providers/{providerId}
-PATCH  /api/v1/providers/{providerId}
-POST   /api/v1/providers/{providerId}/transitions
-GET    /api/v1/providers/{providerId}/representatives
-POST   /api/v1/providers/{providerId}/representatives
-DELETE /api/v1/providers/{providerId}/representatives/{assignmentId}
-GET    /api/v1/catalog/categories
-PUT    /api/v1/providers/{providerId}/categories/{categoryKey}
-DELETE /api/v1/providers/{providerId}/categories/{categoryKey}
-```
-
-Every provider request resolves provider scope from the authenticated assignment. A client-supplied provider ID never grants access.
-
-## 5.4 Location and service areas
-
-```text
-POST /api/v1/location/geocode
-POST /api/v1/location/reverse-geocode
-GET  /api/v1/location/places/suggest?q=...
-PUT  /api/v1/providers/{providerId}/location
-PUT  /api/v1/providers/{providerId}/service-areas
-```
-
-Store separately:
-
-- private precise point/evidence;
-- public-safe locality summary;
-- service-area geometry or bounded radius;
-- source and confidence;
-- consent and last-confirmed timestamp.
-
-Android may use the Maps SDK for interaction, but the backend normalizes and authorizes stored location data.
-
-## 5.5 Evidence upload
-
-```text
-POST   /api/v1/providers/{providerId}/evidence/upload-sessions
-POST   /api/v1/providers/{providerId}/evidence
-GET    /api/v1/providers/{providerId}/evidence
-GET    /api/v1/providers/{providerId}/evidence/{evidenceId}
-DELETE /api/v1/providers/{providerId}/evidence/{evidenceId}
-POST   /api/v1/providers/{providerId}/evidence/{evidenceId}/replace
-```
-
-Recommended upload flow:
-
-1. Android requests an upload session.
-2. Backend validates provider scope, evidence type, file limits and consent.
-3. Backend returns a short-lived signed upload URL to a private bucket.
-4. Android uploads with resumable/retry behavior.
-5. Android confirms completion.
-6. Backend verifies object metadata, checksum, media type and scan status.
-7. Evidence becomes available to authorized operators only after processing.
-
-Evidence object names must use opaque IDs, not phone numbers, names or document numbers.
-
-## 5.6 Verification cases and decisions
-
-```text
-POST   /api/v1/providers/{providerId}/verification-cases
-GET    /api/v1/providers/{providerId}/verification-cases
-GET    /api/v1/verification-cases/{caseId}
-POST   /api/v1/verification-cases/{caseId}/assign
-POST   /api/v1/verification-cases/{caseId}/checks
-POST   /api/v1/verification-cases/{caseId}/field-visits
-POST   /api/v1/verification-cases/{caseId}/recommendations
-POST   /api/v1/verification-cases/{caseId}/decisions
-POST   /api/v1/verification-cases/{caseId}/appeals
-```
-
-A decision must identify:
-
-- the specific claim/check;
-- evidence considered;
-- result and limitations;
-- reviewer and separation-of-duties state;
-- validity/expiry;
-- reason codes;
-- audit and policy version.
-
-No single endpoint creates a blanket “verified provider” flag.
-
-## 5.7 Publication and public search
-
-Publication remains blocked until the verification/publication phase is approved.
-
-Planned public endpoints:
-
-```text
-GET /api/v1/public/categories
-GET /api/v1/public/providers/search
-GET /api/v1/public/providers/{publicProviderId}
-GET /api/v1/public/providers/{publicProviderId}/claims
-```
-
-Search inputs:
-
-```text
-category
-latitude/longitude or area
-radius
-operating model
-availability window
-claim filters
-cursor
-```
-
-Search outputs expose only:
-
-- public-safe provider identity;
-- approved media;
-- service area, not private coordinates;
-- evidence-derived claim cards and limitations;
-- freshness/expiry;
-- tracked interaction action.
-
-Commercial status may not create or improve a trust claim.
-
-## 5.8 Availability and enquiries
-
-```text
-GET  /api/v1/public/providers/{publicProviderId}/availability
-PUT  /api/v1/providers/{providerId}/availability
-POST /api/v1/enquiries
-GET  /api/v1/enquiries/{enquiryId}
-GET  /api/v1/providers/{providerId}/enquiries
-POST /api/v1/enquiries/{enquiryId}/accept
-POST /api/v1/enquiries/{enquiryId}/decline
-POST /api/v1/enquiries/{enquiryId}/contact-handoff
-POST /api/v1/enquiries/{enquiryId}/close
-```
-
-Contact handoff requires consent and records the platform-tracked interaction before revealing the minimum contact data required for call or WhatsApp handoff.
-
-## 5.9 Notifications and device registration
-
-```text
-POST   /api/v1/devices
-DELETE /api/v1/devices/{deviceId}
-GET    /api/v1/notifications
-POST   /api/v1/notifications/{notificationId}/read
-PUT    /api/v1/notification-preferences
-```
-
-The backend stores FCM registration tokens as protected device credentials. Notifications contain no private evidence or sensitive document data.
-
-## 5.10 Reviews, reports and disputes
-
-```text
-POST /api/v1/interactions/{interactionId}/reviews
-GET  /api/v1/public/providers/{publicProviderId}/reviews
-POST /api/v1/public/providers/{publicProviderId}/reports
-POST /api/v1/interactions/{interactionId}/disputes
-GET  /api/v1/account/disputes
-```
-
-Review eligibility requires a platform-tracked interaction. Moderation and appeals remain operator-controlled and auditable.
-
-## 5.11 Payments — deferred API contract
-
-```text
-POST /api/v1/payments/intents
-GET  /api/v1/payments/intents/{paymentIntentId}
-POST /api/v1/payments/intents/{paymentIntentId}/cancel
-GET  /api/v1/account/payments
-POST /api/v1/webhooks/payments/{provider}
-```
-
-Backend rules:
-
-- provider adapters never update business state directly;
-- webhook signatures are verified before parsing business payloads;
-- transaction/provider references are unique;
-- ledger entries are append-only;
-- reconciliation jobs compare internal and provider states;
-- Android displays only backend-confirmed state.
-
-## 5.12 Operations portal API
-
-```text
-GET  /api/v1/operations/mission-control
-GET  /api/v1/operations/providers
-GET  /api/v1/operations/providers/{providerId}
-GET  /api/v1/operations/verification-queue
-GET  /api/v1/operations/verification-cases/{caseId}
-POST /api/v1/operations/verification-cases/{caseId}/assign
-GET  /api/v1/operations/reports
-GET  /api/v1/operations/disputes
-GET  /api/v1/operations/audit
-POST /api/v1/operations/emergency-actions
-```
-
-Operations endpoints require explicit permissions, provider/case scope, audit reason and separation of duties. Emergency actions require an expiry and retrospective review.
-
-## 6. OpenAPI and generated clients
-
-The NestJS OpenAPI document is the contract source of truth.
-
-CI will:
-
-1. generate OpenAPI from the backend;
-2. compare it with the committed contract;
-3. reject undocumented breaking changes;
-4. generate a Kotlin client package for Android;
-5. generate TypeScript schemas/client functions for the portal server layer;
-6. compile and test both generated clients;
-7. publish the OpenAPI artifact with the checkpoint evidence.
-
-Generated code is not hand-edited. Domain UI models remain separate from transport DTOs.
-
-## 7. Caching and offline behavior
-
-Android may cache:
-
-- category taxonomy and requirement metadata;
-- public search results with expiry;
-- the current user/provider summaries;
-- local onboarding/profile/evidence drafts;
-- pending mutation metadata.
-
-Android must not cache unencrypted:
-
-- evidence documents;
-- precise private locations;
-- refresh tokens;
-- operator data;
-- payment credentials.
-
-Conflict strategy:
-
-- use server revision/ETag for provider profile edits;
-- return `409 Conflict` with current server representation;
-- preserve local draft and show a field-level reconciliation UI;
-- never silently overwrite evidence or verification decisions.
-
-## 8. External webhooks
-
-Planned webhook routes:
-
-```text
-POST /api/v1/webhooks/twilio
-POST /api/v1/webhooks/whatsapp
-POST /api/v1/webhooks/payments/{provider}
-POST /api/v1/webhooks/storage
-```
-
-Webhook processing sequence:
-
-1. read bounded raw bytes;
-2. verify timestamp/signature using the provider-specific secret;
-3. reject replay outside the accepted window;
-4. persist idempotency/provider event ID;
-5. acknowledge quickly;
-6. enqueue domain processing;
-7. record outcome and retry state;
-8. never log full sensitive payloads.
-
-## 9. Rate limiting and abuse controls
-
-Apply separate limits for:
-
-- challenge creation and verification;
-- public search;
-- provider profile mutation;
-- upload-session creation;
-- evidence upload confirmation;
-- enquiry creation;
-- reports/reviews;
-- admin sign-in and privileged actions;
-- webhook failures.
-
-Limits use identity, session, device fingerprint, IP/network signals and provider scope as permitted. Public error responses remain enumeration-safe.
-
-## 10. Environment model
-
-### Development
-
-- synthetic users/data;
-- synthetic OTP allowed;
-- Supabase development project;
-- Cloud Run development service or local backend;
-- Firebase App Distribution debug application;
-- Vercel previews;
-- sandbox external providers only.
-
-### Staging
-
-- production-shaped infrastructure;
-- test accounts and non-real evidence;
-- real external sandbox credentials;
-- production authentication disabled until abuse controls are approved;
-- no public indexing or real provider discoverability.
-
-### Production
-
-- separate Supabase project and secrets;
-- production Cloud Run service account;
-- approved OTP and communication providers;
-- production Firebase application and signing;
-- legal/privacy/operations gates complete;
-- real provider discoverability only through evidence-derived publication policy.
-
-## 11. Implementation sequence
-
-### Integration Foundation A — deployment and environments
-
-- containerize NestJS API;
-- create Cloud Run deployment workflow using GitHub OIDC;
-- create Supabase development project and apply migrations;
-- configure Secret Manager;
-- deploy the Vercel portal BFF boundary;
-- configure Firebase App Distribution;
-- verify remote synthetic end-to-end health.
-
-### Integration Foundation B — generated clients
-
-- establish committed OpenAPI contract;
-- generate Android and portal clients;
-- implement typed error/problem mapping;
-- add environment/flavor configuration;
-- add contract compatibility CI.
-
-### Phase 4 — evidence and verification
-
-- private storage adapter;
-- signed upload sessions;
-- scanning/extraction pipeline;
-- evidence viewer with strict permissions;
-- verification case/check/decision model;
-- publication remains blocked.
-
-### Phase 5 — location and search
-
-- Maps SDK and server geocoding adapter;
-- private/public location separation;
-- service-area geometry;
-- PostGIS search;
-- claim-aware public results after publication authorization.
-
-### Phase 6 — enquiries and notifications
-
-- tracked enquiries;
-- availability;
-- consent-aware call/WhatsApp handoff;
-- FCM device registration and notifications;
-- Brevo operational email.
-
-### Later phases
-
-- eligible reviews/disputes;
-- subscriptions/payments and reconciliation;
-- regulator feeds/partnerships;
-- production Play release.
-
-## 12. Acceptance criteria before implementation activation
-
-The owner supplies or confirms:
-
-- Supabase project reference and storage decision;
-- Google Cloud project ID, project number and chosen region;
-- Workload Identity provider and deployer service-account email;
-- Firebase project/app IDs and tester group;
-- Vercel project ID and portal URL;
-- which integrations are authorized now versus deferred;
-- named secrets exist in the correct secret stores without sharing their values in chat.
-
-The agent then creates a bounded implementation issue and workstream lock. No production credential is used until its adapter has synthetic tests, sandbox verification, failure handling, audit coverage and an explicit production gate.
+Until then, the public PWA remains synthetic-only by design.
