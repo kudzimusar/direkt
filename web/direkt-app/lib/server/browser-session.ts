@@ -157,10 +157,12 @@ async function writeSessionCookies(
   contact: { channel: ContactChannel | "unknown"; displayHint: string },
 ): Promise<void> {
   const store = await cookies();
-  const accessMaxAge = secondsUntil(session.accessTokenExpiresAt, 60 * 15);
   const refreshMaxAge = secondsUntil(session.refreshTokenExpiresAt, 60 * 60 * 24 * 30);
 
-  store.set(ACCESS, session.accessToken, { ...common, httpOnly: true, maxAge: accessMaxAge });
+  // Keep the expired access token inside the HttpOnly session envelope until refresh expiry.
+  // The BFF uses ACCESS_EXP to force the dedicated CSRF/origin-protected refresh mutation;
+  // arbitrary reads never rotate refresh tokens and therefore cannot race across tabs.
+  store.set(ACCESS, session.accessToken, { ...common, httpOnly: true, maxAge: refreshMaxAge });
   store.set(ACCESS_EXP, session.accessTokenExpiresAt, {
     ...common,
     httpOnly: true,
