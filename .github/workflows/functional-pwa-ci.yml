@@ -54,7 +54,7 @@ env:
 
 jobs:
   functional-web:
-    name: Typecheck, W2-W5 contracts and build
+    name: Typecheck, W2-W6 contracts and build
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -87,6 +87,8 @@ jobs:
         run: npm run verify:customer
       - name: Verify W5 provider lifecycle and private-evidence boundary
         run: npm run verify:provider
+      - name: Verify W6 commercial lifecycle and external-provider gate
+        run: npm run verify:commercial
       - name: Build functional web client
         env:
           DIREKT_WEB_API_MODE: disabled
@@ -119,15 +121,15 @@ jobs:
           fi
           test -n "${base_sha}"
           echo "base_sha=${base_sha}" >> "${GITHUB_OUTPUT}"
-      - name: Fail on Android changes in functional PWA W0-W5
+      - name: Fail on Android changes in functional PWA W0-W6
         shell: bash
         run: |
           set -euo pipefail
           if ! git diff --quiet "${{ steps.base.outputs.base_sha }}" "${SOURCE_SHA}" -- android/direkt-app; then
-            echo "Functional PWA W0-W5 must not modify android/direkt-app/**" >&2
+            echo "Functional PWA W0-W6 must not modify android/direkt-app/**" >&2
             git diff --name-status "${{ steps.base.outputs.base_sha }}" "${SOURCE_SHA}" -- android/direkt-app >&2
             exit 1
           fi
       - name: Record protected Android baseline
         run: |
-          printf 'Android protected path unchanged for functional PWA W0-W5 at %s\n' "${SOURCE_SHA}"
+          printf 'Android protected path unchanged for functional PWA W0-W6 at %s\n' "${SOURCE_SHA}"
