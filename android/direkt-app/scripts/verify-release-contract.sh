@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ANDROID_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ANDROID_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 REPO_ROOT="$(git -C "${ANDROID_ROOT}" rev-parse --show-toplevel)"
+REPO_ROOT="$(cd "${REPO_ROOT}" && pwd -P)"
 VERSION_FILE="${ANDROID_ROOT}/release/version.properties"
 
 fail() {
@@ -72,6 +73,14 @@ if [[ "${SIGNING_ENABLED}" == "true" ]]; then
 
   [[ "${DIREKT_UPLOAD_KEYSTORE_PATH}" = /* ]] || fail "DIREKT_UPLOAD_KEYSTORE_PATH must be absolute"
   [[ -f "${DIREKT_UPLOAD_KEYSTORE_PATH}" ]] || fail "protected upload keystore path is not a readable file"
+
+  KEYSTORE_PARENT="$(cd "$(dirname "${DIREKT_UPLOAD_KEYSTORE_PATH}")" && pwd -P)"
+  KEYSTORE_REAL="${KEYSTORE_PARENT}/$(basename "${DIREKT_UPLOAD_KEYSTORE_PATH}")"
+  case "${KEYSTORE_REAL}" in
+    "${REPO_ROOT}"|"${REPO_ROOT}"/*)
+      fail "protected upload keystore must be outside the repository checkout"
+      ;;
+  esac
 fi
 
 printf 'release_version_code=%s\n' "${VERSION_CODE}"
