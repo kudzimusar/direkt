@@ -3,10 +3,9 @@
 import { useMemo, useState } from "react";
 import { AccountExperience } from "@/components/account-experience";
 import { CustomerJourneyExperience } from "@/components/customer-journey-experience";
-import {
-  CustomerDiscoveryExperience,
-  type DiscoveryBootstrap,
-} from "@/components/discovery-experience";
+import { CustomerDiscoveryExperience, type DiscoveryBootstrap } from "@/components/discovery-experience";
+import { ProviderInteractionExperience } from "@/components/provider-interaction-experience";
+import { ProviderJourneyExperience } from "@/components/provider-journey-experience";
 import {
   destinationHeading,
   destinationLabel,
@@ -33,11 +32,7 @@ const providerFoundation = [
   "Commercial and subscription state",
 ];
 
-export function DirektAppShell({
-  discoveryBootstrap,
-  initialDestination = "discover",
-  initialProviderId = null,
-}: {
+export function DirektAppShell({ discoveryBootstrap, initialDestination = "discover", initialProviderId = null }: {
   discoveryBootstrap: DiscoveryBootstrap;
   initialDestination?: DirektDestination;
   initialProviderId?: string | null;
@@ -45,11 +40,11 @@ export function DirektAppShell({
   const [mode, setMode] = useState<DirektMode>("customer");
   const [destination, setDestination] = useState<DirektDestination>(initialDestination);
   const [providerModeAvailable, setProviderModeAvailable] = useState(false);
-
   const heading = useMemo(() => destinationHeading(mode, destination), [destination, mode]);
   const foundation = mode === "customer" ? customerFoundation : providerFoundation;
   const showDiscovery = mode === "customer" && destination === "discover";
   const showCustomerJourney = mode === "customer" && (destination === "saved" || destination === "enquiries");
+  const showProviderJourney = mode === "provider" && providerModeAvailable;
   const showAccount = destination === "account";
 
   const switchMode = (nextMode: DirektMode) => {
@@ -58,7 +53,7 @@ export function DirektAppShell({
       return;
     }
     setMode(nextMode);
-    setDestination(nextMode === "customer" ? "discover" : "account");
+    setDestination("discover");
   };
 
   const updateProviderAvailability = (available: boolean) => {
@@ -75,7 +70,7 @@ export function DirektAppShell({
         <Brand />
         <ModeControl mode={mode} onChange={switchMode} compact={false} providerEnabled={providerModeAvailable} />
         <Navigation mode={mode} destination={destination} onNavigate={setDestination} surface="side" />
-        <div className="side-note"><span className="status-dot" aria-hidden="true" /><div><strong>Functional PWA workstream</strong><p>W4 customer lifecycle · backend authority unchanged</p></div></div>
+        <div className="side-note"><span className="status-dot" aria-hidden="true" /><div><strong>Functional PWA workstream</strong><p>W5 provider lifecycle · backend authority unchanged</p></div></div>
       </aside>
 
       <aside className="tablet-rail" aria-label="Primary">
@@ -85,26 +80,18 @@ export function DirektAppShell({
 
       <div className="app-content-column">
         <header className="top-bar"><div className="mobile-brand-row"><Brand compact /></div><ModeControl mode={mode} onChange={switchMode} compact providerEnabled={providerModeAvailable} /></header>
-
         <main id="main-content" className="main-content" tabIndex={-1}>
           <section className="page-heading" aria-labelledby="page-title">
             <div><p className="eyebrow">{mode === "customer" ? "Customer" : "Provider"}</p><h1 id="page-title">{heading.title}</h1><p>{heading.summary}</p></div>
-            <span className="foundation-chip">{showDiscovery ? "W2 closed" : showAccount ? "W3 closed" : showCustomerJourney ? "W4 active" : "Parity foundation"}</span>
+            <span className="foundation-chip">{showDiscovery ? "W2 closed" : mode === "customer" && showAccount ? "W3 closed" : mode === "customer" && showCustomerJourney ? "W4 closed" : showProviderJourney ? "W5 active" : "Parity foundation"}</span>
           </section>
-
-          <section className="boundary-banner" aria-label="Implementation boundary"><div className="boundary-icon" aria-hidden="true">✓</div><div><strong>Same DIREKT product. Server authority stays canonical.</strong><p>Discovery, account sessions and W4 customer lifecycle state use reviewed same-origin BFF routes, private API invocation, HttpOnly credentials and CSRF/origin checks. Real participant admission and production authorization remain separately gated.</p></div></section>
-
-          {showDiscovery ? (
-            <CustomerDiscoveryExperience bootstrap={discoveryBootstrap} />
-          ) : showCustomerJourney ? (
-            <CustomerJourneyExperience destination={destination as "saved" | "enquiries"} initialProviderId={initialProviderId} />
-          ) : showAccount ? (
-            <AccountExperience onProviderAvailabilityChange={updateProviderAvailability} />
-          ) : (
-            <FoundationContent headingTitle={heading.title} foundation={foundation} mode={mode} />
-          )}
+          <section className="boundary-banner" aria-label="Implementation boundary"><div className="boundary-icon" aria-hidden="true">✓</div><div><strong>Same DIREKT product. Server authority stays canonical.</strong><p>Discovery, customer lifecycle and provider workspace state use reviewed same-origin BFF routes and the IAM-private API. Provider scope is actor-resolved; real participant admission and production authorization remain separately gated.</p></div></section>
+          {showDiscovery ? <CustomerDiscoveryExperience bootstrap={discoveryBootstrap} /> : null}
+          {showCustomerJourney ? <CustomerJourneyExperience destination={destination as "saved" | "enquiries"} initialProviderId={initialProviderId} /> : null}
+          {showProviderJourney ? <>{showAccount ? <AccountExperience onProviderAvailabilityChange={updateProviderAvailability} /> : null}<ProviderJourneyExperience destination={destination} />{destination === "enquiries" ? <ProviderInteractionExperience /> : null}</> : null}
+          {!showDiscovery && !showCustomerJourney && !showProviderJourney && showAccount ? <AccountExperience onProviderAvailabilityChange={updateProviderAvailability} /> : null}
+          {!showDiscovery && !showCustomerJourney && !showProviderJourney && !showAccount ? <FoundationContent headingTitle={heading.title} foundation={foundation} mode={mode} /> : null}
         </main>
-
         <nav className="mobile-bottom-nav" aria-label="Primary"><Navigation mode={mode} destination={destination} onNavigate={setDestination} surface="bottom" /></nav>
       </div>
     </div>
@@ -113,10 +100,9 @@ export function DirektAppShell({
 
 function FoundationContent({ headingTitle, foundation, mode }: { headingTitle: string; foundation: string[]; mode: DirektMode }) {
   return <section className="content-grid" aria-label="Functional parity foundation">
-    <article className="surface-card primary-card"><div className="card-header"><div><p className="eyebrow">Parity target</p><h2>{headingTitle}</h2></div><span className="trust-mark" aria-label="Backend-authoritative">API</span></div><p className="card-copy">W2 discovery and W3 account/session are closed with managed evidence. W4 customer journeys are backend-backed; provider and commercial mutations remain fail-closed until their stages close.</p><div className="progress-row" aria-label="Workstream progress"><span>W4</span><div className="progress-track" aria-hidden="true"><span className="progress-fill" /></div><span>W8</span></div></article>
+    <article className="surface-card primary-card"><div className="card-header"><div><p className="eyebrow">Parity target</p><h2>{headingTitle}</h2></div><span className="trust-mark" aria-label="Backend-authoritative">API</span></div><p className="card-copy">W2 discovery, W3 account/session and W4 customer journeys are closed with managed evidence. W5 provider journeys are backend-backed while W6 commercial mutations remain fail-closed.</p></article>
     <article className="surface-card"><p className="eyebrow">No-regression boundary</p><h2>Android remains protected</h2><ul className="check-list"><li>No Kotlin Multiplatform conversion</li><li>No Gradle or Android dependency changes</li><li>No release/signing gate changes</li><li>Shared API changes remain backward compatible</li></ul></article>
     <article className="surface-card wide-card"><p className="eyebrow">Functional scope</p><h2>{mode === "customer" ? "Customer journey" : "Provider journey"}</h2><div className="capability-grid">{foundation.map((item) => <div className="capability-item" key={item}><span aria-hidden="true">→</span><span>{item}</span></div>)}</div></article>
-    <article className="surface-card wide-card architecture-card"><p className="eyebrow">Authority chain</p><h2>Client → reviewed BFF → NestJS → data</h2><div className="authority-chain" aria-label="DIREKT authority chain"><span>{mode === "customer" ? "Customer Web/PWA" : "Provider Web/PWA"}</span><b aria-hidden="true">→</b><span>Reviewed BFF</span><b aria-hidden="true">→</b><span>Canonical API</span><b aria-hidden="true">→</b><span>PostgreSQL / PostGIS / Private Storage</span></div><p className="card-copy">The browser never becomes the database, authorization or trust authority and never receives privileged Supabase credentials or DIREKT refresh tokens.</p></article>
   </section>;
 }
 
@@ -129,5 +115,5 @@ function ModeControl({ mode, onChange, compact, providerEnabled }: { mode: Direk
 }
 
 function Navigation({ mode, destination, onNavigate, surface }: { mode: DirektMode; destination: DirektDestination; onNavigate: (destination: DirektDestination) => void; surface: "side" | "rail" | "bottom" }) {
-  return <div className={`nav-items nav-${surface}`}>{navigationItems.map((item) => { const active = destination === item.id; const label = destinationLabel(mode, item); return <button key={item.id} type="button" className={active ? "nav-item active" : "nav-item"} aria-current={active ? "page" : undefined} onClick={() => onNavigate(item.id)}><span className="nav-glyph" aria-hidden="true">{item.glyph}</span>{surface !== "rail" && <span>{surface === "bottom" ? item.shortLabel : label}</span>}{surface === "rail" && <span className="sr-only">{label}</span>}</button>; })}</div>;
+  return <div className={`nav-items nav-${surface}`}>{navigationItems.map((item) => { const active = destination === item.id; const label = destinationLabel(mode, item); return <button key={item.id} type="button" className={active ? "nav-item active" : "nav-item"} aria-current={active ? "page" : undefined} onClick={() => onNavigate(item.id)}><span className="nav-glyph" aria-hidden="true">{item.glyph}</span>{surface !== "rail" && <span>{surface === "bottom" && mode === "customer" ? item.shortLabel : label}</span>}{surface === "rail" && <span className="sr-only">{label}</span>}</button>; })}</div>;
 }
