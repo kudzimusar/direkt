@@ -1,7 +1,7 @@
 name: DIREKT functional web W2 managed canary
 
 on:
-  pull_request:
+  pull_request_target:
     branches:
       - main
     paths:
@@ -47,7 +47,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
             test "${{ github.event.pull_request.head.repo.full_name }}" = "${{ github.repository }}"
             source_sha="${{ github.event.pull_request.base.sha }}"
             head_sha="${{ github.event.pull_request.head.sha }}"
@@ -76,8 +76,8 @@ jobs:
           git fetch origin main --no-tags
           git merge-base --is-ancestor "${SOURCE_SHA}" origin/main
 
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            git fetch origin "${{ steps.source.outputs.head_sha }}" --no-tags
+          if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+            git fetch --no-tags origin "${{ steps.source.outputs.head_sha }}"
             mapfile -t changed < <(git diff --name-only "${SOURCE_SHA}" "${{ steps.source.outputs.head_sha }}")
             test "${#changed[@]}" -eq 1
             test "${changed[0]}" = "docs/web/W2_MANAGED_CANARY_TRIGGER.md"
