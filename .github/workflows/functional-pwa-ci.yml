@@ -7,6 +7,8 @@ on:
       - build/android-v1
     paths:
       - "web/direkt-app/**"
+      - "backend/direkt-api/src/auth/**"
+      - "backend/direkt-api/src/authorization/**"
       - "backend/direkt-api/src/discovery/**"
       - "backend/direkt-api/src/interaction/review.types.ts"
       - "backend/direkt-api/src/interaction/review.controller.ts"
@@ -22,6 +24,8 @@ on:
       - main
     paths:
       - "web/direkt-app/**"
+      - "backend/direkt-api/src/auth/**"
+      - "backend/direkt-api/src/authorization/**"
       - "backend/direkt-api/src/discovery/**"
       - "backend/direkt-api/src/interaction/review.types.ts"
       - "backend/direkt-api/src/interaction/review.controller.ts"
@@ -46,7 +50,7 @@ env:
 
 jobs:
   functional-web:
-    name: Typecheck, discovery contract and build
+    name: Typecheck, discovery/auth contracts and build
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -73,9 +77,12 @@ jobs:
         run: npm run verify:static
       - name: Verify W2 discovery contract parity and private API boundary
         run: npm run verify:discovery
+      - name: Verify W3 authentication, session and provider-scope boundary
+        run: npm run verify:auth
       - name: Build functional web client
         env:
           DIREKT_WEB_API_MODE: disabled
+          DIREKT_WEB_AUTH_MODE: disabled
           NEXT_TELEMETRY_DISABLED: "1"
         run: npm run build
       - name: Ensure build did not rewrite tracked source
@@ -104,15 +111,15 @@ jobs:
           fi
           test -n "${base_sha}"
           echo "base_sha=${base_sha}" >> "${GITHUB_OUTPUT}"
-      - name: Fail on Android changes in functional PWA W0-W2
+      - name: Fail on Android changes in functional PWA W0-W3
         shell: bash
         run: |
           set -euo pipefail
           if ! git diff --quiet "${{ steps.base.outputs.base_sha }}" "${SOURCE_SHA}" -- android/direkt-app; then
-            echo "Functional PWA W0-W2 must not modify android/direkt-app/**" >&2
+            echo "Functional PWA W0-W3 must not modify android/direkt-app/**" >&2
             git diff --name-status "${{ steps.base.outputs.base_sha }}" "${SOURCE_SHA}" -- android/direkt-app >&2
             exit 1
           fi
       - name: Record protected Android baseline
         run: |
-          printf 'Android protected path unchanged for functional PWA W0-W2 at %s\n' "${SOURCE_SHA}"
+          printf 'Android protected path unchanged for functional PWA W0-W3 at %s\n' "${SOURCE_SHA}"
