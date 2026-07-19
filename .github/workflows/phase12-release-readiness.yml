@@ -130,7 +130,7 @@ jobs:
             echo "- Distribution: prohibited; readiness evidence only"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Prove signing bypasses fail closed
+      - name: Prove signing and formal eligibility bypasses fail closed
         shell: bash
         run: |
           set -euo pipefail
@@ -149,8 +149,11 @@ jobs:
             "${RUNNER_TEMP}/agp-injected-signing.log"
 
           VERSION_BACKUP="${RUNNER_TEMP}/version.properties.phase12a"
+          ELIGIBILITY_BACKUP="${RUNNER_TEMP}/eligibility.properties.phase12a"
           cp release/version.properties "${VERSION_BACKUP}"
-          trap 'cp "${VERSION_BACKUP}" release/version.properties' EXIT
+          cp release/eligibility.properties "${ELIGIBILITY_BACKUP}"
+          trap 'cp "${VERSION_BACKUP}" release/version.properties; cp "${ELIGIBILITY_BACKUP}" release/eligibility.properties' EXIT
+
           python3 - <<'PY'
           from pathlib import Path
 
@@ -168,6 +171,28 @@ jobs:
           PY
 
           set +e
+          ./gradlew --no-daemon --no-configuration-cache \
+            -x verifyFormalReleaseEligibility :app:bundleRelease \
+            > "${RUNNER_TEMP}/excluded-eligibility.log" 2>&1
+          EXCLUDED_STATUS=$?
+          set -e
+          if [[ "${EXCLUDED_STATUS}" -eq 0 ]]; then
+            echo "Release eligibility unexpectedly became bypassable with Gradle -x." >&2
+            exit 1
+          fi
+          grep -F 'Release-capable source is blocked until all formal Phase 12 eligibility latches are true' \
+            "${RUNNER_TEMP}/excluded-eligibility.log"
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("release/eligibility.properties")
+          text = path.read_text()
+          text = text.replace("=false", "=true")
+          path.write_text(text)
+          PY
+
+          set +e
           DIREKT_RELEASE_SIGNING_ENABLED=true \
             ./gradlew --no-daemon help \
             > "${RUNNER_TEMP}/signed-config-cache.log" 2>&1
@@ -181,8 +206,9 @@ jobs:
             "${RUNNER_TEMP}/signed-config-cache.log"
 
           cp "${VERSION_BACKUP}" release/version.properties
+          cp "${ELIGIBILITY_BACKUP}" release/eligibility.properties
           trap - EXIT
-          git diff --exit-code -- release/version.properties
+          git diff --exit-code -- release/version.properties release/eligibility.properties
 
       - name: Run release lint independently
         shell: bash
