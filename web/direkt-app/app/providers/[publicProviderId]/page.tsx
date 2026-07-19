@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ShareProfileAction } from "@/components/share-profile-action";
 import { DirektApiClient, DirektApiError } from "@/lib/server/direkt-api-client";
 import { getPublicRuntimeCapabilities } from "@/lib/server/runtime-config";
 import type { PublicProviderBundle } from "@/lib/contracts/discovery";
@@ -68,9 +69,7 @@ export default async function PublicProviderPage({
               <p className="provider-profile-locality">{profile.locality}</p>
             </div>
             <div className="provider-profile-actions">
-              <a href={share.path} aria-label={`Share-safe DIREKT path for ${profile.displayName}`}>
-                Share profile
-              </a>
+              <ShareProfileAction title={share.title} text={share.text} path={share.path} />
             </div>
           </section>
 
