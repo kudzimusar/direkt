@@ -1,37 +1,76 @@
 # DIREKT
 
-**DIREKT is an Android-first, verification-led local service marketplace for Zambia.**
+**DIREKT is an Android-first, verification-led local service marketplace for Zambia with a responsive customer/provider PWA companion.**
 
-It helps customers discover nearby providers—such as plumbers, electricians, mechanics and repair technicians—using evidence-backed business, identity, qualification and location information. Providers do not receive a generic “verified” label merely for registering or paying. Each public trust claim is tied to a specific check, status, evidence scope and validity period.
+Customers discover nearby providers and inspect check-specific identity, contact, business, qualification and location claims. Providers build evidence-backed profiles and manage verification, enquiries and commercial state. Payment or registration alone can never create a generic “verified” status.
 
-## Product position
+## Product surfaces
 
-DIREKT is not another open business directory. Its differentiator is a controlled trust layer built around:
+- **Native Android** — primary customer/provider client and eventual Play release target.
+- **Customer/provider PWA** — installable desktop/tablet/mobile companion for remote product review and, after a separate browser-security gate, future live API use.
+- **Operations portal** — privileged Next.js interface for verification, moderation, field work, support, finance exceptions and audit.
+- **NestJS API + PostgreSQL/PostGIS** — canonical backend/domain authority shared by all clients.
 
-- identity and contact verification;
-- business or professional evidence;
-- qualification and licence evidence where applicable;
-- public service-area and reduced-precision location information;
-- private physical-location evidence;
-- field verification for selected categories where approved;
-- certificate expiry and renewal controls;
-- platform-tracked enquiries, complaints and reviews.
+The public PWA does not create a second backend and does not bypass Android, trust, privacy, pilot or production gates.
 
-The first production client is a **native Android application**. A web operations portal supports verification, moderation, support and administration. iOS is deferred, while backend and API boundaries remain portable enough to support it later.
+## Current programme state
 
-## Repository status
+- **Phases 0–10:** complete and stable.
+- **Phase 11 internal/synthetic readiness:** complete; real Zambia participant validation, external legal/privacy gates and 11J remain pending.
+- **Phase 12 preauthorization engineering:** Android release contract, Play-readiness package and all currently clearable repository-controlled release-readiness controls are prepared; formal production release is still blocked.
+- **Issue #133:** authoritative documentation/integration reconciliation plus remote customer/provider PWA.
 
-The repository contains the authoritative product, design, architecture, trust, security, testing and operations specifications plus the native Android, NestJS API, PostgreSQL/PostGIS migrations and internal operations portal implementation.
+Real participant evidence, legal approval, operational staffing, signed production artifacts, Play publication and real money movement are never fabricated or inferred from synthetic readiness.
 
-- **Phases 0–9:** complete and promoted.
-- **Phase 10:** security/privacy/legal/reliability hardening and managed synthetic/private-staging activation complete; final promotion merged through PR #111 at `369fc72581b3ed27920b8fc949e32cfedf1ad8d9` and Issue #41 is closed.
-- **Phase 11:** repository-side controlled Zambia pilot entry preparation is active under Issue #112.
-- **Real participant pilot:** not yet authorized; legal/privacy/provider/operational entry gates remain open.
-- **Phase 12 production release:** not authorized before actual Phase 11 primary evidence and an explicit evidence-backed proceed decision.
+## Canonical remote access
 
-Primary Zambia interviews, real provider evidence and field validation have not been fabricated or treated as complete. The historical secondary-research assumptions remain provisional where Phase 11 primary evidence is required.
+Public domain:
 
-### Mandatory reading order
+```text
+https://direkt.forum/
+```
+
+Remote customer/provider UI:
+
+```text
+https://direkt.forum/app/
+```
+
+The `/app/` build is deliberately **synthetic-only** during this review checkpoint: no real submissions, private evidence, participant data or protected API credentials.
+
+Native Android testing remains available through GitHub Actions artifacts and Firebase App Distribution for approved testers. The operations portal remains IAM-private on Cloud Run staging.
+
+See [`docs/operations/REMOTE_UI_TESTING.md`](docs/operations/REMOTE_UI_TESTING.md).
+
+## Current integration truth
+
+Do not infer that a service is active merely because an account, domain or API key exists. The authoritative status register is:
+
+[`docs/integrations/CURRENT_INTEGRATION_STATUS.md`](docs/integrations/CURRENT_INTEGRATION_STATUS.md)
+
+Current high-level state:
+
+- **Active managed foundation:** Supabase PostgreSQL/PostGIS/private Storage, NestJS API, Cloud Run private staging, Artifact Registry, Secret Manager, GitHub Actions/WIF, Cloud Logging/Monitoring and Firebase App Distribution.
+- **Implemented but gated:** Firebase phone OTP/session exchange, real participant access, contact handoff, production Android release/signing and real payment activation.
+- **Externally provisioned but runtime proof still required:** Resend transactional email, Google Maps and Sentry.
+- **Domain/web edge:** `direkt.forum` uses Cloudflare authoritative DNS with GitHub Pages for public static content; Vercel remains the domain registrar rather than the current protected runtime host.
+- **Not active:** Cloudflare Turnstile, production FCM, Crashlytics runtime, production WhatsApp, MTN MoMo/Airtel Money and automated official-registry integrations.
+
+## Repository layout
+
+```text
+android/direkt-app/              Native Kotlin/Jetpack Compose customer/provider app
+web/direkt-pwa/                  Responsive installable customer/provider PWA
+backend/direkt-api/              TypeScript/NestJS modular backend
+admin/direkt-operations-portal/ Internal privileged operations portal
+database/                        PostgreSQL/PostGIS migrations and policies
+prototype/                       Historical Phase 1B synthetic prototype
+docs/                            Authoritative plans, contracts and status records
+scripts/                         Validation/packaging/maintenance scripts
+.github/workflows/               CI, security, release and managed-infrastructure workflows
+```
+
+## Mandatory reading order
 
 1. [`AGENTS.md`](AGENTS.md)
 2. [`MASTER_BUILD_PLAN.md`](MASTER_BUILD_PLAN.md)
@@ -39,88 +78,33 @@ Primary Zambia interviews, real provider evidence and field validation have not 
 4. [`WORKSTREAM_LOCK.md`](WORKSTREAM_LOCK.md)
 5. [`DEFINITION_OF_DONE.md`](DEFINITION_OF_DONE.md)
 6. [`docs/INDEX.md`](docs/INDEX.md)
-7. [`docs/phase11/HANDOFF_FROM_PHASE10.md`](docs/phase11/HANDOFF_FROM_PHASE10.md)
-8. [`docs/phase11/PHASE11_EXECUTION_AND_ENTRY_CONTROL.md`](docs/phase11/PHASE11_EXECUTION_AND_ENTRY_CONTROL.md)
-
-## Repository layout
-
-```text
-android/direkt-app/              Native Kotlin/Jetpack Compose application
-backend/direkt-api/              TypeScript/NestJS modular backend
-admin/direkt-operations-portal/ Internal web operations portal
-database/                        Migrations, seeds and database policies
-prototype/                       Synthetic browser prototype for Pages
-infrastructure/                  Deployment and environment definitions
-docs/                            Authoritative planning and operating documents
-scripts/                         Validation, packaging and maintenance scripts
-.github/workflows/               Documentation, product, security and deployment CI
-```
+7. [`docs/integrations/CURRENT_INTEGRATION_STATUS.md`](docs/integrations/CURRENT_INTEGRATION_STATUS.md)
+8. phase-specific control documents referenced by `PROJECT_STATUS.md`
 
 ## Branch and workflow policy
 
-DIREKT uses one controlled implementation stream:
-
-- `main` is the stable promoted checkpoint and GitHub Pages source.
-- `build/android-v1` is the sequential implementation branch.
-- One active owner or agent controls writes to a workstream.
-- Every material task ends with checks, documentation, an atomic commit and a status update.
+- `main` is the stable promoted checkpoint and public site source.
+- `build/android-v1` remains the long-lived sequential implementation lane for Android/release work.
+- Temporary conflict-containment branches may be used only when an already-active locked lane would otherwise be overwritten; they must be reconciled and removed through the normal PR lifecycle.
 - Force-pushing is prohibited.
-- The active repository agent creates, verifies and merges routine checkpoint pull requests automatically when safe.
-- Completed linked issues are closed automatically only when their acceptance evidence exists.
-- External credentials, qualified legal approval, participant results and field evidence are never fabricated.
+- Exact-head checks, documentation and review are required before promotion.
+- External credentials, legal approval, participant results and field evidence are never invented.
 
-See [`docs/operations/AGENT_WORKFLOW.md`](docs/operations/AGENT_WORKFLOW.md).
+## Public-site safety boundary
 
-## Build, managed staging and remote testing
+Public Pages/PWA content may contain documentation, synthetic UI, non-sensitive test instructions and approved reports. It must not contain:
 
-Current controlled collaboration/testing channels include:
+- production API/server credentials;
+- database/Supabase privileged keys;
+- real verification evidence;
+- private coordinates;
+- participant linkage/contact data;
+- authenticated operations functionality.
 
-- **GitHub Pages** for documentation and fictional/non-sensitive prototypes only;
-- **GitHub Actions** for backend, Android, portal, documentation, security/supply-chain and managed-infrastructure verification;
-- **Supabase development** project `aeeuscifrxcjmnswqwnq` for the protected PostgreSQL/PostGIS/private-storage development boundary;
-- **Google Cloud** project `direkt-dev-502701` for Artifact Registry and IAM-private Cloud Run staging;
-- **Firebase App Distribution** for approved internal Android debug distribution to named testers.
+## Planning pack
 
-Managed Phase 10 staging is synthetic/private and is not the real Phase 11 participant-access path. An internet-addressable Cloud Run URL does not imply public pilot access when IAM denies unauthenticated invocation.
-
-GitHub Pages cannot execute the native Android application. See [`docs/operations/REMOTE_ANDROID_TESTING.md`](docs/operations/REMOTE_ANDROID_TESTING.md).
-
-## GitHub Pages
-
-The Pages workflow publishes:
-
-- product and technical documentation;
-- fictional, non-sensitive interactive prototypes;
-- test instructions and approved pilot material;
-- release notes and approved reports.
-
-Pages must not host the production API, authenticated operations, secrets, real verification documents, personal data, participant linkage keys or private location evidence.
-
-Public site:
-
-`https://kudzimusar.github.io/direkt/`
-
-## Download the planning pack
-
-[Download the generated DIREKT planning pack](https://kudzimusar.github.io/direkt/downloads/DIREKT_PLANNING_PACK.zip)
-
-## Current workstream
-
-The active workstream is **Phase 11 — controlled Zambia pilot and primary validation**, beginning with the entry gate rather than real recruitment.
-
-Current repository priorities are:
-
-1. preserve the Phase 10 stable baseline and permanent regressions;
-2. satisfy/document qualified legal, privacy, processor and provider entry gates;
-3. approve a tightly bounded pilot area/categories/cohort and named operational owners;
-4. reconcile external Maps/Sentry setup with actual runtime source/configuration evidence;
-5. establish a safe participant access/authentication path without exposing privileged infrastructure;
-6. execute the real controlled pilot only after entry authorization;
-7. apply evidence-led corrections to the same production codebase;
-8. make the Phase 11 `STOP / REPEAT / NARROW / PROCEED` exit decision before Phase 12.
-
-See [`PROJECT_STATUS.md`](PROJECT_STATUS.md) for the live checkpoint and blockers.
+The generated planning archive remains part of the Pages build and is available from the canonical site under `/downloads/DIREKT_PLANNING_PACK.zip` when published.
 
 ## Rights and contribution status
 
-This repository is publicly visible for collaboration, testing and GitHub Pages. Public visibility does not grant a licence to reuse the product, brand, documentation or code. See [`LICENSE.md`](LICENSE.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md).
+This repository is publicly visible for collaboration and controlled review. Public visibility does not grant a licence to reuse the product, brand, documentation or code. See [`LICENSE.md`](LICENSE.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md).
