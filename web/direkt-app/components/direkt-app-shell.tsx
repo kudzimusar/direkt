@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AccountExperience } from "@/components/account-experience";
+import { CommercialExperience } from "@/components/commercial-experience";
 import { CustomerJourneyExperience } from "@/components/customer-journey-experience";
 import { CustomerDiscoveryExperience, type DiscoveryBootstrap } from "@/components/discovery-experience";
 import { ProviderInteractionExperience } from "@/components/provider-interaction-experience";
@@ -29,7 +30,7 @@ const providerFoundation = [
   "Verification requirements and evidence recovery",
   "Provider enquiry transitions and handoff state",
   "Reviews, responses and appeals",
-  "Commercial and subscription state",
+  "Commercial and subscription lifecycle",
 ];
 
 export function DirektAppShell({ discoveryBootstrap, initialDestination = "discover", initialProviderId = null }: {
@@ -70,7 +71,7 @@ export function DirektAppShell({ discoveryBootstrap, initialDestination = "disco
         <Brand />
         <ModeControl mode={mode} onChange={switchMode} compact={false} providerEnabled={providerModeAvailable} />
         <Navigation mode={mode} destination={destination} onNavigate={setDestination} surface="side" />
-        <div className="side-note"><span className="status-dot" aria-hidden="true" /><div><strong>Functional PWA workstream</strong><p>W5 provider lifecycle · backend authority unchanged</p></div></div>
+        <div className="side-note"><span className="status-dot" aria-hidden="true" /><div><strong>Functional PWA workstream</strong><p>W6 commercial parity · external providers gated</p></div></div>
       </aside>
 
       <aside className="tablet-rail" aria-label="Primary">
@@ -83,12 +84,12 @@ export function DirektAppShell({ discoveryBootstrap, initialDestination = "disco
         <main id="main-content" className="main-content" tabIndex={-1}>
           <section className="page-heading" aria-labelledby="page-title">
             <div><p className="eyebrow">{mode === "customer" ? "Customer" : "Provider"}</p><h1 id="page-title">{heading.title}</h1><p>{heading.summary}</p></div>
-            <span className="foundation-chip">{showDiscovery ? "W2 closed" : mode === "customer" && showAccount ? "W3 closed" : mode === "customer" && showCustomerJourney ? "W4 closed" : showProviderJourney ? "W5 active" : "Parity foundation"}</span>
+            <span className="foundation-chip">{showDiscovery ? "W2 closed" : mode === "customer" && showAccount ? "W3 closed" : mode === "customer" && showCustomerJourney ? "W4 closed" : showProviderJourney && showAccount ? "W6 active" : showProviderJourney ? "W5 closed" : "Parity foundation"}</span>
           </section>
-          <section className="boundary-banner" aria-label="Implementation boundary"><div className="boundary-icon" aria-hidden="true">✓</div><div><strong>Same DIREKT product. Server authority stays canonical.</strong><p>Discovery, customer lifecycle and provider workspace state use reviewed same-origin BFF routes and the IAM-private API. Provider scope is actor-resolved; real participant admission and production authorization remain separately gated.</p></div></section>
+          <section className="boundary-banner" aria-label="Implementation boundary"><div className="boundary-icon" aria-hidden="true">✓</div><div><strong>Same DIREKT product. Server authority stays canonical.</strong><p>Discovery, customer/provider lifecycle and commercial state use reviewed same-origin BFF routes and the IAM-private API. Provider scope is actor-resolved, and external payment integrations remain separately gated.</p></div></section>
           {showDiscovery ? <CustomerDiscoveryExperience bootstrap={discoveryBootstrap} /> : null}
           {showCustomerJourney ? <CustomerJourneyExperience destination={destination as "saved" | "enquiries"} initialProviderId={initialProviderId} /> : null}
-          {showProviderJourney ? <>{showAccount ? <AccountExperience onProviderAvailabilityChange={updateProviderAvailability} /> : null}<ProviderJourneyExperience destination={destination} />{destination === "enquiries" ? <ProviderInteractionExperience /> : null}</> : null}
+          {showProviderJourney ? <>{showAccount ? <AccountExperience onProviderAvailabilityChange={updateProviderAvailability} /> : null}<ProviderJourneyExperience destination={destination} />{destination === "enquiries" ? <ProviderInteractionExperience /> : null}{showAccount ? <CommercialExperience /> : null}</> : null}
           {!showDiscovery && !showCustomerJourney && !showProviderJourney && showAccount ? <AccountExperience onProviderAvailabilityChange={updateProviderAvailability} /> : null}
           {!showDiscovery && !showCustomerJourney && !showProviderJourney && !showAccount ? <FoundationContent headingTitle={heading.title} foundation={foundation} mode={mode} /> : null}
         </main>
@@ -100,7 +101,7 @@ export function DirektAppShell({ discoveryBootstrap, initialDestination = "disco
 
 function FoundationContent({ headingTitle, foundation, mode }: { headingTitle: string; foundation: string[]; mode: DirektMode }) {
   return <section className="content-grid" aria-label="Functional parity foundation">
-    <article className="surface-card primary-card"><div className="card-header"><div><p className="eyebrow">Parity target</p><h2>{headingTitle}</h2></div><span className="trust-mark" aria-label="Backend-authoritative">API</span></div><p className="card-copy">W2 discovery, W3 account/session and W4 customer journeys are closed with managed evidence. W5 provider journeys are backend-backed while W6 commercial mutations remain fail-closed.</p></article>
+    <article className="surface-card primary-card"><div className="card-header"><div><p className="eyebrow">Parity target</p><h2>{headingTitle}</h2></div><span className="trust-mark" aria-label="Backend-authoritative">API</span></div><p className="card-copy">W2–W5 are closed with managed evidence. W6 adds only the canonical synthetic or disabled commercial lifecycle; external providers remain gated.</p></article>
     <article className="surface-card"><p className="eyebrow">No-regression boundary</p><h2>Android remains protected</h2><ul className="check-list"><li>No Kotlin Multiplatform conversion</li><li>No Gradle or Android dependency changes</li><li>No release/signing gate changes</li><li>Shared API changes remain backward compatible</li></ul></article>
     <article className="surface-card wide-card"><p className="eyebrow">Functional scope</p><h2>{mode === "customer" ? "Customer journey" : "Provider journey"}</h2><div className="capability-grid">{foundation.map((item) => <div className="capability-item" key={item}><span aria-hidden="true">→</span><span>{item}</span></div>)}</div></article>
   </section>;
