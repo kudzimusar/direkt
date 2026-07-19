@@ -11,7 +11,8 @@ This file prevents overlapping writes in the single-lane build process.
 | Authorized scope | Document and implement the real customer/provider web/PWA companion using the same canonical REST/OpenAPI backend, identity, authorization, trust, enquiry, review and commercial rules as Android; desktop replaces bottom navigation with side navigation while mobile retains bottom navigation |
 | Protected surface | `android/direkt-app/**` is regression-protected; no Android architecture, dependency, Gradle, release/signing or UI refactor is authorized by this workstream unless a separately reviewed compatibility fix is strictly required |
 | Implementation lane | `build/android-v1` — historical name retained; single sequential product lane |
-| Baseline | current synchronized `main` checkpoint after PR #152 (`885eb72dcda12be8c23c4068dec138562af5888a`) |
+| Stable checkpoint | W0/W1 merged through PR #153 at `3302f9571d8e4837a6c33c77b93abff066780bc2` and synchronized by PR #154 |
+| Current task | W2 — real public discovery vertical slice through canonical public discovery/review contracts and IAM-private server-side invocation boundary |
 | Governing plan | `docs/web/FUNCTIONAL_PWA_PARITY_IMPLEMENTATION_PLAN.md` |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized |
 | Governing issues | Issue #133 for customer/provider PWA/reconciliation; Issue #112 remains open for real pilot evidence/exit |
@@ -27,12 +28,13 @@ This file prevents overlapping writes in the single-lane build process.
 6. Every shared backend/OpenAPI change must remain backward compatible with Android and pass Android regression gates.
 7. Mobile web uses bottom navigation aligned to Android. Desktop uses persistent side navigation with the same destinations and capabilities; desktop is a layout adaptation, not a different product.
 8. No synthetic fixture or preview-only behavior may be counted as functional parity when a canonical backend capability exists.
+9. W2 public discovery may use backend-managed synthetic/test state, but production browser invocation must remain server-side through `authenticated-bff`; unauthenticated production API mode is prohibited.
 
 ## Active implementation sequence
 
-- W0 — baseline freeze, Android/API/screen inventory, functional parity matrix and project-wide documentation.
-- W1 — additive Next.js/React/TypeScript PWA shell, design system, responsive navigation, manifest/service-worker safety, BFF boundary and typed API foundation.
-- W2 — real public discovery vertical slice through canonical API contracts.
+- W0 — baseline freeze, Android/API/screen inventory, functional parity matrix and project-wide documentation. **Checkpoint merged.**
+- W1 — additive Next.js/React/TypeScript PWA shell, design system, responsive navigation, manifest/service-worker safety, BFF boundary and typed API foundation. **Checkpoint merged.**
+- W2 — real public discovery vertical slice through canonical API contracts. **Active verification/merge task.**
 - W3 — browser authentication/account/session boundary.
 - W4 — complete customer journey parity.
 - W5 — complete provider journey parity.

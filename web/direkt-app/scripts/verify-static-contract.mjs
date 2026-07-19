@@ -7,10 +7,16 @@ const requiredFiles = [
   "app/layout.tsx",
   "app/page.tsx",
   "app/globals.css",
+  "app/discovery.css",
+  "app/providers/[publicProviderId]/page.tsx",
   "components/direkt-app-shell.tsx",
+  "components/discovery-experience.tsx",
   "lib/navigation.ts",
+  "lib/contracts/discovery.ts",
   "lib/server/runtime-config.ts",
   "lib/server/direkt-api-client.ts",
+  "lib/server/cloud-run-identity.ts",
+  "next.config.ts",
   "public/manifest.webmanifest",
   "public/sw.js",
   "public/icon.svg",
@@ -95,6 +101,20 @@ if (envExample.includes("NEXT_PUBLIC_DIREKT_API_BASE_URL")) {
   throw new Error("Canonical API base URL must remain server-only");
 }
 
+const nextConfig = await readFile(join(root, "next.config.ts"), "utf8");
+for (const marker of [
+  '"default-src \'self\'"',
+  '"frame-ancestors \'none\'"',
+  '"connect-src \'self\'"',
+  '"object-src \'none\'"',
+  'key: "Permissions-Policy"',
+  'key: "X-Content-Type-Options"',
+]) {
+  if (!nextConfig.includes(marker)) {
+    throw new Error(`Security-header baseline marker missing: ${marker}`);
+  }
+}
+
 const sourceFiles = await collectSourceFiles(root);
 const prohibitedSourcePatterns = [
   /NEXT_PUBLIC_DIREKT_API_BASE_URL/,
@@ -132,6 +152,7 @@ process.stdout.write(
     event: "functional_pwa_static_contract_passed",
     responsive: true,
     serviceWorkerBounded: true,
+    securityHeadersPresent: true,
     privilegedBrowserDependencies: false,
     apiBaseUrlPublic: false,
   })}\n`,

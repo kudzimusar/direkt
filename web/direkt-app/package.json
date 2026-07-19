@@ -15,7 +15,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "verify:static": "node scripts/verify-static-contract.mjs",
-    "verify": "npm run typecheck && npm run verify:static && npm run build"
+    "verify:discovery": "node scripts/verify-discovery-contract.mjs",
+    "verify": "npm run typecheck && npm run verify:static && npm run verify:discovery && npm run build"
   },
   "dependencies": {
     "next": "16.2.10",

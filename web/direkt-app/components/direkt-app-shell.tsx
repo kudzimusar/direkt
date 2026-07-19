@@ -2,6 +2,10 @@
 
 import { useMemo, useState } from "react";
 import {
+  CustomerDiscoveryExperience,
+  type DiscoveryBootstrap,
+} from "@/components/discovery-experience";
+import {
   destinationHeading,
   destinationLabel,
   navigationItems,
@@ -27,15 +31,22 @@ const providerFoundation = [
   "Commercial and subscription state",
 ];
 
-export function DirektAppShell() {
+export function DirektAppShell({
+  discoveryBootstrap,
+  initialDestination = "discover",
+}: {
+  discoveryBootstrap: DiscoveryBootstrap;
+  initialDestination?: DirektDestination;
+}) {
   const [mode, setMode] = useState<DirektMode>("customer");
-  const [destination, setDestination] = useState<DirektDestination>("discover");
+  const [destination, setDestination] = useState<DirektDestination>(initialDestination);
 
   const heading = useMemo(
     () => destinationHeading(mode, destination),
     [destination, mode],
   );
   const foundation = mode === "customer" ? customerFoundation : providerFoundation;
+  const showDiscovery = mode === "customer" && destination === "discover";
 
   const switchMode = (nextMode: DirektMode) => {
     setMode(nextMode);
@@ -57,7 +68,7 @@ export function DirektAppShell() {
           <span className="status-dot" aria-hidden="true" />
           <div>
             <strong>Functional PWA workstream</strong>
-            <p>W1 foundation · backend authority unchanged</p>
+            <p>W2 discovery · backend authority unchanged</p>
           </div>
         </div>
       </aside>
@@ -89,7 +100,7 @@ export function DirektAppShell() {
               <h1 id="page-title">{heading.title}</h1>
               <p>{heading.summary}</p>
             </div>
-            <span className="foundation-chip">W1 foundation</span>
+            <span className="foundation-chip">{showDiscovery ? "W2 discovery" : "Parity foundation"}</span>
           </section>
 
           <section className="boundary-banner" aria-label="Implementation boundary">
@@ -97,81 +108,20 @@ export function DirektAppShell() {
               ✓
             </div>
             <div>
-              <strong>Same DIREKT product. New browser client.</strong>
+              <strong>Same DIREKT product. Server authority stays canonical.</strong>
               <p>
-                This foundation does not grant roles, provider scope, verification state or production
-                access. Those remain authoritative in the existing backend and documented gates.
+                Public discovery can now use canonical backend projections through specific same-origin
+                BFF routes. This browser surface still does not grant roles, provider scope,
+                verification state, participant access or production authorization.
               </p>
             </div>
           </section>
 
-          <section className="content-grid" aria-label="Functional parity foundation">
-            <article className="surface-card primary-card">
-              <div className="card-header">
-                <div>
-                  <p className="eyebrow">Parity target</p>
-                  <h2>{heading.title}</h2>
-                </div>
-                <span className="trust-mark" aria-label="Backend-authoritative">
-                  API
-                </span>
-              </div>
-              <p className="card-copy">
-                The UI shell is now responsive across phone, tablet and desktop. Functional slices are
-                connected to canonical REST/OpenAPI one bounded capability at a time, starting with
-                public discovery.
-              </p>
-              <div className="progress-row" aria-label="Workstream progress">
-                <span>W1</span>
-                <div className="progress-track" aria-hidden="true">
-                  <span className="progress-fill" />
-                </div>
-                <span>W8</span>
-              </div>
-            </article>
-
-            <article className="surface-card">
-              <p className="eyebrow">No-regression boundary</p>
-              <h2>Android remains protected</h2>
-              <ul className="check-list">
-                <li>No Kotlin Multiplatform conversion</li>
-                <li>No Gradle or Android dependency changes</li>
-                <li>No release/signing gate changes</li>
-                <li>Shared API changes must remain backward compatible</li>
-              </ul>
-            </article>
-
-            <article className="surface-card wide-card">
-              <p className="eyebrow">Functional scope</p>
-              <h2>{mode === "customer" ? "Customer journey" : "Provider journey"}</h2>
-              <div className="capability-grid">
-                {foundation.map((item) => (
-                  <div className="capability-item" key={item}>
-                    <span aria-hidden="true">→</span>
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-            </article>
-
-            <article className="surface-card wide-card architecture-card">
-              <p className="eyebrow">Authority chain</p>
-              <h2>Client → OpenAPI → NestJS → data</h2>
-              <div className="authority-chain" aria-label="DIREKT authority chain">
-                <span>{mode === "customer" ? "Customer Web/PWA" : "Provider Web/PWA"}</span>
-                <b aria-hidden="true">→</b>
-                <span>Reviewed BFF</span>
-                <b aria-hidden="true">→</b>
-                <span>Canonical API</span>
-                <b aria-hidden="true">→</b>
-                <span>PostgreSQL / PostGIS / Private Storage</span>
-              </div>
-              <p className="card-copy">
-                The browser never becomes the database, authorization or trust authority and never
-                receives privileged Supabase credentials.
-              </p>
-            </article>
-          </section>
+          {showDiscovery ? (
+            <CustomerDiscoveryExperience bootstrap={discoveryBootstrap} />
+          ) : (
+            <FoundationContent headingTitle={heading.title} foundation={foundation} mode={mode} />
+          )}
         </main>
 
         <nav className="mobile-bottom-nav" aria-label="Primary">
@@ -184,6 +134,85 @@ export function DirektAppShell() {
         </nav>
       </div>
     </div>
+  );
+}
+
+function FoundationContent({
+  headingTitle,
+  foundation,
+  mode,
+}: {
+  headingTitle: string;
+  foundation: string[];
+  mode: DirektMode;
+}) {
+  return (
+    <section className="content-grid" aria-label="Functional parity foundation">
+      <article className="surface-card primary-card">
+        <div className="card-header">
+          <div>
+            <p className="eyebrow">Parity target</p>
+            <h2>{headingTitle}</h2>
+          </div>
+          <span className="trust-mark" aria-label="Backend-authoritative">
+            API
+          </span>
+        </div>
+        <p className="card-copy">
+          Public discovery is the first connected vertical slice. Authentication, saved providers,
+          enquiries, evidence and commercial mutations remain fail-closed until their documented stages.
+        </p>
+        <div className="progress-row" aria-label="Workstream progress">
+          <span>W2</span>
+          <div className="progress-track" aria-hidden="true">
+            <span className="progress-fill" />
+          </div>
+          <span>W8</span>
+        </div>
+      </article>
+
+      <article className="surface-card">
+        <p className="eyebrow">No-regression boundary</p>
+        <h2>Android remains protected</h2>
+        <ul className="check-list">
+          <li>No Kotlin Multiplatform conversion</li>
+          <li>No Gradle or Android dependency changes</li>
+          <li>No release/signing gate changes</li>
+          <li>Shared API changes must remain backward compatible</li>
+        </ul>
+      </article>
+
+      <article className="surface-card wide-card">
+        <p className="eyebrow">Functional scope</p>
+        <h2>{mode === "customer" ? "Customer journey" : "Provider journey"}</h2>
+        <div className="capability-grid">
+          {foundation.map((item) => (
+            <div className="capability-item" key={item}>
+              <span aria-hidden="true">→</span>
+              <span>{item}</span>
+            </div>
+          ))}
+        </div>
+      </article>
+
+      <article className="surface-card wide-card architecture-card">
+        <p className="eyebrow">Authority chain</p>
+        <h2>Client → OpenAPI → NestJS → data</h2>
+        <div className="authority-chain" aria-label="DIREKT authority chain">
+          <span>{mode === "customer" ? "Customer Web/PWA" : "Provider Web/PWA"}</span>
+          <b aria-hidden="true">→</b>
+          <span>Reviewed BFF</span>
+          <b aria-hidden="true">→</b>
+          <span>Canonical API</span>
+          <b aria-hidden="true">→</b>
+          <span>PostgreSQL / PostGIS / Private Storage</span>
+        </div>
+        <p className="card-copy">
+          The browser never becomes the database, authorization or trust authority and never receives
+          privileged Supabase credentials.
+        </p>
+      </article>
+    </section>
   );
 }
 
@@ -213,7 +242,7 @@ function ModeControl({
   return (
     <div className={compact ? "mode-control compact" : "mode-control"}>
       {!compact && <span className="mode-label">Surface</span>}
-      <div className="segmented-control" role="group" aria-label="Preview product surface">
+      <div className="segmented-control" role="group" aria-label="Product surface">
         {(["customer", "provider"] as const).map((value) => (
           <button
             key={value}

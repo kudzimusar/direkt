@@ -22,6 +22,12 @@ export function getDirektWebRuntimeConfig(): DirektWebRuntimeConfig {
     return { apiMode, apiBaseUrl: null };
   }
 
+  if (apiMode === "public" && process.env.NODE_ENV === "production") {
+    throw new Error(
+      "DIREKT_WEB_API_MODE=public is prohibited in production; use authenticated-bff for the IAM-private API",
+    );
+  }
+
   if (!rawBaseUrl) {
     throw new Error("DIREKT_API_BASE_URL is required when the functional web API mode is enabled");
   }
@@ -44,6 +50,7 @@ export function getPublicRuntimeCapabilities() {
   return {
     apiMode,
     publicDiscoveryEnabled: apiMode === "public" || apiMode === "authenticated-bff",
-    authenticatedBrowserEnabled: apiMode === "authenticated-bff",
+    privateApiInvocationEnabled: apiMode === "authenticated-bff",
+    participantAuthenticationEnabled: false,
   } as const;
 }
