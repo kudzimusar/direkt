@@ -57,8 +57,10 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: "24"
-      - name: Install exact direct dependency set
-        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          cache: npm
+          cache-dependency-path: web/direkt-app/package-lock.json
+      - name: Install locked functional web dependency graph
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Typecheck functional web client
         run: npm run typecheck
       - name: Verify responsive, PWA and privilege boundary contract
