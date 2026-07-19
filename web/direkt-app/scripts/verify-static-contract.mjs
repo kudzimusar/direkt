@@ -17,6 +17,7 @@ const requiredFiles = [
   "lib/server/direkt-api-client.ts",
   "lib/server/cloud-run-identity.ts",
   "next.config.ts",
+  "Dockerfile",
   "public/manifest.webmanifest",
   "public/sw.js",
   "public/icon.svg",
@@ -103,16 +104,35 @@ if (envExample.includes("NEXT_PUBLIC_DIREKT_API_BASE_URL")) {
 
 const nextConfig = await readFile(join(root, "next.config.ts"), "utf8");
 for (const marker of [
+  'output: "standalone"',
   '"default-src \'self\'"',
   '"frame-ancestors \'none\'"',
   '"connect-src \'self\'"',
   '"object-src \'none\'"',
   'key: "Permissions-Policy"',
   'key: "X-Content-Type-Options"',
+  'key: "X-Robots-Tag"',
 ]) {
   if (!nextConfig.includes(marker)) {
-    throw new Error(`Security-header baseline marker missing: ${marker}`);
+    throw new Error(`Security/deployment baseline marker missing: ${marker}`);
   }
+}
+
+const dockerfile = await readFile(join(root, "Dockerfile"), "utf8");
+for (const marker of [
+  "npm ci --ignore-scripts",
+  "npm run typecheck",
+  "npm run verify:static",
+  "/.next/standalone",
+  "USER node",
+  'CMD ["node", "server.js"]',
+]) {
+  if (!dockerfile.includes(marker)) {
+    throw new Error(`W2 canary container marker missing: ${marker}`);
+  }
+}
+if (/DIREKT_API_BASE_URL\s*=/.test(dockerfile)) {
+  throw new Error("Private API URL must be runtime-injected, not baked into the web image");
 }
 
 const sourceFiles = await collectSourceFiles(root);
@@ -153,6 +173,7 @@ process.stdout.write(
     responsive: true,
     serviceWorkerBounded: true,
     securityHeadersPresent: true,
+    standaloneContainer: true,
     privilegedBrowserDependencies: false,
     apiBaseUrlPublic: false,
   })}\n`,

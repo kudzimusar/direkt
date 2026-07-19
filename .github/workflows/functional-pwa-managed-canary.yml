@@ -1,0 +1,371 @@
+name: DIREKT functional web W2 managed canary
+
+on:
+  pull_request_target:
+    branches:
+      - main
+    paths:
+      - "docs/web/W2_MANAGED_CANARY_TRIGGER.md"
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN-DIREKT-W2-CANARY to continue
+        required: true
+        type: string
+      source_sha:
+        description: Exact reviewed DIREKT commit already merged to main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: direkt-functional-web-w2-managed-canary
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    name: Deploy and verify private W2 functional web canary
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_REGION: asia-northeast1
+      GCP_ARTIFACT_REGISTRY: direkt-containers
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_API_SERVICE: direkt-api
+      GCP_WEB_SERVICE: direkt-customer-provider-web-staging
+      GCP_W2_CANARY_RUNTIME_SERVICE_ACCOUNT: direkt-portal-runtime@direkt-dev-502701.iam.gserviceaccount.com
+
+    steps:
+      - name: Resolve immutable merged source
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+            test "${{ github.event.pull_request.head.repo.full_name }}" = "${{ github.repository }}"
+            source_sha="${{ github.event.pull_request.base.sha }}"
+            head_sha="${{ github.event.pull_request.head.sha }}"
+          else
+            test "${{ inputs.confirmation }}" = "RUN-DIREKT-W2-CANARY"
+            [[ "${{ inputs.source_sha }}" =~ ^[0-9a-f]{40}$ ]]
+            source_sha="${{ inputs.source_sha }}"
+            head_sha=""
+          fi
+          [[ "${source_sha}" =~ ^[0-9a-f]{40}$ ]]
+          echo "source_sha=${source_sha}" >> "${GITHUB_OUTPUT}"
+          echo "head_sha=${head_sha}" >> "${GITHUB_OUTPUT}"
+
+      - name: Check out exact merged source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.source.outputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify source ancestry and bounded trigger
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          test "${SOURCE_SHA}" = "${{ steps.source.outputs.source_sha }}"
+          git fetch origin main --no-tags
+          git merge-base --is-ancestor "${SOURCE_SHA}" origin/main
+
+          if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+            git fetch --no-tags origin "${{ steps.source.outputs.head_sha }}"
+            mapfile -t changed < <(git diff --name-only "${SOURCE_SHA}" "${{ steps.source.outputs.head_sha }}")
+            test "${#changed[@]}" -eq 1
+            test "${changed[0]}" = "docs/web/W2_MANAGED_CANARY_TRIGGER.md"
+          fi
+
+          echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
+          echo "WEB_IMAGE_URI=${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/${GCP_WEB_SERVICE}:${SOURCE_SHA}" >> "${GITHUB_ENV}"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/direkt-app/package-lock.json
+
+      - name: Verify exact functional web source
+        working-directory: web/direkt-app
+        env:
+          DIREKT_WEB_API_MODE: disabled
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run typecheck
+          npm run verify:static
+          npm run verify:discovery
+          npm run build
+
+      - name: Authenticate to Google Cloud through GitHub OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Verify existing private API and bounded runtime identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run services describe "${GCP_API_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json \
+            > "${RUNNER_TEMP}/api-service.json"
+          API_URL="$(jq -r '.status.url' "${RUNNER_TEMP}/api-service.json")"
+          test -n "${API_URL}"
+          echo "API_URL=${API_URL}" >> "${GITHUB_ENV}"
+
+          gcloud run services get-iam-policy "${GCP_API_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json \
+            > "${RUNNER_TEMP}/api-iam-before.json"
+          jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' \
+            "${RUNNER_TEMP}/api-iam-before.json" >/dev/null
+          jq -e --arg expected "serviceAccount:${GCP_W2_CANARY_RUNTIME_SERVICE_ACCOUNT}" '
+            [.bindings[]? | select(.role == "roles/run.invoker") | .members[]?] | index($expected) != null
+          ' "${RUNNER_TEMP}/api-iam-before.json" >/dev/null
+
+      - name: Configure Artifact Registry authentication
+        run: gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+
+      - name: Build and push immutable functional web image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build \
+            --file web/direkt-app/Dockerfile \
+            --tag "${WEB_IMAGE_URI}" \
+            web/direkt-app
+          docker push "${WEB_IMAGE_URI}"
+
+      - name: Deploy IAM-private synthetic W2 web canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run deploy "${GCP_WEB_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --platform managed \
+            --image "${WEB_IMAGE_URI}" \
+            --service-account "${GCP_W2_CANARY_RUNTIME_SERVICE_ACCOUNT}" \
+            --port 8080 \
+            --cpu 1 \
+            --memory 512Mi \
+            --min-instances 0 \
+            --max-instances 1 \
+            --concurrency 20 \
+            --timeout 60 \
+            --ingress all \
+            --labels "direkt-environment=staging,direkt-data-mode=synthetic-only,direkt-workstream=w2-canary" \
+            --set-env-vars "NODE_ENV=production,HOSTNAME=0.0.0.0,DIREKT_WEB_API_MODE=authenticated-bff,DIREKT_API_BASE_URL=${API_URL}" \
+            --no-allow-unauthenticated \
+            --quiet
+
+          WEB_URL="$(gcloud run services describe "${GCP_WEB_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format='value(status.url)')"
+          test -n "${WEB_URL}"
+          echo "WEB_URL=${WEB_URL}" >> "${GITHUB_ENV}"
+
+      - name: Verify deployed identity, image and private IAM
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run services describe "${GCP_WEB_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json \
+            > "${RUNNER_TEMP}/web-service.json"
+          jq -e --arg identity "${GCP_W2_CANARY_RUNTIME_SERVICE_ACCOUNT}" '.spec.template.spec.serviceAccountName == $identity' \
+            "${RUNNER_TEMP}/web-service.json" >/dev/null
+          jq -e --arg image "${WEB_IMAGE_URI}" '.spec.template.spec.containers[0].image == $image' \
+            "${RUNNER_TEMP}/web-service.json" >/dev/null
+          jq -e '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef != null)] | length == 0' \
+            "${RUNNER_TEMP}/web-service.json" >/dev/null
+
+          for member in allUsers allAuthenticatedUsers; do
+            gcloud run services remove-iam-policy-binding "${GCP_WEB_SERVICE}" \
+              --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" \
+              --member "${member}" --role roles/run.invoker --quiet >/dev/null 2>&1 || true
+          done
+          gcloud run services get-iam-policy "${GCP_WEB_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json \
+            > "${RUNNER_TEMP}/web-iam-private.json"
+          jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' \
+            "${RUNNER_TEMP}/web-iam-private.json" >/dev/null
+
+      - name: Grant temporary deployer invocation for bounded canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          for service in "${GCP_API_SERVICE}" "${GCP_WEB_SERVICE}"; do
+            gcloud run services add-iam-policy-binding "${service}" \
+              --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" \
+              --member "serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}" \
+              --role roles/run.invoker --quiet
+          done
+
+      - name: Mint private API canary ID token
+        id: api-auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+          token_format: id_token
+          id_token_audience: ${{ env.API_URL }}
+          id_token_include_email: true
+
+      - name: Mint private web canary ID token
+        id: web-auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+          token_format: id_token
+          id_token_audience: ${{ env.WEB_URL }}
+          id_token_include_email: true
+
+      - name: Compare managed API state with web BFF and rendered shell
+        shell: bash
+        env:
+          API_ID_TOKEN: ${{ steps.api-auth.outputs.id_token }}
+          WEB_ID_TOKEN: ${{ steps.web-auth.outputs.id_token }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::${API_ID_TOKEN}"
+          echo "::add-mask::${WEB_ID_TOKEN}"
+          api_header="X-Serverless-Authorization: Bearer ${API_ID_TOKEN}"
+          web_header="X-Serverless-Authorization: Bearer ${WEB_ID_TOKEN}"
+
+          curl --fail --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors \
+            --header "${api_header}" "${API_URL}/api/v1/public/categories" > "${RUNNER_TEMP}/api-categories.json"
+          curl --fail --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors \
+            --header "${web_header}" "${WEB_URL}/api/discovery/categories" > "${RUNNER_TEMP}/web-categories.json"
+          diff -u \
+            <(jq -S 'sort_by(.key)' "${RUNNER_TEMP}/api-categories.json") \
+            <(jq -S 'sort_by(.key)' "${RUNNER_TEMP}/web-categories.json")
+
+          curl --fail --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors \
+            --header "${api_header}" "${API_URL}/api/v1/public/providers/search?limit=20" > "${RUNNER_TEMP}/api-search.json"
+          curl --fail --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors \
+            --header "${web_header}" "${WEB_URL}/api/discovery/search?limit=20" > "${RUNNER_TEMP}/web-search.json"
+
+          jq -e '.items | length > 0' "${RUNNER_TEMP}/api-search.json" >/dev/null
+          jq -e '.items | length > 0' "${RUNNER_TEMP}/web-search.json" >/dev/null
+          diff -u \
+            <(jq -S '[.items[] | {publicProviderId,categoryKey,categoryName,displayName,operatingModel,locality,availability,distanceKm}] | sort_by(.publicProviderId)' "${RUNNER_TEMP}/api-search.json") \
+            <(jq -S '[.items[] | {publicProviderId,categoryKey,categoryName,displayName,operatingModel,locality,availability,distanceKm}] | sort_by(.publicProviderId)' "${RUNNER_TEMP}/web-search.json")
+
+          PUBLIC_PROVIDER_ID="$(jq -r '.items[0].publicProviderId' "${RUNNER_TEMP}/web-search.json")"
+          [[ "${PUBLIC_PROVIDER_ID}" =~ ^[0-9a-fA-F-]{36}$ ]]
+
+          curl --fail --silent --show-error --header "${api_header}" \
+            "${API_URL}/api/v1/public/providers/${PUBLIC_PROVIDER_ID}" > "${RUNNER_TEMP}/api-profile.json"
+          curl --fail --silent --show-error --header "${api_header}" \
+            "${API_URL}/api/v1/public/providers/${PUBLIC_PROVIDER_ID}/claims" > "${RUNNER_TEMP}/api-claims.json"
+          curl --fail --silent --show-error --header "${api_header}" \
+            "${API_URL}/api/v1/public/providers/${PUBLIC_PROVIDER_ID}/availability" > "${RUNNER_TEMP}/api-availability.json"
+          curl --fail --silent --show-error --header "${api_header}" \
+            "${API_URL}/api/v1/public/providers/${PUBLIC_PROVIDER_ID}/reviews" > "${RUNNER_TEMP}/api-reviews.json"
+          curl --fail --silent --show-error --header "${api_header}" \
+            "${API_URL}/api/v1/public/providers/${PUBLIC_PROVIDER_ID}/share" > "${RUNNER_TEMP}/api-share.json"
+          curl --fail --silent --show-error --header "${web_header}" \
+            "${WEB_URL}/api/discovery/providers/${PUBLIC_PROVIDER_ID}" > "${RUNNER_TEMP}/web-bundle.json"
+
+          diff -u <(jq -S . "${RUNNER_TEMP}/api-profile.json") <(jq -S '.profile' "${RUNNER_TEMP}/web-bundle.json")
+          diff -u <(jq -S . "${RUNNER_TEMP}/api-claims.json") <(jq -S '.claims' "${RUNNER_TEMP}/web-bundle.json")
+          diff -u <(jq -S . "${RUNNER_TEMP}/api-availability.json") <(jq -S '.availability' "${RUNNER_TEMP}/web-bundle.json")
+          diff -u <(jq -S . "${RUNNER_TEMP}/api-reviews.json") <(jq -S '.reviews' "${RUNNER_TEMP}/web-bundle.json")
+          diff -u <(jq -S . "${RUNNER_TEMP}/api-share.json") <(jq -S '.share' "${RUNNER_TEMP}/web-bundle.json")
+
+          if grep -Eiq '"(evidenceId|objectKey|verifiedContactRef|customerIdentityId|providerId|reviewerIdentityId|moderationRationale|privateBase)"[[:space:]]*:' \
+            "${RUNNER_TEMP}/web-search.json" "${RUNNER_TEMP}/web-bundle.json"; then
+            echo "::error title=Private field detected::The W2 public web projection contained a prohibited private field."
+            exit 1
+          fi
+
+          curl --fail --silent --show-error --header "${web_header}" "${WEB_URL}/" > "${RUNNER_TEMP}/web-home.html"
+          grep -q "DIREKT" "${RUNNER_TEMP}/web-home.html"
+          grep -q "Search DIREKT providers" "${RUNNER_TEMP}/web-home.html"
+          curl --fail --silent --show-error --head --header "${web_header}" "${WEB_URL}/" > "${RUNNER_TEMP}/web-headers.txt"
+          grep -qi '^x-robots-tag: noindex, nofollow, noarchive' "${RUNNER_TEMP}/web-headers.txt"
+          grep -qi '^content-security-policy:' "${RUNNER_TEMP}/web-headers.txt"
+
+          unauth_api="$(curl --silent --output /dev/null --write-out '%{http_code}' "${API_URL}/api/v1/health/ready")"
+          unauth_web="$(curl --silent --output /dev/null --write-out '%{http_code}' "${WEB_URL}/")"
+          test "${unauth_api}" = "403"
+          test "${unauth_web}" = "403"
+
+          jq -n \
+            --arg source "${SOURCE_SHA}" \
+            --arg webService "${GCP_WEB_SERVICE}" \
+            --arg apiService "${GCP_API_SERVICE}" \
+            --argjson categories "$(jq 'length' "${RUNNER_TEMP}/web-categories.json")" \
+            --argjson searchResults "$(jq '.items | length' "${RUNNER_TEMP}/web-search.json")" \
+            '{source:$source,webService:$webService,apiService:$apiService,categories:$categories,searchResults:$searchResults,apiToBffParity:true,profileBundleParity:true,privateFieldScan:true,renderedShell:true,unauthenticatedDenied:true,dataMode:"synthetic-only"}' \
+            > "${RUNNER_TEMP}/w2-canary-evidence.json"
+
+      - name: Remove temporary deployer invocation and verify final IAM
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          deployer="serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}"
+          for service in "${GCP_API_SERVICE}" "${GCP_WEB_SERVICE}"; do
+            if ! gcloud run services describe "${service}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format='value(metadata.name)' >/dev/null 2>&1; then
+              continue
+            fi
+            gcloud run services remove-iam-policy-binding "${service}" \
+              --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" \
+              --member "${deployer}" --role roles/run.invoker --quiet >/dev/null 2>&1 || true
+            policy="${RUNNER_TEMP}/${service}-final-iam.json"
+            gcloud run services get-iam-policy "${service}" \
+              --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${policy}"
+            jq -e --arg deployer "${deployer}" '[.bindings[]?.members[]? | select(. == $deployer or . == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' \
+              "${policy}" >/dev/null
+          done
+
+          if [[ -f "${RUNNER_TEMP}/${GCP_API_SERVICE}-final-iam.json" ]]; then
+            jq -e --arg expected "serviceAccount:${GCP_W2_CANARY_RUNTIME_SERVICE_ACCOUNT}" '
+              [.bindings[]? | select(.role == "roles/run.invoker") | .members[]?] | index($expected) != null
+            ' "${RUNNER_TEMP}/${GCP_API_SERVICE}-final-iam.json" >/dev/null
+          fi
+
+      - name: Upload sanitized W2 canary evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-functional-web-w2-canary-${{ steps.source.outputs.source_sha }}
+          path: ${{ runner.temp }}/w2-canary-evidence.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish sanitized W2 canary summary
+        if: success()
+        shell: bash
+        run: |
+          {
+            echo "### DIREKT functional web W2 managed canary"
+            echo "- Source: \`${SOURCE_SHA}\`"
+            echo "- Web service: \`${GCP_WEB_SERVICE}\`"
+            echo "- API service: \`${GCP_API_SERVICE}\`"
+            echo "- Web/API invocation: IAM-private"
+            echo "- Data mode: \`synthetic-only\`"
+            echo "- API ↔ BFF category/search/profile parity: passed"
+            echo "- Public projection private-field scan: passed"
+            echo "- Rendered DIREKT discovery shell: passed"
+            echo "- Unauthenticated API and web access: denied"
+            echo "- Temporary deployer Invoker grants: removed"
+            echo "- Public cutover: not authorized"
+          } >> "${GITHUB_STEP_SUMMARY}"
