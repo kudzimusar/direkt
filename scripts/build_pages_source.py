@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the MkDocs source tree from repository documentation and prototype assets."""
+"""Build the MkDocs source tree from repository documentation and public synthetic UI assets."""
 from pathlib import Path
 import shutil
 
@@ -22,10 +22,7 @@ for rel in root_docs:
 
 shutil.copytree(ROOT / "docs", OUT / "docs")
 
-# Publish the dependency-free Phase 1B prototype as static Pages content.
-# The repository README documents the prototype source, while index.html is
-# the public route. Excluding README.md prevents both files mapping to the
-# same MkDocs destination under strict mode.
+# Retain the historical Phase 1B prototype as a synthetic design artifact.
 prototype_src = ROOT / "prototype"
 if prototype_src.exists():
     shutil.copytree(
@@ -33,6 +30,12 @@ if prototype_src.exists():
         OUT / "prototype",
         ignore=shutil.ignore_patterns("README.md"),
     )
+
+# Publish the current customer/provider PWA as a separate synthetic remote-review surface.
+# It is static and must never contain credentials, private evidence or live participant data.
+pwa_src = ROOT / "web" / "direkt-pwa"
+if pwa_src.exists():
+    shutil.copytree(pwa_src, OUT / "app")
 
 # Repository-relative index link becomes the Pages home link.
 index_path = OUT / "docs" / "INDEX.md"
@@ -42,20 +45,20 @@ if index_path.exists():
         encoding="utf-8",
     )
 
-# Add a direct prototype link to the generated Pages landing document.
 readme = (ROOT / "README.md").read_text(encoding="utf-8")
-prototype_callout = """
+ui_callout = """
 
-## Open the interactive prototype
+## Open the remote customer/provider UI
 
-[Launch the DIREKT Phase 1B prototype](prototype/index.html)
+[Launch the DIREKT PWA](app/index.html)
 
-The prototype uses fictional data, makes no real submissions and does not represent an implemented backend or verification service.
+The public PWA is an installable **synthetic remote-review build**. It contains no real participant data, makes no real submissions and does not bypass the protected backend, pilot or production gates.
+
+[Open the historical Phase 1B interaction prototype](prototype/index.html)
 """
-if "## Open the interactive prototype" not in readme:
-    readme = readme.replace("## Download the planning pack", prototype_callout + "\n## Download the planning pack")
+if "## Open the remote customer/provider UI" not in readme:
+    readme = readme.replace("## Download the planning pack", ui_callout + "\n## Download the planning pack")
 
-# MkDocs expects index.md.
 (OUT / "index.md").write_text(readme, encoding="utf-8")
 
 download_src = ROOT / "downloads" / "DIREKT_PLANNING_PACK.zip"
