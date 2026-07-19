@@ -1,0 +1,139 @@
+name: DIREKT functional web W2 canary evidence report
+
+on:
+  workflow_run:
+    workflows:
+      - DIREKT functional web W2 managed canary
+    types:
+      - completed
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+
+jobs:
+  report:
+    name: Publish sanitized W2 canary result
+    if: github.event.workflow_run.event == 'pull_request_target'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download exact canary artifact
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          pattern: direkt-functional-web-w2-canary-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/w2-canary-artifact
+
+      - name: Resolve trusted trigger metadata
+        id: trigger
+        shell: bash
+        run: |
+          set -euo pipefail
+          metadata="${RUNNER_TEMP}/w2-canary-artifact/w2-canary-trigger.json"
+          test -f "${metadata}"
+          jq -e '
+            (.triggerPrNumber | type == "number")
+            and (.triggerPrNumber > 0)
+            and (.source | test("^[0-9a-f]{40}$"))
+            and .event == "pull_request_target"
+          ' "${metadata}" >/dev/null
+          echo "pr_number=$(jq -r '.triggerPrNumber' "${metadata}")" >> "${GITHUB_OUTPUT}"
+          echo "source=$(jq -r '.source' "${metadata}")" >> "${GITHUB_OUTPUT}"
+
+      - name: Validate sanitized successful evidence
+        id: evidence
+        if: github.event.workflow_run.conclusion == 'success'
+        env:
+          EXPECTED_SOURCE: ${{ steps.trigger.outputs.source }}
+          EXPECTED_PR_NUMBER: ${{ steps.trigger.outputs.pr_number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="${RUNNER_TEMP}/w2-canary-artifact/w2-canary-evidence.json"
+          test -f "${evidence}"
+          jq -e \
+            --arg expectedSource "${EXPECTED_SOURCE}" \
+            --argjson expectedPrNumber "${EXPECTED_PR_NUMBER}" '
+            .source == $expectedSource
+            and .triggerPrNumber == $expectedPrNumber
+            and .webService == "direkt-customer-provider-web-staging"
+            and .apiService == "direkt-api"
+            and .apiToBffParity == true
+            and .profileBundleParity == true
+            and .privateFieldScan == true
+            and .renderedShell == true
+            and .unauthenticatedDenied == true
+            and .dataMode == "synthetic-only"
+            and (.categories | type == "number")
+            and (.categories > 0)
+            and (.searchResults | type == "number")
+            and (.searchResults > 0)
+          ' "${evidence}" >/dev/null
+          echo "categories=$(jq -r '.categories' "${evidence}")" >> "${GITHUB_OUTPUT}"
+          echo "search_results=$(jq -r '.searchResults' "${evidence}")" >> "${GITHUB_OUTPUT}"
+          echo "web_service=$(jq -r '.webService' "${evidence}")" >> "${GITHUB_OUTPUT}"
+          echo "api_service=$(jq -r '.apiService' "${evidence}")" >> "${GITHUB_OUTPUT}"
+
+      - name: Publish result to trigger PR
+        if: always() && steps.trigger.outputs.pr_number != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.trigger.outputs.pr_number }}
+          CANARY_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          SOURCE_SHA: ${{ steps.trigger.outputs.source }}
+          EVIDENCE_OUTCOME: ${{ steps.evidence.outcome }}
+          CATEGORY_COUNT: ${{ steps.evidence.outputs.categories }}
+          SEARCH_RESULT_COUNT: ${{ steps.evidence.outputs.search_results }}
+          WEB_SERVICE: ${{ steps.evidence.outputs.web_service }}
+          API_SERVICE: ${{ steps.evidence.outputs.api_service }}
+        run: |
+          set -euo pipefail
+          [[ "${PR_NUMBER}" =~ ^[1-9][0-9]*$ ]]
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${{ github.event.workflow_run.id }}"
+
+          if [[ "${CANARY_CONCLUSION}" == "success" && "${EVIDENCE_OUTCOME}" == "success" ]]; then
+            body=$(cat <<EOF
+          <!-- direkt-w2-canary-result -->
+          ## W2 managed canary: PASS
+
+          - Exact merged source: \`${SOURCE_SHA}\`
+          - Web service: \`${WEB_SERVICE}\`
+          - API service: \`${API_SERVICE}\`
+          - Data mode: \`synthetic-only\`
+          - Canonical categories observed: ${CATEGORY_COUNT}
+          - Provider search results observed: ${SEARCH_RESULT_COUNT}
+          - API ↔ BFF category/search/profile-bundle parity: PASS
+          - Public projection private-field scan: PASS
+          - Rendered DIREKT discovery shell/security headers: PASS
+          - Unauthenticated API and web invocation: denied
+          - Temporary deployer Invoker cleanup: verified by canary job
+          - Public cutover: **not authorized**
+
+          Managed run: ${run_url}
+          EOF
+          )
+          else
+            body=$(cat <<EOF
+          <!-- direkt-w2-canary-result -->
+          ## W2 managed canary: FAIL / INCOMPLETE
+
+          - Exact merged source: \`${SOURCE_SHA}\`
+          - Managed canary conclusion: \`${CANARY_CONCLUSION}\`
+          - Sanitized evidence validation: \`${EVIDENCE_OUTCOME:-not-run}\`
+
+          W2 remains open. No public cutover or W3 advancement is authorized from this run.
+
+          Managed run: ${run_url}
+          EOF
+          )
+          fi
+
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+            -f body="${body}" >/dev/null
