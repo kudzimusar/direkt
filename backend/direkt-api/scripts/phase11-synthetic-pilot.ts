@@ -92,7 +92,9 @@ function requireSyntheticActivation(): void {
     throw new Error('Synthetic pilot seeding refuses PILOT_ENTRY_APPROVED=true.');
   }
   if (activation !== 'true') {
-    throw new Error('Set PHASE11_SYNTHETIC_PILOT_ACTIVATION=true to seed the bounded synthetic cohort.');
+    throw new Error(
+      'Set PHASE11_SYNTHETIC_PILOT_ACTIVATION=true to seed the bounded synthetic cohort.',
+    );
   }
 }
 
@@ -123,7 +125,9 @@ async function seedPolicy(client: PoolClient): Promise<void> {
       POLICY_ID,
       POLICY_KEY,
       POLICY_VERSION,
-      sha256('DIREKT Phase 11 synthetic demo participation notice — not approved for real participants'),
+      sha256(
+        'DIREKT Phase 11 synthetic demo participation notice — not approved for real participants',
+      ),
     ],
   );
 }
@@ -170,9 +174,13 @@ async function seedCustomers(client: PoolClient): Promise<string[]> {
     const identityId = deterministicUuid('11030000', index);
     const wave = (Math.floor((index - 1) / 20) + 1) as 1 | 2 | 3;
     const locality = index % 2 === 0 ? 'Chilenje Ward, Lusaka' : 'Kabwata Ward, Lusaka';
-    const persona = ['standard', 'location_denied', 'low_bandwidth', 'large_text', 'restart_recovery'][
-      (index - 1) % 5
-    ];
+    const persona = [
+      'standard',
+      'location_denied',
+      'low_bandwidth',
+      'large_text',
+      'restart_recovery',
+    ][(index - 1) % 5];
     customerIds.push(identityId);
     await client.query('INSERT INTO account.identities (id) VALUES ($1)', [identityId]);
     await client.query(
@@ -285,7 +293,7 @@ async function seedProvider(
     [providerId, category.categoryId, category.requirementVersionId],
   );
 
-  const longitude = 28.30 + categoryIndex * 0.015 + slot * 0.001;
+  const longitude = 28.3 + categoryIndex * 0.015 + slot * 0.001;
   const latitude = -15.46 + categoryIndex * 0.008 + slot * 0.001;
   const hasPublicPremises = model !== 'mobile';
   await client.query(
@@ -331,7 +339,10 @@ async function seedProvider(
   }
 
   for (const requirement of requirements.rows) {
-    const caseId = deterministicUuid('11040000', globalIndex * 10 + requirements.rows.indexOf(requirement) + 1);
+    const caseId = deterministicUuid(
+      '11040000',
+      globalIndex * 10 + requirements.rows.indexOf(requirement) + 1,
+    );
     await client.query(
       `INSERT INTO verification.cases (
          id, provider_id, category_id, requirement_version_id, requirement_id,
@@ -459,11 +470,25 @@ async function seedInteractions(
     );
 
     if (index < 36) {
-      await transitionEnquiry(client, enquiryId, provider.ownerIdentityId, 'acknowledged', 1, index);
+      await transitionEnquiry(
+        client,
+        enquiryId,
+        provider.ownerIdentityId,
+        'acknowledged',
+        1,
+        index,
+      );
       await transitionEnquiry(client, enquiryId, provider.ownerIdentityId, 'accepted', 2, index);
       await transitionEnquiry(client, enquiryId, provider.ownerIdentityId, 'closed', 3, index);
     } else if (index < 48) {
-      await transitionEnquiry(client, enquiryId, provider.ownerIdentityId, 'acknowledged', 1, index);
+      await transitionEnquiry(
+        client,
+        enquiryId,
+        provider.ownerIdentityId,
+        'acknowledged',
+        1,
+        index,
+      );
       await transitionEnquiry(client, enquiryId, provider.ownerIdentityId, 'accepted', 2, index);
     } else if (index < 54) {
       await transitionEnquiry(client, enquiryId, provider.ownerIdentityId, 'declined', 1, index);
@@ -534,17 +559,14 @@ async function transitionEnquiry(
   expectedRevision: number,
   index: number,
 ): Promise<void> {
-  await client.query(
-    `SELECT interaction.transition_enquiry($1, $2, 'provider', $3, $4, $5, $6)`,
-    [
-      enquiryId,
-      providerOwnerId,
-      targetStatus,
-      expectedRevision,
-      `Synthetic Phase 11 transition ${targetStatus} for scenario ${index + 1}`,
-      POLICY_VERSION,
-    ],
-  );
+  await client.query(`SELECT interaction.transition_enquiry($1, $2, 'provider', $3, $4, $5, $6)`, [
+    enquiryId,
+    providerOwnerId,
+    targetStatus,
+    expectedRevision,
+    `Synthetic Phase 11 transition ${targetStatus} for scenario ${index + 1}`,
+    POLICY_VERSION,
+  ]);
 }
 
 async function validateSyntheticCohort(client: PoolClient): Promise<Record<string, unknown>> {
@@ -634,11 +656,7 @@ async function validateSyntheticCohort(client: PoolClient): Promise<Record<strin
      ORDER BY category, pathway`,
   );
   for (const category of CATEGORIES) {
-    for (const pathway of [
-      'registered_business',
-      'qualified_individual',
-      'experienced_informal',
-    ]) {
+    for (const pathway of ['registered_business', 'qualified_individual', 'experienced_informal']) {
       const match = categoryMix.rows.find(
         (rowItem) => rowItem.category === category.key && rowItem.pathway === pathway,
       );
@@ -687,7 +705,8 @@ async function validateSyntheticCohort(client: PoolClient): Promise<Record<strin
       '11C': 'synthetic functional coverage established; PRIMARY-PILOT pending',
       '11D': 'synthetic discovery/trust coverage established; PRIMARY-PILOT pending',
       '11E': 'synthetic enquiry/review/complaint coverage established; PRIMARY-PILOT pending',
-      '11F': 'synthetic operations state coverage established; real field/capacity evidence pending',
+      '11F':
+        'synthetic operations state coverage established; real field/capacity evidence pending',
       '11G': 'automated device/network contract coverage only; real-device PRIMARY-PILOT pending',
       '11H': 'scenario modelling only; willingness-to-pay PRIMARY-PILOT pending',
     },
@@ -727,7 +746,8 @@ async function main(): Promise<void> {
 }
 
 void main().catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : 'Unknown Phase 11 synthetic activation failure';
+  const message =
+    error instanceof Error ? error.message : 'Unknown Phase 11 synthetic activation failure';
   process.stderr.write(
     `${JSON.stringify({ event: 'phase11_synthetic_pilot_failed', evidenceClass: 'SYNTHETIC', message })}\n`,
   );
