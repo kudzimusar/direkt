@@ -2,131 +2,199 @@
 
 **Updated (Asia/Tokyo):** 2026-07-19  
 **Stable branch:** `main`  
-**Implementation branch:** `build/android-v1` — history-preserving synchronization maintained; no force-push or history rewrite permitted  
-**Programme state:** Phases 0–10 are complete and stable. Phase 11 internal/synthetic readiness is complete, but real-participant pilot evidence and 11J remain pending. Phase 12A preauthorization release engineering is complete and promoted. Formal Phase 12 production release is still not authorized.
+**Implementation branch:** `build/android-v1` — history-preserving synchronization maintained; no force-push/history rewrite  
+**Active corrective workstream:** Issue #133 — authoritative documentation/integration reconciliation + remote customer/provider PWA
+
+## Programme state
+
+Phases 0–10 are complete and stable. Phase 11 internal decisions, synthetic functional readiness and managed synthetic activation are complete, but real-participant pilot evidence (11C–11H) and 11J remain pending. Phase 12 preauthorization engineering is substantially prepared, including Android release contracts, Play-readiness sources and all currently clearable repository-controlled release-readiness controls, but formal production release is **not authorized**.
+
+The owner has additionally authorized an Android-first **customer/provider PWA companion** for remote desktop/tablet/mobile visual testing. Its initial public mode is synthetic-only and does not enable real participant traffic or expose the IAM-private backend.
 
 ## Stable checkpoints
 
-| Phase/checkpoint | PR | Merge commit | Status |
-|---|---:|---|---|
-| Phase 4 verification/evidence | #21 | `d9078a78d3677a94a720de2d16483487594b261e` | complete |
-| Phase 5 customer discovery | #24 | `11541db4d5ea856404f8fee03c0ca55cf6bab36c` | complete |
-| Phase 6 provider workspace | #26 | `3083b54278c73ce74f53db800c2ec0dfc59c4dde` | complete |
-| Phase 7 operations workflow | #29 | `7ea8aa17dbced5f9e56dd259b15216223aa33921` | complete |
-| Phase 8 enquiries/interactions/reviews | #31 | `0182951cdc26a892b3423728bd843e2969b25bc0` | complete |
-| Phase 9 subscription/payment foundation | #35 | `4c78e2419aa4eca225495acaac8e7e0ee81903f1` | complete |
-| Phase 10 security/privacy/reliability | #111 | `369fc72581b3ed27920b8fc949e32cfedf1ad8d9` | complete |
-| Phase 11 entry-control foundation | #113 | `53e20e67a877f481fc94458d1d2ea62bf4e47b0f` | Issue #112 open |
-| Android regression baseline repair | #118 | `e21566deb3fc3a30baf3c6ca3539721416dc1e0a` | complete |
-| Phase 11 synthetic controlled-pilot implementation | #119 | `7b886b9bee91c1337f4e4ad43f71afa4389644de` | complete |
-| Phase 11 managed synthetic activation | #120 | `06ade25b92bdb1dc310b88ed64626037671683c4` | complete |
-| Phase 11 external-entry package | #121 | `e24c41944675d1f31d4466127902917419e37fce` | external gates pending |
-| Phase 11 final synthetic checkpoint | #123 | `25c445f4e33073d1f174b0a30ea5ca50d838859e` | complete |
-| Phase 12 preauthorization release-readiness foundation | #125 | `7b23d812b751345a740a34b77ad1b7890ed15cd1` | complete |
-| Phase 12A Android release contract | #129 | `48f6d2d212d64192819d76d67e157b25f8a5e98b` | complete |
+| Checkpoint | PR | Status |
+|---|---:|---|
+| Phase 4 verification/evidence | #21 | complete |
+| Phase 5 customer discovery | #24 | complete |
+| Phase 6 provider workspace | #26 | complete |
+| Phase 7 operations workflow | #29 | complete |
+| Phase 8 enquiries/interactions/reviews | #31 | complete |
+| Phase 9 subscription/payment foundation | #35 | complete |
+| Phase 10 security/privacy/reliability + managed staging | #111 | complete |
+| Phase 11 entry-control foundation | #113 | Issue #112 remains open |
+| Android regression repair | #118 | complete |
+| Phase 11 synthetic controlled-pilot implementation | #119 | complete |
+| Phase 11 managed synthetic activation | #120 | complete |
+| Phase 11 external-entry package | #121 | external gates pending |
+| Phase 11 final synthetic checkpoint | #123 | complete |
+| Phase 12 preauthorization foundation | #125 | complete |
+| Phase 12A Android release contract | #129 | complete |
+| Phase 12B Play-readiness package | #134 | complete as non-publishing preauthorization |
+| Clearable Phase 12 release-readiness controls | #136 | complete as preauthorization; production gates preserved |
+| Reconciliation + remote PWA | #133 | active until promoted/verified |
 
-## Current Phase 11 truth
+## Current managed infrastructure truth
 
-Phase 11 repository-side synthetic/readiness work is complete, including regression repair, controlled synthetic cohort activation and production-shaped workflow exercise. This does **not** substitute for the mandatory real Zambia pilot evidence.
+| Service | Current verified role |
+|---|---|
+| Supabase | project `direct-app`, ref `aeeuscifrxcjmnswqwnq`, `ap-northeast-1`; PostgreSQL/PostGIS + private Storage |
+| Google Cloud | project `direkt-dev-502701`, region `asia-northeast1` |
+| Artifact Registry | `direkt-containers` |
+| Cloud Run API | `direkt-api` — IAM-private staging |
+| Cloud Run portal | `direkt-operations-portal-staging` — IAM-private staging |
+| Secret Manager | runtime secret authority with pinned-version deployment contracts |
+| GitHub WIF/Actions | active keyless CI/deployment boundary |
+| Firebase App Distribution | active internal Android distribution to `direkt-internal-testers` |
+| Firebase phone auth | source-integrated but real participant use gated |
+| Cloud Logging/Monitoring | active managed observability/rollback/kill-switch evidence |
 
-The following remain pending:
+Live read-only verification on 2026-07-19 confirmed Supabase project `aeeuscifrxcjmnswqwnq` is `ACTIVE_HEALTHY`, with the expected DIREKT schemas and all four required Storage buckets private.
 
-- DPC controller-registration evidence and any applicable overseas storage/transfer authorization;
-- qualified Zambia legal/privacy/consumer review and approved real-participant notice/consent version;
-- real Firebase and private-storage/auth/deletion/withdrawal canaries inside the approved boundary;
-- Zambia-based field ownership before field-verification claims;
-- 11C–11H `PRIMARY-PILOT` evidence from actual controlled pilot activity;
+## Public domain and remote UI truth
+
+Canonical public domain:
+
+```text
+https://direkt.forum/
+```
+
+Current edge model:
+
+```text
+Vercel Domains (registrar)
+  → Cloudflare authoritative DNS
+  → GitHub Pages public static origin
+      /      documentation/public non-sensitive material
+      /app/  customer/provider synthetic PWA
+```
+
+The old `kudzimusar.github.io/direkt` URL is not the owner-facing canonical URL.
+
+The PWA is a safe synthetic review surface: no real submissions, participant data, private evidence, private coordinates, auth tokens or protected API calls. Future live API mode requires an approved browser authentication/session/API access design.
+
+Native Android remains the primary client and is remotely testable through Firebase App Distribution/GitHub artifacts. The operations portal remains separate and privileged on IAM-private Cloud Run staging.
+
+## Integration truth
+
+Detailed authoritative register: `docs/integrations/CURRENT_INTEGRATION_STATUS.md`.
+
+### Active managed foundation
+
+- Supabase PostgreSQL/PostGIS/private Storage;
+- NestJS API and Next.js operations portal on private Cloud Run staging;
+- Artifact Registry;
+- Secret Manager;
+- GitHub Actions + Workload Identity Federation;
+- Cloud Logging/Monitoring;
+- Firebase App Distribution;
+- canonical `direkt.forum` public static path through Cloudflare DNS + GitHub Pages.
+
+### Implemented but gated
+
+- Firebase phone OTP/session exchange and invite/consent controls;
+- real participant admission;
+- consent-aware real contact handoff;
+- production Android signing/Play release;
+- commercial/payment engine with real provider/money movement disabled.
+
+### Externally provisioned but runtime source/binding evidence incomplete
+
+- **Resend:** `notify.direkt.forum` verified; synthetic outbound test passed; send-only key stored as `direkt-resend-api-key` in Secret Manager and API runtime identity has access. Current backend/source/deployment allowlist does not yet prove application email runtime activation.
+- **Google Maps:** owner setup reported; runtime SDK/source integration was not present at Phase 11 audit; manual/PostGIS/list fallback remains authoritative.
+- **Sentry:** external setup reported; runtime SDK integration was not present at Phase 11 audit; Cloud Logging/Monitoring remains authoritative.
+- **Cloudflare Email Routing:** approved role aliases configured; application outbound messaging is separate.
+
+### Not active / planned / superseded
+
+- Cloudflare Turnstile: not active; latest setup attempt hit a 403 permission boundary.
+- FCM production push: planned.
+- Crashlytics runtime: planned/not source-active at audited baseline.
+- WhatsApp production delivery: planned/disabled.
+- MTN MoMo/Airtel Money: planned/disabled; no real money.
+- PACRA/NCC/TEVETA automated APIs: not authorized; manual evidence-source mode.
+- Brevo: superseded as preferred email direction by Resend.
+- Twilio Verify: superseded for the current pilot identity direction by Firebase phone authentication.
+- Vercel application hosting: superseded for current protected staging by Cloud Run; Vercel remains registrar.
+
+## Phase 11 real-entry blockers
+
+Still pending genuine external/primary evidence:
+
+- applicable DPC controller-registration and overseas storage/transfer requirements;
+- qualified Zambia legal/privacy/consumer review;
+- final approved participant/provider notice and consent version;
+- real Firebase/private-storage/auth/deletion/withdrawal canaries inside the approved pilot boundary;
+- Zambia operational/field ownership before field-visited claims;
+- 11C provider onboarding/evidence/comprehension evidence;
+- 11D discovery/location/trust-comprehension evidence;
+- 11E enquiry/contact/review/complaint evidence;
+- 11F real operations/capacity/field evidence;
+- 11G Zambia device/connectivity/reliability evidence;
+- 11H willingness-to-pay/unit-economics evidence;
 - 11J evidence-backed `STOP / REPEAT / NARROW / PROCEED` decision.
 
-Issue #112 remains the active Phase 11 tracker and must stay open until those exit criteria are genuinely met.
+Issue #112 remains open until those criteria genuinely pass.
 
-## Phase 12 preauthorization foundation
+## Phase 12 preauthorization truth
 
-The release surface was audited and the permanent release-readiness gate was introduced before Phase 12A. The Android package remains `com.kudzimusar.direkt`, with `compileSdk` and `targetSdk` at API 36. Preauthorization workflows remain non-publishing and do not authorize signing, Play upload, public production traffic or real-participant activation.
+### Completed repository-controlled engineering
 
-## Phase 12A — completed
+- source-controlled Android preauthorization versioning;
+- fail-closed protected signing contract;
+- reproducible unsigned AAB evidence;
+- Play listing/permission/Data Safety/content/distribution source inventories;
+- production runtime readiness matrix;
+- monitoring/rollback/staged-rollout/stop-criteria contract;
+- staffing requirement matrix without staffing claims;
+- release package/provenance/runbook controls;
+- formal release-eligibility latches that remain false until real evidence exists.
 
-Phase 12A implemented the production-safe Android release contract without crossing the formal release boundary.
+### Still blocked for formal release
 
-### Release identity and versioning
+- Phase 11 real evidence + 11J `PROCEED`;
+- qualified legal/DPC/final privacy approval;
+- account deletion end-to-end/public deletion route as required;
+- evidence-led removal/isolation of synthetic preview production blockers;
+- actual production environment and production backup restore;
+- operational staffing;
+- active/tested production monitoring/escalation;
+- real signing key and signed reproducible AAB;
+- Play internal/closed testing, final forms/IARC/assets and release-date policy check;
+- public production backend traffic and real participant activation.
 
-- [x] Removed the stale hard-coded Phase 8 release identity.
-- [x] Added source-controlled release identity in `android/direkt-app/release/version.properties`.
-- [x] Current identity is `versionCode = 12`, `versionName = 0.12.0-preauth.1`, channel `preauthorization`.
-- [x] Release identity is consumed through Gradle provider-backed file input tracking.
-- [x] Version code/name/channel rules fail closed before release packaging.
-- [x] Before any actual Play upload, the selected version code must still be verified against the highest version code in the real Play Console.
+## Current owner-visible UI workstream
 
-### Protected signing contract
+Issue #133 is authorized to:
 
-- [x] Current `preauthorization` source cannot enable release signing.
-- [x] Future release-candidate/production packaging requires explicit protected signing enablement and cannot silently fall back to an unsigned release artifact.
-- [x] Signing material remains external to git and must resolve outside the repository checkout.
-- [x] Android Gradle Plugin injected-signing overrides are prohibited so they cannot bypass the DIREKT release contract.
-- [x] Protected signed builds require configuration cache to be disabled before signing credentials are consumed.
-- [x] No real upload key or signing credential was configured or tested during Phase 12A.
+1. reconcile the authoritative plan/status/integration/domain documents against current source and managed evidence;
+2. publish an installable responsive customer/provider PWA under `direkt.forum/app/` using synthetic data;
+3. align PWA palette/navigation/trust semantics with the Android design system;
+4. preserve the canonical REST/OpenAPI boundary for future live mode;
+5. validate the public static bundle against secret/private-data leakage;
+6. keep production/pilot gates unchanged.
 
-### Reproducible AAB evidence
+This workstream exists because code/backend/security/integration progress must be inspectable visually by the owner rather than inferred only from CI and source files.
 
-- [x] CI verifies the exact checked-out source SHA before producing release evidence.
-- [x] CI proves injected-signing and configuration-cache signing bypass attempts fail closed.
-- [x] `lintRelease` passes.
-- [x] Two independent clean, build-cache-disabled `bundleRelease` executions produce byte-for-byte identical unsigned AABs.
-- [x] Verified AAB SHA-256: `890b710f18ad7208b6db0e5668193a739052e010462d0beeddb8f752c14dd169`.
-- [x] Exact evidence source: `468ab708b41b4b9ebcc0b6b007b613454caaee89`.
-- [x] Final short-lived evidence artifact: `direkt-phase12a-preauthorization-aab-30-468ab708b41b4b9ebcc0b6b007b613454caaee89`.
-- [x] Artifact archive digest: `sha256:00cc6ca6781079ed83964e2374a1fe2698bce2e31cef691cd04dea2f8a284c30`.
-- [x] Evidence retention expiry: 2026-07-26.
+## Current source-of-truth documents
 
-### Exact-head quality gates
-
-Exact Phase 12A head `468ab708b41b4b9ebcc0b6b007b613454caaee89` passed:
-
-- Android CI;
-- Android performance budget;
-- Phase 10 supply-chain/security;
-- documentation quality;
-- Phase 12A release-readiness and reproducibility.
-
-Automated review findings were addressed before merge, including exact-SHA provenance, keystore symlink resolution, configuration-cache-aware version input, injected-signing bypass and signing-secret configuration-cache exposure.
-
-PR #129 promoted Phase 12A to `main` at `48f6d2d212d64192819d76d67e157b25f8a5e98b`. PR #130 then forward-synchronized `build/android-v1` without file changes.
-
-## Authorization boundary
-
-Phase 12A proves a production-safe **release engineering contract and reproducible unsigned preauthorization artifact**. It does not prove or authorize a production release.
-
-Still prohibited until the governing gates permit them:
-
-- real upload-key activation;
-- signed production AAB;
-- Play Console internal, closed or production-track publication;
-- public production backend traffic;
-- unrestricted signup or real-participant Firebase activation;
-- real-money activity;
-- relabelling synthetic or Phase 12A evidence as `PRIMARY-PILOT` evidence;
-- closing Phase 11 or Issue #112;
-- declaring formal Phase 12 authorized.
-
-## Current source documents
-
+- `MASTER_BUILD_PLAN.md`
+- `docs/integrations/CURRENT_INTEGRATION_STATUS.md`
+- `docs/integrations/INTEGRATION_AND_SECRETS_PLAN.md`
+- `docs/architecture/PWA_ARCHITECTURE.md`
+- `docs/design/PWA_UI_SPECIFICATION.md`
+- `docs/operations/REMOTE_UI_TESTING.md`
 - `docs/phase11/PHASE11_EXECUTION_AND_ENTRY_CONTROL.md`
-- `docs/phase11/PHASE11_SYNTHETIC_CONTROLLED_PILOT_ACTIVATION_2026-07-19.md`
 - `docs/phase11/PILOT_VALIDATION_EVIDENCE_REGISTER.md`
-- `docs/phase12/PHASE12_PREAUTHORIZATION_RELEASE_READINESS_2026-07-19.md`
-- `docs/architecture/PHASE12_PREAUTHORIZATION_RELEASE_READINESS_DECISION.md`
-- `docs/architecture/PHASE12A_ANDROID_RELEASE_CONTRACT_DECISION.md`
-- `android/direkt-app/release/SIGNING_CONTRACT.md`
+- `docs/phase12/PHASE12_CLEARABLE_RELEASE_READINESS_MATRIX.md`
+- `docs/phase12/PHASE12_RELEASE_EXECUTION_RUNBOOK.md`
 
-## Phase boundaries and next safe work
+## Boundary summary
 
-- Phase 10: complete.
+- Phases 0–10: complete.
 - Phase 11 internal/synthetic readiness: complete.
-- Phase 11 real-participant entry and 11C–11H primary evidence: pending external gates and actual Zambia pilot.
+- Phase 11 real-participant pilot/primary evidence: pending.
 - Phase 11J: pending.
-- Phase 12 preauthorization foundation: complete.
-- Phase 12A Android release configuration/versioning/reproducible unsigned AAB/protected-signing contract: complete.
-- Formal Phase 12 production release: not authorized until actual Phase 11 exit evidence supports `PROCEED` and the global release gates pass.
-- Next safe engineering candidate while those gates remain blocked: **Phase 12B — repository-controlled Play listing, permissions declarations and Data Safety inventory/preparation**. Final Play submission remains gated.
-
-Issue #5 remains the historical deferred real-world validation obligation. Issue #112 remains open as the active controlled-pilot execution tracker.
+- Phase 12 preauthorization engineering: substantially prepared.
+- Formal Phase 12 production release: blocked.
+- Remote customer/provider PWA: authorized for synthetic remote review; live/production browser mode separately gated.
