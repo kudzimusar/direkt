@@ -5,30 +5,47 @@ ANDROID_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 REPO_ROOT="$(git -C "${ANDROID_ROOT}" rev-parse --show-toplevel)"
 REPO_ROOT="$(cd "${REPO_ROOT}" && pwd -P)"
 VERSION_FILE="${ANDROID_ROOT}/release/version.properties"
+ELIGIBILITY_FILE="${ANDROID_ROOT}/release/eligibility.properties"
 
 fail() {
-  echo "Phase 12A release contract violation: $*" >&2
+  echo "Phase 12 release contract violation: $*" >&2
   exit 1
 }
 
 read_single_property() {
-  local key="$1"
+  local file="$1"
+  local key="$2"
   local count
   local value
 
-  count="$(awk -F= -v key="${key}" '$1 == key { count += 1 } END { print count + 0 }' "${VERSION_FILE}")"
-  [[ "${count}" == "1" ]] || fail "${key} must appear exactly once in release/version.properties"
+  count="$(awk -F= -v key="${key}" '$1 == key { count += 1 } END { print count + 0 }' "${file}")"
+  [[ "${count}" == "1" ]] || fail "${key} must appear exactly once in ${file#"${ANDROID_ROOT}/"}"
 
-  value="$(awk -F= -v key="${key}" '$1 == key { sub(/^[^=]*=/, ""); print; exit }' "${VERSION_FILE}")"
+  value="$(awk -F= -v key="${key}" '$1 == key { sub(/^[^=]*=/, ""); print; exit }' "${file}")"
   [[ -n "${value}" ]] || fail "${key} must not be empty"
   printf '%s' "${value}"
 }
 
-[[ -f "${VERSION_FILE}" ]] || fail "release/version.properties is missing"
+read_boolean_property() {
+  local file="$1"
+  local key="$2"
+  local value
+  value="$(read_single_property "${file}" "${key}")"
+  [[ "${value}" == "true" || "${value}" == "false" ]] || fail "${key} must be exactly true or false"
+  printf '%s' "${value}"
+}
 
-VERSION_CODE="$(read_single_property DIREKT_RELEASE_VERSION_CODE)"
-VERSION_NAME="$(read_single_property DIREKT_RELEASE_VERSION_NAME)"
-RELEASE_CHANNEL="$(read_single_property DIREKT_RELEASE_CHANNEL)"
+[[ -f "${VERSION_FILE}" ]] || fail "release/version.properties is missing"
+[[ -f "${ELIGIBILITY_FILE}" ]] || fail "release/eligibility.properties is missing"
+
+VERSION_CODE="$(read_single_property "${VERSION_FILE}" DIREKT_RELEASE_VERSION_CODE)"
+VERSION_NAME="$(read_single_property "${VERSION_FILE}" DIREKT_RELEASE_VERSION_NAME)"
+RELEASE_CHANNEL="$(read_single_property "${VERSION_FILE}" DIREKT_RELEASE_CHANNEL)"
+FORMAL_PHASE12_AUTHORIZED="$(read_boolean_property "${ELIGIBILITY_FILE}" DIREKT_FORMAL_PHASE12_AUTHORIZED)"
+PRODUCTION_CLIENT_READY="$(read_boolean_property "${ELIGIBILITY_FILE}" DIREKT_PRODUCTION_CLIENT_READY)"
+ACCOUNT_DELETION_READY="$(read_boolean_property "${ELIGIBILITY_FILE}" DIREKT_ACCOUNT_DELETION_READY)"
+PRODUCTION_OPERATIONS_READY="$(read_boolean_property "${ELIGIBILITY_FILE}" DIREKT_PRODUCTION_OPERATIONS_READY)"
+PLAY_RELEASE_READY="$(read_boolean_property "${ELIGIBILITY_FILE}" DIREKT_PLAY_RELEASE_READY)"
 
 [[ "${VERSION_CODE}" =~ ^[0-9]+$ ]] || fail "DIREKT_RELEASE_VERSION_CODE must be numeric"
 (( VERSION_CODE >= 1 && VERSION_CODE <= 2100000000 )) || fail "DIREKT_RELEASE_VERSION_CODE is outside Android's supported range"
@@ -37,6 +54,14 @@ RELEASE_CHANNEL="$(read_single_property DIREKT_RELEASE_CHANNEL)"
 case "${RELEASE_CHANNEL}" in
   preauthorization)
     [[ "${VERSION_NAME}" == *preauth* ]] || fail "preauthorization versionName must contain 'preauth'"
+    for value in \
+      "${FORMAL_PHASE12_AUTHORIZED}" \
+      "${PRODUCTION_CLIENT_READY}" \
+      "${ACCOUNT_DELETION_READY}" \
+      "${PRODUCTION_OPERATIONS_READY}" \
+      "${PLAY_RELEASE_READY}"; do
+      [[ "${value}" == "false" ]] || fail "all formal release eligibility latches must remain false during preauthorization"
+    done
     ;;
   release-candidate)
     [[ "${VERSION_NAME}" == *rc* ]] || fail "release-candidate versionName must contain 'rc'"
@@ -48,6 +73,14 @@ case "${RELEASE_CHANNEL}" in
     fail "unsupported DIREKT_RELEASE_CHANNEL '${RELEASE_CHANNEL}'"
     ;;
 esac
+
+if [[ "${RELEASE_CHANNEL}" != "preauthorization" ]]; then
+  [[ "${FORMAL_PHASE12_AUTHORIZED}" == "true" ]] || fail "formal Phase 12 authorization latch is false"
+  [[ "${PRODUCTION_CLIENT_READY}" == "true" ]] || fail "production Android client readiness latch is false"
+  [[ "${ACCOUNT_DELETION_READY}" == "true" ]] || fail "account deletion readiness latch is false"
+  [[ "${PRODUCTION_OPERATIONS_READY}" == "true" ]] || fail "production operations readiness latch is false"
+  [[ "${PLAY_RELEASE_READY}" == "true" ]] || fail "Play release readiness latch is false"
+fi
 
 if git -C "${REPO_ROOT}" ls-files | grep -E '\.(jks|keystore|p12|pfx)$' >/dev/null; then
   fail "signing key material is tracked by git"
@@ -91,3 +124,8 @@ printf 'release_version_code=%s\n' "${VERSION_CODE}"
 printf 'release_version_name=%s\n' "${VERSION_NAME}"
 printf 'release_channel=%s\n' "${RELEASE_CHANNEL}"
 printf 'release_signing_enabled=%s\n' "${SIGNING_ENABLED}"
+printf 'formal_phase12_authorized=%s\n' "${FORMAL_PHASE12_AUTHORIZED}"
+printf 'production_client_ready=%s\n' "${PRODUCTION_CLIENT_READY}"
+printf 'account_deletion_ready=%s\n' "${ACCOUNT_DELETION_READY}"
+printf 'production_operations_ready=%s\n' "${PRODUCTION_OPERATIONS_READY}"
+printf 'play_release_ready=%s\n' "${PLAY_RELEASE_READY}"
