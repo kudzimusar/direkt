@@ -198,5 +198,18 @@ jobs:
           echo "DIREKT_RELEASE_RUNTIME_DEPENDENCIES_PATH=${RUNNER_TEMP}/release-runtime-dependencies.txt" >> "${GITHUB_ENV}"
           echo "DIREKT_REQUIRE_RELEASE_RUNTIME_DEPENDENCIES=true" >> "${GITHUB_ENV}"
       - name: Re-run Phase 12B merged Play/Data Safety boundary
-        working-directory: .
-        run: python "${GITHUB_WORKSPACE}/scripts/verify-phase12-play-readiness.py"
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: |
+          set -o pipefail
+          python scripts/verify-phase12-play-readiness.py 2>&1 | tee "${RUNNER_TEMP}/phase12b-integration-audit.txt"
+      - name: Upload Android integration diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-android-integration-audit-${{ github.run_number }}-${{ env.SOURCE_SHA }}
+          path: |
+            ${{ runner.temp }}/phase12b-integration-audit.txt
+            ${{ runner.temp }}/release-runtime-dependencies.txt
+          if-no-files-found: warn
+          retention-days: 7
