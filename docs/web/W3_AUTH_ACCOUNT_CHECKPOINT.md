@@ -1,14 +1,15 @@
 # W3 — Browser Authentication, Account and Session Checkpoint
 
-**Status:** IMPLEMENTING — repository implementation under exact-head verification; managed synthetic session canary required before closure  
+**Status:** CLOSED — managed synthetic auth/session evidence passed on exact merged source `012a7b9c24e93087d823661298d051c08ea34ec0`  
+**Managed run:** `29703117963` — PASS  
 **Workstream:** Functional Android/Web parity  
 **Governing plan:** `docs/web/FUNCTIONAL_PWA_PARITY_IMPLEMENTATION_PLAN.md`
 
-## Scope
+## Scope delivered
 
-W3 adds the browser authentication/account/session boundary without changing DIREKT authorization authority or activating real participants.
+W3 added the browser authentication/account/session boundary without changing DIREKT authorization authority or activating real participants.
 
-Implemented repository boundary:
+Implemented and evidenced boundary:
 
 - server-only authenticated BFF calls to the IAM-private DIREKT API;
 - fail-closed auth modes: `disabled`, explicitly-authorized `synthetic`, and gated `firebase-exchange`;
@@ -17,38 +18,46 @@ Implemented repository boundary:
 - HttpOnly rotating access/refresh session cookies;
 - Secure/SameSite cookie policy in production;
 - same-origin and double-submit CSRF protection for browser mutations;
-- access-expiry rotation with bounded one-time retry after backend 401;
+- refresh rotation confined to the dedicated protected mutation path so arbitrary parallel reads cannot race a one-time refresh token;
+- access/session cookie retention aligned so a still-valid refresh token remains usable after access-token expiry without exposing credentials to browser JavaScript;
 - session list, revoke-other, single-session revoke and logout paths;
 - account summary from the canonical `/account/profile` and `/auth/sessions` contracts;
 - provider-mode availability derived only from the actor-resolved `/provider-workspace/me` backend route;
-- no client-selected provider identifier or role is accepted by the W3 browser boundary;
+- no client-selected provider identifier or role is accepted by the browser boundary;
 - no access/refresh token is returned in browser JSON or stored in localStorage/sessionStorage/IndexedDB;
 - authentication/session API responses remain `no-store`.
 
-## Activation rules
+## Managed closure evidence
 
-`DIREKT_WEB_AUTH_MODE=synthetic` is allowed only when:
+Trusted-main managed run `29703117963` on exact merged source `012a7b9c24e93087d823661298d051c08ea34ec0` passed the W3 closure contract:
 
-- API mode is `authenticated-bff`;
-- `DIREKT_WEB_ALLOW_SYNTHETIC_AUTH=true` is explicitly set;
-- the environment is controlled synthetic staging;
-- no real SMS/email delivery or real participant activation is inferred.
+1. bootstrap issued CSRF state without exposing session credentials;
+2. controlled synthetic challenge/verification created a DIREKT browser session through the IAM-private API;
+3. access/refresh credentials remained only in HttpOnly browser cookies;
+4. account summary and session list were backend-observable after sign-in;
+5. provider-mode availability was backend-derived and no provider identifier was supplied by the client;
+6. missing origin and incorrect CSRF mutations were rejected;
+7. idle access-expiry refresh rotation succeeded through the protected refresh route;
+8. logout/revocation invalidated the browser session and protected summary became unauthorized;
+9. unauthenticated direct API and web invocation remained denied by Cloud Run IAM;
+10. temporary canary Invoker grants were removed and final IAM remained private;
+11. Android protected-path and repository regression gates remained green.
 
-`firebase-exchange` remains GATED until approved Firebase Web phone-auth configuration and separate Phase 11 participant/legal controls are available. The BFF exchange boundary may be implemented and tested without claiming real Firebase Web activation.
+Issue #133 contains the sanitized managed PASS record for this exact run.
 
-## Managed W3 closure evidence required
+## Review defects closed before W3 exit
 
-Before W3 is CLOSED, managed synthetic evidence must prove on exact reviewed source:
+Two valid P2 findings were corrected before promotion:
 
-1. bootstrap issues CSRF state without exposing session credentials;
-2. synthetic challenge/verification creates a DIREKT browser session through the private API;
-3. access/refresh tokens exist only in HttpOnly browser cookies;
-4. account summary and session list are backend-observable after sign-in;
-5. provider mode is backend-derived and no provider ID is supplied by the client;
-6. missing/wrong origin or CSRF is rejected;
-7. session revoke/logout invalidates the browser session and protected summary becomes unauthorized;
-8. unauthenticated direct API/web access remains denied at Cloud Run IAM;
-9. temporary canary Invoker grants are removed;
-10. Android protected-path and repository regression gates remain green.
+- access-cookie lifetime originally could remove the material required to rotate a still-valid refresh session after idle expiry;
+- automatic read-time refresh could race the one-time refresh token across concurrent browser requests.
 
-Firebase phone-possession may remain explicitly `GATED`; W3 closure must not fabricate approved Web Firebase configuration or real participant admission.
+The final design retains session material only inside the HttpOnly boundary through refresh expiry and performs rotation only through the explicit CSRF/origin-protected refresh mutation.
+
+## Gates intentionally unchanged
+
+`firebase-exchange` remains **GATED** until approved Firebase Web phone-auth configuration and the separate Phase 11 participant/legal controls are complete. W3 closure does not activate real Firebase Web participants, real pilot admission, public backend traffic, payments or formal Phase 12 production release.
+
+## Exit decision
+
+W3 is CLOSED. W4 customer-journey parity may proceed on the same `build/android-v1` single implementation lane. All customer mutations must remain backend-authoritative, CSRF/origin protected, `no-store`, observable in canonical lifecycle state and regression-safe for Android.
