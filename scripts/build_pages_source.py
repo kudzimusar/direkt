@@ -31,11 +31,14 @@ if prototype_src.exists():
         ignore=shutil.ignore_patterns("README.md"),
     )
 
-# Publish the current customer/provider PWA as a separate synthetic remote-review surface.
-# It is static and must never contain credentials, private evidence or live participant data.
+# Preserve the dependency-free synthetic customer/provider PWA as an explicit preview.
+# During W8 transition the historical /app/ path remains intact for backwards compatibility,
+# while /preview/ becomes the permanent explicit synthetic/historical route. The functional
+# Next.js/BFF application is deployed separately to a server runtime and is never copied here.
 pwa_src = ROOT / "web" / "direkt-pwa"
 if pwa_src.exists():
     shutil.copytree(pwa_src, OUT / "app")
+    shutil.copytree(pwa_src, OUT / "preview")
 
 # Repository-relative index link becomes the Pages home link.
 index_path = OUT / "docs" / "INDEX.md"
@@ -65,9 +68,9 @@ pwa_callout = """
 
 ## Open the remote customer/provider UI
 
-[Launch the DIREKT customer/provider PWA](app/index.html)
+[Launch the DIREKT customer/provider synthetic preview](preview/index.html)
 
-The PWA is an installable **synthetic remote-review build** for desktop, tablet and mobile. It contains no real participant data, makes no real submissions and does not bypass the protected backend, pilot or production gates.
+The preview is an installable **synthetic remote-review build** for desktop, tablet and mobile. It contains no real participant data, makes no real submissions and does not bypass the protected backend, pilot or production gates. The historical `app/` path is retained during the W8 controlled-cutover transition.
 """
 if "## Open the remote customer/provider UI" not in readme:
     marker = "## Download the planning pack"
@@ -75,6 +78,14 @@ if "## Open the remote customer/provider UI" not in readme:
         readme = readme.replace(marker, pwa_callout + "\n" + marker, 1)
     else:
         readme = readme.rstrip() + pwa_callout + "\n"
+else:
+    start = readme.index("## Open the remote customer/provider UI")
+    marker = "## Download the planning pack"
+    end = readme.find(marker, start)
+    if end == -1:
+        readme = readme[:start].rstrip() + pwa_callout + "\n"
+    else:
+        readme = readme[:start].rstrip() + "\n" + pwa_callout.strip() + "\n\n" + readme[end:]
 
 (OUT / "index.md").write_text(readme, encoding="utf-8")
 
