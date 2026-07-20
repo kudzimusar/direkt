@@ -11,8 +11,8 @@ This file prevents overlapping writes in the single-lane build process.
 | Authorized scope | Document and implement the real customer/provider web/PWA companion using the same canonical REST/OpenAPI backend, identity, authorization, trust, enquiry, review and commercial rules as Android; desktop replaces bottom navigation with side navigation while mobile retains bottom navigation |
 | Protected surface | `android/direkt-app/**` is regression-protected; no Android architecture, dependency, Gradle, release/signing or UI refactor is authorized by this workstream unless a separately reviewed compatibility fix is strictly required |
 | Implementation lane | `build/android-v1` — historical name retained; single sequential product lane |
-| Stable checkpoint | W6 closed on exact merged source `1b5753002afcf115f6f47334f6588648eca7501d`; trusted-main managed commercial canary PASS indexed on Issue #133; exact-head W2–W6 web/build, supply-chain and Android protected-path gates green |
-| Current task | W7 — cross-client parity, security, accessibility, responsive, offline/network and Android regression closure; W8 blocked until W7 closure evidence passes |
+| Stable checkpoint | W7 closed: exact reviewed head `23aedc0af48e244c60a9d03accbdc74e83b14416` passed combined W2–W7 web/backend/database/OpenAPI/Android/security gates; trusted-main managed final browser canary PASS on exact source `25b8cd1b122882974db94b502e3a87080105733d`, indexed on Issue #133 |
+| Current task | W8 — controlled route/deployment cutover: preserve the synthetic preview separately, deploy the functional browser/BFF runtime through a dedicated least-privilege web identity, verify a working public UI route without exposing the IAM-private API, and retain all participant/provider/payment/production gates |
 | Governing plan | `docs/web/FUNCTIONAL_PWA_PARITY_IMPLEMENTATION_PLAN.md` |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized |
 | Governing issues | Issue #133 for customer/provider PWA/reconciliation; Issue #112 remains open for real pilot evidence/exit |
@@ -35,7 +35,9 @@ This file prevents overlapping writes in the single-lane build process.
 13. W4 customer actions remain backend-authoritative and use the same enquiry, contact-consent, interaction, review and complaint lifecycle rules as Android. Managed customer evidence covers customer-controlled mutations; provider-mediated states remain protected and are verified by canonical lifecycle suites rather than fabricated authority.
 14. W5 provider workspace access remains actor-resolved server-side. No browser-selected provider identifier grants or widens provider scope. Private evidence upload grants are transient, private object keys remain excluded, and masked handoffs do not expose raw contact.
 15. W6 commercial actions remain actor-resolved, retry-safe and revision-controlled, with no verification/publication/ranking effects. External payment credentials and production money movement remain prohibited until separately authorized.
-16. W7 must close only on combined Android/backend/database/OpenAPI/web regression evidence plus responsive/accessibility/offline/privacy negative controls; unsupported external integrations remain explicitly GATED.
+16. W7 closed only after combined Android/backend/database/OpenAPI/web regression evidence plus responsive/accessibility/offline/privacy negative controls and a trusted-main managed browser canary passed; unsupported external integrations remain explicitly GATED.
+17. W8 may expose only the reviewed browser/BFF entry point. The canonical API remains IAM-private; the functional browser runtime must use a dedicated least-privilege identity, and the historical static synthetic PWA must remain available under an explicit preview/historical route rather than being silently overwritten.
+18. A W8 public route is not accepted merely because deployment succeeds. DNS/TLS, runtime health, manifest/service-worker/installability, browser privacy/cache boundaries and a directly reachable working UI must be verified on the exact promoted source before closure.
 
 ## Active implementation sequence
 
@@ -46,8 +48,8 @@ This file prevents overlapping writes in the single-lane build process.
 - W4 — complete customer journey parity. **Closed — managed run `29704996877` PASS on `61a6bce54bffcec545a2009ac353596ee1d69f83`, with exact-head lifecycle contract/backend evidence for provider-mediated states.**
 - W5 — complete provider journey parity. **Closed — managed PASS on exact merged source `79228f4bda96106b929aa6183613cb9d2dc127f6`; authoritative bot result is Issue #133 comment `5017630247`.**
 - W6 — commercial parity within currently authorized/gated payment boundaries. **Closed — trusted-main managed commercial canary PASS on exact merged source `1b5753002afcf115f6f47334f6588648eca7501d`.**
-- W7 — cross-client parity, security, accessibility, responsive, offline/network and Android regression closure. **Active; W8 blocked until W7 closure evidence passes.**
-- W8 — controlled route/deployment cutover only after parity evidence passes; preserve historical preview separately.
+- W7 — cross-client parity, security, accessibility, responsive, offline/network and Android regression closure. **Closed — exact-head combined regression PASS plus trusted-main managed final browser canary PASS on `25b8cd1b122882974db94b502e3a87080105733d`.**
+- W8 — controlled route/deployment cutover; preserve historical preview separately. **Active.**
 
 ## Stop conditions
 
@@ -63,7 +65,10 @@ Do not merge or promote the functional PWA checkpoint if:
 - a customer or provider mutation could report success without authoritative backend acknowledgement or bypass canonical eligibility, consent, revision or idempotency rules;
 - provider mode accepts a provider ID, role or scope selected by the browser;
 - commercial state or payment behavior would be allowed to mutate verification, publication or ranking authority, store production payment credentials, or initiate real money movement before external-provider authorization;
-- W7 parity/regression evidence is incomplete, critical/high security findings remain, or Android/backend/database/OpenAPI/web exact-head gates are not all green.
+- W8 would reuse the privileged operations-portal runtime identity as the permanent public customer/provider identity;
+- W8 would make the canonical API unauthenticated/public as a shortcut for browser access;
+- the synthetic `/app/` review surface would be overwritten without an explicit preserved preview/historical route;
+- the promoted browser route cannot be proven reachable over the approved domain with valid TLS, runtime health, installable manifest/service worker and privacy/cache controls on the exact promoted source.
 
 ## Conflict rule
 
