@@ -59,13 +59,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           DISPATCHED_AT: ${{ steps.dispatch.outputs.dispatched_at }}
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
         shell: bash
         run: |
           set -euo pipefail
           run_id=""
           for attempt in $(seq 1 30); do
             runs="$(gh api -H "Accept: application/vnd.github+json" "repos/${GITHUB_REPOSITORY}/actions/workflows/functional-pwa-w7-managed-canary.yml/runs?event=workflow_dispatch&branch=main&per_page=20")"
-            run_id="$(jq -r --arg dispatched_at "${DISPATCHED_AT}" '[.workflow_runs[] | select(.created_at >= $dispatched_at)] | sort_by(.created_at) | last | .id // empty' <<< "${runs}")"
+            run_id="$(jq -r --arg dispatched_at "${DISPATCHED_AT}" --arg source_sha "${SOURCE_SHA}" '[.workflow_runs[] | select(.created_at >= $dispatched_at and .head_sha == $source_sha)] | sort_by(.created_at) | last | .id // empty' <<< "${runs}")"
             [[ "${run_id}" =~ ^[1-9][0-9]*$ ]] && break
             sleep 4
           done
