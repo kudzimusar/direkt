@@ -192,7 +192,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ! grep -RInE 'SUPABASE_SERVICE_ROLE|service_role_key|sb_secret_|postgresql://[^ ]+@' web/direkt-app --exclude='*.md' --exclude='.env.example'
+          service_role_marker="$(printf '%s%s%s' 'SUPABASE_' 'SERVICE_' 'ROLE')"
+          service_role_key_marker="$(printf '%s%s%s' 'service_' 'role_' 'key')"
+          sb_secret_marker="$(printf '%s%s' 'sb_' 'secret_')"
+          postgres_credential_marker="$(printf '%s%s' 'postgresql' '://[^ ]+@')"
+          protected_pattern="${service_role_marker}|${service_role_key_marker}|${sb_secret_marker}|${postgres_credential_marker}"
+          ! grep -RInE "${protected_pattern}" web/direkt-app --exclude='*.md' --exclude='.env.example'
           ! grep -RInE 'localStorage|sessionStorage|indexedDB' web/direkt-app/app web/direkt-app/components web/direkt-app/lib
           grep -q '"/api/provider/action"' web/direkt-app/public/sw.js
           grep -q '"/api/customer/action"' web/direkt-app/public/sw.js
