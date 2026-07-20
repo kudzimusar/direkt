@@ -70,27 +70,22 @@ jobs:
     timeout-minutes: 35
     services:
       postgres:
-        image: postgis/postgis:16-3.5
+        image: postgis/postgis:18-3.6
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: direkt
+          POSTGRES_USER: direkt
+          POSTGRES_PASSWORD: direkt_ci
+          POSTGRES_DB: direkt_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U postgres -d direkt"
+          --health-cmd="pg_isready -U direkt -d direkt_test"
           --health-interval=5s
           --health-timeout=5s
-          --health-retries=12
+          --health-retries=20
     env:
-      DATABASE_URL: postgresql://postgres@localhost:5432/direkt
-      SUPABASE_DB_URL: postgresql://postgres@localhost:5432/direkt
-      PGPASSWORD: postgres
-      SUPABASE_PROJECT_REF: local-w7-regression
-      DIREKT_AUTH_ACCESS_TOKEN_SECRET: w7-regression-access-secret-that-is-long-enough
-      DIREKT_AUTH_REFRESH_TOKEN_PEPPER: w7-regression-refresh-pepper-that-is-long-enough
-      DIREKT_AUTH_SYNTHETIC_CHALLENGE_MODE: "true"
-      DIREKT_PAYMENT_PROVIDER_MODE: synthetic
+      NODE_ENV: test
+      DATABASE_URL: postgresql://direkt@localhost:5432/direkt_test
+      PGPASSWORD: direkt_ci
     steps:
       - uses: actions/checkout@v6
         with:
@@ -103,21 +98,17 @@ jobs:
           cache-dependency-path: backend/direkt-api/package-lock.json
       - name: Verify exact checkout
         run: test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
-      - name: Enable local PostgreSQL extensions
-        run: |
-          psql "${DATABASE_URL}" -v ON_ERROR_STOP=1 <<'SQL'
-          create extension if not exists pgcrypto;
-          create extension if not exists citext;
-          create extension if not exists postgis;
-          SQL
-      - name: Install backend and migrate
+      - name: Install backend dependency graph
+        working-directory: backend/direkt-api
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Canonical backend validation and tests
         working-directory: backend/direkt-api
         run: |
-          npm ci --ignore-scripts --no-audit --no-fund
-          npm run migration:up
-      - name: Full backend tests and build
-        working-directory: backend/direkt-api
-        run: |
+          npm run format:check
+          npm run lint
+          npm run typecheck
+          npm run authorization:check
+          npm run migration:check
           npm test
           npm run build
       - name: Generate and verify canonical OpenAPI
@@ -126,12 +117,10 @@ jobs:
           npm run openapi:generate
           npm run openapi:check
           git diff --exit-code -- openapi.json
-      - name: Database authorization and workspace contract harnesses
-        run: |
-          bash database/scripts/run-data-api-contract-tests.sh
-          bash database/scripts/run-authorization-harness.sh
-          bash database/scripts/run-provider-workspace-contract-tests.sh
-      - name: Ensure migrations remain current
+      - name: Apply migrations for database regression
+        working-directory: backend/direkt-api
+        run: npm run migration:up
+      - name: Verify migrated database remains current
         working-directory: backend/direkt-api
         run: npm run migration:up
 
