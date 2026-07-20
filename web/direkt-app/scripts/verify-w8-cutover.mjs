@@ -110,21 +110,30 @@ if (permanentRuntimeFiles.includes("direkt-portal-runtime@")) {
   throw new Error("W8 permanent public web cutover must not reuse the operations-portal runtime identity");
 }
 
-if (!/jq -e '[^\n]*allUsers[^\n]*allAuthenticatedUsers[^\n]*length == 0'/.test(prepare)) {
-  throw new Error("W8 prepare must assert the canonical API has no public IAM principals");
-}
-if (!/add-iam-policy-binding[\s\S]*serviceAccount:\$\{GCP_DEPLOYER_SERVICE_ACCOUNT\}[\s\S]*roles\/iam\.serviceAccountUser/.test(prepare)) {
-  throw new Error("W8 deployer act-as permission must be scoped to the dedicated runtime service account");
-}
-if (!/remove-iam-policy-binding[\s\S]*--member allUsers[\s\S]*roles\/run\.invoker/.test(cleanup)) {
-  throw new Error("W8 failed cutover must remove public web invocation");
-}
-if (!/remove-iam-policy-binding[\s\S]*serviceAccount:\$\{GCP_WEB_RUNTIME_SERVICE_ACCOUNT\}[\s\S]*roles\/run\.invoker/.test(cleanup)) {
-  throw new Error("W8 failed cutover must remove the new runtime-to-API invocation binding");
-}
-if (!/service-accounts remove-iam-policy-binding[\s\S]*serviceAccount:\$\{GCP_DEPLOYER_SERVICE_ACCOUNT\}[\s\S]*roles\/iam\.serviceAccountUser/.test(cleanup)) {
-  throw new Error("W8 failed cutover must remove the deployer act-as binding from the dedicated runtime");
-}
+requireMarkers(prepare, [
+  "select(. == \"allUsers\" or . == \"allAuthenticatedUsers\")",
+  "| length == 0",
+]);
+requireOrderedMarkers(prepare, [
+  'gcloud iam service-accounts add-iam-policy-binding "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}"',
+  '--member "serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}"',
+  "--role roles/iam.serviceAccountUser",
+]);
+requireOrderedMarkers(prepare, [
+  'gcloud run services add-iam-policy-binding "${GCP_API_SERVICE}"',
+  '--member "serviceAccount:${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}"',
+  "--role roles/run.invoker",
+]);
+requireOrderedMarkers(cleanup, [
+  'gcloud run services remove-iam-policy-binding "${GCP_WEB_SERVICE}"',
+  "--member allUsers --role roles/run.invoker",
+  'gcloud run services remove-iam-policy-binding "${GCP_API_SERVICE}"',
+  '--member "serviceAccount:${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}"',
+  "--role roles/run.invoker",
+  'gcloud iam service-accounts remove-iam-policy-binding "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}"',
+  '--member "serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}"',
+  "--role roles/iam.serviceAccountUser",
+]);
 
 process.stdout.write(`${JSON.stringify({
   event: "w8_cutover_contract_passed",
@@ -144,5 +153,14 @@ process.stdout.write(`${JSON.stringify({
 function requireMarkers(text, markers) {
   for (const marker of markers) {
     if (!text.includes(marker)) throw new Error(`W8 marker missing: ${marker}`);
+  }
+}
+
+function requireOrderedMarkers(text, markers) {
+  let cursor = 0;
+  for (const marker of markers) {
+    const index = text.indexOf(marker, cursor);
+    if (index === -1) throw new Error(`W8 ordered marker missing: ${marker}`);
+    cursor = index + marker.length;
   }
 }
