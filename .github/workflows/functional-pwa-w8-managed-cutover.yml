@@ -114,9 +114,29 @@ jobs:
         shell: bash
         run: bash scripts/w8-managed-cutover-prepare.sh verify
 
-      - name: Exercise public UI, private API and browser privacy boundaries
+      - name: Prove canonical API denies unauthenticated direct traffic
         shell: bash
-        run: bash scripts/w8-managed-cutover-exercise.sh
+        run: bash scripts/w8-managed-cutover-exercise.sh api-denial
+
+      - name: Prove public W8 responsive shell is reachable
+        shell: bash
+        run: bash scripts/w8-managed-cutover-exercise.sh public-shell
+
+      - name: Prove W8 manifest service worker and offline shell
+        shell: bash
+        run: bash scripts/w8-managed-cutover-exercise.sh pwa-assets
+
+      - name: Prove W8 BFF discovery traverses private API
+        shell: bash
+        run: bash scripts/w8-managed-cutover-exercise.sh discovery
+
+      - name: Prove W8 synthetic session and private state boundaries
+        shell: bash
+        run: bash scripts/w8-managed-cutover-exercise.sh session
+
+      - name: Prove W8 browser privacy scan and emit evidence
+        shell: bash
+        run: bash scripts/w8-managed-cutover-exercise.sh privacy-evidence
 
       - name: Mark cutover verification successful
         shell: bash
