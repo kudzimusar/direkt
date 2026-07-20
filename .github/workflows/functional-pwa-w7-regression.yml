@@ -83,8 +83,9 @@ jobs:
           --health-timeout=5s
           --health-retries=12
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/direkt
-      SUPABASE_DB_URL: postgresql://postgres:postgres@localhost:5432/direkt
+      DATABASE_URL: postgresql://postgres@localhost:5432/direkt
+      SUPABASE_DB_URL: postgresql://postgres@localhost:5432/direkt
+      PGPASSWORD: postgres
       SUPABASE_PROJECT_REF: local-w7-regression
       DIREKT_AUTH_ACCESS_TOKEN_SECRET: w7-regression-access-secret-that-is-long-enough
       DIREKT_AUTH_REFRESH_TOKEN_PEPPER: w7-regression-refresh-pepper-that-is-long-enough
