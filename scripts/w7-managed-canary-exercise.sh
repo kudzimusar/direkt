@@ -23,11 +23,12 @@ for marker in '"/api/auth/"' '"/api/customer/action"' '"/api/provider/action"' '
   grep -q "${marker}" "${RUNNER_TEMP}/sw.js"
 done
 
-curl -fsS -H "${wh}" "${WEB_URL}/offline.html" > "${RUNNER_TEMP}/offline.html"
+curl -fsS -H "${wh}" "${WEB_URL}/offline" > "${RUNNER_TEMP}/offline.html"
 test -s "${RUNNER_TEMP}/offline.html"
+grep -q 'DIREKT needs a connection for live actions.' "${RUNNER_TEMP}/offline.html"
 
 curl -fsS -D "${RUNNER_TEMP}/bootstrap.headers" -H "${wh}" -c "${jar}" "${WEB_URL}/api/auth/bootstrap" > "${RUNNER_TEMP}/bootstrap.json"
-jq -e '.authMode == "synthetic" and .hasSession == false and (.csrfToken | test("^[A-Za-z0-9_-]{32,}$")) and (has("accessToken") or has("refreshToken") | not)' "${RUNNER_TEMP}/bootstrap.json" >/dev/null
+jq -e '.authMode == "synthetic" and .hasSession == false and (.csrfToken | test("^[A-Za-z0-9_-]{32,}$")) and ((has("accessToken") or has("refreshToken")) | not)' "${RUNNER_TEMP}/bootstrap.json" >/dev/null
 grep -Eqi '^cache-control:.*no-store' "${RUNNER_TEMP}/bootstrap.headers"
 
 provider_status="$(curl -sS -o "${RUNNER_TEMP}/provider-unauth.json" -w '%{http_code}' -H "${wh}" -b "${jar}" "${WEB_URL}/api/provider/state")"
