@@ -113,11 +113,11 @@ jobs:
         working-directory: backend/direkt-api
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
-          npm run migrate:up
+          npm run migration:up
       - name: Full backend tests and build
         working-directory: backend/direkt-api
         run: |
-          npm test -- --runInBand
+          npm test
           npm run build
       - name: Generate and verify canonical OpenAPI
         working-directory: backend/direkt-api
@@ -132,7 +132,7 @@ jobs:
           bash database/scripts/run-provider-workspace-contract-tests.sh
       - name: Ensure migrations remain current
         working-directory: backend/direkt-api
-        run: npm run migrate:up
+        run: npm run migration:up
 
   android-regression:
     name: Android unit, lint, assembly and dependency regression
