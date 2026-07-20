@@ -1,5 +1,6 @@
 const CACHE_VERSION = "direkt-functional-shell-v1";
-const STATIC_ALLOWLIST = ["/offline", "/manifest.webmanifest", "/icon.svg"];
+const OFFLINE_URL = "/offline";
+const STATIC_ALLOWLIST = [OFFLINE_URL, "/manifest.webmanifest", "/icon.svg"];
 const NETWORK_ONLY_PREFIXES = [
   "/api/auth/",
   "/api/customer/action",
@@ -44,7 +45,7 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
 
   if (request.mode === "navigate") {
-    event.respondWith(fetch(request).catch(() => caches.match("/offline")));
+    event.respondWith(fetch(request).catch(() => caches.match(OFFLINE_URL)));
     return;
   }
 
