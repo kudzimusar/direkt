@@ -30,6 +30,16 @@ jobs:
       - run: python scripts/build_pages_source.py
       - uses: actions/configure-pages@v5
       - run: mkdocs build --strict
+      - name: Verify W8 synthetic preview preservation
+        shell: bash
+        run: |
+          set -euo pipefail
+          for route in app preview; do
+            test -f "site/${route}/index.html"
+            test -f "site/${route}/manifest.webmanifest"
+            test -f "site/${route}/sw.js"
+            grep -q "Synthetic remote UI review" "site/${route}/index.html"
+          done
       - uses: actions/upload-pages-artifact@v4
         with:
           path: site
