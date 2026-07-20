@@ -20,6 +20,12 @@ fi
 
 gcloud iam service-accounts describe "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}" --project "${GCP_PROJECT_ID}" --format='value(email)' | grep -Fx "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}"
 
+# Allow the approved GitHub deployer to attach only this dedicated runtime identity to Cloud Run.
+gcloud iam service-accounts add-iam-policy-binding "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}" \
+  --project "${GCP_PROJECT_ID}" \
+  --member "serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}" \
+  --role roles/iam.serviceAccountUser --quiet >/dev/null
+
 # Grant only service-level invocation of the private DIREKT API to the dedicated web runtime.
 gcloud run services add-iam-policy-binding "${GCP_API_SERVICE}" \
   --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" \
