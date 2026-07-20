@@ -44,6 +44,8 @@ requireMarkers(pagesWorkflow, ["for route in app preview", "Verify W8 synthetic 
 requireMarkers(prepare, [
   "GCP_WEB_RUNTIME_SERVICE_ACCOUNT_ID",
   "GCP_WEB_RUNTIME_SERVICE_ACCOUNT",
+  "roles/iam.serviceAccountUser",
+  "GCP_DEPLOYER_SERVICE_ACCOUNT",
   "roles/run.invoker",
   "--allow-unauthenticated",
   "DIREKT_WEB_API_MODE=authenticated-bff",
@@ -109,6 +111,9 @@ if (permanentRuntimeFiles.includes("direkt-portal-runtime@")) {
 if (!/jq -e '[^\n]*allUsers[^\n]*allAuthenticatedUsers[^\n]*length == 0'/.test(prepare)) {
   throw new Error("W8 prepare must assert the canonical API has no public IAM principals");
 }
+if (!/add-iam-policy-binding[\s\S]*serviceAccount:\$\{GCP_DEPLOYER_SERVICE_ACCOUNT\}[\s\S]*roles\/iam\.serviceAccountUser/.test(prepare)) {
+  throw new Error("W8 deployer act-as permission must be scoped to the dedicated runtime service account");
+}
 if (!/remove-iam-policy-binding[\s\S]*--member allUsers[\s\S]*roles\/run\.invoker/.test(cleanup)) {
   throw new Error("W8 failed cutover must remove public web invocation");
 }
@@ -120,6 +125,7 @@ process.stdout.write(`${JSON.stringify({
   event: "w8_cutover_contract_passed",
   syntheticPreviewPreserved: true,
   dedicatedRuntimeIdentityRequired: true,
+  deployerActAsScopedToDedicatedRuntime: true,
   canonicalApiRemainsPrivate: true,
   publicBrowserBffOnly: true,
   failClosedRollback: true,
