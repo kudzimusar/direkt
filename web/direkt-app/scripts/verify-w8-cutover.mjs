@@ -33,7 +33,7 @@ requireMarkers(pagesBuilder, [
   'OUT / "app"',
   'OUT / "preview"',
   "synthetic customer/provider PWA as an explicit preview",
-  "functional Next.js/BFF application is deployed separately",
+  "Next.js/BFF application is deployed separately",
 ]);
 requireMarkers(pwaCi, [
   "for route in app preview",
