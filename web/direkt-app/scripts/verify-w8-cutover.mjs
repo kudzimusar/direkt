@@ -101,7 +101,7 @@ requireMarkers(checkpoint, [
 ]);
 requireMarkers(lock, [
   "W8 — controlled route/deployment cutover",
-  "dedicated least-privilege web runtime identity",
+  "dedicated least-privilege customer/provider web runtime identity",
   "synthetic `/app/` review surface",
 ]);
 
