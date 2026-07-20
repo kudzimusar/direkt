@@ -135,6 +135,7 @@ jobs:
         run: bash scripts/w8-managed-cutover-exercise.sh session
 
       - name: Prove W8 browser privacy scan and emit evidence
+        id: evidence_file
         shell: bash
         run: bash scripts/w8-managed-cutover-exercise.sh privacy-evidence
 
@@ -148,7 +149,7 @@ jobs:
         run: bash scripts/w8-managed-cutover-cleanup.sh
 
       - name: Upload sanitized W8 public functional web evidence
-        if: always() && hashFiles(format('{0}/w8-cutover-evidence.json', runner.temp)) != ''
+        if: always() && steps.evidence_file.conclusion == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: direkt-w8-functional-cutover-${{ steps.source.outputs.source_sha }}
