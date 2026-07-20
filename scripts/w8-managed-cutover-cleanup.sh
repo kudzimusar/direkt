@@ -3,9 +3,8 @@ set -euo pipefail
 
 success="${W8_CUTOVER_SUCCEEDED:-false}"
 
-# A failed cutover must fail closed: remove public entry, runtime-to-API invocation and the
-# deployer's resource-scoped act-as permission. A successful cutover retains only the reviewed
-# bindings required for future controlled deployments and runtime API invocation.
+# A failed cutover must fail closed: remove the public web entry and the runtime-to-API invocation
+# introduced by this checkpoint. Identity provisioning/act-as policy is not mutated by W8.
 if [[ "${success}" != "true" ]]; then
   gcloud run services remove-iam-policy-binding "${GCP_WEB_SERVICE}" \
     --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" \
@@ -15,11 +14,6 @@ if [[ "${success}" != "true" ]]; then
     --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" \
     --member "serviceAccount:${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}" \
     --role roles/run.invoker --quiet >/dev/null 2>&1 || true
-
-  gcloud iam service-accounts remove-iam-policy-binding "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}" \
-    --project "${GCP_PROJECT_ID}" \
-    --member "serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}" \
-    --role roles/iam.serviceAccountUser --quiet >/dev/null 2>&1 || true
 fi
 
 # The API is never allowed to become publicly invokable, regardless of run outcome.
