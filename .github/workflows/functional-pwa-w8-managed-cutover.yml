@@ -90,9 +90,29 @@ jobs:
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Prepare dedicated public W8 browser/BFF runtime
+      - name: Preflight W8 private API and dedicated runtime identity
         shell: bash
-        run: bash scripts/w8-managed-cutover-prepare.sh
+        run: bash scripts/w8-managed-cutover-prepare.sh preflight
+
+      - name: Bind W8 runtime invoker on private API
+        shell: bash
+        run: bash scripts/w8-managed-cutover-prepare.sh api-invoker
+
+      - name: Build and push W8 functional web image
+        shell: bash
+        run: bash scripts/w8-managed-cutover-prepare.sh image
+
+      - name: Deploy and attach dedicated W8 browser/BFF runtime
+        shell: bash
+        run: bash scripts/w8-managed-cutover-prepare.sh deploy
+
+      - name: Pin W8 browser mutation origin
+        shell: bash
+        run: bash scripts/w8-managed-cutover-prepare.sh origin
+
+      - name: Verify W8 runtime attachment and IAM boundaries
+        shell: bash
+        run: bash scripts/w8-managed-cutover-prepare.sh verify
 
       - name: Exercise public UI, private API and browser privacy boundaries
         shell: bash
