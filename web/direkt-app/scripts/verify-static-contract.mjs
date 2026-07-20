@@ -61,7 +61,15 @@ const manifest = JSON.parse(await readFile(join(root, "public/manifest.webmanife
 if (manifest.display !== "standalone" || manifest.start_url !== "/" || manifest.scope !== "/") {
   throw new Error("PWA manifest must remain standalone with root start_url and scope");
 }
-if (!Array.isArray(manifest.icons) || manifest.icons.length === 0) throw new Error("PWA manifest requires at least one application icon");
+if (!Array.isArray(manifest.icons) || manifest.icons.length < 2) {
+  throw new Error("PWA manifest requires separate standard and maskable icon declarations");
+}
+const iconPurposes = new Set(
+  manifest.icons.flatMap((icon) => String(icon?.purpose ?? "").split(/\s+/).filter(Boolean)),
+);
+if (!iconPurposes.has("any") || !iconPurposes.has("maskable")) {
+  throw new Error("PWA manifest must retain both standard and maskable icon purposes");
+}
 
 const css = await readFile(join(root, "app/globals.css"), "utf8");
 const shell = await readFile(join(root, "components/direkt-app-shell.tsx"), "utf8");
@@ -161,6 +169,7 @@ process.stdout.write(`${JSON.stringify({
   event: "functional_pwa_static_contract_passed",
   responsive: true,
   serviceWorkerBounded: true,
+  manifestStandardAndMaskableIcons: true,
   securityHeadersPresent: true,
   standaloneContainer: true,
   privilegedBrowserDependencies: false,
