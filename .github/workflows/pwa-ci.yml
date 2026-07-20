@@ -89,21 +89,23 @@ jobs:
       - name: Build MkDocs strictly
         run: mkdocs build --strict
 
-      - name: Verify packaged PWA route
+      - name: Verify packaged synthetic PWA routes
         shell: bash
         run: |
           set -euo pipefail
-          test -f site/app/index.html
-          test -f site/app/app.js
-          test -f site/app/styles.css
-          test -f site/app/sw.js
-          test -f site/app/manifest.webmanifest
-          grep -q "Synthetic remote UI review" site/app/index.html
-          grep -q "Launch the DIREKT customer/provider PWA" site/index.html
-          if grep -REn "postgres(ql)?://|SUPABASE_(SECRET|SERVICE)|BEGIN .*PRIVATE KEY" site/app; then
-            echo "Public PWA contains prohibited privileged material" >&2
-            exit 1
-          fi
+          for route in app preview; do
+            test -f "site/${route}/index.html"
+            test -f "site/${route}/app.js"
+            test -f "site/${route}/styles.css"
+            test -f "site/${route}/sw.js"
+            test -f "site/${route}/manifest.webmanifest"
+            grep -q "Synthetic remote UI review" "site/${route}/index.html"
+            if grep -REn "postgres(ql)?://|SUPABASE_(SECRET|SERVICE)|BEGIN .*PRIVATE KEY" "site/${route}"; then
+              echo "Public synthetic PWA contains prohibited privileged material in ${route}" >&2
+              exit 1
+            fi
+          done
+          grep -q "Launch the DIREKT customer/provider synthetic preview" site/index.html
 
       - name: Package review evidence
         uses: actions/upload-artifact@v4
@@ -111,6 +113,7 @@ jobs:
           name: direkt-pwa-review-${{ github.run_number }}-${{ github.sha }}
           path: |
             site/app/**
+            site/preview/**
             docs/REPOSITORY_RECONCILIATION_2026-07-19.md
             docs/integrations/CURRENT_INTEGRATION_STATUS.md
             docs/architecture/PWA_ARCHITECTURE.md
