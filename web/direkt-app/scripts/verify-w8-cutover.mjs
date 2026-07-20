@@ -70,6 +70,8 @@ requireMarkers(cleanup, [
   "remove-iam-policy-binding",
   "--member allUsers",
   "GCP_WEB_RUNTIME_SERVICE_ACCOUNT",
+  "GCP_DEPLOYER_SERVICE_ACCOUNT",
+  "roles/iam.serviceAccountUser",
   "allAuthenticatedUsers",
 ]);
 requireMarkers(managedWorkflow, [
@@ -120,12 +122,16 @@ if (!/remove-iam-policy-binding[\s\S]*--member allUsers[\s\S]*roles\/run\.invoke
 if (!/remove-iam-policy-binding[\s\S]*serviceAccount:\$\{GCP_WEB_RUNTIME_SERVICE_ACCOUNT\}[\s\S]*roles\/run\.invoker/.test(cleanup)) {
   throw new Error("W8 failed cutover must remove the new runtime-to-API invocation binding");
 }
+if (!/service-accounts remove-iam-policy-binding[\s\S]*serviceAccount:\$\{GCP_DEPLOYER_SERVICE_ACCOUNT\}[\s\S]*roles\/iam\.serviceAccountUser/.test(cleanup)) {
+  throw new Error("W8 failed cutover must remove the deployer act-as binding from the dedicated runtime");
+}
 
 process.stdout.write(`${JSON.stringify({
   event: "w8_cutover_contract_passed",
   syntheticPreviewPreserved: true,
   dedicatedRuntimeIdentityRequired: true,
   deployerActAsScopedToDedicatedRuntime: true,
+  failedCutoverRemovesDeployerActAs: true,
   canonicalApiRemainsPrivate: true,
   publicBrowserBffOnly: true,
   failClosedRollback: true,
