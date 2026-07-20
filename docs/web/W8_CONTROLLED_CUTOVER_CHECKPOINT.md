@@ -1,6 +1,6 @@
 # W8 — Controlled Functional Browser Cutover Checkpoint
 
-**Status:** IMPLEMENTING — repository/Android/backend gates PASS; two trusted-main cutover attempts failed closed; managed infrastructure prerequisite remains before public functional UI promotion  
+**Status:** IMPLEMENTING — repository/Android/backend gates PASS; two trusted-main cutover attempts failed closed; invalid overlength runtime identity corrected in repository; one-time valid runtime identity creation remains before public functional UI promotion  
 **Workstream:** Functional Android/Web parity  
 **Governing plan:** `docs/web/FUNCTIONAL_PWA_PARITY_IMPLEMENTATION_PLAN.md`
 
@@ -15,7 +15,7 @@ W8 is a deployment/readiness checkpoint, not a new product-domain phase.
 1. GitHub Pages remains the public static documentation/synthetic-preview origin.
 2. The dependency-free `web/direkt-pwa/` build is preserved under explicit `/preview/`; the historical `/app/` path remains intact during transition so existing links do not break before the functional route is proven.
 3. The functional `web/direkt-app/` Next.js application is deployed to a server runtime because its reviewed BFF/session boundary cannot be safely converted into a privileged static Pages client.
-4. The public browser/BFF service uses a dedicated least-privilege runtime identity: `direkt-customer-provider-web-runtime@direkt-dev-502701.iam.gserviceaccount.com`.
+4. The public browser/BFF service uses a dedicated least-privilege runtime identity: `direkt-cp-web-runtime@direkt-dev-502701.iam.gserviceaccount.com`.
 5. That runtime identity receives only service-level `roles/run.invoker` on the IAM-private `direkt-api` Cloud Run service.
 6. Only the browser/BFF service is publicly invokable. The canonical API must continue to deny unauthenticated direct access.
 7. Browser authentication remains `synthetic` for this remote-review checkpoint. Firebase/real participant admission remains separately gated.
@@ -40,8 +40,10 @@ The deployment workflow must not:
 Required one-time runtime identity:
 
 ```text
-direkt-customer-provider-web-runtime@direkt-dev-502701.iam.gserviceaccount.com
+direkt-cp-web-runtime@direkt-dev-502701.iam.gserviceaccount.com
 ```
+
+Service-account ID: `direkt-cp-web-runtime` — 21 characters and within Google Cloud's 6–30-character service-account ID constraint.
 
 This identity requires no project-wide application role for W8 beyond being attachable as the Cloud Run runtime. API invocation is granted at the `direkt-api` service boundary by the reviewed deployment workflow.
 
@@ -85,17 +87,31 @@ Issue #133 reports **W8 managed public functional web checkpoint: FAIL / INCOMPL
 
 No functional UI URL was promoted.
 
-The sanitized diagnostic intentionally exposes only the failed step name, not logs, environment values or secret-bearing command output. Therefore this checkpoint does **not** claim which subcommand inside the prepare step failed. The next bounded infrastructure action is to verify the required dedicated runtime identity exists in `direkt-dev-502701` and create it once if absent before another trusted-main attempt. Product code, Android and backend/OpenAPI changes are not justified by this failure.
+The sanitized diagnostic intentionally exposes only the failed step name, not logs, environment values or secret-bearing command output.
+
+## Root cause identified after attempt 2
+
+The repository-defined service-account ID was:
+
+`direkt-customer-provider-web-runtime`
+
+That identifier is 36 characters long. Google Cloud service-account account IDs must be 6–30 characters, so the planned identity could never be created under that ID.
+
+W8 now uses the valid dedicated account ID:
+
+`direkt-cp-web-runtime`
+
+The W8 static verifier now enforces the 6–30-character account-ID boundary and rejects reintroduction of the invalid overlength identifier. This is an infrastructure naming defect, not an Android, backend/OpenAPI or product-domain defect.
 
 ## Required one-time owner-managed prerequisite
 
-Verify that this service account exists in Google Cloud project `direkt-dev-502701`:
+Create or verify this exact service account in Google Cloud project `direkt-dev-502701`:
 
 ```text
-direkt-customer-provider-web-runtime@direkt-dev-502701.iam.gserviceaccount.com
+direkt-cp-web-runtime@direkt-dev-502701.iam.gserviceaccount.com
 ```
 
-If it does not exist, create exactly that service account. Do not grant it project-wide application roles and do not substitute `direkt-portal-runtime` or `direkt-api-runtime`.
+Do not grant it project-wide application roles and do not substitute `direkt-portal-runtime` or `direkt-api-runtime`.
 
 After the identity exists, the reviewed W8 workflow remains responsible for the bounded service-level `roles/run.invoker` binding on the private `direkt-api` service and for fail-closed rollback on an unsuccessful cutover.
 
