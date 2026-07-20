@@ -34,8 +34,8 @@ jobs:
       GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
       GCP_API_SERVICE: direkt-api
       GCP_WEB_SERVICE: direkt-customer-provider-web
-      GCP_WEB_RUNTIME_SERVICE_ACCOUNT_ID: direkt-customer-provider-web-runtime
-      GCP_WEB_RUNTIME_SERVICE_ACCOUNT: direkt-customer-provider-web-runtime@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_WEB_RUNTIME_SERVICE_ACCOUNT_ID: direkt-cp-web-runtime
+      GCP_WEB_RUNTIME_SERVICE_ACCOUNT: direkt-cp-web-runtime@direkt-dev-502701.iam.gserviceaccount.com
     steps:
       - name: Validate immutable main source
         id: source

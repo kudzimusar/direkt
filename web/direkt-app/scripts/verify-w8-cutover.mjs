@@ -76,7 +76,8 @@ requireMarkers(managedWorkflow, [
   "RUN-DIREKT-W8-PUBLIC-WEB",
   "source_sha",
   "git merge-base --is-ancestor",
-  "direkt-customer-provider-web-runtime",
+  "GCP_WEB_RUNTIME_SERVICE_ACCOUNT_ID: direkt-cp-web-runtime",
+  "GCP_WEB_RUNTIME_SERVICE_ACCOUNT: direkt-cp-web-runtime@direkt-dev-502701.iam.gserviceaccount.com",
   "w8-managed-cutover-prepare.sh",
   "w8-managed-cutover-exercise.sh",
   "w8-managed-cutover-cleanup.sh",
@@ -104,14 +105,30 @@ requireMarkers(lock, [
 ]);
 
 const permanentRuntimeFiles = [prepare, managedWorkflow, checkpoint, lock].join("\n");
+const executableRuntimeFiles = [prepare, exercise, cleanup, managedWorkflow, mainTrigger].join("\n");
 if (permanentRuntimeFiles.includes("direkt-portal-runtime@")) {
   throw new Error("W8 permanent public web cutover must not reuse the operations-portal runtime identity");
+}
+if (executableRuntimeFiles.includes("direkt-customer-provider-web-runtime")) {
+  throw new Error("W8 executable/runtime configuration must not reintroduce the invalid overlength service-account identifier");
 }
 if (prepare.includes("service-accounts create") || prepare.includes("service-accounts add-iam-policy-binding")) {
   throw new Error("W8 deployment workflow must not create runtime identities or rewrite service-account IAM policy");
 }
 if (cleanup.includes("service-accounts remove-iam-policy-binding")) {
   throw new Error("W8 rollback must not mutate pre-provisioned service-account IAM policy");
+}
+
+const runtimeIdMatch = managedWorkflow.match(/GCP_WEB_RUNTIME_SERVICE_ACCOUNT_ID:\s*([a-z0-9-]+)/);
+if (!runtimeIdMatch) {
+  throw new Error("W8 managed workflow must declare a dedicated runtime service-account ID");
+}
+const runtimeId = runtimeIdMatch[1];
+if (runtimeId.length < 6 || runtimeId.length > 30) {
+  throw new Error(`W8 runtime service-account ID must be 6-30 characters; received ${runtimeId.length}`);
+}
+if (!/^[a-z]([-a-z0-9]*[a-z0-9])$/.test(runtimeId)) {
+  throw new Error("W8 runtime service-account ID must satisfy the Google Cloud account-ID syntax");
 }
 
 requireMarkers(prepare, [
@@ -136,6 +153,7 @@ process.stdout.write(`${JSON.stringify({
   event: "w8_cutover_contract_passed",
   syntheticPreviewPreserved: true,
   dedicatedRuntimeIdentityRequired: true,
+  runtimeServiceAccountIdValid: true,
   runtimeIdentityProvisioningExternalized: true,
   deploymentDoesNotAdministerServiceAccountIam: true,
   canonicalApiRemainsPrivate: true,
