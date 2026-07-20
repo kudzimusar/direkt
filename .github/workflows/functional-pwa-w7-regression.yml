@@ -1,0 +1,194 @@
+name: DIREKT functional web W7 cross-client regression
+
+on:
+  push:
+    branches:
+      - main
+      - build/android-v1
+    paths:
+      - "web/direkt-app/**"
+      - "backend/direkt-api/**"
+      - "database/**"
+      - "android/direkt-app/**"
+      - "docs/web/**"
+      - "docs/testing/FUNCTIONAL_PWA_NO_REGRESSION_TEST_PLAN.md"
+      - "WORKSTREAM_LOCK.md"
+      - ".github/workflows/functional-pwa-w7-regression.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "web/direkt-app/**"
+      - "backend/direkt-api/**"
+      - "database/**"
+      - "android/direkt-app/**"
+      - "docs/web/**"
+      - "docs/testing/FUNCTIONAL_PWA_NO_REGRESSION_TEST_PLAN.md"
+      - "WORKSTREAM_LOCK.md"
+      - ".github/workflows/functional-pwa-w7-regression.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  functional-web:
+    name: W2-W7 functional web regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/direkt-app/package-lock.json
+      - name: Verify exact checkout
+        run: test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
+      - name: Install and verify complete web contract
+        working-directory: web/direkt-app
+        env:
+          DIREKT_WEB_API_MODE: disabled
+          DIREKT_WEB_AUTH_MODE: disabled
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run verify
+      - name: Ensure verification/build did not mutate tracked web source
+        run: git diff --exit-code -- web/direkt-app
+
+  backend-database-openapi:
+    name: Backend, database and OpenAPI regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgis/postgis:18-3.6
+        env:
+          POSTGRES_USER: direkt
+          POSTGRES_PASSWORD: direkt_ci
+          POSTGRES_DB: direkt_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U direkt -d direkt_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://direkt@localhost:5432/direkt_test
+      PGPASSWORD: direkt_ci
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - name: Verify exact checkout
+        run: test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
+      - name: Install backend dependency graph
+        working-directory: backend/direkt-api
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Canonical backend validation and tests
+        working-directory: backend/direkt-api
+        run: |
+          npm run format:check
+          npm run lint
+          npm run typecheck
+          npm run authorization:check
+          npm run migration:check
+          npm test
+          npm run build
+      - name: Generate and verify canonical OpenAPI
+        working-directory: backend/direkt-api
+        run: |
+          npm run openapi:generate
+          npm run openapi:check
+          git diff --exit-code -- openapi.json
+      - name: Apply migrations for database regression
+        working-directory: backend/direkt-api
+        run: npm run migration:up
+      - name: Verify migrated database remains current
+        working-directory: backend/direkt-api
+        run: npm run migration:up
+
+  android-regression:
+    name: Android unit, lint, assembly and dependency regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Verify exact checkout
+        run: test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
+      - name: Android debug regression gates
+        working-directory: android/direkt-app
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --no-daemon
+      - name: Resolve debug and release runtime dependency graphs
+        working-directory: android/direkt-app
+        run: |
+          ./gradlew :app:dependencies --configuration debugRuntimeClasspath --no-daemon >/tmp/direkt-debug-deps.txt
+          ./gradlew :app:dependencies --configuration releaseRuntimeClasspath --no-daemon >/tmp/direkt-release-deps.txt
+          test -s /tmp/direkt-debug-deps.txt
+          test -s /tmp/direkt-release-deps.txt
+      - name: Prove W7 did not modify Android protected surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            git fetch origin main --no-tags
+            base="$(git merge-base HEAD origin/main)"
+          fi
+          git diff --quiet "${base}" "${SOURCE_SHA}" -- android/direkt-app
+
+  documentation-security:
+    name: Documentation and browser privilege regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Validate documentation
+        run: python scripts/validate_docs.py
+      - name: Reject privileged browser authority and private cache regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          service_role_marker="$(printf '%s%s%s' 'SUPABASE_' 'SERVICE_' 'ROLE')"
+          service_role_key_marker="$(printf '%s%s%s' 'service_' 'role_' 'key')"
+          sb_secret_marker="$(printf '%s%s' 'sb_' 'secret_')"
+          postgres_credential_marker="$(printf '%s%s' 'postgresql' '://[^ ]+@')"
+          protected_pattern="${service_role_marker}|${service_role_key_marker}|${sb_secret_marker}|${postgres_credential_marker}"
+          ! grep -RInE "${protected_pattern}" web/direkt-app --exclude='*.md' --exclude='.env.example'
+          ! grep -RInE 'localStorage|sessionStorage|indexedDB' web/direkt-app/app web/direkt-app/components web/direkt-app/lib
+          grep -q '"/api/provider/action"' web/direkt-app/public/sw.js
+          grep -q '"/api/customer/action"' web/direkt-app/public/sw.js
+          grep -q 'cache: "no-store"' web/direkt-app/public/sw.js

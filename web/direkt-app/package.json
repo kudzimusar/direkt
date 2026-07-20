@@ -20,7 +20,8 @@
     "verify:customer": "node scripts/verify-customer-contract.mjs",
     "verify:provider": "node scripts/verify-provider-contract.mjs",
     "verify:commercial": "node scripts/verify-commercial-contract.mjs",
-    "verify": "npm run typecheck && npm run verify:static && npm run verify:discovery && npm run verify:auth && npm run verify:customer && npm run verify:provider && npm run verify:commercial && npm run build"
+    "verify:w7": "node scripts/verify-w7-regression.mjs",
+    "verify": "npm run typecheck && npm run verify:static && npm run verify:discovery && npm run verify:auth && npm run verify:customer && npm run verify:provider && npm run verify:commercial && npm run verify:w7 && npm run build"
   },
   "dependencies": {
     "next": "16.2.10",
