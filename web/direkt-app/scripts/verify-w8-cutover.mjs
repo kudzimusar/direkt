@@ -42,8 +42,15 @@ requireMarkers(pwaCi, [
 ]);
 requireMarkers(pagesWorkflow, ["for route in app preview", "Verify W8 synthetic preview preservation"]);
 requireMarkers(prepare, [
+  'phase="${1:-}"',
+  "preflight()",
+  "bind_api_invoker()",
+  "build_image()",
+  "deploy_web()",
+  "pin_origin()",
+  "verify_iam()",
   "GCP_WEB_RUNTIME_SERVICE_ACCOUNT",
-  "Missing dedicated W8 runtime identity",
+  "W8 preflight could not verify the dedicated runtime identity",
   "Identity provisioning is intentionally outside the deployment identity boundary",
   "roles/run.invoker",
   "--allow-unauthenticated",
@@ -78,7 +85,18 @@ requireMarkers(managedWorkflow, [
   "git merge-base --is-ancestor",
   "GCP_WEB_RUNTIME_SERVICE_ACCOUNT_ID: direkt-cp-web-runtime",
   "GCP_WEB_RUNTIME_SERVICE_ACCOUNT: direkt-cp-web-runtime@direkt-dev-502701.iam.gserviceaccount.com",
-  "w8-managed-cutover-prepare.sh",
+  "Preflight W8 private API and dedicated runtime identity",
+  "w8-managed-cutover-prepare.sh preflight",
+  "Bind W8 runtime invoker on private API",
+  "w8-managed-cutover-prepare.sh api-invoker",
+  "Build and push W8 functional web image",
+  "w8-managed-cutover-prepare.sh image",
+  "Deploy and attach dedicated W8 browser/BFF runtime",
+  "w8-managed-cutover-prepare.sh deploy",
+  "Pin W8 browser mutation origin",
+  "w8-managed-cutover-prepare.sh origin",
+  "Verify W8 runtime attachment and IAM boundaries",
+  "w8-managed-cutover-prepare.sh verify",
   "w8-managed-cutover-exercise.sh",
   "w8-managed-cutover-cleanup.sh",
   "W8_CUTOVER_SUCCEEDED=true",
@@ -132,6 +150,13 @@ if (!/^[a-z]([-a-z0-9]*[a-z0-9])$/.test(runtimeId)) {
 }
 
 requireMarkers(prepare, [
+  'case "${phase}" in',
+  "preflight) preflight ;;",
+  "api-invoker) bind_api_invoker ;;",
+  "image) build_image ;;",
+  "deploy) deploy_web ;;",
+  "origin) pin_origin ;;",
+  "verify) verify_iam ;;",
   "select(. == \"allUsers\" or . == \"allAuthenticatedUsers\")",
   "| length == 0",
 ]);
@@ -156,6 +181,7 @@ process.stdout.write(`${JSON.stringify({
   runtimeServiceAccountIdValid: true,
   runtimeIdentityProvisioningExternalized: true,
   deploymentDoesNotAdministerServiceAccountIam: true,
+  prepareFailurePhasesAreAuditable: true,
   canonicalApiRemainsPrivate: true,
   publicBrowserBffOnly: true,
   failClosedRollback: true,
