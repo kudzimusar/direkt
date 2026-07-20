@@ -115,7 +115,10 @@ requireMarkers(managedWorkflow, [
   "Prove W8 synthetic session and private state boundaries",
   "w8-managed-cutover-exercise.sh session",
   "Prove W8 browser privacy scan and emit evidence",
+  "id: evidence_file",
   "w8-managed-cutover-exercise.sh privacy-evidence",
+  "if: always() && steps.evidence_file.conclusion == 'success'",
+  "if-no-files-found: error",
   "w8-managed-cutover-cleanup.sh",
   "W8_CUTOVER_SUCCEEDED=true",
   "direkt-w8-functional-cutover-",
@@ -153,6 +156,9 @@ if (prepare.includes("service-accounts create") || prepare.includes("service-acc
 }
 if (cleanup.includes("service-accounts remove-iam-policy-binding")) {
   throw new Error("W8 rollback must not mutate pre-provisioned service-account IAM policy");
+}
+if (/hashFiles\([^\n]*runner\.temp/.test(managedWorkflow)) {
+  throw new Error("W8 evidence upload must not use hashFiles against runner.temp; bind upload to the evidence step result instead");
 }
 
 const runtimeIdMatch = managedWorkflow.match(/GCP_WEB_RUNTIME_SERVICE_ACCOUNT_ID:\s*([a-z0-9-]+)/);
@@ -210,6 +216,7 @@ process.stdout.write(`${JSON.stringify({
   deploymentDoesNotAdministerServiceAccountIam: true,
   prepareFailurePhasesAreAuditable: true,
   exerciseFailurePhasesAreAuditable: true,
+  evidenceUploadBoundToEvidenceStep: true,
   canonicalApiRemainsPrivate: true,
   publicBrowserBffOnly: true,
   failClosedRollback: true,
