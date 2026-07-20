@@ -12,7 +12,7 @@ This file prevents overlapping writes in the single-lane build process.
 | Protected surface | `android/direkt-app/**` is regression-protected; no Android architecture, dependency, Gradle, release/signing or UI refactor is authorized by this workstream unless a separately reviewed compatibility fix is strictly required |
 | Implementation lane | `build/android-v1` — historical name retained; single sequential product lane |
 | Stable checkpoint | W7 closed: exact reviewed head `23aedc0af48e244c60a9d03accbdc74e83b14416` passed combined W2–W7 web/backend/database/OpenAPI/Android/security gates; trusted-main managed final browser canary PASS on exact source `25b8cd1b122882974db94b502e3a87080105733d`, indexed on Issue #133 |
-| Current task | W8 — controlled route/deployment cutover: preserve the synthetic preview separately, deploy the functional browser/BFF runtime through a dedicated least-privilege web identity, verify a working public UI route without exposing the IAM-private API, and retain all participant/provider/payment/production gates |
+| Current task | W8 — repository/Android/backend gates are green; trusted-main attempts 1 and 2 failed closed before UI promotion. Verify/create the dedicated `direkt-customer-provider-web-runtime@direkt-dev-502701.iam.gserviceaccount.com` runtime prerequisite, then rerun managed public browser/BFF cutover without exposing the IAM-private API |
 | Governing plan | `docs/web/FUNCTIONAL_PWA_PARITY_IMPLEMENTATION_PLAN.md` |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized |
 | Governing issues | Issue #133 for customer/provider PWA/reconciliation; Issue #112 remains open for real pilot evidence/exit |
@@ -30,7 +30,7 @@ This file prevents overlapping writes in the single-lane build process.
 8. No synthetic fixture or preview-only behavior may be counted as functional parity when a canonical backend capability exists.
 9. W2 public discovery uses backend-managed synthetic/test state through the reviewed `authenticated-bff` private API boundary; production unauthenticated API mode remains prohibited.
 10. W2 managed evidence passed without exposing API/web publicly. The bounded canary reused `direkt-portal-runtime` only for the private synthetic exercise and bound no portal secret; this does not authorize public deployment.
-11. A dedicated least-privilege customer/provider web runtime identity is required before W8 public cutover.
+11. A dedicated least-privilege customer/provider web runtime identity is required before W8 public cutover. The W8 deploy workflow may verify/attach this pre-provisioned identity but must not create it or rewrite service-account IAM policy.
 12. W3 browser authentication keeps session material HttpOnly and server-controlled, enforces CSRF/origin/session rotation/replay/expiry controls, and never derives provider scope or authorization from client-selected state or Firebase claims.
 13. W4 customer actions remain backend-authoritative and use the same enquiry, contact-consent, interaction, review and complaint lifecycle rules as Android. Managed customer evidence covers customer-controlled mutations; provider-mediated states remain protected and are verified by canonical lifecycle suites rather than fabricated authority.
 14. W5 provider workspace access remains actor-resolved server-side. No browser-selected provider identifier grants or widens provider scope. Private evidence upload grants are transient, private object keys remain excluded, and masked handoffs do not expose raw contact.
@@ -38,6 +38,7 @@ This file prevents overlapping writes in the single-lane build process.
 16. W7 closed only after combined Android/backend/database/OpenAPI/web regression evidence plus responsive/accessibility/offline/privacy negative controls and a trusted-main managed browser canary passed; unsupported external integrations remain explicitly GATED.
 17. W8 may expose only the reviewed browser/BFF entry point. The canonical API remains IAM-private; the functional browser runtime must use a dedicated least-privilege identity, and the historical static synthetic PWA must remain available under an explicit preview/historical route rather than being silently overwritten.
 18. A W8 public route is not accepted merely because deployment succeeds. DNS/TLS, runtime health, manifest/service-worker/installability, browser privacy/cache boundaries and a directly reachable working UI must be verified on the exact promoted source before closure.
+19. W8 attempt 2 exact source `aa97b4e71644d453947e55eb55c5cee2fe041784` passed repository/Android/backend gates but failed closed at the sanitized managed step `Prepare dedicated public W8 browser/BFF runtime`; no UI URL was promoted. Do not modify product code to bypass this managed-infrastructure prerequisite.
 
 ## Active implementation sequence
 
@@ -49,7 +50,7 @@ This file prevents overlapping writes in the single-lane build process.
 - W5 — complete provider journey parity. **Closed — managed PASS on exact merged source `79228f4bda96106b929aa6183613cb9d2dc127f6`; authoritative bot result is Issue #133 comment `5017630247`.**
 - W6 — commercial parity within currently authorized/gated payment boundaries. **Closed — trusted-main managed commercial canary PASS on exact merged source `1b5753002afcf115f6f47334f6588648eca7501d`.**
 - W7 — cross-client parity, security, accessibility, responsive, offline/network and Android regression closure. **Closed — exact-head combined regression PASS plus trusted-main managed final browser canary PASS on `25b8cd1b122882974db94b502e3a87080105733d`.**
-- W8 — controlled route/deployment cutover; preserve historical preview separately. **Active.**
+- W8 — controlled route/deployment cutover; preserve historical preview separately. **Active — external dedicated runtime-identity prerequisite before next trusted-main cutover.**
 
 ## Stop conditions
 
