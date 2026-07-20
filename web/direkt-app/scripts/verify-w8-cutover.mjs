@@ -42,10 +42,9 @@ requireMarkers(pwaCi, [
 ]);
 requireMarkers(pagesWorkflow, ["for route in app preview", "Verify W8 synthetic preview preservation"]);
 requireMarkers(prepare, [
-  "GCP_WEB_RUNTIME_SERVICE_ACCOUNT_ID",
   "GCP_WEB_RUNTIME_SERVICE_ACCOUNT",
-  "roles/iam.serviceAccountUser",
-  "GCP_DEPLOYER_SERVICE_ACCOUNT",
+  "Missing dedicated W8 runtime identity",
+  "Identity provisioning is intentionally outside the deployment identity boundary",
   "roles/run.invoker",
   "--allow-unauthenticated",
   "DIREKT_WEB_API_MODE=authenticated-bff",
@@ -70,9 +69,8 @@ requireMarkers(cleanup, [
   "remove-iam-policy-binding",
   "--member allUsers",
   "GCP_WEB_RUNTIME_SERVICE_ACCOUNT",
-  "GCP_DEPLOYER_SERVICE_ACCOUNT",
-  "roles/iam.serviceAccountUser",
   "allAuthenticatedUsers",
+  "Identity provisioning/act-as policy is not mutated by W8",
 ]);
 requireMarkers(managedWorkflow, [
   "RUN-DIREKT-W8-PUBLIC-WEB",
@@ -109,17 +107,19 @@ const permanentRuntimeFiles = [prepare, managedWorkflow, checkpoint, lock].join(
 if (permanentRuntimeFiles.includes("direkt-portal-runtime@")) {
   throw new Error("W8 permanent public web cutover must not reuse the operations-portal runtime identity");
 }
+if (prepare.includes("service-accounts create") || prepare.includes("service-accounts add-iam-policy-binding")) {
+  throw new Error("W8 deployment workflow must not create runtime identities or rewrite service-account IAM policy");
+}
+if (cleanup.includes("service-accounts remove-iam-policy-binding")) {
+  throw new Error("W8 rollback must not mutate pre-provisioned service-account IAM policy");
+}
 
 requireMarkers(prepare, [
   "select(. == \"allUsers\" or . == \"allAuthenticatedUsers\")",
   "| length == 0",
 ]);
 requireOrderedMarkers(prepare, [
-  'gcloud iam service-accounts add-iam-policy-binding "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}"',
-  '--member "serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}"',
-  "--role roles/iam.serviceAccountUser",
-]);
-requireOrderedMarkers(prepare, [
+  'gcloud iam service-accounts describe "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}"',
   'gcloud run services add-iam-policy-binding "${GCP_API_SERVICE}"',
   '--member "serviceAccount:${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}"',
   "--role roles/run.invoker",
@@ -130,17 +130,14 @@ requireOrderedMarkers(cleanup, [
   'gcloud run services remove-iam-policy-binding "${GCP_API_SERVICE}"',
   '--member "serviceAccount:${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}"',
   "--role roles/run.invoker",
-  'gcloud iam service-accounts remove-iam-policy-binding "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}"',
-  '--member "serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}"',
-  "--role roles/iam.serviceAccountUser",
 ]);
 
 process.stdout.write(`${JSON.stringify({
   event: "w8_cutover_contract_passed",
   syntheticPreviewPreserved: true,
   dedicatedRuntimeIdentityRequired: true,
-  deployerActAsScopedToDedicatedRuntime: true,
-  failedCutoverRemovesDeployerActAs: true,
+  runtimeIdentityProvisioningExternalized: true,
+  deploymentDoesNotAdministerServiceAccountIam: true,
   canonicalApiRemainsPrivate: true,
   publicBrowserBffOnly: true,
   failClosedRollback: true,

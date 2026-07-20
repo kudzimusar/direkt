@@ -9,24 +9,18 @@ echo "API_URL=${API_URL}" >> "${GITHUB_ENV}"
 gcloud run services get-iam-policy "${GCP_API_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=json > "${RUNNER_TEMP}/w8-api-iam-before.json"
 jq -e '[.bindings[]?.members[]? | select(. == "allUsers" or . == "allAuthenticatedUsers")] | length == 0' "${RUNNER_TEMP}/w8-api-iam-before.json" >/dev/null
 
-# W8 requires a dedicated least-privilege customer/provider web runtime identity.
+# Identity provisioning is intentionally outside the deployment identity boundary. The approved
+# GitHub deployer may deploy/attach service accounts, but W8 must not silently grant itself IAM
+# administration in order to create or rewrite a runtime identity during a release workflow.
 if ! gcloud iam service-accounts describe "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}" --project "${GCP_PROJECT_ID}" >/dev/null 2>&1; then
-  gcloud iam service-accounts create "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT_ID}" \
-    --project "${GCP_PROJECT_ID}" \
-    --display-name "DIREKT customer provider web runtime" \
-    --description "Least-privilege runtime identity for the public synthetic-only DIREKT customer/provider BFF" \
-    --quiet
+  echo "::error::Missing dedicated W8 runtime identity ${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}. Provision this one service account in project ${GCP_PROJECT_ID} before rerunning the trusted W8 cutover; do not reuse the operations or API runtime identity." >&2
+  exit 72
 fi
 
 gcloud iam service-accounts describe "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}" --project "${GCP_PROJECT_ID}" --format='value(email)' | grep -Fx "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}"
 
-# Allow the approved GitHub deployer to attach only this dedicated runtime identity to Cloud Run.
-gcloud iam service-accounts add-iam-policy-binding "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}" \
-  --project "${GCP_PROJECT_ID}" \
-  --member "serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}" \
-  --role roles/iam.serviceAccountUser --quiet >/dev/null
-
-# Grant only service-level invocation of the private DIREKT API to the dedicated web runtime.
+# Grant only service-level invocation of the private DIREKT API to the pre-provisioned dedicated
+# web runtime. The deployment workflow does not create the identity or mutate its IAM policy.
 gcloud run services add-iam-policy-binding "${GCP_API_SERVICE}" \
   --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" \
   --member "serviceAccount:${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}" \

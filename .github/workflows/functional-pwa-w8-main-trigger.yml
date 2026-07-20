@@ -95,6 +95,21 @@ jobs:
           echo "conclusion=${conclusion}" >> "${GITHUB_OUTPUT}"
           test "${conclusion}" = "success"
 
+      - name: Summarize failed W8 job without logs or secret values
+        id: diagnosis
+        if: always() && steps.result.outputs.conclusion != 'success' && steps.run.outputs.run_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ steps.run.outputs.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          jobs="$(gh api -H "Accept: application/vnd.github+json" "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=100")"
+          summary="$(jq -r '[.jobs[] | select(.conclusion == "failure") | {job:.name, failedSteps:[.steps[]? | select(.conclusion == "failure") | .name]}] | if length == 0 then "No failed job metadata was returned." else map("Job: " + .job + "; failed step(s): " + ((.failedSteps | join(", ")) // "unknown")) | join(" | ") end' <<< "${jobs}")"
+          echo "failure_summary<<EOF" >> "${GITHUB_OUTPUT}"
+          echo "${summary}" >> "${GITHUB_OUTPUT}"
+          echo "EOF" >> "${GITHUB_OUTPUT}"
+
       - name: Extract sanitized W8 public UI evidence
         id: evidence
         if: steps.result.outputs.conclusion == 'success'
@@ -125,6 +140,7 @@ jobs:
           RUN_URL: ${{ steps.run.outputs.run_url }}
           CONCLUSION: ${{ steps.result.outputs.conclusion }}
           PUBLIC_WEB_URL: ${{ steps.evidence.outputs.public_web_url }}
+          FAILURE_SUMMARY: ${{ steps.diagnosis.outputs.failure_summary }}
         shell: bash
         run: |
           set -euo pipefail
@@ -132,9 +148,11 @@ jobs:
           if [[ "${result}" == "success" && -n "${PUBLIC_WEB_URL:-}" ]]; then
             heading="PASS"
             detail="The functional synthetic-only customer/provider browser/BFF is publicly reachable at ${PUBLIC_WEB_URL}. The canonical API remains IAM-private. W8 remains open until the approved custom-domain route, DNS/TLS and preserved preview are independently verified."
+            diagnostic=""
           else
             heading="FAIL / INCOMPLETE"
             detail="The W8 public functional browser checkpoint did not pass. The workflow is designed to fail closed by removing public web invocation and the new runtime-to-API binding on failure. W8 remains open."
+            diagnostic="- Sanitized failure location: ${FAILURE_SUMMARY:-unavailable}"
           fi
           body=$(cat <<EOF
           <!-- direkt-w8-main-public-web-result -->
@@ -145,6 +163,7 @@ jobs:
           - Conclusion: \`${result}\`
           - Functional UI: ${PUBLIC_WEB_URL:-not promoted}
           - Managed run: ${RUN_URL}
+          ${diagnostic}
 
           ${detail}
           EOF
