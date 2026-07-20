@@ -105,11 +105,12 @@ requireMarkers(lock, [
 ]);
 
 const permanentRuntimeFiles = [prepare, managedWorkflow, checkpoint, lock].join("\n");
+const executableRuntimeFiles = [prepare, exercise, cleanup, managedWorkflow, mainTrigger].join("\n");
 if (permanentRuntimeFiles.includes("direkt-portal-runtime@")) {
   throw new Error("W8 permanent public web cutover must not reuse the operations-portal runtime identity");
 }
-if (permanentRuntimeFiles.includes("direkt-customer-provider-web-runtime")) {
-  throw new Error("W8 must not reintroduce the invalid overlength service-account identifier");
+if (executableRuntimeFiles.includes("direkt-customer-provider-web-runtime")) {
+  throw new Error("W8 executable/runtime configuration must not reintroduce the invalid overlength service-account identifier");
 }
 if (prepare.includes("service-accounts create") || prepare.includes("service-accounts add-iam-policy-binding")) {
   throw new Error("W8 deployment workflow must not create runtime identities or rewrite service-account IAM policy");
