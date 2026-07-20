@@ -1,59 +1,52 @@
 # W7 — Cross-Client Parity and Regression Checkpoint
 
-**Status:** CLOSED — comprehensive exact-head regression PASS plus trusted-main managed final browser canary PASS on exact merged source `cebbbc70bfb871da5661924c6653fd050eef12cd`  
-**Managed evidence:** Issue #133 authoritative bot result under `<!-- direkt-w7-main-canary-result -->`  
+**Status:** IMPLEMENTING — exact-head regression and trusted-main managed final browser evidence are required before closure  
 **Workstream:** Functional Android/Web parity  
 **Governing plan:** `docs/web/FUNCTIONAL_PWA_PARITY_IMPLEMENTATION_PLAN.md`
 
-## Closed W7 acceptance boundary
+## W7 acceptance boundary
 
-W7 added no new product domain. It proved that the closed W2–W6 browser capabilities remain compatible with the canonical backend and protected Android client while preserving responsive, accessibility, offline, privacy and security invariants.
+W7 adds no new product domain behavior. It must prove that the closed W2–W6 browser capabilities remain compatible with the canonical backend and protected Android client while preserving responsive, accessibility, offline, privacy and security invariants.
 
-### Exact-head repository evidence
+### Exact-head repository evidence required
 
-The W7 checkpoint passed on exact implementation head `d647a46845fde68c6a13fd8149ba482e48c47ba3`, subsequently promoted to `main` as `a813412d3ab9f1738460b85ca077e6cfc5d73579`:
+Before promotion, the same reviewed W7 head must pass:
 
 - functional web TypeScript, W2–W7 contract verifiers and production build;
-- backend migrations, full Jest regression, build and canonical OpenAPI generation/check;
-- database Data API, authorization and provider-workspace contract harnesses;
+- canonical backend format/lint/type/authorization/migration checks, full Vitest regression and build;
+- canonical OpenAPI generation/check and local PostgreSQL/PostGIS migration regression;
 - Android debug unit tests, lint and debug assembly;
 - Android debug and release runtime dependency graph resolution;
 - Android protected-path diff proving no W7 Android mutation;
-- mobile bottom navigation, tablet navigation rail and desktop side navigation semantics;
-- skip-link, keyboard focus target size and reduced-motion semantics;
-- service-worker network-only/no-store rules for auth/customer/provider mutation routes;
+- responsive mobile/tablet/desktop navigation semantics;
+- skip-link, keyboard focus target-size and reduced-motion semantics;
+- service-worker network-only/no-store rules for API, authentication and private lifecycle traffic;
 - no privileged Supabase/database authority or browser-readable DIREKT session/private evidence state;
-- CSRF/origin/provider-scope/direct-canonical-API negative contracts;
-- parity matrix reconciliation using PASS/GATED/N/A without fabricated runtime claims.
+- CSRF/origin/provider-scope/privacy negative contracts;
+- capability matrix reconciliation using only PASS/GATED/N/A without fabricated runtime claims;
+- repository supply-chain/security and documentation gates.
 
-The comprehensive W7 workflow `29707651313` completed successfully, including all Android, backend/database/OpenAPI, functional-web and documentation/security jobs.
+No implementation SHA, workflow run, or managed canary may be recorded here as PASS until it is the exact evidence used for promotion.
 
-## Managed W7 closure evidence
+## Managed W7 closure evidence required
 
-The trusted-main W7 final browser canary passed on exact merged trigger source `cebbbc70bfb871da5661924c6653fd050eef12cd`. The managed evidence established:
+After the reviewed W7 implementation is merged to `main` and the implementation lane is synchronized, a separate one-file trusted-main trigger must run the reviewed W7 managed canary against an immutable merged source. The managed canary must establish:
 
-1. the reviewed functional web shell rendered desktop side navigation, tablet rail, mobile bottom navigation, skip-link and main-content landmarks from the immutable deployment;
-2. the installable manifest, service worker and offline fallback were served from the same deployment;
-3. auth/customer/provider mutation routes remained network-only/no-store and session-gated;
-4. unauthenticated direct API and web access remained denied by Cloud Run IAM during the private canary;
-5. browser-safe rendered/static/auth-bootstrap responses passed scans for service-role credentials, database URLs, private object keys, raw contact, DIREKT access/refresh tokens and private coordinate fields;
-6. temporary canary Invoker grants were removed after the run;
-7. the W2–W6 managed evidence chain remained reconciled and no core capability was silently downgraded;
-8. external integrations, real participant admission and formal production release remained explicitly GATED.
+1. the functional web shell renders desktop side navigation, tablet rail, mobile bottom navigation, skip-link and main-content landmarks;
+2. the installable manifest, bounded service worker and offline fallback are served from the same deployment;
+3. API/auth/customer/provider private traffic remains network-only/no-store and session-gated;
+4. unauthenticated direct API and managed web access remain denied while the private canary is active;
+5. rendered/static/bootstrap responses contain no privileged credentials, private object keys, raw contact, DIREKT access/refresh tokens or private coordinate fields;
+6. temporary canary Invoker grants are removed and final IAM is re-verified;
+7. the W2–W6 evidence chain remains reconciled;
+8. external integrations, real participant admission and formal production release remain explicitly GATED.
+
+The authoritative PASS/FAIL result is posted to Issue #133 under `<!-- direkt-w7-main-canary-result -->` only by the trusted-main trigger workflow.
 
 ## Honest cross-client constraint retained
 
-The additive PWA workstream did not modify `android/direkt-app/**`. W7 therefore proves canonical REST/OpenAPI compatibility and zero Android regression. It does not fabricate a live Android network mutation for client paths that the protected existing Android runtime does not currently expose. That runtime activation remains explicitly GATED in the parity matrix rather than being counted as PASS.
+The additive PWA workstream must not modify `android/direkt-app/**`. W7 may prove canonical REST/OpenAPI compatibility and zero Android regression, but it must not fabricate live Android network mutations for runtime paths the protected Android surface does not currently expose. Those runtime activations remain explicitly GATED in the parity matrix.
 
-## Scope carried forward to W8
+## W8 remains blocked
 
-W8 is authorized only for controlled browser-route/deployment cutover:
-
-- preserve the historical synthetic preview separately;
-- deploy the real `web/direkt-app` browser client through a reviewed public web entry point while keeping the canonical NestJS API IAM-private;
-- use a dedicated least-privilege customer/provider web runtime identity before public cutover;
-- verify public browser discovery/installability and private BFF/API invocation boundaries;
-- keep real Firebase Web participant activation, external integrations, real payment movement, Phase 11 real evidence and formal Phase 12 production release separately GATED;
-- update project-wide docs/status only after the public route and rollback/preview preservation are proven.
-
-W8 cutover must not reuse the operations portal runtime identity as the permanent public customer/provider web runtime.
+W8 controlled cutover is not authorized until both the exact-head repository matrix and the trusted-main managed W7 canary pass and this checkpoint is updated with the actual evidence identifiers. W8 must continue to preserve the synthetic preview separately and must not weaken the IAM-private canonical API, participant, payment, external-provider, Phase 11 or formal Phase 12 gates.
