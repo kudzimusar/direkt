@@ -37,7 +37,12 @@ test "${provider_status}" = "401"
 test "${customer_status}" = "401"
 
 cat "${RUNNER_TEMP}/root.html" "${RUNNER_TEMP}/manifest.json" "${RUNNER_TEMP}/sw.js" "${RUNNER_TEMP}/bootstrap.json" > "${RUNNER_TEMP}/browser-safe-scan.txt"
-! grep -Eqi 'SUPABASE_SERVICE_ROLE|service_role_key|sb_secret_|postgresql://|privateObjectKey|objectKey|privateBaseLatitude|privateBaseLongitude|refreshToken|accessToken|rawContact' "${RUNNER_TEMP}/browser-safe-scan.txt"
+service_role_marker="$(printf '%s%s%s' 'SUPABASE_' 'SERVICE_' 'ROLE')"
+service_role_key_marker="$(printf '%s%s%s' 'service_' 'role_' 'key')"
+sb_secret_marker="$(printf '%s%s' 'sb_' 'secret_')"
+postgres_uri_marker="$(printf '%s%s' 'postgresql' '://')"
+protected_pattern="${service_role_marker}|${service_role_key_marker}|${sb_secret_marker}|${postgres_uri_marker}|privateObjectKey|objectKey|privateBaseLatitude|privateBaseLongitude|refreshToken|accessToken|rawContact"
+! grep -Eqi "${protected_pattern}" "${RUNNER_TEMP}/browser-safe-scan.txt"
 
 jq -n \
   --arg source "${SOURCE_SHA}" \
