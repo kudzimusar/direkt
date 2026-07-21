@@ -56,9 +56,7 @@ describe('AiService', () => {
   it('fails over to Groq only when the primary provider is unavailable', async () => {
     const primary: AiProviderPort = {
       provider: 'gemini',
-      generate: vi
-        .fn()
-        .mockRejectedValue(new AiProviderUnavailableError('temporary failure')),
+      generate: vi.fn().mockRejectedValue(new AiProviderUnavailableError('temporary failure')),
     };
     const fallback: AiProviderPort = {
       provider: 'groq',
@@ -97,9 +95,7 @@ describe('AiService', () => {
       dataClassification: 'controlled-pilot',
     } as unknown as AiAssistInput;
 
-    await expect(service.assist(unsafeInput)).rejects.toBeInstanceOf(
-      AiInputRejectedError,
-    );
+    await expect(service.assist(unsafeInput)).rejects.toBeInstanceOf(AiInputRejectedError);
     expect(primary.generate).not.toHaveBeenCalled();
     expect(fallback.generate).not.toHaveBeenCalled();
   });
