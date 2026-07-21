@@ -106,27 +106,10 @@ jobs:
           echo "DIREKT_FIREBASE_APP_ID=${CONFIG_APP_ID}" >> "${GITHUB_ENV}"
           echo "DIREKT_FIREBASE_PROJECT_ID=${CONFIG_PROJECT_ID}" >> "${GITHUB_ENV}"
 
-      - name: Establish read-only Crashlytics Events API boundary
+      - name: Verify read-only Crashlytics Events API boundary
         shell: bash
         run: |
           set -euo pipefail
-
-          if ! gcloud services list \
-            --project "${GCP_PROJECT_ID}" \
-            --enabled \
-            --filter='config.name:firebasecrashlytics.googleapis.com' \
-            --format='value(config.name)' | grep -Fxq 'firebasecrashlytics.googleapis.com'; then
-            gcloud services enable firebasecrashlytics.googleapis.com \
-              --project "${GCP_PROJECT_ID}" \
-              --quiet
-          fi
-
-          gcloud projects add-iam-policy-binding "${GCP_PROJECT_ID}" \
-            --member "serviceAccount:${GCP_SERVICE_ACCOUNT}" \
-            --role roles/firebasecrashlytics.viewer \
-            --condition=None \
-            --quiet >/dev/null
-
           token="$(gcloud auth print-access-token)"
           echo "::add-mask::${token}"
           encoded_app_id="$(jq -rn --arg value "${DIREKT_FIREBASE_APP_ID}" '$value|@uri')"
@@ -152,8 +135,7 @@ jobs:
 
           jq -n \
             --arg http "${http_code}" \
-            --arg role "roles/firebasecrashlytics.viewer" \
-            '{httpStatus:$http,readBoundary:"PASS",role:$role}' \
+            '{httpStatus:$http,readBoundary:"PASS",authorization:"existing-managed-principal"}' \
             > "${RUNNER_TEMP}/rc3-events-api-preflight-receipt.json"
 
       - name: Set up Java 17
