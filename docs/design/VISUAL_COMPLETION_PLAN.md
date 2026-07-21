@@ -2,386 +2,313 @@
 
 **Programme:** VC — DIREKT Visual Completion  
 **Governing issue:** #259  
-**Current stage:** VC0 only  
-**Primary product surfaces:** native Android, functional customer/provider web/PWA, internal operations portal  
-**Historical preview:** evidence/reference only; never the canonical runtime
+**Current stage:** VC0 design-control/audit only  
+**Stable predecessor:** `main` at `a06a66d313d8417d8b7731e3d845c1c71bda3dd4`  
+**Primary surfaces:** native Android, functional customer/provider web/PWA, internal operations portal
 
 ## 1. Objective
 
-Complete the high-fidelity UI/UX layer of DIREKT without rebuilding the product or changing its authoritative domain model.
+Complete DIREKT's high-fidelity UI/UX layer without rebuilding the product or weakening existing functionality.
 
-The following remain authoritative and must not be replaced by generated UI logic:
+The following remain authoritative:
 
 - NestJS REST/OpenAPI API;
-- PostgreSQL/PostGIS;
-- Supabase private storage/runtime boundaries;
+- PostgreSQL/PostGIS and private storage;
 - authentication/session/authorization;
 - server-resolved provider scope;
 - verification/publication/trust rules;
-- location privacy;
+- privacy/location rules;
 - enquiry/contact-handoff/review/complaint lifecycles;
-- commercial ledger/subscription rules;
+- commercial ledger/subscription boundaries;
 - Android architecture;
-- functional web/PWA BFF architecture;
-- operations permissions and audit boundaries;
-- Phase 11 and Phase 12 controls.
+- functional browser/BFF architecture;
+- operations permissions/audit boundaries;
+- Phase 11 and Phase 12 gates.
 
 The visual programme interprets DIREKT. It does not redefine DIREKT.
 
-## 2. Non-negotiable visual/product principles
+## 2. Non-negotiable design rules
 
-Every VC stage must preserve:
+Every VC stage preserves:
 
 1. proof before persuasion;
 2. no blanket `Verified` badge;
-3. check-specific trust state, scope, reviewed date, expiry where relevant, source/evidence class, meaning and limitations;
-4. status communicated by icon + text + colour, never colour alone;
+3. check-specific trust state, scope, dates, meaning and limitations;
+4. icon + text + colour for status, never colour alone;
 5. map plus accessible list equivalent;
 6. privacy by precision;
-7. public premises imagery/work imagery separated from private verification evidence;
-8. mobile bottom navigation for customer/provider compact layouts;
-9. persistent side navigation for customer/provider desktop web;
-10. desktop-first operations evidence review with responsive field/triage flows rather than simple desktop shrink-down;
+7. provider work/premises imagery separate from private evidence;
+8. customer/provider mobile bottom navigation;
+9. customer/provider desktop persistent side navigation;
+10. desktop-first operations evidence review with responsive task/triage flows;
 11. 48dp-class interaction targets;
-12. readable body typography and font scaling;
+12. readable typography and font scaling;
 13. short functional motion only;
-14. low-bandwidth and offline-safe fallbacks;
-15. commercial/payment state visually separate from verification/trust authority;
-16. gated integrations shown honestly as unavailable/pending/fallback, never fabricated as active.
+14. low-bandwidth/offline-safe fallbacks;
+15. commercial/payment state visually separate from trust authority;
+16. gated integrations represented honestly as unavailable/pending/fallback.
 
-## 3. Workstream controls
+## 3. Repository control model
 
-### Single lane
+### VC0
 
-All overlapping writes remain on the repository's sequential implementation lane unless a later reviewed repository decision changes that rule.
+The promoted `WORKSTREAM_LOCK.md` explicitly permits VC0 read-only/design-control work on a non-overlapping branch without monopolizing the implementation lane. Therefore VC0 does **not** claim the material implementation lane.
 
-Before each VC stage/slice:
+VC0 may add audit/design-control documents and issue metadata only. It must not mass-edit Android, web, operations or backend product code.
 
-1. re-read `AGENTS.md`, `MASTER_BUILD_PLAN.md`, `PROJECT_STATUS.md`, `WORKSTREAM_LOCK.md`, `DEFINITION_OF_DONE.md` and the relevant design/product documents;
-2. fetch the exact current source;
-3. verify required predecessor gates;
-4. update/confirm the workstream lock and issue scope;
-5. inspect actual implementation before editing;
-6. keep changes bounded to the slice;
-7. run exact-head regression;
-8. inspect UI evidence and diff;
-9. update design/status/handoff docs;
-10. merge only when the exact reviewed head is green.
+### VC1+ material implementation
+
+Before any broad visual code changes:
+
+1. owner approves a high-fidelity representative design direction;
+2. the current stable source is re-fetched;
+3. predecessor gates are verified;
+4. the implementation lane is formally claimed with exact scope/protected surfaces;
+5. the historical W7/W8 verifier-to-lock coupling identified by VC0 is corrected so a legitimate new lock owner does not invalidate historical W8 completion;
+6. implementation proceeds in bounded vertical slices;
+7. every slice receives exact-head regression and visual evidence review.
 
 ### Stop conditions
 
-Stop rather than merge when a visual change would:
+Stop rather than merge if a change would:
 
-- weaken authorization or IAM/BFF/session controls;
+- weaken authorization/IAM/BFF/session controls;
 - accept provider scope from client state;
-- expose private evidence, raw contacts or exact private provider locations;
-- replace canonical API state with fixtures while claiming functional completion;
-- make Google Maps, FCM, Sentry, Crashlytics, Resend, WhatsApp, payment providers or registries appear active when they are not;
-- make commercial/payment state improve trust/publication/ranking;
+- expose private evidence, raw contact data or exact private locations;
+- replace authoritative backend state with fixtures while claiming functionality;
+- make Maps, FCM, Sentry, Crashlytics, Resend, WhatsApp, payment providers or registries appear active when they are not;
+- let payment/commercial state improve trust/publication/ranking;
 - introduce real participants, real evidence, real money movement or production release;
-- require unrelated framework/dependency rewrites;
+- require unrelated framework rewrites;
 - regress Android/backend/database/OpenAPI/web/admin gates;
-- conflict with an owner-approved Design DNA without an explicit design change decision.
+- contradict approved trust/privacy/accessibility rules.
 
-## 4. VC0 — repository-wide visual baseline and gap audit
+---
 
-**Status:** active in the current workstream.
+# VC0 — Repository-wide visual baseline and gap audit
 
-### Outputs
+**Status:** repository audit/design package prepared; actual high-fidelity Stitch renders and owner aesthetic approval still required before material implementation.
+
+## Outputs
 
 - `docs/design/UI_VISUAL_GAP_MATRIX.md`;
 - `docs/design/VISUAL_COMPLETION_PLAN.md`;
 - `docs/design/DESIGN_DNA_BRIEF.md`;
-- Issue #259 and a bounded lock claim;
+- Issue #259;
 - exact-source/regression baseline evidence;
-- representative design-direction package prepared for owner review.
+- three differentiated design directions and generation prompts;
+- Stitch/Antigravity and Higgsfield workflow boundaries.
 
-### VC0 gate
+## Exit checkpoint
 
-No broad UI code change is allowed during VC0.
+VC0 may be treated as repository-side complete when:
 
-A narrow regression-harness repair is allowed only when needed to make the existing historical gates independently valid and it changes no product/runtime/UI behavior.
+- authority reconstruction and matrix are complete;
+- stable predecessor regression evidence is green;
+- three genuinely differentiated directions are documented;
+- design tooling workflow/privacy controls are documented;
+- no broad UI code has started;
+- actual representative high-fidelity renders are presented to the owner;
+- the owner explicitly approves or requests revisions.
 
-### VC0 exit
-
-VC0 exits only after:
-
-- the gap matrix is complete;
-- the exact-head baseline is green or a reviewed blocker is explicitly retained;
-- three genuinely differentiated visual directions are defined against the same non-negotiable trust/privacy rules;
-- the Stitch/Higgsfield workflow is ready;
-- the owner has a concrete representative review package;
-- no direction has been silently selected.
+Because the current automation environment does not expose a connected Stitch/Higgsfield design connector, the repository-side VC0 package can reach **render-ready review status**, but must not falsely claim that external high-fidelity renders already exist.
 
 ---
 
-# 5. VC1 — Design-system reconciliation
+# VC1 — Design-system reconciliation
 
-**Purpose:** reconcile repository design requirements and implementation foundations into one cross-product visual system before propagation.
+**Purpose:** turn the approved direction into one canonical cross-product visual system.
 
-### Scope
+## Foundations
 
-#### Foundations
-
-- semantic colour roles;
-- light/dark behavior;
+- semantic colour roles/light-dark behavior;
 - typography/fallbacks/type scale;
 - spacing/grid;
-- shape/radii;
-- elevation;
+- radii/elevation;
 - iconography;
 - imagery;
 - motion;
-- breakpoints/window size classes;
+- adaptive breakpoints/window classes;
 - accessibility;
-- low-bandwidth rendering.
+- low-bandwidth behavior.
 
-#### Component families
+## Component families
 
-- app bars/navigation/bottom nav/rail/side nav;
+- navigation/app bars;
 - search/suggestions/filters;
-- category cards;
-- provider cards;
+- category/provider cards;
 - provider profile header/gallery;
 - check-specific trust cards/details;
-- location/map/list controls;
-- saved providers;
-- enquiry cards/forms/timeline/contact consent;
-- review/complaint patterns;
-- provider readiness/tasks/services/areas;
-- evidence requirements/upload/timeline/correction;
-- availability;
-- commercial/subscription/receipt state;
-- operations queue/case/evidence/decision/audit components;
-- loading/empty/error/offline/permission/retry states.
+- map/list controls;
+- saved/enquiry/contact-consent/review/complaint flows;
+- provider readiness/services/areas/evidence/timeline/availability;
+- subscription/receipt states;
+- loading/empty/error/offline/retry patterns;
+- operations queue/case/evidence/decision/audit components.
 
-### Deliverable
-
-A reconciled token/component specification that can be represented consistently in:
-
-- Jetpack Compose/Material 3;
-- React/Next.js CSS/components;
-- operations portal CSS/components.
-
-Do not force identical rendering across platforms. Preserve platform-native behavior while keeping shared brand/trust semantics.
-
-### Exit gate
-
-VC1 does not authorize broad code propagation. It supplies the constraints used by VC2 high-fidelity design review.
+Platform-native behavior remains allowed: Compose, customer/provider web and operations should share Design DNA, not identical binaries/layouts.
 
 ---
 
-# 6. VC2 — High-fidelity flagship design review
+# VC2 — High-fidelity flagship design review
 
-**Purpose:** obtain explicit owner approval before the visual system is propagated.
+Before broad implementation, create at least three genuinely different visual directions against the same product rules.
 
-### Required representative screens
+## Required experiences
 
-#### Customer
+### Customer
 
 1. Discover/Home;
 2. Search/results/map-list;
 3. Provider public profile + trust details.
 
-#### Provider
+### Provider
 
-4. Provider overview/workspace;
+4. Provider workspace/overview;
 5. Verification/evidence status.
 
-#### Operations
+### Operations
 
 6. Verification queue + case/evidence review.
 
-### Required variants
+## Required variants
 
-- compact/mobile for customer/provider;
-- desktop for customer/provider web;
-- adaptive/tablet where layout changes materially;
-- desktop evidence-review composition for operations;
-- compact field/triage variant for operations where relevant.
+- compact/mobile customer/provider;
+- desktop customer/provider web;
+- adaptive/tablet where composition materially changes;
+- desktop operations evidence-review workspace;
+- compact operations triage/field sample.
 
-### Directions
+## Owner decision
 
-Generate at least three genuinely differentiated directions from `DESIGN_DNA_BRIEF.md`.
+Record exactly one:
 
-All directions must obey the same product rules; differentiation must come from visual rhythm, imagery treatment, information density, navigation framing and component composition—not from changing trust semantics.
+- `APPROVE DIRECTION A`;
+- `APPROVE DIRECTION B`;
+- `APPROVE DIRECTION C`;
+- `APPROVE HYBRID` with exact borrowed elements;
+- `REVISE` with concrete changes.
 
-### Review package
-
-For each direction include:
-
-- flagship screen set;
-- light theme at minimum;
-- dark theme sample where required by platform spec;
-- typography and token sample;
-- provider/category imagery treatment;
-- icon style;
-- trust-card treatment;
-- map/list treatment;
-- error/empty/offline sample;
-- operations density example;
-- accessibility notes;
-- low-bandwidth behavior.
-
-### Owner decision
-
-Record one of:
-
-- `APPROVE DIRECTION A/B/C`;
-- `APPROVE HYBRID` with exact elements;
-- `REVISE` with concrete requested changes.
-
-No implementation agent may infer approval from silence.
+Silence is never approval.
 
 ---
 
-# 7. VC3 — Lock approved Design DNA
+# VC3 — Lock approved Design DNA
 
-**Purpose:** turn the owner-approved visual direction into an implementation contract.
+After owner approval:
 
-### Outputs
+- record stable Stitch project/screen references;
+- retrieve approved Design DNA through Stitch MCP where available;
+- reconcile generated tokens against repository authority;
+- lock typography, semantic colours, icons, imagery, component anatomy, adaptive rules, motion, accessibility and low-bandwidth rules;
+- record rejected patterns;
+- never adopt generated API/business logic as canonical.
 
-Create/update a canonical approved design record containing:
-
-- Stitch project/screen IDs or stable references;
-- extracted Design DNA/tokens;
-- repository-authoritative corrections to generated suggestions;
-- type scale;
-- semantic colours;
-- icon set;
-- imagery rules;
-- component anatomy;
-- adaptive rules;
-- motion rules;
-- accessibility rules;
-- low-bandwidth rules;
-- explicitly rejected patterns;
-- approval date/decision reference.
-
-### Precedence
-
-When Stitch metadata conflicts with repository rules:
-
-1. trust/privacy/security/authorization/accessibility requirements win;
-2. product/user journey requirements win;
-3. platform specification wins;
-4. owner-approved Design DNA visual intent applies within those constraints.
-
-Generated source code never becomes canonical merely because Stitch or another tool produced it.
+Repository trust/privacy/security requirements always win over generated design metadata.
 
 ---
 
-# 8. VC4 — Customer experience vertical slices
+# VC4 — Customer experience vertical slices
 
 Implement Android + functional web together where capabilities correspond.
 
 ## VC4A — Discovery and provider decision
 
 - Discover/Home;
-- area selection;
-- categories;
-- search/suggestions;
+- area/category/search/suggestions;
 - filters;
 - result list;
-- map/list shell and fallback;
-- provider card;
-- provider public profile;
+- truthful map/list shell/fallback;
+- provider cards/profile;
 - trust details;
 - service detail;
 - no-results/permission/offline states.
 
-**External gate rule:** real Google Maps activation remains separate. A map shell/fallback may be implemented without claiming an active provider integration.
+Google Maps runtime activation remains a separate integration gate.
 
-## VC4B — Saved, enquiries and contact consent
+## VC4B — Saved/enquiries/contact consent
 
 - Saved;
 - create enquiry;
 - enquiry detail/timeline;
 - contact-sharing consent/revoke/expiry;
-- low-bandwidth draft/retry/conflict states.
+- draft/retry/conflict states.
 
-## VC4C — Reviews, complaints and account
+## VC4C — Reviews/complaints/account
 
-- review eligibility;
-- review submission/report/appeal presentation;
+- review eligibility/submission/report/appeal presentation;
 - complaint creation/detail;
 - account/security/privacy/support.
 
-### Slice gate
+### Customer slice gate
 
-For every VC4 slice:
-
+- public-safe provider projection only;
 - no client-selected provider scope;
-- public profile remains public-safe projection only;
 - no private evidence/exact private coordinates;
-- Android regression and web functional contract pass;
-- API/OpenAPI untouched unless separately justified and backward compatible;
+- Android + web + applicable backend/OpenAPI gates pass;
 - responsive/accessibility/offline checks pass;
 - approved visual-reference comparison recorded.
 
 ---
 
-# 9. VC5 — Provider experience vertical slices
+# VC5 — Provider experience vertical slices
 
-## VC5A — Provider overview/profile/services/areas
+## VC5A — Overview/profile/services/areas
 
 - overview/readiness;
-- onboarding checklist;
-- provider pathway;
+- onboarding pathway;
 - representative/business details;
 - services/categories;
 - operating model;
-- location/service area;
-- public premises consent;
-- publication status;
-- availability.
+- service areas/public premises consent;
+- availability;
+- publication status.
 
-Replace raw implementation inputs such as category keys, coordinate pairs and WKT with safe user-facing controls while preserving the same backend contracts or reviewed adapters.
+Replace raw category keys, coordinate pairs and WKT with safe user-facing controls while preserving canonical contracts.
 
 ## VC5B — Verification/evidence
 
-- evidence requirements;
+- requirements;
 - capture/file upload;
-- resumable/retry/error states;
-- verification timeline;
+- progress/resume/retry;
+- timeline;
 - correction/action required;
 - review/declaration.
 
-Private evidence remains private. Public work/premises imagery is a separate media system.
+Private evidence remains private. Public work/premises imagery is separate.
 
 ## VC5C — Enquiries/reviews/commercial/account
 
-- provider enquiry inbox/detail/response;
-- contact-handoff status;
+- enquiry inbox/detail/response;
+- contact handoff;
 - reviews/provider response/appeal;
-- portfolio imagery if in approved scope;
-- subscription/invoices/receipts;
-- team/member surfaces only if authorized;
+- portfolio if approved;
+- subscriptions/invoices/receipts;
+- member/team UI only when authorized;
 - account/security.
 
-Real payment movement remains disabled until its own integration/release gate clears.
+Real payment movement remains separately gated.
 
 ---
 
-# 10. VC6 — Operations portal
+# VC6 — Operations portal
 
-Use the same brand/trust system but optimize for evidence review, queue throughput, keyboard operation and auditability.
+Use the same brand/trust system with operations-appropriate density.
 
 ## VC6A — Verification core
 
 - mission control;
 - triage queue;
-- queue/detail split view;
+- queue/detail split;
 - verification case;
 - secure evidence viewer;
 - decision/reason/checklist;
 - provider operations summary;
 - discovery/publication eligibility.
 
-## VC6B — Field, escalation and trust operations
+## VC6B — Field/trust operations
 
-- field assignments;
-- field visit record;
+- field assignments/visit record;
 - escalations/overrides;
 - incidents;
 - interaction history;
@@ -391,39 +318,39 @@ Use the same brand/trust system but optimize for evidence review, queue throughp
 ## VC6C — Commercial/reporting/configuration
 
 - subscription exceptions;
-- reconciliation shell within gated payment boundaries;
+- payment reconciliation shell within gates;
 - expiry/reporting;
-- taxonomy/evidence-rule configuration where authorized;
+- taxonomy/evidence rules where authorized;
 - audit explorer;
-- role-management UI only when separately authorized;
+- role management only when separately authorized;
 - system health/queues.
 
-### Operations adaptive rule
+### Adaptive rule
 
-- desktop/laptop: queue + detail + evidence/workspace density;
-- tablet: collapsed navigation, one/two panes depending task;
-- compact/mobile: task-focused triage/field actions, not a squeezed desktop table.
+- desktop/laptop: queue + detail + evidence workspace;
+- tablet: one/two panes according to task;
+- compact/mobile: task-focused triage/field actions, never a squeezed desktop table.
 
 ---
 
-# 11. VC7 — World-class quality gate
+# VC7 — World-class quality gate
 
-No screen is complete because it merely resembles a mockup.
+A screen is not complete merely because it looks attractive.
 
-## 11.1 Visual gate
+## Visual
 
-- matches approved Design DNA/reference within documented platform adaptations;
+- matches approved Design DNA/reference with documented platform adaptations;
 - approved typography/icons/imagery;
 - coherent spacing/hierarchy;
-- responsive/adaptive behavior;
+- responsive/adaptive layouts;
 - light/dark behavior where required;
-- no development/workstream labels in production-facing UI;
+- no production-facing workstream/development labels;
 - no primitive glyph icons where approved vectors exist.
 
-## 11.2 Accessibility gate
+## Accessibility
 
-- WCAG contrast;
-- TalkBack/screen reader labels;
+- contrast;
+- TalkBack/screen-reader labels;
 - keyboard/focus order;
 - 48dp-class targets;
 - 200% font scaling/reflow;
@@ -432,56 +359,56 @@ No screen is complete because it merely resembles a mockup.
 - accessible map/list equivalence;
 - form error focus/summary behavior.
 
-## 11.3 Product/trust gate
+## Product/trust
 
-- no generic `Verified` badge;
-- check scope/date/limitation retained;
+- no blanket `Verified` badge;
+- check scope/date/limitations preserved;
 - commercial state separate from trust;
 - no private evidence/location/contact leakage;
-- no gated integration overclaim;
+- no gated-integration overclaim;
 - no real participant/payment/production activation.
 
-## 11.4 Regression gate
+## Regression
 
-At each exact reviewed head run all applicable checks:
+Run all applicable exact-head gates:
 
-- Android unit/lint/assembly and relevant instrumentation/screenshot tests;
-- backend tests/build/authorization/migrations when touched;
-- OpenAPI generation/drift checks when touched;
+- Android unit/lint/assembly and relevant UI tests;
+- backend authorization/tests/build/migrations when touched;
+- OpenAPI generation/drift when touched;
 - database migration verification when touched;
 - functional PWA typecheck/contracts/build/offline/security/responsive tests;
-- operations portal tests/build/permission/accessibility checks;
+- operations tests/build/permission/accessibility checks;
 - documentation quality;
-- supply-chain/security gates where dependency/build files change.
+- supply-chain/security where build/dependencies change.
 
-## 11.5 Visual evidence gate
+## Visual evidence
 
-Use only synthetic/public-safe data for visual evidence.
+Use only synthetic/public-safe data. Record:
 
-For each slice retain:
-
-- approved design reference ID/link;
+- approved design reference;
 - tested viewport/window class;
-- representative screenshots or automated visual references where safe;
-- accessibility state sample;
-- loading/empty/error/offline state sample;
-- diff/review note explaining deliberate platform adaptations.
+- representative screenshots/visual references;
+- accessibility state;
+- loading/empty/error/offline state;
+- deliberate platform adaptations.
 
-Never commit real evidence, participant identity, raw contact data or private coordinates as visual fixtures.
+Never use real evidence, participant identity, raw contact data or private coordinates as visual fixtures.
 
 ---
 
-# 12. AI-assisted design tooling architecture
+# AI-assisted design workflow
 
-## 12.1 Google Stitch — primary high-fidelity source
+## Google Stitch — primary high-fidelity source
 
 Use Stitch for:
 
-- 2–3 high-fidelity visual directions;
+- 2–3 high-fidelity directions;
 - mobile/desktop/adaptive flagship screens;
 - typography/layout/component exploration;
-- approved visual source metadata/Design DNA;
+- approved Design DNA;
 - owner visual review.
+
+Do not generate or adopt a parallel full-stack DIREKT application.
 
 Recommended project naming:
 
@@ -490,89 +417,43 @@ Recommended project naming:
 - `DIREKT-VC-C-Field-Utility`;
 - after approval: `DIREKT-VC-APPROVED`.
 
-Do not generate or adopt a parallel full-stack application.
+## Antigravity + Stitch MCP bridge
 
-## 12.2 Antigravity + Stitch MCP bridge
+1. connect Stitch MCP in Antigravity using secure credentials;
+2. verify project listing;
+3. fetch only the approved DIREKT project;
+4. extract Design DNA/tokens;
+5. reconcile them against repository rules;
+6. implement into existing Compose/Next.js/admin code;
+7. compare implementation against approved design in emulator/browser;
+8. record deliberate differences;
+9. never commit API keys.
 
-The implementation agent should consume approved Stitch context through MCP rather than manually guessing colours/padding.
+## Higgsfield — secondary asset layer
 
-Owner/setup workflow based on the official Google Codelab:
+Use only for controlled imagery/illustration/art-direction work such as:
 
-1. use an appropriate Google Cloud project with billing enabled as required by Stitch setup;
-2. sign in to Google Stitch;
-3. create/store a Stitch API key securely;
-4. in Antigravity Agent Manager open MCP Servers;
-5. install/configure the Stitch MCP with the key;
-6. verify with `List my Stitch projects.`;
-7. fetch only the approved DIREKT project;
-8. extract Design DNA/tokens into a repository review artifact;
-9. reconcile extracted metadata against `design.md` and the approved VC design record;
-10. implement into existing Compose/Next.js/admin code, not a generated replacement stack;
-11. compare implemented UI to the approved design in the integrated browser/emulator and fix discrepancies without altering product contracts.
+- category concepts;
+- generic provider work-scene concepts;
+- onboarding/empty-state illustration concepts;
+- moodboards;
+- promotional/store assets.
 
-Do not commit Stitch API keys or credentials.
+Do not send private evidence, participant identity documents, raw contacts, exact private coordinates, restricted operations screenshots or secrets.
 
-## 12.3 Higgsfield — secondary creative asset layer
-
-Use Higgsfield only for controlled creative work such as:
-
-- provider/workplace imagery concepts;
-- category illustrations;
-- onboarding/empty-state illustration exploration;
-- brand moodboards;
-- approved marketing/store assets;
-- controlled visual references.
-
-Do not use it to rebuild DIREKT as a separate app or author canonical business logic.
-
-Do not upload:
-
-- private verification evidence;
-- real participant identity documents;
-- raw contact data;
-- exact private provider locations;
-- unreleased sensitive operational screenshots.
-
-Any generated asset must pass human review for Zambia relevance, stereotyping, misleading representation, licensing/provenance, accessibility/alt-text suitability and low-bandwidth delivery.
-
-## 12.4 Asset intake contract
-
-Before generated/stock assets enter runtime source, record:
-
-- source/tool;
-- generation/reference prompt where appropriate;
-- human approval;
-- license/provenance status;
-- public/private classification;
-- alt text;
-- crop/aspect variants;
-- compression/source-set strategy;
-- fallback/placeholder behavior.
+Every generated asset requires human review for Zambia relevance, stereotyping, provenance/licensing, accessibility/alt text and low-bandwidth delivery.
 
 ---
 
-# 13. Representative review checkpoint before broad code
+# Representative owner review checkpoint
 
-The owner review checkpoint is six flagship experiences, each shown in the relevant variants:
-
-| Experience | Compact/mobile | Desktop/adaptive | What it must prove |
+| Experience | Compact/mobile | Desktop/adaptive | Must prove |
 |---|---|---|---|
 | Customer Discover/Home | Required | Required for web | Brand, categories, search, local marketplace character, low-bandwidth hierarchy. |
 | Search/results/map | Required | Required | Map/list equivalence, filters, provider cards, privacy-safe location. |
-| Provider public profile + trust | Required | Required | Proof-before-persuasion, imagery vs evidence separation, no blanket verification. |
-| Provider workspace/overview | Required | Required for web | Readiness/tasks/services/enquiries without technical raw inputs. |
-| Provider verification/evidence | Required | Required for web | Private upload/timeline/correction states, calm trust language. |
-| Operations queue/case review | Compact triage/field sample | Required desktop | Queue/detail/evidence density, keyboard/accessibility, privacy/audit controls. |
+| Provider profile + trust | Required | Required | Proof before persuasion, imagery/evidence separation, no blanket verification. |
+| Provider workspace | Required | Required for web | Readiness/tasks/services/enquiries without raw technical inputs. |
+| Verification/evidence | Required | Required for web | Private upload/timeline/correction states and calm trust language. |
+| Operations queue/case | Compact triage/field sample | Required desktop | Queue/detail/evidence density, privacy, accessibility and audit. |
 
-No final aesthetic is selected until owner approval is explicit.
-
-# 14. Programme completion condition
-
-VC is complete only when:
-
-- every matrix row is either visually complete, explicitly deferred with reason, or remains honestly externally gated;
-- Android, functional PWA and operations portal use the approved Design DNA appropriately;
-- no user-facing development/prototype artifacts remain outside explicit preview/test routes;
-- trust/privacy/accessibility/low-bandwidth rules are preserved;
-- exact-head regression and visual quality gates pass;
-- Phase 11/12 status remains truthful and unchanged unless separately cleared by its own evidence process.
+Broad visual implementation remains blocked until this representative set is actually rendered and the owner explicitly approves a direction.
