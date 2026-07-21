@@ -131,16 +131,26 @@ function selectTopics(question: string): PublicHelpTopic[] {
     score: topic.keywords.filter((keyword) => tokens.has(keyword)).length,
   }))
     .filter(({ score }) => score > 0)
-    .sort((left, right) => right.score - left.score || left.topic.title.localeCompare(right.topic.title))
+    .sort(
+      (left, right) =>
+        right.score - left.score || left.topic.title.localeCompare(right.topic.title),
+    )
     .slice(0, 3)
     .map(({ topic }) => topic);
 }
 
 function deterministicAnswer(topics: PublicHelpTopic[]): string {
-  return topics.flatMap((topic) => topic.facts).slice(0, 5).join(' ');
+  return topics
+    .flatMap((topic) => topic.facts)
+    .slice(0, 5)
+    .join(' ');
 }
 
-function buildSupportPrompt(question: string, topics: PublicHelpTopic[], promptVersion: string): string {
+function buildSupportPrompt(
+  question: string,
+  topics: PublicHelpTopic[],
+  promptVersion: string,
+): string {
   return [
     `PROMPT_VERSION=${promptVersion}`,
     'Answer the synthetic DIREKT help question using only the supplied approved public facts.',

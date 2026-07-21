@@ -148,7 +148,11 @@ export function ProviderJourneyExperience({
         </p>
       ) : null}
       {destination === "discover" ? (
-        <ProviderOverview state={state} mutate={mutateAndReload} csrfToken={csrfToken} />
+        <ProviderOverview
+          state={state}
+          mutate={mutateAndReload}
+          csrfToken={csrfToken}
+        />
       ) : null}
       {destination === "saved" ? (
         <ProviderEvidence

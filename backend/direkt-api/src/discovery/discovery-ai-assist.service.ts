@@ -141,8 +141,7 @@ export class DiscoveryAiAssistService {
       if (!category || suggestions.some((item) => item.categoryKey === categoryKey)) continue;
 
       const confidence = clampConfidence(candidate.confidence);
-      const reason =
-        normalizeText(candidate.reason, 220) || `Possible match for ${category.name}.`;
+      const reason = normalizeText(candidate.reason, 220) || `Possible match for ${category.name}.`;
       const searchTerms = Array.isArray(candidate.searchTerms)
         ? candidate.searchTerms
             .filter((term): term is string => typeof term === 'string')
@@ -191,11 +190,7 @@ export class DiscoveryAiAssistService {
   }
 }
 
-function buildPrompt(
-  need: string,
-  categories: ActiveCategory[],
-  promptVersion: string,
-): string {
+function buildPrompt(need: string, categories: ActiveCategory[], promptVersion: string): string {
   const allowlist = categories.map((category) => ({
     key: category.key,
     name: category.name,

@@ -11,7 +11,11 @@ type ProviderAiResult =
   | { kind: "guide"; value: ProviderOnboardingAssistResponse }
   | { kind: "draft"; value: ProviderProfileDraftResponse };
 
-export function ProviderAiAssistPanel({ csrfToken }: { csrfToken: string | null }) {
+export function ProviderAiAssistPanel({
+  csrfToken,
+}: {
+  csrfToken: string | null;
+}) {
   const [busy, setBusy] = useState<"guide" | "draft" | null>(null);
   const [result, setResult] = useState<ProviderAiResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -60,14 +64,18 @@ export function ProviderAiAssistPanel({ csrfToken }: { csrfToken: string | null 
   }
 
   return (
-    <article className="journey-card wide-card provider-ai-copilot" aria-label="Provider assistance">
+    <article
+      className="journey-card wide-card provider-ai-copilot"
+      aria-label="Provider assistance"
+    >
       <div className="section-heading-row">
         <div>
           <p className="eyebrow">Business assistant</p>
           <h2>Get help with your next step</h2>
           <p>
-            Assistance can explain your readiness checklist or draft public profile
-            wording. It cannot approve checks, publish services or change trust.
+            Assistance can explain your readiness checklist or draft public
+            profile wording. It cannot approve checks, publish services or
+            change trust.
           </p>
         </div>
       </div>
@@ -106,7 +114,9 @@ export function ProviderAiAssistPanel({ csrfToken }: { csrfToken: string | null 
       {result?.kind === "guide" ? (
         <div className="provider-ai-result" aria-live="polite">
           <span className="foundation-chip">
-            {result.value.source === "ai" ? "AI-assisted guidance" : "DIREKT checklist guidance"}
+            {result.value.source === "ai"
+              ? "AI-assisted guidance"
+              : "DIREKT checklist guidance"}
           </span>
           <h3>{result.value.headline}</h3>
           <ol>
@@ -115,7 +125,8 @@ export function ProviderAiAssistPanel({ csrfToken }: { csrfToken: string | null 
             ))}
           </ol>
           <p className="provider-ai-limit">
-            The backend checklist and human verification process remain authoritative.
+            The backend checklist and human verification process remain
+            authoritative.
           </p>
         </div>
       ) : null}
@@ -123,7 +134,9 @@ export function ProviderAiAssistPanel({ csrfToken }: { csrfToken: string | null 
       {result?.kind === "draft" ? (
         <div className="provider-ai-result" aria-live="polite">
           <span className="foundation-chip">
-            {result.value.source === "ai" ? "AI-assisted draft" : "DIREKT draft"}
+            {result.value.source === "ai"
+              ? "AI-assisted draft"
+              : "DIREKT draft"}
           </span>
           <h3>Review before using</h3>
           <textarea
@@ -134,8 +147,9 @@ export function ProviderAiAssistPanel({ csrfToken }: { csrfToken: string | null 
             aria-label="Suggested public profile wording"
           />
           <p className="provider-ai-limit">
-            This text is not saved or published automatically. Review and edit it,
-            then use the existing business profile form to save confirmed facts.
+            This text is not saved or published automatically. Review and edit
+            it, then use the existing business profile form to save confirmed
+            facts.
           </p>
         </div>
       ) : null}

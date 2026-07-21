@@ -45,8 +45,7 @@ export function DiscoveryAiAssistPanel({
         cache: "no-store",
       });
       const body = (await response.json()) as
-        | DiscoveryAiAssistResponse
-        | { message?: string };
+        DiscoveryAiAssistResponse | { message?: string };
       if (!response.ok) {
         throw new Error(
           "message" in body && body.message
@@ -73,13 +72,16 @@ export function DiscoveryAiAssistPanel({
   }
 
   return (
-    <section className="discovery-ai-assist" aria-label="Service selection help">
+    <section
+      className="discovery-ai-assist"
+      aria-label="Service selection help"
+    >
       <div className="discovery-ai-assist-intro">
         <div>
           <p className="eyebrow">Need help choosing a service?</p>
           <p>
-            DIREKT can turn your description into possible service categories. You
-            always confirm the choice before searching.
+            DIREKT can turn your description into possible service categories.
+            You always confirm the choice before searching.
           </p>
         </div>
         <button
@@ -124,8 +126,8 @@ export function DiscoveryAiAssistPanel({
               <h3>Possible service matches</h3>
             </div>
             <p>
-              Suggestions help classify your need. They do not endorse a provider
-              or create any trust status.
+              Suggestions help classify your need. They do not endorse a
+              provider or create any trust status.
             </p>
           </div>
 

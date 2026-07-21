@@ -2,15 +2,21 @@ import type { PublicSupportAssistResponse } from "@/lib/contracts/public-support
 import { getCloudRunIdentityToken } from "./cloud-run-identity";
 import { getDirektWebRuntimeConfig } from "./runtime-config";
 
-export async function requestPublicSupport(question: string): Promise<PublicSupportAssistResponse> {
+export async function requestPublicSupport(
+  question: string,
+): Promise<PublicSupportAssistResponse> {
   const config = getDirektWebRuntimeConfig();
   if (!config.apiBaseUrl || config.apiMode === "disabled") {
-    throw new Error("DIREKT support assistance is unavailable in this environment.");
+    throw new Error(
+      "DIREKT support assistance is unavailable in this environment.",
+    );
   }
 
   const url = new URL("/api/v1/public/support/assist", config.apiBaseUrl);
   if (url.origin !== config.apiBaseUrl.origin) {
-    throw new Error("DIREKT support request escaped the configured API origin.");
+    throw new Error(
+      "DIREKT support request escaped the configured API origin.",
+    );
   }
 
   const headers: Record<string, string> = {
@@ -19,7 +25,9 @@ export async function requestPublicSupport(question: string): Promise<PublicSupp
     "user-agent": "direkt-functional-web/0.7",
   };
   if (config.apiMode === "authenticated-bff") {
-    const infrastructureToken = await getCloudRunIdentityToken(config.apiBaseUrl);
+    const infrastructureToken = await getCloudRunIdentityToken(
+      config.apiBaseUrl,
+    );
     headers["X-Serverless-Authorization"] = `Bearer ${infrastructureToken}`;
   }
 

@@ -26,7 +26,10 @@ export async function requestDiscoveryAssist(input: {
 
   const url = new URL("/api/v1/public/discovery/assist", config.apiBaseUrl);
   if (url.origin !== config.apiBaseUrl.origin) {
-    throw new DiscoveryAiClientError("DIREKT API request escaped the configured origin.", 500);
+    throw new DiscoveryAiClientError(
+      "DIREKT API request escaped the configured origin.",
+      500,
+    );
   }
 
   const headers: Record<string, string> = {
@@ -36,7 +39,9 @@ export async function requestDiscoveryAssist(input: {
   };
 
   if (config.apiMode === "authenticated-bff") {
-    const infrastructureToken = await getCloudRunIdentityToken(config.apiBaseUrl);
+    const infrastructureToken = await getCloudRunIdentityToken(
+      config.apiBaseUrl,
+    );
     headers["X-Serverless-Authorization"] = `Bearer ${infrastructureToken}`;
   }
 
@@ -51,7 +56,10 @@ export async function requestDiscoveryAssist(input: {
       signal: AbortSignal.timeout(6_000),
     });
   } catch {
-    throw new DiscoveryAiClientError("AI discovery assistance is temporarily unavailable.", 503);
+    throw new DiscoveryAiClientError(
+      "AI discovery assistance is temporarily unavailable.",
+      503,
+    );
   }
 
   if (!response.ok) {

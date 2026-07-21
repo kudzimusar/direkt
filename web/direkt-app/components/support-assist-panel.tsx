@@ -7,7 +7,9 @@ import type { PublicSupportAssistResponse } from "@/lib/contracts/public-support
 export function SupportAssistPanel() {
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<PublicSupportAssistResponse | null>(null);
+  const [result, setResult] = useState<PublicSupportAssistResponse | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -20,11 +22,15 @@ export function SupportAssistPanel() {
     try {
       const response = await fetch("/api/support/assist", {
         method: "POST",
-        headers: { "content-type": "application/json", accept: "application/json" },
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+        },
         body: JSON.stringify({ question: normalized }),
         cache: "no-store",
       });
-      const body = (await response.json()) as PublicSupportAssistResponse | { message?: string };
+      const body = (await response.json()) as
+        PublicSupportAssistResponse | { message?: string };
       if (!response.ok) {
         throw new Error(
           "message" in body && body.message
@@ -34,14 +40,21 @@ export function SupportAssistPanel() {
       }
       setResult(body as PublicSupportAssistResponse);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Support assistance is temporarily unavailable.");
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Support assistance is temporarily unavailable.",
+      );
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <section className="surface-card wide-card support-assist" aria-labelledby="support-assist-title">
+    <section
+      className="surface-card wide-card support-assist"
+      aria-labelledby="support-assist-title"
+    >
       <div className="card-header">
         <div>
           <p className="eyebrow">Help</p>
@@ -52,8 +65,9 @@ export function SupportAssistPanel() {
         </span>
       </div>
       <p className="card-copy">
-        Ask about trust checks, location privacy, enquiries, provider onboarding or how AI assistance works.
-        Answers are grounded in approved public DIREKT help facts only.
+        Ask about trust checks, location privacy, enquiries, provider onboarding
+        or how AI assistance works. Answers are grounded in approved public
+        DIREKT help facts only.
       </p>
       <form className="support-assist-form" onSubmit={submit}>
         <label>
@@ -67,7 +81,11 @@ export function SupportAssistPanel() {
             placeholder="e.g. Does DIREKT show a provider's private location?"
           />
         </label>
-        <button className="secondary-action" type="submit" disabled={busy || question.trim().length < 3}>
+        <button
+          className="secondary-action"
+          type="submit"
+          disabled={busy || question.trim().length < 3}
+        >
           {busy ? "Checking approved help…" : "Get help"}
         </button>
       </form>
@@ -100,7 +118,8 @@ export function SupportAssistPanel() {
             </div>
           ) : null}
           <small>
-            Help answers cannot change provider trust, account permissions, payments or canonical backend state.
+            Help answers cannot change provider trust, account permissions,
+            payments or canonical backend state.
           </small>
         </div>
       ) : null}

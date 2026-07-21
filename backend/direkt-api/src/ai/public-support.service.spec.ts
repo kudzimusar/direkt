@@ -40,7 +40,9 @@ describe('PublicSupportService', () => {
     });
     const service = createService(assist);
 
-    const result = await service.assist('Does DIREKT expose a provider private location on the map?');
+    const result = await service.assist(
+      'Does DIREKT expose a provider private location on the map?',
+    );
 
     expect(result.source).toBe('ai');
     expect(result.sources.map((source) => source.id)).toContain('location.privacy');

@@ -18,18 +18,28 @@ export class DirektProviderAiApi {
     this.baseUrl = config.apiBaseUrl;
   }
 
-  onboardingGuide(accessToken: string): Promise<ProviderOnboardingAssistResponse> {
-    return this.request("/api/v1/provider-workspace/me/ai-onboarding-guide", accessToken);
+  onboardingGuide(
+    accessToken: string,
+  ): Promise<ProviderOnboardingAssistResponse> {
+    return this.request(
+      "/api/v1/provider-workspace/me/ai-onboarding-guide",
+      accessToken,
+    );
   }
 
   profileDraft(accessToken: string): Promise<ProviderProfileDraftResponse> {
-    return this.request("/api/v1/provider-workspace/me/ai-profile-draft", accessToken);
+    return this.request(
+      "/api/v1/provider-workspace/me/ai-profile-draft",
+      accessToken,
+    );
   }
 
   private async request<T>(path: string, accessToken: string): Promise<T> {
     const url = new URL(path, this.baseUrl);
     if (url.origin !== this.baseUrl.origin) {
-      throw new Error("DIREKT provider AI request escaped the configured API origin");
+      throw new Error(
+        "DIREKT provider AI request escaped the configured API origin",
+      );
     }
 
     const infrastructureToken = await getCloudRunIdentityToken(this.baseUrl);
@@ -47,7 +57,9 @@ export class DirektProviderAiApi {
     });
 
     if (!response.ok) {
-      throw new Error(`DIREKT provider assistance failed with status ${response.status}`);
+      throw new Error(
+        `DIREKT provider assistance failed with status ${response.status}`,
+      );
     }
     return (await response.json()) as T;
   }

@@ -13,7 +13,10 @@ export async function POST(request: NextRequest) {
     const action = typeof body.action === "string" ? body.action : "";
     if (!actions.has(action)) {
       return noStoreJson(
-        { error: "invalid_request", message: "Unsupported provider assistance action." },
+        {
+          error: "invalid_request",
+          message: "Unsupported provider assistance action.",
+        },
         400,
       );
     }

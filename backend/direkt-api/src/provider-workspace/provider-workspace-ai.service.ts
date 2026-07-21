@@ -26,7 +26,9 @@ interface GuidePayload {
 export class ProviderWorkspaceAiService {
   constructor(private readonly aiService: AiService) {}
 
-  async onboardingGuide(workspace: ProviderWorkspaceSummary): Promise<ProviderOnboardingAssistResponse> {
+  async onboardingGuide(
+    workspace: ProviderWorkspaceSummary,
+  ): Promise<ProviderOnboardingAssistResponse> {
     const definition = getAiUseCaseDefinition('provider.onboarding.guide');
     const deterministic = deterministicGuide(workspace);
 
@@ -97,7 +99,10 @@ export class ProviderWorkspaceAiService {
   }
 }
 
-function canUseSyntheticProviderAi(workspace: ProviderWorkspaceSummary, killSwitchEnv: string): boolean {
+function canUseSyntheticProviderAi(
+  workspace: ProviderWorkspaceSummary,
+  killSwitchEnv: string,
+): boolean {
   return (
     workspace.synthetic === true &&
     process.env.DIREKT_DATA_MODE === 'synthetic-only' &&
@@ -105,7 +110,10 @@ function canUseSyntheticProviderAi(workspace: ProviderWorkspaceSummary, killSwit
   );
 }
 
-function deterministicGuide(workspace: ProviderWorkspaceSummary): { headline: string; nextSteps: string[] } {
+function deterministicGuide(workspace: ProviderWorkspaceSummary): {
+  headline: string;
+  nextSteps: string[];
+} {
   const tasks = [...workspace.tasks]
     .filter((task) => task.state !== 'complete')
     .sort((left, right) => left.priority - right.priority)
@@ -120,7 +128,9 @@ function deterministicGuide(workspace: ProviderWorkspaceSummary): { headline: st
     nextSteps:
       tasks.length > 0
         ? tasks
-        : ['Review your profile, services, availability and current check requirements for any changes.'],
+        : [
+            'Review your profile, services, availability and current check requirements for any changes.',
+          ],
   };
 }
 
@@ -181,7 +191,11 @@ function buildProfilePrompt(workspace: ProviderWorkspaceSummary, promptVersion: 
 }
 
 function parseJson(value: string): Record<string, unknown> {
-  const cleaned = value.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  const cleaned = value
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/, '')
+    .trim();
   const parsed: unknown = JSON.parse(cleaned);
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
     throw new Error('Provider AI guidance must be a JSON object.');

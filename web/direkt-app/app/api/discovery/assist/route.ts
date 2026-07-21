@@ -9,8 +9,14 @@ export async function POST(request: NextRequest) {
   try {
     assertSameOrigin(request);
     const body = (await request.json()) as { need?: unknown; area?: unknown };
-    const need = typeof body.need === "string" ? body.need.replace(/\s+/g, " ").trim() : "";
-    const area = typeof body.area === "string" ? body.area.replace(/\s+/g, " ").trim() : "";
+    const need =
+      typeof body.need === "string"
+        ? body.need.replace(/\s+/g, " ").trim()
+        : "";
+    const area =
+      typeof body.area === "string"
+        ? body.area.replace(/\s+/g, " ").trim()
+        : "";
 
     if (need.length < 3 || need.length > 240 || area.length > 160) {
       return noStoreJson(
@@ -29,7 +35,10 @@ export async function POST(request: NextRequest) {
       return noStoreJson({ message: cause.message }, cause.status);
     }
     return noStoreJson(
-      { message: "AI discovery assistance is unavailable. Continue with normal search." },
+      {
+        message:
+          "AI discovery assistance is unavailable. Continue with normal search.",
+      },
       503,
     );
   }
