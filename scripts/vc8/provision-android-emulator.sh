@@ -17,15 +17,14 @@ sdkmanager="$(find "${sdk_root}/cmdline-tools" -type f -name sdkmanager 2>/dev/n
 avdmanager="$(find "${sdk_root}/cmdline-tools" -type f -name avdmanager 2>/dev/null | sort | tail -n 1 || true)"
 [[ -n "${sdkmanager}" ]] || sdkmanager="$(command -v sdkmanager || true)"
 [[ -n "${avdmanager}" ]] || avdmanager="$(command -v avdmanager || true)"
-emulator="${sdk_root}/emulator/emulator"
 
-printf 'SDK root: %s\nSDK manager: %s\nAVD manager: %s\nEmulator: %s\n' \
-  "${sdk_root}" "${sdkmanager:-<missing>}" "${avdmanager:-<missing>}" "${emulator}"
+printf 'SDK root: %s\nSDK manager: %s\nAVD manager: %s\n' \
+  "${sdk_root}" "${sdkmanager:-<missing>}" "${avdmanager:-<missing>}"
 
-for tool in "${sdkmanager}" "${avdmanager}" "${emulator}"; do
+for tool in "${sdkmanager}" "${avdmanager}"; do
   if [[ -z "${tool}" || ! -x "${tool}" ]]; then
-    echo "Required Android emulator tool unavailable: ${tool:-<empty>}" >&2
-    find "${sdk_root}" -maxdepth 5 -type f \( -name sdkmanager -o -name avdmanager -o -name emulator \) -print || true
+    echo "Required Android SDK command-line tool unavailable: ${tool:-<empty>}" >&2
+    find "${sdk_root}" -maxdepth 5 -type f \( -name sdkmanager -o -name avdmanager \) -print || true
     exit 1
   fi
 done
@@ -35,6 +34,22 @@ printf 'y\n' | "${sdkmanager}" --licenses >/dev/null || true
   "platform-tools" \
   "emulator" \
   "system-images;android-35;google_apis;x86_64"
+
+emulator="${sdk_root}/emulator/emulator"
+if [[ ! -x "${emulator}" ]]; then
+  echo "Android emulator binary unavailable after sdkmanager installation: ${emulator}" >&2
+  find "${sdk_root}" -maxdepth 4 -type f -name emulator -print || true
+  exit 1
+fi
+printf 'Emulator: %s\n' "${emulator}"
+
+if ! command -v adb >/dev/null 2>&1; then
+  export PATH="${sdk_root}/platform-tools:${PATH}"
+fi
+command -v adb >/dev/null 2>&1 || {
+  echo "adb is unavailable after platform-tools installation." >&2
+  exit 1
+}
 
 echo no | "${avdmanager}" create avd \
   --force \
