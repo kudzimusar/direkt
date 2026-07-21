@@ -6,14 +6,14 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED — runtime integration closure after W8 |
+| Status | CLAIMED — RC1 Resend runtime email closure |
 | Owner/agent | Active repository agent — Issue #261 runtime integration closure workstream |
-| Authorized scope | Dependency-audit, source/runtime closure and managed evidence for integrations tracked by Issue #261 plus owner-authorized AI provider foundation in Issue #264; one bounded integration checkpoint at a time |
+| Authorized scope | Resend application delivery through the transactional outbox: provider adapter, least-privilege Secret Manager/runtime binding, idempotency/retry/failure persistence, bounded templates/privacy controls, managed synthetic canary and exact-head regressions |
 | Protected surface | Android, backend/database/OpenAPI, web/PWA, operations portal, CI, trust/privacy, payments and release boundaries remain regression-protected; VC0 design/audit work under Issue #259 may continue only on non-overlapping design-control surfaces |
-| Implementation branch | `integration/ai-provider-foundation` from clean RC0 merge `ece3626f6878d32f2b1d0a46058f2064ff1d669b`; do not build new integration work on the diverged historical `build/android-v1` branch |
-| Stable baseline | RC0 merged to `main` at `ece3626f6878d32f2b1d0a46058f2064ff1d669b`; canonical app `https://app.direkt.forum`; W8 verification run `29802524466` |
-| Current task | AI0 — provider-neutral AI foundation: Gemini primary development/synthetic path, open-model fallbacks, least-privilege secret/runtime design, authority/privacy negatives and managed canaries |
-| Governing issues | Issue #261 — Runtime integration closure after W8; Issue #264 — AI provider foundation |
+| Implementation branch | `integration/rc1-resend-runtime` from AI0 merge `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; do not build new integration work on the diverged historical `build/android-v1` branch |
+| Stable baseline | AI0 merged to `main` at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; canonical app `https://app.direkt.forum`; W8 verification run `29802524466` |
+| Current task | RC1 — wire verified `notify.direkt.forum` / `direkt-resend-api-key` v1 into a fail-closed server-side email provider and transactional-outbox delivery path, then prove managed synthetic delivery |
+| Governing issue | Issue #261 — Runtime integration closure after W8 |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates |
 
@@ -37,8 +37,8 @@ This file prevents overlapping writes in the single-lane build process.
 ## Dependency-safe implementation sequence
 
 - RC0 — integration ledger, dependency/source audit, permanent-gate ownership sanity check and payment evidence reconciliation. **Closed — PR #263 merged at `ece3626f6878d32f2b1d0a46058f2064ff1d669b`.**
-- AI0 — provider-neutral AI foundation: Gemini primary for bounded development/synthetic use, production direction via Google Cloud IAM/Vertex AI, hosted open-model fallback candidate(s), local no-key fallback, privacy/authority controls and managed canaries.
-- RC1 — Resend runtime email adapter through the transactional outbox, idempotency/retry/privacy/templates and managed canary.
+- AI0 — provider-neutral AI foundation. **Closed — PR #265 merged at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; Gemini/Groq remain gated rather than active runtime integrations.**
+- RC1 — Resend runtime email adapter through the transactional outbox, idempotency/retry/privacy/templates and managed canary. **ACTIVE CHECKPOINT.**
 - RC2 — Sentry for approved NestJS/Next.js surfaces with strict PII scrubbing, release/source-map controls and kill switch; Cloud Logging remains authoritative infrastructure telemetry.
 - RC3 — Firebase Crashlytics Android activation with privacy/release mapping and synthetic crash/ANR evidence.
 - RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary.
