@@ -5,10 +5,12 @@ export interface PortalSentryRuntimeConfig {
   release?: string;
 }
 
+type PortalRuntimeEnvironment = Readonly<Record<string, string | undefined>>;
+
 const EXACT_COMMIT_SHA = /^[0-9a-f]{40}$/;
 
 export function resolvePortalSentryRuntimeConfig(
-  environment: NodeJS.ProcessEnv = process.env,
+  environment: PortalRuntimeEnvironment = process.env,
 ): PortalSentryRuntimeConfig {
   const mode = environment.SENTRY_MODE ?? 'disabled';
   const deploymentEnvironment = environment.DIREKT_ENVIRONMENT ?? 'local';
