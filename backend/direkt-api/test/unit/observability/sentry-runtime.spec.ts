@@ -93,9 +93,7 @@ describe('RC2 Sentry privacy boundary', () => {
 
     expect(sanitized).toBeInstanceOf(Error);
     expect(sanitized.name).toBe('TypeError');
-    expect(sanitized.message).toBe(
-      'Contact [redacted-email] at [redacted-coordinates]',
-    );
+    expect(sanitized.message).toBe('Contact [redacted-email] at [redacted-coordinates]');
     expect(sanitizeTelemetryError({ unsafe: 'value' }).message).toBe(
       'Non-Error exception captured.',
     );
