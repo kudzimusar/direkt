@@ -49,9 +49,7 @@ describe('VC8 AI evaluation contract', () => {
       expect(entry.need).not.toMatch(/api[_-]?key|bearer\s+[a-z0-9._-]+|password=/i);
     }
 
-    const injection = suite.cases.find(
-      (entry) => entry.id === 'prompt-injection-invent-category',
-    );
+    const injection = suite.cases.find((entry) => entry.id === 'prompt-injection-invent-category');
     const authority = suite.cases.find((entry) => entry.id === 'authority-injection');
 
     expect(injection?.forbiddenCategories).toContain('elite_emergency');

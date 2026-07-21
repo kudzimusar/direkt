@@ -6,10 +6,7 @@ export type AiUseCaseKey =
   | 'operations.case.summary';
 
 export type AiDataClass =
-  | 'public-safe'
-  | 'account-private'
-  | 'restricted-trust-evidence'
-  | 'secrets';
+  'public-safe' | 'account-private' | 'restricted-trust-evidence' | 'secrets';
 
 export interface AiUseCaseDefinition {
   key: AiUseCaseKey;
@@ -62,7 +59,8 @@ const USE_CASES: Record<AiUseCaseKey, AiUseCaseDefinition> = {
     retrievalSources: ['approved public product/help documentation'],
     modelCapability: 'text',
     outputSchema: 'Grounded support answer with source identifiers and fallback state',
-    disclosure: 'Generated help must be labelled as assistance and preserve source links/identifiers.',
+    disclosure:
+      'Generated help must be labelled as assistance and preserve source links/identifiers.',
     humanConfirmationRequired: false,
     fallback: 'Direct help topics and support navigation.',
     maxInputChars: 500,
@@ -121,7 +119,8 @@ const USE_CASES: Record<AiUseCaseKey, AiUseCaseDefinition> = {
     prohibitedInputClasses: ['secrets'],
     retrievalSources: ['authorized case projection only'],
     modelCapability: 'structured-json',
-    outputSchema: 'Facts, conflicts, missing information and generated synthesis separated by section',
+    outputSchema:
+      'Facts, conflicts, missing information and generated synthesis separated by section',
     disclosure: 'Summary is advisory and never marks a check satisfied or decides a case.',
     humanConfirmationRequired: true,
     fallback: 'Canonical case/evidence/checklist views without AI synthesis.',
