@@ -32,8 +32,8 @@ import com.kudzimusar.direkt.ui.discovery.CustomerOnboardingExperience
 import com.kudzimusar.direkt.ui.discovery.SavedProvidersExperience
 import com.kudzimusar.direkt.ui.interaction.CustomerInteractionExperience
 import com.kudzimusar.direkt.ui.interaction.ProviderInteractionExperience
-import com.kudzimusar.direkt.ui.provider.ProviderWorkspaceExperience
 import com.kudzimusar.direkt.ui.provider.ProviderWorkspaceSection
+import com.kudzimusar.direkt.ui.provider.WorldClassProviderWorkspaceExperience
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -122,14 +122,14 @@ fun DirektApp(
             } else {
                 when (appState.destination) {
                     DirektDestination.Discover -> item {
-                        ProviderWorkspaceExperience(ProviderWorkspaceSection.Dashboard)
+                        WorldClassProviderWorkspaceExperience(ProviderWorkspaceSection.Dashboard)
                     }
                     DirektDestination.Saved -> item {
-                        ProviderWorkspaceExperience(ProviderWorkspaceSection.Evidence)
+                        WorldClassProviderWorkspaceExperience(ProviderWorkspaceSection.Evidence)
                     }
                     DirektDestination.Enquiries -> item { ProviderInteractionExperience() }
                     DirektDestination.Account -> item {
-                        ProviderWorkspaceExperience(ProviderWorkspaceSection.Profile)
+                        WorldClassProviderWorkspaceExperience(ProviderWorkspaceSection.Profile)
                     }
                 }
                 if (appState.destination == DirektDestination.Account) {
