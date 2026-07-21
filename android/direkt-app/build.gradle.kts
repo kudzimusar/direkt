@@ -9,6 +9,8 @@ import org.gradle.api.tasks.TaskAction
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.compose) apply false
+    alias(libs.plugins.google.services) apply false
+    alias(libs.plugins.firebase.crashlytics) apply false
 }
 
 fun parseTrackedProperties(text: String, source: String): Map<String, String> {
