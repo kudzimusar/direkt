@@ -112,22 +112,26 @@ jobs:
           set -euo pipefail
           token="$(gcloud auth print-access-token)"
           echo "::add-mask::${token}"
-          encoded_app_id="$(jq -rn --arg value "${DIREKT_FIREBASE_APP_ID}" '$value|@uri')"
-          events_url="https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_ID}/apps/${encoded_app_id}/events"
+          events_url="https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_ID}/apps/${DIREKT_FIREBASE_APP_ID}/events"
           http_code="$(curl --silent --show-error --get \
             --output "${RUNNER_TEMP}/rc3-events-api-preflight.json" \
             --write-out '%{http_code}' \
             --header "Authorization: Bearer ${token}" \
             --data-urlencode 'pageSize=1' \
-            --data-urlencode 'readMask=name,eventId,receivedTime' \
             "${events_url}")"
 
           if [[ "${http_code}" != "200" ]]; then
+            error_message="$(jq -r '.error.message // empty' "${RUNNER_TEMP}/rc3-events-api-preflight.json" 2>/dev/null || true)"
+            error_message="${error_message//${GCP_PROJECT_ID}/[project-id]}"
+            error_message="${error_message//${GCP_PROJECT_NUMBER}/[project-number]}"
+            error_message="${error_message//${DIREKT_FIREBASE_APP_ID}/[firebase-app-id]}"
+            error_message="$(printf '%s' "${error_message}" | cut -c1-500)"
             jq -n \
               --arg http "${http_code}" \
               --arg code "$(jq -r '.error.code // empty' "${RUNNER_TEMP}/rc3-events-api-preflight.json" 2>/dev/null || true)" \
               --arg status "$(jq -r '.error.status // empty' "${RUNNER_TEMP}/rc3-events-api-preflight.json" 2>/dev/null || true)" \
-              '{httpStatus:$http,errorCode:($code|select(length>0)),errorStatus:($status|select(length>0))}' \
+              --arg message "${error_message}" \
+              '{httpStatus:$http,errorCode:($code|select(length>0)),errorStatus:($status|select(length>0)),errorMessage:($message|select(length>0))}' \
               > "${RUNNER_TEMP}/rc3-events-api-preflight-receipt.json"
             cat "${RUNNER_TEMP}/rc3-events-api-preflight-receipt.json" >&2
             exit 1
@@ -204,8 +208,7 @@ jobs:
           set -euo pipefail
           component="${FIREBASE_PACKAGE_NAME}/com.kudzimusar.direkt.MainActivity"
           canary_start_time="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          encoded_app_id="$(jq -rn --arg value "${DIREKT_FIREBASE_APP_ID}" '$value|@uri')"
-          events_url="https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_ID}/apps/${encoded_app_id}/events"
+          events_url="https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_ID}/apps/${DIREKT_FIREBASE_APP_ID}/events"
 
           "${ADB_BIN}" shell setprop log.tag.FirebaseCrashlytics DEBUG
           "${ADB_BIN}" logcat -c
@@ -242,7 +245,6 @@ jobs:
             curl --fail --silent --show-error --get \
               --header "Authorization: Bearer ${token}" \
               --data-urlencode "pageSize=100" \
-              --data-urlencode "readMask=name,eventId,eventTime,receivedTime,customKeys,issueTitle,issueSubtitle,crashlyticsSdkVersion" \
               "${events_url}" > "${RUNNER_TEMP}/rc3-crash-events.json"
             jq -c \
               --arg sha "${SOURCE_SHA}" \
@@ -268,8 +270,7 @@ jobs:
           set -euo pipefail
           component="${FIREBASE_PACKAGE_NAME}/com.kudzimusar.direkt.MainActivity"
           canary_start_time="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          encoded_app_id="$(jq -rn --arg value "${DIREKT_FIREBASE_APP_ID}" '$value|@uri')"
-          events_url="https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_ID}/apps/${encoded_app_id}/events"
+          events_url="https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_ID}/apps/${DIREKT_FIREBASE_APP_ID}/events"
 
           "${ADB_BIN}" logcat -c
           "${ADB_BIN}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
@@ -308,7 +309,6 @@ jobs:
             curl --fail --silent --show-error --get \
               --header "Authorization: Bearer ${token}" \
               --data-urlencode "pageSize=100" \
-              --data-urlencode "readMask=name,eventId,eventTime,receivedTime,customKeys,issueTitle,issueSubtitle,crashlyticsSdkVersion" \
               "${events_url}" > "${RUNNER_TEMP}/rc3-anr-events.json"
             jq -c \
               --arg sha "${SOURCE_SHA}" \
