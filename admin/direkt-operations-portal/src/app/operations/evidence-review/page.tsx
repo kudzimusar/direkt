@@ -1,5 +1,10 @@
 import type { Metadata } from 'next';
-import { PermissionAction, StatusPill, WorkspaceIntro } from '@/components/operations-workspace';
+import {
+  PermissionAction,
+  StatusPill,
+  WorkflowStateCard,
+  WorkspaceIntro,
+} from '@/components/operations-workspace';
 import { syntheticSupervisorSession } from '@/lib/session';
 
 export const metadata: Metadata = { title: 'Evidence review' };
@@ -247,11 +252,32 @@ export default function EvidenceReviewPage() {
             </div>
             <p className="api-boundary-note">
               Decision controls are deliberately disabled in synthetic review. In an authorized
-              environment, actions must pass the normal permission, reason-code, lifecycle and audit
-              controls.
+              environment, every action must pass the normal permission, reason-code, lifecycle and
+              audit controls through the DIREKT API.
             </p>
           </div>
         </aside>
+      </div>
+
+      <div className="workflow-state-grid" aria-label="Evidence review safeguards">
+        <WorkflowStateCard
+          state="revoked_assignment"
+          title="Assignment revoked"
+          description="Private evidence access stops immediately and the case becomes non-actionable."
+          tone="danger"
+        />
+        <WorkflowStateCard
+          state="expired_grant"
+          title="Access grant expired"
+          description="Expired private access cannot be redeemed or silently refreshed."
+          tone="warning"
+        />
+        <WorkflowStateCard
+          state="conflicting_action"
+          title="Evidence version changed"
+          description="A replacement version invalidates stale review context before any decision."
+          tone="warning"
+        />
       </div>
     </section>
   );
