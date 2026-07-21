@@ -1,107 +1,119 @@
 # DIREKT Visual Completion Implementation Status
 
 **Programme:** VC1–VC8 world-class product modernization  
-**Governing issue:** #259  
-**Implementation branch:** `vc/ai-quality-7-8`  
-**Promotion PR:** #270  
+**Governing issue:** #259 — CLOSED/COMPLETED  
+**Promotion PR:** #270 — MERGED  
+**Merge commit:** `c7f5985bc20372b4761e063dc3a66ecc736556e2`  
+**Exact reviewed closure head:** `cc7cdb5760c01498f27ca1daba738e02296320cb`  
 **Owner direction:** approved execution hybrid — Structured Trust for proof/information architecture, Neighbourhood Marketplace for customer warmth/imagery, and Field Utility for provider/operations density.  
-**Status:** implementation and candidate evidence complete; final closure-head regression/promotion pending.
+**Status:** VC1–VC8 COMPLETE.
 
-## Current implementation checkpoint
+## Completion statement
 
-VC1–VC8 has reached its repository completion candidate without replacing or weakening canonical backend, trust, privacy, authorization, commercial, integration or release authority.
+VC1–VC8 is implemented, regression-verified, visually evidenced, documented and merged without replacing or weakening canonical backend, trust, privacy, authorization, commercial, integration or release authority.
 
-Completed implementation:
+Completed scope:
 
 - **VC1 — design-system reconciliation:** shared visual hierarchy, semantic iconography, responsive/adaptive tokens, accessibility rules, imagery policy and cross-surface Design DNA;
-- **VC2 — benchmark direction:** the owner-authorized hybrid direction is the implementation authority for representative customer, provider and operations composition;
-- **VC3 — component foundation:** navigation, marketplace/search, provider/trust, provider workspace, operations mission-control and AI-assistance component patterns are implemented within existing Android, PWA and operations applications;
-- **VC4 — customer experience:** service/problem discovery, area-first search, provider cards/profile/trust explanation, responsive marketplace composition, manual fallback and truthful gated-map behavior are materially modernized across applicable Android/PWA surfaces;
-- **VC5 — provider workspace:** professional provider overview/profile/evidence presentation is implemented while preserving the existing backend-authoritative provider scope and private evidence upload/recovery engine;
-- **VC6 — operations mission control:** desktop queue → case/evidence → checklist/decision composition is implemented, with restricted-data AI explicitly inactive and consequential decisions remaining human/server-authoritative;
-- **VC7 — bounded AI intelligence:** source-controlled governance plus customer discovery intent assistance, grounded public Help, provider onboarding/readiness guidance and provider profile drafting are implemented with deterministic/manual fallback, structured validation, evaluations and fail-closed per-use-case switches;
-- **VC8 — world-class quality closure:** permanent accessibility/AI-safety/privacy/fallback verification and reproducible synthetic visual evidence are integrated into the normal PWA and Android CI lanes.
+- **VC2 — benchmark direction:** owner-authorized hybrid direction established for representative customer, provider and operations composition;
+- **VC3 — component foundation:** navigation, marketplace/search, provider/trust, provider workspace, operations mission-control and AI-assistance patterns implemented within the existing apps;
+- **VC4 — customer experience:** service/problem discovery, area-first search, provider cards/profile/trust explanation, responsive marketplace composition, manual fallback and truthful gated-map behavior modernized across applicable Android/PWA surfaces;
+- **VC5 — provider workspace:** professional provider overview/profile/evidence presentation implemented while preserving backend-authoritative scope and private evidence upload/recovery;
+- **VC6 — operations mission control:** desktop queue → case/evidence → checklist/decision composition implemented, with restricted-data AI inactive and consequential decisions human/server-authoritative;
+- **VC7 — bounded AI intelligence:** customer discovery intent assistance, grounded public Help, provider onboarding/readiness guidance and provider profile drafting implemented with source-controlled governance, evaluations, deterministic/manual fallback and fail-closed switches;
+- **VC8 — world-class quality closure:** permanent accessibility/AI-safety/privacy/fallback verification and reproducible synthetic visual evidence integrated into normal PWA and Android CI.
 
 ## VC7 AI governance truth
 
-The merged provider-neutral AI foundation remains backend-owned. Implemented VC7 use cases:
+Implemented use cases:
 
-1. `customer.discovery.intent` — optional natural-language service/category assistance with live taxonomy validation and explicit user confirmation;
-2. public Help assistance — grounded only in approved DIREKT public help facts with returned source identifiers;
-3. provider onboarding/readiness guidance — provider-safe/synthetic context only;
-4. provider public-profile drafting — editable draft only; no automatic save/publication/trust mutation.
+1. optional natural-language customer discovery/category assistance with canonical taxonomy validation and explicit confirmation;
+2. grounded public Help constrained to approved DIREKT facts with source identifiers;
+3. provider onboarding/readiness guidance using provider-safe/synthetic context;
+4. provider public-profile drafting as an editable provider-confirmed draft only.
 
-Every implemented use case has source-controlled purpose/data classification, prompt version, input bounds, evaluation fixtures, authorization boundaries, deterministic/manual fallback and a fail-closed kill switch.
-
-Restricted evidence OCR/extraction, restricted operations case summarization and other restricted-data model use remain disabled until the separate privacy/security/data-processing/provider approvals and dedicated evaluation/runtime evidence required by the AI architecture exist.
+Controls include source-controlled purpose/data classification, prompt versions, input bounds, evaluations, authorization boundaries, deterministic/manual fallback and fail-closed kill switches.
 
 AI cannot approve/reject provider verification, create or strengthen trust/publication/ranking, authorize payments, decide serious disputes/appeals, widen permissions or act as legal/regulatory authority.
 
-## Candidate regression and visual evidence
+Restricted evidence OCR/extraction, restricted operations case summarization and other restricted-data model use remain disabled until the separate privacy/security/data-processing/provider approvals and dedicated evaluation/runtime evidence required by the AI architecture exist.
 
-Candidate source:
+## Final regression evidence
 
-`2bb734660b520940311c4d2b9c088d8f15224755`
+Exact closure head:
 
-All permanent candidate gates passed on that exact source, including:
+`cc7cdb5760c01498f27ca1daba738e02296320cb`
 
-- Android CI — run `29829437845`;
-- Android performance — run `29829437808`;
-- Backend CI — run `29829437850`;
-- Backend Container CI — run `29829437905`;
-- functional customer/provider PWA — run `29829438711`;
-- customer/provider PWA — run `29829437878`;
-- W4 customer contract — run `29829437857`;
-- W7 cross-client regression — run `29829437876`;
-- W8 canonical-domain contract — run `29829437825`;
-- integration runtime audit — run `29829437807`;
-- controlled staging — run `29829437874`;
-- recovery/reliability — run `29829437821`;
-- supply-chain security — run `29829437932`;
-- Phase 11 synthetic controlled pilot — run `29829437836`;
-- Play readiness — run `29829437865`;
-- Phase 12A preauthorization — run `29829437911`;
-- final preauthorization readiness — run `29829437851`;
-- documentation quality — run `29829437814`.
+Required permanent workflows passed:
 
-No coverage threshold, authorization rule, privacy boundary or release gate was weakened to obtain the green matrix.
+- Backend CI — `29830637203`;
+- Backend Container CI — `29830637313`;
+- Android CI — `29830637218`;
+- Android performance — `29830637188`;
+- functional customer/provider PWA — `29830637290`;
+- customer/provider PWA — `29830637223`;
+- W4 customer contract — `29830637271`;
+- W7 cross-client regression — `29830637153`;
+- W8 canonical-domain contract — `29830637176`;
+- integration runtime audit — `29830637144`;
+- controlled staging — `29830637233`;
+- recovery/reliability — `29830637238`;
+- supply-chain security — `29830637327`;
+- Phase 11 synthetic controlled pilot — `29830637163`;
+- Play readiness — `29830637258`;
+- Phase 12A preauthorization/reproducibility — `29830637246`;
+- final preauthorization readiness — `29830637244`;
+- documentation quality — `29830637220`.
 
-### Web and operations visual evidence
+No coverage threshold, authorization rule, IAM/BFF boundary, privacy rule, trust rule or release condition was weakened to obtain the green matrix.
 
-Permanent functional-PWA evidence artifact:
+## Final visual evidence
 
-- run: `29829438711`;
-- artifact: `direkt-vc8-web-visual-evidence-2bb734660b520940311c4d2b9c088d8f15224755`;
-- artifact ID: `8494672572`;
-- digest: `sha256:212607749a2c3525e15cb46083f06c221ca0b485b0987f5ae338d5d2bf8de3b0`.
+### Web and operations
 
-Representative synthetic/public-safe captures cover responsive customer discovery, deterministic AI fallback, provider public profile/check-specific trust, grounded Help, operations mission control and evidence review.
+- run: `29830637290`;
+- artifact ID: `8495136163`;
+- digest: `sha256:87e995d951efdb5d1282bbd7ad32bd08b4826a858a9c32570b0ed99f3541dd6d`.
 
-### Native Android visual evidence
+Visually inspected representative states:
 
-Permanent Android evidence artifact:
+- responsive customer discovery;
+- deterministic AI fallback;
+- grounded Help;
+- provider public check-specific trust;
+- operations mission control;
+- operations evidence review with restricted AI inactive.
 
-- run: `29829437845`;
-- artifact: `direkt-vc8-android-visual-evidence-2bb734660b520940311c4d2b9c088d8f15224755`;
-- artifact ID: `8494745779`;
-- digest: `sha256:ce86f3affd2c8b3b797e8a22de1dda2fd080d32f3a46b20d365500ae08a1a0bb`.
+### Native Android
 
-The three native captures were visually inspected and confirmed as:
+- run: `29830637218`;
+- artifact ID: `8495234528`;
+- digest: `sha256:ec089058f023ae279325e7e89df63d33b61308ca664dad7cb64e547b6b5fe326`.
 
-- Customer Discover — Customer mode, local-service discovery and customer navigation;
-- Provider Overview — Provider mode, professional service-business overview and provider navigation;
-- Provider Evidence — check/evidence workflow with proof-first language and no private evidence exposure.
+Visually inspected:
 
-The evidence is synthetic-only. No private evidence, exact private coordinates, raw contacts, credentials, blanket `Verified` claim or developer/test-harness presentation is present.
+- Customer Discover;
+- Provider Overview;
+- Provider Evidence/recovery with proof-first trust language.
+
+All evidence is synthetic/public-safe as applicable. No private evidence, exact private coordinates, raw contacts, credentials, developer/test-harness presentation or blanket `Verified` claim is exposed.
 
 ## Permanent regression ownership
 
-Visual evidence is now owned by the normal permanent product gates:
+Visual evidence is no longer a one-off VC helper:
 
-- `.github/workflows/functional-pwa-ci.yml` — responsive customer/provider/public Help/operations evidence;
-- `.github/workflows/android-ci.yml` — native Android build, emulator provisioning and customer/provider/evidence captures.
+- `.github/workflows/functional-pwa-ci.yml` owns responsive customer/provider/public Help/operations evidence;
+- `.github/workflows/android-ci.yml` owns native Android build/emulator/customer/provider/evidence captures.
 
-The former standalone VC8 screenshot workflow is redundant and is removed during the final closure state-control commit so it cannot remain as a stale duplicate red lane.
+The redundant standalone VC8 screenshot workflow was removed before final promotion.
+
+## Closure and handoff
+
+- PR #270 merged at `c7f5985bc20372b4761e063dc3a66ecc736556e2`;
+- Issue #259 closed as completed;
+- VC workstream lock released;
+- no active repository write lane remains;
+- RC2 Sentry under Issue #261 is the next planned bounded integration checkpoint and must claim a fresh lane from current merged `main` before source changes.
 
 ## Boundaries still in force
 
@@ -111,21 +123,10 @@ VC1–VC8 completion does **not** authorize:
 - production authentication/data cutover;
 - restricted evidence processing by an unapproved AI provider;
 - production AI authority;
-- continuous/real-participant external communications beyond separately approved integration gates;
+- uncontrolled real-participant/production external communications;
 - real money movement or escrow/customer-to-provider payments;
 - production release.
 
-The integration status register remains authoritative for whether a provider is `ACTIVE`, `IMPLEMENTED_GATED`, `SANDBOX_PROVEN`, externally provisioned or disabled. Backend/integration readiness must not be conflated with production authorization.
+The integration status register remains authoritative for whether any provider is `ACTIVE`, `IMPLEMENTED_GATED`, `SANDBOX_PROVEN`, externally provisioned or disabled. Backend/integration readiness must not be conflated with production authorization.
 
-## Final closure sequence
-
-The remaining work is state-control only:
-
-1. remove the redundant standalone VC8 visual-evidence workflow;
-2. reconcile `PROJECT_STATUS.md`, `VISUAL_COMPLETION_PLAN.md` and `WORKSTREAM_LOCK.md`;
-3. rerun the complete exact-head matrix on the closure SHA;
-4. record final closure-head visual artifacts and CI receipts in PR #270;
-5. merge PR #270 only if the final head is synchronized with `main`, review threads remain clear and every required permanent gate is green;
-6. close Issue #259 and hand the repository lane back to the next separately claimed runtime-integration checkpoint.
-
-This document records product/visual/AI programme completion evidence only. Existing Phase 11, Phase 12, privacy/legal, real-communications, payment and production-release gates remain unchanged.
+VC1–VC8 is therefore closed as a product/visual/AI modernization programme, while all existing Phase 11, Phase 12, privacy/legal, external-integration, payment and production-release gates remain unchanged.
