@@ -1,5 +1,5 @@
 name: DIREKT Android CI
-# Phase 7 final exact-head validation anchor v2; VC8 synthetic visual evidence included.
+# Phase 7 final exact-head validation anchor v3; VC8 synthetic visual evidence included.
 
 on:
   push:
