@@ -4,20 +4,28 @@ set -euxo pipefail
 : "${RUNNER_TEMP:?RUNNER_TEMP is required}"
 : "${GITHUB_WORKSPACE:?GITHUB_WORKSPACE is required}"
 
+exec > >(tee "${RUNNER_TEMP}/vc8-provision.log") 2>&1
+: > "${RUNNER_TEMP}/vc8-emulator.log"
+
 sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
 if [[ -z "${sdk_root}" || ! -d "${sdk_root}" ]]; then
   echo "Android SDK root is unavailable." >&2
   exit 1
 fi
 
-sdkmanager="$(find "${sdk_root}/cmdline-tools" -type f -name sdkmanager 2>/dev/null | sort | tail -n 1)"
-avdmanager="$(find "${sdk_root}/cmdline-tools" -type f -name avdmanager 2>/dev/null | sort | tail -n 1)"
+sdkmanager="$(find "${sdk_root}/cmdline-tools" -type f -name sdkmanager 2>/dev/null | sort | tail -n 1 || true)"
+avdmanager="$(find "${sdk_root}/cmdline-tools" -type f -name avdmanager 2>/dev/null | sort | tail -n 1 || true)"
+[[ -n "${sdkmanager}" ]] || sdkmanager="$(command -v sdkmanager || true)"
+[[ -n "${avdmanager}" ]] || avdmanager="$(command -v avdmanager || true)"
 emulator="${sdk_root}/emulator/emulator"
+
+printf 'SDK root: %s\nSDK manager: %s\nAVD manager: %s\nEmulator: %s\n' \
+  "${sdk_root}" "${sdkmanager:-<missing>}" "${avdmanager:-<missing>}" "${emulator}"
 
 for tool in "${sdkmanager}" "${avdmanager}" "${emulator}"; do
   if [[ -z "${tool}" || ! -x "${tool}" ]]; then
     echo "Required Android emulator tool unavailable: ${tool:-<empty>}" >&2
-    find "${sdk_root}" -maxdepth 4 -type f \( -name sdkmanager -o -name avdmanager -o -name emulator \) -print || true
+    find "${sdk_root}" -maxdepth 5 -type f \( -name sdkmanager -o -name avdmanager -o -name emulator \) -print || true
     exit 1
   fi
 done
@@ -31,8 +39,7 @@ printf 'y\n' | "${sdkmanager}" --licenses >/dev/null || true
 echo no | "${avdmanager}" create avd \
   --force \
   --name direkt-vc8 \
-  --package "system-images;android-35;google_apis;x86_64" \
-  --device "pixel_2"
+  --package "system-images;android-35;google_apis;x86_64"
 
 if [[ -e /dev/kvm ]]; then
   sudo chmod 666 /dev/kvm || true
