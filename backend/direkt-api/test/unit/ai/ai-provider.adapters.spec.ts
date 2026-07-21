@@ -17,9 +17,16 @@ describe('AI provider adapters', () => {
         { status: 200, headers: { 'content-type': 'application/json' } },
       ),
     );
-    const adapter = new GeminiAiProviderAdapter('gemini-key-12345678901234567890', 'gemini-test', 5000);
+    const adapter = new GeminiAiProviderAdapter(
+      'gemini-key-12345678901234567890',
+      'gemini-test',
+      5000,
+    );
 
-    const result = await adapter.generate({ purpose: 'support_assist', prompt: 'synthetic test' });
+    const result = await adapter.generate({
+      purpose: 'support_assist',
+      prompt: 'synthetic test',
+    });
 
     expect(result).toEqual({
       provider: 'gemini',
@@ -37,9 +44,16 @@ describe('AI provider adapters', () => {
         { status: 200, headers: { 'content-type': 'application/json' } },
       ),
     );
-    const adapter = new GroqAiProviderAdapter('groq-key-12345678901234567890', 'groq-test', 5000);
+    const adapter = new GroqAiProviderAdapter(
+      'groq-key-12345678901234567890',
+      'groq-test',
+      5000,
+    );
 
-    const result = await adapter.generate({ purpose: 'support_assist', prompt: 'synthetic test' });
+    const result = await adapter.generate({
+      purpose: 'support_assist',
+      prompt: 'synthetic test',
+    });
 
     expect(result).toEqual({
       provider: 'groq',
@@ -55,7 +69,11 @@ describe('AI provider adapters', () => {
         headers: { 'content-type': 'application/json' },
       }),
     );
-    const adapter = new GeminiAiProviderAdapter('gemini-key-12345678901234567890', 'gemini-test', 5000);
+    const adapter = new GeminiAiProviderAdapter(
+      'gemini-key-12345678901234567890',
+      'gemini-test',
+      5000,
+    );
 
     await expect(
       adapter.generate({ purpose: 'summarize', prompt: 'synthetic test' }),
