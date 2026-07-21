@@ -42,6 +42,8 @@ jobs:
       GCP_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
       FIREBASE_PACKAGE_NAME: com.kudzimusar.direkt.debug
       DIREKT_GRADLE_VERSION: "9.4.0"
+      # workflow_dispatch equivalent preserved for the permanent verifier:
+      # DIREKT_SOURCE_SHA: ${{ inputs.source_sha }}
       SOURCE_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.source_sha || github.event.pull_request.base.sha }}
       ANDROID_AVD_HOME: ${{ runner.temp }}/direkt-rc3-avd
 
