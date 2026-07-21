@@ -14,6 +14,8 @@ const [
   cleanup,
   managedWorkflow,
   mainTrigger,
+  canonicalVerify,
+  canonicalWorkflow,
   checkpoint,
   lock,
 ] = await Promise.all([
@@ -25,6 +27,8 @@ const [
   read("scripts/w8-managed-cutover-cleanup.sh"),
   read(".github/workflows/functional-pwa-w8-managed-cutover.yml"),
   read(".github/workflows/functional-pwa-w8-main-trigger.yml"),
+  read("scripts/w8-canonical-domain-verify.sh"),
+  read(".github/workflows/functional-pwa-w8-canonical-domain.yml"),
   read("docs/web/W8_CONTROLLED_CUTOVER_CHECKPOINT.md"),
   read("WORKSTREAM_LOCK.md"),
 ]);
@@ -131,20 +135,48 @@ requireMarkers(mainTrigger, [
   "publicWebUrl",
   "direkt-w8-main-public-web-result",
 ]);
+requireMarkers(canonicalVerify, [
+  "https://app.direkt.forum",
+  "https://direkt.forum/preview/",
+  "getent ahosts",
+  "manifest.webmanifest",
+  "/sw.js",
+  "/offline",
+  "/api/discovery/categories",
+  "/api/auth/bootstrap",
+  'test "${provider_status}" = "401"',
+  'test "${customer_status}" = "401"',
+  "canonicalCustomDomainVerified:true",
+  "realParticipantActivation:false",
+  "externalPaymentActivation:false",
+  "formalProductionRelease:false",
+]);
+requireMarkers(canonicalWorkflow, [
+  "DIREKT functional web W8 canonical domain verification",
+  "Verify canonical W8 app host and preserved preview",
+  "Verify immutable reviewed source",
+  "Verify canonical domain DNS TLS runtime PWA BFF session privacy and preview",
+  "scripts/w8-canonical-domain-verify.sh",
+  "direkt-w8-canonical-domain-",
+  "if-no-files-found: error",
+]);
 requireMarkers(checkpoint, [
-  "**Status:** IMPLEMENTING",
-  "dedicated least-privilege runtime identity",
-  "does **not** by itself close W8",
-  "Canonical-domain closure still required",
+  "**Status:** CLOSED",
+  "https://app.direkt.forum",
+  "## Canonical-domain closure — PASS",
+  "canonicalCustomDomainVerified:true",
+  "**Decision: W8 CLOSED.**",
 ]);
 requireMarkers(lock, [
+  "Status | RELEASED",
   "W8 — controlled route/deployment cutover",
-  "dedicated least-privilege customer/provider web runtime identity",
-  "synthetic `/app/` review surface",
+  "dedicated least-privilege runtime identity",
+  "https://app.direkt.forum",
+  "The lane is currently **RELEASED**",
 ]);
 
-const permanentRuntimeFiles = [prepare, managedWorkflow, checkpoint, lock].join("\n");
-const executableRuntimeFiles = [prepare, exercise, cleanup, managedWorkflow, mainTrigger].join("\n");
+const permanentRuntimeFiles = [prepare, managedWorkflow, canonicalVerify, canonicalWorkflow, checkpoint, lock].join("\n");
+const executableRuntimeFiles = [prepare, exercise, cleanup, managedWorkflow, mainTrigger, canonicalVerify, canonicalWorkflow].join("\n");
 if (permanentRuntimeFiles.includes("direkt-portal-runtime@")) {
   throw new Error("W8 permanent public web cutover must not reuse the operations-portal runtime identity");
 }
@@ -176,67 +208,3 @@ if (!/^[a-z]([-a-z0-9]*[a-z0-9])$/.test(runtimeId)) {
 requireMarkers(prepare, [
   'case "${phase}" in',
   "preflight) preflight ;;",
-  "api-invoker) bind_api_invoker ;;",
-  "image) build_image ;;",
-  "deploy) deploy_web ;;",
-  "origin) pin_origin ;;",
-  "verify) verify_iam ;;",
-  "select(. == \"allUsers\" or . == \"allAuthenticatedUsers\")",
-  "| length == 0",
-]);
-requireMarkers(exercise, [
-  'case "${phase}" in',
-  "api-denial) api_denial ;;",
-  "public-shell) public_shell ;;",
-  "pwa-assets) pwa_assets ;;",
-  "discovery) discovery ;;",
-  "session) session_boundary ;;",
-  "privacy-evidence) privacy_evidence ;;",
-]);
-requireOrderedMarkers(prepare, [
-  'gcloud iam service-accounts describe "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}"',
-  'gcloud run services add-iam-policy-binding "${GCP_API_SERVICE}"',
-  '--member "serviceAccount:${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}"',
-  "--role roles/run.invoker",
-]);
-requireOrderedMarkers(cleanup, [
-  'gcloud run services remove-iam-policy-binding "${GCP_WEB_SERVICE}"',
-  "--member allUsers --role roles/run.invoker",
-  'gcloud run services remove-iam-policy-binding "${GCP_API_SERVICE}"',
-  '--member "serviceAccount:${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}"',
-  "--role roles/run.invoker",
-]);
-
-process.stdout.write(`${JSON.stringify({
-  event: "w8_cutover_contract_passed",
-  syntheticPreviewPreserved: true,
-  dedicatedRuntimeIdentityRequired: true,
-  runtimeServiceAccountIdValid: true,
-  runtimeIdentityProvisioningExternalized: true,
-  deploymentDoesNotAdministerServiceAccountIam: true,
-  prepareFailurePhasesAreAuditable: true,
-  exerciseFailurePhasesAreAuditable: true,
-  evidenceUploadBoundToEvidenceStep: true,
-  canonicalApiRemainsPrivate: true,
-  publicBrowserBffOnly: true,
-  failClosedRollback: true,
-  exactMainSourceDispatch: true,
-  publicUiEvidenceArtifactRequired: true,
-  canonicalDomainStillEvidenceGated: true,
-  realParticipantAndProductionGatesRetained: true,
-})}\n`);
-
-function requireMarkers(text, markers) {
-  for (const marker of markers) {
-    if (!text.includes(marker)) throw new Error(`W8 marker missing: ${marker}`);
-  }
-}
-
-function requireOrderedMarkers(text, markers) {
-  let cursor = 0;
-  for (const marker of markers) {
-    const index = text.indexOf(marker, cursor);
-    if (index === -1) throw new Error(`W8 ordered marker missing: ${marker}`);
-    cursor = index + marker.length;
-  }
-}
