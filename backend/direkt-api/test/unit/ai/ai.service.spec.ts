@@ -1,4 +1,4 @@
-import { ConfigService } from '@nestjs/config';
+import type { ConfigService } from '@nestjs/config';
 import { describe, expect, it, vi } from 'vitest';
 import {
   AiInputRejectedError,
@@ -45,12 +45,11 @@ describe('AiService', () => {
       text: 'assistance',
       fallbackUsed: false,
     });
-    expect(primary.generate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        purpose: 'search_assist',
-        prompt: expect.stringContaining('Never claim to verify a provider'),
-      }),
-    );
+    const primaryGenerate = vi.mocked(primary.generate);
+    expect(primaryGenerate).toHaveBeenCalledOnce();
+    const primaryRequest = primaryGenerate.mock.calls[0]?.[0];
+    expect(primaryRequest?.purpose).toBe('search_assist');
+    expect(primaryRequest?.prompt).toContain('Never claim to verify a provider');
   });
 
   it('fails over to Groq only when the primary provider is unavailable', async () => {
