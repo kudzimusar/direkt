@@ -219,7 +219,8 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
   }
   if (value.NODE_ENV === 'production' && value.AI_PROVIDER_MODE !== 'disabled') {
     return helpers.message({
-      custom: 'Production AI provider mode must remain disabled until a later privacy and release gate.',
+      custom:
+        'Production AI provider mode must remain disabled until a later privacy and release gate.',
     });
   }
   if (value.AI_PROVIDER_MODE !== 'disabled' && value.DIREKT_DATA_MODE !== 'synthetic-only') {
