@@ -106,41 +106,9 @@ jobs:
           echo "DIREKT_FIREBASE_APP_ID=${CONFIG_APP_ID}" >> "${GITHUB_ENV}"
           echo "DIREKT_FIREBASE_PROJECT_ID=${CONFIG_PROJECT_ID}" >> "${GITHUB_ENV}"
 
-      - name: Verify read-only Crashlytics Events API boundary
+      - name: Verify read-only Crashlytics reports boundary
         shell: bash
-        run: |
-          set -euo pipefail
-          token="$(gcloud auth print-access-token)"
-          echo "::add-mask::${token}"
-          events_url="https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_NUMBER}/apps/${DIREKT_FIREBASE_APP_ID}/events"
-          http_code="$(curl --silent --show-error --get \
-            --output "${RUNNER_TEMP}/rc3-events-api-preflight.json" \
-            --write-out '%{http_code}' \
-            --header "Authorization: Bearer ${token}" \
-            --data-urlencode 'pageSize=1' \
-            "${events_url}")"
-
-          if [[ "${http_code}" != "200" ]]; then
-            error_message="$(jq -r '.error.message // empty' "${RUNNER_TEMP}/rc3-events-api-preflight.json" 2>/dev/null || true)"
-            error_message="${error_message//${GCP_PROJECT_ID}/[project-id]}"
-            error_message="${error_message//${GCP_PROJECT_NUMBER}/[project-number]}"
-            error_message="${error_message//${DIREKT_FIREBASE_APP_ID}/[firebase-app-id]}"
-            error_message="$(printf '%s' "${error_message}" | cut -c1-500)"
-            jq -n \
-              --arg http "${http_code}" \
-              --arg code "$(jq -r '.error.code // empty' "${RUNNER_TEMP}/rc3-events-api-preflight.json" 2>/dev/null || true)" \
-              --arg status "$(jq -r '.error.status // empty' "${RUNNER_TEMP}/rc3-events-api-preflight.json" 2>/dev/null || true)" \
-              --arg message "${error_message}" \
-              '{httpStatus:$http,errorCode:($code|select(length>0)),errorStatus:($status|select(length>0)),errorMessage:($message|select(length>0))}' \
-              > "${RUNNER_TEMP}/rc3-events-api-preflight-receipt.json"
-            cat "${RUNNER_TEMP}/rc3-events-api-preflight-receipt.json" >&2
-            exit 1
-          fi
-
-          jq -n \
-            --arg http "${http_code}" \
-            '{httpStatus:$http,readBoundary:"PASS",authorization:"existing-managed-principal",projectResource:"numeric"}' \
-            > "${RUNNER_TEMP}/rc3-events-api-preflight-receipt.json"
+        run: bash scripts/integrations/rc3-crashlytics-server-receipt.sh preflight
 
       - name: Set up Java 17
         uses: actions/setup-java@v5
@@ -208,7 +176,6 @@ jobs:
           set -euo pipefail
           component="${FIREBASE_PACKAGE_NAME}/com.kudzimusar.direkt.MainActivity"
           canary_start_time="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          events_url="https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_NUMBER}/apps/${DIREKT_FIREBASE_APP_ID}/events"
 
           "${ADB_BIN}" shell setprop log.tag.FirebaseCrashlytics DEBUG
           "${ADB_BIN}" logcat -c
@@ -238,31 +205,8 @@ jobs:
           done
           test "${transported}" = "true"
 
-          processed=false
-          for _ in $(seq 1 60); do
-            token="$(gcloud auth print-access-token)"
-            echo "::add-mask::${token}"
-            curl --fail --silent --show-error --get \
-              --header "Authorization: Bearer ${token}" \
-              --data-urlencode "pageSize=100" \
-              "${events_url}" > "${RUNNER_TEMP}/rc3-crash-events.json"
-            jq -c \
-              --arg sha "${SOURCE_SHA}" \
-              --arg kind "crash" \
-              --arg start "${canary_start_time}" \
-              '[.events[]? | select(.customKeys.direkt_source_sha == $sha and .customKeys.direkt_canary_kind == $kind and .receivedTime >= $start)][0] // empty' \
-              "${RUNNER_TEMP}/rc3-crash-events.json" > "${RUNNER_TEMP}/rc3-crash-event-match.json"
-            if jq -e 'type == "object" and (.name | type == "string")' "${RUNNER_TEMP}/rc3-crash-event-match.json" >/dev/null 2>&1; then
-              jq '{name,eventId,eventTime,receivedTime,issueTitle,issueSubtitle,crashlyticsSdkVersion,customKeys:{direkt_data_mode:.customKeys.direkt_data_mode,direkt_source_sha:.customKeys.direkt_source_sha,direkt_release_channel:.customKeys.direkt_release_channel,direkt_canary_kind:.customKeys.direkt_canary_kind}}' \
-                "${RUNNER_TEMP}/rc3-crash-event-match.json" > "${RUNNER_TEMP}/rc3-crash-event-receipt.json"
-              processed=true
-              break
-            fi
-            sleep 2
-          done
-          test "${processed}" = "true"
+          bash scripts/integrations/rc3-crashlytics-server-receipt.sh receipt crash FATAL "${canary_start_time}"
           grep -Ei 'report successfully enqueued to DataTransport|Crashlytics report upload complete|[[:space:]]204[[:space:]]' "${RUNNER_TEMP}/rc3-crash-upload.log" | tail -n 5 || true
-          jq '{name,eventId,eventTime,receivedTime,customKeys}' "${RUNNER_TEMP}/rc3-crash-event-receipt.json"
 
       - name: Prove ANR signal and Crashlytics delivery
         shell: bash
@@ -270,7 +214,6 @@ jobs:
           set -euo pipefail
           component="${FIREBASE_PACKAGE_NAME}/com.kudzimusar.direkt.MainActivity"
           canary_start_time="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          events_url="https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_NUMBER}/apps/${DIREKT_FIREBASE_APP_ID}/events"
 
           "${ADB_BIN}" logcat -c
           "${ADB_BIN}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
@@ -302,34 +245,10 @@ jobs:
           done
           test "${transported}" = "true"
 
-          processed=false
-          for _ in $(seq 1 60); do
-            token="$(gcloud auth print-access-token)"
-            echo "::add-mask::${token}"
-            curl --fail --silent --show-error --get \
-              --header "Authorization: Bearer ${token}" \
-              --data-urlencode "pageSize=100" \
-              "${events_url}" > "${RUNNER_TEMP}/rc3-anr-events.json"
-            jq -c \
-              --arg sha "${SOURCE_SHA}" \
-              --arg kind "anr" \
-              --arg start "${canary_start_time}" \
-              '[.events[]? | select(.customKeys.direkt_source_sha == $sha and .customKeys.direkt_canary_kind == $kind and .receivedTime >= $start)][0] // empty' \
-              "${RUNNER_TEMP}/rc3-anr-events.json" > "${RUNNER_TEMP}/rc3-anr-event-match.json"
-            if jq -e 'type == "object" and (.name | type == "string")' "${RUNNER_TEMP}/rc3-anr-event-match.json" >/dev/null 2>&1; then
-              jq '{name,eventId,eventTime,receivedTime,issueTitle,issueSubtitle,crashlyticsSdkVersion,customKeys:{direkt_data_mode:.customKeys.direkt_data_mode,direkt_source_sha:.customKeys.direkt_source_sha,direkt_release_channel:.customKeys.direkt_release_channel,direkt_canary_kind:.customKeys.direkt_canary_kind}}' \
-                "${RUNNER_TEMP}/rc3-anr-event-match.json" > "${RUNNER_TEMP}/rc3-anr-event-receipt.json"
-              processed=true
-              break
-            fi
-            sleep 2
-          done
-          test "${processed}" = "true"
-
+          bash scripts/integrations/rc3-crashlytics-server-receipt.sh receipt anr ANR "${canary_start_time}"
           "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary disable >/dev/null || true
           grep -Ei "ANR in ${FIREBASE_PACKAGE_NAME}|ANR.*${FIREBASE_PACKAGE_NAME}" "${RUNNER_TEMP}/rc3-anr-system.log" | tail -n 5
           grep -Ei 'report successfully enqueued to DataTransport|Crashlytics report upload complete|[[:space:]]204[[:space:]]' "${RUNNER_TEMP}/rc3-anr-upload.log" | tail -n 5 || true
-          jq '{name,eventId,eventTime,receivedTime,customKeys}' "${RUNNER_TEMP}/rc3-anr-event-receipt.json"
 
       - name: Upload sanitized RC3 diagnostics
         if: always()
@@ -337,7 +256,7 @@ jobs:
         with:
           name: direkt-rc3-crashlytics-canary-${{ github.run_number }}-${{ inputs.source_sha }}
           path: |
-            ${{ runner.temp }}/rc3-events-api-preflight-receipt.json
+            ${{ runner.temp }}/rc3-server-read-preflight-receipt.json
             ${{ runner.temp }}/rc3-crash-upload.log
             ${{ runner.temp }}/rc3-crash-event-receipt.json
             ${{ runner.temp }}/rc3-anr-system.log
@@ -355,7 +274,7 @@ jobs:
             echo "- Source: \`${SOURCE_SHA}\`"
             echo "- Package: \`${FIREBASE_PACKAGE_NAME}\`"
             echo "- Data mode: \`synthetic-only\`"
-            echo "- Crashlytics Events API read boundary: \`PASS\`"
+            echo "- Crashlytics reports boundary: \`PASS\`"
             echo "- Fatal crash OS termination: \`PASS\`"
             echo "- Fatal crash DataTransport handoff: \`PASS\`"
             echo "- Fatal crash server-processed Crashlytics event: \`PASS\`"
