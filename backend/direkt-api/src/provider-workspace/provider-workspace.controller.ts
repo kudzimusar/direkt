@@ -4,6 +4,7 @@ import { PERMISSIONS } from '../authorization/permissions';
 import { RequirePermission } from '../authorization/require-permission.decorator';
 import type { DirektRequest } from '../platform/http/request-context';
 import { UpdateProviderProfileDto } from '../provider-core/provider.dto';
+import { ProviderWorkspaceAiService } from './provider-workspace-ai.service';
 import {
   CancelWorkspaceUploadDto,
   ConfirmWorkspaceUploadDto,
@@ -29,6 +30,7 @@ export class ProviderWorkspaceController {
   constructor(
     private readonly service: ProviderWorkspaceService,
     private readonly uploads: ProviderWorkspaceUploadService,
+    private readonly ai: ProviderWorkspaceAiService,
   ) {}
 
   @Get('me')
@@ -39,6 +41,28 @@ export class ProviderWorkspaceController {
   })
   workspace(@Req() request: DirektRequest): Promise<ProviderWorkspaceSummary> {
     return this.service.workspace(request.actor);
+  }
+
+  @Post('me/ai-onboarding-guide')
+  @RequirePermission(PERMISSIONS.PROVIDER_PROFILE_READ, { providerFromActor: true })
+  @ApiOkResponse({
+    description:
+      'Returns synthetic-safe advisory onboarding guidance. It cannot satisfy requirements, approve evidence, create trust claims, or publish services.',
+  })
+  async onboardingGuide(@Req() request: DirektRequest) {
+    const workspace = await this.service.workspace(request.actor);
+    return this.ai.onboardingGuide(workspace);
+  }
+
+  @Post('me/ai-profile-draft')
+  @RequirePermission(PERMISSIONS.PROVIDER_PROFILE_MANAGE, { providerFromActor: true })
+  @ApiOkResponse({
+    description:
+      'Returns an editable synthetic-safe public profile draft from provider-safe workspace facts. Provider confirmation remains mandatory.',
+  })
+  async profileDraft(@Req() request: DirektRequest) {
+    const workspace = await this.service.workspace(request.actor);
+    return this.ai.profileDraft(workspace);
   }
 
   @Get('me/verification-timeline')
