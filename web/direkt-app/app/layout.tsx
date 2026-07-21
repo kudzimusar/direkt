@@ -8,6 +8,7 @@ import "./customer.css";
 import "./provider.css";
 import "./world-class.css";
 import "./provider-world-class.css";
+import "./provider-workspace-world-class.css";
 
 export const metadata: Metadata = {
   title: {
