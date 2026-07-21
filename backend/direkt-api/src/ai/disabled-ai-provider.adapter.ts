@@ -8,7 +8,8 @@ import {
 export class DisabledAiProviderAdapter implements AiProviderPort {
   readonly provider = 'disabled' as const;
 
-  generate(_input: AiProviderRequest): Promise<AiProviderResult> {
+  generate(input: AiProviderRequest): Promise<AiProviderResult> {
+    void input;
     return Promise.reject(new AiProviderUnavailableError('AI provider is disabled.'));
   }
 }
