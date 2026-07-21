@@ -1,3 +1,5 @@
+import type { DirektIconName } from "@/components/ui/direkt-icon";
+
 export type DirektMode = "customer" | "provider";
 export type DirektDestination = "discover" | "saved" | "enquiries" | "account";
 
@@ -6,7 +8,8 @@ export interface NavigationItem {
   customerLabel: string;
   providerLabel: string;
   shortLabel: string;
-  glyph: string;
+  customerIcon: DirektIconName;
+  providerIcon: DirektIconName;
 }
 
 export const navigationItems: readonly NavigationItem[] = [
@@ -15,33 +18,41 @@ export const navigationItems: readonly NavigationItem[] = [
     customerLabel: "Discover",
     providerLabel: "Overview",
     shortLabel: "Home",
-    glyph: "⌂",
+    customerIcon: "home",
+    providerIcon: "briefcase",
   },
   {
     id: "saved",
     customerLabel: "Saved",
     providerLabel: "Evidence",
     shortLabel: "Saved",
-    glyph: "◇",
+    customerIcon: "bookmark",
+    providerIcon: "shield",
   },
   {
     id: "enquiries",
     customerLabel: "Enquiries",
     providerLabel: "Enquiries",
     shortLabel: "Enquiries",
-    glyph: "↔",
+    customerIcon: "messages",
+    providerIcon: "messages",
   },
   {
     id: "account",
     customerLabel: "Account",
     providerLabel: "Account",
     shortLabel: "Account",
-    glyph: "○",
+    customerIcon: "user",
+    providerIcon: "user",
   },
 ] as const;
 
 export function destinationLabel(mode: DirektMode, item: NavigationItem): string {
   return mode === "customer" ? item.customerLabel : item.providerLabel;
+}
+
+export function destinationIcon(mode: DirektMode, item: NavigationItem): DirektIconName {
+  return mode === "customer" ? item.customerIcon : item.providerIcon;
 }
 
 export function destinationHeading(
@@ -52,27 +63,27 @@ export function destinationHeading(
     switch (destination) {
       case "discover":
         return {
-          title: "Find a provider",
+          title: "Find the right local service",
           summary:
-            "Search by category and area, then inspect scoped trust claims before making contact.",
+            "Search by what you need and where you need it, then compare providers using clear, check-specific trust information.",
         };
       case "saved":
         return {
-          title: "Saved providers",
+          title: "Your shortlist",
           summary:
-            "Keep a private shortlist without changing publication, ranking or trust state.",
+            "Keep promising providers together so you can compare services, availability and current trust information before deciding.",
         };
       case "enquiries":
         return {
-          title: "Enquiries and interactions",
+          title: "Your service requests",
           summary:
-            "Track service requests, consent-aware contact handoffs, interaction history and review eligibility.",
+            "Follow enquiries, provider responses, consent-aware contact handoffs and eligible review activity in one place.",
         };
       case "account":
         return {
-          title: "Account and security",
+          title: "Account and privacy",
           summary:
-            "Manage identity, sessions, consent and access without making client-side role claims authoritative.",
+            "Manage your identity, active sessions, consent and security preferences.",
         };
     }
   }
@@ -80,27 +91,27 @@ export function destinationHeading(
   switch (destination) {
     case "discover":
       return {
-        title: "Provider overview",
+        title: "Run your service business",
         summary:
-          "Review profile readiness, service coverage, availability and verification progress in one workspace.",
+          "See what needs attention, keep your services current and respond quickly to new customer opportunities.",
       };
     case "saved":
       return {
-        title: "Evidence and verification",
+        title: "Checks and evidence",
         summary:
-          "Track requirement status and recoverable private evidence submissions without exposing reviewer-only detail.",
+          "Understand each requirement, track review progress and fix action-required items without exposing private evidence.",
       };
     case "enquiries":
       return {
-        title: "Enquiry inbox",
+        title: "Customer enquiries",
         summary:
-          "Respond within actor-resolved provider scope and follow the tracked interaction lifecycle.",
+          "Review incoming service requests, respond clearly and keep each tracked interaction moving.",
       };
     case "account":
       return {
-        title: "Provider account",
+        title: "Business account",
         summary:
-          "Manage profile, security and commercial state while verification and authorization remain backend-owned.",
+          "Manage your profile, security and commercial settings while trust decisions remain independent.",
       };
   }
 }
