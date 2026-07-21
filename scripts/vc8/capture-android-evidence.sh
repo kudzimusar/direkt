@@ -37,6 +37,7 @@ PY
 }
 
 tap_text "Provider"
+tap_text "Overview"
 adb exec-out screencap -p > "${output_dir}/android-provider-overview.png"
 tap_text "Evidence"
 adb exec-out screencap -p > "${output_dir}/android-provider-evidence.png"
