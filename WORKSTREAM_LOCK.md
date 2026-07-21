@@ -6,13 +6,13 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED — RC1 Resend runtime email closure |
+| Status | RELEASED — RC1 Resend closed; RC2 Sentry is next |
 | Owner/agent | Active repository agent — Issue #261 runtime integration closure workstream |
-| Authorized scope | Resend application delivery through the transactional outbox: provider adapter, least-privilege Secret Manager/runtime binding, idempotency/retry/failure persistence, bounded templates/privacy controls, managed synthetic canary and exact-head regressions |
+| Authorized scope | RC1 closure evidence only on this branch; no new integration runtime source changes until the RC1 closure PR merges and RC2 is separately claimed |
 | Protected surface | Android, backend/database/OpenAPI, web/PWA, operations portal, CI, trust/privacy, payments and release boundaries remain regression-protected; VC0 design/audit work under Issue #259 may continue only on non-overlapping design-control surfaces |
-| Implementation branch | `integration/rc1-resend-runtime` from AI0 merge `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; do not build new integration work on the diverged historical `build/android-v1` branch |
-| Stable baseline | AI0 merged to `main` at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; canonical app `https://app.direkt.forum`; W8 verification run `29802524466` |
-| Current task | RC1 — wire verified `notify.direkt.forum` / `direkt-resend-api-key` v1 into a fail-closed server-side email provider and transactional-outbox delivery path, then prove managed synthetic delivery |
+| Implementation branch | `integration/rc1-resend-closure` from `main` after RC1 source/runtime hotfixes; RC2 must start from the merged RC1 closure baseline |
+| Stable baseline | RC1 source PR #269 merged; managed Resend canary execution `direkt-resend-canary-ct9mp` completed successfully on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`; reporting compatibility hotfix PR #272 merged at `d704d29a11719c6a05582e58b492479feedebf68` |
+| Current task | RC1 closure promotion complete in this branch; next bounded checkpoint after merge is RC2 — Sentry API/portal runtime observability closure |
 | Governing issue | Issue #261 — Runtime integration closure after W8 |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates |
@@ -38,7 +38,7 @@ This file prevents overlapping writes in the single-lane build process.
 
 - RC0 — integration ledger, dependency/source audit, permanent-gate ownership sanity check and payment evidence reconciliation. **Closed — PR #263 merged at `ece3626f6878d32f2b1d0a46058f2064ff1d669b`.**
 - AI0 — provider-neutral AI foundation. **Closed — PR #265 merged at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; Gemini/Groq remain gated rather than active runtime integrations.**
-- RC1 — Resend runtime email adapter through the transactional outbox, idempotency/retry/privacy/templates and managed canary. **ACTIVE CHECKPOINT.**
+- RC1 — Resend runtime email adapter through the transactional outbox, idempotency/retry/privacy/templates and managed canary. **Closed — source PR #269; managed execution `direkt-resend-canary-ct9mp` succeeded on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`; workflow-reporting hotfixes #271/#272 merged. Real-participant/production email remains disabled.**
 - RC2 — Sentry for approved NestJS/Next.js surfaces with strict PII scrubbing, release/source-map controls and kill switch; Cloud Logging remains authoritative infrastructure telemetry.
 - RC3 — Firebase Crashlytics Android activation with privacy/release mapping and synthetic crash/ANR evidence.
 - RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary.

@@ -180,7 +180,7 @@ No payment provider secret is attached to Cloud Run until adapter/config/runtime
 | Integration | State | Runtime closure required |
 |---|---|---|
 | Transactional outbox | `ACTIVE` | Canonical asynchronous delivery source of truth. |
-| Resend | `IMPLEMENTED_GATED / MANAGED CANARY PENDING` | Provider-neutral HTTPS adapter, transactional-outbox consumer, bounded retries/stale-lock recovery, deterministic provider idempotency key, synthetic template/privacy boundary and private Cloud Run Job canary workflow are source-integrated. `notify.direkt.forum` verified; `direkt-resend-api-key` version 1 enabled. Managed canary and runtime secret-access proof remain required before any ACTIVE claim. |
+| Resend | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | Managed Cloud Run execution `direkt-resend-canary-ct9mp` succeeded on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`, proving outbox insert → claim → Resend send → durable `published` state. Sending key is sending-only/domain-restricted to verified `notify.direkt.forum`; `direkt-resend-api-key` v1 enabled; runtime secret access proven. Continuous, controlled-pilot participant and production email remain disabled. |
 | Firebase phone OTP | `IMPLEMENTED_GATED` | Real approved participant path, OTP canary, abuse/rate-limit/privacy/legal evidence. |
 | FCM | `PLANNED` | Server send path, device-token lifecycle, Android handling/permission UX, retries/privacy/canary. |
 | WhatsApp Cloud API | `EXTERNALLY CONFIGURED / RUNTIME GATED` | Runtime adapter, approved templates/phone identity where needed, consent-at-send, opt-out, idempotency, receipts/retries/privacy controls. |
@@ -233,8 +233,8 @@ The authoritative sequence is maintained in `WORKSTREAM_LOCK.md` and `RUNTIME_IN
 
 1. RC0 ledger/audit/permanent-gate sanity/payment evidence reconciliation — **CLOSED** in PR #263.
 2. AI0 provider-neutral AI foundation — **CLOSED** in PR #265 at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; Gemini/Groq remain runtime-gated.
-3. RC1 Resend — **ACTIVE CHECKPOINT; IMPLEMENTED_GATED / MANAGED CANARY PENDING**. Source adapter/outbox/job path implemented; exact-head regressions, least-privilege secret access and managed canary remain.
-4. RC2 Sentry API/portal.
+3. RC1 Resend — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Source PR #269 merged; least-privilege sending/domain restriction and runtime secret access proven; Cloud Run execution `direkt-resend-canary-ct9mp` succeeded on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`; workflow-reporting compatibility hotfixes #271/#272 merged. Real-participant/production email remains disabled.
+4. RC2 Sentry API/portal — **NEXT CHECKPOINT after RC1 closure merge.**
 5. RC3 Crashlytics Android.
 6. RC4 FCM.
 7. RC5 Firebase Test Lab.
