@@ -1,5 +1,6 @@
-import { GoogleAuth } from "google-auth-library";
 import type { DiscoveryAiAssistResponse } from "@/lib/contracts/discovery-ai";
+import { getCloudRunIdentityToken } from "@/lib/server/cloud-run-identity";
+import { getDirektWebRuntimeConfig } from "@/lib/server/runtime-config";
 
 export class DiscoveryAiClientError extends Error {
   constructor(
@@ -7,6 +8,7 @@ export class DiscoveryAiClientError extends Error {
     readonly status: number,
   ) {
     super(message);
+    this.name = "DiscoveryAiClientError";
   }
 }
 
@@ -14,59 +16,52 @@ export async function requestDiscoveryAssist(input: {
   need: string;
   area?: string;
 }): Promise<DiscoveryAiAssistResponse> {
-  if ((process.env.DIREKT_WEB_API_MODE ?? "disabled") !== "live") {
+  const config = getDirektWebRuntimeConfig();
+  if (!config.apiBaseUrl || config.apiMode === "disabled") {
     throw new DiscoveryAiClientError(
       "AI discovery assistance is not available in this environment.",
       503,
     );
   }
 
-  const baseUrl = (
-    process.env.DIREKT_WEB_API_BASE_URL ?? process.env.DIREKT_API_BASE_URL ?? ""
-  ).replace(/\/$/, "");
-  if (!baseUrl) {
-    throw new DiscoveryAiClientError("DIREKT API base URL is not configured.", 503);
+  const url = new URL("/api/v1/public/discovery/assist", config.apiBaseUrl);
+  if (url.origin !== config.apiBaseUrl.origin) {
+    throw new DiscoveryAiClientError("DIREKT API request escaped the configured origin.", 500);
   }
 
-  const audience =
-    process.env.DIREKT_WEB_API_AUDIENCE ?? process.env.DIREKT_API_AUDIENCE ?? baseUrl;
-  const auth = new GoogleAuth();
-  const client = await auth.getIdTokenClient(audience);
+  const headers: Record<string, string> = {
+    accept: "application/json",
+    "content-type": "application/json",
+    "user-agent": "direkt-functional-web/0.2",
+  };
 
+  if (config.apiMode === "authenticated-bff") {
+    const infrastructureToken = await getCloudRunIdentityToken(config.apiBaseUrl);
+    headers["X-Serverless-Authorization"] = `Bearer ${infrastructureToken}`;
+  }
+
+  let response: Response;
   try {
-    const response = await client.request<DiscoveryAiAssistResponse>({
-      url: `${baseUrl}/api/v1/public/discovery/assist`,
+    response = await fetch(url, {
       method: "POST",
-      data: input,
-      headers: {
-        "content-type": "application/json",
-        "x-direkt-client": "customer-provider-web-bff",
-      },
-      timeout: 6_000,
+      headers,
+      body: JSON.stringify(input),
+      cache: "no-store",
+      redirect: "error",
+      signal: AbortSignal.timeout(6_000),
     });
-    return response.data;
-  } catch (cause) {
-    const status = extractStatus(cause);
+  } catch {
+    throw new DiscoveryAiClientError("AI discovery assistance is temporarily unavailable.", 503);
+  }
+
+  if (!response.ok) {
     throw new DiscoveryAiClientError(
-      status >= 500
+      response.status >= 500
         ? "AI discovery assistance is temporarily unavailable."
         : "The service description could not be processed.",
-      status,
+      response.status,
     );
   }
-}
 
-function extractStatus(cause: unknown): number {
-  if (
-    typeof cause === "object" &&
-    cause !== null &&
-    "response" in cause &&
-    typeof cause.response === "object" &&
-    cause.response !== null &&
-    "status" in cause.response &&
-    typeof cause.response.status === "number"
-  ) {
-    return cause.response.status;
-  }
-  return 503;
+  return (await response.json()) as DiscoveryAiAssistResponse;
 }
