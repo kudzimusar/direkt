@@ -204,10 +204,12 @@ jobs:
             --wait \
             --quiet
 
-          EXECUTION_NAME="$(gcloud run jobs executions describe-latest \
+          EXECUTION_NAME="$(gcloud run jobs executions list \
             --job "${GCP_CANARY_JOB}" \
             --project "${GCP_PROJECT_ID}" \
             --region "${GCP_REGION}" \
+            --sort-by='~metadata.creationTimestamp' \
+            --limit=1 \
             --format='value(metadata.name)')"
           test -n "${EXECUTION_NAME}"
           echo "EXECUTION_NAME=${EXECUTION_NAME}" >> "${GITHUB_ENV}"
