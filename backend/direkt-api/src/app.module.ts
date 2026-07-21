@@ -5,6 +5,7 @@ import { AiModule } from './ai/ai.module';
 import { AuthModule } from './auth/auth.module';
 import { AuthorizationModule } from './authorization/authorization.module';
 import { CommercialModule } from './commercial/commercial.module';
+import { CommunicationsModule } from './communications/communications.module';
 import { environmentSchema } from './config/environment';
 import { DiscoveryModule } from './discovery/discovery.module';
 import { InteractionModule } from './interaction/interaction.module';
@@ -33,6 +34,7 @@ import { VerificationEvidenceModule } from './verification-evidence/verification
     DatabaseModule,
     AuditModule,
     AiModule,
+    CommunicationsModule,
     AuthModule,
     AuthorizationModule,
     AccountContactModule,
