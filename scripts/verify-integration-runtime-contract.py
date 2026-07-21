@@ -106,6 +106,7 @@ def main() -> None:
     )
     cloud_run = read(".github/workflows/cloud-run-staging-deploy-v2.yml")
     resend_canary = read(".github/workflows/cloud-run-resend-canary.yml")
+    sentry_canary = read(".github/workflows/cloud-run-sentry-canary.yml")
     firebase_distribution = read(".github/workflows/firebase-internal-distribution.yml")
     openapi_generate = read("backend/direkt-api/scripts/generate-openapi.ts")
     openapi_check = read("backend/direkt-api/scripts/check-openapi.ts")
@@ -114,6 +115,27 @@ def main() -> None:
     resend_adapter = read("backend/direkt-api/src/communications/resend-email-provider.adapter.ts")
     email_outbox = read("backend/direkt-api/src/communications/email-outbox.service.ts")
     resend_canary_entrypoint = read("backend/direkt-api/src/communications/resend-canary.ts")
+    backend_sentry = read("backend/direkt-api/src/instrument.ts")
+    backend_sentry_runtime = read(
+        "backend/direkt-api/src/platform/observability/sentry-runtime.ts"
+    )
+    backend_sentry_privacy = read(
+        "backend/direkt-api/src/platform/observability/sentry-privacy.ts"
+    )
+    backend_sentry_canary = read(
+        "backend/direkt-api/src/platform/observability/sentry-canary.ts"
+    )
+    portal_instrumentation = read("admin/direkt-operations-portal/src/instrumentation.ts")
+    portal_sentry = read("admin/direkt-operations-portal/src/sentry.server.config.ts")
+    portal_sentry_runtime = read(
+        "admin/direkt-operations-portal/src/lib/observability/sentry-runtime.ts"
+    )
+    portal_sentry_privacy = read(
+        "admin/direkt-operations-portal/src/lib/observability/sentry-privacy.ts"
+    )
+    portal_sentry_canary = read(
+        "admin/direkt-operations-portal/src/app/api/observability/sentry-canary/route.ts"
+    )
     pwa = read("web/direkt-pwa/app.js")
     service_worker = read("web/direkt-pwa/sw.js")
 
@@ -181,13 +203,18 @@ def main() -> None:
         if integration in catalog_lower or integration in gradle_lower:
             fail(f"{integration} became Android-runtime active without integration-status promotion")
 
-    # Sentry/Maps remain externally provisioned or planned, not silently active.
-    # RC1 intentionally keeps Resend behind a provider-neutral native-fetch adapter rather than
-    # adding a vendor SDK dependency.
+    # RC2 Sentry is source-integrated only for the NestJS API and private Next.js portal.
+    # Android remains on the separate Crashlytics path and managed proof is still required
+    # before the status register can promote Sentry to ACTIVE.
+    backend_sentry_dependencies = {dependency for dependency in backend_pkg if "sentry" in dependency.lower()}
+    portal_sentry_dependencies = {dependency for dependency in portal_pkg if "sentry" in dependency.lower()}
+    if backend_sentry_dependencies != {"@sentry/nestjs"}:
+        fail(f"unexpected backend Sentry dependency set: {sorted(backend_sentry_dependencies)}")
+    if portal_sentry_dependencies != {"@sentry/nextjs"}:
+        fail(f"unexpected portal Sentry dependency set: {sorted(portal_sentry_dependencies)}")
+
     for dependency in backend_pkg | portal_pkg:
         lowered = dependency.lower()
-        if "sentry" in lowered:
-            fail("Sentry SDK became runtime-active without reviewed privacy/runtime promotion")
         if lowered == "resend" or lowered.startswith("@resend/"):
             fail("Resend vendor SDK dependency entered runtime; RC1 requires the reviewed provider-neutral HTTP adapter")
         if "googlemaps" in lowered or "google-maps" in lowered:
@@ -195,8 +222,57 @@ def main() -> None:
         if "twilio" in lowered:
             fail("superseded Twilio integration became runtime-active")
 
-    require(reconciliation, "externally provisioned/runtime-unproven", "Maps/Sentry runtime truth")
-    require(status, "EXTERNALLY_PROVISIONED", "externally provisioned status vocabulary")
+    require(backend_sentry, "sendDefaultPii: false", "API Sentry PII default-off control")
+    require(backend_sentry, "tracesSampleRate: 0", "API Sentry tracing kill switch")
+    require(backend_sentry, "enableLogs: false", "API Sentry logs disabled control")
+    require(backend_sentry, "maxBreadcrumbs: 0", "API Sentry breadcrumb minimization")
+    require(backend_sentry, "includeLocalVariables: false", "API local-variable capture disabled")
+    require(backend_sentry, "delete event.user", "API Sentry user scrubbing")
+    require(backend_sentry, "delete event.extra", "API Sentry extra-data scrubbing")
+    require(backend_sentry_runtime, "DIREKT_DATA_MODE !== 'synthetic-only'", "API synthetic-only Sentry gate")
+    require(backend_sentry_runtime, "SENTRY_RELEASE", "API exact release binding")
+    require(backend_sentry_privacy, "[redacted-coordinates]", "API private-coordinate redaction")
+    require(backend_sentry_privacy, "[redacted-token]", "API credential redaction")
+    require(backend_sentry_canary, "DIREKT_SENTRY_API_OK", "API managed canary receipt")
+    require(backend_sentry_canary, "Sentry.flush(10_000)", "API managed canary flush")
+
+    require(portal_instrumentation, "captureRequestError", "portal server request-error instrumentation")
+    require(portal_sentry, "sendDefaultPii: false", "portal Sentry PII default-off control")
+    require(portal_sentry, "tracesSampleRate: 0", "portal Sentry tracing kill switch")
+    require(portal_sentry, "enableLogs: false", "portal Sentry logs disabled control")
+    require(portal_sentry, "maxBreadcrumbs: 0", "portal Sentry breadcrumb minimization")
+    require(portal_sentry, "includeLocalVariables: false", "portal local-variable capture disabled")
+    require(portal_sentry, "delete event.user", "portal Sentry user scrubbing")
+    require(portal_sentry, "delete event.extra", "portal Sentry extra-data scrubbing")
+    require(portal_sentry_runtime, "DIREKT_DATA_MODE !== 'synthetic-only'", "portal synthetic-only Sentry gate")
+    require(portal_sentry_runtime, "SENTRY_RELEASE", "portal exact release binding")
+    require(portal_sentry_privacy, "[redacted-coordinates]", "portal private-coordinate redaction")
+    require(portal_sentry_privacy, "[redacted-token]", "portal credential redaction")
+    require(portal_sentry_canary, "SENTRY_CANARY_ENABLED", "portal canary kill switch")
+    require(portal_sentry_canary, "DIREKT_SENTRY_PORTAL_OK", "portal managed canary receipt")
+    require(portal_sentry_canary, "Sentry.flush(10_000)", "portal managed canary flush")
+
+    for needle in (
+        "RUN-DIREKT-SENTRY-CANARY",
+        "direkt-sentry-api-canary",
+        "direkt-sentry-portal-canary",
+        "direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com",
+        "direkt-portal-runtime@direkt-dev-502701.iam.gserviceaccount.com",
+        "direkt-sentry-api-dsn",
+        "direkt-sentry-portal-dsn",
+        'DIREKT_DATA_MODE=synthetic-only',
+        'SENTRY_MODE=enabled',
+        "SENTRY_RELEASE=${SOURCE_SHA}",
+        "--max-retries 0",
+        "--no-allow-unauthenticated",
+        "direkt-sentry-auth-token",
+        "Sentry auth token must never bind",
+    ):
+        require(sentry_canary, needle, "managed Sentry canary invariant")
+    prohibit(sentry_canary, r"SENTRY_AUTH_TOKEN\s*=", "Sentry auth token runtime environment binding")
+    require(status, "Sentry API/portal", "Sentry status row")
+    require(status, "RUNTIME NOT PROVEN", "RC2 pre-canary status gate")
+    require(reconciliation, "externally provisioned/runtime-unproven", "historical Maps/Sentry reconciliation truth")
 
     # RC1 Resend: provider-neutral server adapter, synthetic-only runtime job and outbox semantics.
     require(backend_env, "EMAIL_PROVIDER_MODE", "email provider kill switch")
@@ -304,7 +380,7 @@ def main() -> None:
     print("firebase_auth=implemented_gated")
     print("firebase_app_distribution=active_internal")
     print("maps=external_runtime_unproven_manual_fallback_active")
-    print("sentry=external_runtime_unproven_cloud_monitoring_active")
+    print("sentry=implemented_gated_managed_canary_pending_cloud_logging_authoritative")
     print("resend=active_synthetic_only_managed_canary_real_participant_disabled")
     print("fcm=planned")
     print("whatsapp=planned_domain_handoff_only")
