@@ -106,6 +106,56 @@ jobs:
           echo "DIREKT_FIREBASE_APP_ID=${CONFIG_APP_ID}" >> "${GITHUB_ENV}"
           echo "DIREKT_FIREBASE_PROJECT_ID=${CONFIG_PROJECT_ID}" >> "${GITHUB_ENV}"
 
+      - name: Establish read-only Crashlytics Events API boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! gcloud services list \
+            --project "${GCP_PROJECT_ID}" \
+            --enabled \
+            --filter='config.name:firebasecrashlytics.googleapis.com' \
+            --format='value(config.name)' | grep -Fxq 'firebasecrashlytics.googleapis.com'; then
+            gcloud services enable firebasecrashlytics.googleapis.com \
+              --project "${GCP_PROJECT_ID}" \
+              --quiet
+          fi
+
+          gcloud projects add-iam-policy-binding "${GCP_PROJECT_ID}" \
+            --member "serviceAccount:${GCP_SERVICE_ACCOUNT}" \
+            --role roles/firebasecrashlytics.viewer \
+            --condition=None \
+            --quiet >/dev/null
+
+          token="$(gcloud auth print-access-token)"
+          echo "::add-mask::${token}"
+          encoded_app_id="$(jq -rn --arg value "${DIREKT_FIREBASE_APP_ID}" '$value|@uri')"
+          events_url="https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_ID}/apps/${encoded_app_id}/events"
+          http_code="$(curl --silent --show-error --get \
+            --output "${RUNNER_TEMP}/rc3-events-api-preflight.json" \
+            --write-out '%{http_code}' \
+            --header "Authorization: Bearer ${token}" \
+            --data-urlencode 'pageSize=1' \
+            --data-urlencode 'readMask=name,eventId,receivedTime' \
+            "${events_url}")"
+
+          if [[ "${http_code}" != "200" ]]; then
+            jq -n \
+              --arg http "${http_code}" \
+              --arg code "$(jq -r '.error.code // empty' "${RUNNER_TEMP}/rc3-events-api-preflight.json" 2>/dev/null || true)" \
+              --arg status "$(jq -r '.error.status // empty' "${RUNNER_TEMP}/rc3-events-api-preflight.json" 2>/dev/null || true)" \
+              '{httpStatus:$http,errorCode:($code|select(length>0)),errorStatus:($status|select(length>0))}' \
+              > "${RUNNER_TEMP}/rc3-events-api-preflight-receipt.json"
+            cat "${RUNNER_TEMP}/rc3-events-api-preflight-receipt.json" >&2
+            exit 1
+          fi
+
+          jq -n \
+            --arg http "${http_code}" \
+            --arg role "roles/firebasecrashlytics.viewer" \
+            '{httpStatus:$http,readBoundary:"PASS",role:$role}' \
+            > "${RUNNER_TEMP}/rc3-events-api-preflight-receipt.json"
+
       - name: Set up Java 17
         uses: actions/setup-java@v5
         with:
@@ -305,6 +355,7 @@ jobs:
         with:
           name: direkt-rc3-crashlytics-canary-${{ github.run_number }}-${{ inputs.source_sha }}
           path: |
+            ${{ runner.temp }}/rc3-events-api-preflight-receipt.json
             ${{ runner.temp }}/rc3-crash-upload.log
             ${{ runner.temp }}/rc3-crash-event-receipt.json
             ${{ runner.temp }}/rc3-anr-system.log
@@ -322,6 +373,7 @@ jobs:
             echo "- Source: \`${SOURCE_SHA}\`"
             echo "- Package: \`${FIREBASE_PACKAGE_NAME}\`"
             echo "- Data mode: \`synthetic-only\`"
+            echo "- Crashlytics Events API read boundary: \`PASS\`"
             echo "- Fatal crash OS termination: \`PASS\`"
             echo "- Fatal crash DataTransport handoff: \`PASS\`"
             echo "- Fatal crash server-processed Crashlytics event: \`PASS\`"
