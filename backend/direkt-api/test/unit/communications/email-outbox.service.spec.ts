@@ -89,6 +89,39 @@ describe('EmailOutboxService', () => {
     expect(JSON.stringify(failureCall?.[1])).not.toContain('provider detail');
   });
 
+  it('terminally rejects an outbox payload outside the synthetic template boundary', async () => {
+    const database = databaseWithRows([
+      [],
+      [
+        {
+          id: EVENT_ID,
+          payload: {
+            templateKey: 'unapproved_template',
+            to: 'person@example.com',
+            dataClassification: 'synthetic',
+          },
+          attempts: 1,
+        },
+      ],
+      [],
+    ]);
+    const provider: EmailProviderPort = {
+      provider: 'resend',
+      send: vi.fn(),
+    };
+    const service = new EmailOutboxService(database, config(), provider);
+
+    await expect(service.processEvent(EVENT_ID)).rejects.toMatchObject({
+      name: 'EmailOutboxPayloadRejectedError',
+    });
+
+    expect(provider.send).not.toHaveBeenCalled();
+    const query = vi.mocked(database.query);
+    const failureCall = query.mock.calls[2];
+    expect(failureCall?.[1]?.[1]).toBe('payload_rejected');
+    expect(failureCall?.[1]?.[2]).toBe(true);
+  });
+
   it('does not claim or deliver events while the email kill switch is disabled', async () => {
     const database = databaseWithRows([]);
     const provider: EmailProviderPort = {
