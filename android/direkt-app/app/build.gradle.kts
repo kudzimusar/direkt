@@ -21,7 +21,6 @@ abstract class VerifyReleaseArtifactSigningContract : DefaultTask() {
     fun verifyContract() {
         val channel = configuredReleaseChannel.get()
         val signingEnabled = configuredSigningEnabled.get()
-
         if (channel == "preauthorization") {
             require(!signingEnabled) {
                 "Preauthorization release artifacts must remain unsigned"
@@ -144,6 +143,36 @@ val pilotNoticeVersion = providers.gradleProperty("DIREKT_PILOT_NOTICE_VERSION")
     .orElse(providers.environmentVariable("DIREKT_PILOT_NOTICE_VERSION"))
     .orElse("")
     .get()
+val crashlyticsMode = providers.gradleProperty("DIREKT_CRASHLYTICS_MODE")
+    .orElse(providers.environmentVariable("DIREKT_CRASHLYTICS_MODE"))
+    .orElse("disabled")
+    .get()
+    .trim()
+val crashlyticsRelease = providers.gradleProperty("DIREKT_CRASHLYTICS_RELEASE")
+    .orElse(providers.environmentVariable("DIREKT_CRASHLYTICS_RELEASE"))
+    .orElse("")
+    .get()
+    .trim()
+
+require(crashlyticsMode in setOf("disabled", "synthetic-canary")) {
+    "DIREKT_CRASHLYTICS_MODE must be disabled or synthetic-canary"
+}
+if (crashlyticsMode == "synthetic-canary") {
+    require(releaseChannel == "preauthorization") {
+        "Crashlytics synthetic canary is allowed only on the preauthorization release channel"
+    }
+    require(Regex("^[0-9a-f]{40}$").matches(crashlyticsRelease)) {
+        "DIREKT_CRASHLYTICS_RELEASE must be an exact lowercase 40-character source SHA"
+    }
+    require(firebaseApiKey.isNotBlank() && firebaseAppId.isNotBlank() && firebaseProjectId.isNotBlank()) {
+        "Crashlytics synthetic canary requires the exact Firebase Android app configuration"
+    }
+    // The repository never stores google-services.json. The managed canary materializes the
+    // exact Firebase Android app config ephemerally before Gradle runs, then these official
+    // plugins generate the Crashlytics build metadata for that one synthetic build only.
+    pluginManager.apply("com.google.gms.google-services")
+    pluginManager.apply("com.google.firebase.crashlytics")
+}
 
 android {
     namespace = "com.kudzimusar.direkt"
@@ -176,6 +205,8 @@ android {
         buildConfigField("String", "DIREKT_FIREBASE_APP_ID", quotedBuildConfig(firebaseAppId))
         buildConfigField("String", "DIREKT_FIREBASE_PROJECT_ID", quotedBuildConfig(firebaseProjectId))
         buildConfigField("String", "DIREKT_PILOT_NOTICE_VERSION", quotedBuildConfig(pilotNoticeVersion))
+        buildConfigField("String", "DIREKT_CRASHLYTICS_MODE", quotedBuildConfig(crashlyticsMode))
+        buildConfigField("String", "DIREKT_CRASHLYTICS_RELEASE", quotedBuildConfig(crashlyticsRelease))
     }
 
     buildTypes {
@@ -253,6 +284,7 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.crashlytics)
 
     testImplementation(libs.junit)
 
