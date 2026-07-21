@@ -1,0 +1,49 @@
+name: DIREKT functional web W8 canonical domain verification
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/functional-pwa-w8-canonical-domain.yml"
+      - "scripts/w8-canonical-domain-verify.sh"
+      - "docs/web/W8_CONTROLLED_CUTOVER_CHECKPOINT.md"
+      - "WORKSTREAM_LOCK.md"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify canonical W8 app host and preserved preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      WEB_URL: https://app.direkt.forum
+      PREVIEW_URL: https://direkt.forum/preview/
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+
+      - name: Verify immutable reviewed source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
+
+      - name: Verify canonical domain DNS TLS runtime PWA BFF session privacy and preview
+        id: canonical_evidence
+        shell: bash
+        run: bash scripts/w8-canonical-domain-verify.sh
+
+      - name: Upload sanitized canonical-domain evidence
+        if: always() && steps.canonical_evidence.conclusion == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-w8-canonical-domain-${{ env.SOURCE_SHA }}
+          path: ${{ runner.temp }}/w8-canonical-domain-evidence.json
+          if-no-files-found: error
+          retention-days: 14
