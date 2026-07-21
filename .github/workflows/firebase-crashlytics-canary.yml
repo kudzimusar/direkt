@@ -170,7 +170,21 @@ jobs:
             sleep 1
           done
           ! "${ADB_BIN}" shell pidof "${FIREBASE_PACKAGE_NAME}" >/dev/null 2>&1
+
+          # Let Android finish the default uncaught-exception teardown before launching the
+          # dedicated flush process. Prior managed evidence shows the cached report is delivered
+          # reliably once this clean second process starts with Crashlytics settings available.
+          sleep 5
+          "${ADB_BIN}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
+          "${ADB_BIN}" logcat -c
           "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary flush >/dev/null
+          flush_started=false
+          for _ in $(seq 1 20); do
+            if "${ADB_BIN}" shell pidof "${FIREBASE_PACKAGE_NAME}" >/dev/null 2>&1; then flush_started=true; break; fi
+            sleep 1
+          done
+          test "${flush_started}" = "true"
+
           delivered=false
           for _ in $(seq 1 60); do
             "${ADB_BIN}" logcat -d -s FirebaseCrashlytics > "${RUNNER_TEMP}/rc3-crash-upload.log" || true
@@ -199,6 +213,13 @@ jobs:
           "${ADB_BIN}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
           "${ADB_BIN}" logcat -c
           "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary flush >/dev/null
+          flush_started=false
+          for _ in $(seq 1 20); do
+            if "${ADB_BIN}" shell pidof "${FIREBASE_PACKAGE_NAME}" >/dev/null 2>&1; then flush_started=true; break; fi
+            sleep 1
+          done
+          test "${flush_started}" = "true"
+
           delivered=false
           for _ in $(seq 1 60); do
             "${ADB_BIN}" logcat -d -s FirebaseCrashlytics > "${RUNNER_TEMP}/rc3-anr-upload.log" || true
