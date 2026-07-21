@@ -103,6 +103,18 @@ com.kudzimusar.direkt.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 
 No dangerous runtime permission prompt is currently introduced by these declarations. Location, camera, contacts, SMS/call-log, broad storage/media, microphone and notification runtime permissions remain absent.
 
+## AI provider foundation
+
+| Integration | State | Current role |
+|---|---|---|
+| Provider-neutral backend AI contract | **IMPLEMENTED_GATED** | Gemini primary + Groq fallback adapters with synthetic-only input classification, bounded timeout/failover and explicit non-authoritative AI boundary. |
+| Gemini Developer API | **SANDBOX_PROVEN / RUNTIME NOT BOUND** | Synthetic HTTP 200 canary returned `DIREKT_AI_OK`; `direkt-gemini-dev-api-key` version 1 enabled in Secret Manager. |
+| Groq open-model fallback | **SANDBOX_PROVEN / RUNTIME NOT BOUND** | Synthetic HTTP 200 canary returned `DIREKT_GROQ_OK`; `direkt-groq-dev-api-key` version 1 enabled in Secret Manager. |
+| Ollama | **PLANNED LOCAL FALLBACK** | Optional no-key local/offline development path; not deployed to Cloud Run. |
+| Production AI | **DISABLED** | AI may not become authority for verification, trust/ranking/publication, payments/escrow, disputes, consent or authorization. |
+
+AI0 proves provider access and the fail-closed backend abstraction, not active DIREKT runtime use. No AI key is placed in Android/browser code, and external/free-tier AI remains synthetic/non-sensitive only until a separate privacy/data-use/legal gate authorizes otherwise.
+
 ## Location and maps
 
 | Integration | State | Current role |
@@ -119,7 +131,7 @@ Maps becomes ACTIVE only after restricted credentials, source integration, priva
 | Integration | State | Current role |
 |---|---|---|
 | Transactional outbox | **ACTIVE domain foundation** | Durable asynchronous-event foundation. |
-| Resend | **EXTERNALLY_PROVISIONED** | Preferred email direction; runtime app-event delivery not yet proven. |
+| Resend | **EXTERNALLY_PROVISIONED / RC1 PREFLIGHT PROVEN** | `notify.direkt.forum` verified and `direkt-resend-api-key` version 1 enabled. Runtime app-event delivery is not yet proven. |
 | Brevo | **SUPERSEDED** | Historical preferred email provider. |
 | Firebase phone OTP | **IMPLEMENTED_GATED** | Current pilot phone-possession direction. |
 | Twilio Verify | **SUPERSEDED** | Earlier OTP candidate. |
@@ -127,7 +139,7 @@ Maps becomes ACTIVE only after restricted credentials, source integration, priva
 | FCM push | **PLANNED** | Future event delivery/runtime closure. |
 | Cloud Tasks / Pub/Sub / Scheduler | **PLANNED** | Add only when real retry/fan-out/scheduling needs justify them. |
 
-Resend remains EXTERNALLY_PROVISIONED until an application adapter, runtime secret attachment, outbox/idempotency/retry behavior, privacy/template controls and managed delivery canary exist.
+Resend remains non-ACTIVE until an application adapter, runtime secret attachment, outbox/idempotency/retry behavior, privacy/template controls and managed synthetic delivery canary exist.
 
 ## Observability
 
@@ -215,6 +227,8 @@ AI output cannot create payment authority or substitute for registry/verificatio
 W8 is **CLOSED**. The canonical functional browser host passed independent exact-head verification in workflow run `29802524466`; the W0–W8 implementation claim is released.
 
 Issue #261 now governs sequential runtime-integration closure. `WORKSTREAM_LOCK.md` and `RUNTIME_INTEGRATION_CLOSURE_PLAN.md` define the current dependency-safe order. `LIVE_INTEGRATION_LEDGER.md` is the mandatory cross-agent receipt ledger.
+
+AI0 under Issue #264 is the owner-authorized provider-neutral AI foundation immediately after RC0. Its provider/API evidence and source implementation are gated rather than ACTIVE; RC1 Resend follows after AI0 promotion.
 
 VC0 visual audit/design-control work under Issue #259 remains non-overlapping design/audit work. Broad visual implementation requires separate owner approval and must not overlap claimed runtime-integration surfaces.
 

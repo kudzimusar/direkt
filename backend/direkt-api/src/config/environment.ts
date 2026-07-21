@@ -4,6 +4,8 @@ export type NodeEnvironment = 'development' | 'test' | 'production';
 export type EvidenceStorageProvider = 'synthetic' | 'supabase';
 export type PaymentProviderMode = 'synthetic' | 'disabled';
 export type FirebaseAuthMode = 'disabled' | 'firebase';
+export type AiProviderMode = 'disabled' | 'gemini';
+export type AiFallbackProviderMode = 'disabled' | 'groq';
 export type DirektTrafficMode = 'disabled' | 'internal' | 'synthetic-public' | 'controlled-pilot';
 export type DirektDataMode = 'synthetic-only' | 'controlled-pilot' | 'production';
 export type DirektDeploymentEnvironment =
@@ -45,10 +47,20 @@ export interface DirektEnvironment {
   SUPABASE_SYSTEM_EXPORTS_BUCKET: string;
   PAYMENT_PROVIDER_MODE: PaymentProviderMode;
   PAYMENT_SYNTHETIC_WEBHOOK_SECRET?: string;
+  AI_PROVIDER_MODE: AiProviderMode;
+  AI_FALLBACK_PROVIDER: AiFallbackProviderMode;
+  AI_GEMINI_API_KEY?: string;
+  AI_GEMINI_MODEL: string;
+  AI_GROQ_API_KEY?: string;
+  AI_GROQ_MODEL: string;
+  AI_REQUEST_TIMEOUT_MS: number;
+  AI_MAX_INPUT_CHARS: number;
 }
 
 const databaseUrlSchema = Joi.string().uri({ scheme: ['postgresql', 'postgres'] });
 const longSecret = Joi.string().min(64).max(512);
+const providerApiKey = Joi.string().trim().min(20).max(4096);
+const providerModelName = Joi.string().trim().min(3).max(160);
 const supabaseServerKey = Joi.string().min(20).max(2048);
 const bucketName = Joi.string().pattern(/^[a-z0-9][a-z0-9-]{1,62}$/);
 const firebaseProjectId = Joi.string().pattern(/^[a-z][a-z0-9-]{4,29}$/);
@@ -170,6 +182,26 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     ),
     otherwise: Joi.optional(),
   }),
+  AI_PROVIDER_MODE: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.valid('disabled').default('disabled'),
+    otherwise: Joi.valid('disabled', 'gemini').default('disabled'),
+  }),
+  AI_FALLBACK_PROVIDER: Joi.string().valid('disabled', 'groq').default('disabled'),
+  AI_GEMINI_API_KEY: providerApiKey.when('AI_PROVIDER_MODE', {
+    is: 'gemini',
+    then: providerApiKey.required(),
+    otherwise: providerApiKey.optional(),
+  }),
+  AI_GEMINI_MODEL: providerModelName.default('gemini-3.5-flash'),
+  AI_GROQ_API_KEY: providerApiKey.when('AI_FALLBACK_PROVIDER', {
+    is: 'groq',
+    then: providerApiKey.required(),
+    otherwise: providerApiKey.optional(),
+  }),
+  AI_GROQ_MODEL: providerModelName.default('openai/gpt-oss-20b'),
+  AI_REQUEST_TIMEOUT_MS: Joi.number().integer().min(1000).max(30000).default(8000),
+  AI_MAX_INPUT_CHARS: Joi.number().integer().min(256).max(20000).default(8000),
 }).custom((value: DirektEnvironment, helpers) => {
   if (
     value.EVIDENCE_STORAGE_PROVIDER === 'supabase' &&
@@ -183,6 +215,22 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
   if (value.NODE_ENV === 'production' && value.PAYMENT_PROVIDER_MODE !== 'disabled') {
     return helpers.message({
       custom: 'Production payment provider mode must remain disabled until a later approval gate.',
+    });
+  }
+  if (value.NODE_ENV === 'production' && value.AI_PROVIDER_MODE !== 'disabled') {
+    return helpers.message({
+      custom:
+        'Production AI provider mode must remain disabled until a later privacy and release gate.',
+    });
+  }
+  if (value.AI_PROVIDER_MODE !== 'disabled' && value.DIREKT_DATA_MODE !== 'synthetic-only') {
+    return helpers.message({
+      custom: 'AI provider activation currently permits synthetic-only data mode.',
+    });
+  }
+  if (value.AI_FALLBACK_PROVIDER !== 'disabled' && value.AI_PROVIDER_MODE === 'disabled') {
+    return helpers.message({
+      custom: 'AI fallback provider cannot be enabled while the primary AI provider is disabled.',
     });
   }
   if (
@@ -250,6 +298,12 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
       return helpers.message({
         custom:
           'Controlled-pilot data mode requires payments to remain disabled until separately approved.',
+      });
+    }
+    if (value.AI_PROVIDER_MODE !== 'disabled') {
+      return helpers.message({
+        custom:
+          'Controlled-pilot data mode requires AI providers to remain disabled until separately approved.',
       });
     }
     if (!['disabled', 'controlled-pilot'].includes(value.DIREKT_TRAFFIC_MODE)) {

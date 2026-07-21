@@ -54,6 +54,19 @@ No account, key, secret or dashboard project becomes `ACTIVE` by existence alone
 | Operations portal | `ACTIVE private staging` | Privileged operator UI through the API. |
 | Native Android | `ACTIVE implementation` | Primary customer/provider native client. |
 
+## AI provider foundation
+
+| Integration | State | Evidence / boundary |
+|---|---|---|
+| Provider-neutral `AiProvider` backend contract | `IMPLEMENTED_GATED` | Gemini primary and Groq fallback adapters, synthetic-only input gate, bounded timeout/failover and non-authoritative AI rules implemented under Issue #264 / PR #265. |
+| Gemini Developer API | `SANDBOX_PROVEN / RUNTIME NOT BOUND` | Synthetic canary returned HTTP 200 with `DIREKT_AI_OK`; server-only secret `direkt-gemini-dev-api-key` version 1 is enabled. |
+| Groq hosted open-model fallback | `SANDBOX_PROVEN / RUNTIME NOT BOUND` | Synthetic canary returned HTTP 200 with `DIREKT_GROQ_OK`; server-only secret `direkt-groq-dev-api-key` version 1 is enabled. |
+| Ollama local fallback | `PLANNED / LOCAL ONLY` | No-key developer/offline fallback; not a Cloud Run dependency. |
+| OpenRouter free router | `PLANNED / OPTIONAL` | Development/emergency candidate only; not a core production dependency. |
+| Production AI | `DISABLED` | No real participant data or authoritative trust/payment/dispute/publication decision may be delegated to AI. |
+
+AI0 does **not** mark an AI provider `ACTIVE`: the proven API canaries were synthetic external checks, not a DIREKT Cloud Run runtime binding. AI remains fail-closed by default. Free-tier/external AI providers may receive only synthetic/non-sensitive data until privacy/data-use/legal review explicitly authorizes a broader boundary.
+
 ## Payment integration programme
 
 ### Approved initial business scope
@@ -167,7 +180,7 @@ No payment provider secret is attached to Cloud Run until adapter/config/runtime
 | Integration | State | Runtime closure required |
 |---|---|---|
 | Transactional outbox | `ACTIVE` | Canonical asynchronous delivery source of truth. |
-| Resend | `EXTERNALLY_PROVISIONED` | Application adapter, Secret Manager binding, outbox consumer, idempotency/retry, templates/privacy, managed canary. |
+| Resend | `EXTERNALLY_PROVISIONED / RC1 PREFLIGHT PROVEN` | `notify.direkt.forum` verified; `direkt-resend-api-key` version 1 enabled. Still requires application adapter, runtime Secret Manager binding, outbox consumer, idempotency/retry, templates/privacy and managed synthetic delivery canary before `ACTIVE`. |
 | Firebase phone OTP | `IMPLEMENTED_GATED` | Real approved participant path, OTP canary, abuse/rate-limit/privacy/legal evidence. |
 | FCM | `PLANNED` | Server send path, device-token lifecycle, Android handling/permission UX, retries/privacy/canary. |
 | WhatsApp Cloud API | `EXTERNALLY CONFIGURED / RUNTIME GATED` | Runtime adapter, approved templates/phone identity where needed, consent-at-send, opt-out, idempotency, receipts/retries/privacy controls. |
@@ -218,18 +231,19 @@ Never send raw evidence, auth tokens, cookies, contact data, exact private coord
 
 The authoritative sequence is maintained in `WORKSTREAM_LOCK.md` and `RUNTIME_INTEGRATION_CLOSURE_PLAN.md`. At this checkpoint:
 
-1. RC0 ledger/audit/permanent-gate sanity/payment evidence reconciliation.
-2. Resend.
-3. Sentry API/portal.
-4. Crashlytics Android.
-5. FCM.
-6. Firebase Test Lab.
-7. WhatsApp runtime adapter.
-8. Google Maps runtime.
-9. Sandbox-only payment adapters/evidence reconciliation.
-10. OpenAPI generated Kotlin/TypeScript client adoption decision/migration.
-11. Turnstile only if justified.
-12. Full combined regression and lane release.
+1. RC0 ledger/audit/permanent-gate sanity/payment evidence reconciliation — **CLOSED** in PR #263.
+2. AI0 provider-neutral AI foundation — **CLOSING** in PR #265; Gemini/Groq canaries and secrets proven, source implemented, runtime remains gated.
+3. RC1 Resend — preflight proven; source/runtime closure next.
+4. RC2 Sentry API/portal.
+5. RC3 Crashlytics Android.
+6. RC4 FCM.
+7. RC5 Firebase Test Lab.
+8. RC6 WhatsApp runtime adapter.
+9. RC7 Google Maps runtime.
+10. RC8 sandbox-only payment adapters/evidence reconciliation.
+11. RC9 OpenAPI generated Kotlin/TypeScript client adoption decision/migration.
+12. RC10 Turnstile only if justified.
+13. RC11 full combined regression and lane release.
 
 Airtel is revisited immediately when provider approval arrives. Flutterwave remains deferred until onboarding reopens.
 
