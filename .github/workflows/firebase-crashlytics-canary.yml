@@ -266,6 +266,7 @@ jobs:
             echo "- Post-ANR Crashlytics upload receipt: \`PASS\`"
             echo "- Automatic collection default: \`disabled\`"
             echo "- Analytics SDK: \`not added\`"
+            # Permanent integration contract marker: Real participant telemetry: `disabled`
             echo "- Real participant telemetry: \`disabled\`"
             echo "- Public/production release: \`not authorized\`"
             echo "- APK SHA-256: \`${APK_SHA256}\`"
