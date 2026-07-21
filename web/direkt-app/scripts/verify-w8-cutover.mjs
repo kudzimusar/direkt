@@ -14,6 +14,8 @@ const [
   cleanup,
   managedWorkflow,
   mainTrigger,
+  canonicalVerify,
+  canonicalWorkflow,
   checkpoint,
   lock,
 ] = await Promise.all([
@@ -25,6 +27,8 @@ const [
   read("scripts/w8-managed-cutover-cleanup.sh"),
   read(".github/workflows/functional-pwa-w8-managed-cutover.yml"),
   read(".github/workflows/functional-pwa-w8-main-trigger.yml"),
+  read("scripts/w8-canonical-domain-verify.sh"),
+  read(".github/workflows/functional-pwa-w8-canonical-domain.yml"),
   read("docs/web/W8_CONTROLLED_CUTOVER_CHECKPOINT.md"),
   read("WORKSTREAM_LOCK.md"),
 ]);
@@ -131,20 +135,48 @@ requireMarkers(mainTrigger, [
   "publicWebUrl",
   "direkt-w8-main-public-web-result",
 ]);
+requireMarkers(canonicalVerify, [
+  "https://app.direkt.forum",
+  "https://direkt.forum/preview/",
+  "getent ahosts",
+  "manifest.webmanifest",
+  "/sw.js",
+  "/offline",
+  "/api/discovery/categories",
+  "/api/auth/bootstrap",
+  'test "${provider_status}" = "401"',
+  'test "${customer_status}" = "401"',
+  "canonicalCustomDomainVerified:true",
+  "realParticipantActivation:false",
+  "externalPaymentActivation:false",
+  "formalProductionRelease:false",
+]);
+requireMarkers(canonicalWorkflow, [
+  "DIREKT functional web W8 canonical domain verification",
+  "Verify canonical W8 app host and preserved preview",
+  "Verify immutable reviewed source",
+  "Verify canonical domain DNS TLS runtime PWA BFF session privacy and preview",
+  "scripts/w8-canonical-domain-verify.sh",
+  "direkt-w8-canonical-domain-",
+  "if-no-files-found: error",
+]);
 requireMarkers(checkpoint, [
-  "**Status:** IMPLEMENTING",
-  "dedicated least-privilege runtime identity",
-  "does **not** by itself close W8",
-  "Canonical-domain closure still required",
+  "**Status:** CLOSED",
+  "https://app.direkt.forum",
+  "## Canonical-domain closure — PASS",
+  "canonicalCustomDomainVerified:true",
+  "**Decision: W8 CLOSED.**",
 ]);
 requireMarkers(lock, [
+  "Status | RELEASED",
   "W8 — controlled route/deployment cutover",
-  "dedicated least-privilege customer/provider web runtime identity",
-  "synthetic `/app/` review surface",
+  "dedicated least-privilege runtime identity",
+  "https://app.direkt.forum",
+  "W8 implementation claim is **RELEASED**",
 ]);
 
-const permanentRuntimeFiles = [prepare, managedWorkflow, checkpoint, lock].join("\n");
-const executableRuntimeFiles = [prepare, exercise, cleanup, managedWorkflow, mainTrigger].join("\n");
+const permanentRuntimeFiles = [prepare, managedWorkflow, canonicalVerify, canonicalWorkflow, checkpoint, lock].join("\n");
+const executableRuntimeFiles = [prepare, exercise, cleanup, managedWorkflow, mainTrigger, canonicalVerify, canonicalWorkflow].join("\n");
 if (permanentRuntimeFiles.includes("direkt-portal-runtime@")) {
   throw new Error("W8 permanent public web cutover must not reuse the operations-portal runtime identity");
 }
@@ -181,7 +213,7 @@ requireMarkers(prepare, [
   "deploy) deploy_web ;;",
   "origin) pin_origin ;;",
   "verify) verify_iam ;;",
-  "select(. == \"allUsers\" or . == \"allAuthenticatedUsers\")",
+  'select(. == "allUsers" or . == "allAuthenticatedUsers")',
   "| length == 0",
 ]);
 requireMarkers(exercise, [
@@ -222,7 +254,9 @@ process.stdout.write(`${JSON.stringify({
   failClosedRollback: true,
   exactMainSourceDispatch: true,
   publicUiEvidenceArtifactRequired: true,
-  canonicalDomainStillEvidenceGated: true,
+  canonicalDomainEvidencePassed: true,
+  canonicalDomainStillEvidenceGated: false,
+  w8Closed: true,
   realParticipantAndProductionGatesRetained: true,
 })}\n`);
 
