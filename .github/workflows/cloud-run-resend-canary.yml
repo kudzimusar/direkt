@@ -1,0 +1,232 @@
+name: DIREKT managed Resend synthetic canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN-DIREKT-RESEND-CANARY to continue
+        required: true
+        type: string
+      source_sha:
+        description: Exact reviewed DIREKT commit already merged to main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: direkt-managed-resend-canary
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    name: Build and execute synthetic outbox-to-Resend canary
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_REGION: asia-northeast1
+      GCP_ARTIFACT_REGISTRY: direkt-containers
+      GCP_IMAGE_NAME: direkt-api
+      GCP_CANARY_JOB: direkt-resend-canary
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_RUNTIME_SERVICE_ACCOUNT: direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com
+
+    steps:
+      - name: Validate canary controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ inputs.confirmation }}" = "RUN-DIREKT-RESEND-CANARY"
+          [[ "${{ inputs.source_sha }}" =~ ^[0-9a-f]{40}$ ]]
+
+      - name: Check out exact reviewed source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify source identity and main ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          test "${SOURCE_SHA}" = "${{ inputs.source_sha }}"
+          git fetch origin main --no-tags
+          if ! git merge-base --is-ancestor "${SOURCE_SHA}" origin/main; then
+            echo "::error title=Unmerged canary source::The selected source commit is not an ancestor of origin/main."
+            exit 1
+          fi
+          echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
+          echo "IMAGE_URI=${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/${GCP_IMAGE_NAME}:${SOURCE_SHA}" >> "${GITHUB_ENV}"
+
+      - name: Verify exact backend source
+        working-directory: backend/direkt-api
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npm run format:check
+          npm run lint
+          npm run typecheck
+          npm run migration:check
+          npm run test
+          npm run build
+          npm run openapi:check
+
+      - name: Authenticate to Google Cloud through GitHub OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Resolve enabled numeric Secret Manager versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          mappings=(
+            "DIREKT_DATABASE_URL_SECRET_VERSION:direkt-database-url"
+            "DIREKT_RESEND_API_KEY_SECRET_VERSION:direkt-resend-api-key"
+          )
+
+          for mapping in "${mappings[@]}"; do
+            variable_name="${mapping%%:*}"
+            secret_name="${mapping#*:}"
+            record="$(gcloud secrets versions describe latest \
+              --secret "${secret_name}" \
+              --project "${GCP_PROJECT_ID}" \
+              --format=json)"
+            version="$(jq -r '.name | split("/") | last' <<< "${record}")"
+            state="$(jq -r '.state' <<< "${record}")"
+            if [[ ! "${version}" =~ ^[1-9][0-9]*$ ]] || [[ "${state}" != "ENABLED" ]]; then
+              echo "::error title=Enabled secret version missing::${secret_name} did not resolve to an enabled numeric version."
+              exit 1
+            fi
+            echo "${variable_name}=${version}" >> "${GITHUB_ENV}"
+            echo "- ${secret_name}: version ${version}" >> "${GITHUB_STEP_SUMMARY}"
+          done
+
+      - name: Configure Artifact Registry authentication
+        shell: bash
+        run: gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+
+      - name: Build and push immutable canary image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build \
+            --file backend/direkt-api/Dockerfile \
+            --tag "${IMAGE_URI}" \
+            backend/direkt-api
+          docker push "${IMAGE_URI}"
+
+      - name: Write bounded synthetic canary configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "${RUNNER_TEMP}/direkt-resend-canary-env.yaml" <<'EOF'
+          NODE_ENV: "development"
+          LOG_LEVEL: "info"
+          DIREKT_ENVIRONMENT: "staging"
+          DIREKT_DATA_MODE: "synthetic-only"
+          DIREKT_TRAFFIC_MODE: "internal"
+          RATE_LIMITS_ENABLED: "false"
+          EVIDENCE_STORAGE_PROVIDER: "synthetic"
+          PAYMENT_PROVIDER_MODE: "disabled"
+          AI_PROVIDER_MODE: "disabled"
+          AI_FALLBACK_PROVIDER: "disabled"
+          EMAIL_PROVIDER_MODE: "resend"
+          EMAIL_FROM_ADDRESS: "DIREKT <canary@notify.direkt.forum>"
+          EMAIL_REQUEST_TIMEOUT_MS: "8000"
+          EMAIL_MAX_ATTEMPTS: "4"
+          EMAIL_OUTBOX_LOCK_TIMEOUT_MS: "300000"
+          EOF
+
+      - name: Deploy private synthetic Resend canary job
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run jobs deploy "${GCP_CANARY_JOB}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --image "${IMAGE_URI}" \
+            --service-account "${GCP_RUNTIME_SERVICE_ACCOUNT}" \
+            --tasks 1 \
+            --max-retries 0 \
+            --task-timeout 2m \
+            --cpu 1 \
+            --memory 512Mi \
+            --command node \
+            --args dist/communications/resend-canary.js \
+            --env-vars-file "${RUNNER_TEMP}/direkt-resend-canary-env.yaml" \
+            --set-secrets "DATABASE_URL=direkt-database-url:${DIREKT_DATABASE_URL_SECRET_VERSION},EMAIL_RESEND_API_KEY=direkt-resend-api-key:${DIREKT_RESEND_API_KEY_SECRET_VERSION}" \
+            --labels "direkt-environment=staging,direkt-data-mode=synthetic-only,direkt-integration=resend-canary" \
+            --quiet
+
+      - name: Verify deployed job secret and identity contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run jobs describe "${GCP_CANARY_JOB}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --format=export > "${RUNNER_TEMP}/direkt-resend-canary-job.yaml"
+
+          grep -Fq "${GCP_RUNTIME_SERVICE_ACCOUNT}" "${RUNNER_TEMP}/direkt-resend-canary-job.yaml"
+          grep -Fq "direkt-database-url" "${RUNNER_TEMP}/direkt-resend-canary-job.yaml"
+          grep -Fq "direkt-resend-api-key" "${RUNNER_TEMP}/direkt-resend-canary-job.yaml"
+          grep -Fq "EMAIL_PROVIDER_MODE" "${RUNNER_TEMP}/direkt-resend-canary-job.yaml"
+          grep -Fq "notify.direkt.forum" "${RUNNER_TEMP}/direkt-resend-canary-job.yaml"
+          if grep -Eq 'key:[[:space:]]*["'"']?latest["'"']?' "${RUNNER_TEMP}/direkt-resend-canary-job.yaml"; then
+            echo "::error title=Unpinned canary secret::Cloud Run Job contains a latest secret reference."
+            exit 1
+          fi
+
+      - name: Execute managed outbox-to-Resend canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run jobs execute "${GCP_CANARY_JOB}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --wait \
+            --quiet
+
+          EXECUTION_NAME="$(gcloud run jobs executions describe-latest \
+            --job "${GCP_CANARY_JOB}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --format='value(metadata.name)')"
+          test -n "${EXECUTION_NAME}"
+          echo "EXECUTION_NAME=${EXECUTION_NAME}" >> "${GITHUB_ENV}"
+
+      - name: Publish sanitized canary summary
+        shell: bash
+        run: |
+          {
+            echo "### DIREKT managed Resend synthetic canary"
+            echo "- Source: \`${SOURCE_SHA}\`"
+            echo "- Image: \`${IMAGE_URI}\`"
+            echo "- Project: \`${GCP_PROJECT_ID}\`"
+            echo "- Region: \`${GCP_REGION}\`"
+            echo "- Job: \`${GCP_CANARY_JOB}\`"
+            echo "- Execution: \`${EXECUTION_NAME}\`"
+            echo "- Runtime identity: \`${GCP_RUNTIME_SERVICE_ACCOUNT}\`"
+            echo "- Data mode: \`synthetic-only\`"
+            echo "- Recipient: Resend delivered test sink"
+            echo "- Sender domain: \`notify.direkt.forum\`"
+            echo "- Secret references: enabled numeric versions only"
+            echo "- Outbox → Resend canary: passed"
+            echo "- Continuous external delivery scheduling: disabled"
+          } >> "${GITHUB_STEP_SUMMARY}"
