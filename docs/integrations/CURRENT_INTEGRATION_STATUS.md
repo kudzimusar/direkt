@@ -2,16 +2,20 @@
 
 **Authoritative as-of date:** 2026-07-21 (Asia/Tokyo)  
 **Scope:** repository `kudzimusar/direkt`, managed development/staging evidence, live Supabase verification and owner-configured external services  
-**Purpose:** prevent external provisioning, source integration and runtime activation from being conflated.
+**Purpose:** prevent external provisioning, source integration and runtime activation from being conflated.  
+**Detailed live receipts:** `LIVE_INTEGRATION_LEDGER.md`
 
 ## Status vocabulary
 
 - **ACTIVE** — source/configuration and managed execution evidence prove approved runtime use.
 - **IMPLEMENTED_GATED** — application/domain code exists, but real/provider-backed activation remains fail-closed.
 - **EXTERNALLY_PROVISIONED** — account/domain/credential setup exists, but application runtime use is not proven.
+- **SANDBOX_PROVEN** — a real provider sandbox flow was exercised successfully, but DIREKT runtime/live activation is not yet approved.
+- **PENDING_PROVIDER** — provider account/product exists but provider approval or credential issuance is still pending.
 - **PLANNED** — approved direction exists; implementation/runtime binding incomplete.
 - **DISABLED** — intentionally off in the approved environment.
 - **SUPERSEDED** — historical/fallback direction, not the current preferred runtime.
+- **BLOCKED** — cannot progress without an external/legal/commercial/repository gate.
 
 No integration becomes ACTIVE merely because an account, DNS record, API key or secret exists.
 
@@ -119,7 +123,7 @@ Maps becomes ACTIVE only after restricted credentials, source integration, priva
 | Brevo | **SUPERSEDED** | Historical preferred email provider. |
 | Firebase phone OTP | **IMPLEMENTED_GATED** | Current pilot phone-possession direction. |
 | Twilio Verify | **SUPERSEDED** | Earlier OTP candidate. |
-| WhatsApp Cloud API | **PLANNED / DISABLED** | Consent-aware domain handoff exists; production delivery adapter disabled. |
+| WhatsApp Cloud API | **EXTERNALLY CONFIGURED / RUNTIME GATED** | Consent-aware domain handoff/control-plane setup exists; production delivery adapter remains disabled. |
 | FCM push | **PLANNED** | Future event delivery/runtime closure. |
 | Cloud Tasks / Pub/Sub / Scheduler | **PLANNED** | Add only when real retry/fan-out/scheduling needs justify them. |
 
@@ -152,13 +156,22 @@ The operations portal has no direct privileged database/Supabase client path. Th
 |---|---|---|
 | Subscription/payment domain | **ACTIVE implementation** | Products, subscriptions, invoices, intents, ledger and reconciliation contracts. |
 | Synthetic payment adapter | **ACTIVE tests only** | Lifecycle/idempotency testing without real money. |
-| MTN MoMo | **PLANNED / DISABLED** | Candidate future provider. |
-| Airtel Money | **PLANNED / DISABLED** | Candidate future provider. |
+| MTN MoMo Collections API | **SANDBOX_PROVEN / RUNTIME DISABLED** | OAuth, Request to Pay and authoritative status verification succeeded in sandbox; runtime adapter/Cloud Run binding not yet active. |
+| MTN Collection Widget / QR / USSD | **EXTERNALLY_PROVISIONED / RUNTIME DISABLED** | Separate widget subscription/secret exists; runtime feature not wired. |
+| Airtel Money Zambia Cash-In API | **PENDING_PROVIDER / DISABLED** | Zambia TEST application and Cash-In product created; provider approval/credential generation pending. |
+| DPO Pay / Network | **SANDBOX_PROVEN / RUNTIME DISABLED** | Sandbox `createToken` + hosted checkout + `verifyToken` returned paid; no production merchant runtime binding. |
+| Stripe Checkout | **SANDBOX_PROVEN / RUNTIME DISABLED** | Account-sandbox API/Checkout/payment verification succeeded; live merchant activation remains separate. |
+| Stripe Link | **EXTERNALLY_PROVISIONED / NOT EXPLICITLY PROVEN** | Sandbox account exists; dedicated Link evidence still outstanding. |
+| PayPal | **SANDBOX_PROVEN / RUNTIME DISABLED** | OAuth/order/approval/capture/independent verification succeeded in sandbox. |
+| Flutterwave | **BLOCKED / DEFERRED** | Zambia onboarding unavailable/rejected because provider capacity/full; do not block DIREKT on this rail. |
 | Real money movement | **DISABLED** | Requires legal/commercial/provider/pilot/release gates. |
+| Escrow/customer-to-provider payments | **PLANNED LATER / NOT MVP** | Requires separate legal/regulatory/payout/dispute/KYC architecture. |
 | PACRA | **MANUAL EVIDENCE SOURCE** | Business evidence source. |
 | NCC | **MANUAL EVIDENCE SOURCE** | Contractor/technical evidence where applicable. |
 | TEVETA | **MANUAL EVIDENCE SOURCE** | Training/qualification evidence source. |
 | Automated registry APIs | **NOT AUTHORIZED** | No scraping/fabricated API access. |
+
+Payment sandbox evidence is a provisioning/adapter-readiness receipt only. Android/browser clients must never decide payment success; real money remains disabled until separate authorization.
 
 ## API/client contract tooling
 
@@ -167,21 +180,21 @@ The operations portal has no direct privileged database/Supabase client path. Th
 | OpenAPI | **ACTIVE** | Canonical backend contract generated and drift-checked in CI. |
 | Android API boundary | **ACTIVE implementation** | Backend API only; no privileged direct Supabase path. |
 | TypeScript/PWA API boundary | **ACTIVE reviewed BFF architecture in synthetic mode** | Functional PWA reaches canonical REST/OpenAPI through reviewed same-origin BFF/private-API path; real participant activation remains gated. |
-| Fully generated Kotlin/TypeScript client packages | **NOT CURRENT RUNTIME INTEGRATION** | Runtime adoption still requires a reviewed migration and Android/web/backend/OpenAPI regression evidence. |
+| Fully generated Kotlin/TypeScript client packages | **NOT CURRENT RUNTIME INTEGRATION** | Runtime adoption still requires a reviewed migration and Android/web/backend/OpenAPI regression evidence after API shape stabilizes. |
 
-## W8 closure and sequencing release
+## W8 closure and runtime-integration workstream
 
 W8 is **CLOSED**. The canonical functional browser host passed independent exact-head verification in workflow run `29802524466`; the W0–W8 implementation claim is released.
 
-Therefore W8 no longer blocks a subsequent bounded runtime-integration closure workstream from claiming the implementation lane for items such as generated clients, Resend, FCM, Crashlytics, Test Lab, Google Maps, Sentry, WhatsApp and Turnstile where justified.
+Issue #261 now governs sequential runtime-integration closure. `WORKSTREAM_LOCK.md` and `RUNTIME_INTEGRATION_CLOSURE_PLAN.md` define the current dependency-safe order. `LIVE_INTEGRATION_LEDGER.md` is the mandatory cross-agent receipt ledger.
 
-VC0 visual audit/design-control work under Issue #259 is non-overlapping audit/design work and must not represent W8 as active or use W8 to block runtime-integration closure. Broad visual implementation requires its own later owner-approved implementation claim.
+VC0 visual audit/design-control work under Issue #259 remains non-overlapping design/audit work. Broad visual implementation requires separate owner approval and must not overlap claimed runtime-integration surfaces.
 
-This is only a sequencing release. Every integration retains its own activation requirements and must not be marked ACTIVE until source/configuration, least-privilege secrets, runtime binding, privacy/security, fallback/kill-switch, managed canary and regression evidence genuinely pass.
+Every integration retains its own activation requirements and must not be marked ACTIVE until source/configuration, least-privilege secrets, runtime binding, privacy/security, fallback/kill-switch, managed canary and regression evidence genuinely pass.
 
 ## Phase 0–12 audit checkpoint
 
-PR #149 promoted the full integration/runtime audit at `25deaae72ca2974c5560a8059a50fce37c810f63` after exact-head regression checks on `e3cddf7645e514d9a6254fff86283d4055d745c4`.
+PR #149 promoted the full integration/runtime audit at `25deaae72ca2974c5560a8059a50fce37c810f63` after exact-head regression checks on `e3cddf7645e5142c5560a8059a50fce37c810f63`.
 
 Permanent controls verify:
 
@@ -198,4 +211,4 @@ Detailed evidence: `docs/integrations/PHASE_INTEGRATION_RUNTIME_AUDIT_2026-07-19
 
 ## Change-control rule
 
-Update this register whenever provider provisioning, source adapter/SDK, secret/runtime binding, managed canary, privacy/legal approval, fallback/kill switch or production authorization changes. External provisioning alone is never enough to mark an integration ACTIVE.
+Update this register and `LIVE_INTEGRATION_LEDGER.md` whenever provider provisioning, source adapter/SDK, secret/runtime binding, managed canary, privacy/legal approval, fallback/kill switch or production authorization changes. External provisioning alone is never enough to mark an integration ACTIVE.
