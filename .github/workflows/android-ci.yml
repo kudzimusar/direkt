@@ -150,6 +150,7 @@ jobs:
         with:
           name: direkt-vc8-emulator-diagnostics-${{ github.run_number }}-${{ env.SOURCE_SHA }}
           path: |
+            ${{ runner.temp }}/vc8-provision.log
             ${{ runner.temp }}/vc8-emulator.log
             ${{ runner.temp }}/vc8-emulator.pid
           if-no-files-found: warn
