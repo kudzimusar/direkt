@@ -1,0 +1,82 @@
+name: RC1 one-time source reconcile
+
+on:
+  push:
+    branches:
+      - integration/rc1-resend-runtime
+    paths:
+      - ".github/workflows/rc1-source-reconcile-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: integration/rc1-resend-runtime
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - name: Apply canonical backend formatting
+        working-directory: backend/direkt-api
+        run: |
+          npm ci --ignore-scripts
+          npx prettier --write \
+            src/app.module.ts \
+            src/config/environment.ts \
+            'src/communications/**/*.ts' \
+            'test/unit/communications/**/*.ts'
+      - name: Reconcile RC1 source-phase status and live ledger
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          status_path = Path('docs/integrations/CURRENT_INTEGRATION_STATUS.md')
+          status = status_path.read_text()
+          replacements = {
+              '| Resend | **EXTERNALLY_PROVISIONED / RC1 PREFLIGHT PROVEN** | `notify.direkt.forum` verified and `direkt-resend-api-key` version 1 enabled. Runtime app-event delivery is not yet proven. |':
+              '| Resend | **IMPLEMENTED_GATED / MANAGED CANARY PENDING** | Provider-neutral HTTP adapter, transactional-outbox consumer, stable idempotency/retry/failure persistence, verified sender-domain gate and a private Cloud Run Job canary workflow are source-integrated. `notify.direkt.forum` is verified and `direkt-resend-api-key` version 1 is enabled; the managed canary has not yet executed, so Resend is not ACTIVE. |',
+              'Resend remains non-ACTIVE until an application adapter, runtime secret attachment, outbox/idempotency/retry behavior, privacy/template controls and managed synthetic delivery canary exist.':
+              'RC1 source integration is implemented and remains gated. Promotion requires least-privilege runtime secret access plus a successful exact-source managed synthetic outbox-to-Resend canary; continuous and real-participant external email remain disabled.',
+              'AI0 under Issue #264 is the owner-authorized provider-neutral AI foundation immediately after RC0. Its provider/API evidence and source implementation are gated rather than ACTIVE; RC1 Resend follows after AI0 promotion.':
+              'AI0 under Issue #264 is CLOSED and merged in PR #265 at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; its providers remain gated rather than active runtime integrations. RC1 Resend is the active checkpoint and is `IMPLEMENTED_GATED / MANAGED CANARY PENDING` until managed proof passes.'
+          }
+          for old, new in replacements.items():
+              if old not in status:
+                  raise SystemExit(f'missing status replacement anchor: {old[:80]}')
+              status = status.replace(old, new, 1)
+          status_path.write_text(status)
+
+          ledger_path = Path('docs/integrations/LIVE_INTEGRATION_LEDGER.md')
+          ledger = ledger_path.read_text()
+          replacements = {
+              '| Resend | `EXTERNALLY_PROVISIONED / RC1 PREFLIGHT PROVEN` | `notify.direkt.forum` verified; `direkt-resend-api-key` version 1 enabled. Still requires application adapter, runtime Secret Manager binding, outbox consumer, idempotency/retry, templates/privacy and managed synthetic delivery canary before `ACTIVE`. |':
+              '| Resend | `IMPLEMENTED_GATED / MANAGED CANARY PENDING` | Provider-neutral HTTPS adapter, transactional-outbox consumer, bounded retries/stale-lock recovery, deterministic provider idempotency key, synthetic template/privacy boundary and private Cloud Run Job canary workflow are source-integrated. `notify.direkt.forum` verified; `direkt-resend-api-key` version 1 enabled. Managed canary and runtime secret-access proof remain required before any ACTIVE claim. |',
+              '2. AI0 provider-neutral AI foundation — **CLOSING** in PR #265; Gemini/Groq canaries and secrets proven, source implemented, runtime remains gated.':
+              '2. AI0 provider-neutral AI foundation — **CLOSED** in PR #265 at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; Gemini/Groq remain runtime-gated.',
+              '3. RC1 Resend — preflight proven; source/runtime closure next.':
+              '3. RC1 Resend — **ACTIVE CHECKPOINT; IMPLEMENTED_GATED / MANAGED CANARY PENDING**. Source adapter/outbox/job path implemented; exact-head regressions, least-privilege secret access and managed canary remain.'
+          }
+          for old, new in replacements.items():
+              if old not in ledger:
+                  raise SystemExit(f'missing ledger replacement anchor: {old[:80]}')
+              ledger = ledger.replace(old, new, 1)
+          ledger_path.write_text(ledger)
+          PY
+      - name: Commit one-time reconciliation
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/direkt-api/src backend/direkt-api/test docs/integrations/CURRENT_INTEGRATION_STATUS.md docs/integrations/LIVE_INTEGRATION_LEDGER.md
+          if git diff --cached --quiet; then
+            echo "No reconciliation changes required."
+            exit 0
+          fi
+          git commit -m "style(rc1): format source and reconcile integration registers"
+          git push origin HEAD:integration/rc1-resend-runtime
