@@ -51,7 +51,7 @@ jobs:
           cache-dependency-path: web/direkt-app/package-lock.json
       - name: Verify exact checkout
         run: test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
-      - name: Install and verify complete web contract
+      - name: Install and verify complete W2-W7 web contract
         working-directory: web/direkt-app
         env:
           DIREKT_WEB_API_MODE: disabled
@@ -60,7 +60,15 @@ jobs:
         run: |
           set -euo pipefail
           npm ci --ignore-scripts --no-audit --no-fund
-          npm run verify
+          npm run typecheck
+          npm run verify:static
+          npm run verify:discovery
+          npm run verify:auth
+          npm run verify:customer
+          npm run verify:provider
+          npm run verify:commercial
+          npm run verify:w7
+          npm run build
       - name: Ensure verification/build did not mutate tracked web source
         run: git diff --exit-code -- web/direkt-app
 
