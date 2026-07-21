@@ -98,6 +98,17 @@ def main() -> None:
     android_gradle = read("android/direkt-app/app/build.gradle.kts")
     android_catalog = read("android/direkt-app/gradle/libs.versions.toml")
     android_manifest = read("android/direkt-app/app/src/main/AndroidManifest.xml")
+    crashlytics_configuration = read(
+        "android/direkt-app/app/src/main/java/com/kudzimusar/direkt/observability/CrashlyticsConfiguration.kt"
+    )
+    crashlytics_runtime = read(
+        "android/direkt-app/app/src/main/java/com/kudzimusar/direkt/observability/CrashlyticsRuntime.kt"
+    )
+    crashlytics_canary_activity = read(
+        "android/direkt-app/app/src/debug/java/com/kudzimusar/direkt/observability/CrashlyticsCanaryActivity.kt"
+    )
+    crashlytics_debug_manifest = read("android/direkt-app/app/src/debug/AndroidManifest.xml")
+    crashlytics_workflow = read(".github/workflows/firebase-crashlytics-canary.yml")
     storage_module = read(
         "backend/direkt-api/src/verification-evidence/verification-evidence.module.ts"
     )
@@ -181,7 +192,7 @@ def main() -> None:
         fail("both API and operations portal Cloud Run services must remain private")
     prohibit(cloud_run, r"--allow-unauthenticated", "public Cloud Run invocation")
 
-    # Firebase: Auth is implemented-gated; App Distribution is active; other SDKs remain absent.
+    # Firebase Auth/App Distribution remain bounded; RC3 adds only gated Android Crashlytics.
     require(android_gradle, "implementation(libs.firebase.auth)", "Firebase Auth Android binding")
     require(firebase_distribution, "com.kudzimusar.direkt.debug", "Firebase debug app package")
     require(firebase_distribution, "direkt-internal-testers", "internal tester group")
@@ -191,7 +202,6 @@ def main() -> None:
     require(android_manifest, 'android:usesCleartextTraffic="false"', "Android HTTPS-only network policy")
 
     prohibited_android_integrations = (
-        "firebase-crashlytics",
         "firebase-messaging",
         "play-services-maps",
         "places",
@@ -203,9 +213,63 @@ def main() -> None:
         if integration in catalog_lower or integration in gradle_lower:
             fail(f"{integration} became Android-runtime active without integration-status promotion")
 
-    # RC2 Sentry is active only for the proven synthetic-only NestJS API/private Next.js
-    # portal managed boundary. Android remains on the separate Crashlytics path and
-    # participant/production telemetry remains disabled.
+    # RC3 Crashlytics source contract: dependency present, generic collection default-off,
+    # exact-source synthetic-only build activation and fixed privacy-safe managed canaries.
+    require(android_catalog, "com.google.firebase:firebase-crashlytics", "Crashlytics Android SDK catalog entry")
+    require(android_catalog, 'id = "com.google.firebase.crashlytics"', "Crashlytics Gradle plugin catalog entry")
+    require(android_gradle, "implementation(libs.firebase.crashlytics)", "Crashlytics Android SDK binding")
+    require(android_gradle, 'orElse("disabled")', "Crashlytics default-disabled build mode")
+    require(android_gradle, 'DIREKT_CRASHLYTICS_MODE must be disabled or synthetic-canary', "Crashlytics mode allowlist")
+    require(android_gradle, 'pluginManager.apply("com.google.gms.google-services")', "conditional Google Services plugin")
+    require(android_gradle, 'pluginManager.apply("com.google.firebase.crashlytics")', "conditional Crashlytics plugin")
+    require(android_gradle, 'Regex("^[0-9a-f]{40}$")', "Crashlytics exact source-SHA release gate")
+    require(android_manifest, 'android:name=".DirektApplication"', "Crashlytics application bootstrap")
+    require(android_manifest, 'android:name="firebase_crashlytics_collection_enabled"', "Crashlytics manifest collection control")
+    require(android_manifest, 'android:value="false"', "Crashlytics default collection disabled")
+    if (ROOT / "android/direkt-app/app/google-services.json").exists():
+        fail("google-services.json must remain ephemeral and must not be committed to the repository")
+
+    require(crashlytics_configuration, "SYNTHETIC_CANARY_MODE", "Crashlytics synthetic-only configuration")
+    require(crashlytics_configuration, 'Regex("^[0-9a-f]{40}$")', "Crashlytics runtime exact release gate")
+    require(crashlytics_runtime, "setCrashlyticsCollectionEnabled(true)", "Crashlytics canary-only collection activation")
+    require(crashlytics_runtime, 'setCustomKey("direkt_canary", true)', "Crashlytics fixed canary key")
+    require(crashlytics_runtime, 'setCustomKey("direkt_data_mode", "synthetic-only")', "Crashlytics synthetic data-mode key")
+    require(crashlytics_runtime, 'setCustomKey("direkt_release", configuration.release)', "Crashlytics exact release key")
+    require(crashlytics_canary_activity, "DIREKT_CRASHLYTICS_NONFATAL_CANARY_", "Crashlytics non-fatal canary marker")
+    require(crashlytics_canary_activity, "DIREKT_CRASHLYTICS_FATAL_CANARY_", "Crashlytics fatal canary marker")
+    require(crashlytics_debug_manifest, ".observability.CrashlyticsCanaryActivity", "debug-only Crashlytics canary activity")
+    combined_crashlytics_source = crashlytics_runtime + "\n" + crashlytics_canary_activity
+    prohibit(combined_crashlytics_source, r"setUserId\s*\(", "Crashlytics user identifier")
+    prohibit(combined_crashlytics_source, r"FirebaseCrashlytics[^\n]*\.log\s*\(", "unrestricted Crashlytics custom log")
+
+    for needle in (
+        "RUN-DIREKT-CRASHLYTICS-CANARY",
+        "com.kudzimusar.direkt.debug",
+        "firebase.googleapis.com/v1beta1/projects/${GCP_PROJECT_ID}/androidApps",
+        "configFileContents",
+        "app/google-services.json",
+        "DIREKT_CRASHLYTICS_MODE=synthetic-canary",
+        "DIREKT_CRASHLYTICS_RELEASE=${SOURCE_SHA}",
+        "scripts/vc8/provision-android-emulator.sh",
+        "DIREKT_CRASHLYTICS_NONFATAL_CANARY_${SOURCE_SHA}",
+        "DIREKT_CRASHLYTICS_FATAL_CANARY_${SOURCE_SHA}",
+        "firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_ID}/apps/${FIREBASE_APP_ID}/events",
+        "Participant and production Crashlytics telemetry: disabled",
+    ):
+        require(crashlytics_workflow, needle, "managed Crashlytics canary invariant")
+    prohibit(crashlytics_workflow, r"gcloud\s+firebase\s+test\s+android\s+run", "RC5 Firebase Test Lab execution in RC3")
+    require(
+        status,
+        "Firebase Crashlytics | **IMPLEMENTED_GATED / MANAGED DEVICE CANARY PENDING**",
+        "RC3 pre-canary status gate",
+    )
+    require(
+        status,
+        "Participant/production Crashlytics telemetry remains disabled.",
+        "RC3 participant/production telemetry stop gate",
+    )
+
+    # RC2 Sentry remains active only for the proven synthetic-only API/private portal boundary.
     backend_sentry_dependencies = {dependency for dependency in backend_pkg if "sentry" in dependency.lower()}
     portal_sentry_dependencies = {dependency for dependency in portal_pkg if "sentry" in dependency.lower()}
     if backend_sentry_dependencies != {"@sentry/nestjs"}:
@@ -387,6 +451,7 @@ def main() -> None:
     print("google_cloud=active_private_staging")
     print("firebase_auth=implemented_gated")
     print("firebase_app_distribution=active_internal")
+    print("crashlytics=implemented_gated_managed_device_canary_pending_participant_disabled")
     print("maps=external_runtime_unproven_manual_fallback_active")
     print("sentry=active_synthetic_only_managed_canary_cloud_logging_authoritative_participant_disabled")
     print("resend=active_synthetic_only_managed_canary_real_participant_disabled")
