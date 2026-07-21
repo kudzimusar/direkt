@@ -1,4 +1,4 @@
-import type { SVGProps } from "react";
+import type { ReactNode, SVGProps } from "react";
 
 export type DirektIconName =
   | "home"
@@ -19,7 +19,7 @@ export type DirektIconName =
   | "check"
   | "chevron-down";
 
-const paths: Record<DirektIconName, React.ReactNode> = {
+const paths: Record<DirektIconName, ReactNode> = {
   home: <><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9 21v-7h6v7"/></>,
   bookmark: <path d="M6 3h12v18l-6-4-6 4V3Z"/>,
   messages: <><path d="M4 5h16v11H9l-5 4V5Z"/><path d="M8 9h8M8 12h6"/></>,
