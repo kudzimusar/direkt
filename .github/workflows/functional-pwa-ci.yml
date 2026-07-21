@@ -101,8 +101,8 @@ jobs:
         working-directory: .
         run: git diff --exit-code -- web/direkt-app
 
-  android-protected-path:
-    name: Prove Android protected surface is unchanged
+  android-cross-client-handoff:
+    name: Record post-W7 Android cross-client validation ownership
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -123,15 +123,14 @@ jobs:
           fi
           test -n "${base_sha}"
           echo "base_sha=${base_sha}" >> "${GITHUB_OUTPUT}"
-      - name: Fail on Android changes in functional PWA W0-W7
+      - name: Delegate legitimate Android changes to exact-head Android and W7 gates
         shell: bash
         run: |
           set -euo pipefail
+          test -f .github/workflows/functional-pwa-w7-regression.yml
           if ! git diff --quiet "${{ steps.base.outputs.base_sha }}" "${SOURCE_SHA}" -- android/direkt-app; then
-            echo "Functional PWA W0-W7 must not modify android/direkt-app/**" >&2
-            git diff --name-status "${{ steps.base.outputs.base_sha }}" "${SOURCE_SHA}" -- android/direkt-app >&2
-            exit 1
+            echo "Android changed after W7 closure. This is permitted; Android CI and W7 cross-client regression own validation."
+            git diff --name-status "${{ steps.base.outputs.base_sha }}" "${SOURCE_SHA}" -- android/direkt-app
+          else
+            echo "No Android change in this checkpoint."
           fi
-      - name: Record protected Android baseline
-        run: |
-          printf 'Android protected path unchanged for functional PWA W0-W7 at %s\n' "${SOURCE_SHA}"
