@@ -6,17 +6,46 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | RELEASED — W0–W8 functional customer/provider web/PWA parity and controlled cutover complete |
-| Owner/agent | None — lane available for the next separately authorized implementation workstream |
-| Authorized scope | No active implementation claim. Read-only/design-audit work may proceed on non-overlapping branches without monopolizing the implementation lane. A material implementation workstream must claim the lane before overlapping code writes begin. |
-| Protected surface | Normal project-wide no-regression controls remain in force for Android, backend/database/OpenAPI, web/PWA, operations portal, CI, trust/privacy and release boundaries. |
-| Implementation lane | `build/android-v1` — historical name retained; W8 no longer owns or blocks this lane |
-| Stable checkpoint | W8 CLOSED: functional runtime source `c1262ce2bfb76e06d2296d793f1acd6cf5cc3ca2`; managed run `29721199177`; canonical host `https://app.direkt.forum`; canonical-domain verification run `29802524466`; verification mechanism merged through PR #257 at `a4ad5fa348857f27b5bfef23f6f761deb75859c7` |
-| Current task | None under W0–W8. Runtime integration closure, visual-completion implementation after owner approval, Phase 11 evidence work or another documented task may claim the lane according to programme priority and bounded scope. |
-| Completed governing plan | `docs/web/FUNCTIONAL_PWA_PARITY_IMPLEMENTATION_PLAN.md` — W0 through W8 closed |
+| Status | CLAIMED — runtime integration closure after W8 |
+| Owner/agent | Active repository agent — Issue #261 runtime integration closure workstream |
+| Authorized scope | Dependency-audit, source/runtime closure and managed evidence for integrations tracked by Issue #261 plus reconciliation of newly proven sandbox payment-provider evidence; one bounded integration checkpoint at a time |
+| Protected surface | Android, backend/database/OpenAPI, web/PWA, operations portal, CI, trust/privacy, payments and release boundaries remain regression-protected; VC0 design/audit work under Issue #259 may continue only on non-overlapping design-control surfaces |
+| Implementation branch | `integration/runtime-closure-261` from clean `main` baseline; do not build new integration work on the currently diverged historical `build/android-v1` branch until history is reconciled |
+| Stable baseline | `main` at W8 closure merge `a06a66d313d8417d8b7731e3d845c1c71bda3dd4`; canonical app `https://app.direkt.forum`; W8 verification run `29802524466` |
+| Current task | RC0 — dependency/current-source audit, live integration ledger promotion, historical W7/W8 verifier ownership decoupling if required, then sequential runtime integration closure |
+| Governing issue | Issue #261 — Runtime integration closure after W8 |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized |
-| Governing issues | Issue #133 is eligible for closure after this W8 closure checkpoint is promoted; Issue #112 remains open for real pilot evidence/exit; Issue #259 may continue VC0 audit/design-control work without treating W8 as active |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates |
+
+## Runtime integration closure contract
+
+1. Close one bounded integration checkpoint at a time; do not batch unrelated SDK/provider activation.
+2. An external account, API key, secret or dashboard project is not `ACTIVE` evidence by itself.
+3. Each closure requires applicable source integration, least-privilege secret/runtime binding, privacy/security controls, retry/idempotency/fallback or kill switch, managed canary/device evidence, exact-head regressions and status documentation.
+4. The transactional outbox remains the domain source of truth for asynchronous external delivery.
+5. Android/browser clients call DIREKT-controlled API/BFF boundaries; they do not receive privileged provider, database, payment or registry credentials.
+6. Real participants, real external communications, real payment movement, production auth and production release remain separately gated.
+7. Payment state cannot create or improve verification, publication or ranking authority.
+8. Exact private provider coordinates, raw evidence, contact data, credentials and tokens must not leak into telemetry, public maps, browser caches or provider payloads.
+9. Generated-client adoption must follow API-shape stabilization and preserve backward compatibility across Android and web.
+10. Turnstile is implemented only if an approved abuse-control design demonstrates a concrete public-flow need.
+11. VC0 under Issue #259 may continue as read-only/design-control work but must not modify overlapping runtime-integration surfaces while this lock is claimed.
+12. The workstream releases the lane only after the final integration status ledger, exact-head regression matrix and handoff are promoted.
+
+## Dependency-safe implementation sequence
+
+- RC0 — integration ledger, dependency/source audit, permanent-gate ownership sanity check and payment evidence reconciliation.
+- RC1 — Resend runtime email adapter through the transactional outbox, idempotency/retry/privacy/templates and managed canary.
+- RC2 — Sentry for approved NestJS/Next.js surfaces with strict PII scrubbing, release/source-map controls and kill switch; Cloud Logging remains authoritative infrastructure telemetry.
+- RC3 — Firebase Crashlytics Android activation with privacy/release mapping and synthetic crash/ANR evidence.
+- RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary.
+- RC5 — Firebase Test Lab device-matrix automation after the Android runtime dependency set stabilizes through RC3–RC4.
+- RC6 — WhatsApp Cloud API application adapter using outbox/idempotency/consent/template/delivery-receipt rules; production sends remain gated until provider/legal approvals exist.
+- RC7 — Google Maps runtime activation with separate restricted Android/backend credentials, privacy-safe publication semantics, quotas, manual/list fallback and kill switch.
+- RC8 — sandbox-only payment-provider adapter closure/reconciliation for already proven MTN, DPO, Stripe and PayPal rails; Airtel remains provider-pending and Flutterwave deferred; real money remains disabled.
+- RC9 — OpenAPI-generated Kotlin and TypeScript client adoption/decision after backend integration/API shape stabilizes; migrate incrementally with cross-client regressions.
+- RC10 — Turnstile threat-model decision; implement only if a reviewed public abuse-sensitive flow requires it, otherwise close as not currently justified.
+- RC11 — combined integration regression, managed evidence index, live ledger/status reconciliation and lane release.
 
 ## Completed W0–W8 workstream contract
 
@@ -37,21 +66,9 @@ This file prevents overlapping writes in the single-lane build process.
 15. `https://direkt.forum/preview/` remains preserved as the explicit synthetic historical/review route.
 16. W8 closure does not authorize real participants, real evidence, production authentication, external communications/payment activation, Phase 11 exit or production release.
 
-## Completed implementation sequence
-
-- W0 — baseline freeze, Android/API/screen inventory, functional parity matrix and project-wide documentation. **Closed.**
-- W1 — additive Next.js/React/TypeScript PWA shell, design system, responsive navigation, manifest/service-worker safety, BFF boundary and typed API foundation. **Closed.**
-- W2 — real public discovery vertical slice through canonical API contracts plus managed IAM-private evidence. **Closed — managed run `29694862350` PASS on `4b892b90c42239c81c4f9c6f8c9f5447519dd6f6`.**
-- W3 — browser authentication/account/session boundary. **Closed — managed run `29703117963` PASS on `012a7b9c24e93087d823661298d051c08ea34ec0`.**
-- W4 — complete customer journey parity. **Closed — managed run `29704996877` PASS on `61a6bce54bffcec545a2009ac353596ee1d69f83`.**
-- W5 — complete provider journey parity. **Closed — managed PASS on exact merged source `79228f4bda96106b929aa6183613cb9d2dc127f6`.**
-- W6 — commercial parity within authorized/gated payment boundaries. **Closed — managed PASS on `1b5753002afcf115f6f47334f6588648eca7501d`.**
-- W7 — cross-client parity, security, accessibility, responsive, offline/network and Android regression closure. **Closed — exact-head combined regression plus managed browser canary PASS on `25b8cd1b122882974db94b502e3a87080105733d`.**
-- W8 — controlled route/deployment cutover with preserved historical preview. **Closed — canonical `https://app.direkt.forum` verification PASS in run `29802524466`.**
-
 ## Persistent stop conditions
 
-A future implementation workstream must still stop rather than merge if it would:
+Stop rather than merge if a checkpoint would:
 
 - regress Android/backend/database/OpenAPI/web/portal required gates;
 - weaken Cloud Run IAM or expose privileged Supabase/database/Storage access;
@@ -60,8 +77,9 @@ A future implementation workstream must still stop rather than merge if it would
 - accept client-selected provider scope or authorization;
 - allow commercial/payment state to influence verification or public trust claims;
 - store production credentials in source or browser-readable surfaces;
-- replace backend-authoritative behavior with static fixtures while claiming runtime completion.
+- replace backend-authoritative behavior with static fixtures while claiming runtime completion;
+- mark an integration `ACTIVE` without managed runtime evidence.
 
 ## Conflict rule
 
-The W8 implementation claim is **RELEASED**. W8 must not be used as a reason to block unrelated runtime-integration closure. Read-only or design-control audits may run on non-overlapping branches without claiming the implementation lane. Before material implementation begins, the next bounded implementation workstream must claim the lane with its protected surfaces, governing plan/issues and exact baseline. Parallel overlapping code writes remain prohibited once such a claim is established.
+No second agent may write to overlapping runtime-integration surfaces while this claim is active. Read-only review and the isolated VC0 design-control branch may continue. The lock is released only after bounded checkpoints are promoted, final regressions pass, integration status/ledger are reconciled and the next handoff is recorded.
