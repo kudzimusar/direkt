@@ -13,6 +13,13 @@ const SYNTHETIC_CANARY_TEMPLATE = 'synthetic_canary_v1';
 const SYNTHETIC_CANARY_RECIPIENT = 'delivered@resend.dev';
 const WORKER_ID = 'direkt-email-outbox';
 
+class EmailOutboxPayloadRejectedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'EmailOutboxPayloadRejectedError';
+  }
+}
+
 interface EmailOutboxPayload {
   templateKey: typeof SYNTHETIC_CANARY_TEMPLATE;
   to: typeof SYNTHETIC_CANARY_RECIPIENT;
@@ -179,16 +186,16 @@ export class EmailOutboxService {
   }
 
   private async deliverClaimed(claimed: ClaimedEmailEvent): Promise<EmailOutboxDeliveryReceipt> {
-    const payload = this.parsePayload(claimed.payload);
-    const from = this.configService.getOrThrow<string>('EMAIL_FROM_ADDRESS');
-    const subject = 'DIREKT RC1 synthetic email canary';
-    const text = [
-      'DIREKT synthetic integration canary.',
-      `Outbox event: ${claimed.id}`,
-      'No participant or production data is included.',
-    ].join('\n');
-
     try {
+      const payload = this.parsePayload(claimed.payload);
+      const from = this.configService.getOrThrow<string>('EMAIL_FROM_ADDRESS');
+      const subject = 'DIREKT RC1 synthetic email canary';
+      const text = [
+        'DIREKT synthetic integration canary.',
+        `Outbox event: ${claimed.id}`,
+        'No participant or production data is included.',
+      ].join('\n');
+
       const delivery = await this.emailProvider.send({
         from,
         to: payload.to,
@@ -207,13 +214,17 @@ export class EmailOutboxService {
     } catch (error) {
       const maxAttempts = this.configService.getOrThrow<number>('EMAIL_MAX_ATTEMPTS');
       const terminal =
-        error instanceof EmailProviderRejectedError || claimed.attempts >= maxAttempts;
+        error instanceof EmailOutboxPayloadRejectedError ||
+        error instanceof EmailProviderRejectedError ||
+        claimed.attempts >= maxAttempts;
       const failureCode =
-        error instanceof EmailProviderRejectedError
-          ? `provider_rejected_${error.status}`
-          : error instanceof EmailProviderUnavailableError
-            ? 'provider_unavailable'
-            : 'delivery_internal_error';
+        error instanceof EmailOutboxPayloadRejectedError
+          ? 'payload_rejected'
+          : error instanceof EmailProviderRejectedError
+            ? `provider_rejected_${error.status}`
+            : error instanceof EmailProviderUnavailableError
+              ? 'provider_unavailable'
+              : 'delivery_internal_error';
       await this.markFailed(claimed.id, claimed.attempts, terminal, failureCode);
       throw error;
     }
@@ -221,7 +232,7 @@ export class EmailOutboxService {
 
   private parsePayload(value: unknown): EmailOutboxPayload {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
-      throw new Error('Email outbox payload must be an object.');
+      throw new EmailOutboxPayloadRejectedError('Email outbox payload must be an object.');
     }
     const payload = value as Record<string, unknown>;
     if (
@@ -229,7 +240,7 @@ export class EmailOutboxService {
       payload.to !== SYNTHETIC_CANARY_RECIPIENT ||
       payload.dataClassification !== 'synthetic'
     ) {
-      throw new Error(
+      throw new EmailOutboxPayloadRejectedError(
         'Email outbox payload is outside the approved RC1 synthetic template boundary.',
       );
     }
