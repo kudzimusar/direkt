@@ -6,47 +6,17 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED — VC0 repository-wide visual baseline and gap audit |
-| Owner/agent | VC — DIREKT Visual Completion |
-| Authorized scope | Read-only reconstruction/audit across Android, functional web/PWA, operations portal and historical preview surfaces; create/update VC0 control/design documentation; narrowly repair regression-harness defects discovered while verifying the baseline, without changing product/runtime/UI behaviour. No broad UI implementation until owner approves a representative high-fidelity direction. |
-| Protected surface | Android behaviour and release controls; backend/database/OpenAPI contracts; IAM/BFF/session boundaries; provider-scope authorization; trust/publication semantics; private evidence/location/contact boundaries; PWA/offline/security behavior; operations permissions; Phase 11/12 gates. |
-| Implementation lane | `build/android-v1` — historical name retained as the single sequential implementation lane |
-| Exact VC0 baseline | `a7a1e03f4de3b2cad3d51b7f611bdbb2f30af961` (`fix: complete closed-state W8 verifier`) |
-| Stable predecessor checkpoint | W8 CLOSED: managed functional runtime source `c1262ce2bfb76e06d2296d793f1acd6cf5cc3ca2`; managed run `29721199177`; canonical host `https://app.direkt.forum`; canonical-domain verification run `29802524466`; PR #257 merge checkpoint `a4ad5fa348857f27b5bfef23f6f761deb75859c7` |
-| Current task | VC0 only: exact-source/regression verification, full implemented-screen inventory, code/preview inspection, visual gap matrix, design-system gap audit, Stitch/Higgsfield workflow, differentiated flagship design directions for owner review; plus only the regression-harness repair needed to keep historical W7/W8 checks independently valid. |
-| Governing issue | #259 — VC — DIREKT Visual Completion |
+| Status | RELEASED — W0–W8 functional customer/provider web/PWA parity and controlled cutover complete |
+| Owner/agent | None — lane available for the next separately authorized implementation workstream |
+| Authorized scope | No active implementation claim. Read-only/design-audit work may proceed on non-overlapping branches without monopolizing the implementation lane. A material implementation workstream must claim the lane before overlapping code writes begin. |
+| Protected surface | Normal project-wide no-regression controls remain in force for Android, backend/database/OpenAPI, web/PWA, operations portal, CI, trust/privacy and release boundaries. |
+| Implementation lane | `build/android-v1` — historical name retained; W8 no longer owns or blocks this lane |
+| Stable checkpoint | W8 CLOSED: functional runtime source `c1262ce2bfb76e06d2296d793f1acd6cf5cc3ca2`; managed run `29721199177`; canonical host `https://app.direkt.forum`; canonical-domain verification run `29802524466`; verification mechanism merged through PR #257 at `a4ad5fa348857f27b5bfef23f6f761deb75859c7` |
+| Current task | None under W0–W8. Runtime integration closure, visual-completion implementation after owner approval, Phase 11 evidence work or another documented task may claim the lane according to programme priority and bounded scope. |
+| Completed governing plan | `docs/web/FUNCTIONAL_PWA_PARITY_IMPLEMENTATION_PLAN.md` — W0 through W8 closed |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized |
+| Governing issues | Issue #133 is complete; Issue #112 remains open for real pilot evidence/exit; Issue #259 continues VC0 audit/design-control on `vc/visual-completion` without treating W8 as active or monopolizing this implementation lane |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates |
-
-## VC0 implementation boundary
-
-VC0 may change repository control/design documentation needed to establish the programme and its auditable baseline. It may also make a narrowly bounded regression-harness correction when an existing historical verifier is proven to be incorrectly coupled to a later workstream state. It must not mass-edit Android, web/PWA, operations UI, backend, database, OpenAPI, authentication, authorization, trust, payment, notification or deployment behaviour.
-
-Before VC1 or any broad visual implementation begins, VC0 must:
-
-1. reconstruct the product from the repository authority hierarchy;
-2. record the exact current source and regression state without false-green claims;
-3. inventory all implemented and specified customer, provider, shared/auth and operations screens;
-4. inspect actual Android, functional browser and operations UI code plus historical preview/reference surfaces;
-5. classify each surface as functional + visually ready, functional + needs polish, functional + prototype-level UI, missing visual implementation, or externally gated;
-6. identify visible development/prototype artifacts and cross-client design-system gaps;
-7. define protected vertical-slice sequencing for VC1–VC7;
-8. prepare Stitch-first Design DNA and Higgsfield-secondary asset workflows;
-9. present genuinely differentiated representative high-fidelity directions for owner approval;
-10. keep broad UI propagation blocked until that approval is explicit.
-
-## Current regression truth at VC0 claim
-
-On exact head `a7a1e03f4de3b2cad3d51b7f611bdbb2f30af961`:
-
-- W8 canonical-domain verification: PASS;
-- functional customer/provider PWA CI: PASS;
-- W4 customer contract: PASS;
-- integration runtime audit: PASS;
-- documentation quality: PASS;
-- W7 cross-client regression: Android and backend/database/OpenAPI jobs PASS, while the W2–W7 functional-web job fails deterministically because that historical W7 workflow now invokes the global `npm run verify`, which later acquired W8-specific checks. This is a regression-harness coupling defect, not evidence that Android/backend/database/OpenAPI or the separately verified functional PWA runtime regressed.
-
-VC0 must correct that coupling so W7 verifies W2–W7 and W8 remains independently verified by its own exact canonical-domain workflow. A VC workstream must not describe the complete regression baseline as green until the corrected exact-head gate passes.
 
 ## Completed W0–W8 workstream contract
 
@@ -67,9 +37,21 @@ VC0 must correct that coupling so W7 verifies W2–W7 and W8 remains independent
 15. `https://direkt.forum/preview/` remains preserved as the explicit synthetic historical/review route.
 16. W8 closure does not authorize real participants, real evidence, production authentication, external communications/payment activation, Phase 11 exit or production release.
 
+## Completed implementation sequence
+
+- W0 — baseline freeze, Android/API/screen inventory, functional parity matrix and project-wide documentation. **Closed.**
+- W1 — additive Next.js/React/TypeScript PWA shell, design system, responsive navigation, manifest/service-worker safety, BFF boundary and typed API foundation. **Closed.**
+- W2 — real public discovery vertical slice through canonical API contracts plus managed IAM-private evidence. **Closed — managed run `29694862350` PASS on `4b892b90c42239c81c4f9c6f8c9f5447519dd6f6`.**
+- W3 — browser authentication/account/session boundary. **Closed — managed run `29703117963` PASS on `012a7b9c24e93087d823661298d051c08ea34ec0`.**
+- W4 — complete customer journey parity. **Closed — managed run `29704996877` PASS on `61a6bce54bffcec545a2009ac353596ee1d69f83`.**
+- W5 — complete provider journey parity. **Closed — managed PASS on exact merged source `79228f4bda96106b929aa6183613cb9d2dc127f6`.**
+- W6 — commercial parity within authorized/gated payment boundaries. **Closed — managed PASS on `1b5753002afcf115f6f47334f6588648eca7501d`.**
+- W7 — cross-client parity, security, accessibility, responsive, offline/network and Android regression closure. **Closed — exact-head combined regression plus managed browser canary PASS on `25b8cd1b122882974db94b502e3a87080105733d`.**
+- W8 — controlled route/deployment cutover with preserved historical preview. **Closed — canonical `https://app.direkt.forum` verification PASS in run `29802524466`.**
+
 ## Persistent stop conditions
 
-The VC workstream must stop rather than merge if it would:
+A future implementation workstream must still stop rather than merge if it would:
 
 - regress Android/backend/database/OpenAPI/web/portal required gates;
 - weaken Cloud Run IAM or expose privileged Supabase/database/Storage access;
@@ -78,12 +60,8 @@ The VC workstream must stop rather than merge if it would:
 - accept client-selected provider scope or authorization;
 - allow commercial/payment state to influence verification or public trust claims;
 - store production credentials in source or browser-readable surfaces;
-- replace backend-authoritative behavior with static fixtures while claiming runtime completion;
-- introduce a blanket “Verified” badge or otherwise overstate check-specific trust;
-- use colour alone to communicate status;
-- remove accessible list alternatives to map/location experiences;
-- rebuild the existing product as a separate Stitch/Higgsfield-generated application.
+- replace backend-authoritative behavior with static fixtures while claiming runtime completion.
 
 ## Conflict rule
 
-The lane is **CLAIMED by VC0**. Parallel overlapping writes are prohibited. Unrelated work must use non-overlapping paths or wait for a documented handoff/release. Broad visual implementation remains blocked until VC0 closes and the owner explicitly approves a representative high-fidelity direction.
+The W8 implementation claim is **RELEASED**. W8 must not be used as a reason to block unrelated runtime-integration closure. Read-only or design-control audits may run on non-overlapping branches without claiming the implementation lane. Before material implementation begins, the next bounded implementation workstream must claim the lane with its protected surfaces, governing plan/issues and exact baseline. Parallel overlapping code writes remain prohibited once such a claim is established.
