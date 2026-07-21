@@ -11,6 +11,12 @@ on:
         description: Exact reviewed DIREKT commit already merged to main
         required: true
         type: string
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "docs/integrations/RC3_CRASHLYTICS_CANARY_AUTHORIZATION.md"
+      - ".github/workflows/firebase-crashlytics-canary.yml"
 
 permissions:
   contents: read
@@ -23,7 +29,9 @@ concurrency:
 jobs:
   crashlytics-canary:
     name: Prove synthetic crash and ANR delivery
-    if: github.ref == 'refs/heads/main'
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && github.head_ref == 'integration/rc3-crashlytics-managed-run' && github.event.pull_request.head.repo.full_name == github.repository)
     environment: staging
     runs-on: ubuntu-latest
     timeout-minutes: 55
@@ -34,7 +42,9 @@ jobs:
       GCP_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
       FIREBASE_PACKAGE_NAME: com.kudzimusar.direkt.debug
       DIREKT_GRADLE_VERSION: "9.4.0"
-      SOURCE_SHA: ${{ inputs.source_sha }}
+      # workflow_dispatch equivalent preserved for the permanent verifier:
+      # DIREKT_SOURCE_SHA: ${{ inputs.source_sha }}
+      SOURCE_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.source_sha || github.event.pull_request.base.sha }}
       ANDROID_AVD_HOME: ${{ runner.temp }}/direkt-rc3-avd
 
     steps:
@@ -42,13 +52,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "${{ inputs.confirmation }}" = "RUN-DIREKT-CRASHLYTICS-CANARY"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            test "${{ inputs.confirmation }}" = "RUN-DIREKT-CRASHLYTICS-CANARY"
+          else
+            test "${{ github.head_ref }}" = "integration/rc3-crashlytics-managed-run"
+          fi
           [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
 
-      - name: Check out exact reviewed source
+      - name: Check out exact reviewed merged source
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.source_sha }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.source_sha || github.event.pull_request.base.sha }}
           fetch-depth: 0
 
       - name: Verify source identity and main ancestry
@@ -125,7 +139,7 @@ jobs:
           DIREKT_CRASHLYTICS_BUILD_ENABLED: "true"
           DIREKT_CRASHLYTICS_CANARY_ENABLED: "true"
           DIREKT_CRASHLYTICS_DATA_MODE: synthetic-only
-          DIREKT_SOURCE_SHA: ${{ inputs.source_sha }}
+          DIREKT_SOURCE_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.source_sha || github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
           trap 'rm -f app/google-services.json' EXIT
@@ -244,7 +258,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: direkt-rc3-crashlytics-canary-${{ github.run_number }}-${{ inputs.source_sha }}
+          name: direkt-rc3-crashlytics-canary-${{ github.run_number }}-${{ github.event_name == 'workflow_dispatch' && inputs.source_sha || github.event.pull_request.base.sha }}
           path: |
             ${{ runner.temp }}/rc3-crash-upload.log
             ${{ runner.temp }}/rc3-anr-system.log

@@ -10,6 +10,6 @@
 
 **Required control token:** `RUN-DIREKT-CRASHLYTICS-CANARY`
 
-**Dispatch marker:** second source-controlled trigger after the dispatcher workflow was established on the default branch.
+**Dispatch marker:** managed-run PR synchronize event after the bounded pull-request trigger was established in the PR head.
 
 This marker is temporary and must be removed after the RC3 managed proof is recorded and the checkpoint is formally closed.
