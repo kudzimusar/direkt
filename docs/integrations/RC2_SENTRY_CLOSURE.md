@@ -37,11 +37,18 @@ RC2 remains intentionally narrow:
 - Android Sentry is not activated; Android crash/ANR ownership moves to RC3 Firebase Crashlytics;
 - real participant telemetry and production restricted-data telemetry require a separate reviewed privacy/data-use decision and new managed evidence.
 
+Permanent stop-gate markers remain explicit:
+
+- Participant/production Sentry telemetry remains disabled.
+- Continuous, controlled-pilot participant and production external email remain disabled.
+
 ## Regression evidence
 
 The RC2 source exact head passed the required backend, backend-container, integration audit, operations portal, PWA/W4/W7/W8, supply-chain, staging, recovery and Phase 11 synthetic gates before source promotion.
 
 The temporary one-shot dispatcher/authorization marker was separately regression-verified in PR #279 before merge. It is removed as part of RC2 closure so it cannot become an uncontrolled recurring deployment path.
+
+The RC2 closeout must also pass the permanent integration runtime verifier on its own exact head; the verifier is not modified or weakened by this closure.
 
 ## Handoff
 
