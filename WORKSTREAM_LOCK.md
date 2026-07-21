@@ -6,27 +6,30 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED — RC2 Sentry API/portal runtime observability closure |
-| Owner/agent | Active repository agent — Issue #261 runtime integration closure workstream |
-| Authorized scope | Sentry activation for approved NestJS API and private Next.js operations portal only: separate runtime boundaries, strict PII/data scrubbing, release/source-map controls, kill switch, managed synthetic canaries and exact-head regressions. Android Sentry is out of scope; RC3 retains Crashlytics ownership. |
+| Status | RELEASED — RC2 Sentry API/portal synthetic-managed runtime closure complete |
+| Owner/agent | None — next material repository work requires a fresh bounded claim |
+| Authorized scope | No active RC2 write scope. RC3 Firebase Crashlytics is the next dependency-safe checkpoint and must claim a new lane from the merged RC2 closure baseline before source changes. |
 | Protected surface | Android, backend/database/OpenAPI, web/PWA, operations portal, CI, trust/privacy, payments, integrations, VC1–VC8 completion and release boundaries remain regression-protected. |
-| Implementation branch | `integration/rc2-sentry-runtime`, reconciled to preserve the merged VC1–VC8 baseline at `c7f5985bc20372b4761e063dc3a66ecc736556e2`; RC2 source changes remain isolated to Sentry/runtime-control surfaces. |
-| Stable baseline | RC1 closure merged at `772ce87e2b81820a4ecb84d0df430de4b8f830ae`; VC1–VC8 subsequently merged through PR #270 at `c7f5985bc20372b4761e063dc3a66ecc736556e2`; Resend remains proven only for the synthetic managed boundary and real-participant/production email remains disabled. |
-| Current task | RC2 — complete separate API/portal Sentry source integration, privacy minimization, exact release binding, DSN-only runtime secrets, managed synthetic canaries, permanent runtime-truth verification and exact-head regression before any `ACTIVE` promotion. |
-| Governing issue | Issue #261 — Runtime integration closure after W8; Issue #259 VC1–VC8 is closed and preserved as baseline. |
+| Stable baseline | VC1–VC8 merged through PR #270 at `c7f5985bc20372b4761e063dc3a66ecc736556e2`; RC1 Resend closed at its synthetic managed boundary; RC2 Sentry source merged through PR #275 at `15210c5b0bf1832e32f8c33a7618c69f61f65275`; managed synthetic Sentry proof succeeded from exact merged source `035f4e8ff60a6e571d7aa09c0eaedb831c73648b`. |
+| Current task | RC2 closure/status reconciliation only. After this closeout merges, RC3 Crashlytics may claim a fresh bounded lane from current `main`. |
+| Governing issue | Issue #261 — Runtime integration closure after W8; Issue #259 VC1–VC8 is closed/completed. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
 
-## VC1–VC8 closure record preserved
+## RC2 Sentry closure record
 
-1. VC1–VC6 were promoted through PR #268 at `c5eb25b2e579d7f148b67130baf307a45f11e7a0`.
-2. The approved execution hybrid is Structured Trust for proof/information architecture, Neighbourhood Marketplace for customer warmth/imagery and Field Utility for provider/operations density.
-3. AI0 was promoted through PR #265; VC7 uses the provider-neutral backend foundation rather than client-direct model credentials.
-4. VC7 implements bounded customer discovery intent assistance, grounded public Help, provider onboarding/readiness guidance and provider profile drafting with source-controlled governance, evaluations, fail-closed switches and deterministic/manual fallback.
-5. Restricted evidence/OCR/operations-case AI remains disabled until explicit privacy/security/data-processing/provider approval and dedicated evaluation/runtime evidence exist.
-6. VC8 permanent verification guards AI disclosure/fallback/privacy, restricted-data gating, target/focus/reflow/accessibility expectations, browser credential boundaries and no-blanket-verification semantics.
-7. Permanent responsive visual evidence is owned by `functional-pwa-ci.yml`; permanent native Android evidence is owned by `android-ci.yml`.
-8. The VC1–VC8 closure programme merged through PR #270 at `c7f5985bc20372b4761e063dc3a66ecc736556e2`; RC2 must preserve those exact product, AI, privacy and accessibility boundaries.
+1. PR #275 integrated Sentry into the approved NestJS API and private Next.js operations portal surfaces without adding Android Sentry.
+2. Runtime activation is fail-closed: `SENTRY_MODE=enabled` is accepted only with `DIREKT_DATA_MODE=synthetic-only`, a valid HTTPS DSN and exact 40-character `SENTRY_RELEASE` source SHA.
+3. Separate API/portal DSNs use enabled numeric Secret Manager versions; Sentry auth tokens remain CI/release tooling only and are prohibited from application runtime.
+4. Default PII is disabled and the RC2 runtime minimizes request/user/context/extra data. Raw evidence, tokens, cookies, contacts, exact private coordinates and unnecessary free text remain prohibited telemetry.
+5. The managed API canary produced a Sentry event identifier and flushed successfully; the private portal canary produced the expected `DIREKT_SENTRY_PORTAL_OK` receipt/event identifier and flushed successfully.
+6. The portal canary remained private, used temporary least-privilege invocation for the managed proof, removed that grant afterward and verified no deployer/public invocation remained.
+7. Cloud Logging/Monitoring remains the authoritative infrastructure telemetry baseline.
+8. PR #279 provided a temporary, source-controlled one-shot dispatcher because the connected GitHub tool could not directly invoke `workflow_dispatch`. The dispatcher and authorization marker are removed in the RC2 closure change after the success receipt was recorded on Issue #261.
+9. RC2 is `ACTIVE` only for the approved synthetic-only managed boundary. Real participant/production telemetry or broader data classes require a separate privacy/data-use review and new managed evidence.
+10. Android crash/ANR telemetry ownership remains RC3 Firebase Crashlytics.
+
+Detailed closure evidence: `docs/integrations/RC2_SENTRY_CLOSURE.md`.
 
 ## Runtime integration closure contract
 
@@ -39,47 +42,33 @@ This file prevents overlapping writes in the single-lane build process.
 7. AI output cannot independently verify providers, change trust/ranking/publication, authorize payments/escrow, decide disputes, override consent/authorization or act as legal/regulatory authority.
 8. Exact private provider coordinates, raw evidence, contact data, credentials and tokens must not leak into telemetry, public maps, browser caches or provider payloads.
 9. Sentry auth tokens remain CI/release tooling only and must never bind to API, portal, Android or browser runtime.
-10. RC2 Sentry activation is synthetic-only until a separate reviewed privacy/data-use decision authorizes any broader data class.
-11. The workstream releases the lane only after status/ledger reconciliation, exact-head regression matrix, managed evidence and handoff are promoted.
+10. Every checkpoint must preserve deterministic/manual fallback or a safe disabled mode where applicable.
+11. The lane releases only after status/ledger reconciliation, exact-head regressions, managed evidence and handoff are promoted.
 
 ## Dependency-safe implementation sequence
 
 - RC0 — integration ledger, dependency/source audit, permanent-gate ownership sanity check and payment evidence reconciliation. **Closed — PR #263.**
-- AI0 — provider-neutral AI foundation. **Closed — PR #265; runtime activation remains per-use-case and data-classification gated.**
-- RC1 — Resend transactional-outbox runtime. **Closed — source PR #269; managed synthetic execution proven; hotfixes #271/#272 and closure PR #273 merged; real-participant/production email remains disabled.**
-- RC2 — Sentry for approved NestJS/Next.js surfaces with strict PII scrubbing, release controls and kill switch; Cloud Logging remains authoritative infrastructure telemetry. **ACTIVE CHECKPOINT.**
-- RC3 — Firebase Crashlytics Android activation with privacy/release mapping and synthetic crash/ANR evidence.
+- AI0 — provider-neutral AI foundation. **Closed — PR #265; Gemini/Groq sandbox proven, DIREKT runtime not bound; per-use-case activation remains fail-closed.**
+- RC1 — Resend transactional-outbox runtime. **Closed — ACTIVE for the synthetic-only managed boundary; real-participant/production email disabled.**
+- RC2 — Sentry API/portal observability. **Closed — ACTIVE for the synthetic-only managed boundary; real participant/production restricted-data telemetry not authorized.**
+- RC3 — Firebase Crashlytics Android activation with privacy/release mapping and synthetic crash/ANR evidence. **NEXT CHECKPOINT after a fresh claim.**
 - RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary.
 - RC5 — Firebase Test Lab device-matrix automation after Android runtime dependencies stabilize through RC3–RC4.
 - RC6 — WhatsApp Cloud API application adapter using outbox/idempotency/consent/template/delivery-receipt rules; production sends remain gated until provider/legal approvals exist.
 - RC7 — Google Maps runtime activation with separate restricted Android/backend credentials, privacy-safe publication semantics, quotas, manual/list fallback and kill switch.
-- RC8 — sandbox-only payment-provider adapter closure/reconciliation for already proven MTN, DPO, Stripe and PayPal rails; Airtel remains provider-pending and Flutterwave deferred; real money remains disabled.
+- RC8 — sandbox-only payment-provider adapter closure/reconciliation for proven MTN, DPO, Stripe and PayPal rails; Airtel remains provider-pending and Flutterwave deferred; real money remains disabled.
 - RC9 — OpenAPI-generated Kotlin and TypeScript client adoption/decision after backend integration/API shape stabilizes; migrate incrementally with cross-client regressions.
 - RC10 — Turnstile threat-model decision; implement only if a reviewed public abuse-sensitive flow requires it, otherwise close as not currently justified.
 - RC11 — combined integration regression, managed evidence index, live ledger/status reconciliation and lane release.
 
-## VC7–VC8 implementation contract preserved after closure
+## AI contract preserved
 
 1. AI is assistive, never authoritative: it cannot approve/reject verification, publish trust, suspend providers, decide serious complaints/appeals, mutate payment truth, widen permissions or make legal/regulatory conclusions.
-2. Customer discovery AI remains optional and reversible; deterministic category/search/area flows continue when AI is disabled, unavailable, invalid or rejected.
-3. AI output is schema/allowlist validated and model-invented canonical IDs are rejected server-side.
-4. Browser and Android clients use DIREKT-controlled API/BFF boundaries; no model/provider credential, privileged database credential or restricted retrieval authority enters client code.
-5. Implemented VC7 use cases use synthetic/public-safe or deliberately reduced provider-safe context only. Restricted evidence/OCR/operations-case AI remains hard-disabled until separate approval and runtime evidence exist.
-6. Prompt injection, sensitive-data disclosure, excessive agency, hallucination, outage/fallback, authorization and evaluation controls are required before any AI use case can be runtime-enabled.
-7. AI cannot create or strengthen verification, publication, ranking or commercial state. Payment remains independent from trust.
-8. Exact private provider coordinates, private evidence, raw contact data, reviewer-private notes, credentials and tokens remain outside public/client AI context.
-9. Every material UI action must execute a real authorized flow, be explicitly disabled/gated, or clearly state its synthetic limitation.
-10. Real participants, real evidence, live external communications, real money movement and production release remain separate Phase 11/12 and integration gates.
-
-## Completed W0–W8 workstream contract
-
-1. The functional browser client is additive under `web/direkt-app/`; Android remains the primary native Version 1 client.
-2. Android and web share product semantics through canonical NestJS REST/OpenAPI boundaries, not shared UI binaries.
-3. Browser session state remains server-controlled and provider scope/DIREKT authorization remain backend-authoritative.
-4. No direct privileged Supabase/database/Storage credentials or authority enter browser code.
-5. Commercial state cannot create or improve verification/publication/ranking authority; real money remains separately gated.
-6. Canonical host `https://app.direkt.forum` passed independent W8 exact-head verification; `https://direkt.forum/preview/` remains the explicit synthetic historical/review route.
-7. W8 closure did not authorize real participants, real evidence, production authentication, external communications/payment activation, Phase 11 exit or production release.
+2. Implemented bounded use cases are customer discovery/category assistance, grounded public Help, provider onboarding/readiness guidance and provider public-profile drafting.
+3. Those use cases have deterministic/manual fallback and per-use-case fail-closed switches.
+4. External model runtime is not active by default; Gemini and Groq remain sandbox-proven but not bound to the managed DIREKT runtime at this checkpoint.
+5. Restricted evidence/OCR/operations-case AI remains disabled until separate privacy/security/data-processing/provider approval and dedicated evaluation/runtime evidence exist.
+6. No model/provider credential or privileged retrieval authority enters Android/browser code.
 
 ## Persistent stop conditions
 
@@ -98,4 +87,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-The VC1–VC8 implementation claim is closed and preserved as baseline. No second agent may write to overlapping RC2 runtime-integration surfaces while this claim is active. Read-only review may continue. The RC2 lock is released only after source/runtime promotion, managed evidence, status/ledger reconciliation and exact-head regressions are complete.
+No active implementation lane is held after RC2 closure. Before RC3 or any other material work begins, the next agent must fetch current `main`, verify predecessor exact-head regressions, re-read Issue #261 and this lock, then claim only the bounded checkpoint it owns.
