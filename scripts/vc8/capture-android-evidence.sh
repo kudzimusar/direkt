@@ -9,6 +9,19 @@ diagnostics_dir="${RUNNER_TEMP}/vc8-android-capture"
 mkdir -p "${output_dir}" "${diagnostics_dir}"
 exec > >(tee "${diagnostics_dir}/capture.log") 2>&1
 
+sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+adb_bin="$(command -v adb || true)"
+if [[ -z "${adb_bin}" && -n "${sdk_root}" ]]; then
+  adb_bin="${sdk_root}/platform-tools/adb"
+fi
+if [[ -z "${adb_bin}" || ! -x "${adb_bin}" ]]; then
+  echo "adb is unavailable for native evidence capture: ${adb_bin:-<empty>}" >&2
+  exit 1
+fi
+adb() {
+  "${adb_bin}" "$@"
+}
+
 capture_diagnostics() {
   local label="$1"
   adb shell uiautomator dump /sdcard/window.xml >/dev/null 2>&1 || true
