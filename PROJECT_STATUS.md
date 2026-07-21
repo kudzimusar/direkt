@@ -2,10 +2,10 @@
 
 **Updated:** 2026-07-21 (Asia/Tokyo)  
 **Stable branch:** `main`  
-**VC1–VC8 promotion:** PR #270 merged at `c7f5985bc20372b4761e063dc3a66ecc736556e2`  
-**Visual Completion issue:** #259 — CLOSED/COMPLETED  
-**Runtime integration tracker:** #261  
-**Active repository write lane:** none; next material work requires a fresh claim
+**Visual Completion:** VC1–VC8 merged through PR #270 at `c7f5985bc20372b4761e063dc3a66ecc736556e2`; Issue #259 closed/completed  
+**Runtime integration tracker:** Issue #261  
+**Latest integration checkpoint:** RC2 Sentry API/portal closed for the synthetic-only managed boundary  
+**Active repository write lane:** none after RC2 closeout; RC3 Crashlytics requires a fresh claim
 
 ## 1. Programme state
 
@@ -19,9 +19,13 @@ DIREKT’s current repository state is:
 - functional customer/provider web/PWA W0–W8 — **closed**;
 - VC0 preparation/control — **closed**;
 - VC1–VC8 world-class product/AI modernization — **complete and merged**;
-- runtime integration closure — **RC1 Resend closed at its managed synthetic boundary; RC2 Sentry is the next planned bounded checkpoint after a fresh lane claim**.
+- RC0 integration audit/ledger — **closed**;
+- AI0 provider-neutral AI foundation — **closed / runtime-gated**;
+- RC1 Resend — **closed / ACTIVE for synthetic-only managed canary boundary**;
+- RC2 Sentry API/portal — **closed / ACTIVE for synthetic-only managed canary boundary**;
+- RC3 Firebase Crashlytics — **next dependency-safe runtime-integration checkpoint after a fresh workstream claim**.
 
-VC1–VC8 completion does not replace or weaken the remaining Phase 11 real-world evidence, privacy/legal, payment, external-communications or production-release gates.
+No repository-only integration checkpoint replaces or weakens Phase 11 real-world evidence, privacy/legal, payment, external-communications or production-release gates.
 
 ## 2. Current product truth
 
@@ -38,180 +42,179 @@ DIREKT now has:
 - canonical browser application at `https://app.direkt.forum`;
 - preserved synthetic historical preview at `https://direkt.forum/preview/`;
 - completed VC1–VC8 modernization using the approved Structured Trust + Neighbourhood Marketplace + Field Utility hybrid;
-- bounded AI assistance behind DIREKT-controlled backend/BFF boundaries with deterministic/manual fallback and fail-closed use-case switches;
-- permanent synthetic-safe responsive/native visual-evidence generation in normal CI.
+- bounded AI-assistance product surfaces behind backend/BFF authority with deterministic/manual fallback and fail-closed switches;
+- permanent synthetic-safe responsive/native visual-evidence generation in normal CI;
+- transactional Resend runtime proven at the approved synthetic-only managed boundary;
+- Sentry API/private-portal observability proven at the approved synthetic-only managed boundary while Cloud Logging/Monitoring remains authoritative infrastructure telemetry.
 
-Android remains the primary native Version 1 client. Web/PWA remains additive and shares product semantics through canonical backend contracts, not shared UI binaries or privileged browser credentials.
+Android remains the primary native Version 1 client. Web/PWA is additive and shares product semantics through canonical backend contracts, not shared privileged credentials.
 
-## 3. W0–W8 functional parity
+## 3. Integration closure sequence
 
-W0–W8 are **closed**.
+The authoritative runtime integration sequence remains one bounded checkpoint at a time:
 
-```text
-                         DIREKT PRODUCT
-                              │
-               ┌──────────────┴──────────────┐
-               │                             │
-        Android Client                Web/PWA Client
-       Jetpack Compose              Next.js / React
-               │                             │
-               └──────────────┬──────────────┘
-                              │
-                     Canonical OpenAPI
-                              │
-                     DIREKT NestJS API
-                              │
-              PostgreSQL / PostGIS / Private Storage
-                              │
-          Identity / Trust / Enquiries / Reviews / Commercial / Audit
-```
+1. RC0 — ledger/dependency/source audit — **closed**.
+2. AI0 — provider-neutral AI foundation — **closed; Gemini/Groq sandbox proven, managed DIREKT runtime not bound**.
+3. RC1 — Resend — **closed; synthetic-only managed canary proven**.
+4. RC2 — Sentry API/portal — **closed; synthetic-only managed canary proven**.
+5. RC3 — Firebase Crashlytics Android — **next**.
+6. RC4 — FCM push delivery.
+7. RC5 — Firebase Test Lab device matrix.
+8. RC6 — WhatsApp Cloud API application adapter.
+9. RC7 — Google Maps runtime.
+10. RC8 — sandbox payment adapters/reconciliation.
+11. RC9 — OpenAPI-generated Kotlin/TypeScript client adoption/decision.
+12. RC10 — Turnstile threat-model decision.
+13. RC11 — combined integration regression/evidence index/final lane release.
 
-Stable W8 managed evidence remains:
+Detailed authority:
+
+- `WORKSTREAM_LOCK.md`;
+- `docs/integrations/RUNTIME_INTEGRATION_CLOSURE_PLAN.md`;
+- `docs/integrations/CURRENT_INTEGRATION_STATUS.md`;
+- `docs/integrations/LIVE_INTEGRATION_LEDGER.md`;
+- Issue #261.
+
+## 4. RC1 Resend status
+
+RC1 is closed only for the approved synthetic-only managed boundary.
+
+Proven:
+
+- provider-neutral Resend adapter through the transactional outbox;
+- deterministic idempotency/retry/failure persistence;
+- verified sender domain `notify.direkt.forum`;
+- sending-only/domain-restricted provider key;
+- Secret Manager/runtime access;
+- managed Cloud Run execution `direkt-resend-canary-ct9mp` on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`;
+- outbox path reached durable `published` state.
+
+Not authorized by RC1:
+
+- uncontrolled participant email;
+- production marketing/bulk email;
+- Phase 11 exit or production release.
+
+## 5. RC2 Sentry status
+
+RC2 is closed only for the approved synthetic-only managed boundary.
+
+Source:
+
+- Sentry API/private operations portal integration promoted through PR #275;
+- managed proof dispatched from exact merged source `035f4e8ff60a6e571d7aa09c0eaedb831c73648b`;
+- Issue #261 contains the sanitized dispatch and final success receipts;
+- closeout detail: `docs/integrations/RC2_SENTRY_CLOSURE.md`.
+
+Proven boundaries:
+
+- separate API/portal DSNs;
+- enabled numeric Secret Manager versions only;
+- exact 40-character release/source binding;
+- synthetic-only data-mode gate;
+- API and portal Sentry event generation/flush;
+- private portal invocation/IAM cleanup after the canary;
+- no Sentry auth token in application runtime;
+- `sendDefaultPii=false` and minimized telemetry;
+- traces/logs/breadcrumbs/local-vars/replay not activated by RC2;
+- Cloud Logging/Monitoring remains authoritative infrastructure telemetry.
+
+Not authorized by RC2:
+
+- real participant or production restricted-data telemetry;
+- raw evidence/contact/private-coordinate telemetry;
+- Android Sentry;
+- any trust, authorization, verification, payment, publication or dispute authority.
+
+Android crash/ANR ownership moves to RC3 Firebase Crashlytics.
+
+## 6. What AI is doing now
+
+AI is implemented as a bounded assistance layer, not as canonical authority.
+
+Implemented product use cases:
+
+1. customer natural-language service-need/category assistance;
+2. grounded public Help using approved DIREKT facts/source identifiers;
+3. provider onboarding/readiness guidance;
+4. provider public-profile drafting requiring provider confirmation.
+
+Current managed runtime truth:
+
+- provider-neutral `AiProvider` backend contract — **implemented/gated**;
+- Gemini — **sandbox proven, DIREKT runtime not bound**;
+- Groq fallback — **sandbox proven, DIREKT runtime not bound**;
+- AI provider mode and per-use-case modes default fail-closed;
+- production AI provider activation is disabled;
+- `AiService` currently accepts synthetic model input only;
+- deterministic/manual fallback remains active for core tasks when AI is disabled/unavailable/invalid;
+- restricted evidence OCR/extraction and restricted operations-case AI remain disabled.
+
+Therefore, in the current managed DIREKT runtime, the visible AI-capable features do **not** imply live Gemini/Groq calls. Unless a reviewed synthetic environment explicitly enables both the use-case switch and provider binding, the product uses deterministic/manual behavior.
+
+AI cannot:
+
+- verify or reject a provider;
+- create or improve trust/publication/ranking;
+- authorize payments or escrow;
+- decide serious disputes/appeals;
+- override consent/authorization;
+- expose restricted evidence/private coordinates/raw contacts;
+- make legal/regulatory conclusions.
+
+## 7. W0–W8 and VC1–VC8 remain closed
+
+Stable W8 evidence:
 
 - functional managed runtime source: `c1262ce2bfb76e06d2296d793f1acd6cf5cc3ca2`;
 - managed run: `29721199177`;
-- canonical-domain verification run: `29802524466`;
+- canonical-domain verification: `29802524466`;
 - canonical host: `https://app.direkt.forum`.
 
-## 4. VC1–VC8 completion
-
-### VC1–VC6
-
-Promoted through PR #268 at `c5eb25b2e579d7f148b67130baf307a45f11e7a0`:
-
-- cross-surface Design DNA and visual-system reconciliation;
-- customer marketplace/discovery and provider-profile modernization;
-- provider professional workspace and evidence presentation;
-- operations mission-control / queue → case/evidence → checklist/decision composition;
-- Android visual/product modernization;
-- historical W4/W7 ownership corrections so legitimate later evolution remains regression-tested.
-
-### VC7 — bounded AI intelligence
-
-The provider-neutral AI foundation was promoted through PR #265. VC7 adds:
-
-- optional natural-language customer discovery/category assistance;
-- grounded public Help with source identifiers;
-- provider onboarding/readiness guidance;
-- provider public-profile drafting requiring provider confirmation.
-
-Controls include use-case registry/data classification, prompt/version control, input limits, canonical taxonomy validation, evaluations/security tests, authorization, deterministic/manual fallback and fail-closed switches.
-
-AI cannot approve verification, strengthen trust/publication/ranking, authorize payments, decide serious disputes/appeals, widen permissions or make legal/regulatory conclusions.
-
-Restricted evidence OCR/extraction and restricted operations AI remain disabled until separately approved privacy/security/data-processing/provider requirements and dedicated runtime evidence exist.
-
-### VC8 — quality, regression and visual evidence
-
-Permanent quality verification covers:
-
-- responsive/adaptive presentation;
-- accessibility/focus/target/reflow expectations;
-- AI disclosure/fallback/privacy;
-- credential and client-privilege boundaries;
-- no blanket `Verified` regression;
-- restricted-data AI gating;
-- exact-head visual evidence.
-
-Permanent evidence ownership:
-
-- `functional-pwa-ci.yml` — responsive customer/provider/public Help/operations evidence;
-- `android-ci.yml` — native Android build/emulator/customer/provider/evidence captures.
-
-The redundant standalone VC8 visual workflow was removed after both permanent lanes proved successful.
-
-## 5. Final VC closure evidence
-
-Exact reviewed closure head:
+VC1–VC8 final reviewed closure head:
 
 `cc7cdb5760c01498f27ca1daba738e02296320cb`
 
-Merged through PR #270 at:
+The completed visual/AI modernization does not bypass integration/provider/runtime gates.
 
-`c7f5985bc20372b4761e063dc3a66ecc736556e2`
+## 8. Payments remain sandbox/runtime-gated
 
-All required permanent exact-head workflows passed, including Backend CI/Container, Android CI/performance, both PWA suites, W4/W7/W8, integration audit, controlled staging, recovery, supply-chain security, Phase 11 synthetic, Play readiness, Phase12A/final preauthorization and documentation quality.
+Provider evidence currently includes:
 
-### Web and operations visual evidence
+- MTN MoMo Collections — sandbox proven;
+- DPO Pay — sandbox proven;
+- Stripe Checkout — sandbox proven;
+- PayPal — sandbox proven;
+- Airtel Money Zambia Cash-In — provider approval/credentials pending;
+- Flutterwave — deferred/blocked by onboarding availability.
 
-- workflow run: `29830637290`;
-- artifact ID: `8495136163`;
-- digest: `sha256:87e995d951efdb5d1282bbd7ad32bd08b4826a858a9c32570b0ed99f3541dd6d`.
+Real money movement, escrow and customer-to-provider service payment remain disabled unless separate legal/commercial/provider/pilot/release gates authorize them.
 
-Visually inspected representative states: responsive customer discovery, deterministic AI fallback, grounded Help, provider check-specific trust, operations mission control and evidence review.
+Payment state can never create verification, publication or ranking authority.
 
-### Native Android visual evidence
+## 9. Remaining formal programme gates
 
-- workflow run: `29830637218`;
-- artifact ID: `8495234528`;
-- digest: `sha256:ec089058f023ae279325e7e89df63d33b61308ca664dad7cb64e547b6b5fe326`.
+Still externally/operationally open:
 
-Visually inspected states:
-
-1. Customer Discover;
-2. Provider Overview;
-3. Provider Evidence/recovery.
-
-All evidence is synthetic/public-safe as applicable. No private evidence, exact private coordinates, raw contacts, credentials, developer/test-harness presentation or blanket provider verification is exposed.
-
-## 6. Integration/runtime truth
-
-Detailed authority remains:
-
-- `docs/integrations/CURRENT_INTEGRATION_STATUS.md`;
-- `docs/integrations/LIVE_INTEGRATION_LEDGER.md`;
-- `docs/integrations/RUNTIME_INTEGRATION_CLOSURE_PLAN.md`;
-- `WORKSTREAM_LOCK.md`.
-
-Important distinctions:
-
-- Supabase/Postgres/PostGIS/private Storage, canonical backend, Cloud Run, Secret Manager, Workload Identity Federation, Logging and core CI/runtime infrastructure are active within documented environment boundaries;
-- RC1 Resend has managed synthetic outbox → provider proof, while real-participant/continuous production email remains separately gated;
-- the provider-neutral AI contract and bounded VC7 use cases are implemented, but external model runtime activation remains per-use-case/fail-closed and restricted-data AI remains disabled;
-- Maps and other externally provisioned integrations require their own runtime evidence before being represented as active;
-- payment rails may be sandbox-proven while real money remains disabled;
-- an account, API key, secret or provider dashboard entry alone is never `ACTIVE` runtime evidence.
-
-Backend/integration readiness does not authorize real participant data, private evidence processing, production communications, real money or production release.
-
-## 7. Trust, privacy and commercial boundaries
-
-The following remain non-negotiable:
-
-- no blanket `Verified` badge;
-- public trust remains check-specific, scoped, dated/currentness-aware and limitation-aware;
-- payment/commercial state cannot create or strengthen verification, publication or ranking authority;
-- exact private provider coordinates, private evidence, raw contact data, credentials and reviewer-private notes remain protected;
-- browser/Android clients do not receive privileged provider/database/payment/AI credentials;
-- provider scope and consequential authorization remain backend-authoritative;
-- synthetic fixtures cannot replace canonical state while claiming production functionality.
-
-## 8. Phase 11/12 boundaries remain unchanged
-
-VC1–VC8 completion does not clear:
-
-1. actual 11C–11H Zambia pilot evidence;
+1. actual Phase 11 Zambia pilot evidence 11C–11H;
 2. evidence-backed 11J `PROCEED`;
-3. required Zambia legal/privacy/regulatory approvals and final live policy versions;
+3. required Zambia legal/privacy/regulatory approvals and current live policy versions;
 4. production evidence/private-data readiness;
-5. end-to-end account deletion where required;
-6. production environment and backup restore;
-7. operational staffing/exercises;
-8. active production monitoring/escalation;
-9. real Play account/current-policy/signed-release controls;
-10. formal go/no-go/staged rollout;
-11. any production AI capability without provider/data/evaluation/security/monitoring/fallback/human-accountability approval.
+5. production environment/backup-restore readiness;
+6. operational staffing/exercises and active monitoring/escalation;
+7. real Play/current-policy/signed-release controls;
+8. formal go/no-go/staged rollout;
+9. any broader AI data class/provider activation beyond the currently approved synthetic-only boundaries.
 
-## 9. Next execution rule
+## 10. Next execution rule
 
-VC1–VC8 and Issue #259 are closed. No active repository write lane exists.
+Before RC3 begins:
 
-The next planned material checkpoint is **RC2 — Sentry API/portal runtime observability** under Issue #261. Before RC2 source changes:
-
-1. start from current merged `main`;
-2. recheck predecessor exact-head regressions and current integration ledger;
-3. claim a new bounded workstream lane in `WORKSTREAM_LOCK.md`;
-4. preserve all VC, trust, privacy, integration and Phase 11/12 release controls;
-5. close RC2 only with the source/runtime/privacy/managed-evidence requirements in the runtime-integration closure plan.
-
-This project status records repository/product completion truth only and does not imply production authorization beyond the explicitly evidenced integration and release boundaries.
+1. fetch current `main` after RC2 closeout merge;
+2. verify predecessor exact-head regression state;
+3. re-read `WORKSTREAM_LOCK.md`, Issue #261 and the runtime closure plan;
+4. claim only RC3 Crashlytics Android surfaces;
+5. preserve Android identity, release signing, Play/Data Safety, privacy and VC1–VC8 regressions;
+6. add source integration and fail-closed configuration;
+7. prove release mapping/privacy and synthetic crash/ANR behavior on managed Firebase infrastructure;
+8. merge only after exact-head Android/integration/security/release regressions and status reconciliation are green.
