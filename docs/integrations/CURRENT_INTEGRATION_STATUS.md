@@ -131,7 +131,7 @@ Maps becomes ACTIVE only after restricted credentials, source integration, priva
 | Integration | State | Current role |
 |---|---|---|
 | Transactional outbox | **ACTIVE domain foundation** | Durable asynchronous-event foundation. |
-| Resend | **IMPLEMENTED_GATED / MANAGED CANARY PENDING** | Provider-neutral HTTP adapter, transactional-outbox consumer, stable idempotency/retry/failure persistence, verified sender-domain gate and a private Cloud Run Job canary workflow are source-integrated. `notify.direkt.forum` is verified and `direkt-resend-api-key` version 1 is enabled; the managed canary has not yet executed, so Resend is not ACTIVE. |
+| Resend | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY** | Provider-neutral HTTP adapter and transactional-outbox consumer are proven through Cloud Run execution `direkt-resend-canary-ct9mp` on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`; the durable path reached `published`. Sending key is sending-only/domain-restricted to verified `notify.direkt.forum`; `direkt-resend-api-key` v1 is enabled. Continuous, controlled-pilot participant and production external email remain disabled. |
 | Brevo | **SUPERSEDED** | Historical preferred email provider. |
 | Firebase phone OTP | **IMPLEMENTED_GATED** | Current pilot phone-possession direction. |
 | Twilio Verify | **SUPERSEDED** | Earlier OTP candidate. |
@@ -139,7 +139,7 @@ Maps becomes ACTIVE only after restricted credentials, source integration, priva
 | FCM push | **PLANNED** | Future event delivery/runtime closure. |
 | Cloud Tasks / Pub/Sub / Scheduler | **PLANNED** | Add only when real retry/fan-out/scheduling needs justify them. |
 
-RC1 source integration is implemented and remains gated. Promotion requires least-privilege runtime secret access plus a successful exact-source managed synthetic outbox-to-Resend canary; continuous and real-participant external email remain disabled.
+RC1 is closed for the approved synthetic-only boundary: least-privilege key/domain restriction and runtime secret access are proven, and managed Cloud Run execution `direkt-resend-canary-ct9mp` completed the exact-source outbox-to-Resend path successfully. This does not authorize continuous, controlled-pilot participant or production external email.
 
 ## Observability
 
@@ -228,7 +228,7 @@ W8 is **CLOSED**. The canonical functional browser host passed independent exact
 
 Issue #261 now governs sequential runtime-integration closure. `WORKSTREAM_LOCK.md` and `RUNTIME_INTEGRATION_CLOSURE_PLAN.md` define the current dependency-safe order. `LIVE_INTEGRATION_LEDGER.md` is the mandatory cross-agent receipt ledger.
 
-AI0 under Issue #264 is CLOSED and merged in PR #265 at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; its providers remain gated rather than active runtime integrations. RC1 Resend is the active checkpoint and is `IMPLEMENTED_GATED / MANAGED CANARY PENDING` until managed proof passes.
+AI0 under Issue #264 is CLOSED and merged in PR #265 at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; its providers remain gated rather than active runtime integrations. RC1 Resend is CLOSED for the synthetic-only managed-canary boundary after successful Cloud Run execution `direkt-resend-canary-ct9mp`; RC2 Sentry API/portal is the next bounded checkpoint after the RC1 closure merge.
 
 VC0 visual audit/design-control work under Issue #259 remains non-overlapping design/audit work. Broad visual implementation requires separate owner approval and must not overlap claimed runtime-integration surfaces.
 
