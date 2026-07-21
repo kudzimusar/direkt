@@ -143,26 +143,17 @@ jobs:
       - name: Provision headless Android emulator for VC8 evidence
         working-directory: .
         shell: bash
-        run: |
-          set -euo pipefail
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platform-tools" "emulator" "system-images;android-35;google_apis;x86_64"
-          echo no | avdmanager create avd --force --name direkt-vc8 --package "system-images;android-35;google_apis;x86_64" --device "pixel_2"
-          sudo chmod 666 /dev/kvm || true
-          nohup "${ANDROID_HOME}/emulator/emulator" -avd direkt-vc8 -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot > "${RUNNER_TEMP}/vc8-emulator.log" 2>&1 &
-          adb wait-for-device
-          for attempt in $(seq 1 90); do
-            if [[ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == "1" ]]; then break; fi
-            if [[ "$attempt" == "90" ]]; then
-              cat "${RUNNER_TEMP}/vc8-emulator.log"
-              exit 1
-            fi
-            sleep 2
-          done
-          adb shell settings put global window_animation_scale 0
-          adb shell settings put global transition_animation_scale 0
-          adb shell settings put global animator_duration_scale 0
-          adb install -r android/direkt-app/app/build/outputs/apk/debug/app-debug.apk
+        run: bash scripts/vc8/provision-android-emulator.sh
+      - name: Upload Android emulator diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-vc8-emulator-diagnostics-${{ github.run_number }}-${{ env.SOURCE_SHA }}
+          path: |
+            ${{ runner.temp }}/vc8-emulator.log
+            ${{ runner.temp }}/vc8-emulator.pid
+          if-no-files-found: warn
+          retention-days: 14
       - name: Capture native customer and provider synthetic evidence
         working-directory: .
         shell: bash
