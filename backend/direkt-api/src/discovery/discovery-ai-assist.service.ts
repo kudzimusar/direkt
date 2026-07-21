@@ -139,8 +139,7 @@ export class DiscoveryAiAssistService {
       if (!category || suggestions.some((item) => item.categoryKey === categoryKey)) continue;
 
       const confidence = clampConfidence(candidate.confidence);
-      const reason =
-        normalizeText(candidate.reason, 220) || `Possible match for ${category.name}.`;
+      const reason = normalizeText(candidate.reason, 220) || `Possible match for ${category.name}.`;
       const searchTerms = Array.isArray(candidate.searchTerms)
         ? candidate.searchTerms
             .filter((term): term is string => typeof term === 'string')
