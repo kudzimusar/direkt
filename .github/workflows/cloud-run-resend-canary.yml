@@ -176,17 +176,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          job_export="${RUNNER_TEMP}/direkt-resend-canary-job.yaml"
           gcloud run jobs describe "${GCP_CANARY_JOB}" \
             --project "${GCP_PROJECT_ID}" \
             --region "${GCP_REGION}" \
-            --format=export > "${RUNNER_TEMP}/direkt-resend-canary-job.yaml"
+            --format=export > "${job_export}"
 
-          grep -Fq "${GCP_RUNTIME_SERVICE_ACCOUNT}" "${RUNNER_TEMP}/direkt-resend-canary-job.yaml"
-          grep -Fq "direkt-database-url" "${RUNNER_TEMP}/direkt-resend-canary-job.yaml"
-          grep -Fq "direkt-resend-api-key" "${RUNNER_TEMP}/direkt-resend-canary-job.yaml"
-          grep -Fq "EMAIL_PROVIDER_MODE" "${RUNNER_TEMP}/direkt-resend-canary-job.yaml"
-          grep -Fq "notify.direkt.forum" "${RUNNER_TEMP}/direkt-resend-canary-job.yaml"
-          if grep -Eq 'key:[[:space:]]*["'"']?latest["'"']?' "${RUNNER_TEMP}/direkt-resend-canary-job.yaml"; then
+          grep -Fq "${GCP_RUNTIME_SERVICE_ACCOUNT}" "${job_export}"
+          grep -Fq "direkt-database-url" "${job_export}"
+          grep -Fq "direkt-resend-api-key" "${job_export}"
+          grep -Fq "EMAIL_PROVIDER_MODE" "${job_export}"
+          grep -Fq "notify.direkt.forum" "${job_export}"
+          if grep -Fq 'key: latest' "${job_export}" || \
+             grep -Fq 'key: "latest"' "${job_export}" || \
+             grep -Fq "key: 'latest'" "${job_export}"; then
             echo "::error title=Unpinned canary secret::Cloud Run Job contains a latest secret reference."
             exit 1
           fi
