@@ -90,13 +90,13 @@ fun DirektNavigationIcon(
                 )
                 val shoulders = Path().apply {
                     moveTo(size.width * 0.2f, size.height * 0.82f)
-                    quadraticBezierTo(
+                    quadraticTo(
                         size.width * 0.24f,
                         size.height * 0.58f,
                         size.width * 0.5f,
                         size.height * 0.58f,
                     )
-                    quadraticBezierTo(
+                    quadraticTo(
                         size.width * 0.76f,
                         size.height * 0.58f,
                         size.width * 0.8f,
