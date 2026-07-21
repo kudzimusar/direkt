@@ -2,13 +2,13 @@
 
 **Updated:** 2026-07-21 (Asia/Tokyo)  
 **Stable branch:** `main`  
-**Sequential implementation lane:** `build/android-v1` when formally claimed  
-**Documentation/modernization planning branch:** `docs/world-class-ai-vc-plan` until promoted  
-**Programme state:** Phases 0–10 are complete. Phase 11 internal/synthetic readiness is complete; real 11C–11H evidence and 11J remain pending. Repository-clearable Phase 12 preauthorization engineering and the Phase 0–12 integration/runtime reconciliation are complete. Functional customer/provider web/PWA W0–W8 is closed. Formal Phase 12 production release is not authorized. The next product-modernization programme is VC1–VC8 after the VC0 design/benchmark checkpoint and explicit owner direction.
+**Current claimed implementation lane:** Issue #261 runtime integration closure on `integration/runtime-closure-261`  
+**VC documentation/benchmark branch:** `docs/world-class-ai-vc-plan` until promoted  
+**Programme state:** Phases 0–10 are complete. Phase 11 internal/synthetic readiness is complete; real 11C–11H evidence and 11J remain pending. Repository-clearable Phase 12 preauthorization engineering is complete but production release is not authorized. Functional customer/provider web/PWA W0–W8 is closed. Runtime-integration closure is now a separate sequential lane under Issue #261. The next product-modernization programme is VC1–VC8 under Issue #259, subject to the active workstream lock and explicit owner high-fidelity direction.
 
 ## 1. Current product truth
 
-DIREKT now has:
+DIREKT has:
 
 - native Android customer/provider implementation;
 - functional responsive customer/provider web/PWA companion;
@@ -18,27 +18,24 @@ DIREKT now has:
 - check-specific verification/trust engine;
 - enquiries/reviews/complaints/commercial foundations;
 - active managed development/staging infrastructure within documented boundaries;
-- closed W0–W8 browser parity/cutover workstream.
+- closed W0–W8 browser parity/cutover workstream;
+- an active sequential runtime-integration closure programme that is reconciling remaining provider SDK/runtime evidence without authorizing real production use.
 
-The major remaining product gap is no longer basic backend scaffolding. It is the conversion of a technically mature but visually uneven product into a world-class, AI-assisted marketplace across customer, provider and operations experiences without regressing trust/privacy/security.
+The major visible product gap is no longer basic backend scaffolding. It is converting a technically mature but visually uneven product into a world-class, AI-assisted marketplace across customer, provider and operations experiences without regressing trust, privacy, security or active integration work.
 
 Governing modernization documents:
 
 - `docs/product/WORLD_CLASS_PRODUCT_AND_AI_PLAN.md`;
 - `docs/design/VISUAL_COMPLETION_PLAN.md`;
 - `docs/architecture/AI_PRODUCT_ARCHITECTURE.md`;
+- `docs/design/DESIGN_DNA_BRIEF.md`;
+- `docs/design/UI_VISUAL_GAP_MATRIX.md`;
+- `docs/testing/AI_EVALUATION_AND_SECURITY_TEST_PLAN.md`;
 - Issue #259.
 
-## 2. Completed functional Android/Web parity
+## 2. Functional Android/web parity
 
-The owner-authorized browser companion is additive to native Android. W0 through W8 are closed.
-
-Governing historical controls:
-
-- `docs/web/FUNCTIONAL_PWA_PARITY_IMPLEMENTATION_PLAN.md`;
-- `docs/web/FUNCTIONAL_PARITY_MATRIX.md`;
-- `docs/architecture/FUNCTIONAL_PWA_ARCHITECTURE_DECISION.md`;
-- `docs/testing/FUNCTIONAL_PWA_NO_REGRESSION_TEST_PLAN.md`.
+The browser companion is additive to native Android. W0 through W8 are closed.
 
 Architecture:
 
@@ -90,7 +87,24 @@ W8 stable evidence:
 
 W8 proves functional parity/cutover, not final visual design approval.
 
-## 3. Current checkpoints
+## 3. Current implementation-lane truth
+
+Issue #261 now owns the claimed sequential runtime-integration lane.
+
+Current branch from repository lock:
+
+`integration/runtime-closure-261`
+
+The integration plan is closing one bounded integration at a time and includes runtime evidence for items such as email, observability, Crashlytics, FCM, Test Lab, WhatsApp, Maps, sandbox payment adapters, generated clients and any justified abuse-control integration.
+
+Important:
+
+- the historical W7/W8 verifier ownership coupling has already been decoupled in the promoted runtime-integration baseline;
+- VC0/benchmark/documentation work may proceed on isolated non-overlapping design-control surfaces;
+- broad VC Android/PWA/operations implementation must not overlap the active Issue #261 claim;
+- before starting broad VC implementation, re-read `WORKSTREAM_LOCK.md`, current `main`, Issue #261 status and exact-head CI, then claim/reconcile the next allowed scope.
+
+## 4. Selected current checkpoints
 
 | Checkpoint | PR / evidence | Stable result |
 |---|---:|---|
@@ -100,98 +114,73 @@ W8 proves functional parity/cutover, not final visual design approval.
 | Phase 12A Android release engineering | #129 | `48f6d2d212d64192819d76d67e157b25f8a5e98b` |
 | Phase 12B Play/Data Safety preparation | #134 | `b876c499aed0f135feec39601b58f22c734879cc` |
 | Remaining clearable Phase 12 controls | #136 | `c6bb694046b2fe8e82d3f745330447632169355c` |
-| Late Phase 12 release-policy hardening | #140 | `8363e2196739f5bad2393eaa8896d4c43bd64e0f` |
-| Reconciled synthetic customer/provider PWA | #142 | `d9ae39963ace0ef99ad744f5615a98dbec058463` |
-| Phase 0–12 integration/runtime audit | #149 | `25deaae72ca2974c5560a8059a50fce37c810f63` |
-| Integration closeout/status sync | #151/#152 | `885eb72dcda12be8c23c4068dec138562af5888a` |
+| Integration/runtime audit | #149 | `25deaae72ca2974c5560a8059a50fce37c810f63` |
 | W8 managed browser runtime | run `29721199177` | PASS |
-| W8 canonical host/DNS/TLS | PR #257 / run `29802524466` | PASS |
+| W8 canonical host/DNS/TLS | run `29802524466` | PASS |
+| Runtime-integration closure baseline | #263 | promoted on 2026-07-21 |
 
-## 4. Integration/runtime truth
+## 5. Integration/runtime truth
+
+Detailed authority:
+
+- `docs/integrations/CURRENT_INTEGRATION_STATUS.md`;
+- `docs/integrations/LIVE_INTEGRATION_LEDGER.md`;
+- `docs/integrations/RUNTIME_INTEGRATION_CLOSURE_PLAN.md`;
+- `WORKSTREAM_LOCK.md`.
 
 ### Active in approved boundaries
 
 - Supabase PostgreSQL/PostGIS and private server-side Storage;
 - canonical NestJS REST/OpenAPI backend;
 - Artifact Registry and IAM-private Cloud Run API/operations staging;
-- public synthetic-only functional customer/provider browser/BFF runtime at `https://app.direkt.forum`;
+- public synthetic-only functional customer/provider browser/BFF runtime;
 - Secret Manager;
 - GitHub Actions and Workload Identity Federation;
 - Cloud Logging/Monitoring;
 - Firebase App Distribution;
-- GitHub Pages/static public edge, `direkt.forum` and preserved `/preview/` route;
+- GitHub Pages/static public edge and owner-controlled domains;
 - native Android implementation;
 - transactional outbox domain foundation.
 
-### Implemented but gated
+### Gated/provisioned/sandbox states
 
-- Firebase phone authentication/session exchange;
-- real participant admission and private evidence processing;
-- real contact handoff;
-- Google Play release/signing execution;
-- real payment-provider activation.
+The detailed ledger records the exact state of Firebase auth, Maps, Sentry, communications, payment rails, generated clients and other external services. A sandbox-proven or externally provisioned provider is not automatically runtime-active or production-authorized.
 
-### Externally provisioned or planned, not runtime-active
+Real participant data, real evidence, real communications, real money and production release remain separately gated.
 
-- Google Maps;
-- Sentry;
-- Resend application delivery;
-- Firebase Crashlytics;
-- FCM;
-- Firebase Test Lab automation;
-- Cloudflare Turnstile;
-- production WhatsApp delivery;
-- MTN MoMo/Airtel Money or approved payment aggregator path;
-- automated PACRA/NCC/TEVETA access;
-- AI model/provider runtime — **not selected or active merely because AI architecture is now planned**.
+## 6. AI integration truth
 
-Vercel remains registrar role rather than the protected staging application runtime. Brevo/Twilio are historical/superseded directions unless later reviewed.
+AI is now an authoritative product direction, but no model provider is automatically active.
 
-OpenAPI generation/drift checking is active. Fully generated Kotlin/TypeScript client package adoption remains separately evidenced work.
+Current state:
 
-## 5. Live Supabase checkpoint
+- AI product architecture — **PLANNED / DOCUMENTED**;
+- external foundation-model provider — **NOT SELECTED / NOT ACTIVE**;
+- embedding/vector provider — **NOT SELECTED / NOT ACTIVE**;
+- restricted-evidence vision/OCR — **DISABLED BY DEFAULT**;
+- client-direct privileged AI SDK/API calls — **PROHIBITED**.
 
-Project: `aeeuscifrxcjmnswqwnq`
+A future AI provider/use case requires:
 
-Hardening migration:
-
-`202607191200_integration_runtime_privilege_hardening.sql`
-
-Recorded checksum:
-
-`e02d1be228a992b7541db92328e9528b8fe0e184660fb78206ca405e9c7b2372`
-
-Post-apply managed verification recorded:
-
-- DIREKT migration count: `39`;
-- browser application-schema usage: `0`;
-- browser executable DIREKT application functions: `0`;
-- PUBLIC executable DIREKT application functions: `0`;
-- application `SECURITY DEFINER` functions: `0`;
-- all required Storage buckets remain private;
-- Storage object count remains `0` at the recorded checkpoint.
-
-Advisor warnings on mutable `search_path`, extension placement and index opportunities remain explicit hardening/performance debt and must not be mass-mutated without workload/regression evidence.
-
-## 6. Android release boundary
-
-Current Android release identity remains:
-
-- application ID: `com.kudzimusar.direkt`;
-- version code: `12`;
-- version name: `0.12.0-preauth.1`;
-- channel: `preauthorization`.
-
-The recorded merged release manifest declares the existing non-runtime-prompt permissions. Location, camera, contacts, SMS/call-log, broad storage/media, microphone and notification runtime permissions remain absent at the recorded preauthorization checkpoint.
-
-No signed production artifact or Play production release has been created.
+- source-controlled use-case definition;
+- data classification;
+- approved provider/model/data-processing terms;
+- backend orchestration and Secret Manager binding;
+- structured-output/tool authorization controls;
+- quality/grounding evaluation;
+- prompt-injection/sensitive-data/excessive-agency tests;
+- cost/latency/rate limits;
+- observability and kill switch;
+- manual/deterministic fallback;
+- human-accountability boundary;
+- managed canary and exact-head regression.
 
 ## 7. World-class benchmark direction
 
 DIREKT uses a composite benchmark:
 
 - **Urban Company:** service-marketplace polish, provider professionalism and operational quality;
-- **Checkatrade:** trust proposition and recurring checks;
+- **Checkatrade:** visible recurring trust checks;
 - **Taskrabbit:** transaction simplicity;
 - **Thumbtack:** AI-guided natural-language/multimodal discovery;
 - **DIREKT differentiation:** check-specific proof, privacy-by-precision, payment-independent trust, Zambia low-bandwidth/locality fit and human-accountable operations.
@@ -200,7 +189,7 @@ No single benchmark is copied literally.
 
 ## 8. AI-native product direction
 
-AI is now a planned cross-cutting product capability, not an isolated chatbot feature.
+AI is a planned cross-cutting capability rather than an isolated chatbot.
 
 Target bounded uses:
 
@@ -216,20 +205,26 @@ Target bounded uses:
 - documentation-grounded support;
 - analytics/taxonomy insights.
 
-Non-negotiable AI boundary:
+Non-negotiable boundary:
 
 AI cannot autonomously approve/reject verification, publish trust claims, suspend providers, decide serious complaints/appeals, mutate payment ledgers, bypass authorization, expose restricted evidence or make legal conclusions.
 
-No AI provider is currently marked `ACTIVE`. Provider selection/provisioning/runtime activation requires the same integration-truth discipline as every other external dependency.
+## 9. VC0 and next modernization programme
 
-## 9. VC0 and next implementation programme
+VC0 now establishes:
 
-VC0 establishes the audit, benchmark, world-class target, AI architecture and owner visual-review checkpoint without broad UI implementation.
+- repository-wide visual gap matrix;
+- global benchmark direction;
+- Design DNA candidates;
+- VC1–VC8 implementation programme;
+- AI product and architecture boundaries;
+- AI evaluation/security plan;
+- agent/control-document alignment.
 
 VC1–VC8:
 
-1. **VC1 — Design-system reconciliation**;
-2. **VC2 — High-fidelity benchmark directions and owner approval**;
+1. **VC1 — World-class design-system reconciliation**;
+2. **VC2 — High-fidelity benchmark directions and explicit owner approval**;
 3. **VC3 — Approved Design DNA/component foundation**;
 4. **VC4 — Customer world-class experience**;
 5. **VC5 — Provider professional workspace**;
@@ -237,61 +232,52 @@ VC1–VC8:
 7. **VC7 — AI intelligence layer**;
 8. **VC8 — World-class visual/product/AI quality gate**.
 
-Before material VC implementation:
-
-- re-fetch latest stable source;
-- verify predecessor CI;
-- correct the known historical W7/W8 verifier-to-lock coupling before the new legitimate lock owner is recorded;
-- claim exact implementation scope;
-- preserve existing backend/domain/integration boundaries;
-- implement bounded vertical slices with exact-head regression and visual evidence.
+The intent is to execute these sequentially and continuously once the implementation lane permits it, without pausing between stages unless CI/review/design approval/external gates create a genuine disturbance.
 
 ## 10. Visual quality status
 
-Current functional UI remains testable but should not be confused with final visual quality.
+The functional UI remains testable but is not final world-class presentation.
 
-Known broad gaps:
+Broad gaps:
 
 - insufficient typography hierarchy;
 - primitive/placeholder iconography in places;
-- limited imagery/marketplace richness;
-- text-heavy cards/forms;
+- limited marketplace imagery;
+- text-heavy/form-heavy presentation;
 - developer/workstream/API language visible in places;
 - incomplete world-class search/discovery/provider profile composition;
 - provider workspace still exposes implementation-oriented concepts in places;
-- operations lacks the final desktop queue → case → secure evidence → decision composition;
+- operations lacks final queue → case → secure evidence → decision workspace;
 - AI assistance is not yet implemented as a product layer.
 
-VC1–VC8 exists to close these gaps without regressions.
+No flagship customer/provider/operations journey is visually complete end to end against the new benchmark.
 
-## 11. Remaining genuine programme gates
+## 11. Phase 11/12 boundaries remain unchanged
 
-No repository-only document, toggle, synthetic dataset, web UI, AI demo or unsigned artifact can clear:
+No repository-only document, visual redesign, AI demo, synthetic dataset or sandbox provider receipt can clear:
 
 1. actual 11C–11H Zambia pilot evidence;
 2. evidence-backed 11J `PROCEED`;
-3. required Zambia regulatory/legal/privacy approvals and final live policy versions;
-4. evidence-led removal/isolation of synthetic preview marketplace surfaces from production;
-5. end-to-end account deletion including public request/backend fulfillment;
-6. actual production environment plus production-backup restore;
-7. operational support/verification/on-call staffing and exercises;
-8. active/tested production monitoring and escalation;
-9. real Play account/current-policy verification, authorized signed reproducible AAB, final forms/assets/content rating and testing;
-10. formal go/no-go, staged rollout and final release record;
-11. for any production AI capability: approved provider/data processing, evaluation/security evidence, monitoring, fallback/kill switch and human-accountability controls.
+3. required Zambia legal/privacy/regulatory approvals and final live policy versions;
+4. production evidence/private-data readiness;
+5. end-to-end account deletion where required;
+6. production environment and backup restore;
+7. operational staffing/exercises;
+8. active production monitoring/escalation;
+9. real Play account/current-policy/signed-release controls;
+10. formal go/no-go/staged rollout;
+11. any production AI capability without provider/data/evaluation/security/monitoring/fallback/human-accountability approval.
 
-## 12. Current boundary and next authorized work
+## 12. Next-session execution rule
 
-- Phase 10: complete.
-- Phase 11 internal/synthetic readiness: complete.
-- Phase 11 real evidence and 11J: pending.
-- Phase 12 repository-clearable/preauthorization engineering: complete.
-- Phase 0–12 integration/runtime reconciliation: complete.
-- Functional customer/provider web/PWA W0–W8: **CLOSED**.
-- W8 implementation claim: **RELEASED**.
-- Formal Phase 12 production release: **BLOCKED** until Phase 11 and all release gates support `PROCEED`.
-- Issue #112 remains the real-pilot tracker.
-- Issue #259 is the visual/world-class modernization tracker.
-- Next planned implementation programme after the documentation/owner checkpoint: **VC1–VC8**.
+At the start of VC implementation:
 
-VC work must not be used to bypass real pilot, legal, payments, registry, communications or production activation gates.
+1. fetch current `main`;
+2. read current `WORKSTREAM_LOCK.md` and Issue #261 closure state;
+3. verify exact-head predecessor CI;
+4. if Issue #261 still holds overlapping runtime surfaces, perform only non-overlapping VC1/VC2 design-system/high-fidelity work or reconcile ownership explicitly;
+5. once the lane is released/compatible, claim the bounded VC implementation scope;
+6. execute VC1–VC8 sequentially with exact-head regression, visual evidence and owner approval at VC2;
+7. never use VC work to bypass Phase 11/12 real-world gates.
+
+This sequencing preserves the owner's goal of moving directly into implementation while preventing concurrent integration/UI changes from creating regressions.
