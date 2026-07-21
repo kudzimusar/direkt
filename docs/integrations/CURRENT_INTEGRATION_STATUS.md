@@ -131,7 +131,7 @@ Maps becomes ACTIVE only after restricted credentials, source integration, priva
 | Integration | State | Current role |
 |---|---|---|
 | Transactional outbox | **ACTIVE domain foundation** | Durable asynchronous-event foundation. |
-| Resend | **EXTERNALLY_PROVISIONED / RC1 PREFLIGHT PROVEN** | `notify.direkt.forum` verified and `direkt-resend-api-key` version 1 enabled. Runtime app-event delivery is not yet proven. |
+| Resend | **IMPLEMENTED_GATED / MANAGED CANARY PENDING** | Provider-neutral HTTP adapter, transactional-outbox consumer, stable idempotency/retry/failure persistence, verified sender-domain gate and a private Cloud Run Job canary workflow are source-integrated. `notify.direkt.forum` is verified and `direkt-resend-api-key` version 1 is enabled; the managed canary has not yet executed, so Resend is not ACTIVE. |
 | Brevo | **SUPERSEDED** | Historical preferred email provider. |
 | Firebase phone OTP | **IMPLEMENTED_GATED** | Current pilot phone-possession direction. |
 | Twilio Verify | **SUPERSEDED** | Earlier OTP candidate. |
@@ -139,7 +139,7 @@ Maps becomes ACTIVE only after restricted credentials, source integration, priva
 | FCM push | **PLANNED** | Future event delivery/runtime closure. |
 | Cloud Tasks / Pub/Sub / Scheduler | **PLANNED** | Add only when real retry/fan-out/scheduling needs justify them. |
 
-Resend remains non-ACTIVE until an application adapter, runtime secret attachment, outbox/idempotency/retry behavior, privacy/template controls and managed synthetic delivery canary exist.
+RC1 source integration is implemented and remains gated. Promotion requires least-privilege runtime secret access plus a successful exact-source managed synthetic outbox-to-Resend canary; continuous and real-participant external email remain disabled.
 
 ## Observability
 
@@ -228,7 +228,7 @@ W8 is **CLOSED**. The canonical functional browser host passed independent exact
 
 Issue #261 now governs sequential runtime-integration closure. `WORKSTREAM_LOCK.md` and `RUNTIME_INTEGRATION_CLOSURE_PLAN.md` define the current dependency-safe order. `LIVE_INTEGRATION_LEDGER.md` is the mandatory cross-agent receipt ledger.
 
-AI0 under Issue #264 is the owner-authorized provider-neutral AI foundation immediately after RC0. Its provider/API evidence and source implementation are gated rather than ACTIVE; RC1 Resend follows after AI0 promotion.
+AI0 under Issue #264 is CLOSED and merged in PR #265 at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; its providers remain gated rather than active runtime integrations. RC1 Resend is the active checkpoint and is `IMPLEMENTED_GATED / MANAGED CANARY PENDING` until managed proof passes.
 
 VC0 visual audit/design-control work under Issue #259 remains non-overlapping design/audit work. Broad visual implementation requires separate owner approval and must not overlap claimed runtime-integration surfaces.
 

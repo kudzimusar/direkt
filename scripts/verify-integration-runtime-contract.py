@@ -105,10 +105,15 @@ def main() -> None:
         "backend/direkt-api/src/verification-evidence/supabase-private-storage.adapter.ts"
     )
     cloud_run = read(".github/workflows/cloud-run-staging-deploy-v2.yml")
+    resend_canary = read(".github/workflows/cloud-run-resend-canary.yml")
     firebase_distribution = read(".github/workflows/firebase-internal-distribution.yml")
     openapi_generate = read("backend/direkt-api/scripts/generate-openapi.ts")
     openapi_check = read("backend/direkt-api/scripts/check-openapi.ts")
     platform_migration = read("database/migrations/202607141430_platform_foundation.sql")
+    communications_module = read("backend/direkt-api/src/communications/communications.module.ts")
+    resend_adapter = read("backend/direkt-api/src/communications/resend-email-provider.adapter.ts")
+    email_outbox = read("backend/direkt-api/src/communications/email-outbox.service.ts")
+    resend_canary_entrypoint = read("backend/direkt-api/src/communications/resend-canary.ts")
     pwa = read("web/direkt-pwa/app.js")
     service_worker = read("web/direkt-pwa/sw.js")
 
@@ -176,13 +181,15 @@ def main() -> None:
         if integration in catalog_lower or integration in gradle_lower:
             fail(f"{integration} became Android-runtime active without integration-status promotion")
 
-    # Sentry/Resend/Maps remain externally provisioned or planned, not silently active.
+    # Sentry/Maps remain externally provisioned or planned, not silently active.
+    # RC1 intentionally keeps Resend behind a provider-neutral native-fetch adapter rather than
+    # adding a vendor SDK dependency.
     for dependency in backend_pkg | portal_pkg:
         lowered = dependency.lower()
         if "sentry" in lowered:
             fail("Sentry SDK became runtime-active without reviewed privacy/runtime promotion")
         if lowered == "resend" or lowered.startswith("@resend/"):
-            fail("Resend SDK became runtime-active without reviewed application-delivery promotion")
+            fail("Resend vendor SDK dependency entered runtime; RC1 requires the reviewed provider-neutral HTTP adapter")
         if "googlemaps" in lowered or "google-maps" in lowered:
             fail("Google Maps server SDK became runtime-active without reviewed location promotion")
         if "twilio" in lowered:
@@ -190,6 +197,37 @@ def main() -> None:
 
     require(reconciliation, "externally provisioned/runtime-unproven", "Maps/Sentry runtime truth")
     require(status, "EXTERNALLY_PROVISIONED", "externally provisioned status vocabulary")
+
+    # RC1 Resend: provider-neutral server adapter, synthetic-only runtime job and outbox semantics.
+    require(backend_env, "EMAIL_PROVIDER_MODE", "email provider kill switch")
+    require(backend_env, "EMAIL_RESEND_API_KEY", "server-only Resend credential contract")
+    require(backend_env, "Email provider activation currently permits synthetic-only data mode", "email data-mode gate")
+    require(backend_env, "notify\\.direkt\\.forum", "verified Resend sender-domain gate")
+    require(communications_module, "ResendEmailProviderAdapter", "Resend provider adapter binding")
+    require(resend_adapter, "https://api.resend.com/emails", "Resend send endpoint")
+    require(resend_adapter, "'idempotency-key'", "Resend provider idempotency header")
+    require(email_outbox, "communications.email.send.v1", "email outbox event contract")
+    require(email_outbox, "FOR UPDATE SKIP LOCKED", "concurrent outbox claim protection")
+    require(email_outbox, "provider_unavailable", "sanitized retry failure code")
+    require(email_outbox, "delivered@resend.dev", "synthetic-only Resend test sink")
+    require(resend_canary_entrypoint, "runSyntheticCanary", "managed canary entrypoint")
+    for needle in (
+        "RUN-DIREKT-RESEND-CANARY",
+        "direkt-resend-canary",
+        "direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com",
+        'DIREKT_DATA_MODE: "synthetic-only"',
+        'EMAIL_PROVIDER_MODE: "resend"',
+        'EMAIL_FROM_ADDRESS: "DIREKT <canary@notify.direkt.forum>"',
+        "EMAIL_RESEND_API_KEY=direkt-resend-api-key:${DIREKT_RESEND_API_KEY_SECRET_VERSION}",
+        "DATABASE_URL=direkt-database-url:${DIREKT_DATABASE_URL_SECRET_VERSION}",
+        "--max-retries 0",
+        "--command node",
+        "--args dist/communications/resend-canary.js",
+        "--wait",
+        "Continuous external delivery scheduling: disabled",
+    ):
+        require(resend_canary, needle, "managed Resend canary invariant")
+    require(status, "IMPLEMENTED_GATED / MANAGED CANARY PENDING", "RC1 source-phase status")
 
     # Operations portal: server API only; never direct database/storage client.
     forbidden_portal_dependencies = {
@@ -209,7 +247,8 @@ def main() -> None:
     require(openapi_check, "Missing required", "OpenAPI contract drift gate")
     require(status, "OpenAPI", "OpenAPI integration status")
 
-    # Communications: transactional outbox foundation exists, but external delivery stays gated.
+    # Communications: transactional outbox foundation exists and RC1 external email remains
+    # synthetic-only until the managed canary passes and closure evidence is reconciled.
     require(platform_migration, "CREATE TABLE platform.outbox_events", "transactional outbox")
     require(status, "Transactional outbox", "outbox status")
     require(status, "WhatsApp", "WhatsApp status")
@@ -261,7 +300,7 @@ def main() -> None:
     print("firebase_app_distribution=active_internal")
     print("maps=external_runtime_unproven_manual_fallback_active")
     print("sentry=external_runtime_unproven_cloud_monitoring_active")
-    print("resend=external_runtime_unproven")
+    print("resend=implemented_gated_managed_canary_pending")
     print("fcm=planned")
     print("whatsapp=planned_domain_handoff_only")
     print("payments=domain_foundation_real_provider_disabled")
