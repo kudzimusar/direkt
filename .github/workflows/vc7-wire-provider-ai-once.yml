@@ -1,0 +1,68 @@
+name: VC7 wire provider copilot once
+
+on:
+  push:
+    branches:
+      - vc/ai-quality-7-8
+    paths:
+      - ".github/workflows/vc7-wire-provider-ai-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: vc/ai-quality-7-8
+          fetch-depth: 0
+      - name: Patch only reviewed provider integration points
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("web/direkt-app/components/provider-journey-experience.tsx")
+          text = path.read_text()
+
+          import_marker = 'import { DirektIcon } from "@/components/ui/direkt-icon";\n'
+          if 'ProviderAiAssistPanel' not in text:
+              text = text.replace(
+                  import_marker,
+                  'import { ProviderAiAssistPanel } from "@/components/provider-ai-assist-panel";\n' + import_marker,
+                  1,
+              )
+
+          call_marker = '<ProviderOverview state={state} mutate={mutateAndReload} />'
+          call_replacement = '<ProviderOverview state={state} mutate={mutateAndReload} csrfToken={csrfToken} />'
+          if call_marker not in text:
+              raise SystemExit("ProviderOverview call marker missing")
+          text = text.replace(call_marker, call_replacement, 1)
+
+          props_marker = '''function ProviderOverview({\n  state,\n  mutate,\n}: {\n  state: ProviderStateResponse;\n  mutate: (payload: Record<string, unknown>, success: string) => Promise<void>;\n}) {'''
+          props_replacement = '''function ProviderOverview({\n  state,\n  mutate,\n  csrfToken,\n}: {\n  state: ProviderStateResponse;\n  mutate: (payload: Record<string, unknown>, success: string) => Promise<void>;\n  csrfToken: string | null;\n}) {'''
+          if props_marker not in text:
+              raise SystemExit("ProviderOverview props marker missing")
+          text = text.replace(props_marker, props_replacement, 1)
+
+          insert_marker = '''      <article className="journey-card provider-action-card">\n        <div className="card-icon-heading">\n          <span>\n            <DirektIcon name="briefcase" />'''
+          insertion = '''      <ProviderAiAssistPanel csrfToken={csrfToken} />\n\n      <article className="journey-card provider-action-card">\n        <div className="card-icon-heading">\n          <span>\n            <DirektIcon name="briefcase" />'''
+          if insert_marker not in text:
+              raise SystemExit("Provider profile card insertion marker missing")
+          text = text.replace(insert_marker, insertion, 1)
+
+          path.write_text(text)
+          PY
+      - name: Commit bounded provider wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git config user.name "direkt-vc-wiring[bot]"
+          git config user.email "direkt-vc-wiring[bot]@users.noreply.github.com"
+          git add web/direkt-app/components/provider-journey-experience.tsx
+          git commit -m "feat(vc7): connect provider onboarding and profile assistance"
+          git push origin HEAD:vc/ai-quality-7-8
