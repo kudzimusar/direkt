@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AiProviderUnavailableError } from '../../../src/ai/ai-provider.port';
+import type { AiProviderUnavailableError } from '../../../src/ai/ai-provider.port';
 import { GeminiAiProviderAdapter } from '../../../src/ai/gemini-ai-provider.adapter';
 import { GroqAiProviderAdapter } from '../../../src/ai/groq-ai-provider.adapter';
 
