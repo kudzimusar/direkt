@@ -1,0 +1,49 @@
+name: VC7 VC8 AI governance format once
+
+on:
+  push:
+    branches:
+      - vc/ai-quality-7-8
+    paths:
+      - ".github/workflows/vc78-format-governance-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: vc/ai-quality-7-8
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - name: Install locked backend dependencies
+        working-directory: backend/direkt-api
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Apply repository-pinned Prettier
+        working-directory: backend/direkt-api
+        run: >-
+          npx prettier --write
+          src/ai/ai-use-case.registry.ts
+          src/ai/ai-use-case.registry.spec.ts
+          src/ai/ai-evaluation-contract.spec.ts
+          test/ai/customer-discovery-intent.evaluation.json
+      - name: Commit canonical formatting if needed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- backend/direkt-api/src/ai backend/direkt-api/test/ai; then
+            exit 0
+          fi
+          git config user.name "direkt-vc-formatter[bot]"
+          git config user.email "direkt-vc-formatter[bot]@users.noreply.github.com"
+          git add backend/direkt-api/src/ai backend/direkt-api/test/ai
+          git commit -m "style(vc8): apply canonical AI governance formatting"
+          git push origin HEAD:vc/ai-quality-7-8
