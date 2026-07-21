@@ -1,15 +1,15 @@
 name: RC1 closure reconcile
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - integration/rc1-resend-closure
 
 permissions:
   contents: write
 
 jobs:
   reconcile:
-    if: github.head_ref == 'integration/rc1-resend-closure'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
