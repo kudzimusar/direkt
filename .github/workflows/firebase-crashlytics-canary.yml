@@ -166,11 +166,15 @@ jobs:
           "${adb_bin}" shell pm path "${FIREBASE_PACKAGE_NAME}" >/dev/null
           echo "ADB_BIN=${adb_bin}" >> "${GITHUB_ENV}"
 
-      - name: Prove fatal crash upload
+      - name: Prove fatal crash delivery
         shell: bash
         run: |
           set -euo pipefail
           component="${FIREBASE_PACKAGE_NAME}/com.kudzimusar.direkt.MainActivity"
+          canary_start_time="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          encoded_app_id="$(jq -rn --arg value "${DIREKT_FIREBASE_APP_ID}" '$value|@uri')"
+          events_url="https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_ID}/apps/${encoded_app_id}/events"
+
           "${ADB_BIN}" shell setprop log.tag.FirebaseCrashlytics DEBUG
           "${ADB_BIN}" logcat -c
           "${ADB_BIN}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
@@ -188,23 +192,53 @@ jobs:
           fi
 
           "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary flush >/dev/null
-          uploaded=false
+          transported=false
           for _ in $(seq 1 40); do
             "${ADB_BIN}" logcat -d -s FirebaseCrashlytics > "${RUNNER_TEMP}/rc3-crash-upload.log" || true
-            if grep -Eq 'Crashlytics report upload complete|[[:space:]]204[[:space:]]' "${RUNNER_TEMP}/rc3-crash-upload.log"; then
-              uploaded=true
+            if grep -Eqi 'report successfully enqueued to DataTransport|Crashlytics report upload complete|[[:space:]]204[[:space:]]' "${RUNNER_TEMP}/rc3-crash-upload.log"; then
+              transported=true
               break
             fi
             sleep 2
           done
-          test "${uploaded}" = "true"
-          grep -E 'Crashlytics report upload complete|[[:space:]]204[[:space:]]' "${RUNNER_TEMP}/rc3-crash-upload.log" | tail -n 5
+          test "${transported}" = "true"
 
-      - name: Prove ANR signal and Crashlytics upload
+          processed=false
+          for _ in $(seq 1 60); do
+            token="$(gcloud auth print-access-token)"
+            echo "::add-mask::${token}"
+            curl --fail --silent --show-error --get \
+              --header "Authorization: Bearer ${token}" \
+              --data-urlencode "pageSize=100" \
+              --data-urlencode "readMask=name,eventId,eventTime,receivedTime,customKeys,issueTitle,issueSubtitle,crashlyticsSdkVersion" \
+              "${events_url}" > "${RUNNER_TEMP}/rc3-crash-events.json"
+            jq -c \
+              --arg sha "${SOURCE_SHA}" \
+              --arg kind "crash" \
+              --arg start "${canary_start_time}" \
+              '[.events[]? | select(.customKeys.direkt_source_sha == $sha and .customKeys.direkt_canary_kind == $kind and .receivedTime >= $start)][0] // empty' \
+              "${RUNNER_TEMP}/rc3-crash-events.json" > "${RUNNER_TEMP}/rc3-crash-event-match.json"
+            if jq -e 'type == "object" and (.name | type == "string")' "${RUNNER_TEMP}/rc3-crash-event-match.json" >/dev/null 2>&1; then
+              jq '{name,eventId,eventTime,receivedTime,issueTitle,issueSubtitle,crashlyticsSdkVersion,customKeys:{direkt_data_mode:.customKeys.direkt_data_mode,direkt_source_sha:.customKeys.direkt_source_sha,direkt_release_channel:.customKeys.direkt_release_channel,direkt_canary_kind:.customKeys.direkt_canary_kind}}' \
+                "${RUNNER_TEMP}/rc3-crash-event-match.json" > "${RUNNER_TEMP}/rc3-crash-event-receipt.json"
+              processed=true
+              break
+            fi
+            sleep 2
+          done
+          test "${processed}" = "true"
+          grep -Ei 'report successfully enqueued to DataTransport|Crashlytics report upload complete|[[:space:]]204[[:space:]]' "${RUNNER_TEMP}/rc3-crash-upload.log" | tail -n 5 || true
+          jq '{name,eventId,eventTime,receivedTime,customKeys}' "${RUNNER_TEMP}/rc3-crash-event-receipt.json"
+
+      - name: Prove ANR signal and Crashlytics delivery
         shell: bash
         run: |
           set -euo pipefail
           component="${FIREBASE_PACKAGE_NAME}/com.kudzimusar.direkt.MainActivity"
+          canary_start_time="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          encoded_app_id="$(jq -rn --arg value "${DIREKT_FIREBASE_APP_ID}" '$value|@uri')"
+          events_url="https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_ID}/apps/${encoded_app_id}/events"
+
           "${ADB_BIN}" logcat -c
           "${ADB_BIN}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
           "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary anr >/dev/null 2>&1 &
@@ -224,20 +258,46 @@ jobs:
           "${ADB_BIN}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
           "${ADB_BIN}" logcat -c
           "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary flush >/dev/null
-          uploaded=false
+          transported=false
           for _ in $(seq 1 40); do
             "${ADB_BIN}" logcat -d -s FirebaseCrashlytics > "${RUNNER_TEMP}/rc3-anr-upload.log" || true
-            if grep -Eq 'Crashlytics report upload complete|[[:space:]]204[[:space:]]' "${RUNNER_TEMP}/rc3-anr-upload.log"; then
-              uploaded=true
+            if grep -Eqi 'report successfully enqueued to DataTransport|Crashlytics report upload complete|[[:space:]]204[[:space:]]' "${RUNNER_TEMP}/rc3-anr-upload.log"; then
+              transported=true
               break
             fi
             sleep 2
           done
-          test "${uploaded}" = "true"
+          test "${transported}" = "true"
+
+          processed=false
+          for _ in $(seq 1 60); do
+            token="$(gcloud auth print-access-token)"
+            echo "::add-mask::${token}"
+            curl --fail --silent --show-error --get \
+              --header "Authorization: Bearer ${token}" \
+              --data-urlencode "pageSize=100" \
+              --data-urlencode "readMask=name,eventId,eventTime,receivedTime,customKeys,issueTitle,issueSubtitle,crashlyticsSdkVersion" \
+              "${events_url}" > "${RUNNER_TEMP}/rc3-anr-events.json"
+            jq -c \
+              --arg sha "${SOURCE_SHA}" \
+              --arg kind "anr" \
+              --arg start "${canary_start_time}" \
+              '[.events[]? | select(.customKeys.direkt_source_sha == $sha and .customKeys.direkt_canary_kind == $kind and .receivedTime >= $start)][0] // empty' \
+              "${RUNNER_TEMP}/rc3-anr-events.json" > "${RUNNER_TEMP}/rc3-anr-event-match.json"
+            if jq -e 'type == "object" and (.name | type == "string")' "${RUNNER_TEMP}/rc3-anr-event-match.json" >/dev/null 2>&1; then
+              jq '{name,eventId,eventTime,receivedTime,issueTitle,issueSubtitle,crashlyticsSdkVersion,customKeys:{direkt_data_mode:.customKeys.direkt_data_mode,direkt_source_sha:.customKeys.direkt_source_sha,direkt_release_channel:.customKeys.direkt_release_channel,direkt_canary_kind:.customKeys.direkt_canary_kind}}' \
+                "${RUNNER_TEMP}/rc3-anr-event-match.json" > "${RUNNER_TEMP}/rc3-anr-event-receipt.json"
+              processed=true
+              break
+            fi
+            sleep 2
+          done
+          test "${processed}" = "true"
 
           "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary disable >/dev/null || true
           grep -Ei "ANR in ${FIREBASE_PACKAGE_NAME}|ANR.*${FIREBASE_PACKAGE_NAME}" "${RUNNER_TEMP}/rc3-anr-system.log" | tail -n 5
-          grep -E 'Crashlytics report upload complete|[[:space:]]204[[:space:]]' "${RUNNER_TEMP}/rc3-anr-upload.log" | tail -n 5
+          grep -Ei 'report successfully enqueued to DataTransport|Crashlytics report upload complete|[[:space:]]204[[:space:]]' "${RUNNER_TEMP}/rc3-anr-upload.log" | tail -n 5 || true
+          jq '{name,eventId,eventTime,receivedTime,customKeys}' "${RUNNER_TEMP}/rc3-anr-event-receipt.json"
 
       - name: Upload sanitized RC3 diagnostics
         if: always()
@@ -246,8 +306,10 @@ jobs:
           name: direkt-rc3-crashlytics-canary-${{ github.run_number }}-${{ inputs.source_sha }}
           path: |
             ${{ runner.temp }}/rc3-crash-upload.log
+            ${{ runner.temp }}/rc3-crash-event-receipt.json
             ${{ runner.temp }}/rc3-anr-system.log
             ${{ runner.temp }}/rc3-anr-upload.log
+            ${{ runner.temp }}/rc3-anr-event-receipt.json
           if-no-files-found: warn
           retention-days: 14
 
@@ -261,9 +323,11 @@ jobs:
             echo "- Package: \`${FIREBASE_PACKAGE_NAME}\`"
             echo "- Data mode: \`synthetic-only\`"
             echo "- Fatal crash OS termination: \`PASS\`"
-            echo "- Fatal crash Crashlytics upload receipt: \`PASS\`"
+            echo "- Fatal crash DataTransport handoff: \`PASS\`"
+            echo "- Fatal crash server-processed Crashlytics event: \`PASS\`"
             echo "- Android ANR signal: \`PASS\`"
-            echo "- Post-ANR Crashlytics upload receipt: \`PASS\`"
+            echo "- Post-ANR DataTransport handoff: \`PASS\`"
+            echo "- Post-ANR server-processed Crashlytics event: \`PASS\`"
             echo "- Automatic collection default: \`disabled\`"
             echo "- Analytics SDK: \`not added\`"
             # Permanent integration contract marker: Real participant telemetry: `disabled`
