@@ -11,6 +11,7 @@ import "./world-class.css";
 import "./provider-world-class.css";
 import "./provider-workspace-world-class.css";
 import "./provider-ai.css";
+import "./support-ai.css";
 
 export const metadata: Metadata = {
   title: {
