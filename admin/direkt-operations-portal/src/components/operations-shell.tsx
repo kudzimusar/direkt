@@ -13,30 +13,37 @@ export function OperationsShell({ session, children }: OperationsShellProps) {
   const items = visibleNavigation(session);
 
   return (
-    <div className="portal-shell">
+    <div className="portal-shell operations-world-shell">
       <a className="skip-link" href="#main-content">
         Skip to main content
       </a>
-      <header className="topbar">
-        <div>
-          <strong>DIREKT Operations</strong>
-          <span className="environment-chip">Synthetic Phase 7</span>
+      <header className="topbar operations-topbar">
+        <div className="operations-brand">
+          <span className="operations-brand-mark" aria-hidden="true">
+            D
+          </span>
+          <span>
+            <strong>DIREKT Operations</strong>
+            <small>Trust, safety and marketplace operations</small>
+          </span>
+          <span className="environment-chip">Synthetic review environment</span>
         </div>
-        <div className="session-summary" aria-label="Current synthetic session">
+        <div className="session-summary" aria-label="Current operations session">
           <span>{session.displayName}</span>
           <span>{session.role.replaceAll('_', ' ')}</span>
           <KeyboardShortcuts />
         </div>
       </header>
       <div className="portal-grid">
-        <aside className="sidebar">
+        <aside className="sidebar operations-sidebar">
           <nav aria-label="Operations navigation">
+            <p className="sidebar-section-label">Workspaces</p>
             <ul>
               {items.map((item) => (
                 <li key={item.permission}>
                   {item.status === 'available' ? (
                     <Link href={item.href} title={item.description}>
-                      {item.label}
+                      <span>{item.label}</span>
                     </Link>
                   ) : (
                     <span aria-disabled="true" title={item.description}>
@@ -47,21 +54,27 @@ export function OperationsShell({ session, children }: OperationsShellProps) {
               ))}
             </ul>
           </nav>
-          <section aria-labelledby="session-policy-heading" className="policy-card">
-            <h2 id="session-policy-heading">Session policy</h2>
-            <p>Permissions are resolved by the backend. Hidden navigation never grants access.</p>
-            <p>
-              Step-up required: <strong>{session.stepUpRequired ? 'Yes' : 'No'}</strong>
-            </p>
-            <p>
-              Session expiry: <time dateTime={session.expiresAt}>{session.expiresAt}</time>
-            </p>
+          <section aria-labelledby="session-policy-heading" className="policy-card operations-session-card">
+            <h2 id="session-policy-heading">Access context</h2>
+            <p>Permissions are resolved by the backend. Navigation never grants authority.</p>
+            <dl>
+              <div>
+                <dt>Step-up</dt>
+                <dd>{session.stepUpRequired ? 'Required' : 'Not required'}</dd>
+              </div>
+              <div>
+                <dt>Session ends</dt>
+                <dd>
+                  <time dateTime={session.expiresAt}>{session.expiresAt}</time>
+                </dd>
+              </div>
+            </dl>
           </section>
         </aside>
         <main id="main-content" tabIndex={-1}>
-          <div className="synthetic-banner" role="status">
-            Synthetic interface only. No real accounts, provider data, evidence, incidents, field
-            visits, decisions or production systems.
+          <div className="synthetic-banner operations-environment-banner" role="status">
+            Synthetic review environment — no real participant records, private evidence, decisions or
+            production actions are available here.
           </div>
           {children}
         </main>
