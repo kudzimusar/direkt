@@ -59,10 +59,14 @@ jobs:
         run: npm run build
       - name: Ensure build did not rewrite tracked source
         run: git diff --exit-code -- web/direkt-app
-      - name: Prove Android protected surface unchanged
+      - name: Preserve post-W7 Android ownership boundary
         shell: bash
         run: |
           set -euo pipefail
+          # W4 is a historical web/backend contract. After W7 closure, legitimate Android
+          # evolution is validated by Android CI and the exact-head W7 cross-client regression
+          # instead of being prohibited by this older gate.
+          test -f .github/workflows/functional-pwa-w7-regression.yml
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             base_sha="${{ github.event.pull_request.base.sha }}"
           else
@@ -70,4 +74,7 @@ jobs:
             base_sha="$(git merge-base HEAD origin/main)"
           fi
           test -n "${base_sha}"
-          git diff --quiet "${base_sha}" "${SOURCE_SHA}" -- android/direkt-app
+          if ! git diff --quiet "${base_sha}" "${SOURCE_SHA}" -- android/direkt-app; then
+            echo "Android changed after W7 closure; validation is delegated to Android CI + W7 exact-head regression."
+            git diff --name-status "${base_sha}" "${SOURCE_SHA}" -- android/direkt-app
+          fi
