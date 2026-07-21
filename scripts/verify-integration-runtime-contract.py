@@ -227,7 +227,12 @@ def main() -> None:
         "Continuous external delivery scheduling: disabled",
     ):
         require(resend_canary, needle, "managed Resend canary invariant")
-    require(status, "IMPLEMENTED_GATED / MANAGED CANARY PENDING", "RC1 source-phase status")
+    require(status, "ACTIVE — SYNTHETIC-ONLY MANAGED CANARY", "RC1 managed-canary status")
+    require(
+        status,
+        "Continuous, controlled-pilot participant and production external email remain disabled.",
+        "RC1 real-participant/production email stop gate",
+    )
 
     # Operations portal: server API only; never direct database/storage client.
     forbidden_portal_dependencies = {
@@ -247,8 +252,8 @@ def main() -> None:
     require(openapi_check, "Missing required", "OpenAPI contract drift gate")
     require(status, "OpenAPI", "OpenAPI integration status")
 
-    # Communications: transactional outbox foundation exists and RC1 external email remains
-    # synthetic-only until the managed canary passes and closure evidence is reconciled.
+    # Communications: transactional outbox foundation exists; RC1 external email is proven only
+    # for the managed synthetic canary while continuous/participant/production delivery stays off.
     require(platform_migration, "CREATE TABLE platform.outbox_events", "transactional outbox")
     require(status, "Transactional outbox", "outbox status")
     require(status, "WhatsApp", "WhatsApp status")
@@ -300,7 +305,7 @@ def main() -> None:
     print("firebase_app_distribution=active_internal")
     print("maps=external_runtime_unproven_manual_fallback_active")
     print("sentry=external_runtime_unproven_cloud_monitoring_active")
-    print("resend=implemented_gated_managed_canary_pending")
+    print("resend=active_synthetic_only_managed_canary_real_participant_disabled")
     print("fcm=planned")
     print("whatsapp=planned_domain_handoff_only")
     print("payments=domain_foundation_real_provider_disabled")
