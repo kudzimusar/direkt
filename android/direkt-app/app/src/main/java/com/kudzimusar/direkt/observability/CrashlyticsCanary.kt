@@ -57,9 +57,15 @@ internal object CrashlyticsCanary {
             }
             "anr" -> {
                 enableSyntheticCollection(crashlytics, "anr")
-                // Debug/canary builds only. The managed RC3 workflow launches this explicit mode,
-                // confirms the OS ANR signal, then restarts the app to upload the stored report.
-                Thread.sleep(20_000L)
+                // Let onCreate complete and a frame become interactive before blocking the main
+                // looper. The managed canary then sends an input event and requires Android's
+                // ActivityManager ANR signal before the report is flushed from a clean process.
+                activity.window.decorView.postDelayed(
+                    {
+                        Thread.sleep(20_000L)
+                    },
+                    1_500L,
+                )
             }
         }
     }
