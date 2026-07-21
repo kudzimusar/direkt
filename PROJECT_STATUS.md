@@ -2,9 +2,9 @@
 
 **Updated:** 2026-07-21 (Asia/Tokyo)  
 **Stable branch:** `main`  
+**World-class/AI planning checkpoint:** PR #266 merged at `48f57870ec0820ed5d8d4f1f34f9fb531c1339f1`  
 **Current claimed implementation lane:** Issue #261 runtime integration closure on `integration/runtime-closure-261`  
-**VC documentation/benchmark branch:** `docs/world-class-ai-vc-plan` until promoted  
-**Programme state:** Phases 0–10 are complete. Phase 11 internal/synthetic readiness is complete; real 11C–11H evidence and 11J remain pending. Repository-clearable Phase 12 preauthorization engineering is complete but production release is not authorized. Functional customer/provider web/PWA W0–W8 is closed. Runtime-integration closure is now a separate sequential lane under Issue #261. The next product-modernization programme is VC1–VC8 under Issue #259, subject to the active workstream lock and explicit owner high-fidelity direction.
+**Programme state:** Phases 0–10 are complete. Phase 11 internal/synthetic readiness is complete; real 11C–11H evidence and 11J remain pending. Repository-clearable Phase 12 preauthorization engineering is complete but production release is not authorized. Functional customer/provider web/PWA W0–W8 is closed. Runtime-integration closure is a separate sequential lane under Issue #261. The next product-modernization programme is VC1–VC8 under Issue #259, subject to the active workstream lock and explicit owner high-fidelity direction.
 
 ## 1. Current product truth
 
@@ -19,7 +19,8 @@ DIREKT has:
 - enquiries/reviews/complaints/commercial foundations;
 - active managed development/staging infrastructure within documented boundaries;
 - closed W0–W8 browser parity/cutover workstream;
-- an active sequential runtime-integration closure programme that is reconciling remaining provider SDK/runtime evidence without authorizing real production use.
+- an active sequential runtime-integration closure programme reconciling remaining provider SDK/runtime evidence without authorizing real production use;
+- a merged repository-authoritative world-class visual and AI-native modernization direction for VC1–VC8.
 
 The major visible product gap is no longer basic backend scaffolding. It is converting a technically mature but visually uneven product into a world-class, AI-assisted marketplace across customer, provider and operations experiences without regressing trust, privacy, security or active integration work.
 
@@ -36,8 +37,6 @@ Governing modernization documents:
 ## 2. Functional Android/web parity
 
 The browser companion is additive to native Android. W0 through W8 are closed.
-
-Architecture:
 
 ```text
                          DIREKT PRODUCT
@@ -58,17 +57,7 @@ Architecture:
           Identity / Trust / Enquiries / Reviews / Commercial / Audit
 ```
 
-W0–W8 result:
-
-1. W0 baseline/parity controls — **Closed**;
-2. W1 PWA shell/BFF/typed API foundation — **Closed**;
-3. W2 public discovery slice — **Closed**;
-4. W3 browser authentication/session boundary — **Closed**;
-5. W4 customer parity — **Closed**;
-6. W5 provider parity — **Closed**;
-7. W6 commercial parity within boundaries — **Closed**;
-8. W7 cross-client security/accessibility/resilience — **Closed**;
-9. W8 deployment/canonical route cutover — **Closed**.
+W0–W8 are **Closed**.
 
 Functional browser application:
 
@@ -89,35 +78,34 @@ W8 proves functional parity/cutover, not final visual design approval.
 
 ## 3. Current implementation-lane truth
 
-Issue #261 now owns the claimed sequential runtime-integration lane.
+Issue #261 owns the claimed sequential runtime-integration lane.
 
-Current branch from repository lock:
+Current branch from the repository lock:
 
 `integration/runtime-closure-261`
 
-The integration plan is closing one bounded integration at a time and includes runtime evidence for items such as email, observability, Crashlytics, FCM, Test Lab, WhatsApp, Maps, sandbox payment adapters, generated clients and any justified abuse-control integration.
+The integration plan closes one bounded integration at a time and covers runtime evidence for items such as email, observability, Crashlytics, FCM, Test Lab, WhatsApp, Maps, sandbox payment adapters, generated clients and any justified abuse-control integration.
 
 Important:
 
-- the historical W7/W8 verifier ownership coupling has already been decoupled in the promoted runtime-integration baseline;
-- VC0/benchmark/documentation work may proceed on isolated non-overlapping design-control surfaces;
-- broad VC Android/PWA/operations implementation must not overlap the active Issue #261 claim;
-- before starting broad VC implementation, re-read `WORKSTREAM_LOCK.md`, current `main`, Issue #261 status and exact-head CI, then claim/reconcile the next allowed scope.
+- the historical W7/W8 verifier ownership coupling is already decoupled;
+- the merged world-class/AI documentation does not claim overlapping runtime code;
+- non-overlapping VC1/VC2 design-system/high-fidelity work may proceed only within the current lock rules;
+- broad VC Android/PWA/operations implementation must not overlap Issue #261 runtime surfaces;
+- before broad VC implementation, re-read `WORKSTREAM_LOCK.md`, current `main`, Issue #261 status and exact-head CI, then claim/reconcile the next allowed scope.
 
-## 4. Selected current checkpoints
+## 4. Selected checkpoints
 
 | Checkpoint | PR / evidence | Stable result |
 |---|---:|---|
 | Phase 11 entry foundation | #113 | `53e20e67a877f481fc94458d1d2ea62bf4e47b0f` |
 | Phase 11 synthetic pilot | #119 | `7b886b9bee91c1337f4e4ad43f71afa4389644de` |
 | Phase 12 preauthorization foundation | #125 | `7b23d812b751345a740a34b77ad1b7890ed15cd1` |
-| Phase 12A Android release engineering | #129 | `48f6d2d212d64192819d76d67e157b25f8a5e98b` |
-| Phase 12B Play/Data Safety preparation | #134 | `b876c499aed0f135feec39601b58f22c734879cc` |
-| Remaining clearable Phase 12 controls | #136 | `c6bb694046b2fe8e82d3f745330447632169355c` |
 | Integration/runtime audit | #149 | `25deaae72ca2974c5560a8059a50fce37c810f63` |
 | W8 managed browser runtime | run `29721199177` | PASS |
 | W8 canonical host/DNS/TLS | run `29802524466` | PASS |
 | Runtime-integration closure baseline | #263 | promoted on 2026-07-21 |
+| World-class VC1–VC8 + AI direction | #266 | `48f57870ec0820ed5d8d4f1f34f9fb531c1339f1` |
 
 ## 5. Integration/runtime truth
 
@@ -128,23 +116,7 @@ Detailed authority:
 - `docs/integrations/RUNTIME_INTEGRATION_CLOSURE_PLAN.md`;
 - `WORKSTREAM_LOCK.md`.
 
-### Active in approved boundaries
-
-- Supabase PostgreSQL/PostGIS and private server-side Storage;
-- canonical NestJS REST/OpenAPI backend;
-- Artifact Registry and IAM-private Cloud Run API/operations staging;
-- public synthetic-only functional customer/provider browser/BFF runtime;
-- Secret Manager;
-- GitHub Actions and Workload Identity Federation;
-- Cloud Logging/Monitoring;
-- Firebase App Distribution;
-- GitHub Pages/static public edge and owner-controlled domains;
-- native Android implementation;
-- transactional outbox domain foundation.
-
-### Gated/provisioned/sandbox states
-
-The detailed ledger records the exact state of Firebase auth, Maps, Sentry, communications, payment rails, generated clients and other external services. A sandbox-proven or externally provisioned provider is not automatically runtime-active or production-authorized.
+A sandbox-proven, externally provisioned or documented provider is not automatically runtime-active or production-authorized.
 
 Real participant data, real evidence, real communications, real money and production release remain separately gated.
 
@@ -160,7 +132,7 @@ Current state:
 - restricted-evidence vision/OCR — **DISABLED BY DEFAULT**;
 - client-direct privileged AI SDK/API calls — **PROHIBITED**.
 
-A future AI provider/use case requires:
+Before an AI provider/use case becomes active it requires:
 
 - source-controlled use-case definition;
 - data classification;
@@ -205,13 +177,11 @@ Target bounded uses:
 - documentation-grounded support;
 - analytics/taxonomy insights.
 
-Non-negotiable boundary:
-
 AI cannot autonomously approve/reject verification, publish trust claims, suspend providers, decide serious complaints/appeals, mutate payment ledgers, bypass authorization, expose restricted evidence or make legal conclusions.
 
-## 9. VC0 and next modernization programme
+## 9. VC0 complete; next modernization programme
 
-VC0 now establishes:
+VC0 repository-side control work is complete and promoted through PR #266. It established:
 
 - repository-wide visual gap matrix;
 - global benchmark direction;
@@ -220,6 +190,8 @@ VC0 now establishes:
 - AI product and architecture boundaries;
 - AI evaluation/security plan;
 - agent/control-document alignment.
+
+Actual high-fidelity visual selection still requires the VC2 owner checkpoint.
 
 VC1–VC8:
 
@@ -232,11 +204,11 @@ VC1–VC8:
 7. **VC7 — AI intelligence layer**;
 8. **VC8 — World-class visual/product/AI quality gate**.
 
-The intent is to execute these sequentially and continuously once the implementation lane permits it, without pausing between stages unless CI/review/design approval/external gates create a genuine disturbance.
+The intent is sequential, continuous execution once the implementation lane permits it, pausing only for genuine CI/review/design-approval/external blockers.
 
 ## 10. Visual quality status
 
-The functional UI remains testable but is not final world-class presentation.
+The functional UI is testable but is not final world-class presentation.
 
 Broad gaps:
 
@@ -246,8 +218,8 @@ Broad gaps:
 - text-heavy/form-heavy presentation;
 - developer/workstream/API language visible in places;
 - incomplete world-class search/discovery/provider profile composition;
-- provider workspace still exposes implementation-oriented concepts in places;
-- operations lacks final queue → case → secure evidence → decision workspace;
+- provider workspace exposes implementation-oriented concepts in places;
+- operations lacks the final queue → case → secure evidence → decision workspace;
 - AI assistance is not yet implemented as a product layer.
 
 No flagship customer/provider/operations journey is visually complete end to end against the new benchmark.
@@ -275,7 +247,7 @@ At the start of VC implementation:
 1. fetch current `main`;
 2. read current `WORKSTREAM_LOCK.md` and Issue #261 closure state;
 3. verify exact-head predecessor CI;
-4. if Issue #261 still holds overlapping runtime surfaces, perform only non-overlapping VC1/VC2 design-system/high-fidelity work or reconcile ownership explicitly;
+4. if Issue #261 still holds overlapping runtime surfaces, perform only non-overlapping VC1/VC2 design-system/high-fidelity work or explicitly reconcile ownership;
 5. once the lane is released/compatible, claim the bounded VC implementation scope;
 6. execute VC1–VC8 sequentially with exact-head regression, visual evidence and owner approval at VC2;
 7. never use VC work to bypass Phase 11/12 real-world gates.
