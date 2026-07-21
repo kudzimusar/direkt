@@ -27,7 +27,9 @@ describe('AI environment contract', () => {
       AI_GEMINI_API_KEY: GEMINI_KEY,
     });
 
-    expect(result.error?.message).toContain('AI provider activation currently permits synthetic-only data mode');
+    expect(result.error?.message).toContain(
+      'AI provider activation currently permits synthetic-only data mode',
+    );
   });
 
   it('rejects a fallback provider without an enabled primary provider', () => {
