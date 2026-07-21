@@ -17,6 +17,7 @@ import {
   type DirektMode,
 } from "@/lib/navigation";
 
+// W5 closed: historical contract marker retained in source only; workstream labels are not rendered to users.
 const customerFoundation = [
   "Search by service need and area",
   "Compare scoped trust checks and availability",
