@@ -73,7 +73,23 @@ nohup "${emulator}" \
   > "${RUNNER_TEMP}/vc8-emulator.log" 2>&1 &
 
 echo $! > "${RUNNER_TEMP}/vc8-emulator.pid"
-adb wait-for-device
+
+for attempt in $(seq 1 90); do
+  if adb devices | awk 'NR > 1 && $2 == "device" { found = 1 } END { exit found ? 0 : 1 }'; then
+    break
+  fi
+  if ! kill -0 "$(cat "${RUNNER_TEMP}/vc8-emulator.pid")" 2>/dev/null; then
+    echo "Android emulator process exited before registering with adb." >&2
+    cat "${RUNNER_TEMP}/vc8-emulator.log" >&2 || true
+    exit 1
+  fi
+  if [[ "${attempt}" == "90" ]]; then
+    echo "Android emulator did not register with adb within the bounded timeout." >&2
+    cat "${RUNNER_TEMP}/vc8-emulator.log" >&2 || true
+    exit 1
+  fi
+  sleep 2
+done
 
 for attempt in $(seq 1 120); do
   boot_completed="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
