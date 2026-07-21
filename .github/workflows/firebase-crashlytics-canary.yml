@@ -1,0 +1,264 @@
+name: DIREKT managed Crashlytics synthetic device canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN-DIREKT-CRASHLYTICS-CANARY to continue
+        required: true
+        type: string
+      source_sha:
+        description: Exact reviewed DIREKT commit already merged to main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: direkt-managed-crashlytics-canary
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    name: Build and execute synthetic Crashlytics fatal/non-fatal canaries
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      FIREBASE_PACKAGE_NAME: com.kudzimusar.direkt.debug
+      DIREKT_GRADLE_VERSION: "9.4.0"
+
+    steps:
+      - name: Validate canary controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ inputs.confirmation }}" = "RUN-DIREKT-CRASHLYTICS-CANARY"
+          [[ "${{ inputs.source_sha }}" =~ ^[0-9a-f]{40}$ ]]
+
+      - name: Check out exact reviewed source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify source identity and main ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          test "${SOURCE_SHA}" = "${{ inputs.source_sha }}"
+          git fetch origin main --no-tags
+          git merge-base --is-ancestor "${SOURCE_SHA}" origin/main
+          echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Configure pinned Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ env.DIREKT_GRADLE_VERSION }}
+
+      - name: Authenticate to Google Cloud through GitHub OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Resolve exact Firebase debug app and ephemeral configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(gcloud auth print-access-token)"
+          echo "::add-mask::${token}"
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer ${token}" \
+            "https://firebase.googleapis.com/v1beta1/projects/${GCP_PROJECT_ID}/androidApps?pageSize=100" \
+            > "${RUNNER_TEMP}/firebase-android-apps.json"
+
+          APP_RESOURCE_NAME="$(jq -r --arg package "${FIREBASE_PACKAGE_NAME}" '[.apps[]? | select(.packageName == $package and .state == "ACTIVE") | .name][0] // empty' "${RUNNER_TEMP}/firebase-android-apps.json")"
+          FIREBASE_APP_ID="$(jq -r --arg package "${FIREBASE_PACKAGE_NAME}" '[.apps[]? | select(.packageName == $package and .state == "ACTIVE") | .appId][0] // empty' "${RUNNER_TEMP}/firebase-android-apps.json")"
+          test -n "${APP_RESOURCE_NAME}"
+          test -n "${FIREBASE_APP_ID}"
+
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer ${token}" \
+            "https://firebase.googleapis.com/v1beta1/${APP_RESOURCE_NAME}/config" \
+            > "${RUNNER_TEMP}/firebase-android-config.json"
+
+          jq -r '.configFileContents' "${RUNNER_TEMP}/firebase-android-config.json" \
+            | base64 --decode \
+            > android/direkt-app/app/google-services.json
+
+          CONFIG_APP_ID="$(jq -r --arg package "${FIREBASE_PACKAGE_NAME}" '[.client[]? | select(.client_info.android_client_info.package_name == $package) | .client_info.mobilesdk_app_id][0] // empty' android/direkt-app/app/google-services.json)"
+          FIREBASE_API_KEY="$(jq -r --arg package "${FIREBASE_PACKAGE_NAME}" '[.client[]? | select(.client_info.android_client_info.package_name == $package) | .api_key[0].current_key][0] // empty' android/direkt-app/app/google-services.json)"
+          FIREBASE_PROJECT_ID="$(jq -r '.project_info.project_id // empty' android/direkt-app/app/google-services.json)"
+
+          test "${CONFIG_APP_ID}" = "${FIREBASE_APP_ID}"
+          test "${FIREBASE_PROJECT_ID}" = "${GCP_PROJECT_ID}"
+          test -n "${FIREBASE_API_KEY}"
+          echo "::add-mask::${FIREBASE_API_KEY}"
+
+          echo "FIREBASE_APP_ID=${FIREBASE_APP_ID}" >> "${GITHUB_ENV}"
+          echo "FIREBASE_API_KEY=${FIREBASE_API_KEY}" >> "${GITHUB_ENV}"
+          echo "FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}" >> "${GITHUB_ENV}"
+
+      - name: Build exact synthetic Crashlytics debug APK
+        working-directory: android/direkt-app
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -f gradle/wrapper/gradle-wrapper.jar ]]; then
+            wrapper_checksum="$(sed -n 's/^distributionSha256Sum=//p' gradle/wrapper/gradle-wrapper.properties)"
+            [[ "${wrapper_checksum}" =~ ^[0-9a-f]{64}$ ]]
+            gradle wrapper \
+              --gradle-version "${DIREKT_GRADLE_VERSION}" \
+              --distribution-type bin \
+              --gradle-distribution-sha256-sum "${wrapper_checksum}"
+          fi
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace \
+            -PDIREKT_FIREBASE_API_KEY="${FIREBASE_API_KEY}" \
+            -PDIREKT_FIREBASE_APP_ID="${FIREBASE_APP_ID}" \
+            -PDIREKT_FIREBASE_PROJECT_ID="${FIREBASE_PROJECT_ID}" \
+            -PDIREKT_CRASHLYTICS_MODE=synthetic-canary \
+            -PDIREKT_CRASHLYTICS_RELEASE="${SOURCE_SHA}" \
+            testDebugUnitTest lintDebug assembleDebug \
+            2>&1 | tee "${RUNNER_TEMP}/direkt-crashlytics-build.log"
+
+          test -s app/build/outputs/apk/debug/app-debug.apk
+          grep -Fq 'firebase_crashlytics_collection_enabled' app/src/main/AndroidManifest.xml
+          grep -Fq 'android:value="false"' app/src/main/AndroidManifest.xml
+          git diff --exit-code -- app/google-services.json || true
+
+      - name: Remove ephemeral Firebase configuration
+        if: always()
+        shell: bash
+        run: rm -f android/direkt-app/app/google-services.json
+
+      - name: Provision isolated headless Android emulator
+        shell: bash
+        run: bash scripts/vc8/provision-android-emulator.sh
+
+      - name: Execute non-fatal and fatal synthetic canaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          package="${FIREBASE_PACKAGE_NAME}"
+          activity="com.kudzimusar.direkt.observability.CrashlyticsCanaryActivity"
+          extra="direkt_crashlytics_canary_kind"
+
+          adb logcat -c
+          adb shell setprop log.tag.FirebaseCrashlytics DEBUG
+
+          adb shell am start -W \
+            -n "${package}/${activity}" \
+            --es "${extra}" nonfatal
+          sleep 12
+
+          adb shell am force-stop "${package}"
+          adb shell monkey -p "${package}" -c android.intent.category.LAUNCHER 1 >/dev/null
+          sleep 12
+
+          set +e
+          adb shell am start -W \
+            -n "${package}/${activity}" \
+            --es "${extra}" fatal
+          fatal_status=$?
+          set -e
+          echo "Fatal canary activity exit status: ${fatal_status}"
+          sleep 8
+
+          adb shell monkey -p "${package}" -c android.intent.category.LAUNCHER 1 >/dev/null
+          sleep 20
+
+          adb logcat -d -v brief > "${RUNNER_TEMP}/direkt-crashlytics-logcat.txt"
+          grep -Fq "DIREKT_CRASHLYTICS_CANARY" "${RUNNER_TEMP}/direkt-crashlytics-logcat.txt"
+          grep -Eq 'Crashlytics report upload complete|Crashlytics.*204|Report upload complete' "${RUNNER_TEMP}/direkt-crashlytics-logcat.txt" || true
+
+      - name: Verify exact synthetic events through Crashlytics API
+        shell: bash
+        run: |
+          set -euo pipefail
+          fatal_marker="DIREKT_CRASHLYTICS_FATAL_CANARY_${SOURCE_SHA}"
+          nonfatal_marker="DIREKT_CRASHLYTICS_NONFATAL_CANARY_${SOURCE_SHA}"
+          found_fatal=false
+          found_nonfatal=false
+          fatal_event_id=""
+          nonfatal_event_id=""
+
+          for attempt in $(seq 1 30); do
+            token="$(gcloud auth print-access-token)"
+            echo "::add-mask::${token}"
+            http_code="$(curl --silent --show-error \
+              --output "${RUNNER_TEMP}/crashlytics-events.json" \
+              --write-out '%{http_code}' \
+              --header "Authorization: Bearer ${token}" \
+              "https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_ID}/apps/${FIREBASE_APP_ID}/events?pageSize=100")"
+
+            if [[ "${http_code}" == "403" ]]; then
+              echo "::error title=Crashlytics API permission denied::The GitHub deployer can run the device canary but cannot read Crashlytics event metadata for managed verification."
+              exit 1
+            fi
+            test "${http_code}" = "200"
+
+            fatal_event_id="$(jq -r --arg marker "${fatal_marker}" --arg package "${FIREBASE_PACKAGE_NAME}" '[.events[]? | select(.bundleOrPackage == $package) | select(any(.exceptions[]?; .exceptionMessage == $marker)) | .eventId][0] // empty' "${RUNNER_TEMP}/crashlytics-events.json")"
+            nonfatal_event_id="$(jq -r --arg marker "${nonfatal_marker}" --arg package "${FIREBASE_PACKAGE_NAME}" '[.events[]? | select(.bundleOrPackage == $package) | select(any(.exceptions[]?; .exceptionMessage == $marker)) | .eventId][0] // empty' "${RUNNER_TEMP}/crashlytics-events.json")"
+
+            [[ -n "${fatal_event_id}" ]] && found_fatal=true
+            [[ -n "${nonfatal_event_id}" ]] && found_nonfatal=true
+            if [[ "${found_fatal}" == "true" && "${found_nonfatal}" == "true" ]]; then
+              break
+            fi
+            sleep 10
+          done
+
+          test "${found_fatal}" = "true"
+          test "${found_nonfatal}" = "true"
+          echo "FATAL_EVENT_ID=${fatal_event_id}" >> "${GITHUB_ENV}"
+          echo "NONFATAL_EVENT_ID=${nonfatal_event_id}" >> "${GITHUB_ENV}"
+
+      - name: Stop isolated emulator
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f "${RUNNER_TEMP}/vc8-emulator.pid" ]]; then
+            kill "$(cat "${RUNNER_TEMP}/vc8-emulator.pid")" 2>/dev/null || true
+          fi
+          adb emu kill 2>/dev/null || true
+
+      - name: Publish sanitized Crashlytics canary summary
+        shell: bash
+        run: |
+          {
+            echo "### DIREKT managed Crashlytics synthetic device canary"
+            echo "- Source: \`${SOURCE_SHA}\`"
+            echo "- Firebase project: \`${GCP_PROJECT_ID}\`"
+            echo "- Android package: \`${FIREBASE_PACKAGE_NAME}\`"
+            echo "- Firebase app: exact registered debug app resolved through Firebase Management API"
+            echo "- Device: isolated GitHub-hosted Android emulator"
+            echo "- Automatic collection default: disabled"
+            echo "- Canary collection: enabled only for \`synthetic-canary\` build mode"
+            echo "- Non-fatal event ID: \`${NONFATAL_EVENT_ID}\`"
+            echo "- Fatal event ID: \`${FATAL_EVENT_ID}\`"
+            echo "- Event verification: Firebase Crashlytics REST API matched exact synthetic exception markers"
+            echo "- User IDs / contact / evidence / private coordinates / auth tokens: not supplied"
+            echo "- FCM / notification permission / Maps / Test Lab: not activated"
+            echo "- Participant and production Crashlytics telemetry: disabled"
+          } >> "${GITHUB_STEP_SUMMARY}"
