@@ -10,6 +10,7 @@ on:
 permissions:
   contents: write
 
+# One-shot helper: remove after the bounded presentation-only patch lands.
 jobs:
   polish:
     runs-on: ubuntu-latest
