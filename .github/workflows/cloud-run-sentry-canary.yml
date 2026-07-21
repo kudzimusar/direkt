@@ -1,0 +1,351 @@
+name: DIREKT managed Sentry synthetic canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN-DIREKT-SENTRY-CANARY to continue
+        required: true
+        type: string
+      source_sha:
+        description: Exact reviewed DIREKT commit already merged to main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: direkt-managed-sentry-canary
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    name: Build and execute API and portal Sentry canaries
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_REGION: asia-northeast1
+      GCP_ARTIFACT_REGISTRY: direkt-containers
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_API_RUNTIME_SERVICE_ACCOUNT: direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_PORTAL_RUNTIME_SERVICE_ACCOUNT: direkt-portal-runtime@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_API_IMAGE_NAME: direkt-api
+      GCP_PORTAL_IMAGE_NAME: direkt-sentry-portal-canary
+      GCP_API_CANARY_JOB: direkt-sentry-api-canary
+      GCP_PORTAL_CANARY_SERVICE: direkt-sentry-portal-canary
+
+    steps:
+      - name: Validate canary controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ inputs.confirmation }}" = "RUN-DIREKT-SENTRY-CANARY"
+          [[ "${{ inputs.source_sha }}" =~ ^[0-9a-f]{40}$ ]]
+
+      - name: Check out exact reviewed source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify source identity and main ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          test "${SOURCE_SHA}" = "${{ inputs.source_sha }}"
+          git fetch origin main --no-tags
+          if ! git merge-base --is-ancestor "${SOURCE_SHA}" origin/main; then
+            echo "::error title=Unmerged canary source::The selected source commit is not an ancestor of origin/main."
+            exit 1
+          fi
+          echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
+          echo "API_IMAGE_URI=${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/${GCP_API_IMAGE_NAME}:${SOURCE_SHA}" >> "${GITHUB_ENV}"
+          echo "PORTAL_IMAGE_URI=${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/${GCP_PORTAL_IMAGE_NAME}:${SOURCE_SHA}" >> "${GITHUB_ENV}"
+
+      - name: Verify exact backend source
+        working-directory: backend/direkt-api
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npm run format:check
+          npm run lint
+          npm run typecheck
+          npm run test:unit
+          npm run build
+
+      - name: Verify exact portal source
+        working-directory: admin/direkt-operations-portal
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npm run format:check
+          npm run lint
+          npm run typecheck
+          npm run test
+          npm run build
+
+      - name: Authenticate to Google Cloud through GitHub OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Resolve enabled numeric Sentry DSN secret versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          mappings=(
+            "DIREKT_SENTRY_API_DSN_SECRET_VERSION:direkt-sentry-api-dsn"
+            "DIREKT_SENTRY_PORTAL_DSN_SECRET_VERSION:direkt-sentry-portal-dsn"
+          )
+
+          for mapping in "${mappings[@]}"; do
+            variable_name="${mapping%%:*}"
+            secret_name="${mapping#*:}"
+            record="$(gcloud secrets versions describe latest \
+              --secret "${secret_name}" \
+              --project "${GCP_PROJECT_ID}" \
+              --format=json)"
+            version="$(jq -r '.name | split("/") | last' <<< "${record}")"
+            state="$(jq -r '.state' <<< "${record}")"
+            if [[ ! "${version}" =~ ^[1-9][0-9]*$ ]] || [[ "${state}" != "ENABLED" ]]; then
+              echo "::error title=Enabled Sentry DSN version missing::${secret_name} did not resolve to an enabled numeric version."
+              exit 1
+            fi
+            echo "${variable_name}=${version}" >> "${GITHUB_ENV}"
+            echo "- ${secret_name}: version ${version}" >> "${GITHUB_STEP_SUMMARY}"
+          done
+
+      - name: Configure Artifact Registry authentication
+        shell: bash
+        run: gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+
+      - name: Build and push immutable canary images
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build \
+            --file backend/direkt-api/Dockerfile \
+            --tag "${API_IMAGE_URI}" \
+            backend/direkt-api
+          docker build \
+            --file admin/direkt-operations-portal/Dockerfile \
+            --build-arg NEXT_PUBLIC_APP_ENV=staging-synthetic \
+            --tag "${PORTAL_IMAGE_URI}" \
+            admin/direkt-operations-portal
+          docker push "${API_IMAGE_URI}"
+          docker push "${PORTAL_IMAGE_URI}"
+
+      - name: Deploy private API Sentry canary job
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run jobs deploy "${GCP_API_CANARY_JOB}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --image "${API_IMAGE_URI}" \
+            --service-account "${GCP_API_RUNTIME_SERVICE_ACCOUNT}" \
+            --tasks 1 \
+            --max-retries 0 \
+            --task-timeout 2m \
+            --cpu 1 \
+            --memory 512Mi \
+            --command node \
+            --args dist/platform/observability/sentry-canary.js \
+            --set-env-vars "DIREKT_ENVIRONMENT=staging,DIREKT_DATA_MODE=synthetic-only,SENTRY_MODE=enabled,SENTRY_RELEASE=${SOURCE_SHA}" \
+            --set-secrets "SENTRY_DSN=direkt-sentry-api-dsn:${DIREKT_SENTRY_API_DSN_SECRET_VERSION}" \
+            --labels "direkt-environment=staging,direkt-data-mode=synthetic-only,direkt-integration=sentry-api-canary" \
+            --quiet
+
+      - name: Verify API canary identity and secret contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          export_file="${RUNNER_TEMP}/direkt-sentry-api-canary.yaml"
+          gcloud run jobs describe "${GCP_API_CANARY_JOB}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --format=export > "${export_file}"
+          grep -Fq "${GCP_API_RUNTIME_SERVICE_ACCOUNT}" "${export_file}"
+          grep -Fq "direkt-sentry-api-dsn" "${export_file}"
+          grep -Fq "${SOURCE_SHA}" "${export_file}"
+          if grep -Fq 'key: latest' "${export_file}" || \
+             grep -Fq 'key: "latest"' "${export_file}" || \
+             grep -Fq "key: 'latest'" "${export_file}"; then
+            echo "::error title=Unpinned API Sentry secret::Cloud Run Job contains a latest secret reference."
+            exit 1
+          fi
+          if grep -Fq "direkt-sentry-auth-token" "${export_file}"; then
+            echo "::error title=Runtime auth-token leak::Sentry auth token must never bind to API runtime."
+            exit 1
+          fi
+
+      - name: Execute managed API Sentry canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run jobs execute "${GCP_API_CANARY_JOB}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --wait \
+            --quiet
+          API_EXECUTION_NAME="$(gcloud run jobs executions list \
+            --job "${GCP_API_CANARY_JOB}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --sort-by='~metadata.creationTimestamp' \
+            --limit=1 \
+            --format='value(metadata.name)')"
+          test -n "${API_EXECUTION_NAME}"
+          echo "API_EXECUTION_NAME=${API_EXECUTION_NAME}" >> "${GITHUB_ENV}"
+
+      - name: Deploy private portal Sentry canary service
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run deploy "${GCP_PORTAL_CANARY_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --platform managed \
+            --image "${PORTAL_IMAGE_URI}" \
+            --service-account "${GCP_PORTAL_RUNTIME_SERVICE_ACCOUNT}" \
+            --port 8080 \
+            --cpu 1 \
+            --memory 512Mi \
+            --min-instances 0 \
+            --max-instances 1 \
+            --concurrency 5 \
+            --timeout 60 \
+            --ingress all \
+            --set-env-vars "NODE_ENV=production,HOSTNAME=0.0.0.0,NEXT_PUBLIC_APP_ENV=staging-synthetic,DIREKT_ENVIRONMENT=staging,DIREKT_DATA_MODE=synthetic-only,SENTRY_MODE=enabled,SENTRY_RELEASE=${SOURCE_SHA},SENTRY_CANARY_ENABLED=true" \
+            --set-secrets "SENTRY_DSN=direkt-sentry-portal-dsn:${DIREKT_SENTRY_PORTAL_DSN_SECRET_VERSION}" \
+            --labels "direkt-environment=staging,direkt-data-mode=synthetic-only,direkt-integration=sentry-portal-canary" \
+            --no-allow-unauthenticated \
+            --quiet
+
+          PORTAL_CANARY_URL="$(gcloud run services describe "${GCP_PORTAL_CANARY_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --format='value(status.url)')"
+          test -n "${PORTAL_CANARY_URL}"
+          echo "PORTAL_CANARY_URL=${PORTAL_CANARY_URL}" >> "${GITHUB_ENV}"
+
+      - name: Verify portal canary identity and secret contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          service_json="${RUNNER_TEMP}/direkt-sentry-portal-canary.json"
+          gcloud run services describe "${GCP_PORTAL_CANARY_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --format=json > "${service_json}"
+          jq -e --arg identity "${GCP_PORTAL_RUNTIME_SERVICE_ACCOUNT}" '.spec.template.spec.serviceAccountName == $identity' "${service_json}" >/dev/null
+          jq -e '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef != null) | .name] == ["SENTRY_DSN"]' "${service_json}" >/dev/null
+          jq -e '[.spec.template.spec.containers[0].env[]? | select(.valueFrom.secretKeyRef != null) | .valueFrom.secretKeyRef.key] | all(test("^[1-9][0-9]*$"))' "${service_json}" >/dev/null
+          if grep -Fq "direkt-sentry-auth-token" "${service_json}"; then
+            echo "::error title=Runtime auth-token leak::Sentry auth token must never bind to portal runtime."
+            exit 1
+          fi
+
+      - name: Grant temporary deployer invocation on portal canary only
+        shell: bash
+        run: |
+          gcloud run services add-iam-policy-binding "${GCP_PORTAL_CANARY_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --member "serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}" \
+            --role roles/run.invoker \
+            --quiet
+
+      - name: Mint private portal canary ID token
+        id: portal-canary-auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+          token_format: id_token
+          id_token_audience: ${{ env.PORTAL_CANARY_URL }}
+          id_token_include_email: true
+
+      - name: Execute managed portal Sentry canary
+        shell: bash
+        env:
+          PORTAL_ID_TOKEN: ${{ steps.portal-canary-auth.outputs.id_token }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::${PORTAL_ID_TOKEN}"
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "X-Serverless-Authorization: Bearer ${PORTAL_ID_TOKEN}" \
+            "${PORTAL_CANARY_URL}/api/observability/sentry-canary" \
+            > "${RUNNER_TEMP}/portal-sentry-canary.json"
+          jq -e '.status == "ok" and .receipt == "DIREKT_SENTRY_PORTAL_OK" and (.eventId | test("^[0-9a-f]{32}$"))' \
+            "${RUNNER_TEMP}/portal-sentry-canary.json" >/dev/null
+          PORTAL_EVENT_ID="$(jq -r '.eventId' "${RUNNER_TEMP}/portal-sentry-canary.json")"
+          echo "PORTAL_EVENT_ID=${PORTAL_EVENT_ID}" >> "${GITHUB_ENV}"
+
+      - name: Remove temporary portal canary invocation
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run services remove-iam-policy-binding "${GCP_PORTAL_CANARY_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --member "serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}" \
+            --role roles/run.invoker \
+            --quiet >/dev/null 2>&1 || true
+
+          if gcloud run services describe "${GCP_PORTAL_CANARY_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --format='value(metadata.name)' >/dev/null 2>&1; then
+            policy_file="${RUNNER_TEMP}/portal-sentry-canary-final-iam.json"
+            gcloud run services get-iam-policy "${GCP_PORTAL_CANARY_SERVICE}" \
+              --project "${GCP_PROJECT_ID}" \
+              --region "${GCP_REGION}" \
+              --format=json > "${policy_file}"
+            jq -e --arg deployer "serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}" '
+              [.bindings[]?.members[]?
+                | select(. == $deployer or . == "allUsers" or . == "allAuthenticatedUsers")]
+              | length == 0
+            ' "${policy_file}" >/dev/null
+          fi
+
+      - name: Publish sanitized Sentry canary summary
+        shell: bash
+        run: |
+          {
+            echo "### DIREKT managed Sentry synthetic canary"
+            echo "- Source: \`${SOURCE_SHA}\`"
+            echo "- API image: \`${API_IMAGE_URI}\`"
+            echo "- Portal image: \`${PORTAL_IMAGE_URI}\`"
+            echo "- API job: \`${GCP_API_CANARY_JOB}\`"
+            echo "- API execution: \`${API_EXECUTION_NAME}\`"
+            echo "- Portal canary service: \`${GCP_PORTAL_CANARY_SERVICE}\`"
+            echo "- Portal event ID: \`${PORTAL_EVENT_ID}\`"
+            echo "- Organization: \`direkt-l7\`"
+            echo "- API project: \`direkt-api\`"
+            echo "- Portal project: \`direkt-operations-portal\`"
+            echo "- Data mode: \`synthetic-only\`"
+            echo "- Runtime DSNs: enabled numeric Secret Manager versions only"
+            echo "- CI/release auth token bound to runtime: no"
+            echo "- Default PII, traces, logs, breadcrumbs, local variables and replay: disabled"
+            echo "- Cloud Logging remains authoritative infrastructure telemetry"
+          } >> "${GITHUB_STEP_SUMMARY}"
