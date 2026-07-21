@@ -20,14 +20,18 @@ const AUTHORITY_BOUNDARY = [
 @Injectable()
 export class AiService {
   constructor(
-    @Inject(AI_PRIMARY_PROVIDER) private readonly primaryProvider: AiProviderPort,
-    @Inject(AI_FALLBACK_PROVIDER) private readonly fallbackProvider: AiProviderPort,
+    @Inject(AI_PRIMARY_PROVIDER)
+    private readonly primaryProvider: AiProviderPort,
+    @Inject(AI_FALLBACK_PROVIDER)
+    private readonly fallbackProvider: AiProviderPort,
     private readonly configService: ConfigService,
   ) {}
 
   async assist(input: AiAssistInput): Promise<AiAssistResult> {
     if (input.dataClassification !== 'synthetic') {
-      throw new AiInputRejectedError('AI requests currently permit synthetic data only.');
+      throw new AiInputRejectedError(
+        'AI requests currently permit synthetic data only.',
+      );
     }
 
     const prompt = input.prompt.trim();
@@ -35,9 +39,12 @@ export class AiService {
       throw new AiInputRejectedError('AI prompt must not be empty.');
     }
 
-    const maxInputChars = this.configService.getOrThrow<number>('AI_MAX_INPUT_CHARS');
+    const maxInputChars =
+      this.configService.getOrThrow<number>('AI_MAX_INPUT_CHARS');
     if (prompt.length > maxInputChars) {
-      throw new AiInputRejectedError(`AI prompt exceeds the ${maxInputChars}-character limit.`);
+      throw new AiInputRejectedError(
+        `AI prompt exceeds the ${maxInputChars}-character limit.`,
+      );
     }
 
     const request: AiProviderRequest = {
