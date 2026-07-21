@@ -39,9 +39,7 @@ export class GroqAiProviderAdapter implements AiProviderPort {
       });
 
       if (!response.ok) {
-        throw new AiProviderUnavailableError(
-          `Groq request failed with status ${response.status}.`,
-        );
+        throw new AiProviderUnavailableError(`Groq request failed with status ${response.status}.`);
       }
 
       const payload = (await response.json()) as GroqResponse;
