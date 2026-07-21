@@ -35,37 +35,56 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
+
+          def replace_one(text: str, pattern: str, replacement: str, label: str) -> str:
+              updated, count = re.subn(pattern, replacement, text, count=1, flags=re.M)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected one replacement, found {count}')
+              return updated
 
           status_path = Path('docs/integrations/CURRENT_INTEGRATION_STATUS.md')
           status = status_path.read_text()
-          replacements = {
-              '| Resend | **EXTERNALLY_PROVISIONED / RC1 PREFLIGHT PROVEN** | `notify.direkt.forum` verified and `direkt-resend-api-key` version 1 enabled. Runtime app-event delivery is not yet proven. |':
+          status = replace_one(
+              status,
+              r'^\| Resend \| .*$',
               '| Resend | **IMPLEMENTED_GATED / MANAGED CANARY PENDING** | Provider-neutral HTTP adapter, transactional-outbox consumer, stable idempotency/retry/failure persistence, verified sender-domain gate and a private Cloud Run Job canary workflow are source-integrated. `notify.direkt.forum` is verified and `direkt-resend-api-key` version 1 is enabled; the managed canary has not yet executed, so Resend is not ACTIVE. |',
-              'Resend remains non-ACTIVE until an application adapter, runtime secret attachment, outbox/idempotency/retry behavior, privacy/template controls and managed synthetic delivery canary exist.':
+              'status Resend row',
+          )
+          status = replace_one(
+              status,
+              r'^Resend remains non-ACTIVE.*$',
               'RC1 source integration is implemented and remains gated. Promotion requires least-privilege runtime secret access plus a successful exact-source managed synthetic outbox-to-Resend canary; continuous and real-participant external email remain disabled.',
-              'AI0 under Issue #264 is the owner-authorized provider-neutral AI foundation immediately after RC0. Its provider/API evidence and source implementation are gated rather than ACTIVE; RC1 Resend follows after AI0 promotion.':
-              'AI0 under Issue #264 is CLOSED and merged in PR #265 at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; its providers remain gated rather than active runtime integrations. RC1 Resend is the active checkpoint and is `IMPLEMENTED_GATED / MANAGED CANARY PENDING` until managed proof passes.'
-          }
-          for old, new in replacements.items():
-              if old not in status:
-                  raise SystemExit(f'missing status replacement anchor: {old[:80]}')
-              status = status.replace(old, new, 1)
+              'status Resend paragraph',
+          )
+          status = replace_one(
+              status,
+              r'^AI0 under Issue #264.*$',
+              'AI0 under Issue #264 is CLOSED and merged in PR #265 at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; its providers remain gated rather than active runtime integrations. RC1 Resend is the active checkpoint and is `IMPLEMENTED_GATED / MANAGED CANARY PENDING` until managed proof passes.',
+              'status workstream sentence',
+          )
           status_path.write_text(status)
 
           ledger_path = Path('docs/integrations/LIVE_INTEGRATION_LEDGER.md')
           ledger = ledger_path.read_text()
-          replacements = {
-              '| Resend | `EXTERNALLY_PROVISIONED / RC1 PREFLIGHT PROVEN` | `notify.direkt.forum` verified; `direkt-resend-api-key` version 1 enabled. Still requires application adapter, runtime Secret Manager binding, outbox consumer, idempotency/retry, templates/privacy and managed synthetic delivery canary before `ACTIVE`. |':
+          ledger = replace_one(
+              ledger,
+              r'^\| Resend \| .*$',
               '| Resend | `IMPLEMENTED_GATED / MANAGED CANARY PENDING` | Provider-neutral HTTPS adapter, transactional-outbox consumer, bounded retries/stale-lock recovery, deterministic provider idempotency key, synthetic template/privacy boundary and private Cloud Run Job canary workflow are source-integrated. `notify.direkt.forum` verified; `direkt-resend-api-key` version 1 enabled. Managed canary and runtime secret-access proof remain required before any ACTIVE claim. |',
-              '2. AI0 provider-neutral AI foundation — **CLOSING** in PR #265; Gemini/Groq canaries and secrets proven, source implemented, runtime remains gated.':
+              'ledger Resend row',
+          )
+          ledger = replace_one(
+              ledger,
+              r'^2\. AI0 provider-neutral AI foundation.*$',
               '2. AI0 provider-neutral AI foundation — **CLOSED** in PR #265 at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; Gemini/Groq remain runtime-gated.',
-              '3. RC1 Resend — preflight proven; source/runtime closure next.':
-              '3. RC1 Resend — **ACTIVE CHECKPOINT; IMPLEMENTED_GATED / MANAGED CANARY PENDING**. Source adapter/outbox/job path implemented; exact-head regressions, least-privilege secret access and managed canary remain.'
-          }
-          for old, new in replacements.items():
-              if old not in ledger:
-                  raise SystemExit(f'missing ledger replacement anchor: {old[:80]}')
-              ledger = ledger.replace(old, new, 1)
+              'ledger AI0 queue',
+          )
+          ledger = replace_one(
+              ledger,
+              r'^3\. RC1 Resend.*$',
+              '3. RC1 Resend — **ACTIVE CHECKPOINT; IMPLEMENTED_GATED / MANAGED CANARY PENDING**. Source adapter/outbox/job path implemented; exact-head regressions, least-privilege secret access and managed canary remain.',
+              'ledger RC1 queue',
+          )
           ledger_path.write_text(ledger)
           PY
       - name: Commit one-time reconciliation
