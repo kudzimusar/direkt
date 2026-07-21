@@ -1,0 +1,63 @@
+name: VC canonical format once
+
+on:
+  push:
+    branches:
+      - vc/world-class-1-8
+    paths:
+      - ".github/workflows/vc-format-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: vc/world-class-1-8
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Format functional web files with pinned Prettier
+        working-directory: web/direkt-app
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx prettier --write \
+            app/layout.tsx \
+            app/world-class.css \
+            app/provider-world-class.css \
+            app/provider-workspace-world-class.css \
+            'app/providers/[publicProviderId]/page.tsx' \
+            components/direkt-app-shell.tsx \
+            components/discovery-experience.tsx \
+            components/provider-journey-experience.tsx \
+            components/ui/direkt-icon.tsx \
+            lib/navigation.ts
+      - name: Format operations files with pinned Prettier
+        working-directory: admin/direkt-operations-portal
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx prettier --write \
+            src/app/operations/layout.tsx \
+            src/app/operations/page.tsx \
+            src/app/operations/evidence-review/page.tsx \
+            src/app/operations/world-class-operations.css \
+            src/components/operations-shell.tsx
+      - name: Commit canonical formatting and remove one-time helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/vc-format-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/direkt-app admin/direkt-operations-portal .github/workflows
+          if git diff --cached --quiet; then
+            echo "No formatting changes required."
+            exit 0
+          fi
+          git commit -m "style(vc): apply canonical web and operations formatting"
+          git push origin HEAD:vc/world-class-1-8
