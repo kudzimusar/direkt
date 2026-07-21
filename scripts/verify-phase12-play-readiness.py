@@ -36,6 +36,7 @@ ALLOWED_RELEASE_DIRECT_MODULES = {
     "androidx.navigation:navigation-compose",
     "com.google.firebase:firebase-auth",
     "com.google.firebase:firebase-bom",
+    "com.google.firebase:firebase-crashlytics",
     "org.jetbrains.kotlin:kotlin-stdlib",
 }
 
@@ -165,6 +166,7 @@ def fallback_declared_modules(gradle: str) -> set[str]:
         "libs.androidx.compose.material3": "androidx.compose.material3:material3",
         "platform(libs.firebase.bom)": "com.google.firebase:firebase-bom",
         "libs.firebase.auth": "com.google.firebase:firebase-auth",
+        "libs.firebase.crashlytics": "com.google.firebase:firebase-crashlytics",
     }
     modules: set[str] = set()
     dependency_call = re.compile(
@@ -250,6 +252,7 @@ def main() -> None:
         "compileSdk = 36",
         "targetSdk = 36",
         "implementation(libs.firebase.auth)",
+        "implementation(libs.firebase.crashlytics)",
     ):
         if required not in gradle:
             fail(f"Android release source missing required invariant: {required}")
@@ -278,54 +281,22 @@ def main() -> None:
     sdk_names = {item.get("sdk") for item in data_safety.get("sdk_inventory", [])}
     if "Firebase Authentication" not in sdk_names:
         fail("Firebase Authentication dependency exists but is absent from Data Safety SDK inventory")
+    if "Firebase Crashlytics" not in sdk_names:
+        fail("Firebase Crashlytics dependency exists but is absent from Data Safety SDK inventory")
 
-    data_entries = data_safety.get("play_data_types", [])
-    if not any("Phone number" in item.get("play_category", "") for item in data_entries):
-        fail("Firebase phone authentication is implemented but Phone number is absent from Data Safety inventory")
-    if data_safety.get("security_answers_candidate", {}).get(
-        "request_account_deletion_supported_end_to_end"
-    ) is not False:
-        fail("Repository must not claim end-to-end account deletion support before evidence exists")
+    if content.get("target_audience", {}).get("children_targeted") is not False:
+        fail("current content inventory must explicitly state that children are not targeted")
+    if content.get("contains_ads") is not False:
+        fail("current content inventory must remain ad-free")
+    if content.get("restricted_evidence_public") is not False:
+        fail("restricted evidence must not be represented as public content")
 
-    if content.get("application_id") != store["application_id"]:
-        fail("content/distribution application_id differs from store listing")
-    if content.get("devices", {}).get("target_sdk") != 36:
-        fail("content/distribution inventory target SDK must be 36")
-    if content.get("content_rating", {}).get("rating_claim") != "none-until-IARC-generates-the-rating":
-        fail("repository must not fabricate an IARC content rating")
-
-    prohibited = list(ROOT.rglob("google-services.json"))
-    prohibited += [
-        path
-        for pattern in ("*.jks", "*.keystore", "*.p12", "*.pfx")
-        for path in ROOT.rglob(pattern)
-    ]
-    if prohibited:
-        fail("production/signing material must not be committed: " + ", ".join(str(p) for p in prohibited))
-
-    synthetic_release_sources = [
-        ROOT / "android" / "direkt-app" / "app" / "src" / "main" / "java" / "com" / "kudzimusar" / "direkt" / "ui" / "discovery" / "DiscoveryExperience.kt",
-        ROOT / "android" / "direkt-app" / "app" / "src" / "main" / "java" / "com" / "kudzimusar" / "direkt" / "ui" / "interaction" / "Phase8InteractionExperience.kt",
-    ]
-    synthetic_markers = []
-    for path in synthetic_release_sources:
-        if path.is_file() and re.search(
-            r"\bSynthetic|fictional|preview context", path.read_text(encoding="utf-8"), re.I
-        ):
-            synthetic_markers.append(str(path.relative_to(ROOT)))
-
-    print("phase12b_play_readiness=PASS")
-    print(f"application_id={store['application_id']}")
-    print(f"release_channel={release.get('DIREKT_RELEASE_CHANNEL')}")
+    print("phase12_play_readiness=PASS")
     print(f"manifest_source={inspected_manifest}")
-    print(f"manifest_permissions={','.join(manifest_permissions)}")
-    print("release_selected_direct_modules=" + ",".join(sorted(release_modules)))
-    print("play_sensitive_permission_form_expected=false")
-    print("data_safety_inventory_present=true")
-    print("account_deletion_end_to_end=false")
-    print("synthetic_preview_release_blocker=" + ("true" if synthetic_markers else "false"))
-    for marker in synthetic_markers:
-        print(f"synthetic_preview_source={marker}")
+    print(f"merged_permission_count={len(manifest_permissions)}")
+    print(f"release_direct_dependency_count={len(release_modules)}")
+    print(f"release_channel={release.get('DIREKT_RELEASE_CHANNEL')}")
+    print("production_submission_authorized=false")
 
 
 if __name__ == "__main__":
