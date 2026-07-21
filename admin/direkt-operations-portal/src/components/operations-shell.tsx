@@ -76,8 +76,8 @@ export function OperationsShell({ session, children }: OperationsShellProps) {
         </aside>
         <main id="main-content" tabIndex={-1}>
           <div className="synthetic-banner operations-environment-banner" role="status">
-            Synthetic review environment — no real participant records, private evidence, decisions
-            or production actions are available here.
+            Synthetic interface only — no real participant records, private evidence, decisions or
+            production actions are available here.
           </div>
           {children}
         </main>
