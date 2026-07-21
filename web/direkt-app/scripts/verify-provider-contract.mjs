@@ -43,7 +43,10 @@ requireMarkers(source.providerApi, [
 ]);
 requireMarkers(source.stateRoute, ["withAuthenticatedSession", "api.workspace", "api.verificationTimeline", "api.listUploadIntents", "api.listEnquiries", "api.interactions", "api.currentHandoff", "api.listReviews", "api.commercial", "noStoreJson"]);
 requireMarkers(source.actionRoute, ["assertSecureMutation", 'case "update-profile"', 'case "update-location"', 'case "select-service"', 'case "remove-service"', 'case "update-availability"', 'case "create-upload-intent"', 'case "retry-upload"', 'case "interrupt-upload"', 'case "confirm-upload"', 'case "cancel-upload"', 'case "transition-enquiry"', 'case "respond-review"', 'case "appeal-review"', "DIREKT_WEB_INTERACTION_POLICY_VERSION"]);
-requireMarkers(source.providerUi, ['fetch("/api/provider/state"', 'fetch("/api/provider/action"', 'crypto.subtle.digest("SHA-256"', "grant.upload.uploadUrl", 'action: "interrupt-upload"', "Private base coordinates", "Provider mode is granted only"]);
+requireMarkers(source.providerUi, ['fetch("/api/provider/state"', 'fetch("/api/provider/action"', "grant.upload.uploadUrl", 'action: "interrupt-upload"', "Private base coordinates", "Provider mode is granted only"]);
+if (!/crypto\.subtle\.digest\(\s*["']SHA-256["']/.test(source.providerUi)) {
+  throw new Error("W5 contract marker missing: SHA-256 upload digest");
+}
 requireMarkers(source.interactionUi, ['fetch("/api/provider/state"', "contactDisplayHint", "Raw contact", "interaction.events"]);
 requireMarkers(source.shell, ["ProviderJourneyExperience", "ProviderInteractionExperience", "providerModeAvailable", "W5 closed"]);
 
