@@ -194,7 +194,7 @@ Every integration retains its own activation requirements and must not be marked
 
 ## Phase 0–12 audit checkpoint
 
-PR #149 promoted the full integration/runtime audit at `25deaae72ca2974c5560a8059a50fce37c810f63` after exact-head regression checks on `e3cddf7645e5142c5560a8059a50fce37c810f63`.
+PR #149 promoted the full integration/runtime audit at `25deaae72ca2974c5560a8059a50fce37c810f63` after exact-head regression checks on `e3cddf7645e514d9a6254fff86283d4055d745c4`.
 
 Permanent controls verify:
 
