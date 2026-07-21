@@ -118,7 +118,7 @@ export function CustomerDiscoveryExperience({
       <section className="marketplace-hero" aria-labelledby="marketplace-title">
         <div className="marketplace-hero-copy">
           <p className="marketplace-kicker">
-            <DirektIcon name="sparkle" /> Local help, with clearer proof
+            <DirektIcon name="shield" /> Local help, with clearer proof
           </p>
           <h1 id="marketplace-title">What do you need help with?</h1>
           <p className="marketplace-hero-lead">
