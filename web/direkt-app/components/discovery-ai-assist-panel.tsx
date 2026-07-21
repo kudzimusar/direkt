@@ -4,7 +4,7 @@ import { useState } from "react";
 import { DirektIcon } from "@/components/ui/direkt-icon";
 import type {
   DiscoveryAiAssistResponse,
-  DiscoveryAiSuggestion,
+  DiscoveryAiAssistSuggestion,
 } from "@/lib/contracts/discovery-ai";
 
 export function DiscoveryAiAssistPanel({
@@ -16,7 +16,7 @@ export function DiscoveryAiAssistPanel({
   need: string;
   area: string;
   disabled: boolean;
-  onApply: (suggestion: DiscoveryAiSuggestion) => void;
+  onApply: (suggestion: DiscoveryAiAssistSuggestion) => void;
 }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DiscoveryAiAssistResponse | null>(null);
@@ -66,7 +66,7 @@ export function DiscoveryAiAssistPanel({
     }
   }
 
-  function applySuggestion(suggestion: DiscoveryAiSuggestion) {
+  function applySuggestion(suggestion: DiscoveryAiAssistSuggestion) {
     onApply(suggestion);
     setResult(null);
     setError(null);
@@ -139,7 +139,10 @@ export function DiscoveryAiAssistPanel({
           {result.suggestions.length > 0 ? (
             <div className="discovery-ai-suggestions">
               {result.suggestions.map((suggestion) => (
-                <article key={suggestion.categoryKey} className="discovery-ai-suggestion-card">
+                <article
+                  key={suggestion.categoryKey}
+                  className="discovery-ai-suggestion-card"
+                >
                   <div>
                     <p className="eyebrow">Possible match</p>
                     <h4>{suggestion.categoryName}</h4>
