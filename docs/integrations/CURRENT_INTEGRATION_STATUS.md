@@ -87,9 +87,9 @@ Supabase advisor warnings for mutable function `search_path`, extension placemen
 | Firebase project | **ACTIVE foundation** | Attached to `direkt-dev-502701`. |
 | Firebase App Distribution | **ACTIVE** | Controlled Android delivery to `direkt-internal-testers`. |
 | Firebase Authentication / phone OTP | **IMPLEMENTED_GATED** | Phone-possession proof/session exchange behind invite/consent/Phase 11 gates. |
-| Firebase Crashlytics | **PLANNED / NOT SOURCE-ACTIVE** | Android crash/ANR runtime integration closure still required. |
+| Firebase Crashlytics | **IMPLEMENTED_GATED / MANAGED DEVICE CANARY PENDING** | Android SDK and conditional build-plugin path are source-integrated. Automatic collection is explicitly false in the main manifest; activation is allowed only in the exact-source `synthetic-canary` build with fixed non-sensitive metadata. Managed fatal/non-fatal device proof is still required before any ACTIVE claim. Participant/production Crashlytics telemetry remains disabled. |
 | FCM | **PLANNED** | Push-delivery adapter/runtime integration closure still required. |
-| Firebase Test Lab | **PLANNED** | Device-matrix automation/runtime closure still required. |
+| Firebase Test Lab | **PLANNED** | Device-matrix automation/runtime closure still required; RC3 uses the existing GitHub-hosted emulator and does not consume RC5 scope. |
 | Google Play | **IMPLEMENTED_GATED** | Release engineering prepared; no production release authorized. |
 
 Current merged release manifest permissions:
@@ -102,6 +102,8 @@ com.kudzimusar.direkt.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ```
 
 No dangerous runtime permission prompt is currently introduced by these declarations. Location, camera, contacts, SMS/call-log, broad storage/media, microphone and notification runtime permissions remain absent.
+
+RC3 does not add FCM, notification permission, Maps/location, Analytics or Test Lab. The Crashlytics SDK is included in the release-capable dependency inventory for truthful Play/Data Safety review, but generic builds keep collection default-off and do not use participant/production Crashlytics telemetry. The managed device canary must prove exact synthetic fatal/non-fatal delivery before status can advance.
 
 ## AI provider foundation
 
@@ -147,11 +149,12 @@ RC1 is closed for the approved synthetic-only boundary: least-privilege key/doma
 |---|---|---|
 | Cloud Logging / Monitoring | **ACTIVE** | Authoritative infrastructure/runtime observability. |
 | Sentry API/portal | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY** | `@sentry/nestjs` and `@sentry/nextjs` are privacy-gated on separate API/portal projects. Managed workflow `DIREKT managed Sentry synthetic canary #1` passed on exact source `15210c5b0bf1832e32f8c33a7618c69f61f65275`; API and private portal events were captured and flushed successfully. `direkt-sentry-api-dsn` v1 and `direkt-sentry-portal-dsn` v1 are runtime-bound separately; `direkt-sentry-auth-token` v2 remains CI/release-only and is not bound to application runtime. Cloud Logging remains authoritative infrastructure telemetry. Participant/production Sentry telemetry remains disabled. |
-| Sentry Android | **NOT DEFAULT** | Android plan prefers Crashlytics unless a later reviewed decision changes this. |
+| Firebase Crashlytics Android | **IMPLEMENTED_GATED / MANAGED DEVICE CANARY PENDING** | Preferred Android crash/non-fatal/ANR provider is source-integrated with collection default-off, exact-source synthetic-canary gating and fixed non-sensitive custom keys. Fatal/non-fatal managed device/API evidence is pending; participant/production telemetry remains disabled. |
+| Sentry Android | **NOT DEFAULT** | Android uses the separately gated Crashlytics path; Sentry is not added to Android. |
 
 RC2 is closed only for the approved synthetic-only managed observability boundary. `sendDefaultPii=false`; tracing, SDK logs, breadcrumbs, local-variable capture and replay remain disabled; event scrubbing removes user/request payload/context/extra data and redacts contact, credential/JWT and precise-coordinate patterns. Participant/production Sentry telemetry remains disabled.
 
-No telemetry provider may receive raw evidence, tokens, contact data, exact private coordinates or unnecessary free text.
+No telemetry provider may receive raw evidence, tokens, contact data, exact private coordinates or unnecessary free text. RC3 additionally prohibits Crashlytics user IDs, unrestricted Crashlytics logs and arbitrary custom metadata.
 
 ## AI/model providers and AI runtime
 
@@ -201,7 +204,7 @@ The operations portal has no direct privileged database/Supabase client path. Th
 | Airtel Money Zambia Cash-In API | **PENDING_PROVIDER / DISABLED** | Zambia TEST application and Cash-In product created; provider approval/credential generation pending. |
 | DPO Pay / Network | **SANDBOX_PROVEN / RUNTIME DISABLED** | Sandbox `createToken` + hosted checkout + `verifyToken` returned paid; no production merchant runtime binding. |
 | Stripe Checkout | **SANDBOX_PROVEN / RUNTIME DISABLED** | Account-sandbox API/Checkout/payment verification succeeded; live merchant activation remains separate. |
-| Stripe Link | **EXTERNALLY_PROVISIONED / NOT EXPLICITLY PROVEN** | Sandbox account exists; dedicated Link evidence still outstanding. |
+| Stripe Link | **EXTERNALLY_PROVISIONED / NOT EXPLICITLY PROVEN** | Account sandbox exists; dedicated Link evidence still outstanding. |
 | PayPal | **SANDBOX_PROVEN / RUNTIME DISABLED** | OAuth/order/approval/capture/independent verification succeeded in sandbox. |
 | Flutterwave | **BLOCKED / DEFERRED** | Zambia onboarding unavailable/rejected because provider capacity/full; do not block DIREKT on this rail. |
 | Real money movement | **DISABLED** | Requires legal/commercial/provider/pilot/release gates. |
@@ -230,7 +233,7 @@ W8 is **CLOSED**. The canonical functional browser host passed independent exact
 
 Issue #261 now governs sequential runtime-integration closure. `WORKSTREAM_LOCK.md` and `RUNTIME_INTEGRATION_CLOSURE_PLAN.md` define the current dependency-safe order. `LIVE_INTEGRATION_LEDGER.md` is the mandatory cross-agent receipt ledger.
 
-AI0 under Issue #264 is CLOSED and merged in PR #265 at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; its providers remain gated rather than active runtime integrations. RC1 Resend is CLOSED for the synthetic-only managed-canary boundary. RC2 Sentry API/portal is CLOSED for the synthetic-only managed observability boundary after successful managed canary #1 on source `15210c5b0bf1832e32f8c33a7618c69f61f65275`; RC3 Crashlytics Android is the next bounded checkpoint.
+AI0 under Issue #264 is CLOSED and merged in PR #265 at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; its providers remain gated rather than active runtime integrations. RC1 Resend is CLOSED for the synthetic-only managed-canary boundary. RC2 Sentry API/portal is CLOSED for the synthetic-only managed observability boundary after successful managed canary #1 on source `15210c5b0bf1832e32f8c33a7618c69f61f65275`. RC3 Crashlytics Android is the active source checkpoint at `IMPLEMENTED_GATED / MANAGED DEVICE CANARY PENDING`; managed exact-source fatal/non-fatal device proof is required before any ACTIVE promotion.
 
 VC0 visual audit/design-control work under Issue #259 remains non-overlapping design/audit work. Broad visual implementation requires separate owner approval and must not overlap claimed runtime-integration surfaces.
 
