@@ -1,0 +1,56 @@
+name: VC7 wire discovery assist once
+
+on:
+  push:
+    branches:
+      - vc/ai-quality-7-8
+    paths:
+      - ".github/workflows/vc7-wire-discovery-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: vc/ai-quality-7-8
+          fetch-depth: 0
+      - name: Patch only the reviewed Discover integration points
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("web/direkt-app/components/discovery-experience.tsx")
+          text = path.read_text()
+
+          import_marker = 'import { DirektIcon } from "@/components/ui/direkt-icon";\n'
+          import_replacement = (
+              'import { DiscoveryAiAssistPanel } from "@/components/discovery-ai-assist-panel";\n'
+              + import_marker
+          )
+          if import_marker not in text or 'DiscoveryAiAssistPanel' in text:
+              raise SystemExit("Discover import marker missing or already patched")
+          text = text.replace(import_marker, import_replacement, 1)
+
+          form_marker = '''        </form>\n\n        <div className="discovery-secondary-controls">'''
+          form_replacement = '''        </form>\n\n        <DiscoveryAiAssistPanel\n          need={query}\n          area={area}\n          disabled={loading}\n          onApply={(suggestion) => {\n            setCategory(suggestion.categoryKey);\n            setQuery(\n              suggestion.searchTerms.length > 0\n                ? suggestion.searchTerms.join(" ")\n                : suggestion.categoryName,\n            );\n            setResults(null);\n            setError(null);\n          }}\n        />\n\n        <div className="discovery-secondary-controls">'''
+          if form_marker not in text:
+              raise SystemExit("Discover form marker missing")
+          text = text.replace(form_marker, form_replacement, 1)
+          path.write_text(text)
+          PY
+      - name: Commit bounded wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git config user.name "direkt-vc-wiring[bot]"
+          git config user.email "direkt-vc-wiring[bot]@users.noreply.github.com"
+          git add web/direkt-app/components/discovery-experience.tsx
+          git commit -m "feat(vc7): connect customer discovery assist confirmation flow"
+          git push origin HEAD:vc/ai-quality-7-8
