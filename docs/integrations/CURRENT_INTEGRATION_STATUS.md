@@ -13,7 +13,7 @@
 - **DISABLED** — intentionally off in the approved environment.
 - **SUPERSEDED** — historical/fallback direction, not the current preferred runtime.
 
-No integration becomes ACTIVE merely because an account, DNS record, API key or secret exists.
+No integration becomes ACTIVE merely because an account, DNS record, API key, SDK, model name or secret exists.
 
 ## Domain and public edge
 
@@ -135,6 +135,32 @@ Resend remains EXTERNALLY_PROVISIONED until an application adapter, runtime secr
 
 No telemetry provider may receive raw evidence, tokens, contact data, exact private coordinates or unnecessary free text.
 
+## AI/model providers and AI runtime
+
+| Integration | State | Current role |
+|---|---|---|
+| DIREKT AI product architecture | **PLANNED / DOCUMENTED** | Provider-neutral backend orchestration, use-case registry, evaluation, security and kill-switch direction defined in `docs/architecture/AI_PRODUCT_ARCHITECTURE.md`. |
+| External foundation-model provider | **NOT SELECTED / NOT ACTIVE** | No provider/model is authorized merely by the world-class/AI plan. Selection requires technical, cost, privacy, data-processing, regional, retention/training and security review. |
+| Embedding/vector AI service | **NOT SELECTED / NOT ACTIVE** | Future semantic discovery/retrieval capability; deterministic eligibility and authorization remain mandatory. |
+| Vision/OCR model for restricted evidence | **DISABLED BY DEFAULT** | Restricted evidence must not be sent to an external model without explicit dedicated legal/privacy/security/data-processing approval and minimization controls. |
+| Client-direct AI SDK/API calls | **PROHIBITED** | Model credentials/system prompts/tool authority remain backend-owned. |
+
+Before any AI provider/use case can become ACTIVE, evidence must prove:
+
+- source-controlled use-case purpose and data classification;
+- approved provider/model and processing terms;
+- Secret Manager/runtime binding with least privilege;
+- backend-only orchestration;
+- structured output/tool authorization controls;
+- prompt-injection/sensitive-data/security evaluation;
+- offline quality/grounding thresholds;
+- cost/latency/rate limits;
+- observability and kill switch;
+- managed canary;
+- deterministic/manual fallback;
+- human decision boundary;
+- applicable client/backend regression.
+
 ## Browser/application surfaces
 
 | Surface | State | Current role |
@@ -160,6 +186,8 @@ The operations portal has no direct privileged database/Supabase client path. Th
 | TEVETA | **MANUAL EVIDENCE SOURCE** | Training/qualification evidence source. |
 | Automated registry APIs | **NOT AUTHORIZED** | No scraping/fabricated API access. |
 
+AI output cannot create payment authority or substitute for registry/verification evidence.
+
 ## API/client contract tooling
 
 | Integration | State | Current role |
@@ -167,21 +195,21 @@ The operations portal has no direct privileged database/Supabase client path. Th
 | OpenAPI | **ACTIVE** | Canonical backend contract generated and drift-checked in CI. |
 | Android API boundary | **ACTIVE implementation** | Backend API only; no privileged direct Supabase path. |
 | TypeScript/PWA API boundary | **ACTIVE reviewed BFF architecture in synthetic mode** | Functional PWA reaches canonical REST/OpenAPI through reviewed same-origin BFF/private-API path; real participant activation remains gated. |
-| Fully generated Kotlin/TypeScript client packages | **NOT CURRENT RUNTIME INTEGRATION** | Runtime adoption still requires a reviewed migration and Android/web/backend/OpenAPI regression evidence. |
+| Fully generated Kotlin/TypeScript client packages | **NOT CURRENT RUNTIME INTEGRATION** | Runtime adoption still requires reviewed migration and cross-client regression evidence. |
 
-## W8 closure and sequencing release
+## W8 closure and modernization sequencing
 
 W8 is **CLOSED**. The canonical functional browser host passed independent exact-head verification in workflow run `29802524466`; the W0–W8 implementation claim is released.
 
-Therefore W8 no longer blocks a subsequent bounded runtime-integration closure workstream from claiming the implementation lane for items such as generated clients, Resend, FCM, Crashlytics, Test Lab, Google Maps, Sentry, WhatsApp and Turnstile where justified.
+W8 no longer blocks a later bounded integration or VC implementation workstream from claiming the lane. The known historical W7/W8 verifier-to-lock coupling must be corrected before the next legitimate overlapping implementation claim so historical W8 closure is not invalidated by a new lock owner.
 
-VC0 visual audit/design-control work under Issue #259 is non-overlapping audit/design work and must not represent W8 as active or use W8 to block runtime-integration closure. Broad visual implementation requires its own later owner-approved implementation claim.
+VC0 audit/design/benchmark work under Issue #259 does not make any provider runtime-active. VC1–VC8 implementation requires its own lane control, exact-head regression and truthful integration state.
 
-This is only a sequencing release. Every integration retains its own activation requirements and must not be marked ACTIVE until source/configuration, least-privilege secrets, runtime binding, privacy/security, fallback/kill-switch, managed canary and regression evidence genuinely pass.
+Every integration retains its own activation requirements and must not be marked ACTIVE until source/configuration, least-privilege secrets, runtime binding, privacy/security, fallback/kill-switch, managed canary and regression evidence genuinely pass.
 
 ## Phase 0–12 audit checkpoint
 
-PR #149 promoted the full integration/runtime audit at `25deaae72ca2974c5560a8059a50fce37c810f63` after exact-head regression checks on `e3cddf7645e514d9a6254fff86283d4055d745c4`.
+PR #149 promoted the integration/runtime audit at `25deaae72ca2974c5560a8059a50fce37c810f63` after exact-head regression checks on `e3cddf7645e514d9a6254fff86283d4055d745c4`.
 
 Permanent controls verify:
 
@@ -198,4 +226,4 @@ Detailed evidence: `docs/integrations/PHASE_INTEGRATION_RUNTIME_AUDIT_2026-07-19
 
 ## Change-control rule
 
-Update this register whenever provider provisioning, source adapter/SDK, secret/runtime binding, managed canary, privacy/legal approval, fallback/kill switch or production authorization changes. External provisioning alone is never enough to mark an integration ACTIVE.
+Update this register whenever provider/model provisioning, source adapter/SDK, secret/runtime binding, managed canary, privacy/legal approval, evaluation, fallback/kill switch or production authorization changes. External provisioning alone is never enough to mark an integration ACTIVE.
