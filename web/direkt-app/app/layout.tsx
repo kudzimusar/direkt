@@ -6,6 +6,7 @@ import "./discovery.css";
 import "./account.css";
 import "./customer.css";
 import "./provider.css";
+import "./world-class.css";
 
 export const metadata: Metadata = {
   title: {
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
     template: "%s · DIREKT",
   },
   description:
-    "DIREKT customer and provider application for evidence-backed local service discovery in Zambia.",
+    "DIREKT helps people in Zambia find local service providers and understand clear, evidence-backed trust information before making contact.",
   applicationName: "DIREKT",
   manifest: "/manifest.webmanifest",
   robots: {
