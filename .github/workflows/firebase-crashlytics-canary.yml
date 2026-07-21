@@ -112,7 +112,7 @@ jobs:
           set -euo pipefail
           token="$(gcloud auth print-access-token)"
           echo "::add-mask::${token}"
-          events_url="https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_ID}/apps/${DIREKT_FIREBASE_APP_ID}/events"
+          events_url="https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_NUMBER}/apps/${DIREKT_FIREBASE_APP_ID}/events"
           http_code="$(curl --silent --show-error --get \
             --output "${RUNNER_TEMP}/rc3-events-api-preflight.json" \
             --write-out '%{http_code}' \
@@ -139,7 +139,7 @@ jobs:
 
           jq -n \
             --arg http "${http_code}" \
-            '{httpStatus:$http,readBoundary:"PASS",authorization:"existing-managed-principal"}' \
+            '{httpStatus:$http,readBoundary:"PASS",authorization:"existing-managed-principal",projectResource:"numeric"}' \
             > "${RUNNER_TEMP}/rc3-events-api-preflight-receipt.json"
 
       - name: Set up Java 17
@@ -208,7 +208,7 @@ jobs:
           set -euo pipefail
           component="${FIREBASE_PACKAGE_NAME}/com.kudzimusar.direkt.MainActivity"
           canary_start_time="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          events_url="https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_ID}/apps/${DIREKT_FIREBASE_APP_ID}/events"
+          events_url="https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_NUMBER}/apps/${DIREKT_FIREBASE_APP_ID}/events"
 
           "${ADB_BIN}" shell setprop log.tag.FirebaseCrashlytics DEBUG
           "${ADB_BIN}" logcat -c
@@ -270,7 +270,7 @@ jobs:
           set -euo pipefail
           component="${FIREBASE_PACKAGE_NAME}/com.kudzimusar.direkt.MainActivity"
           canary_start_time="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          events_url="https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_ID}/apps/${DIREKT_FIREBASE_APP_ID}/events"
+          events_url="https://firebasecrashlytics.googleapis.com/v1alpha/projects/${GCP_PROJECT_NUMBER}/apps/${DIREKT_FIREBASE_APP_ID}/events"
 
           "${ADB_BIN}" logcat -c
           "${ADB_BIN}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
