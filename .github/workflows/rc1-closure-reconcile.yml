@@ -23,87 +23,63 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
-          def replace_once(path: str, old: str, new: str):
+          def replace_line(path: str, prefix: str, replacement: str):
               p = Path(path)
               text = p.read_text()
-              if old not in text:
-                  if new in text:
-                      return
-                  raise SystemExit(f'missing anchor in {path}: {old[:120]}')
-              p.write_text(text.replace(old, new, 1))
+              pattern = rf'^{re.escape(prefix)}.*$'
+              updated, count = re.subn(pattern, replacement, text, count=1, flags=re.MULTILINE)
+              if count == 0 and replacement not in text:
+                  raise SystemExit(f'missing line prefix in {path}: {prefix}')
+              p.write_text(updated)
 
-          replace_once(
-              'WORKSTREAM_LOCK.md',
-              '| Status | CLAIMED — RC1 Resend runtime email closure |',
-              '| Status | RELEASED — RC1 Resend closed; RC2 Sentry is next |',
-          )
-          replace_once(
-              'WORKSTREAM_LOCK.md',
-              '| Authorized scope | Resend application delivery through the transactional outbox: provider adapter, least-privilege Secret Manager/runtime binding, idempotency/retry/failure persistence, bounded templates/privacy controls, managed synthetic canary and exact-head regressions |',
-              '| Authorized scope | RC1 closure evidence only on this branch; no new integration runtime source changes until the RC1 closure PR merges and RC2 is separately claimed |',
-          )
-          replace_once(
-              'WORKSTREAM_LOCK.md',
-              '| Implementation branch | `integration/rc1-resend-runtime` from AI0 merge `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; do not build new integration work on the diverged historical `build/android-v1` branch |',
-              '| Implementation branch | `integration/rc1-resend-closure` from `main` after RC1 source/runtime hotfixes; RC2 must start from the merged RC1 closure baseline |',
-          )
-          replace_once(
-              'WORKSTREAM_LOCK.md',
-              '| Stable baseline | AI0 merged to `main` at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; canonical app `https://app.direkt.forum`; W8 verification run `29802524466` |',
-              '| Stable baseline | RC1 source PR #269 merged; managed Resend canary execution `direkt-resend-canary-ct9mp` completed successfully on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`; reporting compatibility hotfix PR #272 merged at `d704d29a11719c6a05582e58b492479feedebf68` |',
-          )
-          replace_once(
-              'WORKSTREAM_LOCK.md',
-              '| Current task | RC1 — wire verified `notify.direkt.forum` / `direkt-resend-api-key` v1 into a fail-closed server-side email provider and transactional-outbox delivery path, then prove managed synthetic delivery |',
-              '| Current task | RC1 closure promotion complete in this branch; next bounded checkpoint after merge is RC2 — Sentry API/portal runtime observability closure |',
-          )
-          replace_once(
-              'WORKSTREAM_LOCK.md',
-              '- RC1 — Resend runtime email adapter through the transactional outbox, idempotency/retry/privacy/templates and managed canary. **ACTIVE CHECKPOINT.**',
-              '- RC1 — Resend runtime email adapter through the transactional outbox, idempotency/retry/privacy/templates and managed canary. **Closed — source PR #269; managed execution `direkt-resend-canary-ct9mp` succeeded on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`; workflow-reporting hotfixes #271/#272 merged. Real-participant/production email remains disabled.**',
-          )
+          replace_line('WORKSTREAM_LOCK.md', '| Status |', '| Status | RELEASED — RC1 Resend closed; RC2 Sentry is next |')
+          replace_line('WORKSTREAM_LOCK.md', '| Authorized scope |', '| Authorized scope | RC1 closure evidence only on this branch; no new integration runtime source changes until the RC1 closure PR merges and RC2 is separately claimed |')
+          replace_line('WORKSTREAM_LOCK.md', '| Implementation branch |', '| Implementation branch | `integration/rc1-resend-closure` from `main` after RC1 source/runtime hotfixes; RC2 must start from the merged RC1 closure baseline |')
+          replace_line('WORKSTREAM_LOCK.md', '| Stable baseline |', '| Stable baseline | RC1 source PR #269 merged; managed Resend canary execution `direkt-resend-canary-ct9mp` completed successfully on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`; reporting compatibility hotfix PR #272 merged at `d704d29a11719c6a05582e58b492479feedebf68` |')
+          replace_line('WORKSTREAM_LOCK.md', '| Current task |', '| Current task | RC1 closure promotion complete in this branch; next bounded checkpoint after merge is RC2 — Sentry API/portal runtime observability closure |')
+          replace_line('WORKSTREAM_LOCK.md', '- RC1 — Resend runtime email adapter', '- RC1 — Resend runtime email adapter through the transactional outbox, idempotency/retry/privacy/templates and managed canary. **Closed — source PR #269; managed execution `direkt-resend-canary-ct9mp` succeeded on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`; workflow-reporting hotfixes #271/#272 merged. Real-participant/production email remains disabled.**')
 
-          replace_once(
-              'docs/integrations/RESEND_RUNTIME_CLOSURE.md',
-              '**Source status:** `IMPLEMENTED_GATED / MANAGED CANARY PENDING`',
-              '**Source status:** `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY PROVEN`',
-          )
-          marker = '## Stop conditions\n'
-          receipt = '''## Managed-phase closure receipt\n\nRC1 managed proof is complete for the approved synthetic-only boundary:\n\n- source PR: #269;\n- exact canary source: `8e367f47f16b3f9f28a26a62ee8bdd305a286153`;\n- Cloud Run Job: `direkt-resend-canary`;\n- execution: `direkt-resend-canary-ct9mp`;\n- region: `asia-northeast1`;\n- runtime identity: `direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com`;\n- sender: `DIREKT <canary@notify.direkt.forum>`;\n- recipient: Resend delivered test sink `delivered@resend.dev`;\n- Resend API key: sending-access only, restricted to `notify.direkt.forum`;\n- Secret Manager: `direkt-resend-api-key` version `1` enabled;\n- Cloud Run execution result: completed successfully.\n\nThe canary executable exits successfully only after `EmailOutboxService.runSyntheticCanary()` returns a receipt whose event has been marked `published`; therefore the successful Cloud Run execution is managed evidence for the full outbox insert → claim → Resend send → durable published-state path.\n\nTwo workflow-only issues were discovered and repaired without invalidating the successful provider execution: the first attempt lacked deployer permission to inspect secret-version metadata; the second exposed a shell-quoting defect in the secret-pin guard. After those were corrected, execution `direkt-resend-canary-ct9mp` completed successfully. The workflow then failed only in a post-success execution-name lookup because the runner's installed `gcloud` lacked `describe-latest`; PR #272 replaced that reporting lookup with the compatible executions-list path. No additional duplicate send was required to prove the already-successful canary.\n\nRC1 promotion is intentionally narrow: **synthetic-only managed Resend delivery is proven; continuous external delivery, controlled-pilot participant email and production email remain disabled and require separate authorization.**\n\n'''
           p = Path('docs/integrations/RESEND_RUNTIME_CLOSURE.md')
           text = p.read_text()
+          text = re.sub(r'^\*\*Source status:\*\*.*$', '**Source status:** `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY PROVEN`', text, count=1, flags=re.MULTILINE)
+          receipt = '''## Managed-phase closure receipt
+
+RC1 managed proof is complete for the approved synthetic-only boundary:
+
+- source PR: #269;
+- exact canary source: `8e367f47f16b3f9f28a26a62ee8bdd305a286153`;
+- Cloud Run Job: `direkt-resend-canary`;
+- execution: `direkt-resend-canary-ct9mp`;
+- region: `asia-northeast1`;
+- runtime identity: `direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com`;
+- sender: `DIREKT <canary@notify.direkt.forum>`;
+- recipient: Resend delivered test sink `delivered@resend.dev`;
+- Resend API key: sending-access only, restricted to `notify.direkt.forum`;
+- Secret Manager: `direkt-resend-api-key` version `1` enabled;
+- Cloud Run execution result: completed successfully.
+
+The canary executable exits successfully only after `EmailOutboxService.runSyntheticCanary()` returns a receipt whose event has been marked `published`; therefore the successful Cloud Run execution is managed evidence for the full outbox insert → claim → Resend send → durable published-state path.
+
+Two pre-send workflow defects were found and repaired: deployer secret-version metadata permission and a shell-quoting defect in the secret-pin guard. After those fixes, execution `direkt-resend-canary-ct9mp` completed successfully. The workflow then failed only in a post-success execution-name lookup because the runner's installed `gcloud` lacked `describe-latest`; PR #272 replaced that reporting lookup with the compatible executions-list path. No additional duplicate send was required to prove the already-successful canary.
+
+RC1 promotion is intentionally narrow: **synthetic-only managed Resend delivery is proven; continuous external delivery, controlled-pilot participant email and production email remain disabled and require separate authorization.**
+
+'''
           if '## Managed-phase closure receipt' not in text:
+              marker = '## Stop conditions\n'
               if marker not in text:
                   raise SystemExit('missing RESEND stop-condition marker')
-              p.write_text(text.replace(marker, receipt + marker, 1))
+              text = text.replace(marker, receipt + marker, 1)
+          p.write_text(text)
 
-          replace_once(
-              'docs/integrations/CURRENT_INTEGRATION_STATUS.md',
-              '| Resend | **IMPLEMENTED_GATED / MANAGED CANARY PENDING** | Provider-neutral HTTP adapter, transactional-outbox consumer, stable idempotency/retry/failure persistence, verified sender-domain gate and a private Cloud Run Job canary workflow are source-integrated. `notify.direkt.forum` is verified and `direkt-resend-api-key` version 1 is enabled; the managed canary has not yet executed, so Resend is not ACTIVE. |',
-              '| Resend | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY** | Provider-neutral HTTP adapter and transactional-outbox consumer are proven through Cloud Run execution `direkt-resend-canary-ct9mp` on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`; the durable path reached `published`. Sending key is sending-only/domain-restricted to verified `notify.direkt.forum`; `direkt-resend-api-key` v1 is enabled. Continuous, controlled-pilot participant and production external email remain disabled. |',
-          )
-          replace_once(
-              'docs/integrations/CURRENT_INTEGRATION_STATUS.md',
-              'RC1 source integration is implemented and remains gated. Promotion requires least-privilege runtime secret access plus a successful exact-source managed synthetic outbox-to-Resend canary; continuous and real-participant external email remain disabled.',
-              'RC1 is closed for the approved synthetic-only boundary: least-privilege key/domain restriction and runtime secret access are proven, and managed Cloud Run execution `direkt-resend-canary-ct9mp` completed the exact-source outbox-to-Resend path successfully. This does not authorize continuous, controlled-pilot participant or production external email.',
-          )
+          replace_line('docs/integrations/CURRENT_INTEGRATION_STATUS.md', '| Resend |', '| Resend | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY** | Provider-neutral HTTP adapter and transactional-outbox consumer are proven through Cloud Run execution `direkt-resend-canary-ct9mp` on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`; the durable path reached `published`. Sending key is sending-only/domain-restricted to verified `notify.direkt.forum`; `direkt-resend-api-key` v1 is enabled. Continuous, controlled-pilot participant and production external email remain disabled. |')
+          replace_line('docs/integrations/CURRENT_INTEGRATION_STATUS.md', 'RC1 source integration', 'RC1 is closed for the approved synthetic-only boundary: least-privilege key/domain restriction and runtime secret access are proven, and managed Cloud Run execution `direkt-resend-canary-ct9mp` completed the exact-source outbox-to-Resend path successfully. This does not authorize continuous, controlled-pilot participant or production external email.')
 
-          replace_once(
-              'docs/integrations/LIVE_INTEGRATION_LEDGER.md',
-              '| Resend | `IMPLEMENTED_GATED / MANAGED CANARY PENDING` | Provider-neutral HTTPS adapter, transactional-outbox consumer, bounded retries/stale-lock recovery, deterministic provider idempotency key, synthetic template/privacy boundary and private Cloud Run Job canary workflow are source-integrated. `notify.direkt.forum` verified; `direkt-resend-api-key` version 1 enabled. Managed canary and runtime secret-access proof remain required before any ACTIVE claim. |',
-              '| Resend | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | Managed Cloud Run execution `direkt-resend-canary-ct9mp` succeeded on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`, proving outbox insert → claim → Resend send → durable `published` state. Sending key is sending-only/domain-restricted to verified `notify.direkt.forum`; `direkt-resend-api-key` v1 enabled; runtime secret access proven. Continuous, controlled-pilot participant and production email remain disabled. |',
-          )
-          replace_once(
-              'docs/integrations/LIVE_INTEGRATION_LEDGER.md',
-              '3. RC1 Resend — **ACTIVE CHECKPOINT; IMPLEMENTED_GATED / MANAGED CANARY PENDING**. Source adapter/outbox/job path implemented; exact-head regressions, least-privilege secret access and managed canary remain.',
-              '3. RC1 Resend — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Source PR #269 merged; least-privilege sending/domain restriction and runtime secret access proven; Cloud Run execution `direkt-resend-canary-ct9mp` succeeded on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`; workflow-reporting compatibility hotfixes #271/#272 merged. Real-participant/production email remains disabled.',
-          )
-          replace_once(
-              'docs/integrations/LIVE_INTEGRATION_LEDGER.md',
-              '4. RC2 Sentry API/portal.',
-              '4. RC2 Sentry API/portal — **NEXT CHECKPOINT after RC1 closure merge.**',
-          )
+          replace_line('docs/integrations/LIVE_INTEGRATION_LEDGER.md', '| Resend |', '| Resend | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | Managed Cloud Run execution `direkt-resend-canary-ct9mp` succeeded on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`, proving outbox insert → claim → Resend send → durable `published` state. Sending key is sending-only/domain-restricted to verified `notify.direkt.forum`; `direkt-resend-api-key` v1 enabled; runtime secret access proven. Continuous, controlled-pilot participant and production email remain disabled. |')
+          replace_line('docs/integrations/LIVE_INTEGRATION_LEDGER.md', '3. RC1 Resend', '3. RC1 Resend — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Source PR #269 merged; least-privilege sending/domain restriction and runtime secret access proven; Cloud Run execution `direkt-resend-canary-ct9mp` succeeded on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`; workflow-reporting compatibility hotfixes #271/#272 merged. Real-participant/production email remains disabled.')
+          replace_line('docs/integrations/LIVE_INTEGRATION_LEDGER.md', '4. RC2 Sentry API/portal', '4. RC2 Sentry API/portal — **NEXT CHECKPOINT after RC1 closure merge.**')
           PY
 
           git diff --check
