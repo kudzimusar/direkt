@@ -203,9 +203,9 @@ def main() -> None:
         if integration in catalog_lower or integration in gradle_lower:
             fail(f"{integration} became Android-runtime active without integration-status promotion")
 
-    # RC2 Sentry is source-integrated only for the NestJS API and private Next.js portal.
-    # Android remains on the separate Crashlytics path and managed proof is still required
-    # before the status register can promote Sentry to ACTIVE.
+    # RC2 Sentry is active only for the proven synthetic-only NestJS API/private Next.js
+    # portal managed boundary. Android remains on the separate Crashlytics path and
+    # participant/production telemetry remains disabled.
     backend_sentry_dependencies = {dependency for dependency in backend_pkg if "sentry" in dependency.lower()}
     portal_sentry_dependencies = {dependency for dependency in portal_pkg if "sentry" in dependency.lower()}
     if backend_sentry_dependencies != {"@sentry/nestjs"}:
@@ -270,8 +270,16 @@ def main() -> None:
     ):
         require(sentry_canary, needle, "managed Sentry canary invariant")
     prohibit(sentry_canary, r"SENTRY_AUTH_TOKEN\s*=", "Sentry auth token runtime environment binding")
-    require(status, "Sentry API/portal", "Sentry status row")
-    require(status, "RUNTIME NOT PROVEN", "RC2 pre-canary status gate")
+    require(
+        status,
+        "Sentry API/portal | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY**",
+        "RC2 managed-canary status",
+    )
+    require(
+        status,
+        "Participant/production Sentry telemetry remains disabled.",
+        "RC2 participant/production telemetry stop gate",
+    )
     require(reconciliation, "externally provisioned/runtime-unproven", "historical Maps/Sentry reconciliation truth")
 
     # RC1 Resend: provider-neutral server adapter, synthetic-only runtime job and outbox semantics.
@@ -380,7 +388,7 @@ def main() -> None:
     print("firebase_auth=implemented_gated")
     print("firebase_app_distribution=active_internal")
     print("maps=external_runtime_unproven_manual_fallback_active")
-    print("sentry=implemented_gated_managed_canary_pending_cloud_logging_authoritative")
+    print("sentry=active_synthetic_only_managed_canary_cloud_logging_authoritative_participant_disabled")
     print("resend=active_synthetic_only_managed_canary_real_participant_disabled")
     print("fcm=planned")
     print("whatsapp=planned_domain_handoff_only")

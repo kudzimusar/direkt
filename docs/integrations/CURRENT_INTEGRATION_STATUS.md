@@ -146,8 +146,10 @@ RC1 is closed for the approved synthetic-only boundary: least-privilege key/doma
 | Integration | State | Current role |
 |---|---|---|
 | Cloud Logging / Monitoring | **ACTIVE** | Authoritative infrastructure/runtime observability. |
-| Sentry API/portal | **EXTERNALLY_PROVISIONED / RUNTIME NOT PROVEN** | External setup reported; audited runtime SDK activation not yet proven. |
+| Sentry API/portal | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY** | `@sentry/nestjs` and `@sentry/nextjs` are privacy-gated on separate API/portal projects. Managed workflow `DIREKT managed Sentry synthetic canary #1` passed on exact source `15210c5b0bf1832e32f8c33a7618c69f61f65275`; API and private portal events were captured and flushed successfully. `direkt-sentry-api-dsn` v1 and `direkt-sentry-portal-dsn` v1 are runtime-bound separately; `direkt-sentry-auth-token` v2 remains CI/release-only and is not bound to application runtime. Cloud Logging remains authoritative infrastructure telemetry. Participant/production Sentry telemetry remains disabled. |
 | Sentry Android | **NOT DEFAULT** | Android plan prefers Crashlytics unless a later reviewed decision changes this. |
+
+RC2 is closed only for the approved synthetic-only managed observability boundary. `sendDefaultPii=false`; tracing, SDK logs, breadcrumbs, local-variable capture and replay remain disabled; event scrubbing removes user/request payload/context/extra data and redacts contact, credential/JWT and precise-coordinate patterns. Participant/production Sentry telemetry remains disabled.
 
 No telemetry provider may receive raw evidence, tokens, contact data, exact private coordinates or unnecessary free text.
 
@@ -228,7 +230,7 @@ W8 is **CLOSED**. The canonical functional browser host passed independent exact
 
 Issue #261 now governs sequential runtime-integration closure. `WORKSTREAM_LOCK.md` and `RUNTIME_INTEGRATION_CLOSURE_PLAN.md` define the current dependency-safe order. `LIVE_INTEGRATION_LEDGER.md` is the mandatory cross-agent receipt ledger.
 
-AI0 under Issue #264 is CLOSED and merged in PR #265 at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; its providers remain gated rather than active runtime integrations. RC1 Resend is CLOSED for the synthetic-only managed-canary boundary after successful Cloud Run execution `direkt-resend-canary-ct9mp`; RC2 Sentry API/portal is the next bounded checkpoint after the RC1 closure merge.
+AI0 under Issue #264 is CLOSED and merged in PR #265 at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; its providers remain gated rather than active runtime integrations. RC1 Resend is CLOSED for the synthetic-only managed-canary boundary. RC2 Sentry API/portal is CLOSED for the synthetic-only managed observability boundary after successful managed canary #1 on source `15210c5b0bf1832e32f8c33a7618c69f61f65275`; RC3 Crashlytics Android is the next bounded checkpoint.
 
 VC0 visual audit/design-control work under Issue #259 remains non-overlapping design/audit work. Broad visual implementation requires separate owner approval and must not overlap claimed runtime-integration surfaces.
 

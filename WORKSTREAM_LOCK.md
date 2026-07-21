@@ -6,13 +6,13 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED — RC2 Sentry API/portal runtime observability closure |
+| Status | RELEASED — RC2 Sentry closed; RC3 Crashlytics is next |
 | Owner/agent | Active repository agent — Issue #261 runtime integration closure workstream |
-| Authorized scope | Sentry activation for approved NestJS API and private Next.js operations portal only: separate runtime boundaries, strict PII/data scrubbing, release/source-map controls, kill switch, managed synthetic canaries and exact-head regressions. Android Sentry is out of scope; RC3 retains Crashlytics ownership. |
+| Authorized scope | RC2 closure evidence/status reconciliation only. Sentry is proven only for the synthetic-only API/private-portal managed boundary; participant/production telemetry remains disabled. RC3 must be separately claimed before Crashlytics implementation begins. |
 | Protected surface | Android, backend/database/OpenAPI, web/PWA, operations portal, CI, trust/privacy, payments, integrations, VC1–VC8 completion and release boundaries remain regression-protected. |
-| Implementation branch | `integration/rc2-sentry-runtime`, reconciled to preserve the merged VC1–VC8 baseline at `c7f5985bc20372b4761e063dc3a66ecc736556e2`; RC2 source changes remain isolated to Sentry/runtime-control surfaces. |
-| Stable baseline | RC1 closure merged at `772ce87e2b81820a4ecb84d0df430de4b8f830ae`; VC1–VC8 subsequently merged through PR #270 at `c7f5985bc20372b4761e063dc3a66ecc736556e2`; Resend remains proven only for the synthetic managed boundary and real-participant/production email remains disabled. |
-| Current task | RC2 — complete separate API/portal Sentry source integration, privacy minimization, exact release binding, DSN-only runtime secrets, managed synthetic canaries, permanent runtime-truth verification and exact-head regression before any `ACTIVE` promotion. |
+| Implementation branch | `integration/rc2-sentry-closure` from RC2 source merge `15210c5b0bf1832e32f8c33a7618c69f61f65275`; RC3 must start from the merged RC2 closure baseline. |
+| Stable baseline | RC2 source PR #275 merged at `15210c5b0bf1832e32f8c33a7618c69f61f65275`; managed workflow `DIREKT managed Sentry synthetic canary #1` completed SUCCESS in 4m15s for separate API and private operations-portal Sentry projects. |
+| Current task | RC2 closure promotion; next bounded checkpoint after merge is RC3 — Firebase Crashlytics Android activation with privacy/release mapping and synthetic crash/ANR evidence. |
 | Governing issue | Issue #261 — Runtime integration closure after W8; Issue #259 VC1–VC8 is closed and preserved as baseline. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
@@ -47,8 +47,8 @@ This file prevents overlapping writes in the single-lane build process.
 - RC0 — integration ledger, dependency/source audit, permanent-gate ownership sanity check and payment evidence reconciliation. **Closed — PR #263.**
 - AI0 — provider-neutral AI foundation. **Closed — PR #265; runtime activation remains per-use-case and data-classification gated.**
 - RC1 — Resend transactional-outbox runtime. **Closed — source PR #269; managed synthetic execution proven; hotfixes #271/#272 and closure PR #273 merged; real-participant/production email remains disabled.**
-- RC2 — Sentry for approved NestJS/Next.js surfaces with strict PII scrubbing, release controls and kill switch; Cloud Logging remains authoritative infrastructure telemetry. **ACTIVE CHECKPOINT.**
-- RC3 — Firebase Crashlytics Android activation with privacy/release mapping and synthetic crash/ANR evidence.
+- RC2 — Sentry for approved NestJS/Next.js surfaces with strict PII scrubbing, release controls and kill switch; Cloud Logging remains authoritative infrastructure telemetry. **CLOSED — PR #275 merged at `15210c5b0bf1832e32f8c33a7618c69f61f65275`; managed synthetic API + private portal canary #1 passed. Participant/production telemetry remains disabled.**
+- RC3 — Firebase Crashlytics Android activation with privacy/release mapping and synthetic crash/ANR evidence. **NEXT CHECKPOINT after RC2 closure merge.**
 - RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary.
 - RC5 — Firebase Test Lab device-matrix automation after Android runtime dependencies stabilize through RC3–RC4.
 - RC6 — WhatsApp Cloud API application adapter using outbox/idempotency/consent/template/delivery-receipt rules; production sends remain gated until provider/legal approvals exist.
