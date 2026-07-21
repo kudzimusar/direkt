@@ -51,10 +51,20 @@ command -v adb >/dev/null 2>&1 || {
   exit 1
 }
 
+export ANDROID_AVD_HOME="${RUNNER_TEMP}/direkt-avd"
+mkdir -p "${ANDROID_AVD_HOME}"
+rm -rf "${ANDROID_AVD_HOME}/direkt-vc8.avd" "${ANDROID_AVD_HOME}/direkt-vc8.ini"
+
 echo no | "${avdmanager}" create avd \
   --force \
   --name direkt-vc8 \
   --package "system-images;android-35;google_apis;x86_64"
+
+if ! "${emulator}" -list-avds | grep -Fxq 'direkt-vc8'; then
+  echo "AVD direkt-vc8 was not discoverable after creation." >&2
+  find "${ANDROID_AVD_HOME}" -maxdepth 2 -type f -print || true
+  exit 1
+fi
 
 if [[ -e /dev/kvm ]]; then
   sudo chmod 666 /dev/kvm || true
