@@ -50,7 +50,7 @@ describe('email environment contract', () => {
   it('keeps production email delivery disabled', () => {
     const result = environmentSchema.validate({
       NODE_ENV: 'production',
-      DATABASE_URL: 'postgresql://direkt:secret@db.example.com:5432/direkt',
+      DATABASE_URL: 'postgresql://direkt:direkt_dev@localhost:5432/direkt',
       RATE_LIMIT_HASH_PEPPER: 'x'.repeat(64),
       ACCESS_TOKEN_SECRET: 'y'.repeat(64),
       CONTACT_HASH_PEPPER: 'z'.repeat(64),
