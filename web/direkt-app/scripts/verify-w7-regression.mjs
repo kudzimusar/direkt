@@ -27,10 +27,12 @@ requireMarkers(globals, [
   "min-height: 48px",
 ]);
 requireMarkers(layout, [
-  '<a className="skip-link" href="#main-content">Skip to content</a>',
   'colorScheme: "light dark"',
   'width: "device-width"',
 ]);
+if (!/<a\s+className=["']skip-link["']\s+href=["']#main-content["']\s*>\s*Skip to content\s*<\/a>/s.test(layout)) {
+  throw new Error("W7 marker missing: accessible skip link to main content");
+}
 requireMarkers(shell, [
   'className="desktop-side-nav"',
   'className="tablet-rail"',
