@@ -1,7 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { AiFallbackProviderMode, AiProviderMode } from '../config/environment';
-import { AI_FALLBACK_PROVIDER, AI_PRIMARY_PROVIDER } from './ai-provider.port';
+import type {
+  AiFallbackProviderMode,
+  AiProviderMode,
+} from '../config/environment';
+import {
+  AI_FALLBACK_PROVIDER,
+  AI_PRIMARY_PROVIDER,
+} from './ai-provider.port';
 import { AiService } from './ai.service';
 import { DisabledAiProviderAdapter } from './disabled-ai-provider.adapter';
 import { GeminiAiProviderAdapter } from './gemini-ai-provider.adapter';
@@ -13,7 +19,8 @@ import { GroqAiProviderAdapter } from './groq-ai-provider.adapter';
       provide: AI_PRIMARY_PROVIDER,
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const mode = configService.getOrThrow<AiProviderMode>('AI_PROVIDER_MODE');
+        const mode =
+          configService.getOrThrow<AiProviderMode>('AI_PROVIDER_MODE');
         if (mode === 'disabled') {
           return new DisabledAiProviderAdapter();
         }
@@ -28,7 +35,9 @@ import { GroqAiProviderAdapter } from './groq-ai-provider.adapter';
       provide: AI_FALLBACK_PROVIDER,
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const mode = configService.getOrThrow<AiFallbackProviderMode>('AI_FALLBACK_PROVIDER');
+        const mode = configService.getOrThrow<AiFallbackProviderMode>(
+          'AI_FALLBACK_PROVIDER',
+        );
         if (mode === 'disabled') {
           return new DisabledAiProviderAdapter();
         }
