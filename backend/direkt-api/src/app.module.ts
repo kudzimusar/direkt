@@ -1,5 +1,7 @@
 import { MiddlewareConsumer, Module, type NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_FILTER } from '@nestjs/core';
+import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { AccountContactModule } from './account-contact/account-contact.module';
 import { AiModule } from './ai/ai.module';
 import { AuthModule } from './auth/auth.module';
@@ -46,6 +48,12 @@ import { VerificationEvidenceModule } from './verification-evidence/verification
     ProviderWorkspaceModule,
     VerificationEvidenceModule,
     DiscoveryModule,
+  ],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: SentryGlobalFilter,
+    },
   ],
 })
 export class AppModule implements NestModule {
