@@ -1,9 +1,9 @@
 name: RC1 one-time source reconcile
 
 on:
-  push:
+  pull_request:
     branches:
-      - integration/rc1-resend-runtime
+      - main
     paths:
       - ".github/workflows/rc1-source-reconcile-once.yml"
 
