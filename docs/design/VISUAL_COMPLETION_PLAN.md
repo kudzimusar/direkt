@@ -83,13 +83,11 @@ Stop rather than merge if a change would:
 - regress Android/backend/database/OpenAPI/web/admin gates;
 - contradict approved trust/privacy/accessibility rules.
 
----
-
-# VC0 — Repository-wide visual baseline and gap audit
+## VC0 — Repository-wide visual baseline and gap audit
 
 **Status:** repository audit/design package prepared; actual high-fidelity Stitch renders and owner aesthetic approval still required before material implementation.
 
-## Outputs
+### Outputs
 
 - `docs/design/UI_VISUAL_GAP_MATRIX.md`;
 - `docs/design/VISUAL_COMPLETION_PLAN.md`;
@@ -99,7 +97,7 @@ Stop rather than merge if a change would:
 - three differentiated design directions and generation prompts;
 - Stitch/Antigravity and Higgsfield workflow boundaries.
 
-## Exit checkpoint
+### Exit checkpoint
 
 VC0 may be treated as repository-side complete when:
 
@@ -113,13 +111,11 @@ VC0 may be treated as repository-side complete when:
 
 Because the current automation environment does not expose a connected Stitch/Higgsfield design connector, the repository-side VC0 package can reach **render-ready review status**, but must not falsely claim that external high-fidelity renders already exist.
 
----
-
-# VC1 — Design-system reconciliation
+## VC1 — Design-system reconciliation
 
 **Purpose:** turn the approved direction into one canonical cross-product visual system.
 
-## Foundations
+### Foundations
 
 - semantic colour roles/light-dark behavior;
 - typography/fallbacks/type scale;
@@ -132,7 +128,7 @@ Because the current automation environment does not expose a connected Stitch/Hi
 - accessibility;
 - low-bandwidth behavior.
 
-## Component families
+### Component families
 
 - navigation/app bars;
 - search/suggestions/filters;
@@ -148,30 +144,28 @@ Because the current automation environment does not expose a connected Stitch/Hi
 
 Platform-native behavior remains allowed: Compose, customer/provider web and operations should share Design DNA, not identical binaries/layouts.
 
----
-
-# VC2 — High-fidelity flagship design review
+## VC2 — High-fidelity flagship design review
 
 Before broad implementation, create at least three genuinely different visual directions against the same product rules.
 
-## Required experiences
+### Required experiences
 
-### Customer
+#### Customer
 
 1. Discover/Home;
 2. Search/results/map-list;
 3. Provider public profile + trust details.
 
-### Provider
+#### Provider
 
 4. Provider workspace/overview;
 5. Verification/evidence status.
 
-### Operations
+#### Operations
 
 6. Verification queue + case/evidence review.
 
-## Required variants
+### Required variants
 
 - compact/mobile customer/provider;
 - desktop customer/provider web;
@@ -179,7 +173,7 @@ Before broad implementation, create at least three genuinely different visual di
 - desktop operations evidence-review workspace;
 - compact operations triage/field sample.
 
-## Owner decision
+### Owner decision
 
 Record exactly one:
 
@@ -191,9 +185,7 @@ Record exactly one:
 
 Silence is never approval.
 
----
-
-# VC3 — Lock approved Design DNA
+## VC3 — Lock approved Design DNA
 
 After owner approval:
 
@@ -206,13 +198,11 @@ After owner approval:
 
 Repository trust/privacy/security requirements always win over generated design metadata.
 
----
-
-# VC4 — Customer experience vertical slices
+## VC4 — Customer experience vertical slices
 
 Implement Android + functional web together where capabilities correspond.
 
-## VC4A — Discovery and provider decision
+### VC4A — Discovery and provider decision
 
 - Discover/Home;
 - area/category/search/suggestions;
@@ -226,7 +216,7 @@ Implement Android + functional web together where capabilities correspond.
 
 Google Maps runtime activation remains a separate integration gate.
 
-## VC4B — Saved/enquiries/contact consent
+### VC4B — Saved/enquiries/contact consent
 
 - Saved;
 - create enquiry;
@@ -234,7 +224,7 @@ Google Maps runtime activation remains a separate integration gate.
 - contact-sharing consent/revoke/expiry;
 - draft/retry/conflict states.
 
-## VC4C — Reviews/complaints/account
+### VC4C — Reviews/complaints/account
 
 - review eligibility/submission/report/appeal presentation;
 - complaint creation/detail;
@@ -249,11 +239,9 @@ Google Maps runtime activation remains a separate integration gate.
 - responsive/accessibility/offline checks pass;
 - approved visual-reference comparison recorded.
 
----
+## VC5 — Provider experience vertical slices
 
-# VC5 — Provider experience vertical slices
-
-## VC5A — Overview/profile/services/areas
+### VC5A — Overview/profile/services/areas
 
 - overview/readiness;
 - onboarding pathway;
@@ -266,7 +254,7 @@ Google Maps runtime activation remains a separate integration gate.
 
 Replace raw category keys, coordinate pairs and WKT with safe user-facing controls while preserving canonical contracts.
 
-## VC5B — Verification/evidence
+### VC5B — Verification/evidence
 
 - requirements;
 - capture/file upload;
@@ -277,7 +265,7 @@ Replace raw category keys, coordinate pairs and WKT with safe user-facing contro
 
 Private evidence remains private. Public work/premises imagery is separate.
 
-## VC5C — Enquiries/reviews/commercial/account
+### VC5C — Enquiries/reviews/commercial/account
 
 - enquiry inbox/detail/response;
 - contact handoff;
@@ -289,13 +277,11 @@ Private evidence remains private. Public work/premises imagery is separate.
 
 Real payment movement remains separately gated.
 
----
-
-# VC6 — Operations portal
+## VC6 — Operations portal
 
 Use the same brand/trust system with operations-appropriate density.
 
-## VC6A — Verification core
+### VC6A — Verification core
 
 - mission control;
 - triage queue;
@@ -306,7 +292,7 @@ Use the same brand/trust system with operations-appropriate density.
 - provider operations summary;
 - discovery/publication eligibility.
 
-## VC6B — Field/trust operations
+### VC6B — Field/trust operations
 
 - field assignments/visit record;
 - escalations/overrides;
@@ -315,7 +301,7 @@ Use the same brand/trust system with operations-appropriate density.
 - review moderation/appeals;
 - complaints.
 
-## VC6C — Commercial/reporting/configuration
+### VC6C — Commercial/reporting/configuration
 
 - subscription exceptions;
 - payment reconciliation shell within gates;
@@ -331,13 +317,11 @@ Use the same brand/trust system with operations-appropriate density.
 - tablet: one/two panes according to task;
 - compact/mobile: task-focused triage/field actions, never a squeezed desktop table.
 
----
-
-# VC7 — World-class quality gate
+## VC7 — World-class quality gate
 
 A screen is not complete merely because it looks attractive.
 
-## Visual
+### Visual
 
 - matches approved Design DNA/reference with documented platform adaptations;
 - approved typography/icons/imagery;
@@ -347,7 +331,7 @@ A screen is not complete merely because it looks attractive.
 - no production-facing workstream/development labels;
 - no primitive glyph icons where approved vectors exist.
 
-## Accessibility
+### Accessibility
 
 - contrast;
 - TalkBack/screen-reader labels;
@@ -359,7 +343,7 @@ A screen is not complete merely because it looks attractive.
 - accessible map/list equivalence;
 - form error focus/summary behavior.
 
-## Product/trust
+### Product/trust
 
 - no blanket `Verified` badge;
 - check scope/date/limitations preserved;
@@ -368,7 +352,7 @@ A screen is not complete merely because it looks attractive.
 - no gated-integration overclaim;
 - no real participant/payment/production activation.
 
-## Regression
+### Regression
 
 Run all applicable exact-head gates:
 
@@ -381,7 +365,7 @@ Run all applicable exact-head gates:
 - documentation quality;
 - supply-chain/security where build/dependencies change.
 
-## Visual evidence
+### Visual evidence
 
 Use only synthetic/public-safe data. Record:
 
@@ -394,11 +378,9 @@ Use only synthetic/public-safe data. Record:
 
 Never use real evidence, participant identity, raw contact data or private coordinates as visual fixtures.
 
----
+## AI-assisted design workflow
 
-# AI-assisted design workflow
-
-## Google Stitch — primary high-fidelity source
+### Google Stitch — primary high-fidelity source
 
 Use Stitch for:
 
@@ -417,7 +399,7 @@ Recommended project naming:
 - `DIREKT-VC-C-Field-Utility`;
 - after approval: `DIREKT-VC-APPROVED`.
 
-## Antigravity + Stitch MCP bridge
+### Antigravity + Stitch MCP bridge
 
 1. connect Stitch MCP in Antigravity using secure credentials;
 2. verify project listing;
@@ -429,7 +411,7 @@ Recommended project naming:
 8. record deliberate differences;
 9. never commit API keys.
 
-## Higgsfield — secondary asset layer
+### Higgsfield — secondary asset layer
 
 Use only for controlled imagery/illustration/art-direction work such as:
 
@@ -443,9 +425,7 @@ Do not send private evidence, participant identity documents, raw contacts, exac
 
 Every generated asset requires human review for Zambia relevance, stereotyping, provenance/licensing, accessibility/alt text and low-bandwidth delivery.
 
----
-
-# Representative owner review checkpoint
+## Representative owner review checkpoint
 
 | Experience | Compact/mobile | Desktop/adaptive | Must prove |
 |---|---|---|---|
