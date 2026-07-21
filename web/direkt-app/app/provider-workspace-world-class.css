@@ -14,7 +14,11 @@
   border-color: color-mix(in srgb, var(--primary) 18%, var(--border));
   background:
     radial-gradient(circle at 90% 8%, rgb(11 138 96 / 15%), transparent 34%),
-    linear-gradient(145deg, color-mix(in srgb, var(--mint) 48%, var(--surface)), var(--surface) 70%);
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--mint) 48%, var(--surface)),
+      var(--surface) 70%
+    );
   box-shadow: var(--direkt-shadow-md);
 }
 
@@ -28,7 +32,7 @@
 .provider-command-heading h2 {
   margin: 5px 0 0;
   font-size: clamp(28px, 5vw, 40px);
-  letter-spacing: -.04em;
+  letter-spacing: -0.04em;
 }
 
 .provider-command-meta {
@@ -74,7 +78,7 @@
 .readiness-number strong {
   display: block;
   font-size: 30px;
-  letter-spacing: -.04em;
+  letter-spacing: -0.04em;
 }
 
 .readiness-number span {
@@ -419,7 +423,7 @@
 
 @media (min-width: 760px) {
   .provider-readiness-layout {
-    grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
     align-items: end;
   }
 

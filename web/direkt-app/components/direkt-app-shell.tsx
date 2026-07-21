@@ -53,7 +53,8 @@ export function DirektAppShell({
     () => destinationHeading(mode, destination),
     [destination, mode],
   );
-  const foundation = mode === "customer" ? customerFoundation : providerFoundation;
+  const foundation =
+    mode === "customer" ? customerFoundation : providerFoundation;
   const showDiscovery = mode === "customer" && destination === "discover";
   const showCustomerJourney =
     mode === "customer" &&

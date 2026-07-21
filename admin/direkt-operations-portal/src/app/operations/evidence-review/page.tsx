@@ -57,7 +57,10 @@ export default function EvidenceReviewPage() {
       </WorkspaceIntro>
 
       <div className="evidence-mission-grid">
-        <section className="evidence-mission-panel queue-panel" aria-labelledby="review-queue-heading">
+        <section
+          className="evidence-mission-panel queue-panel"
+          aria-labelledby="review-queue-heading"
+        >
           <header className="evidence-panel-header">
             <div>
               <h2 id="review-queue-heading">Assigned queue</h2>
@@ -68,11 +71,16 @@ export default function EvidenceReviewPage() {
           <ol className="review-queue-list">
             {reviewQueue.map((item) => (
               <li key={item.id}>
-                <button className={item.active ? 'review-queue-item active' : 'review-queue-item'} type="button">
+                <button
+                  className={item.active ? 'review-queue-item active' : 'review-queue-item'}
+                  type="button"
+                >
                   <strong>{item.provider}</strong>
                   <span>{item.check}</span>
                   <div className="review-queue-meta">
-                    <small className={item.priority === 'Normal' ? undefined : 'review-priority'}>{item.priority}</small>
+                    <small className={item.priority === 'Normal' ? undefined : 'review-priority'}>
+                      {item.priority}
+                    </small>
                     <small>{item.age}</small>
                   </div>
                 </button>
@@ -108,7 +116,10 @@ export default function EvidenceReviewPage() {
           </div>
         </section>
 
-        <section className="evidence-mission-panel evidence-viewer-shell" aria-labelledby="document-viewer-heading">
+        <section
+          className="evidence-mission-panel evidence-viewer-shell"
+          aria-labelledby="document-viewer-heading"
+        >
           <header className="evidence-panel-header">
             <div>
               <h2 id="document-viewer-heading">Evidence viewer</h2>
@@ -117,14 +128,16 @@ export default function EvidenceReviewPage() {
             <StatusPill tone="success">Clean</StatusPill>
           </header>
           <div className="evidence-access-banner">
-            Private access is assignment-scoped and expires five minutes after issue. The synthetic document below contains no real evidence.
+            Private access is assignment-scoped and expires five minutes after issue. The synthetic
+            document below contains no real evidence.
           </div>
           <div className="evidence-document-stage" aria-label="Synthetic private evidence preview">
             <article className="synthetic-document">
               <div className="synthetic-document-watermark">Synthetic evidence preview</div>
               <h3>Identity document placeholder</h3>
               <p>
-                This visual represents the secure review surface only. Real document bytes, object references and submitter identifiers are not part of this public repository fixture.
+                This visual represents the secure review surface only. Real document bytes, object
+                references and submitter identifiers are not part of this public repository fixture.
               </p>
               <div className="synthetic-document-lines" aria-hidden="true">
                 <span />
@@ -142,7 +155,10 @@ export default function EvidenceReviewPage() {
           </footer>
         </section>
 
-        <aside className="evidence-mission-panel decision-panel" aria-labelledby="decision-workspace-heading">
+        <aside
+          className="evidence-mission-panel decision-panel"
+          aria-labelledby="decision-workspace-heading"
+        >
           <header className="evidence-panel-header">
             <div>
               <h2 id="decision-workspace-heading">Review and decision</h2>
@@ -168,7 +184,9 @@ export default function EvidenceReviewPage() {
             <div className="ai-assist-panel">
               <strong>AI review assistance</strong>
               <p>
-                Not active in this synthetic environment. When an approved AI evidence-assist use case is enabled, it may summarize candidate fields or flag inconsistencies, but it cannot decide this case.
+                Not active in this synthetic environment. When an approved AI evidence-assist use
+                case is enabled, it may summarize candidate fields or flag inconsistencies, but it
+                cannot decide this case.
               </p>
               <small>Human review and server policy remain authoritative.</small>
             </div>
@@ -179,7 +197,10 @@ export default function EvidenceReviewPage() {
                 <input type="checkbox" aria-label="Identity name comparison complete" />
                 <div>
                   <strong>Identity name comparison</strong>
-                  <p>Compare the submitted identity context against the assigned provider representative.</p>
+                  <p>
+                    Compare the submitted identity context against the assigned provider
+                    representative.
+                  </p>
                 </div>
               </li>
               <li>
@@ -199,18 +220,35 @@ export default function EvidenceReviewPage() {
             </ul>
 
             <div className="decision-button-grid" aria-label="Synthetic decision controls">
-              <button className="decision-approve" type="button" disabled title="Synthetic review does not submit real decisions">
+              <button
+                className="decision-approve"
+                type="button"
+                disabled
+                title="Synthetic review does not submit real decisions"
+              >
                 Approve check
               </button>
-              <button className="decision-action" type="button" disabled title="Synthetic review does not submit real decisions">
+              <button
+                className="decision-action"
+                type="button"
+                disabled
+                title="Synthetic review does not submit real decisions"
+              >
                 Request action
               </button>
-              <button className="decision-reject" type="button" disabled title="Synthetic review does not submit real decisions">
+              <button
+                className="decision-reject"
+                type="button"
+                disabled
+                title="Synthetic review does not submit real decisions"
+              >
                 Reject check
               </button>
             </div>
             <p className="api-boundary-note">
-              Decision controls are deliberately disabled in synthetic review. In an authorized environment, actions must pass the normal permission, reason-code, lifecycle and audit controls.
+              Decision controls are deliberately disabled in synthetic review. In an authorized
+              environment, actions must pass the normal permission, reason-code, lifecycle and audit
+              controls.
             </p>
           </div>
         </aside>

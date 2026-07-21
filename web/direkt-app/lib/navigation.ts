@@ -47,11 +47,17 @@ export const navigationItems: readonly NavigationItem[] = [
   },
 ] as const;
 
-export function destinationLabel(mode: DirektMode, item: NavigationItem): string {
+export function destinationLabel(
+  mode: DirektMode,
+  item: NavigationItem,
+): string {
   return mode === "customer" ? item.customerLabel : item.providerLabel;
 }
 
-export function destinationIcon(mode: DirektMode, item: NavigationItem): DirektIconName {
+export function destinationIcon(
+  mode: DirektMode,
+  item: NavigationItem,
+): DirektIconName {
   return mode === "customer" ? item.customerIcon : item.providerIcon;
 }
 

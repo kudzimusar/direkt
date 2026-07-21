@@ -121,7 +121,9 @@ export default function OperationsPage() {
       <section className="ops-principle-strip" aria-label="Operations safeguards">
         <div>
           <strong>Authority stays server-side</strong>
-          <p>Navigation and visible controls never grant a permission the backend has not resolved.</p>
+          <p>
+            Navigation and visible controls never grant a permission the backend has not resolved.
+          </p>
         </div>
         <div>
           <strong>Private evidence stays bounded</strong>
@@ -129,7 +131,10 @@ export default function OperationsPage() {
         </div>
         <div>
           <strong>Decisions stay accountable</strong>
-          <p>Field observations and future AI assistance inform work; they do not replace authorized decisions.</p>
+          <p>
+            Field observations and future AI assistance inform work; they do not replace authorized
+            decisions.
+          </p>
         </div>
       </section>
 

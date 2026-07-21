@@ -54,7 +54,10 @@ export function OperationsShell({ session, children }: OperationsShellProps) {
               ))}
             </ul>
           </nav>
-          <section aria-labelledby="session-policy-heading" className="policy-card operations-session-card">
+          <section
+            aria-labelledby="session-policy-heading"
+            className="policy-card operations-session-card"
+          >
             <h2 id="session-policy-heading">Access context</h2>
             <p>Permissions are resolved by the backend. Navigation never grants authority.</p>
             <dl>
@@ -73,8 +76,8 @@ export function OperationsShell({ session, children }: OperationsShellProps) {
         </aside>
         <main id="main-content" tabIndex={-1}>
           <div className="synthetic-banner operations-environment-banner" role="status">
-            Synthetic review environment — no real participant records, private evidence, decisions or
-            production actions are available here.
+            Synthetic review environment — no real participant records, private evidence, decisions
+            or production actions are available here.
           </div>
           {children}
         </main>
