@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { environmentSchema } from '../../../src/config/environment';
+import { environmentSchema, type DirektEnvironment } from '../../../src/config/environment';
 
 const GEMINI_KEY = 'gemini-development-key-1234567890';
 const GROQ_KEY = 'groq-development-key-123456789012';
@@ -13,10 +13,11 @@ describe('AI environment contract', () => {
       AI_GEMINI_API_KEY: GEMINI_KEY,
       AI_GROQ_API_KEY: GROQ_KEY,
     });
+    const value = result.value as DirektEnvironment;
 
     expect(result.error).toBeUndefined();
-    expect(result.value.AI_GEMINI_MODEL).toBe('gemini-3.5-flash');
-    expect(result.value.AI_GROQ_MODEL).toBe('openai/gpt-oss-20b');
+    expect(value.AI_GEMINI_MODEL).toBe('gemini-3.5-flash');
+    expect(value.AI_GROQ_MODEL).toBe('openai/gpt-oss-20b');
   });
 
   it('fails closed when AI is enabled outside synthetic-only data mode', () => {
