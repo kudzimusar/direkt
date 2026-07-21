@@ -8,12 +8,12 @@ This file prevents overlapping writes in the single-lane build process.
 |---|---|
 | Status | CLAIMED — runtime integration closure after W8 |
 | Owner/agent | Active repository agent — Issue #261 runtime integration closure workstream |
-| Authorized scope | Dependency-audit, source/runtime closure and managed evidence for integrations tracked by Issue #261 plus reconciliation of newly proven sandbox payment-provider evidence; one bounded integration checkpoint at a time |
+| Authorized scope | Dependency-audit, source/runtime closure and managed evidence for integrations tracked by Issue #261 plus owner-authorized AI provider foundation in Issue #264; one bounded integration checkpoint at a time |
 | Protected surface | Android, backend/database/OpenAPI, web/PWA, operations portal, CI, trust/privacy, payments and release boundaries remain regression-protected; VC0 design/audit work under Issue #259 may continue only on non-overlapping design-control surfaces |
-| Implementation branch | `integration/runtime-closure-261` from clean `main` baseline; do not build new integration work on the currently diverged historical `build/android-v1` branch until history is reconciled |
-| Stable baseline | `main` at W8 closure merge `a06a66d313d8417d8b7731e3d845c1c71bda3dd4`; canonical app `https://app.direkt.forum`; W8 verification run `29802524466` |
-| Current task | RC0 — dependency/current-source audit, live integration ledger promotion, historical W7/W8 verifier ownership decoupling if required, then sequential runtime integration closure |
-| Governing issue | Issue #261 — Runtime integration closure after W8 |
+| Implementation branch | `integration/ai-provider-foundation` from clean RC0 merge `ece3626f6878d32f2b1d0a46058f2064ff1d669b`; do not build new integration work on the diverged historical `build/android-v1` branch |
+| Stable baseline | RC0 merged to `main` at `ece3626f6878d32f2b1d0a46058f2064ff1d669b`; canonical app `https://app.direkt.forum`; W8 verification run `29802524466` |
+| Current task | AI0 — provider-neutral AI foundation: Gemini primary development/synthetic path, open-model fallbacks, least-privilege secret/runtime design, authority/privacy negatives and managed canaries |
+| Governing issues | Issue #261 — Runtime integration closure after W8; Issue #264 — AI provider foundation |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates |
 
@@ -23,18 +23,21 @@ This file prevents overlapping writes in the single-lane build process.
 2. An external account, API key, secret or dashboard project is not `ACTIVE` evidence by itself.
 3. Each closure requires applicable source integration, least-privilege secret/runtime binding, privacy/security controls, retry/idempotency/fallback or kill switch, managed canary/device evidence, exact-head regressions and status documentation.
 4. The transactional outbox remains the domain source of truth for asynchronous external delivery.
-5. Android/browser clients call DIREKT-controlled API/BFF boundaries; they do not receive privileged provider, database, payment or registry credentials.
+5. Android/browser clients call DIREKT-controlled API/BFF boundaries; they do not receive privileged provider, database, payment, AI or registry credentials.
 6. Real participants, real external communications, real payment movement, production auth and production release remain separately gated.
 7. Payment state cannot create or improve verification, publication or ranking authority.
-8. Exact private provider coordinates, raw evidence, contact data, credentials and tokens must not leak into telemetry, public maps, browser caches or provider payloads.
-9. Generated-client adoption must follow API-shape stabilization and preserve backward compatibility across Android and web.
-10. Turnstile is implemented only if an approved abuse-control design demonstrates a concrete public-flow need.
-11. VC0 under Issue #259 may continue as read-only/design-control work but must not modify overlapping runtime-integration surfaces while this lock is claimed.
-12. The workstream releases the lane only after the final integration status ledger, exact-head regression matrix and handoff are promoted.
+8. AI output cannot independently verify providers, change trust/ranking/publication, authorize payments/escrow, decide disputes, override consent/authorization or act as a legal/regulatory authority.
+9. Free-tier/external AI providers receive synthetic/non-sensitive data only until privacy/data-use/legal terms are explicitly approved for real data.
+10. Exact private provider coordinates, raw evidence, contact data, credentials and tokens must not leak into telemetry, public maps, browser caches or provider payloads.
+11. Generated-client adoption must follow API-shape stabilization and preserve backward compatibility across Android and web.
+12. Turnstile is implemented only if an approved abuse-control design demonstrates a concrete public-flow need.
+13. VC0 under Issue #259 may continue as read-only/design-control work but must not modify overlapping runtime-integration surfaces while this lock is claimed.
+14. The workstream releases the lane only after the final integration status ledger, exact-head regression matrix and handoff are promoted.
 
 ## Dependency-safe implementation sequence
 
-- RC0 — integration ledger, dependency/source audit, permanent-gate ownership sanity check and payment evidence reconciliation.
+- RC0 — integration ledger, dependency/source audit, permanent-gate ownership sanity check and payment evidence reconciliation. **Closed — PR #263 merged at `ece3626f6878d32f2b1d0a46058f2064ff1d669b`.**
+- AI0 — provider-neutral AI foundation: Gemini primary for bounded development/synthetic use, production direction via Google Cloud IAM/Vertex AI, hosted open-model fallback candidate(s), local no-key fallback, privacy/authority controls and managed canaries.
 - RC1 — Resend runtime email adapter through the transactional outbox, idempotency/retry/privacy/templates and managed canary.
 - RC2 — Sentry for approved NestJS/Next.js surfaces with strict PII scrubbing, release/source-map controls and kill switch; Cloud Logging remains authoritative infrastructure telemetry.
 - RC3 — Firebase Crashlytics Android activation with privacy/release mapping and synthetic crash/ANR evidence.
@@ -76,6 +79,7 @@ Stop rather than merge if a checkpoint would:
 - fabricate or bypass participant, legal/privacy, payment or production-release gates;
 - accept client-selected provider scope or authorization;
 - allow commercial/payment state to influence verification or public trust claims;
+- allow AI output to become an authoritative verification/trust/payment/dispute/publication decision;
 - store production credentials in source or browser-readable surfaces;
 - replace backend-authoritative behavior with static fixtures while claiming runtime completion;
 - mark an integration `ACTIVE` without managed runtime evidence.
