@@ -184,8 +184,8 @@ No payment provider secret is attached to Cloud Run until adapter/config/runtime
 | Firebase phone OTP | `IMPLEMENTED_GATED` | Real approved participant path, OTP canary, abuse/rate-limit/privacy/legal evidence. |
 | FCM | `PLANNED` | Server send path, device-token lifecycle, Android handling/permission UX, retries/privacy/canary. |
 | WhatsApp Cloud API | `EXTERNALLY CONFIGURED / RUNTIME GATED` | Runtime adapter, approved templates/phone identity where needed, consent-at-send, opt-out, idempotency, receipts/retries/privacy controls. |
-| Firebase Crashlytics | `PLANNED` | Android plugin/runtime setup, privacy, release mapping, synthetic crash/ANR evidence and alerts. |
-| Firebase Test Lab | `PLANNED` | CI/device matrix, test APKs, artifact/report retention. |
+| Firebase Crashlytics | `IMPLEMENTED_GATED / MANAGED DEVICE CANARY PENDING` | Android SDK and conditional Google Services/Crashlytics plugin path are source-integrated; main manifest collection is false. Only exact-source `synthetic-canary` builds may initialize the default Firebase app and enable collection with fixed non-sensitive keys. Managed fatal/non-fatal emulator plus Crashlytics API evidence remains required. Participant/production telemetry is disabled. |
+| Firebase Test Lab | `PLANNED` | RC5 owns CI/device-matrix automation; RC3 uses the existing isolated GitHub-hosted emulator only. |
 | Cloudflare Turnstile | `PLANNED / WHERE NEEDED` | Only for reviewed abuse-sensitive public flows with server verification, accessibility fallback and kill switch. |
 | Cloud Tasks / Pub/Sub / Scheduler | `PLANNED ON DEMAND` | Add only when retry/fan-out/scheduling needs justify them. |
 
@@ -195,9 +195,9 @@ No payment provider secret is attached to Cloud Run until adapter/config/runtime
 |---|---|---|
 | Cloud Logging / Monitoring | `ACTIVE` | Infrastructure/runtime baseline. |
 | Sentry API/portal | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | Source PR #275 merged at `15210c5b0bf1832e32f8c33a7618c69f61f65275`. Managed Sentry canary #1 completed SUCCESS in 4m15s for separate `direkt-api` and `direkt-operations-portal` projects. DSNs are separately bound through `direkt-sentry-api-dsn` v1 and `direkt-sentry-portal-dsn` v1; `direkt-sentry-auth-token` v2 is CI/release-only and absent from application runtime. Default PII, traces, SDK logs, breadcrumbs, local variables and replay are disabled; privacy scrubbers redact sensitive text/coordinates. Exact SHA release binding is required. Cloud Logging remains authoritative. Participant/production Sentry telemetry remains disabled. |
-| Firebase Crashlytics | `PLANNED` | Preferred Android crash/ANR path unless architecture explicitly changes. |
+| Firebase Crashlytics Android | `IMPLEMENTED_GATED / MANAGED DEVICE CANARY PENDING` | Preferred Android crash/non-fatal/ANR path is source-integrated. Collection defaults off; no user IDs, unrestricted logs, contact/evidence/private-coordinate/auth-token metadata, Analytics breadcrumbs, FCM, Maps or Test Lab activation. Exact synthetic fatal/non-fatal managed device/API proof is pending. |
 
-Never send raw evidence, auth tokens, cookies, contact data, exact private coordinates or unnecessary free text to telemetry providers.
+Never send raw evidence, auth tokens, cookies, contact data, exact private coordinates or unnecessary free text to telemetry providers. Crashlytics participant/production collection remains disabled until a separate reviewed privacy/data-use decision and exact release revalidation.
 
 ## Maps and location
 
@@ -235,7 +235,7 @@ The authoritative sequence is maintained in `WORKSTREAM_LOCK.md` and `RUNTIME_IN
 2. AI0 provider-neutral AI foundation — **CLOSED** in PR #265 at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; Gemini/Groq remain runtime-gated.
 3. RC1 Resend — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Source PR #269 merged; least-privilege sending/domain restriction and runtime secret access proven; Cloud Run execution `direkt-resend-canary-ct9mp` succeeded on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`; workflow-reporting compatibility hotfixes #271/#272 merged. Real-participant/production email remains disabled.
 4. RC2 Sentry API/portal — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. PR #275 merged at `15210c5b0bf1832e32f8c33a7618c69f61f65275`; managed API + private portal canary #1 completed successfully. Separate DSN v1 bindings proven; Sentry auth token v2 remained CI/release-only; participant/production telemetry disabled.
-5. RC3 Crashlytics Android — **NEXT CHECKPOINT after RC2 closure merge.**
+5. RC3 Crashlytics Android — **ACTIVE CHECKPOINT — IMPLEMENTED_GATED / MANAGED DEVICE CANARY PENDING**. Crashlytics SDK/default-off collection/conditional synthetic-canary build path, fixed privacy-safe canary events and managed emulator/API verifier are source-integrated. Exact-head regressions and managed fatal/non-fatal proof remain before ACTIVE promotion.
 6. RC4 FCM.
 7. RC5 Firebase Test Lab.
 8. RC6 WhatsApp runtime adapter.
