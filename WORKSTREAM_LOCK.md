@@ -6,68 +6,49 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED — RC1 Resend runtime email closure |
-| Owner/agent | Active repository agent — Issue #261 runtime integration closure workstream |
-| Authorized scope | Resend application delivery through the transactional outbox: provider adapter, least-privilege Secret Manager/runtime binding, idempotency/retry/failure persistence, bounded templates/privacy controls, managed synthetic canary and exact-head regressions |
-| Protected surface | Android, backend/database/OpenAPI, web/PWA, operations portal, CI, trust/privacy, payments and release boundaries remain regression-protected; VC0 design/audit work under Issue #259 may continue only on non-overlapping design-control surfaces |
-| Implementation branch | `integration/rc1-resend-runtime` from AI0 merge `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; do not build new integration work on the diverged historical `build/android-v1` branch |
-| Stable baseline | AI0 merged to `main` at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; canonical app `https://app.direkt.forum`; W8 verification run `29802524466` |
-| Current task | RC1 — wire verified `notify.direkt.forum` / `direkt-resend-api-key` v1 into a fail-closed server-side email provider and transactional-outbox delivery path, then prove managed synthetic delivery |
-| Governing issue | Issue #261 — Runtime integration closure after W8 |
+| Status | CLAIMED — VC7–VC8 AI product intelligence and world-class quality closure |
+| Owner/agent | Active repository agent — Issue #259 Visual Completion programme |
+| Authorized scope | Bounded AI-assisted product use cases on the merged provider-neutral AI foundation, customer/provider/operations UX completion, accessibility/responsive/offline/low-bandwidth quality closure, regression hardening, documentation/status reconciliation and final VC evidence |
+| Protected surface | Android, backend/database/OpenAPI, web/PWA, operations portal, CI, trust/privacy, payments and release boundaries remain regression-protected. Issue #261 may continue external/provider-managed evidence work, but no overlapping repository code writes begin while this VC claim is active. |
+| Implementation branch | `vc/ai-quality-7-8` from `main@c5eb25b2e579d7f148b67130baf307a45f11e7a0` after VC1–VC6 promotion; do not build new work on the diverged historical `build/android-v1` branch |
+| Stable baseline | VC1–VC6 merged through PR #268 at `c5eb25b2e579d7f148b67130baf307a45f11e7a0`; AI0 merged through PR #265; RC1 source checkpoint merged through PR #269; canonical app `https://app.direkt.forum` remains synthetic-review only |
+| Current task | VC7 — first bounded AI-assisted customer discovery use case with deterministic fallback, then provider/operations assists where safe; VC8 follows with full visual/product/AI/accessibility/regression closure |
+| Governing issue | Issue #259 — DIREKT Visual Completion; Issue #261 remains the external/runtime integration evidence tracker |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates |
 
-## Runtime integration closure contract
+## VC7–VC8 implementation contract
 
-1. Close one bounded integration checkpoint at a time; do not batch unrelated SDK/provider activation.
-2. An external account, API key, secret or dashboard project is not `ACTIVE` evidence by itself.
-3. Each closure requires applicable source integration, least-privilege secret/runtime binding, privacy/security controls, retry/idempotency/fallback or kill switch, managed canary/device evidence, exact-head regressions and status documentation.
-4. The transactional outbox remains the domain source of truth for asynchronous external delivery.
-5. Android/browser clients call DIREKT-controlled API/BFF boundaries; they do not receive privileged provider, database, payment, AI or registry credentials.
-6. Real participants, real external communications, real payment movement, production auth and production release remain separately gated.
-7. Payment state cannot create or improve verification, publication or ranking authority.
-8. AI output cannot independently verify providers, change trust/ranking/publication, authorize payments/escrow, decide disputes, override consent/authorization or act as a legal/regulatory authority.
-9. Free-tier/external AI providers receive synthetic/non-sensitive data only until privacy/data-use/legal terms are explicitly approved for real data.
-10. Exact private provider coordinates, raw evidence, contact data, credentials and tokens must not leak into telemetry, public maps, browser caches or provider payloads.
-11. Generated-client adoption must follow API-shape stabilization and preserve backward compatibility across Android and web.
-12. Turnstile is implemented only if an approved abuse-control design demonstrates a concrete public-flow need.
-13. VC0 under Issue #259 may continue as read-only/design-control work but must not modify overlapping runtime-integration surfaces while this lock is claimed.
-14. The workstream releases the lane only after the final integration status ledger, exact-head regression matrix and handoff are promoted.
+1. AI is assistive, never authoritative: it may interpret, classify, suggest, summarize, extract or draft within approved use cases, but cannot approve/reject verification, publish trust, suspend providers, decide serious complaints/appeals, mutate payment truth, widen permissions or make legal/regulatory conclusions.
+2. Customer discovery AI must remain optional and reversible: deterministic search/category/area flows continue to work when AI is disabled, unavailable, low-confidence or rejected by the user.
+3. AI output is schema-validated and canonical IDs/categories are resolved by server logic; model-invented identifiers are rejected.
+4. Browser and Android clients call DIREKT-controlled API/BFF boundaries; no model/provider credential, privileged database credential or restricted retrieval authority enters client code.
+5. The initial VC7 use cases use synthetic/public-safe data only. Restricted evidence/OCR remains disabled until explicit privacy/legal/provider approval and dedicated evaluation exist.
+6. Prompt injection, sensitive-data disclosure, excessive agency, hallucination, cost/latency, outage/fallback and authorization tests are required before any use case is marked runtime-active.
+7. AI cannot create or strengthen verification, publication, ranking or commercial state. Payment remains independent from trust.
+8. Exact private provider coordinates, private evidence, raw contact data, reviewer-private notes, credentials and tokens remain outside public/client AI context.
+9. Every material UI action must either execute a real authorized flow, be explicitly disabled/gated, or state its synthetic limitation; no deceptive no-op controls survive VC8.
+10. VC8 requires exact-head Android/backend/database/OpenAPI/PWA/operations/security/performance/release regressions plus accessibility, responsive/adaptive, offline/failure and low-bandwidth evidence.
+11. Real participants, real evidence, live external communications, real money movement and production release remain separate Phase 11/12 and integration gates.
+12. The VC lane releases only after the final VC status, issue handoff, exact-head regression matrix and residual external blockers are documented.
 
-## Dependency-safe implementation sequence
+## Runtime-integration coordination
 
-- RC0 — integration ledger, dependency/source audit, permanent-gate ownership sanity check and payment evidence reconciliation. **Closed — PR #263 merged at `ece3626f6878d32f2b1d0a46058f2064ff1d669b`.**
-- AI0 — provider-neutral AI foundation. **Closed — PR #265 merged at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; Gemini/Groq remain gated rather than active runtime integrations.**
-- RC1 — Resend runtime email adapter through the transactional outbox, idempotency/retry/privacy/templates and managed canary. **ACTIVE CHECKPOINT.**
-- RC2 — Sentry for approved NestJS/Next.js surfaces with strict PII scrubbing, release/source-map controls and kill switch; Cloud Logging remains authoritative infrastructure telemetry.
-- RC3 — Firebase Crashlytics Android activation with privacy/release mapping and synthetic crash/ANR evidence.
-- RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary.
-- RC5 — Firebase Test Lab device-matrix automation after the Android runtime dependency set stabilizes through RC3–RC4.
-- RC6 — WhatsApp Cloud API application adapter using outbox/idempotency/consent/template/delivery-receipt rules; production sends remain gated until provider/legal approvals exist.
-- RC7 — Google Maps runtime activation with separate restricted Android/backend credentials, privacy-safe publication semantics, quotas, manual/list fallback and kill switch.
-- RC8 — sandbox-only payment-provider adapter closure/reconciliation for already proven MTN, DPO, Stripe and PayPal rails; Airtel remains provider-pending and Flutterwave deferred; real money remains disabled.
-- RC9 — OpenAPI-generated Kotlin and TypeScript client adoption/decision after backend integration/API shape stabilizes; migrate incrementally with cross-client regressions.
-- RC10 — Turnstile threat-model decision; implement only if a reviewed public abuse-sensitive flow requires it, otherwise close as not currently justified.
-- RC11 — combined integration regression, managed evidence index, live ledger/status reconciliation and lane release.
+- RC0 — integration ledger/dependency/source audit. **Closed — PR #263.**
+- AI0 — provider-neutral Gemini-primary/Groq-fallback AI foundation. **Closed — PR #265; model runtimes remain gated until use-case/provider evaluation and managed evidence.**
+- RC1 — Resend runtime email source checkpoint. **SOURCE CHECKPOINT MERGED — PR #269. Managed synthetic delivery/canary and any remaining external evidence stay on Issue #261 and do not authorize overlapping code writes during VC7–VC8.**
+- RC2–RC11 — remain planned under `docs/integrations/RUNTIME_INTEGRATION_CLOSURE_PLAN.md`; resume sequential repository writes after the VC lane is released or after an explicitly reconciled non-overlapping claim.
 
-## Completed W0–W8 workstream contract
+## Completed VC1–VC6 checkpoint
 
-1. The functional browser client is additive under `web/direkt-app/`; Android remains the primary native Version 1 client.
-2. Android and web share product semantics through the canonical NestJS REST/OpenAPI boundary, not shared UI binaries.
-3. The browser uses a reviewed BFF/session boundary; the canonical API remains IAM-private.
-4. No direct privileged Supabase/database/Storage credentials or authority enter browser code.
-5. Shared backend/OpenAPI behavior remains backward compatible with Android and regression-tested.
-6. Mobile web uses Android-aligned bottom navigation; desktop uses persistent side navigation with the same product capabilities.
-7. No preview/static fixture is counted as functional parity where an authoritative backend capability exists.
-8. Browser authentication/session state remains server-controlled; provider scope and DIREKT authorization are backend-authoritative.
-9. Customer/provider mutations use canonical lifecycle, eligibility, consent, revision and idempotency rules.
-10. Commercial state cannot create or improve verification/publication/ranking authority; real money movement remains separately gated.
-11. W7 closed only after combined Android/backend/database/OpenAPI/web regression, responsive/accessibility/offline/privacy negatives and managed browser evidence passed.
-12. W8 exposed only the reviewed browser/BFF entry point using dedicated least-privilege runtime identity `direkt-cp-web-runtime@direkt-dev-502701.iam.gserviceaccount.com`; the API remained private.
-13. Managed W8 attempt 8 passed on runtime source `c1262ce2bfb76e06d2296d793f1acd6cf5cc3ca2`, run `29721199177`, artifact digest `sha256:00a0d41e8b8824d7764ab9762f05816bac3639d9360ed8926071c346f066e0b0`.
-14. Canonical host `https://app.direkt.forum` passed independent exact-head DNS/TLS/runtime/PWA/BFF/session/privacy/preview verification on `a831b58f8f6684bd345b668c1dfb4d8aab70c5c5`, run `29802524466`, artifact digest `sha256:1fc4c334f79f8f6b0f30fcaf55d2d19ea2941cdebc8c5eabf886a913704ea786`.
-15. `https://direkt.forum/preview/` remains preserved as the explicit synthetic historical/review route.
-16. W8 closure does not authorize real participants, real evidence, production authentication, external communications/payment activation, Phase 11 exit or production release.
+1. PR #268 promoted the cross-surface Design DNA foundation, customer discovery/provider-profile modernization, provider professional workspace, operations mission control and Android visual/product modernization.
+2. The approved execution hybrid is Structured Trust for proof/information architecture, Neighbourhood Marketplace for customer warmth/imagery and Field Utility for provider/operations density.
+3. No blanket `Verified` badge was introduced; check-specific statements, dates/currentness and limitations remain the trust language.
+4. The functional PWA continues through the reviewed same-origin BFF/private-API boundary; no direct privileged Supabase/database path was introduced.
+5. Android remains native Jetpack Compose/Material 3; web/Android share Design DNA and canonical contracts, not UI binaries.
+6. Operations uses a desktop queue → case/evidence → checklist/decision workspace with compact task-focused fallback and synthetic decision controls disabled until authorized.
+7. Historical W4/W7/PWA regression gates were corrected so legitimate post-W7 Android evolution is validated rather than prohibited.
+8. The promoted checkpoint passed exact-head Android, W7, PWA, operations, performance, integration, security, staging, Play readiness, Phase12A reproducibility and final preauthorization gates before merge.
 
 ## Persistent stop conditions
 
@@ -76,14 +57,14 @@ Stop rather than merge if a checkpoint would:
 - regress Android/backend/database/OpenAPI/web/portal required gates;
 - weaken Cloud Run IAM or expose privileged Supabase/database/Storage access;
 - expose private evidence, raw contact data or exact private provider coordinates;
-- fabricate or bypass participant, legal/privacy, payment or production-release gates;
+- fabricate or bypass participant, legal/privacy, payment, AI-provider or production-release gates;
 - accept client-selected provider scope or authorization;
 - allow commercial/payment state to influence verification or public trust claims;
 - allow AI output to become an authoritative verification/trust/payment/dispute/publication decision;
-- store production credentials in source or browser-readable surfaces;
+- store production credentials or model/provider secrets in source or browser-readable surfaces;
 - replace backend-authoritative behavior with static fixtures while claiming runtime completion;
-- mark an integration `ACTIVE` without managed runtime evidence.
+- mark an integration or AI use case `ACTIVE` without exact configured-provider/runtime evidence.
 
 ## Conflict rule
 
-No second agent may write to overlapping runtime-integration surfaces while this claim is active. Read-only review and the isolated VC0 design-control branch may continue. The lock is released only after bounded checkpoints are promoted, final regressions pass, integration status/ledger are reconciled and the next handoff is recorded.
+No second agent may write to overlapping repository surfaces while this VC7–VC8 claim is active. Issue #261 may continue read-only/provider-console/managed-canary evidence gathering that does not mutate overlapping repository code. Any necessary overlapping integration code change must first reconcile ownership in this file. The lane is released only after VC7–VC8 bounded checkpoints are promoted, final regressions pass and the next handoff is recorded.
