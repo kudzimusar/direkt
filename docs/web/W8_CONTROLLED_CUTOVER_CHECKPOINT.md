@@ -1,6 +1,6 @@
 # W8 — Controlled Functional Browser Cutover Checkpoint
 
-**Status:** IMPLEMENTING — functional public `run.app` browser/BFF checkpoint PASS on exact source `c1262ce2bfb76e06d2296d793f1acd6cf5cc3ca2`; canonical-domain routing, DNS, TLS and direct external verification remain before W8 closure  
+**Status:** CLOSED — canonical functional browser host `https://app.direkt.forum` independently verified with DNS resolution, valid HTTPS/TLS, functional runtime/PWA/BFF/session/privacy controls and preserved synthetic `/preview/` route  
 **Workstream:** Functional Android/Web parity  
 **Governing plan:** `docs/web/FUNCTIONAL_PWA_PARITY_IMPLEMENTATION_PLAN.md`
 
@@ -17,6 +17,7 @@ W8 promotes the reviewed `web/direkt-app/` Next.js browser/BFF to a remotely rea
 5. That identity receives only service-level `roles/run.invoker` on the IAM-private `direkt-api` service.
 6. Only the browser/BFF is publicly invokable. Direct unauthenticated canonical-API access remains denied.
 7. Browser authentication remains synthetic for this review checkpoint.
+8. The canonical functional browser hostname is `https://app.direkt.forum`; the static owner-controlled root remains `https://direkt.forum/`.
 
 ## Deployment identity boundary
 
@@ -28,7 +29,7 @@ Service-account ID `direkt-cp-web-runtime` is 21 characters and remains statical
 
 ## Exact-head repository acceptance
 
-The final W8 cutover/evidence mechanism and attempt-8 one-file trigger passed the required exact-head matrix before promotion:
+The W8 cutover/evidence mechanism and managed attempt 8 passed the required exact-head matrix before promotion:
 
 - W2–W8 functional web TypeScript/static/security/build verification;
 - backend/database/OpenAPI regression;
@@ -41,67 +42,66 @@ The final W8 cutover/evidence mechanism and attempt-8 one-file trigger passed th
 - sanitized evidence generation and upload.
 
 Attempt-8 trigger exact head: `cf0afb8ce1249a7988a79c1b20eef528244d60be` — required checks PASS.  
-Attempt-8 merged source: `c1262ce2bfb76e06d2296d793f1acd6cf5cc3ca2`.
-
-## Managed cutover progression
-
-W8 remained fail-closed while defects were isolated and corrected:
-
-- early attempts corrected deployment-identity overreach and the invalid 36-character runtime account ID;
-- dedicated-runtime preflight was isolated, then the valid runtime identity and resource-scoped attach permission were provisioned;
-- deployment, image, private-API invoker, origin and IAM checks were split into auditable phases;
-- browser verification was split into direct-API denial, public shell, PWA/offline, BFF discovery, session/private-state and privacy-evidence phases;
-- a PWA manifest icon mismatch was corrected and permanently regression-tested;
-- attempt 7 passed all runtime checks but exposed an evidence-upload predicate defect;
-- attempt 8 reproduced the full managed verification and successfully promoted the evidence artifact.
-
-Earlier incomplete attempts are diagnostic history only and do not override the final exact-source PASS.
+Attempt-8 merged runtime source: `c1262ce2bfb76e06d2296d793f1acd6cf5cc3ca2`.
 
 ## Managed public functional UI checkpoint — PASS
 
-**Exact merged source:** `c1262ce2bfb76e06d2296d793f1acd6cf5cc3ca2`  
+**Exact merged runtime source:** `c1262ce2bfb76e06d2296d793f1acd6cf5cc3ca2`  
 **Managed run:** `29721199177`  
-**Public functional UI:** `https://direkt-customer-provider-web-6cvw322xxq-an.a.run.app`  
+**Managed public functional UI:** `https://direkt-customer-provider-web-6cvw322xxq-an.a.run.app`  
 **Evidence artifact:** `direkt-w8-functional-cutover-c1262ce2bfb76e06d2296d793f1acd6cf5cc3ca2`  
 **Artifact digest:** `sha256:00a0d41e8b8824d7764ab9762f05816bac3639d9360ed8926071c346f066e0b0`
 
-The managed run passed:
+The managed run passed immutable source verification, the complete functional W2–W8 contract, private API/runtime preflight, bounded runtime-to-API invoker binding, image build/deploy, dedicated runtime attachment, IAM verification, direct unauthenticated API denial, responsive browser reachability, manifest/service-worker/offline behavior, BFF discovery, synthetic session/private-state boundaries, browser privacy scanning and evidence promotion.
 
-1. immutable reviewed-source verification;
-2. functional W2–W8 contract verification;
-3. private API and dedicated-runtime preflight;
-4. service-level runtime-to-API invoker binding;
-5. image build/push and Cloud Run deployment;
-6. dedicated runtime attachment and origin pinning;
-7. final IAM boundary verification;
-8. direct unauthenticated canonical API denial;
-9. public responsive browser shell reachability;
-10. installable manifest, service worker and offline fallback;
-11. BFF discovery traversal into the private API;
-12. synthetic session and unauthenticated private-state boundaries;
-13. browser privacy scan;
-14. evidence artifact upload and trusted-main promotion.
+## Canonical-domain closure — PASS
 
-The sanitized evidence records synthetic-only data mode, 4 backend-managed categories, responsive/PWA/offline PASS, private traffic network-only/no-store controls, private-state denial, privacy PASS, preserved `https://direkt.forum/preview/`, and `canonicalCustomDomainVerified:false`.
+The owner verified base-domain ownership, created the Cloud Run mapping for `app.direkt.forum`, and published the exact required Cloudflare DNS record:
 
-A successful managed `run.app` route gives the owner a directly working functional UI for review, but it does **not** by itself close W8.
+```text
+app CNAME ghs.googlehosted.com.
+```
 
-## Canonical-domain closure still required
+The final canonical-domain verifier was added and exact-head tested through PR #257.
 
-W8 closes only after an approved canonical functional-app route is independently proven with:
+**Canonical URL:** `https://app.direkt.forum`  
+**Verification exact head:** `a831b58f8f6684bd345b668c1dfb4d8aab70c5c5`  
+**Verification workflow run:** `29802524466`  
+**Evidence artifact ID:** `8484244284`  
+**Evidence artifact:** `direkt-w8-canonical-domain-a831b58f8f6684bd345b668c1dfb4d8aab70c5c5`  
+**Artifact digest:** `sha256:1fc4c334f79f8f6b0f30fcaf55d2d19ea2941cdebc8c5eabf886a913704ea786`  
+**Verification mechanism merged:** PR #257 at `a4ad5fa348857f27b5bfef23f6f761deb75859c7`
 
-- DNS resolution;
-- valid TLS;
-- functional runtime health;
-- installable manifest/service worker/offline shell;
-- privacy/cache controls;
-- preserved explicit synthetic `/preview/` route;
-- direct external fetch of the working UI.
+The external verifier independently proved:
 
-The existing `direkt.forum` root is the GitHub Pages/static origin. A server-side functional application cannot safely replace only `/app/` through a simple Cloud Run domain mapping. The remaining closure must use a routing architecture that supports the required separation, such as an approved dedicated app host/subdomain or reviewed edge/load-balancer route.
+1. public DNS resolution for `app.direkt.forum`;
+2. valid HTTPS/TLS hostname and certificate-chain validation through the HTTPS client;
+3. direct reachability of the functional responsive browser shell;
+4. installable DIREKT manifest;
+5. bounded service worker and offline fallback;
+6. canonical-host BFF discovery into the reviewed private API path with `no-store` behavior;
+7. synthetic session bootstrap with no JavaScript-readable access/refresh token material;
+8. unauthenticated private customer/provider state denial;
+9. browser-observable privacy scan with no protected credential/evidence/contact/private-location markers;
+10. preserved and independently reachable `https://direkt.forum/preview/` synthetic review route.
 
-Until that route is configured and externally verified, the working functional review UI remains the managed `run.app` URL, `canonicalCustomDomainVerified` remains false, and W8 remains **IMPLEMENTING**.
+The sanitized evidence records `canonicalCustomDomainVerified:true`, while `realParticipantActivation:false`, `externalPaymentActivation:false`, and `formalProductionRelease:false` remain unchanged.
+
+## W8 exit decision
+
+All documented W8 exit conditions are now met:
+
+- managed functional browser runtime: PASS;
+- dedicated least-privilege runtime identity: PASS;
+- canonical API remains IAM-private: PASS;
+- canonical hostname/DNS/TLS: PASS;
+- responsive runtime/PWA/offline: PASS;
+- BFF/session/private-state/privacy boundaries: PASS;
+- preserved explicit synthetic preview: PASS;
+- direct external canonical-host verification: PASS.
+
+**Decision: W8 CLOSED.** The W0–W8 functional customer/provider browser parity/cutover workstream no longer requires the repository single-lane lock and may release it for the next separately authorized workstream.
 
 ## Non-authorization statement
 
-W8 browser readiness does not authorize real participant admission, production authentication, real money movement, Phase 11 exit or formal production release.
+W8 closure proves browser deployment/readiness only. It does **not** authorize real participant admission, production authentication, real evidence collection, production WhatsApp/FCM/email delivery, real money movement, Phase 11 exit, Play production release or formal Phase 12 production launch. Those remain controlled by their own documented integration, pilot, legal/privacy and release gates.
