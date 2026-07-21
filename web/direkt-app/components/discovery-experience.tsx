@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
+import { DiscoveryAiAssistPanel } from "@/components/discovery-ai-assist-panel";
 import { DirektIcon } from "@/components/ui/direkt-icon";
 import type {
   PublicCategory,
@@ -163,6 +164,22 @@ export function CustomerDiscoveryExperience({
             <DirektIcon name="arrow-right" />
           </button>
         </form>
+
+        <DiscoveryAiAssistPanel
+          need={query}
+          area={area}
+          disabled={loading}
+          onApply={(suggestion) => {
+            setCategory(suggestion.categoryKey);
+            setQuery(
+              suggestion.searchTerms.length > 0
+                ? suggestion.searchTerms.join(" ")
+                : suggestion.categoryName,
+            );
+            setResults(null);
+            setError(null);
+          }}
+        />
 
         <div className="discovery-secondary-controls">
           <label>
