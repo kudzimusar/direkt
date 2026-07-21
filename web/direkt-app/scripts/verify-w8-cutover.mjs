@@ -208,3 +208,69 @@ if (!/^[a-z]([-a-z0-9]*[a-z0-9])$/.test(runtimeId)) {
 requireMarkers(prepare, [
   'case "${phase}" in',
   "preflight) preflight ;;",
+  "api-invoker) bind_api_invoker ;;",
+  "image) build_image ;;",
+  "deploy) deploy_web ;;",
+  "origin) pin_origin ;;",
+  "verify) verify_iam ;;",
+  'select(. == "allUsers" or . == "allAuthenticatedUsers")',
+  "| length == 0",
+]);
+requireMarkers(exercise, [
+  'case "${phase}" in',
+  "api-denial) api_denial ;;",
+  "public-shell) public_shell ;;",
+  "pwa-assets) pwa_assets ;;",
+  "discovery) discovery ;;",
+  "session) session_boundary ;;",
+  "privacy-evidence) privacy_evidence ;;",
+]);
+requireOrderedMarkers(prepare, [
+  'gcloud iam service-accounts describe "${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}"',
+  'gcloud run services add-iam-policy-binding "${GCP_API_SERVICE}"',
+  '--member "serviceAccount:${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}"',
+  "--role roles/run.invoker",
+]);
+requireOrderedMarkers(cleanup, [
+  'gcloud run services remove-iam-policy-binding "${GCP_WEB_SERVICE}"',
+  "--member allUsers --role roles/run.invoker",
+  'gcloud run services remove-iam-policy-binding "${GCP_API_SERVICE}"',
+  '--member "serviceAccount:${GCP_WEB_RUNTIME_SERVICE_ACCOUNT}"',
+  "--role roles/run.invoker",
+]);
+
+process.stdout.write(`${JSON.stringify({
+  event: "w8_cutover_contract_passed",
+  syntheticPreviewPreserved: true,
+  dedicatedRuntimeIdentityRequired: true,
+  runtimeServiceAccountIdValid: true,
+  runtimeIdentityProvisioningExternalized: true,
+  deploymentDoesNotAdministerServiceAccountIam: true,
+  prepareFailurePhasesAreAuditable: true,
+  exerciseFailurePhasesAreAuditable: true,
+  evidenceUploadBoundToEvidenceStep: true,
+  canonicalApiRemainsPrivate: true,
+  publicBrowserBffOnly: true,
+  failClosedRollback: true,
+  exactMainSourceDispatch: true,
+  publicUiEvidenceArtifactRequired: true,
+  canonicalDomainEvidencePassed: true,
+  canonicalDomainStillEvidenceGated: false,
+  w8Closed: true,
+  realParticipantAndProductionGatesRetained: true,
+})}\n`);
+
+function requireMarkers(text, markers) {
+  for (const marker of markers) {
+    if (!text.includes(marker)) throw new Error(`W8 marker missing: ${marker}`);
+  }
+}
+
+function requireOrderedMarkers(text, markers) {
+  let cursor = 0;
+  for (const marker of markers) {
+    const index = text.indexOf(marker, cursor);
+    if (index === -1) throw new Error(`W8 ordered marker missing: ${marker}`);
+    cursor = index + marker.length;
+  }
+}
