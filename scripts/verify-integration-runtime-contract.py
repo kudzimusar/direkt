@@ -47,13 +47,7 @@ def dependencies(path: str) -> set[str]:
 
 
 def scan_tree(relative: str, patterns: dict[str, re.Pattern[str]]) -> list[str]:
-    """Scan deployable client source while excluding tests, fixtures and build tooling.
-
-    Negative security assertions in tests and verifier/build scripts intentionally contain
-    strings such as ``service_role``. Those files are not deployed into the Android, Next.js
-    or static PWA runtime. Runtime/deployable source remains scanned so an actual privileged
-    reference still fails closed.
-    """
+    """Scan deployable client source while excluding tests, fixtures and build tooling."""
     matches: list[str] = []
     root = ROOT / relative
     if not root.exists():
@@ -95,9 +89,16 @@ def main() -> None:
     backend_env = read("backend/direkt-api/src/config/environment.ts")
     backend_pkg = dependencies("backend/direkt-api/package.json")
     portal_pkg = dependencies("admin/direkt-operations-portal/package.json")
+    android_root_gradle = read("android/direkt-app/build.gradle.kts")
     android_gradle = read("android/direkt-app/app/build.gradle.kts")
     android_catalog = read("android/direkt-app/gradle/libs.versions.toml")
     android_manifest = read("android/direkt-app/app/src/main/AndroidManifest.xml")
+    android_main_activity = read(
+        "android/direkt-app/app/src/main/java/com/kudzimusar/direkt/MainActivity.kt"
+    )
+    android_crashlytics = read(
+        "android/direkt-app/app/src/main/java/com/kudzimusar/direkt/observability/CrashlyticsCanary.kt"
+    )
     storage_module = read(
         "backend/direkt-api/src/verification-evidence/verification-evidence.module.ts"
     )
@@ -108,6 +109,7 @@ def main() -> None:
     resend_canary = read(".github/workflows/cloud-run-resend-canary.yml")
     sentry_canary = read(".github/workflows/cloud-run-sentry-canary.yml")
     firebase_distribution = read(".github/workflows/firebase-internal-distribution.yml")
+    crashlytics_canary = read(".github/workflows/firebase-crashlytics-canary.yml")
     openapi_generate = read("backend/direkt-api/scripts/generate-openapi.ts")
     openapi_check = read("backend/direkt-api/scripts/check-openapi.ts")
     platform_migration = read("database/migrations/202607141430_platform_foundation.sql")
@@ -181,21 +183,75 @@ def main() -> None:
         fail("both API and operations portal Cloud Run services must remain private")
     prohibit(cloud_run, r"--allow-unauthenticated", "public Cloud Run invocation")
 
-    # Firebase: Auth is implemented-gated; App Distribution is active; other SDKs remain absent.
+    # Firebase Auth/App Distribution remain intact while RC3 promotes Crashlytics under a
+    # narrower synthetic-only, collection-default-off contract.
     require(android_gradle, "implementation(libs.firebase.auth)", "Firebase Auth Android binding")
+    require(android_gradle, "implementation(libs.firebase.crashlytics)", "Crashlytics Android SDK binding")
+    require(android_catalog, 'firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }', "Crashlytics version-catalog binding")
+    require(android_catalog, 'googleServicesPlugin = "4.5.0"', "Google Services plugin reviewed version")
+    require(android_catalog, 'crashlyticsPlugin = "3.0.7"', "Crashlytics Gradle plugin reviewed version")
+    require(android_root_gradle, "alias(libs.plugins.google.services) apply false", "conditional Google Services plugin classpath")
+    require(android_root_gradle, "alias(libs.plugins.crashlytics) apply false", "conditional Crashlytics plugin classpath")
+    require(android_gradle, 'pluginManager.apply("com.google.gms.google-services")', "managed-canary Google Services plugin application")
+    require(android_gradle, 'pluginManager.apply("com.google.firebase.crashlytics")', "managed-canary Crashlytics plugin application")
+    require(android_gradle, "DIREKT_CRASHLYTICS_BUILD_ENABLED", "Crashlytics build kill switch")
+    require(android_gradle, "DIREKT_CRASHLYTICS_CANARY_ENABLED", "Crashlytics canary kill switch")
+    require(android_gradle, 'crashlyticsDataMode == "synthetic-only"', "Crashlytics synthetic-only build gate")
+    require(android_gradle, 'Regex("^[0-9a-f]{40}$")', "Crashlytics exact-source build gate")
+    require(android_manifest, 'android:name="firebase_crashlytics_collection_enabled"', "Crashlytics manifest collection control")
+    require(android_manifest, 'android:value="false"', "Crashlytics default collection disabled")
+    require(android_main_activity, "CrashlyticsCanary.handleLaunch(this, intent)", "guarded Crashlytics canary launch")
+    for needle in (
+        'const val EXTRA_MODE = "direkt_rc3_crashlytics_canary"',
+        'dataMode == "synthetic-only"',
+        'sourceShaPattern = Regex("^[0-9a-f]{40}$")',
+        'setCrashlyticsCollectionEnabled(true)',
+        'setCrashlyticsCollectionEnabled(false)',
+        'deleteUnsentReports()',
+        'sendUnsentReports()',
+        'DIREKT_RC3_SYNTHETIC_CRASH',
+        'Thread.sleep(20_000L)',
+        'setCustomKey("direkt_data_mode", "synthetic-only")',
+        'setCustomKey("direkt_source_sha"',
+    ):
+        require(android_crashlytics, needle, "Crashlytics synthetic canary invariant")
+    prohibit(android_crashlytics, r"setUserId\s*\(", "Crashlytics stable user identifier")
+    prohibit(android_crashlytics, r"recordException\s*\(", "unbounded application exception telemetry outside canary proof")
+
+    for needle in (
+        "RUN-DIREKT-CRASHLYTICS-CANARY",
+        "com.kudzimusar.direkt.debug",
+        "DIREKT_CRASHLYTICS_BUILD_ENABLED: \"true\"",
+        "DIREKT_CRASHLYTICS_CANARY_ENABLED: \"true\"",
+        "DIREKT_CRASHLYTICS_DATA_MODE: synthetic-only",
+        "DIREKT_SOURCE_SHA: ${{ inputs.source_sha }}",
+        "firebase.googleapis.com/v1beta1/projects/${GCP_PROJECT_ID}/androidApps",
+        "app/google-services.json",
+        "rm -f app/google-services.json",
+        "Crashlytics report upload complete",
+        "ANR in ${FIREBASE_PACKAGE_NAME}",
+        "Real participant telemetry: `disabled`",
+    ):
+        require(crashlytics_canary, needle, "managed Crashlytics canary invariant")
+    require(crashlytics_canary, "workloadIdentityPools/direkt-github/providers/direkt-main", "Crashlytics canary WIF auth")
     require(firebase_distribution, "com.kudzimusar.direkt.debug", "Firebase debug app package")
     require(firebase_distribution, "direkt-internal-testers", "internal tester group")
     require(firebase_distribution, "workloadIdentityPools/direkt-github/providers/direkt-main", "WIF distribution auth")
     require(backend_env, "FIREBASE_AUTH_MODE", "backend Firebase auth gate")
     require(backend_env, "PILOT_ENTRY_APPROVED", "pilot entry gate")
     require(android_manifest, 'android:usesCleartextTraffic="false"', "Android HTTPS-only network policy")
+    require(
+        status,
+        "Firebase Crashlytics | **IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING**",
+        "RC3 source-integrated gated status",
+    )
 
     prohibited_android_integrations = (
-        "firebase-crashlytics",
         "firebase-messaging",
         "play-services-maps",
         "places",
         "sentry",
+        "firebase-analytics",
     )
     catalog_lower = android_catalog.lower()
     gradle_lower = android_gradle.lower()
@@ -203,9 +259,7 @@ def main() -> None:
         if integration in catalog_lower or integration in gradle_lower:
             fail(f"{integration} became Android-runtime active without integration-status promotion")
 
-    # RC2 Sentry is active only for the proven synthetic-only NestJS API/private Next.js
-    # portal managed boundary. Android remains on the separate Crashlytics path and
-    # participant/production telemetry remains disabled.
+    # RC2 Sentry remains active only for the proven synthetic-only API/private portal boundary.
     backend_sentry_dependencies = {dependency for dependency in backend_pkg if "sentry" in dependency.lower()}
     portal_sentry_dependencies = {dependency for dependency in portal_pkg if "sentry" in dependency.lower()}
     if backend_sentry_dependencies != {"@sentry/nestjs"}:
@@ -282,7 +336,7 @@ def main() -> None:
     )
     require(reconciliation, "externally provisioned/runtime-unproven", "historical Maps/Sentry reconciliation truth")
 
-    # RC1 Resend: provider-neutral server adapter, synthetic-only runtime job and outbox semantics.
+    # RC1 Resend remains provider-neutral and synthetic-only.
     require(backend_env, "EMAIL_PROVIDER_MODE", "email provider kill switch")
     require(backend_env, "EMAIL_RESEND_API_KEY", "server-only Resend credential contract")
     require(backend_env, "Email provider activation currently permits synthetic-only data mode", "email data-mode gate")
@@ -336,14 +390,13 @@ def main() -> None:
     require(openapi_check, "Missing required", "OpenAPI contract drift gate")
     require(status, "OpenAPI", "OpenAPI integration status")
 
-    # Communications: transactional outbox foundation exists; RC1 external email is proven only
-    # for the managed synthetic canary while continuous/participant/production delivery stays off.
+    # Communications: transactional outbox exists; provider runtime claims remain explicit.
     require(platform_migration, "CREATE TABLE platform.outbox_events", "transactional outbox")
     require(status, "Transactional outbox", "outbox status")
     require(status, "WhatsApp", "WhatsApp status")
     require(status, "FCM", "FCM status")
 
-    # Payments/registries: domain foundation only, no real provider path.
+    # Payments/registries: domain/sandbox foundation only, no real provider path.
     require(backend_env, "Production payment provider mode must remain disabled", "payment production gate")
     require(openapi_check, "Unapproved payment-provider paths were exposed", "real payment route guard")
     for real_provider in ("mtn momo", "airtel money"):
@@ -387,6 +440,7 @@ def main() -> None:
     print("google_cloud=active_private_staging")
     print("firebase_auth=implemented_gated")
     print("firebase_app_distribution=active_internal")
+    print("firebase_crashlytics=implemented_gated_synthetic_canary_pending_collection_default_off")
     print("maps=external_runtime_unproven_manual_fallback_active")
     print("sentry=active_synthetic_only_managed_canary_cloud_logging_authoritative_participant_disabled")
     print("resend=active_synthetic_only_managed_canary_real_participant_disabled")

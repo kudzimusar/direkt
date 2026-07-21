@@ -10,6 +10,26 @@ plugins {
     alias(libs.plugins.compose)
 }
 
+fun strictBooleanProvider(name: String) =
+    providers.gradleProperty(name)
+        .orElse(providers.environmentVariable(name))
+        .orElse("false")
+        .map { raw ->
+            raw.toBooleanStrictOrNull()
+                ?: error("$name must be exactly 'true' or 'false'")
+        }
+
+val crashlyticsBuildEnabled = strictBooleanProvider("DIREKT_CRASHLYTICS_BUILD_ENABLED").get()
+val crashlyticsCanaryEnabled = strictBooleanProvider("DIREKT_CRASHLYTICS_CANARY_ENABLED").get()
+
+if (crashlyticsBuildEnabled) {
+    require(file("google-services.json").isFile) {
+        "DIREKT_CRASHLYTICS_BUILD_ENABLED=true requires a runner-provisioned app/google-services.json"
+    }
+    pluginManager.apply("com.google.gms.google-services")
+    pluginManager.apply("com.google.firebase.crashlytics")
+}
+
 abstract class VerifyReleaseArtifactSigningContract : DefaultTask() {
     @get:Input
     abstract val configuredReleaseChannel: Property<String>
@@ -144,6 +164,32 @@ val pilotNoticeVersion = providers.gradleProperty("DIREKT_PILOT_NOTICE_VERSION")
     .orElse(providers.environmentVariable("DIREKT_PILOT_NOTICE_VERSION"))
     .orElse("")
     .get()
+val crashlyticsSourceSha = providers.gradleProperty("DIREKT_SOURCE_SHA")
+    .orElse(providers.environmentVariable("DIREKT_SOURCE_SHA"))
+    .orElse("")
+    .get()
+val crashlyticsDataMode = providers.gradleProperty("DIREKT_CRASHLYTICS_DATA_MODE")
+    .orElse(providers.environmentVariable("DIREKT_CRASHLYTICS_DATA_MODE"))
+    .orElse("disabled")
+    .get()
+
+if (crashlyticsCanaryEnabled) {
+    require(crashlyticsBuildEnabled) {
+        "DIREKT_CRASHLYTICS_CANARY_ENABLED=true requires DIREKT_CRASHLYTICS_BUILD_ENABLED=true"
+    }
+    require(releaseChannel == "preauthorization") {
+        "RC3 Crashlytics canary is allowed only in preauthorization builds"
+    }
+    require(crashlyticsDataMode == "synthetic-only") {
+        "RC3 Crashlytics canary requires DIREKT_CRASHLYTICS_DATA_MODE=synthetic-only"
+    }
+    require(Regex("^[0-9a-f]{40}$").matches(crashlyticsSourceSha)) {
+        "RC3 Crashlytics canary requires an exact 40-character DIREKT_SOURCE_SHA"
+    }
+    require(firebaseApiKey.isNotBlank() && firebaseAppId.isNotBlank() && firebaseProjectId.isNotBlank()) {
+        "RC3 Crashlytics canary requires runner-provisioned Firebase app configuration"
+    }
+}
 
 android {
     namespace = "com.kudzimusar.direkt"
@@ -176,6 +222,9 @@ android {
         buildConfigField("String", "DIREKT_FIREBASE_APP_ID", quotedBuildConfig(firebaseAppId))
         buildConfigField("String", "DIREKT_FIREBASE_PROJECT_ID", quotedBuildConfig(firebaseProjectId))
         buildConfigField("String", "DIREKT_PILOT_NOTICE_VERSION", quotedBuildConfig(pilotNoticeVersion))
+        buildConfigField("boolean", "DIREKT_CRASHLYTICS_CANARY_ENABLED", crashlyticsCanaryEnabled.toString())
+        buildConfigField("String", "DIREKT_CRASHLYTICS_SOURCE_SHA", quotedBuildConfig(crashlyticsSourceSha))
+        buildConfigField("String", "DIREKT_CRASHLYTICS_DATA_MODE", quotedBuildConfig(crashlyticsDataMode))
     }
 
     buildTypes {
@@ -253,6 +302,7 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.crashlytics)
 
     testImplementation(libs.junit)
 

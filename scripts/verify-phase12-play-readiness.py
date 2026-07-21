@@ -36,6 +36,7 @@ ALLOWED_RELEASE_DIRECT_MODULES = {
     "androidx.navigation:navigation-compose",
     "com.google.firebase:firebase-auth",
     "com.google.firebase:firebase-bom",
+    "com.google.firebase:firebase-crashlytics",
     "org.jetbrains.kotlin:kotlin-stdlib",
 }
 
@@ -165,6 +166,7 @@ def fallback_declared_modules(gradle: str) -> set[str]:
         "libs.androidx.compose.material3": "androidx.compose.material3:material3",
         "platform(libs.firebase.bom)": "com.google.firebase:firebase-bom",
         "libs.firebase.auth": "com.google.firebase:firebase-auth",
+        "libs.firebase.crashlytics": "com.google.firebase:firebase-crashlytics",
     }
     modules: set[str] = set()
     dependency_call = re.compile(
@@ -250,9 +252,15 @@ def main() -> None:
         "compileSdk = 36",
         "targetSdk = 36",
         "implementation(libs.firebase.auth)",
+        "implementation(libs.firebase.crashlytics)",
+        "DIREKT_CRASHLYTICS_CANARY_ENABLED",
     ):
         if required not in gradle:
             fail(f"Android release source missing required invariant: {required}")
+
+    source_manifest = SOURCE_MANIFEST.read_text(encoding="utf-8")
+    if 'android:name="firebase_crashlytics_collection_enabled"' not in source_manifest or 'android:value="false"' not in source_manifest:
+        fail("Crashlytics SDK is present but automatic collection is not explicitly disabled in the source manifest")
 
     release_modules = release_runtime_modules(gradle)
     unexpected = sorted(release_modules - ALLOWED_RELEASE_DIRECT_MODULES)
@@ -278,6 +286,19 @@ def main() -> None:
     sdk_names = {item.get("sdk") for item in data_safety.get("sdk_inventory", [])}
     if "Firebase Authentication" not in sdk_names:
         fail("Firebase Authentication dependency exists but is absent from Data Safety SDK inventory")
+    if "Firebase Crashlytics" not in sdk_names:
+        fail("Firebase Crashlytics dependency exists but is absent from Data Safety SDK inventory")
+
+    crashlytics_inventory = next(
+        (item for item in data_safety.get("sdk_inventory", []) if item.get("sdk") == "Firebase Crashlytics"),
+        None,
+    )
+    if not isinstance(crashlytics_inventory, dict):
+        fail("Firebase Crashlytics SDK inventory entry is invalid")
+    if crashlytics_inventory.get("automatic_collection_default") is not False:
+        fail("Crashlytics Data Safety inventory must record automatic collection default-off")
+    if crashlytics_inventory.get("production_participant_collection_authorized") is not False:
+        fail("Crashlytics Data Safety inventory must not authorize production participant telemetry")
 
     data_entries = data_safety.get("play_data_types", [])
     if not any("Phone number" in item.get("play_category", "") for item in data_entries):
@@ -322,6 +343,9 @@ def main() -> None:
     print("release_selected_direct_modules=" + ",".join(sorted(release_modules)))
     print("play_sensitive_permission_form_expected=false")
     print("data_safety_inventory_present=true")
+    print("crashlytics_sdk_present=true")
+    print("crashlytics_automatic_collection_default=false")
+    print("crashlytics_production_participant_collection_authorized=false")
     print("account_deletion_end_to_end=false")
     print("synthetic_preview_release_blocker=" + ("true" if synthetic_markers else "false"))
     for marker in synthetic_markers:
