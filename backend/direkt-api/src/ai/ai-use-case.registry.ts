@@ -69,7 +69,7 @@ const USE_CASES: Record<AiUseCaseKey, AiUseCaseDefinition> = {
     evaluationSuite: 'test/ai/public-support.evaluation.json',
     promptVersion: 'customer-support-public-v1',
     killSwitchEnv: 'DIREKT_AI_PUBLIC_SUPPORT_MODE',
-    activation: 'planned',
+    activation: 'implemented',
   },
   'provider.onboarding.guide': {
     key: 'provider.onboarding.guide',
@@ -89,7 +89,7 @@ const USE_CASES: Record<AiUseCaseKey, AiUseCaseDefinition> = {
     evaluationSuite: 'test/ai/provider-onboarding.evaluation.json',
     promptVersion: 'provider-onboarding-guide-v1',
     killSwitchEnv: 'DIREKT_AI_PROVIDER_GUIDE_MODE',
-    activation: 'planned',
+    activation: 'implemented',
   },
   'provider.profile.draft': {
     key: 'provider.profile.draft',
@@ -109,7 +109,7 @@ const USE_CASES: Record<AiUseCaseKey, AiUseCaseDefinition> = {
     evaluationSuite: 'test/ai/provider-profile-draft.evaluation.json',
     promptVersion: 'provider-profile-draft-v1',
     killSwitchEnv: 'DIREKT_AI_PROVIDER_DRAFT_MODE',
-    activation: 'planned',
+    activation: 'implemented',
   },
   'operations.case.summary': {
     key: 'operations.case.summary',
