@@ -6,6 +6,7 @@ export type PaymentProviderMode = 'synthetic' | 'disabled';
 export type FirebaseAuthMode = 'disabled' | 'firebase';
 export type AiProviderMode = 'disabled' | 'gemini';
 export type AiFallbackProviderMode = 'disabled' | 'groq';
+export type EmailProviderMode = 'disabled' | 'resend';
 export type DirektTrafficMode = 'disabled' | 'internal' | 'synthetic-public' | 'controlled-pilot';
 export type DirektDataMode = 'synthetic-only' | 'controlled-pilot' | 'production';
 export type DirektDeploymentEnvironment =
@@ -55,6 +56,12 @@ export interface DirektEnvironment {
   AI_GROQ_MODEL: string;
   AI_REQUEST_TIMEOUT_MS: number;
   AI_MAX_INPUT_CHARS: number;
+  EMAIL_PROVIDER_MODE: EmailProviderMode;
+  EMAIL_RESEND_API_KEY?: string;
+  EMAIL_FROM_ADDRESS: string;
+  EMAIL_REQUEST_TIMEOUT_MS: number;
+  EMAIL_MAX_ATTEMPTS: number;
+  EMAIL_OUTBOX_LOCK_TIMEOUT_MS: number;
 }
 
 const databaseUrlSchema = Joi.string().uri({ scheme: ['postgresql', 'postgres'] });
@@ -64,6 +71,7 @@ const providerModelName = Joi.string().trim().min(3).max(160);
 const supabaseServerKey = Joi.string().min(20).max(2048);
 const bucketName = Joi.string().pattern(/^[a-z0-9][a-z0-9-]{1,62}$/);
 const firebaseProjectId = Joi.string().pattern(/^[a-z][a-z0-9-]{4,29}$/);
+const resendFromAddress = Joi.string().trim().min(10).max(320);
 
 export const environmentSchema = Joi.object<DirektEnvironment>({
   NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
@@ -202,6 +210,20 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
   AI_GROQ_MODEL: providerModelName.default('openai/gpt-oss-20b'),
   AI_REQUEST_TIMEOUT_MS: Joi.number().integer().min(1000).max(30000).default(8000),
   AI_MAX_INPUT_CHARS: Joi.number().integer().min(256).max(20000).default(8000),
+  EMAIL_PROVIDER_MODE: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.valid('disabled').default('disabled'),
+    otherwise: Joi.valid('disabled', 'resend').default('disabled'),
+  }),
+  EMAIL_RESEND_API_KEY: providerApiKey.when('EMAIL_PROVIDER_MODE', {
+    is: 'resend',
+    then: providerApiKey.required(),
+    otherwise: providerApiKey.optional(),
+  }),
+  EMAIL_FROM_ADDRESS: resendFromAddress.default('DIREKT <canary@notify.direkt.forum>'),
+  EMAIL_REQUEST_TIMEOUT_MS: Joi.number().integer().min(1000).max(30000).default(8000),
+  EMAIL_MAX_ATTEMPTS: Joi.number().integer().min(1).max(6).default(4),
+  EMAIL_OUTBOX_LOCK_TIMEOUT_MS: Joi.number().integer().min(30000).max(900000).default(300000),
 }).custom((value: DirektEnvironment, helpers) => {
   if (
     value.EVIDENCE_STORAGE_PROVIDER === 'supabase' &&
@@ -223,6 +245,11 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
         'Production AI provider mode must remain disabled until a later privacy and release gate.',
     });
   }
+  if (value.NODE_ENV === 'production' && value.EMAIL_PROVIDER_MODE !== 'disabled') {
+    return helpers.message({
+      custom: 'Production email provider mode must remain disabled until a later approval gate.',
+    });
+  }
   if (value.AI_PROVIDER_MODE !== 'disabled' && value.DIREKT_DATA_MODE !== 'synthetic-only') {
     return helpers.message({
       custom: 'AI provider activation currently permits synthetic-only data mode.',
@@ -231,6 +258,19 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
   if (value.AI_FALLBACK_PROVIDER !== 'disabled' && value.AI_PROVIDER_MODE === 'disabled') {
     return helpers.message({
       custom: 'AI fallback provider cannot be enabled while the primary AI provider is disabled.',
+    });
+  }
+  if (value.EMAIL_PROVIDER_MODE !== 'disabled' && value.DIREKT_DATA_MODE !== 'synthetic-only') {
+    return helpers.message({
+      custom: 'Email provider activation currently permits synthetic-only data mode.',
+    });
+  }
+  if (
+    value.EMAIL_PROVIDER_MODE === 'resend' &&
+    !/^[^<>]*<[^@\s<>]+@notify\.direkt\.forum>$/.test(value.EMAIL_FROM_ADDRESS)
+  ) {
+    return helpers.message({
+      custom: 'Resend sender must use the verified notify.direkt.forum domain.',
     });
   }
   if (
@@ -304,6 +344,12 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
       return helpers.message({
         custom:
           'Controlled-pilot data mode requires AI providers to remain disabled until separately approved.',
+      });
+    }
+    if (value.EMAIL_PROVIDER_MODE !== 'disabled') {
+      return helpers.message({
+        custom:
+          'Controlled-pilot data mode requires external email delivery to remain disabled until separately approved.',
       });
     }
     if (!['disabled', 'controlled-pilot'].includes(value.DIREKT_TRAFFIC_MODE)) {
