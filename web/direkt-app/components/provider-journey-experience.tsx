@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { ProviderAiAssistPanel } from "@/components/provider-ai-assist-panel";
 import { DirektIcon } from "@/components/ui/direkt-icon";
 import type { PublicCategory } from "@/lib/contracts/discovery";
 import type {
@@ -147,7 +148,11 @@ export function ProviderJourneyExperience({
         </p>
       ) : null}
       {destination === "discover" ? (
-        <ProviderOverview state={state} mutate={mutateAndReload} />
+        <ProviderOverview
+          state={state}
+          mutate={mutateAndReload}
+          csrfToken={csrfToken}
+        />
       ) : null}
       {destination === "saved" ? (
         <ProviderEvidence
@@ -169,9 +174,11 @@ export function ProviderJourneyExperience({
 function ProviderOverview({
   state,
   mutate,
+  csrfToken,
 }: {
   state: ProviderStateResponse;
   mutate: (payload: Record<string, unknown>, success: string) => Promise<void>;
+  csrfToken: string | null;
 }) {
   const workspace = state.workspace;
   const [categories, setCategories] = useState<PublicCategory[]>([]);
@@ -307,6 +314,8 @@ function ProviderOverview({
           </ul>
         )}
       </article>
+
+      <ProviderAiAssistPanel csrfToken={csrfToken} />
 
       <article className="journey-card provider-action-card">
         <div className="card-icon-heading">

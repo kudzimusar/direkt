@@ -169,11 +169,11 @@ private fun ProviderUploadRecoveryCard(
         }
         Spacer(Modifier.height(8.dp))
         Text(
-            snapshot.logicalIntentId?.let { "Logical intent ${it.take(8)}…" }
+            snapshot.logicalIntentId?.let { "Upload reference ${it.take(8)}…" }
                 ?: "No upload intent has been created.",
         )
         snapshot.lastErrorCode?.let { errorCode ->
-            Text("Recovery code: $errorCode")
+            Text("Retry status: $errorCode")
         }
         Spacer(Modifier.height(10.dp))
 
@@ -188,9 +188,9 @@ private fun ProviderUploadRecoveryCard(
             ) {
                 Text(
                     if (snapshot.state == ProviderUploadState.NotStarted) {
-                        "Start synthetic upload"
+                        "Prepare evidence upload"
                     } else {
-                        "Start another synthetic upload"
+                        "Prepare another evidence upload"
                     },
                 )
             }
@@ -207,7 +207,7 @@ private fun ProviderUploadRecoveryCard(
                         modifier = Modifier.testTag("provider-upload-interrupt"),
                         onClick = onInterrupt,
                     ) {
-                        Text("Simulate interruption")
+                        Text("Save and retry later")
                     }
                 }
                 Spacer(Modifier.height(8.dp))
@@ -247,7 +247,7 @@ private fun ProviderVerificationTimeline(workspace: ProviderWorkspaceSnapshot) {
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         ProviderCard {
-            Text("Provider-safe verification timeline", style = MaterialTheme.typography.titleLarge)
+            Text("Verification progress", style = MaterialTheme.typography.titleLarge)
             Text(
                 "Events omit reviewer identities, private rationale, hashes and storage references.",
                 style = MaterialTheme.typography.bodySmall,
@@ -256,7 +256,7 @@ private fun ProviderVerificationTimeline(workspace: ProviderWorkspaceSnapshot) {
         }
         TimelineItem(
             title = "Correction required",
-            detail = "Identity evidence needs a clearer synthetic image.",
+            detail = "Identity evidence needs a clearer image.",
             limitation = "This is scoped to one identity check, not the whole provider.",
         )
         TimelineItem(
@@ -295,10 +295,10 @@ private fun ProviderProfileWorkspace(workspace: ProviderWorkspaceSnapshot) {
         }
         ProviderLocationBoundaryCard(workspace.location)
         ProviderCard {
-            Text("Later-phase boundaries", style = MaterialTheme.typography.titleMedium)
+            Text("Additional workspace features", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
             workspace.deferredSurfaces.forEach { surface ->
-                Text("${surface.label}: ${surface.state} · ${surface.phaseOwner}")
+                Text("${surface.label}: ${surface.state}")
                 Text(
                     "Mutation allowed: ${if (surface.mutationAllowed) "Yes" else "No"}",
                     style = MaterialTheme.typography.bodySmall,
@@ -335,7 +335,7 @@ private fun ProviderLocationBoundaryCard(location: ProviderWorkspaceLocationBoun
         Text("Location privacy boundary", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(6.dp))
         Text(location.safeSummary)
-        location.publicLocality?.let { locality -> Text("Public-safe locality: $locality") }
+        location.publicLocality?.let { locality -> Text("Public locality: $locality") }
         Spacer(Modifier.height(6.dp))
         Text(
             "Private base, consented public premises and service area are separate records. Coordinates are not displayed here.",
@@ -372,11 +372,11 @@ private fun ProviderTrustBoundary(message: String) {
         ),
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text("Provider trust boundary", fontWeight = FontWeight.Bold)
+            Text("What this workspace can and cannot change", fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(6.dp))
             Text(message)
             Text(
-                "No real evidence, private coordinates, production storage, messaging, payment or public traffic is connected.",
+                "This controlled review build uses fictional data. Trust decisions, private location, payments and publication remain backend-controlled.",
             )
         }
     }

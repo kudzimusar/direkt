@@ -7,6 +7,7 @@ on:
       - build/android-v1
     paths:
       - "web/direkt-app/**"
+      - "admin/direkt-operations-portal/**"
       - "backend/direkt-api/src/auth/**"
       - "backend/direkt-api/src/authorization/**"
       - "backend/direkt-api/src/discovery/**"
@@ -14,6 +15,7 @@ on:
       - "backend/direkt-api/src/provider-workspace/**"
       - "backend/direkt-api/src/provider-core/provider.dto.ts"
       - "backend/direkt-api/src/commercial/**"
+      - "scripts/vc8/**"
       - "docs/web/**"
       - "docs/architecture/FUNCTIONAL_PWA_ARCHITECTURE_DECISION.md"
       - "docs/testing/FUNCTIONAL_PWA_NO_REGRESSION_TEST_PLAN.md"
@@ -26,6 +28,7 @@ on:
       - main
     paths:
       - "web/direkt-app/**"
+      - "admin/direkt-operations-portal/**"
       - "backend/direkt-api/src/auth/**"
       - "backend/direkt-api/src/authorization/**"
       - "backend/direkt-api/src/discovery/**"
@@ -33,6 +36,7 @@ on:
       - "backend/direkt-api/src/provider-workspace/**"
       - "backend/direkt-api/src/provider-core/provider.dto.ts"
       - "backend/direkt-api/src/commercial/**"
+      - "scripts/vc8/**"
       - "docs/web/**"
       - "docs/architecture/FUNCTIONAL_PWA_ARCHITECTURE_DECISION.md"
       - "docs/testing/FUNCTIONAL_PWA_NO_REGRESSION_TEST_PLAN.md"
@@ -91,6 +95,8 @@ jobs:
         run: npm run verify:commercial
       - name: Verify W7 responsive, accessibility, offline and parity closure contract
         run: npm run verify:w7
+      - name: Verify VC8 AI, accessibility, fallback and privacy quality contract
+        run: npm run verify:vc8
       - name: Build functional web client
         env:
           DIREKT_WEB_API_MODE: disabled
@@ -100,6 +106,71 @@ jobs:
       - name: Ensure build did not rewrite tracked source
         working-directory: .
         run: git diff --exit-code -- web/direkt-app
+
+  visual-evidence:
+    name: Capture synthetic responsive product evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      - name: Verify exact checkout
+        run: test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Install locked product dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts --no-audit --no-fund --prefix web/direkt-app
+          npm ci --ignore-scripts --no-audit --no-fund --prefix admin/direkt-operations-portal
+      - name: Install isolated Chromium screenshot tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/vc8-playwright"
+          npm install --prefix "${RUNNER_TEMP}/vc8-playwright" --package-lock=false --no-save playwright@1.55.0
+          node "${RUNNER_TEMP}/vc8-playwright/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Start synthetic public-safe fixture and product servers
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/vc8/fixture-api.cjs > "${RUNNER_TEMP}/vc8-fixture.log" 2>&1 &
+          (
+            cd web/direkt-app
+            DIREKT_WEB_API_MODE=public DIREKT_API_BASE_URL=http://127.0.0.1:4100 DIREKT_WEB_AUTH_MODE=disabled NEXT_TELEMETRY_DISABLED=1 npm run dev -- --hostname 127.0.0.1 --port 3100
+          ) > "${RUNNER_TEMP}/vc8-web.log" 2>&1 &
+          (
+            cd admin/direkt-operations-portal
+            NEXT_TELEMETRY_DISABLED=1 npm run dev -- --hostname 127.0.0.1 --port 3200
+          ) > "${RUNNER_TEMP}/vc8-ops.log" 2>&1 &
+          for url in http://127.0.0.1:3100 http://127.0.0.1:3200/operations; do
+            for attempt in $(seq 1 60); do
+              if curl --fail --silent --show-error "$url" >/dev/null; then break; fi
+              if [[ "$attempt" == "60" ]]; then
+                cat "${RUNNER_TEMP}/vc8-fixture.log" || true
+                cat "${RUNNER_TEMP}/vc8-web.log" || true
+                cat "${RUNNER_TEMP}/vc8-ops.log" || true
+                exit 1
+              fi
+              sleep 2
+            done
+          done
+      - name: Capture exact-head customer, provider, help and operations screenshots
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/vc8-playwright/node_modules/playwright
+          VC8_EVIDENCE_DIR: visual-evidence/web
+        run: node scripts/vc8/capture-web-evidence.cjs
+      - name: Upload responsive visual evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-vc8-web-visual-evidence-${{ env.SOURCE_SHA }}
+          path: visual-evidence/web/**
+          if-no-files-found: error
+          retention-days: 30
 
   android-cross-client-handoff:
     name: Record post-W7 Android cross-client validation ownership

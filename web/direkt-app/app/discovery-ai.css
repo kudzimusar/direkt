@@ -1,0 +1,152 @@
+.discovery-ai-assist {
+  margin-top: 18px;
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border));
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--mint) 34%, var(--surface));
+  padding: 16px;
+}
+
+.discovery-ai-assist-intro,
+.discovery-ai-assist-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.discovery-ai-assist-intro p,
+.discovery-ai-assist-heading p,
+.discovery-ai-suggestion-card p,
+.discovery-ai-assist-state p,
+.discovery-ai-empty,
+.discovery-ai-assist-hint {
+  margin: 4px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.discovery-ai-assist-trigger,
+.discovery-ai-apply {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--primary) 32%, var(--border));
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--primary);
+  padding: 10px 14px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.discovery-ai-assist-trigger:hover:not(:disabled),
+.discovery-ai-apply:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mint) 56%, var(--surface));
+}
+
+.discovery-ai-assist-trigger:focus-visible,
+.discovery-ai-apply:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 38%, transparent);
+  outline-offset: 3px;
+}
+
+.discovery-ai-assist-trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.discovery-ai-assist-hint {
+  font-size: 13px;
+}
+
+.discovery-ai-assist-result,
+.discovery-ai-assist-state {
+  margin-top: 14px;
+}
+
+.discovery-ai-assist-state {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 12px 14px;
+}
+
+.discovery-ai-source-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  color: var(--primary);
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.discovery-ai-assist-heading h3,
+.discovery-ai-suggestion-card h4 {
+  margin: 7px 0 0;
+}
+
+.discovery-ai-clarification {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 14px;
+  border-left: 3px solid var(--primary);
+  background: var(--surface);
+  padding: 11px 13px;
+  line-height: 1.5;
+}
+
+.discovery-ai-suggestions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.discovery-ai-suggestion-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 14px;
+}
+
+.discovery-ai-apply {
+  width: 100%;
+}
+
+@media (max-width: 860px) {
+  .discovery-ai-suggestions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .discovery-ai-assist-intro,
+  .discovery-ai-assist-heading {
+    flex-direction: column;
+  }
+
+  .discovery-ai-assist-trigger {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .discovery-ai-assist-trigger,
+  .discovery-ai-apply {
+    scroll-behavior: auto;
+  }
+}
