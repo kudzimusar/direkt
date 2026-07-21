@@ -1,4 +1,5 @@
 name: DIREKT VC8 visual evidence
+# VC8 exact-head synthetic/public-safe screenshot evidence v1.
 
 on:
   pull_request:
@@ -133,30 +134,22 @@ jobs:
           server.listen(4100, '127.0.0.1');
           NODE
           node "${RUNNER_TEMP}/vc8-fixture-api.cjs" > "${RUNNER_TEMP}/vc8-fixture-api.log" 2>&1 &
-          echo $! > "${RUNNER_TEMP}/vc8-fixture-api.pid"
       - name: Start customer/provider web and operations portal
         shell: bash
         run: |
           set -euo pipefail
           (
             cd web/direkt-app
-            DIREKT_WEB_API_MODE=public \
-            DIREKT_API_BASE_URL=http://127.0.0.1:4100 \
-            DIREKT_WEB_AUTH_MODE=disabled \
-            NEXT_TELEMETRY_DISABLED=1 \
-            npm run dev -- --hostname 127.0.0.1 --port 3100
+            DIREKT_WEB_API_MODE=public DIREKT_API_BASE_URL=http://127.0.0.1:4100 DIREKT_WEB_AUTH_MODE=disabled NEXT_TELEMETRY_DISABLED=1 npm run dev -- --hostname 127.0.0.1 --port 3100
           ) > "${RUNNER_TEMP}/vc8-web.log" 2>&1 &
-          echo $! > "${RUNNER_TEMP}/vc8-web.pid"
           (
             cd admin/direkt-operations-portal
             NEXT_TELEMETRY_DISABLED=1 npm run dev -- --hostname 127.0.0.1 --port 3200
           ) > "${RUNNER_TEMP}/vc8-ops.log" 2>&1 &
-          echo $! > "${RUNNER_TEMP}/vc8-ops.pid"
           for url in http://127.0.0.1:3100 http://127.0.0.1:3200/operations; do
             for attempt in $(seq 1 60); do
               if curl --fail --silent --show-error "$url" >/dev/null; then break; fi
               if [[ "$attempt" == "60" ]]; then
-                echo "::error title=Visual evidence server unavailable::$url did not become ready"
                 cat "${RUNNER_TEMP}/vc8-web.log" || true
                 cat "${RUNNER_TEMP}/vc8-ops.log" || true
                 exit 1
@@ -183,48 +176,37 @@ jobs:
             await desktop.getByRole('button', { name: 'Find providers' }).click();
             await desktop.getByRole('heading', { name: 'Synthetic Copperbelt Repairs' }).waitFor();
             await desktop.screenshot({ path: 'visual-evidence/web/customer-discovery-desktop.png', fullPage: true });
-
             await desktop.goto('http://127.0.0.1:3100/providers/11111111-1111-4111-8111-111111111111', { waitUntil: 'networkidle' });
             await desktop.getByRole('heading', { name: 'Synthetic Copperbelt Repairs' }).waitFor();
             await desktop.screenshot({ path: 'visual-evidence/web/provider-public-profile-desktop.png', fullPage: true });
-
             await desktop.goto('http://127.0.0.1:3100/?view=account', { waitUntil: 'networkidle' });
             await desktop.getByLabel('Your question').fill('How do provider trust checks work?');
             await desktop.getByRole('button', { name: 'Get help' }).click();
             await desktop.getByText('How DIREKT trust information works').waitFor();
             await desktop.screenshot({ path: 'visual-evidence/web/account-help-desktop.png', fullPage: true });
-
             const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
             await mobile.goto('http://127.0.0.1:3100', { waitUntil: 'networkidle' });
             await mobile.getByLabel('Service or problem').fill('leaking pipe');
             await mobile.getByRole('button', { name: 'Help me choose' }).click();
             await mobile.getByText('DIREKT category match').waitFor();
             await mobile.screenshot({ path: 'visual-evidence/web/customer-ai-fallback-mobile.png', fullPage: true });
-
             await desktop.goto('http://127.0.0.1:3200/operations', { waitUntil: 'networkidle' });
             await desktop.screenshot({ path: 'visual-evidence/web/operations-mission-control-desktop.png', fullPage: true });
             await desktop.goto('http://127.0.0.1:3200/operations/evidence-review', { waitUntil: 'networkidle' });
             await desktop.screenshot({ path: 'visual-evidence/web/operations-evidence-review-desktop.png', fullPage: true });
-
-            fs.writeFileSync('visual-evidence/web/metadata.json', JSON.stringify({
-              sourceSha: process.env.SOURCE_SHA,
-              data: 'synthetic/public-safe only',
-              designDirection: 'Structured Trust + Neighbourhood Marketplace + Field Utility',
-              captures: [
-                { file: 'customer-discovery-desktop.png', viewport: '1440x1000', state: 'search results' },
-                { file: 'provider-public-profile-desktop.png', viewport: '1440x1000', state: 'check-specific trust profile' },
-                { file: 'account-help-desktop.png', viewport: '1440x1000', state: 'deterministic grounded help fallback' },
-                { file: 'customer-ai-fallback-mobile.png', viewport: '390x844', state: 'AI unavailable/deterministic category fallback' },
-                { file: 'operations-mission-control-desktop.png', viewport: '1440x1000', state: 'mission control' },
-                { file: 'operations-evidence-review-desktop.png', viewport: '1440x1000', state: 'restricted-AI inactive evidence review' }
-              ]
-            }, null, 2));
+            fs.writeFileSync('visual-evidence/web/metadata.json', JSON.stringify({ sourceSha: process.env.SOURCE_SHA, data: 'synthetic/public-safe only', designDirection: 'Structured Trust + Neighbourhood Marketplace + Field Utility', captures: [
+              { file: 'customer-discovery-desktop.png', viewport: '1440x1000', state: 'search results' },
+              { file: 'provider-public-profile-desktop.png', viewport: '1440x1000', state: 'check-specific trust profile' },
+              { file: 'account-help-desktop.png', viewport: '1440x1000', state: 'deterministic grounded help fallback' },
+              { file: 'customer-ai-fallback-mobile.png', viewport: '390x844', state: 'AI unavailable/deterministic category fallback' },
+              { file: 'operations-mission-control-desktop.png', viewport: '1440x1000', state: 'mission control' },
+              { file: 'operations-evidence-review-desktop.png', viewport: '1440x1000', state: 'restricted-AI inactive evidence review' }
+            ] }, null, 2));
             await browser.close();
           })().catch((error) => { console.error(error); process.exit(1); });
           NODE
           SOURCE_SHA="${SOURCE_SHA}" node "${RUNNER_TEMP}/capture-vc8.cjs"
-      - name: Upload web and operations visual evidence
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: direkt-vc8-web-visual-evidence-${{ env.SOURCE_SHA }}
           path: visual-evidence/web/**
@@ -285,7 +267,6 @@ jobs:
           adb shell monkey -p com.kudzimusar.direkt.debug -c android.intent.category.LAUNCHER 1 >/dev/null
           sleep 4
           adb exec-out screencap -p > visual-evidence/android/android-customer-discovery.png
-
           tap_text() {
             local target="$1"
             adb shell uiautomator dump /sdcard/window.xml >/dev/null
@@ -307,26 +288,14 @@ jobs:
             adb shell input tap "$x" "$y"
             sleep 2
           }
-
           tap_text "Provider"
           adb exec-out screencap -p > visual-evidence/android/android-provider-overview.png
           tap_text "Evidence"
           adb exec-out screencap -p > visual-evidence/android/android-provider-evidence.png
-
           cat > visual-evidence/android/metadata.json <<EOF
-          {
-            "sourceSha": "${SOURCE_SHA}",
-            "data": "synthetic review data only",
-            "device": "Pixel 2 class emulator / Android API 35",
-            "captures": [
-              {"file":"android-customer-discovery.png","state":"customer discovery"},
-              {"file":"android-provider-overview.png","state":"provider overview"},
-              {"file":"android-provider-evidence.png","state":"provider evidence/recovery"}
-            ]
-          }
+          {"sourceSha":"${SOURCE_SHA}","data":"synthetic review data only","device":"Pixel 2 class emulator / Android API 35","captures":[{"file":"android-customer-discovery.png","state":"customer discovery"},{"file":"android-provider-overview.png","state":"provider overview"},{"file":"android-provider-evidence.png","state":"provider evidence/recovery"}]}
           EOF
-      - name: Upload Android visual evidence
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: direkt-vc8-android-visual-evidence-${{ env.SOURCE_SHA }}
           path: visual-evidence/android/**
