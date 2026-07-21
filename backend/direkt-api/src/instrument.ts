@@ -18,11 +18,16 @@ if (config.enabled) {
       return null;
     },
     beforeSend(event) {
-      event.user = undefined;
-      event.request = event.request?.method ? { method: event.request.method } : undefined;
-      event.contexts = undefined;
-      event.extra = undefined;
-      event.breadcrumbs = undefined;
+      delete event.user;
+      const requestMethod = event.request?.method;
+      if (requestMethod) {
+        event.request = { method: requestMethod };
+      } else {
+        delete event.request;
+      }
+      delete event.contexts;
+      delete event.extra;
+      delete event.breadcrumbs;
 
       if (event.message) {
         event.message = redactTelemetryText(event.message);
