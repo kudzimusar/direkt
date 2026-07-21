@@ -1,0 +1,146 @@
+name: DIREKT RC3 Crashlytics managed proof bridge
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - "docs/integrations/RC3_CRASHLYTICS_CANARY_AUTHORIZATION.md"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-rc3-crashlytics-managed-proof-bridge
+  cancel-in-progress: false
+
+jobs:
+  dispatch-and-watch:
+    name: Dispatch and verify managed RC3 Crashlytics canary
+    if: >-
+      github.head_ref == 'integration/rc3-crashlytics-managed-run' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      actions: write
+      issues: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      SOURCE_SHA: ${{ github.event.pull_request.base.sha }}
+      CANARY_WORKFLOW: firebase-crashlytics-canary.yml
+      ISSUE_NUMBER: "261"
+
+    steps:
+      - name: Validate bounded RC3 trigger
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.event_name }}" = "pull_request"
+          test "${{ github.head_ref }}" = "integration/rc3-crashlytics-managed-run"
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          test "${{ github.event.pull_request.head.repo.full_name }}" = "${REPO}"
+
+      - name: Dispatch exact-source managed Crashlytics canary
+        id: dispatch
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          previous_id="$(gh run list \
+            --repo "${REPO}" \
+            --workflow "${CANARY_WORKFLOW}" \
+            --branch main \
+            --event workflow_dispatch \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId // 0')"
+
+          gh workflow run "${CANARY_WORKFLOW}" \
+            --repo "${REPO}" \
+            --ref main \
+            -f confirmation=RUN-DIREKT-CRASHLYTICS-CANARY \
+            -f source_sha="${SOURCE_SHA}"
+
+          run_id=""
+          for attempt in $(seq 1 30); do
+            runs_json="$(gh run list \
+              --repo "${REPO}" \
+              --workflow "${CANARY_WORKFLOW}" \
+              --branch main \
+              --event workflow_dispatch \
+              --limit 10 \
+              --json databaseId,headSha)"
+            run_id="$(jq -r \
+              --arg sha "${SOURCE_SHA}" \
+              --argjson previous "${previous_id}" \
+              '[.[] | select(.headSha == $sha and .databaseId != $previous)][0].databaseId // empty' \
+              <<< "${runs_json}")"
+            if [[ -n "${run_id}" ]]; then
+              break
+            fi
+            sleep 2
+          done
+
+          if [[ -z "${run_id}" ]]; then
+            gh issue comment "${ISSUE_NUMBER}" \
+              --repo "${REPO}" \
+              --body "RC3 managed-proof bridge could not resolve the Crashlytics canary run for exact merged source \`${SOURCE_SHA}\`. No RC3 ACTIVE claim was made."
+            exit 1
+          fi
+
+          echo "run_id=${run_id}" >> "${GITHUB_OUTPUT}"
+          echo "Managed Crashlytics canary run: ${run_id}"
+
+      - name: Record managed canary start
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_id="${{ steps.dispatch.outputs.run_id }}"
+          gh issue comment "${ISSUE_NUMBER}" \
+            --repo "${REPO}" \
+            --body "RC3 managed Crashlytics canary dispatched for exact merged source \`${SOURCE_SHA}\`. Run: \`${run_id}\`. Boundary is synthetic-only debug crash/ANR proof; participant/production telemetry remains disabled."
+
+      - name: Wait for managed canary result
+        id: watch
+        shell: bash
+        run: |
+          set +e
+          run_id="${{ steps.dispatch.outputs.run_id }}"
+          gh run watch "${run_id}" --repo "${REPO}" --exit-status
+          status=$?
+          set -e
+          echo "watch_status=${status}" >> "${GITHUB_OUTPUT}"
+
+      - name: Publish sanitized managed canary receipt
+        if: always() && steps.dispatch.outputs.run_id != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_id="${{ steps.dispatch.outputs.run_id }}"
+          run_json="$(gh run view "${run_id}" --repo "${REPO}" --json status,conclusion,url,headSha)"
+          conclusion="$(jq -r '.conclusion // "unknown"' <<< "${run_json}")"
+          run_url="$(jq -r '.url' <<< "${run_json}")"
+          head_sha="$(jq -r '.headSha' <<< "${run_json}")"
+
+          if [[ "${head_sha}" != "${SOURCE_SHA}" ]]; then
+            conclusion="source-mismatch"
+          fi
+
+          gh issue comment "${ISSUE_NUMBER}" \
+            --repo "${REPO}" \
+            --body "RC3 managed Crashlytics canary result for exact source \`${SOURCE_SHA}\`: **${conclusion}**. Run \`${run_id}\`: ${run_url}. This receipt is synthetic-only and does not authorize participant/production crash telemetry."
+
+          test "${conclusion}" = "success"
+
+      - name: Enforce successful managed proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ steps.watch.outputs.watch_status }}" = "0"
