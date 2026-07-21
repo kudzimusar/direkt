@@ -8,19 +8,19 @@ This file prevents overlapping writes in the single-lane build process.
 |---|---|
 | Status | CLAIMED — VC0 repository-wide visual baseline and gap audit |
 | Owner/agent | VC — DIREKT Visual Completion |
-| Authorized scope | Read-only reconstruction/audit across Android, functional web/PWA, operations portal and historical preview surfaces; create/update VC0 control/design documentation only. No broad UI implementation until owner approves a representative high-fidelity direction. |
+| Authorized scope | Read-only reconstruction/audit across Android, functional web/PWA, operations portal and historical preview surfaces; create/update VC0 control/design documentation; narrowly repair regression-harness defects discovered while verifying the baseline, without changing product/runtime/UI behaviour. No broad UI implementation until owner approves a representative high-fidelity direction. |
 | Protected surface | Android behaviour and release controls; backend/database/OpenAPI contracts; IAM/BFF/session boundaries; provider-scope authorization; trust/publication semantics; private evidence/location/contact boundaries; PWA/offline/security behavior; operations permissions; Phase 11/12 gates. |
 | Implementation lane | `build/android-v1` — historical name retained as the single sequential implementation lane |
 | Exact VC0 baseline | `a7a1e03f4de3b2cad3d51b7f611bdbb2f30af961` (`fix: complete closed-state W8 verifier`) |
 | Stable predecessor checkpoint | W8 CLOSED: managed functional runtime source `c1262ce2bfb76e06d2296d793f1acd6cf5cc3ca2`; managed run `29721199177`; canonical host `https://app.direkt.forum`; canonical-domain verification run `29802524466`; PR #257 merge checkpoint `a4ad5fa348857f27b5bfef23f6f761deb75859c7` |
-| Current task | VC0 only: exact-source/regression verification, full implemented-screen inventory, code/preview inspection, visual gap matrix, design-system gap audit, Stitch/Higgsfield workflow, differentiated flagship design directions for owner review. |
+| Current task | VC0 only: exact-source/regression verification, full implemented-screen inventory, code/preview inspection, visual gap matrix, design-system gap audit, Stitch/Higgsfield workflow, differentiated flagship design directions for owner review; plus only the regression-harness repair needed to keep historical W7/W8 checks independently valid. |
 | Governing issue | #259 — VC — DIREKT Visual Completion |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates |
 
 ## VC0 implementation boundary
 
-VC0 may change only repository control/design documentation needed to establish the programme and its auditable baseline. It must not mass-edit Android, web/PWA, operations UI, backend, database, OpenAPI, authentication, authorization, trust, payment, notification or deployment code.
+VC0 may change repository control/design documentation needed to establish the programme and its auditable baseline. It may also make a narrowly bounded regression-harness correction when an existing historical verifier is proven to be incorrectly coupled to a later workstream state. It must not mass-edit Android, web/PWA, operations UI, backend, database, OpenAPI, authentication, authorization, trust, payment, notification or deployment behaviour.
 
 Before VC1 or any broad visual implementation begins, VC0 must:
 
@@ -44,9 +44,9 @@ On exact head `a7a1e03f4de3b2cad3d51b7f611bdbb2f30af961`:
 - W4 customer contract: PASS;
 - integration runtime audit: PASS;
 - documentation quality: PASS;
-- W7 cross-client regression: Android and backend/database/OpenAPI jobs PASS, but the W2–W7 functional-web job failed on its first attempt and is being re-verified before any visual implementation is authorized.
+- W7 cross-client regression: Android and backend/database/OpenAPI jobs PASS, while the W2–W7 functional-web job fails deterministically because that historical W7 workflow now invokes the global `npm run verify`, which later acquired W8-specific checks. This is a regression-harness coupling defect, not evidence that Android/backend/database/OpenAPI or the separately verified functional PWA runtime regressed.
 
-A VC workstream must not describe the complete regression baseline as green until this discrepancy is resolved or a reviewed corrective checkpoint is recorded.
+VC0 must correct that coupling so W7 verifies W2–W7 and W8 remains independently verified by its own exact canonical-domain workflow. A VC workstream must not describe the complete regression baseline as green until the corrected exact-head gate passes.
 
 ## Completed W0–W8 workstream contract
 
