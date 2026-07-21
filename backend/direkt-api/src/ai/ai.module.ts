@@ -6,8 +6,11 @@ import { AiService } from './ai.service';
 import { DisabledAiProviderAdapter } from './disabled-ai-provider.adapter';
 import { GeminiAiProviderAdapter } from './gemini-ai-provider.adapter';
 import { GroqAiProviderAdapter } from './groq-ai-provider.adapter';
+import { PublicSupportController } from './public-support.controller';
+import { PublicSupportService } from './public-support.service';
 
 @Module({
+  controllers: [PublicSupportController],
   providers: [
     {
       provide: AI_PRIMARY_PROVIDER,
@@ -40,7 +43,8 @@ import { GroqAiProviderAdapter } from './groq-ai-provider.adapter';
       },
     },
     AiService,
+    PublicSupportService,
   ],
-  exports: [AiService],
+  exports: [AiService, PublicSupportService],
 })
 export class AiModule {}

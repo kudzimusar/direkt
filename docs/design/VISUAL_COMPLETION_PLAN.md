@@ -7,6 +7,25 @@
 **Parent direction:** `docs/product/WORLD_CLASS_PRODUCT_AND_AI_PLAN.md`  
 **AI architecture:** `docs/architecture/AI_PRODUCT_ARCHITECTURE.md`
 
+## Completion checkpoint — 2026-07-21
+
+The owner-approved execution hybrid — **Structured Trust** for proof/information architecture, **Neighbourhood Marketplace** for customer warmth/imagery and **Field Utility** for provider/operations density — has been implemented through the VC1–VC8 programme without replacing canonical backend/business authority.
+
+Promotion history and candidate evidence:
+
+- VC1–VC6 implementation was promoted through PR #268 at `c5eb25b2e579d7f148b67130baf307a45f11e7a0`;
+- the provider-neutral AI foundation was promoted through PR #265;
+- VC7 implements bounded customer discovery assistance, grounded public Help, provider onboarding/readiness guidance and provider profile drafting with source-controlled governance, evaluations, fail-closed switches and deterministic/manual fallback;
+- restricted evidence/OCR/operations AI remains disabled pending the separate approvals required by this plan;
+- VC8 permanent quality/visual-evidence ownership is integrated into the normal functional-PWA and Android CI lanes;
+- candidate source `2bb734660b520940311c4d2b9c088d8f15224755` passed every permanent applicable regression gate;
+- web/operations evidence: run `29829438711`, artifact ID `8494672572`, digest `sha256:212607749a2c3525e15cb46083f06c221ca0b485b0987f5ae338d5d2bf8de3b0`;
+- native Android evidence: run `29829437845`, artifact ID `8494745779`, digest `sha256:ce86f3affd2c8b3b797e8a22de1dda2fd080d32f3a46b20d365500ae08a1a0bb`;
+- native Customer Discover, Provider Overview and Provider Evidence captures were visually inspected and confirmed synthetic-only and free of private evidence/raw coordinates/developer-harness leakage;
+- the redundant standalone VC8 screenshot workflow is removed at final closure because permanent PWA/Android evidence lanes now own the requirement.
+
+This checkpoint records **VC1–VC8 implementation completion evidence**, subject to final closure-head regression and PR #270 promotion. It does not authorize real Phase 11 participant/evidence execution, restricted-data AI, real communications, real money or Phase 12 production release. The non-negotiable rules and all stage requirements below remain authoritative for maintenance/regression.
+
 ## 1. Objective
 
 Transform the already functional DIREKT system into a visually world-class, AI-assisted, trustworthy local-services marketplace without rebuilding or weakening the existing backend, data, security, trust, privacy, integration or release architecture.

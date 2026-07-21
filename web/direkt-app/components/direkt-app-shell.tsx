@@ -10,6 +10,7 @@ import {
 } from "@/components/discovery-experience";
 import { ProviderInteractionExperience } from "@/components/provider-interaction-experience";
 import { ProviderJourneyExperience } from "@/components/provider-journey-experience";
+import { SupportAssistPanel } from "@/components/support-assist-panel";
 import { DirektIcon } from "@/components/ui/direkt-icon";
 import {
   destinationHeading,
@@ -177,6 +178,7 @@ export function DirektAppShell({
               onProviderAvailabilityChange={updateProviderAvailability}
             />
           ) : null}
+          {showAccount ? <SupportAssistPanel /> : null}
           {!showDiscovery &&
           !showCustomerJourney &&
           !showProviderJourney &&

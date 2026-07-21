@@ -1,0 +1,87 @@
+.provider-ai-copilot {
+  border-color: color-mix(in srgb, var(--primary) 18%, var(--border));
+  background: color-mix(in srgb, var(--mint) 28%, var(--surface));
+}
+
+.provider-ai-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.provider-ai-actions button {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.provider-ai-state,
+.provider-ai-result {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 14px;
+}
+
+.provider-ai-state {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.provider-ai-state p,
+.provider-ai-result p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.provider-ai-result h3 {
+  margin: 10px 0 8px;
+}
+
+.provider-ai-result ol {
+  margin: 8px 0 0;
+  padding-left: 22px;
+}
+
+.provider-ai-result li + li {
+  margin-top: 8px;
+}
+
+.provider-ai-draft {
+  width: 100%;
+  min-height: 128px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 94%, var(--mint));
+  color: inherit;
+  padding: 12px;
+  font: inherit;
+  line-height: 1.55;
+}
+
+.provider-ai-draft:focus-visible,
+.provider-ai-actions button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 38%, transparent);
+  outline-offset: 3px;
+}
+
+.provider-ai-limit {
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .provider-ai-actions {
+    flex-direction: column;
+  }
+
+  .provider-ai-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+}

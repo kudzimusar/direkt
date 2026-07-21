@@ -6,6 +6,7 @@ export type PaymentProviderMode = 'synthetic' | 'disabled';
 export type FirebaseAuthMode = 'disabled' | 'firebase';
 export type AiProviderMode = 'disabled' | 'gemini';
 export type AiFallbackProviderMode = 'disabled' | 'groq';
+export type AiUseCaseMode = 'disabled' | 'synthetic';
 export type EmailProviderMode = 'disabled' | 'resend';
 export type DirektTrafficMode = 'disabled' | 'internal' | 'synthetic-public' | 'controlled-pilot';
 export type DirektDataMode = 'synthetic-only' | 'controlled-pilot' | 'production';
@@ -56,6 +57,11 @@ export interface DirektEnvironment {
   AI_GROQ_MODEL: string;
   AI_REQUEST_TIMEOUT_MS: number;
   AI_MAX_INPUT_CHARS: number;
+  DIREKT_AI_DISCOVERY_ASSIST_MODE: AiUseCaseMode;
+  DIREKT_AI_PUBLIC_SUPPORT_MODE: AiUseCaseMode;
+  DIREKT_AI_PROVIDER_GUIDE_MODE: AiUseCaseMode;
+  DIREKT_AI_PROVIDER_DRAFT_MODE: AiUseCaseMode;
+  DIREKT_AI_OPERATIONS_SUMMARY_MODE: 'disabled';
   EMAIL_PROVIDER_MODE: EmailProviderMode;
   EMAIL_RESEND_API_KEY?: string;
   EMAIL_FROM_ADDRESS: string;
@@ -210,6 +216,11 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
   AI_GROQ_MODEL: providerModelName.default('openai/gpt-oss-20b'),
   AI_REQUEST_TIMEOUT_MS: Joi.number().integer().min(1000).max(30000).default(8000),
   AI_MAX_INPUT_CHARS: Joi.number().integer().min(256).max(20000).default(8000),
+  DIREKT_AI_DISCOVERY_ASSIST_MODE: Joi.string().valid('disabled', 'synthetic').default('disabled'),
+  DIREKT_AI_PUBLIC_SUPPORT_MODE: Joi.string().valid('disabled', 'synthetic').default('disabled'),
+  DIREKT_AI_PROVIDER_GUIDE_MODE: Joi.string().valid('disabled', 'synthetic').default('disabled'),
+  DIREKT_AI_PROVIDER_DRAFT_MODE: Joi.string().valid('disabled', 'synthetic').default('disabled'),
+  DIREKT_AI_OPERATIONS_SUMMARY_MODE: Joi.string().valid('disabled').default('disabled'),
   EMAIL_PROVIDER_MODE: Joi.string().when('NODE_ENV', {
     is: 'production',
     then: Joi.valid('disabled').default('disabled'),
@@ -258,6 +269,22 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
   if (value.AI_FALLBACK_PROVIDER !== 'disabled' && value.AI_PROVIDER_MODE === 'disabled') {
     return helpers.message({
       custom: 'AI fallback provider cannot be enabled while the primary AI provider is disabled.',
+    });
+  }
+  const enabledAiUseCases = [
+    value.DIREKT_AI_DISCOVERY_ASSIST_MODE,
+    value.DIREKT_AI_PUBLIC_SUPPORT_MODE,
+    value.DIREKT_AI_PROVIDER_GUIDE_MODE,
+    value.DIREKT_AI_PROVIDER_DRAFT_MODE,
+  ].some((mode) => mode === 'synthetic');
+  if (enabledAiUseCases && value.DIREKT_DATA_MODE !== 'synthetic-only') {
+    return helpers.message({
+      custom: 'AI use-case activation currently permits synthetic-only data mode.',
+    });
+  }
+  if (enabledAiUseCases && value.AI_PROVIDER_MODE === 'disabled') {
+    return helpers.message({
+      custom: 'AI use-case activation requires an explicitly enabled primary AI provider.',
     });
   }
   if (value.EMAIL_PROVIDER_MODE !== 'disabled' && value.DIREKT_DATA_MODE !== 'synthetic-only') {
