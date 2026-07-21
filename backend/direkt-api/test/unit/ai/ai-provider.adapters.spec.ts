@@ -44,11 +44,7 @@ describe('AI provider adapters', () => {
         { status: 200, headers: { 'content-type': 'application/json' } },
       ),
     );
-    const adapter = new GroqAiProviderAdapter(
-      'groq-key-12345678901234567890',
-      'groq-test',
-      5000,
-    );
+    const adapter = new GroqAiProviderAdapter('groq-key-12345678901234567890', 'groq-test', 5000);
 
     const result = await adapter.generate({
       purpose: 'support_assist',
