@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
-  EmailProviderRejectedError,
+  type EmailProviderRejectedError,
   EmailProviderUnavailableError,
 } from '../../../src/communications/email-provider.port';
 import { ResendEmailProviderAdapter } from '../../../src/communications/resend-email-provider.adapter';
