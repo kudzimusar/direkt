@@ -1,0 +1,62 @@
+name: VC8 visible copy polish once
+
+on:
+  push:
+    branches:
+      - vc/ai-quality-7-8
+    paths:
+      - ".github/workflows/vc8-copy-polish-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  polish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: vc/ai-quality-7-8
+          fetch-depth: 0
+      - name: Remove remaining implementation jargon and decorative AI cue
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          account = Path("web/direkt-app/components/account-experience.tsx")
+          text = account.read_text()
+          marker = '<p className="eyebrow">W3 security boundary</p>'
+          if marker not in text:
+              raise SystemExit("Account W3 visible marker missing")
+          text = text.replace(
+              marker,
+              '{/* Historical W3 security contract is retained in source tests; users see task language only. */}\n          <p className="eyebrow">Account security</p>',
+              1,
+          )
+          account.write_text(text)
+
+          discovery = Path("web/direkt-app/components/discovery-experience.tsx")
+          text = discovery.read_text()
+          marker = '<DirektIcon name="sparkle" /> Local help, with clearer proof'
+          if marker not in text:
+              raise SystemExit("Discovery sparkle marker missing")
+          text = text.replace(marker, '<DirektIcon name="shield" /> Local help, with clearer proof', 1)
+          discovery.write_text(text)
+          PY
+      - name: Canonically format changed web files
+        working-directory: web/direkt-app
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx prettier --write components/account-experience.tsx components/discovery-experience.tsx scripts/verify-vc8-quality.mjs
+      - name: Commit bounded polish
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git config user.name "direkt-vc-polish[bot]"
+          git config user.email "direkt-vc-polish[bot]@users.noreply.github.com"
+          git add web/direkt-app/components/account-experience.tsx web/direkt-app/components/discovery-experience.tsx web/direkt-app/scripts/verify-vc8-quality.mjs
+          git commit -m "polish(vc8): remove visible implementation jargon and AI decoration"
+          git push origin HEAD:vc/ai-quality-7-8
