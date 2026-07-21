@@ -67,15 +67,18 @@ jobs:
 
           run_id=""
           for attempt in $(seq 1 30); do
-            run_id="$(gh run list \
+            runs_json="$(gh run list \
               --repo "${REPO}" \
               --workflow "${CANARY_WORKFLOW}" \
               --branch main \
               --event workflow_dispatch \
               --limit 10 \
-              --json databaseId,headSha \
-              --jq --arg sha "${SOURCE_SHA}" --argjson previous "${previous_id}" \
-              '[.[] | select(.headSha == $sha and .databaseId != $previous)][0].databaseId // empty')"
+              --json databaseId,headSha)"
+            run_id="$(jq -r \
+              --arg sha "${SOURCE_SHA}" \
+              --argjson previous "${previous_id}" \
+              '[.[] | select(.headSha == $sha and .databaseId != $previous)][0].databaseId // empty' \
+              <<< "${runs_json}")"
             if [[ -n "${run_id}" ]]; then
               break
             fi
