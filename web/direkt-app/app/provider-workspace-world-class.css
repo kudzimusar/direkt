@@ -1,0 +1,433 @@
+.provider-world-workspace {
+  gap: 18px;
+}
+
+.provider-world-grid,
+.provider-evidence-world-grid,
+.provider-enquiries-world-grid {
+  gap: 16px;
+}
+
+.provider-command-card {
+  position: relative;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--primary) 18%, var(--border));
+  background:
+    radial-gradient(circle at 90% 8%, rgb(11 138 96 / 15%), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--mint) 48%, var(--surface)), var(--surface) 70%);
+  box-shadow: var(--direkt-shadow-md);
+}
+
+.provider-command-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.provider-command-heading h2 {
+  margin: 5px 0 0;
+  font-size: clamp(28px, 5vw, 40px);
+  letter-spacing: -.04em;
+}
+
+.provider-command-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.provider-command-meta .direkt-icon {
+  width: 17px;
+  height: 17px;
+  color: var(--primary);
+}
+
+.business-status-pill {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  padding: 0 11px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.provider-readiness-layout {
+  display: grid;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.readiness-visual {
+  display: grid;
+  gap: 10px;
+}
+
+.readiness-number strong {
+  display: block;
+  font-size: 30px;
+  letter-spacing: -.04em;
+}
+
+.readiness-number span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.provider-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.provider-stat-grid > div {
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  padding: 13px;
+}
+
+.provider-stat-grid strong {
+  display: block;
+  font-size: 21px;
+}
+
+.provider-stat-grid span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.provider-publication-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-top: 18px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  padding-top: 16px;
+}
+
+.provider-publication-note > .direkt-icon {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  color: var(--primary);
+}
+
+.provider-publication-note strong {
+  display: block;
+  font-size: 13px;
+}
+
+.provider-publication-note p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.provider-action-card,
+.provider-services-card,
+.provider-location-card,
+.provider-evidence-timeline-card,
+.provider-upload-card,
+.world-class-commercial-card {
+  box-shadow: var(--direkt-shadow-sm);
+}
+
+.card-icon-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.card-icon-heading > span {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--direkt-mint-soft);
+  color: var(--direkt-forest);
+}
+
+.card-icon-heading > span .direkt-icon {
+  width: 21px;
+  height: 21px;
+}
+
+.card-icon-heading h2 {
+  margin: 2px 0 0;
+}
+
+.card-icon-heading p:not(.eyebrow) {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.52;
+}
+
+.provider-empty-positive,
+.provider-empty-state {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  border: 1px dashed var(--border);
+  border-radius: 17px;
+  background: var(--surface-2);
+  padding: 14px;
+}
+
+.provider-empty-positive > .direkt-icon,
+.provider-empty-state > .direkt-icon {
+  width: 21px;
+  height: 21px;
+  flex: 0 0 auto;
+  color: var(--primary);
+}
+
+.provider-empty-positive p,
+.provider-empty-state p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.provider-task-list-polished li {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface-2) 52%, var(--surface));
+  padding: 13px;
+}
+
+.provider-friendly-form input,
+.provider-friendly-form select,
+.provider-friendly-form textarea,
+.provider-service-add select,
+.provider-availability-controls select,
+.provider-availability-controls input {
+  background: var(--surface);
+}
+
+.provider-service-add {
+  align-items: end;
+  margin-bottom: 15px;
+}
+
+.provider-service-add label {
+  flex: 1 1 320px;
+}
+
+.provider-service-list {
+  gap: 10px;
+}
+
+.provider-service-row {
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface-2) 42%, var(--surface));
+  padding: 14px;
+}
+
+.provider-service-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+}
+
+.provider-service-summary .category-market-icon {
+  flex: 0 0 auto;
+}
+
+.provider-service-summary strong {
+  display: block;
+  font-size: 14px;
+}
+
+.provider-service-summary small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.service-eligibility {
+  display: inline-flex;
+  margin-top: 8px;
+  border-radius: 999px;
+  padding: 5px 8px;
+  font-size: 9px;
+  font-weight: 850;
+}
+
+.service-eligibility.eligible {
+  background: var(--mint);
+  color: var(--direkt-forest-deep);
+}
+
+.service-eligibility.attention {
+  background: color-mix(in srgb, var(--amber) 13%, var(--surface));
+  color: color-mix(in srgb, var(--amber) 65%, var(--ink));
+}
+
+.provider-availability-controls {
+  flex: 1 1 330px;
+  justify-content: flex-end;
+}
+
+.location-boundary-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.location-boundary-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: color-mix(in srgb, var(--surface-2) 45%, var(--surface));
+  padding: 14px;
+}
+
+.location-boundary-item > .direkt-icon {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  color: var(--primary);
+}
+
+.location-boundary-item strong {
+  display: block;
+  font-size: 13px;
+}
+
+.location-boundary-item p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.advanced-location-details {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: var(--surface-2);
+  padding: 13px 15px;
+}
+
+.advanced-location-details > summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.advanced-location-details > p {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.provider-timeline-polished {
+  gap: 9px;
+}
+
+.provider-timeline-polished li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 11px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: color-mix(in srgb, var(--surface-2) 45%, var(--surface));
+  padding: 14px;
+}
+
+.timeline-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--direkt-mint-soft);
+  color: var(--direkt-forest);
+}
+
+.timeline-icon .direkt-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.timeline-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.timeline-limitation {
+  display: block;
+  margin: 6px 0;
+  border-left: 2px solid var(--amber);
+  padding-left: 8px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.world-class-enquiry-card,
+.world-class-review-card {
+  margin-top: 12px;
+  border-radius: 18px;
+}
+
+.world-class-enquiry-card .provider-locality-line {
+  margin: 4px 0 10px;
+}
+
+.world-class-review-card blockquote {
+  margin: 12px 0;
+  border-left: 3px solid var(--primary);
+  border-radius: 0 12px 12px 0;
+  background: var(--surface-2);
+  padding: 12px;
+}
+
+.world-class-review-card blockquote p {
+  margin-bottom: 0;
+}
+
+.provider-notice-card {
+  max-width: 720px;
+  box-shadow: var(--direkt-shadow-sm);
+}
+
+@media (min-width: 760px) {
+  .provider-readiness-layout {
+    grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+    align-items: end;
+  }
+
+  .provider-stat-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .location-boundary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
