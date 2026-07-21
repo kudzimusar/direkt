@@ -6,13 +6,13 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | RELEASED — RC2 Sentry closed; RC3 Crashlytics is next |
+| Status | CLAIMED — RC3 Firebase Crashlytics Android runtime closure |
 | Owner/agent | Active repository agent — Issue #261 runtime integration closure workstream |
-| Authorized scope | RC2 closure evidence/status reconciliation only. Sentry is proven only for the synthetic-only API/private-portal managed boundary; participant/production telemetry remains disabled. RC3 must be separately claimed before Crashlytics implementation begins. |
+| Authorized scope | Firebase Crashlytics activation for the native Android customer/provider application only: reviewed SDK/plugin dependency, default-off collection control, strict non-PII custom metadata policy, release/build mapping, synthetic crash/non-fatal evidence, alerting/managed-device proof and exact-head regressions. Sentry remains API/portal only; FCM and Test Lab remain RC4/RC5. |
 | Protected surface | Android, backend/database/OpenAPI, web/PWA, operations portal, CI, trust/privacy, payments, integrations, VC1–VC8 completion and release boundaries remain regression-protected. |
-| Implementation branch | `integration/rc2-sentry-closure` from RC2 source merge `15210c5b0bf1832e32f8c33a7618c69f61f65275`; RC3 must start from the merged RC2 closure baseline. |
-| Stable baseline | RC2 source PR #275 merged at `15210c5b0bf1832e32f8c33a7618c69f61f65275`; managed workflow `DIREKT managed Sentry synthetic canary #1` completed SUCCESS in 4m15s for separate API and private operations-portal Sentry projects. |
-| Current task | RC2 closure promotion; next bounded checkpoint after merge is RC3 — Firebase Crashlytics Android activation with privacy/release mapping and synthetic crash/ANR evidence. |
+| Implementation branch | `integration/rc3-crashlytics-runtime` from RC2 closure merge `c9cce1bb688ecb9c746d2ebd9d57dfe2f8c275b6`; do not build new integration work on stale/diverged branches. |
+| Stable baseline | RC2 Sentry closure PR #280 merged at `c9cce1bb688ecb9c746d2ebd9d57dfe2f8c275b6`; Sentry is proven only for the synthetic managed API/private-portal boundary. Temporary RC2 one-shot dispatcher/authorization artifacts are removed on this RC3 branch before Android runtime changes. |
+| Current task | RC3 — audit existing Firebase Android apps/configuration and current native release architecture, then integrate Crashlytics with fail-closed collection/privacy controls, release mapping and managed synthetic crash/non-fatal proof without changing Android permissions or enabling FCM. |
 | Governing issue | Issue #261 — Runtime integration closure after W8; Issue #259 VC1–VC8 is closed and preserved as baseline. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
@@ -26,29 +26,32 @@ This file prevents overlapping writes in the single-lane build process.
 5. Restricted evidence/OCR/operations-case AI remains disabled until explicit privacy/security/data-processing/provider approval and dedicated evaluation/runtime evidence exist.
 6. VC8 permanent verification guards AI disclosure/fallback/privacy, restricted-data gating, target/focus/reflow/accessibility expectations, browser credential boundaries and no-blanket-verification semantics.
 7. Permanent responsive visual evidence is owned by `functional-pwa-ci.yml`; permanent native Android evidence is owned by `android-ci.yml`.
-8. The VC1–VC8 closure programme merged through PR #270 at `c7f5985bc20372b4761e063dc3a66ecc736556e2`; RC2 must preserve those exact product, AI, privacy and accessibility boundaries.
+8. The VC1–VC8 closure programme merged through PR #270 at `c7f5985bc20372b4761e063dc3a66ecc736556e2`; RC3 must preserve those exact product, AI, privacy and accessibility boundaries.
 
 ## Runtime integration closure contract
 
 1. Close one bounded integration checkpoint at a time; do not batch unrelated SDK/provider activation.
-2. An external account, API key, DSN, secret or dashboard project is not `ACTIVE` evidence by itself.
-3. Each closure requires applicable source integration, least-privilege secret/runtime binding, privacy/security controls, fallback or kill switch, managed canary/device evidence, exact-head regressions and status documentation.
+2. An external account, API key, DSN, secret, dashboard project or Firebase product toggle is not `ACTIVE` evidence by itself.
+3. Each closure requires applicable source integration, least-privilege configuration, privacy/security controls, fallback or kill switch, managed canary/device evidence, exact-head regressions and status documentation.
 4. Android/browser clients call DIREKT-controlled API/BFF boundaries; they do not receive privileged provider, database, payment, AI, registry or telemetry-auth credentials.
 5. Real participants, real external communications, real payment movement, production auth and production release remain separately gated.
 6. Payment state cannot create or improve verification, publication or ranking authority.
 7. AI output cannot independently verify providers, change trust/ranking/publication, authorize payments/escrow, decide disputes, override consent/authorization or act as legal/regulatory authority.
 8. Exact private provider coordinates, raw evidence, contact data, credentials and tokens must not leak into telemetry, public maps, browser caches or provider payloads.
 9. Sentry auth tokens remain CI/release tooling only and must never bind to API, portal, Android or browser runtime.
-10. RC2 Sentry activation is synthetic-only until a separate reviewed privacy/data-use decision authorizes any broader data class.
-11. The workstream releases the lane only after status/ledger reconciliation, exact-head regression matrix, managed evidence and handoff are promoted.
+10. RC2 Sentry remains synthetic-only until a separate reviewed privacy/data-use decision authorizes a broader data class.
+11. RC3 Crashlytics must not upload user identifiers, contact data, evidence content, exact private coordinates, auth/session tokens or unrestricted free-form logs/custom keys.
+12. Crashlytics automatic collection must be explicitly controlled by the approved data mode/consent boundary; RC3 proof must not silently activate production participant telemetry.
+13. RC3 must not add notification permission, FCM messaging, Maps/location permission or any unrelated Android runtime capability.
+14. The workstream releases the lane only after status/ledger reconciliation, exact-head regression matrix, managed evidence and handoff are promoted.
 
 ## Dependency-safe implementation sequence
 
 - RC0 — integration ledger, dependency/source audit, permanent-gate ownership sanity check and payment evidence reconciliation. **Closed — PR #263.**
 - AI0 — provider-neutral AI foundation. **Closed — PR #265; runtime activation remains per-use-case and data-classification gated.**
 - RC1 — Resend transactional-outbox runtime. **Closed — source PR #269; managed synthetic execution proven; hotfixes #271/#272 and closure PR #273 merged; real-participant/production email remains disabled.**
-- RC2 — Sentry for approved NestJS/Next.js surfaces with strict PII scrubbing, release controls and kill switch; Cloud Logging remains authoritative infrastructure telemetry. **CLOSED — PR #275 merged at `15210c5b0bf1832e32f8c33a7618c69f61f65275`; managed synthetic API + private portal canary #1 passed. Participant/production telemetry remains disabled.**
-- RC3 — Firebase Crashlytics Android activation with privacy/release mapping and synthetic crash/ANR evidence. **NEXT CHECKPOINT after RC2 closure merge.**
+- RC2 — Sentry for approved NestJS/Next.js surfaces with strict PII scrubbing, release controls and kill switch; Cloud Logging remains authoritative infrastructure telemetry. **Closed — source PR #275 and closure PR #280; managed synthetic API + private portal canary #1 passed. Participant/production telemetry remains disabled.**
+- RC3 — Firebase Crashlytics Android activation with privacy/release mapping and synthetic crash/ANR evidence. **ACTIVE CHECKPOINT.**
 - RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary.
 - RC5 — Firebase Test Lab device-matrix automation after Android runtime dependencies stabilize through RC3–RC4.
 - RC6 — WhatsApp Cloud API application adapter using outbox/idempotency/consent/template/delivery-receipt rules; production sends remain gated until provider/legal approvals exist.
@@ -92,10 +95,11 @@ Stop rather than merge or activate a later checkpoint if it would:
 - accept client-selected provider scope or authorization;
 - allow commercial/payment state to influence verification or public trust claims;
 - allow AI output to become authoritative verification/trust/payment/dispute/publication authority;
-- store production credentials, model/provider secrets or Sentry auth tokens in application runtime or browser-readable surfaces;
+- store production credentials, model/provider secrets or telemetry auth tokens in application runtime or browser-readable surfaces;
+- enable unrestricted Crashlytics collection/logging for real participants without a separate reviewed privacy/data-use authorization;
 - replace backend-authoritative behavior with static fixtures while claiming runtime completion;
 - mark an integration or AI use case `ACTIVE` without exact configured-provider/runtime evidence.
 
 ## Conflict rule
 
-The VC1–VC8 implementation claim is closed and preserved as baseline. No second agent may write to overlapping RC2 runtime-integration surfaces while this claim is active. Read-only review may continue. The RC2 lock is released only after source/runtime promotion, managed evidence, status/ledger reconciliation and exact-head regressions are complete.
+The VC1–VC8 implementation claim and RC2 integration checkpoint are closed and preserved as baseline. No second agent may write to overlapping RC3 Android/Firebase runtime-integration surfaces while this claim is active. Read-only review may continue. The RC3 lock is released only after source/runtime promotion, managed device evidence, status/ledger reconciliation and exact-head regressions are complete.
