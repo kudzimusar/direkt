@@ -20,19 +20,37 @@ import { PERMISSIONS } from '../authorization/permissions';
 import { PublicRoute } from '../authorization/public.decorator';
 import { RequirePermission } from '../authorization/require-permission.decorator';
 import type { DirektRequest } from '../platform/http/request-context';
+import { DiscoveryAiAssistService } from './discovery-ai-assist.service';
+import { DiscoveryAiAssistRequestDto } from './discovery-ai.dto';
 import { DiscoverySearchDto, HidePublicationDto, RefreshPublicationDto } from './discovery.dto';
 import { DiscoveryService } from './discovery.service';
 
 @ApiTags('customer discovery')
 @Controller()
 export class DiscoveryController {
-  constructor(private readonly discovery: DiscoveryService) {}
+  constructor(
+    private readonly discovery: DiscoveryService,
+    private readonly discoveryAssist: DiscoveryAiAssistService,
+  ) {}
 
   @Get('public/categories')
   @PublicRoute()
   @ApiOkResponse({ description: 'Lists active public-safe service categories.' })
   categories() {
     return this.discovery.categories();
+  }
+
+  @Post('public/discovery/assist')
+  @PublicRoute()
+  @ApiOperation({
+    summary: 'Suggests active service categories from a short synthetic service-need description.',
+  })
+  @ApiOkResponse({
+    description:
+      'Returns bounded AI-assisted or deterministic category suggestions. Suggestions never create trust, ranking or provider authority.',
+  })
+  assist(@Body() body: DiscoveryAiAssistRequestDto) {
+    return this.discoveryAssist.assist(body);
   }
 
   @Get('public/providers/search')
