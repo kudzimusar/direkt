@@ -3,24 +3,20 @@
 **Programme:** VC — DIREKT Visual Completion  
 **Workstream:** VC0 — repository-wide visual baseline and gap audit  
 **Governing issue:** #259  
-**Audit baseline:** `a7a1e03f4de3b2cad3d51b7f611bdbb2f30af961`  
-**Predecessor stable checkpoint:** W8 closed; canonical functional browser verified at `https://app.direkt.forum`  
-**Production status:** Phase 11 real evidence and Phase 12 production authorization remain gated
+**Stable baseline:** `a06a66d313d8417d8b7731e3d845c1c71bda3dd4` (`Merge PR #260: finalize W8 closure and release integration sequencing`)  
+**Verified predecessor head:** `e2c4cdd33cdf0f037fc5528093d4ef904f2bb07e`  
+**Production status:** Phase 11 real evidence and 11J remain pending; formal Phase 12 production release remains blocked
 
-## 1. Purpose
+## 1. Scope and authority
 
-This document records the visual-completion gap between the implemented DIREKT product and the repository's authoritative product/design requirements. It covers the whole product, not one isolated PWA workstream:
+This audit covers the whole DIREKT product:
 
 1. native Android customer/provider application;
 2. functional customer/provider web/PWA;
 3. internal operations/admin portal;
 4. historical prototype/preview surfaces as design evidence only.
 
-The audit is intentionally strict. Functional correctness, test coverage or remote reachability does not by itself make a surface visually production-ready.
-
-## 2. Authority hierarchy used
-
-The audit was reconstructed in this order:
+It was reconstructed from the repository authority chain, in order:
 
 1. `AGENTS.md`;
 2. `MASTER_BUILD_PLAN.md`;
@@ -29,31 +25,26 @@ The audit was reconstructed in this order:
 5. `DEFINITION_OF_DONE.md`;
 6. `design.md`;
 7. current repository/integration reconciliation evidence;
-8. `docs/product/PRODUCT_REQUIREMENTS.md`;
-9. `docs/product/FEATURE_CATALOG.md`;
-10. `docs/product/USER_JOURNEYS.md`;
-11. `docs/design/SCREEN_INVENTORY.md`;
-12. `docs/design/DESIGN_SYSTEM.md`;
-13. `docs/design/ANDROID_UI_SPECIFICATION.md`;
-14. `docs/design/PWA_UI_SPECIFICATION.md`;
-15. `docs/design/RESPONSIVE_ADMIN_DESIGN.md`;
-16. relevant Android, web/PWA, operations, API, testing and phase/workstream documents;
-17. actual current source;
-18. external AI-generated design suggestions last.
+8. product requirements, feature catalogue, user journeys and screen inventory;
+9. `docs/design/DESIGN_SYSTEM.md`;
+10. `docs/design/ANDROID_UI_SPECIFICATION.md`;
+11. `docs/design/PWA_UI_SPECIFICATION.md`;
+12. `docs/design/RESPONSIVE_ADMIN_DESIGN.md`;
+13. relevant Android, PWA, operations, API, testing and phase/workstream documents;
+14. actual current implementation;
+15. AI-generated design suggestions last.
 
-Where historical documentation conflicts with newer source/evidence, current source plus reviewed managed evidence wins. AI-generated design never overrides trust, privacy, authorization, accessibility, release or domain rules.
+Repository trust/privacy/security/product rules always override generated design output.
 
-## 3. Exact source and regression checkpoint
+## 2. Exact current checkpoint
 
-### 3.1 Source truth
+During VC0, W8 closure/status synchronization was promoted separately through PR #260. VC0 was therefore reconciled onto the new stable `main` rather than carrying a divergent pre-promotion history.
 
-At VC0 entry the actual single implementation lane was `build/android-v1`, not merely the latest `main` merge. The lane head was:
+Current stable source:
 
-`a7a1e03f4de3b2cad3d51b7f611bdbb2f30af961` — `fix: complete closed-state W8 verifier`
+`a06a66d313d8417d8b7731e3d845c1c71bda3dd4`
 
-The lane already contained the W8 closure/status synchronization that had not yet been reflected by the latest visible `main` checkpoint. `WORKSTREAM_LOCK.md` at that source recorded W0–W8 as closed and the lane as released.
-
-W8 managed/canonical evidence remains:
+W8 evidence remains:
 
 - managed functional runtime source: `c1262ce2bfb76e06d2296d793f1acd6cf5cc3ca2`;
 - managed run: `29721199177`;
@@ -61,437 +52,345 @@ W8 managed/canonical evidence remains:
 - canonical-domain verification head: `a831b58f8f6684bd345b668c1dfb4d8aab70c5c5`;
 - canonical-domain run: `29802524466`;
 - canonical evidence digest: `sha256:1fc4c334f79f8f6b0f30fcaf55d2d19ea2941cdebc8c5eabf886a913704ea786`;
-- canonical functional browser: `https://app.direkt.forum`;
+- functional browser: `https://app.direkt.forum`;
 - preserved historical/synthetic preview: `https://direkt.forum/preview/`.
 
-### 3.2 Regression truth discovered by VC0
+On predecessor head `e2c4cdd33cdf0f037fc5528093d4ef904f2bb07e`, the following required checks passed:
 
-On `a7a1e03...`:
+- documentation quality;
+- W8 canonical-domain verification;
+- functional customer/provider PWA CI;
+- customer/provider PWA CI;
+- W4 customer contract;
+- integration runtime audit;
+- W7 cross-client regression.
 
-- W8 canonical-domain verification: PASS;
-- functional customer/provider PWA CI: PASS;
-- W4 customer contract: PASS;
-- integration runtime audit: PASS;
-- documentation quality: PASS;
-- W7 cross-client workflow: Android PASS; backend/database/OpenAPI PASS; documentation/browser privilege PASS; W2–W7 functional-web job FAIL.
+### Regression-harness prerequisite discovered by VC0
 
-The W7 failure was reproduced and traced to a regression-harness coupling defect: the historical W7 job invoked the global `npm run verify`, which later acquired W8 checks. VC0 therefore treats the baseline as **not globally green until the corrected exact-head W7 gate passes**. The repair is limited to restoring independent historical gate ownership: W7 verifies W2–W7 plus build; W8 remains verified by its dedicated W8 workflow. No product/runtime/UI behavior is changed by that repair.
+The historical W7 workflow currently calls the aggregate `npm run verify`, and that aggregate later acquired W8 checks. The W8 verifier also asserts the current workstream lock remains in the W8-released state.
 
-Broad visual implementation is blocked until the corrected baseline is green.
+That is harmless while VC0 remains a non-overlapping design-control branch and the W8 lock is released, but it creates a latent coupling: **before a future material VC implementation workstream claims the implementation lane, W7/W8 historical gate ownership must be decoupled or the W8 verifier must be made insensitive to the next legitimate lock owner.**
 
-## 4. Classification legend
+VC0 does not change product/runtime behavior to solve that future-lane issue. It is a required pre-VC1/implementation regression-control item.
+
+## 3. Classification legend
 
 | Classification | Meaning |
 |---|---|
-| **Functional + visually ready** | Functionality and visual execution already satisfy the documented production-quality direction; only routine regression maintenance remains. |
-| **Functional + needs polish** | Structure and behavior are sound, but hierarchy, typography, icons, imagery, spacing, responsive detail or final states need production-quality refinement. |
-| **Functional + prototype-level UI** | Core behavior exists, but the presentation still exposes development/demo concepts, raw technical inputs, test fixtures, simulation controls, text-heavy scaffolding or placeholder interactions. |
-| **Missing visual implementation** | The product requirement exists but there is no adequate user-facing visual flow yet, even if backend/domain support exists. |
-| **Externally gated** | Completion depends materially on a separately gated external integration, real participant/pilot state, production credential, legal/operations approval or other non-VC activation. A safe visual shell may still be designed without activating the gate. |
+| **Functional + visually ready** | Functionality and visual execution already meet the documented production-quality direction. |
+| **Functional + needs polish** | Structure/behavior are sound, but hierarchy, typography, icons, imagery, spacing, responsive detail or final states need refinement. |
+| **Functional + prototype-level UI** | Core behavior exists, but presentation still exposes development/demo language, raw technical inputs, fixtures, simulation controls or placeholder interactions. |
+| **Missing visual implementation** | A required user-facing visual flow is absent or materially incomplete even where backend/domain support exists. |
+| **Externally gated** | Completion depends materially on a separately gated integration, real participant/pilot state, production credential or approval. A truthful inactive/fallback design may still be created. |
 
-**VC0 finding:** no audited flagship customer/provider/operations journey is currently classified as fully **functional + visually ready** end-to-end.
+**VC0 conclusion:** no flagship customer, provider or operations journey is currently production-visually complete end-to-end.
 
-## 5. Current surface truth
+## 4. Actual implementation baseline
 
-### 5.1 Native Android
+### 4.1 Native Android
 
-Current Android is genuine Jetpack Compose/Material 3 application code with domain-specific discovery, provider workspace, interactions, commercial and pilot-auth concepts. It is not merely a screenshot prototype.
+The Android application is genuine Jetpack Compose/Material 3 product code with discovery, provider workspace, interaction, commercial and pilot-auth domain behavior. It is not merely a screenshot prototype.
 
-However, the root shell is still visibly development-oriented:
+Current visual problems include:
 
-- one broad `Scaffold`/`LazyColumn` presentation rather than a finished route-led experience;
-- top-bar development label `Phase 11 — controlled pilot entry`;
-- bottom-navigation icons rendered as the first letter of each destination;
+- root experience still behaves like a broad controlled-pilot/demo surface rather than a finished route-led marketplace;
+- top-bar development label such as `Phase 11 — controlled pilot entry`;
+- bottom navigation icons rendered from destination initials instead of approved vectors;
 - `Preview context` mode selector;
-- provider destinations mapped through customer destination enum values;
-- repeated trust-boundary/development explanation cards;
-- synthetic state controls such as `Start synthetic upload`, `Simulate interruption`, `Save synthetic draft offline`, `Simulate stale`, `Expire consent`;
-- text descriptions in place of real marketplace imagery and map presentation.
+- repeated development/trust-boundary explanation cards;
+- synthetic controls such as `Start synthetic upload`, `Simulate interruption`, `Save synthetic draft offline`, `Simulate stale`, `Expire consent`;
+- text description placeholders instead of a mature imagery system;
+- synthetic text-map presentation rather than the intended map + accessible list product experience.
 
-The Android theme contains a useful green/ink/mint/amber Material 3 foundation and light/dark schemes, but typography, iconography, component hierarchy and adaptive layout are not yet a locked cross-product Design DNA.
+Strength: the Android theme already provides a useful Material 3 green/ink/mint/amber light/dark foundation.
 
-### 5.2 Functional customer/provider web/PWA
+### 4.2 Functional customer/provider web/PWA
 
-`web/direkt-app/` is the current functional browser client. It uses the canonical API/BFF/session architecture and is remotely reachable in the reviewed synthetic mode.
+`web/direkt-app/` is the canonical functional browser client and preserves the reviewed BFF/session/private-API boundary.
 
-It has stronger responsive scaffolding than Android today:
+Strengths:
 
 - mobile bottom navigation;
 - tablet rail;
 - desktop persistent side navigation;
 - skip links/focus/reduced-motion/offline foundations;
 - API-backed discovery;
-- authenticated customer/provider state and mutations;
-- public provider bundle;
-- commercial parity within gated boundaries.
+- authenticated customer/provider state and lifecycle mutations;
+- public-safe provider projection;
+- commercial parity inside gated boundaries.
 
-But significant development artifacts remain visible:
+Visual/development debt:
 
-- `Functional PWA workstream`;
-- W-stage labels such as `W2 closed`, `W3 closed`, `W6 active`/parity language in historical/current shell code;
-- `Parity target`, `Android remains protected`, `Canonical discovery`, `API-backed`, `W2 public discovery`;
-- technical BFF/API/provider-scope explanations presented as primary user content;
-- primitive text glyphs such as `⌂`, `◇`, `↔`, `○`, `←`, `★`, `☆` instead of an approved icon system;
-- card-heavy text presentation with little provider/category/work imagery;
-- search results list without the intended finished map/list marketplace experience;
-- raw provider configuration inputs such as category keys, coordinates and WKT polygons.
+- workstream labels such as `Functional PWA workstream`, W-stage/parity language and implementation-boundary copy;
+- primitive text glyphs such as `⌂`, `◇`, `↔`, `○`, `←`, `★`, `☆`;
+- card-heavy, text-heavy presentation with little marketplace imagery;
+- no finished map/list search experience;
+- raw provider IDs in enquiry UI;
+- raw category keys;
+- raw latitude/longitude and WKT polygon inputs in provider workspace;
+- API/BFF/provider-scope implementation explanations presented too prominently to end users.
 
-The public provider profile has the strongest current user-facing trust structure and should be preserved conceptually, but it still needs production visual hierarchy, imagery, iconography and copy refinement.
+Strength: the public provider profile has the strongest current trust-information structure and should be evolved rather than discarded.
 
-### 5.3 Operations/admin portal
+### 4.3 Operations/admin portal
 
-The operations portal has real permission-aware architecture and route coverage for mission control, triage, evidence review, field workflow, escalations, incidents, interaction history, review moderation, complaints, finance, reporting, provider drafts/workspaces and discovery eligibility.
+The operations portal has broad route coverage and real permission-aware architecture for mission control, triage, evidence review, field workflow, escalations, incidents, interaction history, review moderation, complaints, finance, reporting, provider workspaces and discovery eligibility.
 
-Its current presentation remains an operations prototype/test harness:
+Current visual state remains prototype/test-harness level:
 
-- `Synthetic Phase 7`, `Stage 7A`, `Stage 7B` labels;
+- labels such as `Synthetic Phase 7`, `Stage 7A`, `Stage 7B`;
 - fixture records embedded in page modules;
-- visible API-route implementation notes;
-- loading/empty/error/access-denied state cards shown simultaneously as test evidence;
-- evidence review is metadata/table oriented rather than the documented secure evidence-viewer workspace;
-- 44px and 36px controls remain in some admin CSS despite the 48dp-class interaction target;
-- hard-coded local status colours exist outside a reconciled shared semantic token layer;
-- desktop table density exists, but the queue/detail/evidence split-view and responsive field/triage hierarchy are not yet high fidelity.
+- visible API implementation notes;
+- loading/empty/error/access-denied test cards shown as demonstrations rather than state-driven product views;
+- evidence review is metadata/table oriented rather than the documented secure evidence-review workspace;
+- some controls remain below the 48dp-class target;
+- local hard-coded status colours are not fully reconciled to one semantic token system;
+- desktop table density exists, but the intended queue/detail/evidence split and responsive field/triage hierarchy are not yet high fidelity.
 
-### 5.4 Historical prototype/preview
+### 4.4 Historical prototype/preview
 
-`web/direkt-pwa/` and `https://direkt.forum/preview/` remain historical/synthetic review evidence only. They contain explicit `Synthetic remote UI review`, `UI checkpoint`, `Android-aligned PWA` and preview-mode controls. They must not be treated as the canonical functional client or copied wholesale into final production UI.
+`web/direkt-pwa/` and `https://direkt.forum/preview/` remain historical/synthetic review evidence only. Labels such as `Synthetic remote UI review`, `UI checkpoint` and `Android-aligned PWA` are appropriate only on that preserved preview route and must not define the canonical product aesthetic.
 
-No canonical repository-wide screenshot/reference-baseline set was found in source search. VC2/VC3 should add owner-approved visual references or stable design links/IDs without committing private evidence or participant data.
+No repository-wide owner-approved screenshot/reference baseline set was found during VC0 source inspection.
 
 ---
 
-# 6. Shared/auth screen matrix
+## 5. Shared/auth screen matrix
 
-| ID | Screen | Current implementation | Classification | Primary VC gap |
-|---|---|---|---|---|
-| SH-001 | Splash / session restore | Android startup/session state and web bootstrap exist, but no polished branded restore/loading sequence is established. | Functional + needs polish | Calm startup, offline/session recovery, no decorative delay. |
-| SH-002 | Registration / account creation | Pilot/auth foundations exist; no complete production registration visual flow. | Missing visual implementation | Define progressive account creation without implying pilot/production activation. |
-| SH-003 | Phone sign-in | Android pilot-auth card and browser auth boundary exist. | Functional + prototype-level UI | Remove implementation language; polished phone input, consent, recovery and disabled-gate states. |
-| SH-004 | Verification code | Android code field exists; browser equivalent depends on current auth mode. | Functional + prototype-level UI | OTP hierarchy, resend/error/timer/accessibility states. |
-| SH-005 | Terms / privacy consent | Controlled-pilot notice/consent appears in auth flow. | Functional + prototype-level UI | Separate required vs optional consent; readable legal summary + full policy links. |
-| SH-006 | Notification permission education | Notification runtime activation remains gated and Android manifest deliberately lacks notification runtime permission. | Externally gated | Design education/denied/settings states without activating FCM/production messaging. |
-| SH-007 | Customer / provider mode selector | Android `Preview context`; web surface switcher/provider scope is backend constrained. | Functional + prototype-level UI | Replace preview semantics with legitimate account-role/context patterns; never client-grant provider scope. |
-| SH-008 | Notification centre | Transactional/outbox foundations exist; no complete user-facing centre. | Externally gated | Design inbox/badges/read state around active channels only; do not imply FCM/email/WhatsApp activation. |
-| SH-009 | Support / help | Complaints/safety concepts exist, but no cohesive help centre. | Missing visual implementation | Help, safety escalation, FAQs, contact/support boundaries. |
-| SH-010 | Account / security | Android account/auth/commercial sections and web account/session controls exist. | Functional + needs polish | Cohesive profile/security/privacy/session layout; role-aware sections. |
+| ID | Screen | Classification | Main gap |
+|---|---|---|---|
+| SH-001 | Splash / session restore | Functional + needs polish | Branded calm loading, offline/session recovery. |
+| SH-002 | Registration / account creation | Missing visual implementation | Complete progressive production flow without implying activation. |
+| SH-003 | Phone sign-in | Functional + prototype-level UI | Remove pilot/implementation language; polish validation/recovery. |
+| SH-004 | Verification code | Functional + prototype-level UI | OTP hierarchy, resend/error/timer/accessibility states. |
+| SH-005 | Terms / privacy consent | Functional + prototype-level UI | Separate required/optional consent and readable summaries. |
+| SH-006 | Notification permission education | Externally gated | Honest inactive/denied/settings states; no fake FCM activation. |
+| SH-007 | Customer/provider mode/context | Functional + prototype-level UI | Legitimate account context without client-granting provider scope. |
+| SH-008 | Notification centre | Externally gated | Design only around actually active delivery/state. |
+| SH-009 | Support / help | Missing visual implementation | Cohesive help/safety/support centre. |
+| SH-010 | Account / security | Functional + needs polish | Unified profile/security/privacy/session hierarchy. |
 
-# 7. Customer screen matrix
+## 6. Customer screen matrix
 
-| ID | Screen | Current implementation | Classification | Primary VC gap |
-|---|---|---|---|---|
-| CU-001 | Discover home | Android and functional PWA render discovery controls/results; shell still exposes development labels and is text/card heavy. | Functional + prototype-level UI | Marketplace-quality home hierarchy, categories, nearby/service intent, imagery, calm trust cues. |
-| CU-002 | Area selector | Manual area/locality controls exist. | Functional + prototype-level UI | Human-readable area picker, recent areas, permission fallback, privacy explanation. |
-| CU-003 | Category browser | Chips/selects exist; no rich category browsing system. | Functional + prototype-level UI | Category icon/imagery tiles, hierarchy, low-bandwidth fallback. |
-| CU-004 | Search suggestions | No finished predictive/suggested-search presentation found. | Missing visual implementation | Recent/suggested/category/provider suggestions with accessible keyboard/mobile behavior. |
-| CU-005 | Result list | API-backed list exists on web; Android synthetic/current discovery cards exist. | Functional + needs polish | Strong provider card hierarchy, images, service fit, distance/area wording, trust snippets, availability. |
-| CU-006 | Result map | Android shows a synthetic text-map concept; functional web does not provide the intended finished map/list experience. Google Maps runtime is not active. | Externally gated | Build safe visual map/list shell and accessible list parity; do not activate Maps until integration gate clears. |
-| CU-007 | Filters | Android chips and web form controls exist. | Functional + needs polish | Bottom sheet/side panel patterns, active filter summary, clear/reset, 48dp targets. |
-| CU-008 | Provider profile | Functional web public provider bundle is structurally strong; Android has provider result/trust cards rather than a fully finished profile hierarchy. | Functional + needs polish | Provider/work imagery, service grouping, actions, trust placement, reviews, adaptive desktop composition. |
-| CU-009 | Trust details | Check-specific claims, scope/limitations/dates are present on web and conceptually on Android. | Functional + needs polish | Dedicated check-detail component family; icons + text + dates + limitations; no blanket badge. |
-| CU-010 | Service detail | Service/category information exists mostly inside profile/result cards. | Functional + prototype-level UI | Dedicated service scope, what is/not included, pricing disclaimer, availability and enquiry CTA. |
-| CU-011 | Create enquiry | Web has real structured form; Android has controlled/synthetic/offline draft experience. | Functional + needs polish | Progressive form, provider context, timing/locality, draft/retry clarity, no raw IDs. |
-| CU-012 | Contact-sharing consent | Consent-scoped handoff exists. | Functional + needs polish | Clear temporary access, channel, expiry, revoke, privacy explanation. |
-| CU-013 | Enquiry detail | Lifecycle cards/history exist. | Functional + needs polish | Timeline/state hierarchy, next action, provider context, accessible failures/conflicts. |
-| CU-014 | Saved providers | Android/web lists exist. | Functional + needs polish | Provider imagery/cards, compare/revisit context, empty state. |
-| CU-015 | Review eligibility | Eligibility/reason state exists after tracked interactions. | Functional + needs polish | Explain why eligible/not eligible without exposing internal codes. |
-| CU-016 | Submit review | Functional browser form and lifecycle exist; Android review surface remains less complete visually. | Functional + needs polish | Rating controls/icons, guidance, moderation expectations, success/pending states. |
-| CU-017 | Report provider / interaction | Review report and complaint actions exist in browser journeys. | Functional + prototype-level UI | Separate safety/report/complaint semantics; human reason labels; severity guidance. |
-| CU-018 | Complaint detail | Complaint records/status exist, but no polished dedicated detail journey. | Functional + prototype-level UI | Case timeline, updates, evidence/privacy boundaries, escalation/help. |
-| CU-019 | No-results recovery | Empty/no-result states exist conceptually and in components. | Functional + needs polish | Alternative area/category, clear filters, manual list fallback, helpful imagery. |
-| CU-020 | Location permission / fallback | Manual fallback is implemented; Android release permissions remain deliberately absent; Maps/location integration is not active. | Externally gated | Permission education only when justified; precise privacy copy; manual area remains first-class. |
+| ID | Screen | Classification | Main gap |
+|---|---|---|---|
+| CU-001 | Discover home | Functional + prototype-level UI | Marketplace hierarchy, categories, imagery, calm trust cues. |
+| CU-002 | Area selector | Functional + prototype-level UI | Human area picker, recent areas, privacy-first fallback. |
+| CU-003 | Category browser | Functional + prototype-level UI | Rich icon/imagery tiles and hierarchy. |
+| CU-004 | Search suggestions | Missing visual implementation | Recent/suggested/category/provider suggestions. |
+| CU-005 | Results list | Functional + needs polish | Production provider cards, imagery, service fit, availability, trust snippets. |
+| CU-006 | Results map | Externally gated | Safe map/list shell and accessible list; Google Maps activation remains separate. |
+| CU-007 | Filters | Functional + needs polish | Sheet/panel patterns, active summary, reset, 48dp targets. |
+| CU-008 | Provider public profile | Functional + needs polish | Imagery, hierarchy, adaptive layout, stronger service/actions composition. |
+| CU-009 | Trust details | Functional + needs polish | Dedicated check-detail components with dates/scope/limitations. |
+| CU-010 | Service detail | Functional + prototype-level UI | Clear scope, availability, pricing disclaimer and enquiry CTA. |
+| CU-011 | Create enquiry | Functional + needs polish | Progressive form; remove raw IDs; clear draft/retry. |
+| CU-012 | Contact-sharing consent | Functional + needs polish | Channel, expiry, revoke and privacy clarity. |
+| CU-013 | Enquiry detail | Functional + needs polish | Timeline/next-action/conflict hierarchy. |
+| CU-014 | Saved providers | Functional + needs polish | Stronger provider cards, imagery and empty state. |
+| CU-015 | Review eligibility | Functional + needs polish | Human reasons instead of internal codes. |
+| CU-016 | Submit review | Functional + needs polish | Rating controls/icons, moderation expectations and success states. |
+| CU-017 | Report provider/interaction | Functional + prototype-level UI | Separate safety/report/complaint semantics. |
+| CU-018 | Complaint detail | Functional + prototype-level UI | Dedicated status/timeline/escalation view. |
+| CU-019 | No-results recovery | Functional + needs polish | Alternative area/category and clear-filter recovery. |
+| CU-020 | Location permission/fallback | Externally gated | Permission education only when justified; manual area remains first-class. |
 
-# 8. Provider screen matrix
+## 7. Provider screen matrix
 
-| ID | Screen | Current implementation | Classification | Primary VC gap |
-|---|---|---|---|---|
-| PR-001 | Provider overview | Android dashboard/readiness and web provider overview exist. | Functional + prototype-level UI | Marketplace/provider workspace dashboard with task hierarchy, readiness, enquiries and status. |
-| PR-002 | Onboarding checklist | Android text checklist and web readiness tasks exist. | Functional + prototype-level UI | Resumable stepper/checklist, saved progress, why each item matters, error/recovery. |
-| PR-003 | Provider type / pathway | Operating-model/type concepts exist, but not as a polished guided pathway. | Functional + prototype-level UI | Guided fixed/mobile/hybrid choice with implications and privacy. |
-| PR-004 | Representative details | Domain support exists; no clearly finished standalone visual flow found. | Missing visual implementation | Role/authority capture, identity boundaries, edit/review states. |
-| PR-005 | Business / professional details | Data exists across profile/workspace, not a coherent production screen. | Missing visual implementation | Structured identity/profile sections with category-dependent requirements. |
-| PR-006 | Category / services | Web uses category-key inputs and rows; Android uses basic selection. | Functional + prototype-level UI | Human category picker, service editor, scope, removal consequences. |
-| PR-007 | Operating model | Select/form exists. | Functional + prototype-level UI | Visual explanation of fixed/mobile/hybrid and related location/privacy behavior. |
-| PR-008 | Service areas | Web currently exposes raw WKT polygon input. | Functional + prototype-level UI | Map/draw/area-picker abstraction plus accessible text alternative; hide implementation geometry. |
-| PR-009 | Public premises consent | Raw latitude/longitude + consent checkbox exists. | Functional + prototype-level UI | Address/place workflow, explicit public-point preview, separate private base, privacy confirmation. |
-| PR-010 | Evidence requirements | Requirement/timeline concepts exist. | Functional + needs polish | Requirement cards, accepted evidence, status, scope, expiry, action. |
-| PR-011 | Evidence capture / upload | Browser recoverable private upload is functional; Android includes synthetic upload/recovery controls. | Functional + prototype-level UI | Real capture/file-picker states, progress/retry, privacy, size/type guidance; remove simulation controls. |
-| PR-012 | Review and declaration | No complete polished declaration/review-before-submit flow found. | Missing visual implementation | Summary, declarations, consent, edit links, submission consequences. |
-| PR-013 | Verification timeline | Android/web timelines exist. | Functional + needs polish | Visual chronology, per-check status, correction/expiry, concise explanations. |
-| PR-014 | Action required / correction | Correction/retry concepts exist but are scattered. | Functional + prototype-level UI | Dedicated task card/detail flow, exact missing item, resubmit/review expectations. |
-| PR-015 | Availability | Web and Android state controls exist. | Functional + needs polish | Quick status, next available time, per-service scope, clear unknown/unavailable states. |
-| PR-016 | Enquiry inbox | Provider enquiry states exist. | Functional + needs polish | Prioritized list, response SLA/context, filters, unread/attention treatment. |
-| PR-017 | Enquiry response | Lifecycle actions exist. | Functional + needs polish | Accept/decline/request-info hierarchy, reason capture, revision conflict states. |
-| PR-018 | Portfolio | No finished portfolio/media management surface found. | Missing visual implementation | Work/premises imagery management separated from verification evidence. |
-| PR-019 | Reviews / provider response | Review/provider-response domain exists and browser provider journey covers review state. | Functional + needs polish | Review summary, response form, moderation/appeal states. |
-| PR-020 | Subscription / receipts | Commercial parity exists with synthetic/gated payment boundaries. | Functional + needs polish | Product/plan, invoice/receipt/status clarity; real payment actions remain externally gated. |
-| PR-021 | Provider members | No completed member-management visual flow found. | Missing visual implementation | Role-scoped members only when product scope/authorization permits. |
-| PR-022 | Publication status | Readiness/publication eligibility is represented. | Functional + needs polish | Explicit why published/not published, blocking checks, no commercial conflation. |
+| ID | Screen | Classification | Main gap |
+|---|---|---|---|
+| PR-001 | Provider overview | Functional + prototype-level UI | Production workspace dashboard and task hierarchy. |
+| PR-002 | Onboarding checklist | Functional + prototype-level UI | Resumable stepper/checklist with clear reasons/actions. |
+| PR-003 | Provider type/pathway | Functional + prototype-level UI | Guided fixed/mobile/hybrid pathway. |
+| PR-004 | Representative details | Missing visual implementation | Authority/role capture and edit/review states. |
+| PR-005 | Business/professional details | Missing visual implementation | Coherent category-aware details flow. |
+| PR-006 | Categories/services | Functional + prototype-level UI | Human category/service editor; remove raw keys. |
+| PR-007 | Operating model | Functional + prototype-level UI | Explain privacy/location implications. |
+| PR-008 | Service areas | Functional + prototype-level UI | Replace raw WKT with safe area controls + accessible text alternative. |
+| PR-009 | Public premises consent | Functional + prototype-level UI | Replace raw coordinates with place/address workflow and explicit preview. |
+| PR-010 | Evidence requirements | Functional + needs polish | Requirement cards, accepted evidence, status, scope, expiry. |
+| PR-011 | Evidence capture/upload | Functional + prototype-level UI | Real picker/capture/progress/retry; remove simulation controls. |
+| PR-012 | Review/declaration | Missing visual implementation | Summary, declarations, consent and edit links. |
+| PR-013 | Verification timeline | Functional + needs polish | Strong chronology, per-check status/correction/expiry. |
+| PR-014 | Action required/correction | Functional + prototype-level UI | Dedicated task/detail/resubmit flow. |
+| PR-015 | Availability | Functional + needs polish | Quick state, next available, per-service scope. |
+| PR-016 | Enquiry inbox | Functional + needs polish | Prioritised list, attention/SLA context and filters. |
+| PR-017 | Enquiry response | Functional + needs polish | Accept/decline/info hierarchy and conflict states. |
+| PR-018 | Portfolio | Missing visual implementation | Public work/premises imagery separate from evidence. |
+| PR-019 | Reviews/provider response | Functional + needs polish | Summary, response, moderation/appeal states. |
+| PR-020 | Subscription/receipts | Functional + needs polish | Plan/invoice/receipt clarity; real payments remain gated. |
+| PR-021 | Provider members | Missing visual implementation | Role-scoped member management only when authorized. |
+| PR-022 | Publication status | Functional + needs polish | Explain why published/not published and blockers without commercial conflation. |
 
-# 9. Operations/admin screen matrix
+## 8. Operations/admin screen matrix
 
-| ID | Screen | Current implementation | Classification | Primary VC gap |
-|---|---|---|---|---|
-| OP-001 | Operations dashboard | `Mission control` route/metrics exist with synthetic/stage language. | Functional + prototype-level UI | Production information architecture, workload/attention hierarchy, environment indicator moved out of primary content. |
-| OP-002 | Verification queue | Triage queue with metrics/table/keyboard structure exists. | Functional + prototype-level UI | Queue/detail split, saved filters, clear SLA/priority semantics, responsive triage. |
-| OP-003 | Verification case | Context appears across evidence/provider workspace routes, but not as a cohesive case workspace. | Functional + prototype-level UI | Case header, checklist, evidence, history, decisions, related provider context. |
-| OP-004 | Secure evidence viewer | Metadata/access controls exist; no complete high-fidelity private evidence viewer matching design spec. | Missing visual implementation | Revocable view, watermark, zoom, metadata, versions, checklist, timeout/access audit; synthetic-only until real evidence gate. |
-| OP-005 | Decision + reason form | Decision/action domain exists across operations flows. | Functional + prototype-level UI | Clear check-specific decision form, reason codes, limitations, four-eyes states. |
-| OP-006 | Field assignment | Field workflow route exists. | Functional + prototype-level UI | Assignment list/detail, travel/contact minimization, offline-ready field hierarchy. |
-| OP-007 | Field visit record | Structured field workflow exists. | Functional + prototype-level UI | Mobile-first task form, evidence boundaries, unable/missed/safety states. |
-| OP-008 | Provider operations profile | Provider drafts/workspaces routes exist. | Functional + prototype-level UI | Unified provider summary, services, checks, cases, actions, audit. |
-| OP-009 | Complaint queue | Customer complaints route exists. | Functional + prototype-level UI | Queue/detail workflow, severity/status, interaction linkage, response history. |
-| OP-010 | Incident case | Internal incidents route exists. | Functional + prototype-level UI | Incident severity/owner/actions/timeline without conflating customer complaints. |
-| OP-011 | Appeal review | Review moderation/appeal flows exist. | Functional + prototype-level UI | Original/moderated/appeal comparison, reasoned decision and audit trail. |
-| OP-012 | Subscription exception | Finance/commercial route exists; real payments remain gated. | Functional + prototype-level UI | Exception queue, account/invoice context, no trust-state impact. |
-| OP-013 | Payment reconciliation | Synthetic reconciliation foundations exist; real provider money movement disabled. | Externally gated | High-fidelity ledger/reconciliation shell may be designed; no real payment activation. |
-| OP-014 | Taxonomy configuration | No complete current production visual route. | Missing visual implementation | Versioned category/config editing with review controls. |
-| OP-015 | Evidence-rule configuration | No complete current production visual route. | Missing visual implementation | Versioned requirement/rule editor with effective dates and audit. |
-| OP-016 | Audit search / history | Navigation marks dedicated Audit as planned. | Missing visual implementation | Role-scoped immutable search/history, export boundaries. |
-| OP-017 | Role management | Navigation marks role management planned. | Missing visual implementation | Must remain separately controlled; do not infer authorization from UI. |
-| OP-018 | System health / queues | Some mission-control/reporting status exists; no cohesive system-health screen. | Functional + prototype-level UI | Operational health, queues, degraded integrations, kill-switch state, no secret leakage. |
+| ID | Screen | Classification | Main gap |
+|---|---|---|---|
+| OP-001 | Operations dashboard | Functional + prototype-level UI | Real workload/attention hierarchy; remove stage labels. |
+| OP-002 | Verification queue | Functional + prototype-level UI | Queue/detail split, filters, SLA/priority semantics, responsive triage. |
+| OP-003 | Verification case | Functional + prototype-level UI | Cohesive case workspace with checklist/evidence/history/decision. |
+| OP-004 | Secure evidence viewer | Missing visual implementation | Revocable viewer, watermark, zoom, metadata, versions, timeout/access audit. |
+| OP-005 | Decision + reason form | Functional + prototype-level UI | Check-specific decision, reason, limitation and four-eyes states. |
+| OP-006 | Field assignment | Functional + prototype-level UI | Task list/detail and privacy-minimised field hierarchy. |
+| OP-007 | Field visit record | Functional + prototype-level UI | Mobile-first record with missed/unable/safety states. |
+| OP-008 | Provider operations profile | Functional + prototype-level UI | Unified provider/services/checks/cases/actions/audit view. |
+| OP-009 | Complaint queue | Functional + prototype-level UI | Queue/detail, severity/status, interaction linkage. |
+| OP-010 | Incident case | Functional + prototype-level UI | Severity/owner/actions/timeline distinct from complaints. |
+| OP-011 | Appeal review | Functional + prototype-level UI | Original/moderated/appeal comparison and reasoned decision. |
+| OP-012 | Subscription exception | Functional + prototype-level UI | Account/invoice context; no trust impact. |
+| OP-013 | Payment reconciliation | Externally gated | Honest ledger/reconciliation shell only until real provider activation. |
+| OP-014 | Taxonomy configuration | Missing visual implementation | Versioned category/config editor with review. |
+| OP-015 | Evidence-rule configuration | Missing visual implementation | Versioned rule editor with effective dates/audit. |
+| OP-016 | Audit search/history | Missing visual implementation | Role-scoped immutable search/history/export. |
+| OP-017 | Role management | Missing visual implementation | Separately controlled; UI never becomes authorization source. |
+| OP-018 | System health/queues | Functional + prototype-level UI | Cohesive degraded-integration/queue/kill-switch view without secrets. |
 
-## 9.1 Additional implemented operations routes beyond the original inventory wording
+Additional implemented operations routes—escalations/overrides, interaction history, review moderation, customer complaints, commercial finance, expiry/reporting, provider drafts, provider workspaces and discovery eligibility—are all **functional + prototype-level UI** and should be consolidated into the VC6 component/workspace system rather than redesigned as isolated pages.
 
-| Current route/surface | Classification | VC interpretation |
-|---|---|---|
-| Escalations and overrides | Functional + prototype-level UI | Preserve explicit ownership/four-eyes semantics; redesign as case-linked escalation workspace. |
-| Interaction history | Functional + prototype-level UI | Preserve privacy-safe summaries; improve timeline/filter/detail hierarchy. |
-| Review moderation | Functional + prototype-level UI | Integrate with OP-011 visual family. |
-| Customer complaints | Functional + prototype-level UI | Integrate with OP-009 detail/triage family. |
-| Commercial finance | Functional + prototype-level UI | Keep commercial state visually and semantically separate from trust verification. |
-| Expiry and reporting | Functional + prototype-level UI | Improve renewal/expiry signals, charts only where accessible table equivalents exist. |
-| Provider drafts | Functional + prototype-level UI | Clarify draft vs public provider state. |
-| Provider workspaces | Functional + prototype-level UI | Candidate foundation for unified OP-008 provider operations profile. |
-| Discovery eligibility | Functional + prototype-level UI | Strong candidate for explainable publication-status visualization; never expose private inputs. |
-
-# 10. Prototype/development artifacts visible in user-facing UI
-
-The following must not define final production aesthetics or copy:
+## 9. User-facing development/prototype artifacts to remove from canonical product UI
 
 ### Android
 
-- `Phase 11 — controlled pilot entry` in the top app bar;
-- `Preview context` mode selector;
-- navigation icons made from destination initials;
-- `Phase 5 discovery boundary` and repeated implementation-boundary cards;
-- `Synthetic privacy-safe map` presented as text rather than a map/list product experience;
-- `Image description:` rendered as user-facing placeholder copy;
-- `Start synthetic upload`, `Simulate interruption`, `Save synthetic draft offline`, `Simulate stale`, `Expire consent` and similar test controls;
-- internal wording such as API/provider/publication scope explanations where user-centered copy should be primary.
+- phase/pilot labels in permanent app chrome;
+- `Preview context`;
+- destination-initial navigation icons;
+- synthetic map/text-map labels;
+- visible `Image description:` placeholders;
+- synthetic upload/offline/stale/consent simulation controls;
+- developer-facing API/publication boundary explanations where user-centred copy should lead.
 
 ### Functional web/PWA
 
-- primitive glyph navigation/icons: `⌂`, `◇`, `↔`, `○`, `←`, `★`, `☆`, text checkmarks/arrows;
-- `Functional PWA workstream`;
-- W-stage/changelog labels inside the product shell;
-- `Parity target`, `Android remains protected`, `Canonical discovery`, `API-backed`, `W2 public discovery`;
-- primary content explaining BFF/API/provider-scope implementation details;
-- raw provider public IDs in customer enquiry forms;
+- primitive glyph navigation/action icons;
+- `Functional PWA workstream` and W-stage labels;
+- `Parity target`, `Android remains protected`, `Canonical discovery`, `API-backed` and similar implementation language;
+- raw provider public IDs;
 - raw category keys;
-- raw latitude/longitude and WKT polygon inputs;
-- technical share-safety/API-boundary notes as visible primary UI.
+- raw coordinates and WKT;
+- implementation-level BFF/API explanations as primary content.
 
-### Operations portal
+### Operations
 
 - `Synthetic Phase 7`, `Stage 7A`, `Stage 7B`;
-- fixture IDs/content embedded as visible primary data without a polished demo-data convention;
-- API endpoint strings rendered in page content;
-- simultaneous `loading`, `empty`, `overdue`, `access denied`, revoked/expired/conflict cards used as test evidence rather than actual state-driven rendering;
-- `Planned` items mixed into operational navigation without a deliberate roadmap/permission treatment;
-- session-policy implementation detail occupying permanent sidebar attention.
+- fixture/test state presentations as if they were normal case content;
+- API route strings in primary UI;
+- planned items mixed into operational navigation without deliberate unavailable/roadmap treatment;
+- session-policy implementation detail dominating permanent navigation.
 
 ### Historical preview
 
-- `Synthetic remote UI review`;
-- `UI checkpoint`;
-- `Android-aligned PWA`;
-- preview user-mode controls and primitive theme glyph.
+Preview labels may remain on the explicit preserved preview route. They must not leak into the functional product.
 
-Historical preview labels may remain on the preserved preview route; they must not leak into the final functional product shell.
+## 10. Shared design-system gaps
 
-# 11. Shared design-system gap audit
+### Typography
 
-## 11.1 Typography
+- lock one cross-product type family/fallback policy and platform-equivalent scale;
+- stronger title/body/supporting/limitation hierarchy;
+- readable ~16sp-equivalent body text;
+- 200% scaling/reflow validation.
 
-Current state:
+### Iconography
 
-- Android relies mainly on default Material 3 typography;
-- functional web uses Inter/system-family styling without a locked cross-platform type scale contract;
-- operations portal uses its own CSS sizing/weight conventions;
-- technical/development copy competes visually with user tasks.
+- replace initials/glyphs with Material Symbols/approved vectors;
+- establish semantic icons for search, map/list, save, enquiry, account, trust checks, expiry, warning, privacy, upload, field work and audit;
+- status always icon + text + colour.
 
-Gap:
+### Imagery
 
-- canonical type family/fallback policy;
-- platform-specific but equivalent scale mapping;
-- clearer display/title/body/label hierarchy;
-- body readability around 16sp-equivalent;
-- status/limitation text hierarchy;
-- 200% font scaling/reflow validation.
-
-## 11.2 Iconography
-
-Current state:
-
-- Android bottom navigation uses destination initials;
-- web uses primitive text glyphs and stars/checkmarks/arrows;
-- admin has minimal consistent icon usage.
-
-Gap:
-
-- approved Material Symbols/Material Icons or controlled vector set;
-- icon semantics for search, map/list, save, enquiry, account, evidence, checks, expiry, warning, info, privacy, upload, field, audit;
-- icons must supplement—not replace—status text.
-
-## 11.3 Imagery
-
-Current state:
-
-- provider/category/work imagery is largely absent;
-- text descriptions substitute for images in Android;
-- public provider profile lacks a mature gallery/premises/work visual hierarchy;
-- verification evidence is correctly private but public imagery rules are not yet embodied in components.
-
-Gap:
-
-- category illustration/icon strategy;
+- category icon/illustration system;
 - provider hero/gallery/thumbnail system;
 - premises/work imagery rules;
-- low-bandwidth thumbnail/source-set policy;
-- placeholders and failed-image states;
-- strict separation between public imagery and private verification evidence;
-- culturally appropriate Zambia-oriented art direction without stereotyping.
+- low-bandwidth responsive sources/placeholders;
+- strict separation from private verification evidence;
+- Zambia-relevant art direction without stereotyping.
 
-## 11.4 Colour
+### Colour
 
-Current state:
+- reconcile Android/web/admin to one semantic token map;
+- validate light/dark contrast;
+- remove ad hoc admin status colours;
+- keep commercial/payment semantics visually separate from trust.
 
-- useful green/ink/mint/amber foundation exists on Android/PWA;
-- dark schemes exist in Android/PWA foundations;
-- admin includes local hard-coded status colours;
-- some status treatments rely heavily on chip colour.
+### Spacing/shape/elevation
 
-Gap:
-
-- one canonical semantic palette/token map;
-- contrast validation across light/dark;
-- status icon + text + colour rule enforcement;
-- operations density states mapped to shared semantics;
-- no commercial/payment colour conflation with trust.
-
-## 11.5 Spacing, shape and elevation
-
-Current state:
-
-- 4dp/8/12/16/24/32 guidance exists;
-- implementation is card-heavy and inconsistent across clients;
-- operations controls include 44px and 36px targets.
-
-Gap:
-
-- canonical spacing tokens and layout grids;
-- 48dp-class interaction targets;
+- canonical spacing/grid tokens;
+- 48dp-class targets;
 - restrained radius/elevation hierarchy;
 - fewer unnecessary cards/borders;
-- clearer section grouping and meaningful whitespace.
+- more meaningful whitespace/grouping.
 
-## 11.6 Components
+### Components
 
-Needs one reconciled visual family across platform-native implementations:
+Reconcile platform-native equivalents for:
 
-- provider summary/card;
-- category tile;
-- search and suggestions;
-- map/list switch and filter controls;
-- check-specific trust card/details;
-- status/limitation/expiry chip patterns;
+- provider/category cards;
+- search/suggestions/filters;
+- map/list controls;
+- check-specific trust cards/details;
 - provider profile header/gallery;
-- enquiry card/detail/timeline;
-- evidence requirement/upload/timeline;
-- consent and privacy callouts;
-- empty/loading/error/offline/retry states;
-- bottom nav / rail / side nav;
-- operations queue, case header, evidence viewer, decision panel and audit timeline.
+- enquiry/contact-consent/review/complaint patterns;
+- provider readiness/services/areas/evidence/timeline/availability;
+- loading/empty/error/offline/retry states;
+- navigation;
+- operations queue/case/evidence/decision/audit components.
 
-## 11.7 Responsive/adaptive layout
+### Responsive/adaptive layout
 
-Current state:
-
-- web shell already has mobile/tablet/desktop navigation patterns;
-- Android root experience is predominantly a single compact scrolling column;
-- admin is table-oriented desktop-first but lacks the finished queue/detail split and mobile field-task adaptation.
-
-Gap:
-
-- Android compact/medium/expanded window-size rules;
-- web content-level responsive composition beyond shell navigation;
-- customer/provider desktop persistent side navigation with appropriate detail panes;
+- Android compact/medium/expanded behavior;
+- web content-level responsive composition beyond navigation shell;
+- customer/provider desktop side-navigation detail layouts;
 - operations desktop queue/detail/evidence split;
-- tablet collapse rules;
-- mobile operations task/triage flows rather than desktop shrink-down.
+- compact operations as task-focused triage/field flows, not squeezed tables.
 
-## 11.8 Motion
+### Motion
 
-Current state: little decorative motion, which is safer than over-animation.
+- short functional transitions only;
+- progress/upload/state feedback;
+- reduced-motion equivalent;
+- no decorative trust animation.
 
-Gap:
+### Accessibility
 
-- short functional transitions for navigation/state changes;
-- upload/progress feedback;
-- map/list transitions;
-- reduced-motion equivalence;
-- never animate trust/verification in a way that implies certainty or approval.
-
-## 11.9 Accessibility
-
-Strengths already present:
-
-- skip links/focus styles on web;
-- semantics/test tags in Compose;
-- reduced-motion foundation;
-- accessible list remains central to discovery.
-
-Gaps to close:
-
-- replace glyph/initial icons with labeled vectors;
-- enforce 48dp-class targets;
+- vector icons with labels/semantics;
+- 48dp targets;
+- keyboard/focus order;
+- TalkBack/screen-reader state labels;
+- non-colour status cues;
+- map/list equivalence;
+- long-form error summary/focus management;
 - 200% font scaling/reflow;
-- keyboard/focus order in dense operations split views;
-- TalkBack/screen-reader labels for check status, maps, uploads, ratings and timelines;
-- non-colour status cues everywhere;
-- accessible map/list equivalence;
-- error summary/focus management in long forms;
-- reduced-motion test coverage.
+- reduced-motion tests.
 
-## 11.10 Copy and information architecture
+### Copy/information architecture
 
-The code correctly contains many trust/privacy boundaries, but too many are expressed as developer/security explanations rather than user-centered product copy.
+Keep the invariant, but translate implementation/security explanations into concise user meaning:
 
-Required rule:
+- what happened;
+- what it means;
+- what it does not mean;
+- what the user can do next;
+- what remains private.
 
-- keep the underlying invariant;
-- move implementation detail to docs/logs/admin diagnostics where appropriate;
-- present concise user meaning, limitation, next action and privacy consequence in the UI.
+## 11. Priority conclusions
 
-# 12. Priority visual-gap conclusions
+1. **Android has the largest flagship visual gap**: substantial functionality exists inside a controlled-pilot/prototype presentation.
+2. **The functional PWA has the strongest responsive shell**, but workstream labels, raw technical inputs, primitive glyphs and minimal imagery keep it below production visual quality.
+3. **The public provider profile has the strongest current trust structure** and should inform the approved Design DNA rather than be discarded.
+4. **Operations has broad functional coverage but remains visually a test harness**; queue/detail/evidence review is the highest-value high-fidelity admin redesign.
+5. **Map/location is partly externally gated**, but truthful map/list shells, privacy wording and accessible list behavior can be designed before provider activation.
+6. **Payments, real messaging and real participant states remain externally gated**; VC may design inactive/pending/fallback states but may not imply activation.
+7. **No mass redesign should start from generated code.** The representative design set and owner approval come first.
 
-1. **Android is the largest flagship visual gap.** It is functionally meaningful but still presents as a single-screen controlled pilot/prototype harness.
-2. **The functional PWA has the strongest responsive foundation** but still visibly exposes workstream labels, primitive glyphs, raw technical provider inputs and minimal imagery.
-3. **The public provider profile has the best current trust-information structure** and should become a Design DNA reference, not be discarded.
-4. **Operations has broad route/function coverage but is visually a test harness.** The secure evidence viewer and queue/detail workspace are the most important missing high-fidelity admin patterns.
-5. **Map/location experience is partly externally gated**, but visual map/list shells, fallbacks and accessible list behavior can be designed before Google Maps activation.
-6. **Payments, notifications and real participant states remain externally gated.** VC may design honest disabled/pending/fallback states but must not make them appear active.
-7. **No mass redesign should start from generated code.** First lock an owner-approved Design DNA using representative screens.
+## 12. VC0 review checkpoint
 
-# 13. VC0 exit criteria tied to this matrix
+VC0 repository-side audit/design-control is ready when all of the following are true:
 
-VC0 may close only when:
-
-- this matrix is reviewed against actual source and authoritative docs;
-- the baseline regression discrepancy is corrected and exact-head gates are green or a reviewed blocker is explicitly recorded;
+- this matrix is reviewed against current source and authority documents;
+- stable predecessor regression evidence is green;
 - `VISUAL_COMPLETION_PLAN.md` defines controlled VC1–VC7 sequencing;
-- `DESIGN_DNA_BRIEF.md` defines non-negotiable trust/privacy/accessibility rules and genuinely differentiated design directions;
-- Stitch/Antigravity MCP and Higgsfield-secondary asset workflows are documented without making either tool authoritative over the repository;
-- the representative flagship design set is ready for owner review;
-- broad UI implementation remains blocked pending explicit owner approval of one direction.
+- `DESIGN_DNA_BRIEF.md` defines non-negotiable rules, three differentiated directions and exact representative generation prompts;
+- Stitch/Antigravity MCP and Higgsfield-secondary boundaries are documented;
+- the current design tooling limitation is stated honestly;
+- broad implementation remains blocked pending actual high-fidelity renders and explicit owner approval;
+- the W7/W8 historical-verifier lock coupling is resolved before any future VC implementation-lane claim that would make the current W8 `RELEASED` assertion stale.
