@@ -1,0 +1,733 @@
+:root {
+  --direkt-forest: #075d43;
+  --direkt-forest-deep: #063d2f;
+  --direkt-leaf: #0b8a60;
+  --direkt-mint-soft: #e8f7f0;
+  --direkt-sand: #f6f2ea;
+  --direkt-warm: #fffaf2;
+  --direkt-ink-soft: #33433b;
+  --direkt-shadow-sm: 0 8px 22px rgb(24 54 42 / 7%);
+  --direkt-shadow-md: 0 18px 44px rgb(20 55 41 / 11%);
+  --direkt-shadow-focus: 0 22px 60px rgb(8 76 55 / 16%);
+  --direkt-radius-xl: 30px;
+  --direkt-radius-2xl: 38px;
+}
+
+.direkt-icon {
+  width: 1.35em;
+  height: 1.35em;
+  flex: 0 0 auto;
+}
+
+.world-class-shell .desktop-side-nav {
+  background:
+    radial-gradient(
+      circle at 14% 4%,
+      color-mix(in srgb, var(--mint) 72%, transparent),
+      transparent 31%
+    ),
+    var(--surface);
+}
+
+.world-class-shell .brand-mark,
+.world-class-shell .rail-brand {
+  background: linear-gradient(
+    145deg,
+    var(--direkt-leaf),
+    var(--direkt-forest-deep)
+  );
+  box-shadow: 0 9px 25px rgb(7 93 67 / 19%);
+}
+
+.world-class-shell .brand strong {
+  letter-spacing: 0.08em;
+}
+
+.world-class-shell .nav-item {
+  border-radius: 15px;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.world-class-shell .nav-item:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.world-class-shell .nav-item.active {
+  background: color-mix(in srgb, var(--mint) 74%, var(--surface));
+  color: var(--direkt-forest-deep);
+}
+
+.world-class-shell .nav-glyph {
+  display: grid;
+  place-items: center;
+}
+
+.world-class-shell .nav-glyph .direkt-icon {
+  width: 21px;
+  height: 21px;
+}
+
+.side-trust-note {
+  display: flex;
+  gap: 11px;
+  margin-top: auto;
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border));
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--mint) 48%, var(--surface));
+  padding: 14px;
+}
+
+.side-trust-note strong {
+  display: block;
+  font-size: 13px;
+}
+
+.side-trust-note p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.48;
+}
+
+.side-trust-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--direkt-forest);
+  color: #fff;
+}
+
+.trust-principle-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  margin: -1px 0 22px;
+  border: 1px solid color-mix(in srgb, var(--primary) 16%, var(--border));
+  border-radius: 19px;
+  background: color-mix(in srgb, var(--mint) 34%, var(--surface));
+  padding: 14px 16px;
+}
+
+.trust-principle-strip > .direkt-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--direkt-forest);
+}
+
+.trust-principle-strip strong {
+  display: block;
+  font-size: 14px;
+}
+
+.trust-principle-strip p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.workspace-intro .trust-mark {
+  font-size: 18px;
+}
+
+.workspace-intro .trust-mark .direkt-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.workspace-intro .capability-item .direkt-icon {
+  width: 19px;
+  height: 19px;
+  color: var(--primary);
+}
+
+/* Discovery / customer marketplace */
+.marketplace-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--primary) 15%, var(--border));
+  border-radius: var(--direkt-radius-2xl);
+  background:
+    radial-gradient(circle at 92% 12%, rgb(11 138 96 / 17%), transparent 34%),
+    radial-gradient(circle at 5% 95%, rgb(242 169 0 / 11%), transparent 32%),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--mint) 62%, var(--surface)),
+      var(--surface) 68%
+    );
+  padding: clamp(24px, 6vw, 56px);
+  box-shadow: var(--direkt-shadow-sm);
+}
+
+.marketplace-hero-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+}
+
+.marketplace-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mint) 70%, var(--surface));
+  padding: 8px 11px;
+  color: var(--direkt-forest);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.marketplace-kicker .direkt-icon {
+  width: 17px;
+  height: 17px;
+}
+
+.marketplace-hero h1 {
+  max-width: 720px;
+  margin: 0;
+  font-size: clamp(34px, 7vw, 62px);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.marketplace-hero-lead {
+  max-width: 670px;
+  margin: 17px 0 0;
+  color: color-mix(in srgb, var(--ink) 76%, var(--muted));
+  font-size: clamp(16px, 2.5vw, 19px);
+  line-height: 1.58;
+}
+
+.marketplace-search-card {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 12px;
+  margin-top: 28px;
+  border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+  padding: 12px;
+  box-shadow: var(--direkt-shadow-md);
+  backdrop-filter: blur(18px);
+}
+
+.marketplace-search-main,
+.marketplace-search-location {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: var(--surface);
+  padding: 0 14px;
+}
+
+.marketplace-search-main:focus-within,
+.marketplace-search-location:focus-within {
+  border-color: color-mix(in srgb, var(--primary) 56%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 62%, transparent);
+}
+
+.marketplace-search-main > .direkt-icon,
+.marketplace-search-location > .direkt-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--primary);
+}
+
+.marketplace-search-main label,
+.marketplace-search-location label {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+}
+
+.marketplace-search-main label span,
+.marketplace-search-location label span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.marketplace-search-main input,
+.marketplace-search-location input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.marketplace-search-submit {
+  display: inline-flex;
+  min-height: 58px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 0;
+  border-radius: 17px;
+  background: linear-gradient(145deg, var(--direkt-leaf), var(--direkt-forest));
+  padding: 0 20px;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 850;
+  box-shadow: 0 10px 26px rgb(7 93 67 / 22%);
+}
+
+.marketplace-search-submit:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+.category-section,
+.marketplace-results-section,
+.marketplace-confidence-section {
+  margin-top: 28px;
+}
+
+.section-heading-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+.section-heading-row h2 {
+  margin: 3px 0 0;
+  font-size: clamp(23px, 4vw, 32px);
+  letter-spacing: -0.035em;
+}
+
+.section-heading-row p {
+  max-width: 640px;
+  margin: 5px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.category-market-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.category-market-card {
+  min-height: 118px;
+  border: 1px solid var(--border);
+  border-radius: 21px;
+  background: var(--surface);
+  padding: 16px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--direkt-shadow-sm);
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease;
+}
+
+.category-market-card:hover,
+.category-market-card.active {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--primary) 38%, var(--border));
+  box-shadow: var(--direkt-shadow-md);
+}
+
+.category-market-card.active {
+  background: color-mix(in srgb, var(--mint) 42%, var(--surface));
+}
+
+.category-market-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 13px;
+  background: var(--direkt-mint-soft);
+  color: var(--direkt-forest);
+}
+
+.category-market-card strong {
+  display: block;
+  margin-top: 13px;
+  font-size: 15px;
+}
+
+.category-market-card span:last-child {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.discovery-secondary-controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.discovery-secondary-controls label {
+  display: grid;
+  gap: 7px;
+}
+
+.discovery-secondary-controls label > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.discovery-secondary-controls select {
+  min-height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 0 12px;
+  color: var(--ink);
+}
+
+.search-privacy-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.search-privacy-note .direkt-icon {
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+  color: var(--primary);
+}
+
+.marketplace-confidence-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.confidence-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 19px;
+  background: var(--surface);
+  padding: 15px;
+}
+
+.confidence-card > .direkt-icon {
+  width: 23px;
+  height: 23px;
+  color: var(--primary);
+}
+
+.confidence-card strong {
+  display: block;
+  font-size: 14px;
+}
+
+.confidence-card p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.marketplace-results-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.results-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.view-switch {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface);
+  padding: 3px;
+}
+
+.view-switch button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  padding: 0 12px;
+  color: var(--muted);
+}
+
+.view-switch button.active {
+  background: var(--mint);
+  color: var(--direkt-forest-deep);
+  font-weight: 800;
+}
+
+.view-switch button:disabled {
+  opacity: 0.52;
+}
+
+.provider-results-grid.marketplace-provider-grid {
+  gap: 15px;
+}
+
+.marketplace-provider-card {
+  overflow: hidden;
+  padding: 0;
+  box-shadow: var(--direkt-shadow-sm);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.marketplace-provider-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--direkt-shadow-focus);
+}
+
+.provider-market-media {
+  position: relative;
+  min-height: 158px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 80% 15%, rgb(255 255 255 / 24%), transparent 28%),
+    linear-gradient(145deg, var(--direkt-forest), var(--direkt-leaf));
+}
+
+.provider-market-media img {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  display: block;
+}
+
+.provider-media-fallback {
+  display: grid;
+  min-height: 158px;
+  place-items: center;
+  color: #fff;
+}
+
+.provider-media-fallback span {
+  display: grid;
+  width: 62px;
+  height: 62px;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 30%);
+  border-radius: 22px;
+  background: rgb(255 255 255 / 13%);
+  font-size: 24px;
+  font-weight: 900;
+  backdrop-filter: blur(8px);
+}
+
+.provider-availability-overlay {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.provider-market-body {
+  padding: 18px;
+}
+
+.provider-market-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.provider-market-heading h3 {
+  margin: 3px 0 0;
+  font-size: 21px;
+  letter-spacing: -0.03em;
+}
+
+.provider-locality-line {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.provider-locality-line .direkt-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--primary);
+}
+
+.provider-fit-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 13px;
+}
+
+.provider-fit-reasons span,
+.trust-summary-chip {
+  border-radius: 999px;
+  background: var(--surface-2);
+  padding: 7px 9px;
+  color: color-mix(in srgb, var(--ink) 80%, var(--muted));
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.provider-trust-preview {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.provider-trust-line {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 9px;
+  align-items: start;
+}
+
+.provider-trust-line > .direkt-icon {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  color: var(--primary);
+}
+
+.provider-trust-line strong {
+  display: block;
+  font-size: 12px;
+  line-height: 1.42;
+}
+
+.provider-trust-line small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.provider-market-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.provider-distance {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.provider-market-action {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 7px;
+  border-radius: 13px;
+  background: var(--direkt-forest);
+  padding: 0 14px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.discovery-disabled.world-class-disabled {
+  border-style: solid;
+  background: color-mix(in srgb, var(--sand) 62%, var(--surface));
+}
+
+.discovery-disabled.world-class-disabled .disabled-icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  margin-bottom: 13px;
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: var(--direkt-shadow-sm);
+}
+
+@media (min-width: 640px) {
+  .marketplace-search-card {
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr) auto;
+  }
+
+  .category-market-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .discovery-secondary-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .marketplace-confidence-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .marketplace-hero {
+    padding: 52px 54px;
+  }
+
+  .category-market-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .provider-results-grid.marketplace-provider-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-class-shell .nav-item,
+  .category-market-card,
+  .marketplace-provider-card {
+    transition: none;
+  }
+}

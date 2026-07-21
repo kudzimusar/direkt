@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -29,8 +32,8 @@ import com.kudzimusar.direkt.ui.discovery.CustomerOnboardingExperience
 import com.kudzimusar.direkt.ui.discovery.SavedProvidersExperience
 import com.kudzimusar.direkt.ui.interaction.CustomerInteractionExperience
 import com.kudzimusar.direkt.ui.interaction.ProviderInteractionExperience
-import com.kudzimusar.direkt.ui.provider.ProviderWorkspaceExperience
 import com.kudzimusar.direkt.ui.provider.ProviderWorkspaceSection
+import com.kudzimusar.direkt.ui.provider.WorldClassProviderWorkspaceExperience
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,10 +48,15 @@ fun DirektApp(
             TopAppBar(
                 title = {
                     Column {
-                        Text("DIREKT", fontWeight = FontWeight.Bold)
                         Text(
-                            text = "Phase 11 — controlled pilot entry",
+                            text = "DIREKT",
+                            fontWeight = FontWeight.ExtraBold,
+                            style = MaterialTheme.typography.titleLarge,
+                        )
+                        Text(
+                            text = "Local services. Clearer proof.",
                             style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 },
@@ -63,8 +71,8 @@ fun DirektApp(
                     NavigationBarItem(
                         selected = appState.destination == destination,
                         onClick = { appState.navigate(destination) },
-                        icon = { Text(destination.label.take(1), fontWeight = FontWeight.Bold) },
-                        label = { Text(destination.label) },
+                        icon = { DirektNavigationIcon(destination) },
+                        label = { Text(destinationLabel(appState.mode, destination)) },
                     )
                 }
             }
@@ -74,7 +82,7 @@ fun DirektApp(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(20.dp),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
@@ -84,18 +92,21 @@ fun DirektApp(
                 )
             }
             item {
-                Text(
-                    text = screenTitle(appState),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = screenTitle(appState),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                    )
+                    Text(
+                        text = screenSummary(appState),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
-            item {
-                Text(
-                    text = screenSummary(appState),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            if (appState.destination != DirektDestination.Discover) {
+                item { TrustPrincipleCard() }
             }
             if (appState.destination == DirektDestination.Account) {
                 item { PilotAuthenticationExperience() }
@@ -111,14 +122,14 @@ fun DirektApp(
             } else {
                 when (appState.destination) {
                     DirektDestination.Discover -> item {
-                        ProviderWorkspaceExperience(ProviderWorkspaceSection.Dashboard)
+                        WorldClassProviderWorkspaceExperience(ProviderWorkspaceSection.Dashboard)
                     }
                     DirektDestination.Saved -> item {
-                        ProviderWorkspaceExperience(ProviderWorkspaceSection.Evidence)
+                        WorldClassProviderWorkspaceExperience(ProviderWorkspaceSection.Evidence)
                     }
                     DirektDestination.Enquiries -> item { ProviderInteractionExperience() }
                     DirektDestination.Account -> item {
-                        ProviderWorkspaceExperience(ProviderWorkspaceSection.Profile)
+                        WorldClassProviderWorkspaceExperience(ProviderWorkspaceSection.Profile)
                     }
                 }
                 if (appState.destination == DirektDestination.Account) {
@@ -134,57 +145,116 @@ private fun ModeSelector(
     selectedMode: DirektMode,
     onModeSelected: (DirektMode) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(text = "Preview context", style = MaterialTheme.typography.labelLarge)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            DirektMode.entries.forEach { mode ->
-                FilterChip(
-                    selected = selectedMode == mode,
-                    onClick = { onModeSelected(mode) },
-                    label = { Text(mode.label) },
-                )
+            Text(
+                text = "Use DIREKT as",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                DirektMode.entries.forEach { mode ->
+                    FilterChip(
+                        selected = selectedMode == mode,
+                        onClick = { onModeSelected(mode) },
+                        label = { Text(mode.label) },
+                    )
+                }
             }
+            Text(
+                text = "Switching views does not change your account permissions. Provider access and trust decisions remain controlled by DIREKT.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
-        Text(
-            text = "Mode is presentation context only. Backend identity, role, provider, publication, interaction, review and commercial policy remain authoritative.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 
+@Composable
+private fun TrustPrincipleCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
+        ),
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = "Proof before persuasion",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = "Trust information is shown check by check. A payment or subscription never upgrades a provider's trust status.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+private fun destinationLabel(mode: DirektMode, destination: DirektDestination): String =
+    if (mode == DirektMode.Customer) {
+        destination.label
+    } else {
+        when (destination) {
+            DirektDestination.Discover -> "Overview"
+            DirektDestination.Saved -> "Evidence"
+            DirektDestination.Enquiries -> "Enquiries"
+            DirektDestination.Account -> "Account"
+        }
+    }
+
 private fun screenTitle(appState: DirektAppState): String = when (appState.mode) {
     DirektMode.Customer -> when (appState.destination) {
-        DirektDestination.Discover -> "Find a provider"
-        DirektDestination.Saved -> "Saved providers"
-        DirektDestination.Enquiries -> "Enquiries and reviews"
-        DirektDestination.Account -> "Account and pilot access"
+        DirektDestination.Discover -> "Find the right local service"
+        DirektDestination.Saved -> "Your shortlist"
+        DirektDestination.Enquiries -> "Your service requests"
+        DirektDestination.Account -> "Account and privacy"
     }
     DirektMode.Provider -> when (appState.destination) {
-        DirektDestination.Discover -> "Provider workspace"
-        DirektDestination.Saved -> "Private evidence uploads"
-        DirektDestination.Enquiries -> "Enquiry inbox and review responses"
-        DirektDestination.Account -> "Account, profile and subscription"
+        DirektDestination.Discover -> "Run your service business"
+        DirektDestination.Saved -> "Checks and evidence"
+        DirektDestination.Enquiries -> "Customer enquiries"
+        DirektDestination.Account -> "Business account"
     }
 }
 
 private fun screenSummary(appState: DirektAppState): String = when (appState.mode) {
-    DirektMode.Customer -> if (appState.destination == DirektDestination.Enquiries) {
-        "Track bounded service requests, time-limited contact consent, private history, eligible reviews and appeals."
-    } else if (appState.destination == DirektDestination.Account) {
-        "Real pilot sign-in remains fail-closed until approved Firebase, API and notice configuration is injected."
-    } else {
-        "Search fictional, policy-eligible providers using manual area or a one-time location model."
+    DirektMode.Customer -> when (appState.destination) {
+        DirektDestination.Discover ->
+            "Search by what you need and where you need it, then compare providers using clear, check-specific trust information."
+        DirektDestination.Saved ->
+            "Keep promising providers together so you can compare services, availability and current trust information."
+        DirektDestination.Enquiries ->
+            "Follow service requests, provider responses, consent-aware contact handoffs and eligible review activity."
+        DirektDestination.Account ->
+            "Manage sign-in, consent and security while provider trust remains independently controlled."
     }
     DirektMode.Provider -> when (appState.destination) {
+        DirektDestination.Discover ->
+            "See what needs attention, keep your services current and understand what customers can see."
+        DirektDestination.Saved ->
+            "Understand each requirement, track review progress and fix action-required items without exposing private evidence."
         DirektDestination.Enquiries ->
-            "Respond inside the actor-resolved provider scope with optimistic revisions and one bounded review response."
+            "Respond to structured customer requests and keep tracked interactions moving."
         DirektDestination.Account ->
-            "Pilot authentication proves phone possession only; provider scope, verification and commercial state remain backend-authoritative."
-        else ->
-            "Manage a fictional actor-scoped workspace with private evidence recovery, safe verification progress and independent availability."
+            "Manage your business profile, security and commercial settings while trust decisions remain independent."
     }
 }

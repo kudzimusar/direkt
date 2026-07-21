@@ -6,6 +6,9 @@ import "./discovery.css";
 import "./account.css";
 import "./customer.css";
 import "./provider.css";
+import "./world-class.css";
+import "./provider-world-class.css";
+import "./provider-workspace-world-class.css";
 
 export const metadata: Metadata = {
   title: {
@@ -13,7 +16,7 @@ export const metadata: Metadata = {
     template: "%s · DIREKT",
   },
   description:
-    "DIREKT customer and provider application for evidence-backed local service discovery in Zambia.",
+    "DIREKT helps people in Zambia find local service providers and understand clear, evidence-backed trust information before making contact.",
   applicationName: "DIREKT",
   manifest: "/manifest.webmanifest",
   robots: {
@@ -32,11 +35,15 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en">
       <body>
-        <a className="skip-link" href="#main-content">Skip to content</a>
+        <a className="skip-link" href="#main-content">
+          Skip to content
+        </a>
         {children}
         <PwaRegistration />
       </body>

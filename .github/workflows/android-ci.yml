@@ -99,7 +99,20 @@ jobs:
           test ! -f google-services.json
 
       - name: Run unit tests, Android lint and debug builds
-        run: ./gradlew --no-daemon --stacktrace testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon --stacktrace testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest \
+            2>&1 | tee "${RUNNER_TEMP}/direkt-android-build.log"
+
+      - name: Upload Android build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-android-build-log-${{ github.run_number }}
+          path: ${{ runner.temp }}/direkt-android-build.log
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Upload test and lint reports
         if: always()
