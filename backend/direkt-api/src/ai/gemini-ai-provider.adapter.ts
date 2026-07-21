@@ -23,7 +23,8 @@ export class GeminiAiProviderAdapter implements AiProviderPort {
   ) {}
 
   async generate(input: AiProviderRequest): Promise<AiProviderResult> {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(this.model)}:generateContent`;
+    const endpoint =
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(this.model)}:generateContent`;
 
     try {
       const response = await fetch(endpoint, {
