@@ -17,7 +17,7 @@
 - **SUPERSEDED** — historical/fallback direction, not the current preferred runtime.
 - **BLOCKED** — cannot progress without an external/legal/commercial/repository gate.
 
-No integration becomes ACTIVE merely because an account, DNS record, API key or secret exists.
+No integration becomes ACTIVE merely because an account, DNS record, API key, SDK, model name or secret exists.
 
 ## Domain and public edge
 
@@ -139,6 +139,32 @@ Resend remains EXTERNALLY_PROVISIONED until an application adapter, runtime secr
 
 No telemetry provider may receive raw evidence, tokens, contact data, exact private coordinates or unnecessary free text.
 
+## AI/model providers and AI runtime
+
+| Integration | State | Current role |
+|---|---|---|
+| DIREKT AI product architecture | **PLANNED / DOCUMENTED** | Provider-neutral backend orchestration, use-case registry, evaluation, security and kill-switch direction defined in `docs/architecture/AI_PRODUCT_ARCHITECTURE.md`. |
+| External foundation-model provider | **NOT SELECTED / NOT ACTIVE** | No provider/model is authorized merely by the world-class/AI plan. Selection requires technical, cost, privacy, data-processing, regional, retention/training and security review. |
+| Embedding/vector AI service | **NOT SELECTED / NOT ACTIVE** | Future semantic discovery/retrieval capability; deterministic eligibility and authorization remain mandatory. |
+| Vision/OCR model for restricted evidence | **DISABLED BY DEFAULT** | Restricted evidence must not be sent to an external model without explicit dedicated legal/privacy/security/data-processing approval and minimization controls. |
+| Client-direct AI SDK/API calls | **PROHIBITED** | Model credentials/system prompts/tool authority remain backend-owned. |
+
+Before any AI provider/use case can become ACTIVE, evidence must prove:
+
+- source-controlled use-case purpose and data classification;
+- approved provider/model and processing terms;
+- Secret Manager/runtime binding with least privilege;
+- backend-only orchestration;
+- structured output/tool authorization controls;
+- prompt-injection/sensitive-data/security evaluation;
+- offline quality/grounding thresholds;
+- cost/latency/rate limits;
+- observability and kill switch;
+- managed canary;
+- deterministic/manual fallback;
+- human decision boundary;
+- applicable client/backend regression.
+
 ## Browser/application surfaces
 
 | Surface | State | Current role |
@@ -172,6 +198,8 @@ The operations portal has no direct privileged database/Supabase client path. Th
 | Automated registry APIs | **NOT AUTHORIZED** | No scraping/fabricated API access. |
 
 Payment sandbox evidence is a provisioning/adapter-readiness receipt only. Android/browser clients must never decide payment success; real money remains disabled until separate authorization.
+
+AI output cannot create payment authority or substitute for registry/verification evidence.
 
 ## API/client contract tooling
 
@@ -211,4 +239,4 @@ Detailed evidence: `docs/integrations/PHASE_INTEGRATION_RUNTIME_AUDIT_2026-07-19
 
 ## Change-control rule
 
-Update this register and `LIVE_INTEGRATION_LEDGER.md` whenever provider provisioning, source adapter/SDK, secret/runtime binding, managed canary, privacy/legal approval, fallback/kill switch or production authorization changes. External provisioning alone is never enough to mark an integration ACTIVE.
+Update this register and `LIVE_INTEGRATION_LEDGER.md` whenever provider/model provisioning, source adapter/SDK, secret/runtime binding, managed canary, privacy/legal approval, AI evaluation, fallback/kill switch or production authorization changes. External provisioning alone is never enough to mark an integration ACTIVE.
