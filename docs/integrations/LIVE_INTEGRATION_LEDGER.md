@@ -180,7 +180,7 @@ No payment provider secret is attached to Cloud Run until adapter/config/runtime
 | Integration | State | Runtime closure required |
 |---|---|---|
 | Transactional outbox | `ACTIVE` | Canonical asynchronous delivery source of truth. |
-| Resend | `EXTERNALLY_PROVISIONED / RC1 PREFLIGHT PROVEN` | `notify.direkt.forum` verified; `direkt-resend-api-key` version 1 enabled. Still requires application adapter, runtime Secret Manager binding, outbox consumer, idempotency/retry, templates/privacy and managed synthetic delivery canary before `ACTIVE`. |
+| Resend | `IMPLEMENTED_GATED / MANAGED CANARY PENDING` | Provider-neutral HTTPS adapter, transactional-outbox consumer, bounded retries/stale-lock recovery, deterministic provider idempotency key, synthetic template/privacy boundary and private Cloud Run Job canary workflow are source-integrated. `notify.direkt.forum` verified; `direkt-resend-api-key` version 1 enabled. Managed canary and runtime secret-access proof remain required before any ACTIVE claim. |
 | Firebase phone OTP | `IMPLEMENTED_GATED` | Real approved participant path, OTP canary, abuse/rate-limit/privacy/legal evidence. |
 | FCM | `PLANNED` | Server send path, device-token lifecycle, Android handling/permission UX, retries/privacy/canary. |
 | WhatsApp Cloud API | `EXTERNALLY CONFIGURED / RUNTIME GATED` | Runtime adapter, approved templates/phone identity where needed, consent-at-send, opt-out, idempotency, receipts/retries/privacy controls. |
@@ -232,8 +232,8 @@ Never send raw evidence, auth tokens, cookies, contact data, exact private coord
 The authoritative sequence is maintained in `WORKSTREAM_LOCK.md` and `RUNTIME_INTEGRATION_CLOSURE_PLAN.md`. At this checkpoint:
 
 1. RC0 ledger/audit/permanent-gate sanity/payment evidence reconciliation — **CLOSED** in PR #263.
-2. AI0 provider-neutral AI foundation — **CLOSING** in PR #265; Gemini/Groq canaries and secrets proven, source implemented, runtime remains gated.
-3. RC1 Resend — preflight proven; source/runtime closure next.
+2. AI0 provider-neutral AI foundation — **CLOSED** in PR #265 at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; Gemini/Groq remain runtime-gated.
+3. RC1 Resend — **ACTIVE CHECKPOINT; IMPLEMENTED_GATED / MANAGED CANARY PENDING**. Source adapter/outbox/job path implemented; exact-head regressions, least-privilege secret access and managed canary remain.
 4. RC2 Sentry API/portal.
 5. RC3 Crashlytics Android.
 6. RC4 FCM.

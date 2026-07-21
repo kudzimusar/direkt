@@ -71,11 +71,7 @@ describe('EmailOutboxService', () => {
   });
 
   it('persists a bounded retry state without provider response details', async () => {
-    const database = databaseWithRows([
-      [],
-      [{ id: EVENT_ID, payload: PAYLOAD, attempts: 1 }],
-      [],
-    ]);
+    const database = databaseWithRows([[], [{ id: EVENT_ID, payload: PAYLOAD, attempts: 1 }], []]);
     const provider: EmailProviderPort = {
       provider: 'resend',
       send: vi.fn().mockRejectedValue(new EmailProviderUnavailableError('provider detail')),

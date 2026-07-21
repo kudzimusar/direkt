@@ -56,7 +56,9 @@ export class EmailOutboxService {
     const eventId = await this.enqueueSyntheticCanary();
     const receipt = await this.processEvent(eventId);
     if (!receipt) {
-      throw new EmailProviderUnavailableError('Synthetic email canary could not claim its outbox event.');
+      throw new EmailProviderUnavailableError(
+        'Synthetic email canary could not claim its outbox event.',
+      );
     }
     return receipt;
   }
@@ -204,7 +206,8 @@ export class EmailOutboxService {
       };
     } catch (error) {
       const maxAttempts = this.configService.getOrThrow<number>('EMAIL_MAX_ATTEMPTS');
-      const terminal = error instanceof EmailProviderRejectedError || claimed.attempts >= maxAttempts;
+      const terminal =
+        error instanceof EmailProviderRejectedError || claimed.attempts >= maxAttempts;
       const failureCode =
         error instanceof EmailProviderRejectedError
           ? `provider_rejected_${error.status}`
@@ -226,7 +229,9 @@ export class EmailOutboxService {
       payload.to !== SYNTHETIC_CANARY_RECIPIENT ||
       payload.dataClassification !== 'synthetic'
     ) {
-      throw new Error('Email outbox payload is outside the approved RC1 synthetic template boundary.');
+      throw new Error(
+        'Email outbox payload is outside the approved RC1 synthetic template boundary.',
+      );
     }
     return {
       templateKey: SYNTHETIC_CANARY_TEMPLATE,
@@ -235,7 +240,11 @@ export class EmailOutboxService {
     };
   }
 
-  private async markPublished(eventId: string, provider: 'resend', messageId: string): Promise<void> {
+  private async markPublished(
+    eventId: string,
+    provider: 'resend',
+    messageId: string,
+  ): Promise<void> {
     await this.database.query(
       `UPDATE platform.outbox_events
           SET status = 'published',
