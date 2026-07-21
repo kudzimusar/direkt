@@ -2,7 +2,7 @@
 
 **Governing issue:** #261  
 **Checkpoint:** RC1  
-**Source status:** `IMPLEMENTED_GATED / MANAGED CANARY PENDING`  
+**Source status:** `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY PROVEN`  
 **Production/real-participant external email:** `DISABLED`
 
 ## Proven external preflight
@@ -128,6 +128,28 @@ After the source PR merges:
 5. record job/execution/source/image/secret-version evidence without secret values;
 6. update this document, `CURRENT_INTEGRATION_STATUS.md`, `LIVE_INTEGRATION_LEDGER.md` and `WORKSTREAM_LOCK.md` in the RC1 closure PR;
 7. promote only the exact proven scope, for example `ACTIVE synthetic-only managed email canary`; do not claim real participant or production external communications.
+
+## Managed-phase closure receipt
+
+RC1 managed proof is complete for the approved synthetic-only boundary:
+
+- source PR: #269;
+- exact canary source: `8e367f47f16b3f9f28a26a62ee8bdd305a286153`;
+- Cloud Run Job: `direkt-resend-canary`;
+- execution: `direkt-resend-canary-ct9mp`;
+- region: `asia-northeast1`;
+- runtime identity: `direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com`;
+- sender: `DIREKT <canary@notify.direkt.forum>`;
+- recipient: Resend delivered test sink `delivered@resend.dev`;
+- Resend API key: sending-access only, restricted to `notify.direkt.forum`;
+- Secret Manager: `direkt-resend-api-key` version `1` enabled;
+- Cloud Run execution result: completed successfully.
+
+The canary executable exits successfully only after `EmailOutboxService.runSyntheticCanary()` returns a receipt whose event has been marked `published`; therefore the successful Cloud Run execution is managed evidence for the full outbox insert → claim → Resend send → durable published-state path.
+
+Two pre-send workflow defects were found and repaired: deployer secret-version metadata permission and a shell-quoting defect in the secret-pin guard. After those fixes, execution `direkt-resend-canary-ct9mp` completed successfully. The workflow then failed only in a post-success execution-name lookup because the runner's installed `gcloud` lacked `describe-latest`; PR #272 replaced that reporting lookup with the compatible executions-list path. No additional duplicate send was required to prove the already-successful canary.
+
+RC1 promotion is intentionally narrow: **synthetic-only managed Resend delivery is proven; continuous external delivery, controlled-pilot participant email and production email remain disabled and require separate authorization.**
 
 ## Stop conditions
 
