@@ -116,6 +116,10 @@ export default function OperationsPage() {
             </article>
           ))}
         </div>
+        <p className="api-boundary-note">
+          Every consequential action flows through the permission-checked DIREKT API; this interface
+          never grants authority by navigation alone.
+        </p>
       </section>
 
       <section className="ops-principle-strip" aria-label="Operations safeguards">
