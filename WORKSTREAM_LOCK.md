@@ -10,12 +10,21 @@ This file prevents overlapping writes in the single-lane build process.
 | Owner/agent | Active repository agent — Issue #354 runnable surfaces acceptance and connected UI review. |
 | Authorized scope | UIA promotion only: promote an exact merged post-VC/current `main` source to the synthetic owner-review browser runtime, refresh/verify the approved internal Android App Distribution build, refresh/verify the protected operations review surface where the existing deployment path permits it, capture clean production-built responsive evidence, and reconcile owner-access acceptance. No redesign, RC5 Test Lab source change, Maps, WhatsApp, payment, production auth, real-participant activation or unrelated backend feature work is authorized. |
 | Protected surface | RC5 Firebase Test Lab source/workflows and draft proof bridge PR #378, backend/database/OpenAPI trust and authorization boundaries, private API/BFF IAM, operations authorization/private evidence controls, payments, integrations, VC1–VC8 design baseline, Phase 11/12 gates, Android auth/signing/Play/Data Safety and RC0–RC4 evidence remain regression-protected. |
-| Implementation branch | `integration/uia-owner-review-transition-1ca498` from `main@1ca498657e193a331c3c6de70579128e20bce043`. |
-| Stable baseline | RC5 source PR #377 merged at `7e718ce0a1a5d5e58b04566e7f14c8fbc5ddc463`; Next.js 16.2.11 security update PR #380 merged at `8c08168faa8205c06401a4bff06f017a39d34536`; RC5 project-applicable IAM correction PR #379 merged at current `main@1ca498657e193a331c3c6de70579128e20bce043` after exact-head RC5 contract, PWA, documentation, supply-chain and integration-runtime gates passed. RC5 remains `IMPLEMENTED_GATED / MANAGED MATRIX PENDING` at an owner-controlled Google Cloud bootstrap boundary; draft PR #378 is preserved and must remain unmerged while UIA owns the exact-current-main lane. RC4 remains closed with managed FCM proof run `29916381754` successful. |
+| Implementation branch | `integration/uia-owner-review-promotion-afe47` from `main@afe47a50b981cae1cf653e51f1f2717f02c6e2a4`. |
+| Stable baseline | UIA coordinated-transition PR #384 merged at current `main@afe47a50b981cae1cf653e51f1f2717f02c6e2a4`; RC5 source PR #377, Next.js security PR #380 and RC5 IAM correction PR #379 are preserved beneath it. RC5 remains `IMPLEMENTED_GATED / MANAGED MATRIX PENDING` at an owner-controlled Google Cloud bootstrap boundary; draft PR #378 is preserved and must remain unmerged while UIA owns the exact-current-main lane. RC4 remains closed with managed FCM proof run `29916381754` successful. |
 | Current task | UIA — make the already-completed VC1–VC8 product directly reviewable by the owner on the canonical browser host, current internal Android build and protected operations surface, without changing the approved visual direction or weakening synthetic/real-participant boundaries. |
 | Governing issue | Issue #354 — UIA runnable surfaces acceptance and connected UI review. Issue #261 RC5 remains parked, not closed. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
+
+## W8 historical closure receipt — CLOSED AND PRESERVED
+
+The following strings are historical closure evidence required by the permanent W8 cutover verifier; they do not describe current lock ownership:
+
+- Historical lock row: `Status | RELEASED`.
+- W8 — controlled route/deployment cutover completed with a dedicated least-privilege runtime identity.
+- Canonical owner-review host: `https://app.direkt.forum`; historical preview remains `https://direkt.forum/preview/`.
+- W8 implementation claim is **RELEASED**. Current implementation ownership is UIA Issue #354 under the Current lock table above.
 
 ## RC3 implementation contract — CLOSED AND PRESERVED
 
