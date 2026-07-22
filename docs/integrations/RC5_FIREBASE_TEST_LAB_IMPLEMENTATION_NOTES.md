@@ -28,7 +28,7 @@ Android CI now installs the built debug APK plus `debugAndroidTest` APK on its m
 `.github/workflows/firebase-test-lab.yml` is manual/exact-source managed proof only:
 
 1. requires `RUN-DIREKT-TEST-LAB` plus an exact 40-character source SHA, with the confirmation value passed through the workflow environment rather than interpolated directly into shell source;
-2. checks out that SHA and proves it is already merged into `main`;
+2. checks out that SHA, fetches `origin/main`, and requires the dispatched SHA to equal the **exact current main** head; an older ancestor of `main` cannot produce promotable RC5 evidence;
 3. builds unit/lint/debug/instrumentation artifacts without persistent Firebase config or production credentials;
 4. authenticates with existing GitHub Workload Identity Federation;
 5. verifies the owner-provisioned Test Lab APIs, exact live custom-role definitions, absence of a project-scoped results role, and the dedicated results-bucket boundary;
@@ -87,7 +87,7 @@ It must not retain production credentials, raw auth/FCM tokens, participant cont
 
 ## Source-phase state
 
-Until owner bootstrap, exact-main managed execution and closure reconciliation succeed, Firebase Test Lab remains:
+Until owner bootstrap, exact-current-main managed execution and closure reconciliation succeed, Firebase Test Lab remains:
 
 `IMPLEMENTED_GATED / MANAGED MATRIX PENDING`
 
