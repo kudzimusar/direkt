@@ -2,6 +2,7 @@ package com.kudzimusar.direkt.observability
 
 import android.app.Activity
 import android.content.Intent
+import android.util.Log
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.crashlytics.FirebaseCrashlytics
@@ -28,6 +29,8 @@ internal object CrashlyticsCanaryPolicy {
 
 internal object CrashlyticsCanary {
     const val EXTRA_MODE = "direkt_rc3_crashlytics_canary"
+    private const val TAG = "DirektCrashlyticsCanary"
+    const val ANR_BLOCK_STARTED_MARKER = "DIREKT_RC3_ANR_BLOCK_STARTED"
 
     fun handleLaunch(activity: Activity, intent: Intent) {
         val policyAllowsCanary =
@@ -65,14 +68,16 @@ internal object CrashlyticsCanary {
             }
             "anr" -> {
                 enableSyntheticCollection(crashlytics, "anr")
-                // Let onCreate complete and a frame become interactive before blocking the main
-                // looper. The managed canary then sends an input event and requires Android's
-                // ActivityManager ANR signal before the report is flushed from a clean process.
+                // The cold managed emulator can take several seconds to render and focus the
+                // Activity. Delay the debug-only main-looper block until after that window, emit
+                // an exact marker immediately before blocking, then let the workflow inject input
+                // only after it has independently proven DIREKT owns the resumed/focused window.
                 activity.window.decorView.postDelayed(
                     {
-                        Thread.sleep(20_000L)
+                        Log.i(TAG, ANR_BLOCK_STARTED_MARKER)
+                        Thread.sleep(30_000L)
                     },
-                    1_500L,
+                    5_000L,
                 )
             }
         }
