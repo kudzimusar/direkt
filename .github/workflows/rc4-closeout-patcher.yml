@@ -1,0 +1,251 @@
+name: DIREKT RC4 controlled closeout patcher
+
+on:
+  push:
+    branches:
+      - integration/rc4-fcm-closeout
+    paths:
+      - .github/workflows/rc4-closeout-patcher.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-closeout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: integration/rc4-fcm-closeout
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Apply exact RC4 closeout reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          SOURCE = "f05ff19105cb8dc7c4621c044c110b6029f63300"
+          RUN = "29916381754"
+          ARTIFACT = "rc4-fcm-canary-29916381754"
+          DIGEST = "sha256:f45d1924ee6138f86ec15a222e97f28ff67bbe9c610ff75f57666fd03929526c"
+
+          def read(path):
+              return Path(path).read_text(encoding="utf-8")
+
+          def write(path, text):
+              Path(path).write_text(text, encoding="utf-8")
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected exactly one match, found {count}")
+              return text.replace(old, new, 1)
+
+          def replace_prefixed_line(text, prefix, new_line, label):
+              lines = text.splitlines()
+              matches = [i for i, line in enumerate(lines) if line.startswith(prefix)]
+              if len(matches) != 1:
+                  raise SystemExit(f"{label}: expected exactly one prefixed line, found {len(matches)}")
+              lines[matches[0]] = new_line
+              return "\n".join(lines) + ("\n" if text.endswith("\n") else "")
+
+          # Authoritative integration status.
+          path = "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
+          status = read(path)
+          status = replace_prefixed_line(
+              status,
+              "| FCM |",
+              f"| FCM | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY** | RC4 exact-main managed run `{RUN}` on source `{SOURCE}` proved backend-owned transactional-outbox delivery through FCM HTTP v1 to Android in both foreground and background. The fixed `direkt-fcm-canary-token` container uses secret-scoped least privilege and a temporary numeric version that was destroyed after the private Cloud Run Job was deleted. Participant registration and participant/production push remain disabled. |",
+              "status FCM row",
+          )
+          status = replace_prefixed_line(
+              status,
+              "| FCM push |",
+              f"| FCM push | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY** | Exact-main run `{RUN}` on `{SOURCE}` passed synthetic Firebase registration, immutable backend image/private Cloud Run Job deployment, foreground and background outbox → FCM → Android receipt proof, sanitized artifact publication and ordered cleanup. Artifact `{ARTIFACT}` digest `{DIGEST}`. Participant registration and participant/production push remain disabled. |",
+              "status FCM push row",
+          )
+          status = replace_prefixed_line(
+              status,
+              "6. RC4 FCM",
+              f"6. RC4 FCM — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**; exact-main managed proof run `{RUN}` succeeded on `{SOURCE}` for foreground/background delivery and cleanup; participant/production push remains disabled.",
+              "status RC4 sequence",
+          )
+          status = replace_prefixed_line(
+              status,
+              "7. RC5 Firebase Test Lab",
+              "7. RC5 Firebase Test Lab — **NEXT CHECKPOINT** after an explicit workstream claim from the RC4 closeout baseline.",
+              "status RC5 sequence",
+          )
+          status = status.replace(
+              "Controlled-pilot participant and production push delivery also remain disabled during RC4.",
+              "Participant/production push remains disabled after RC4 synthetic proof; any participant activation requires a later explicit privacy/release authorization.",
+          )
+          status = status.replace(
+              "Managed foreground/background push proof remains required before ACTIVE status. Participant registration remains source-controlled disabled.",
+              f"Managed foreground/background push proof succeeded in exact-main run `{RUN}` on `{SOURCE}`. Participant registration remains source-controlled disabled.",
+          )
+          write(path, status)
+
+          # Canonical live ledger and mandatory closure receipt.
+          path = "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
+          ledger = read(path)
+          ledger = replace_prefixed_line(
+              ledger,
+              "| FCM |",
+              f"| FCM | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | RC4 exact-main run `{RUN}` on `{SOURCE}` proved synthetic registration, private backend outbox → FCM HTTP v1 → Android foreground/background delivery, sanitized evidence publication and ordered cleanup. Fixed secret `direkt-fcm-canary-token` remains an empty owner-provisioned container between proofs; the temporary numeric token version was destroyed after Cloud Run Job deletion. Participant registration and participant/production push remain disabled. |",
+              "ledger FCM row",
+          )
+          ledger = replace_prefixed_line(
+              ledger,
+              "6. RC4 FCM",
+              f"6. RC4 FCM — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Exact-main run `{RUN}` on `{SOURCE}` passed foreground/background outbox → FCM → Android receipt proof, sanitized evidence and ordered cleanup. Participant registration and participant/production push remain disabled.",
+              "ledger RC4 queue",
+          )
+          ledger = replace_prefixed_line(
+              ledger,
+              "7. RC5 Firebase Test Lab",
+              "7. RC5 Firebase Test Lab — **NEXT CHECKPOINT; explicit lane claim required after RC4 closeout merge**.",
+              "ledger RC5 queue",
+          )
+          receipt_pattern = re.compile(
+              r"### RC4 FCM source-phase receipt\n\n```text\n.*?\n```\n\n## Maps and location",
+              re.S,
+          )
+          receipt = f'''### RC4 FCM closure receipt
+
+```text
+Integration: Firebase Cloud Messaging (RC4)
+Previous state: IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING
+New state: CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY
+External provisioning: Firebase project direkt-dev-502701; registered Android debug application com.kudzimusar.direkt.debug; FCM API and least-privilege custom sender role verified; fixed direkt-fcm-canary-token container and secret-scoped deployer/runtime bindings owner-bootstrap verified on 2026-07-22
+Repo/source changes: provider-neutral FCM HTTP v1 adapter; transactional push outbox; identity-bound token lifecycle; Android foreground/background handling and notification permission controls; source PR #339; registration stability PR #364; pre-provisioned secret lifecycle PR #371; proof-trigger/status reconciliation PR #373
+Secret Manager names/versions: fixed empty container direkt-fcm-canary-token; proof used one temporary numeric token version pinned into the private Cloud Run Job; cleanup deleted the Cloud Run Job before destroying that version; no token value was logged or retained in artifacts
+Runtime binding: synthetic-only managed canary; PUSH_PROVIDER_MODE=fcm only in bounded proof; PUSH_REGISTRATION_MODE remains disabled; participant registration source-controlled false
+Managed canary evidence: SUCCESS — exact-main run {RUN} on source {SOURCE}; synthetic Firebase registration passed; immutable backend image and private Cloud Run Job passed; foreground outbox → FCM → Android receipt passed; background outbox → FCM → Android receipt passed; sanitized artifact {ARTIFACT}; digest {DIGEST}; ordered cleanup passed
+Privacy/security checks: no Firebase Analytics; no raw FCM token in API response/audit/logs/artifacts; bounded synthetic routing identifiers only; secret-scoped least privilege; temporary Firebase config removed; permanent lifecycle audit remains fail-closed
+Fallback/kill switch: PUSH_PROVIDER_MODE defaults disabled; PUSH_REGISTRATION_MODE defaults disabled; PARTICIPANT_REGISTRATION_ENABLED=false; bounded retries/idempotency and invalid-token invalidation preserved
+Production authorization: NOT AUTHORIZED; participant/production push remains disabled
+Known blockers: none for RC4 synthetic-only closure
+Next exact step: merge exact-head RC4 closeout, release the RC4 lock, then explicitly claim RC5 Firebase Test Lab from the resulting exact main baseline
+Ledger updated: YES
+```
+
+## Maps and location'''
+          ledger, n = receipt_pattern.subn(receipt, ledger, count=1)
+          if n != 1:
+              raise SystemExit(f"ledger RC4 receipt: expected one block, found {n}")
+          write(path, ledger)
+
+          # RC4 implementation notes become a final evidence note rather than an instruction to bootstrap.
+          path = "docs/integrations/RC4_FCM_IMPLEMENTATION_NOTES.md"
+          notes = read(path)
+          notes = re.sub(
+              r"## Required least-privilege owner bootstrap\n.*?\nNo Test Lab, Maps, WhatsApp, payment activation, participant/production push, Phase 11 exit or Phase 12 production release is authorized by this claim\.",
+              f'''## Least-privilege bootstrap and managed closure
+
+The owner bootstrap completed successfully on 2026-07-22 for the fixed `direkt-fcm-canary-token` container. It created no secret value and verified only secret-scoped `roles/secretmanager.secretVersionManager` for the GitHub deployer and `roles/secretmanager.secretAccessor` for the runtime identity.
+
+Exact-main managed run `{RUN}` on `{SOURCE}` then passed the complete RC4 proof: synthetic Firebase registration, temporary numeric secret version creation, immutable backend image/private Cloud Run Job deployment, foreground and background outbox → FCM → Android receipts, sanitized evidence publication, Cloud Run Job deletion, and temporary secret-version destruction. Artifact `{ARTIFACT}` has digest `{DIGEST}`.
+
+RC4 is therefore closed as `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY`. Participant registration, participant/production push, Test Lab, Maps, WhatsApp, payment activation, Phase 11 exit and Phase 12 production release remain separately gated. RC5 Firebase Test Lab is the next integration checkpoint after an explicit lane claim.''',
+              notes,
+              count=1,
+              flags=re.S,
+          )
+          if f"`{RUN}`" not in notes:
+              raise SystemExit("RC4 notes closure replacement failed")
+          write(path, notes)
+
+          # Release the single-writer lane exactly as prior checkpoint closeouts do.
+          path = "WORKSTREAM_LOCK.md"
+          lock = read(path)
+          replacements = {
+              "| Status | CLAIMED — RC4 Firebase Cloud Messaging runtime closure |": "| Status | RELEASED — RC4 Firebase Cloud Messaging runtime closure complete; RC5 Firebase Test Lab is the next checkpoint |",
+              "| Owner/agent | Active repository agent — Issue #261 runtime integration closure workstream |": "| Owner/agent | No active implementation writer after RC4 closeout; the next repository agent must explicitly claim RC5 under Issue #261 before Test Lab source changes begin. |",
+              "| Authorized scope | Firebase Cloud Messaging only: provider-neutral backend send adapter through the transactional outbox, authenticated device-token registration/rotation/deletion, Android foreground/background handling, Android 13+ notification permission UX, retry/idempotency/privacy controls, exact-source managed synthetic push canary, permanent verifier promotion, and status/ledger reconciliation. No Test Lab, Maps, payment, WhatsApp or unrelated backend/PWA/portal feature work is authorized in RC4. |": "| Authorized scope | RC4 closeout only: managed-proof receipt promotion, permanent verifier/status/ledger reconciliation and removal of the completed one-shot proof bridge. No Test Lab, Maps, payment, WhatsApp or unrelated backend/PWA/portal feature work is authorized until the next explicit claim. |",
+              "| Protected surface | Backend/database/OpenAPI, web/PWA, operations portal, trust/privacy, payments, integrations, VC1–VC8 completion, Phase 11/12 gates, Android auth/distribution/signing/Play/Data Safety and RC0–RC3 evidence remain regression-protected. |": "| Protected surface | Backend/database/OpenAPI, web/PWA, operations portal, trust/privacy, payments, integrations, VC1–VC8 completion, Phase 11/12 gates, Android auth/distribution/signing/Play/Data Safety and RC0–RC4 evidence remain regression-protected. |",
+              "| Implementation branch | `integration/rc4-fcm` from merged RC3 closeout baseline `0d7d29313990c37b25bd985588866a85bbe10f83`. |": "| Implementation branch | `integration/rc4-fcm-closeout` from exact proven RC4 source `f05ff19105cb8dc7c4621c044c110b6029f63300`. |",
+              "| Stable baseline | RC3 closure PR #338 merged at `0d7d29313990c37b25bd985588866a85bbe10f83`; Crashlytics exact-source managed proof run `29885635547` succeeded and the RC3 lock was released. |": f"| Stable baseline | RC4 exact-main managed proof run `{RUN}` succeeded on `{SOURCE}`: least-privilege bootstrap verification, synthetic registration, foreground/background outbox → FCM → Android receipts, sanitized evidence and ordered cleanup all passed. |",
+              "| Current task | RC4 — add FCM without weakening auth/privacy/release boundaries, prove durable outbox send plus Android receipt on a synthetic managed device, then reconcile status and release/transition the lane. |": "| Current task | Promote RC4 closure evidence, remove the completed one-shot bridge, merge exact-head regression-clean closeout, then allow an explicit RC5 Firebase Test Lab claim. |",
+              "## RC4 implementation contract — ACTIVE": "## RC4 implementation contract — CLOSED AND PRESERVED",
+              "10. RC4 is not `ACTIVE` until source integration, privacy controls, managed synthetic delivery evidence, exact-head regressions and status reconciliation are complete.": "10. RC4 is `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY`; participant registration and participant/production push remain separately gated.",
+              "- RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary. **ACTIVE CHECKPOINT.**": f"- RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary. **CLOSED — exact source `{SOURCE}`; managed run `{RUN}` successful; participant/production push disabled.**",
+              "- RC5 — Firebase Test Lab device-matrix automation after Android runtime dependencies stabilize through RC3–RC4.": "- RC5 — Firebase Test Lab device-matrix automation after Android runtime dependencies stabilize through RC3–RC4. **NEXT CHECKPOINT — requires explicit lane claim after RC4 closeout merge.**",
+              "No second agent may write to overlapping RC4 FCM backend/Android/notification surfaces while this claim is active. Read-only review may continue. RC5+ source work must not begin until RC4 has exact-head source/regression evidence, managed synthetic push evidence, status reconciliation, merge promotion and a released/transitioned lock.": "RC4 is closed. No new RC4 implementation writes are authorized. RC5+ source work must not begin until this closeout is merged and the next agent explicitly claims RC5 Firebase Test Lab under Issue #261 from the resulting exact `main` baseline.",
+          }
+          for old, new in replacements.items():
+              lock = replace_once(lock, old, new, f"lock replacement {old[:40]}")
+          write(path, lock)
+
+          # Promote the permanent runtime verifier from source-pending to proven synthetic-only closure.
+          path = "scripts/verify-integration-runtime-contract.py"
+          verifier = read(path)
+          verifier = replace_once(
+              verifier,
+              '        "direkt-fcm-canary-token-${GITHUB_RUN_ID}",\n',
+              '        "GCP_FCM_TOKEN_SECRET: direkt-fcm-canary-token",\n        "gcloud secrets versions add",\n        "gcloud secrets versions destroy",\n',
+              "FCM fixed secret lifecycle assertions",
+          )
+          verifier = replace_once(
+              verifier,
+              '        "FCM | **IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING**",\n        "RC4 source-integrated gated status",\n',
+              '        "FCM | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY**",\n        "RC4 closed synthetic-only managed status",\n',
+              "FCM active status assertion",
+          )
+          verifier = replace_once(
+              verifier,
+              '        "Controlled-pilot participant and production push delivery also remain disabled during RC4.",\n        "RC4 participant/production push stop gate",\n',
+              '        "Participant/production push remains disabled",\n        "RC4 post-closure participant/production push stop gate",\n',
+              "FCM post-closure stop gate assertion",
+          )
+          anchor = '''    prohibit(
+        fcm_canary,
+        r"roles/firebasecloudmessaging\\.admin",
+        "broad predefined FCM admin role",
+    )
+'''
+          addition = anchor + '''    prohibit(
+        fcm_canary,
+        r"direkt-fcm-canary-token-\\$\\{GITHUB_RUN_ID\\}",
+        "dynamic per-run FCM secret container",
+    )
+    require(
+        status,
+        f"exact-main managed proof run `{RUN}`" if False else "29916381754",
+        "RC4 managed proof receipt",
+    )
+'''
+          verifier = replace_once(verifier, anchor, addition, "FCM lifecycle verifier promotion")
+          write(path, verifier)
+
+          # The permanent canary remains; remove the obsolete compatibility sentinel.
+          path = ".github/workflows/firebase-fcm-canary.yml"
+          fcm = read(path)
+          sentinel = '''\n# Non-executable compatibility sentinel for the pre-existing integration verifier only.\n# The permanent RC4 lifecycle audit prohibits dynamic secret creation/IAM/deletion.\n# direkt-fcm-canary-token-${GITHUB_RUN_ID}\n'''
+          fcm = replace_once(fcm, sentinel, "\n", "remove obsolete FCM verifier sentinel")
+          write(path, fcm)
+          PY
+
+          git rm .github/workflows/rc4-fcm-managed-proof-once.yml
+          git rm .github/workflows/rc4-closeout-patcher.yml
+
+          python scripts/verify-integration-runtime-contract.py
+          python scripts/rc4/verify-fcm-canary-secret-lifecycle.py
+
+          git config user.name "direkt-rc4-closeout"
+          git config user.email "actions@users.noreply.github.com"
+          git add WORKSTREAM_LOCK.md \
+            docs/integrations/CURRENT_INTEGRATION_STATUS.md \
+            docs/integrations/LIVE_INTEGRATION_LEDGER.md \
+            docs/integrations/RC4_FCM_IMPLEMENTATION_NOTES.md \
+            scripts/verify-integration-runtime-contract.py \
+            .github/workflows/firebase-fcm-canary.yml
+          git diff --cached --check
+          git commit -m "docs(rc4): close FCM runtime checkpoint"
+          git push origin HEAD:integration/rc4-fcm-closeout
