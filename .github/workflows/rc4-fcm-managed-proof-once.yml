@@ -102,3 +102,5 @@ jobs:
           done
           echo "Timed out waiting for managed FCM canary ${RUN_ID}." >&2
           exit 1
+
+# RC4 classified registration-error proof trigger.
