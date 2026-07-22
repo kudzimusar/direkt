@@ -182,12 +182,14 @@ No payment provider secret is attached to Cloud Run until adapter/config/runtime
 | Transactional outbox | `ACTIVE` | Canonical asynchronous delivery source of truth. |
 | Resend | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | Managed Cloud Run execution `direkt-resend-canary-ct9mp` succeeded on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`, proving outbox insert → claim → Resend send → durable `published` state. Sending key is sending-only/domain-restricted to verified `notify.direkt.forum`; `direkt-resend-api-key` v1 enabled; runtime secret access proven. Continuous, controlled-pilot participant and production email remain disabled. |
 | Firebase phone OTP | `IMPLEMENTED_GATED` | Real approved participant path, OTP canary, abuse/rate-limit/privacy/legal evidence. |
-| FCM | `PLANNED` | RC4 server send path, device-token lifecycle, Android handling/permission UX, retries/privacy/canary. |
+| FCM | `IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING` | RC4 source integration adds provider-neutral HTTP v1 delivery through `communications.push.send.v1`, server-only identity-bound token lifecycle, Android foreground/background receipt handling and Android 13+ notification permission controls. Participant registration is source-controlled disabled; exact-source managed foreground/background synthetic delivery evidence remains required before ACTIVE status. |
 | WhatsApp Cloud API | `EXTERNALLY CONFIGURED / RUNTIME GATED` | Runtime adapter, approved templates/phone identity where needed, consent-at-send, opt-out, idempotency, receipts/retries/privacy controls. |
 | Firebase Crashlytics | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | RC3 exact-source managed proof succeeded for `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; bridge run `29885635547` enforced marker-pinned source identity and terminal canary success for fatal delivery, focused input-dispatch ANR, historical `REASON_ANR`, restart pickup and post-ANR Crashlytics/DataTransport delivery. Automatic collection remains default-off; Firebase Analytics and stable participant user IDs are absent; participant/production telemetry remains disabled. |
 | Firebase Test Lab | `PLANNED` | CI/device matrix, test APKs, artifact/report retention. |
 | Cloudflare Turnstile | `PLANNED / WHERE NEEDED` | Only for reviewed abuse-sensitive public flows with server verification, accessibility fallback and kill switch. |
 | Cloud Tasks / Pub/Sub / Scheduler | `PLANNED ON DEMAND` | Add only when retry/fan-out/scheduling needs justify them. |
+
+Controlled-pilot participant and production FCM delivery remain disabled during RC4. Device-token registration is fail-closed unless a later controlled-pilot authorization explicitly enables the source-controlled registration gate.
 
 ## Observability
 
@@ -215,6 +217,25 @@ Fallback/kill switch: automatic collection default-off; build/canary/data-mode g
 Production authorization: NOT AUTHORIZED; participant/production crash telemetry remains disabled
 Known blockers: none for RC3 closure
 Next exact step: RC4 FCM source/runtime closure
+Ledger updated: YES
+```
+
+### RC4 FCM source-phase receipt
+
+```text
+Integration: Firebase Cloud Messaging (RC4)
+Previous state: PLANNED
+New state: IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING
+External provisioning: Firebase project direkt-dev-502701; registered Android debug application com.kudzimusar.direkt.debug; managed FCM API/least-privilege runtime role proof pending exact-source canary
+Repo/source changes: provider-neutral backend FCM HTTP v1 adapter using managed Google identity; durable communications.push.send.v1 outbox with bounded retry/idempotency and invalid-token handling; server-only token table with classification anti-downgrade control; authenticated identity-bound registration/rotation/deletion routes; Android Messaging SDK/service, exact-source foreground/background receipt handling and Android 13+ permission control; source PR #339
+Secret Manager names/versions: no persistent FCM application secret; managed canary is designed to create a one-run temporary FCM-token secret and delete it after proof
+Runtime binding: default disabled; FCM provider activation restricted to non-production synthetic-only mode; participant registration source-controlled disabled
+Managed canary evidence: PENDING — exact-source workflow must prove outbox → FCM HTTP v1 → Android foreground and background receipts before promotion
+Privacy/security checks: no Firebase Analytics; no raw FCM token in API response/audit/logs/artifacts; device-token rows server-only; push payload restricted to bounded synthetic routing identifiers; routes require authenticated account.sessions.manage permission
+Fallback/kill switch: PUSH_PROVIDER_MODE defaults disabled; PUSH_REGISTRATION_MODE defaults disabled; participant registration constant false; bounded retries and invalid-token invalidation
+Production authorization: NOT AUTHORIZED; controlled-pilot participant and production push remain disabled
+Known blockers: managed migration/runtime proof and exact-head source merge pending
+Next exact step: complete exact-head PR #339 gates/review, merge source, apply RC4 migration to managed Supabase, then run exact-source managed FCM canary
 Ledger updated: YES
 ```
 
@@ -255,7 +276,7 @@ The authoritative sequence is maintained in `WORKSTREAM_LOCK.md` and `RUNTIME_IN
 3. RC1 Resend — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Source PR #269 merged; least-privilege sending/domain restriction and runtime secret access proven; Cloud Run execution `direkt-resend-canary-ct9mp` succeeded on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`; workflow-reporting compatibility hotfixes #271/#272 merged. Real-participant/production email remains disabled.
 4. RC2 Sentry API/portal — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. PR #275 merged at `15210c5b0bf1832e32f8c33a7618c69f61f65275`; managed API + private portal canary #1 completed successfully. Separate DSN v1 bindings proven; Sentry auth token v2 remained CI/release-only; participant/production telemetry disabled.
 5. RC3 Crashlytics Android — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Exact source `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; managed bridge run `29885635547` passed marker-pinned exact-source enforcement and terminal fatal+ANR delivery proof. Participant/production telemetry remains disabled.
-6. RC4 FCM — **NEXT CHECKPOINT**.
+6. RC4 FCM — **IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING**. Source PR #339 adds backend-owned outbox delivery, identity-bound token lifecycle and Android receive/permission handling; participant registration remains disabled pending managed exact-source proof.
 7. RC5 Firebase Test Lab.
 8. RC6 WhatsApp runtime adapter.
 9. RC7 Google Maps runtime.
