@@ -24,7 +24,7 @@ jobs:
       - name: Resolve or dispatch reviewed RC4 FCM canary
         env:
           GH_TOKEN: ${{ github.token }}
-          SOURCE_SHA: c67d7e27e33ac4d7a18d6ec9810f3663fbd62a14
+          SOURCE_SHA: b6f1d349c0a280ed5af26060c0f518d4219be8f1
         run: |
           set -euo pipefail
 
