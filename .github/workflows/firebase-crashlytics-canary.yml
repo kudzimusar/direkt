@@ -216,70 +216,9 @@ jobs:
           test "${delivered}" = "true"
           grep -Ei "${delivery_pattern}" "${RUNNER_TEMP}/rc3-crash-system.log" "${RUNNER_TEMP}/rc3-crash-upload.log" | tail -n 10
 
-      - name: Prove ANR signal and Crashlytics delivery
+      - name: Prove ANR signal, ANR exit reason and Crashlytics delivery
         shell: bash
-        run: |
-          set -euo pipefail
-          component="${FIREBASE_PACKAGE_NAME}/com.kudzimusar.direkt.MainActivity"
-          "${ADB_BIN}" logcat -c
-          "${ADB_BIN}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
-          "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary anr >/dev/null
-          anr_process_started=false
-          for _ in $(seq 1 20); do
-            if "${ADB_BIN}" shell pidof "${FIREBASE_PACKAGE_NAME}" >/dev/null 2>&1; then anr_process_started=true; break; fi
-            sleep 1
-          done
-          test "${anr_process_started}" = "true"
-
-          # Wait until the debug-only canary confirms a real focused Activity window and emits its
-          # synthetic marker immediately before blocking the main looper. Persist that exact marker
-          # before later logcat snapshots can rotate it away, then inject the input event.
-          block_started=false
-          for _ in $(seq 1 40); do
-            "${ADB_BIN}" logcat -d > "${RUNNER_TEMP}/rc3-anr-system.log" || true
-            if grep -Fq 'DIREKT_RC3_ANR_BLOCK_BEGIN' "${RUNNER_TEMP}/rc3-anr-system.log"; then
-              grep -F 'DIREKT_RC3_ANR_BLOCK_BEGIN' "${RUNNER_TEMP}/rc3-anr-system.log" | tail -n 4 > "${RUNNER_TEMP}/rc3-anr-block-marker.log" || true
-              test -s "${RUNNER_TEMP}/rc3-anr-block-marker.log"
-              block_started=true
-              break
-            fi
-            sleep 1
-          done
-          test "${block_started}" = "true"
-          "${ADB_BIN}" shell input tap 160 320
-
-          anr_seen=false
-          for _ in $(seq 1 40); do
-            "${ADB_BIN}" logcat -d > "${RUNNER_TEMP}/rc3-anr-system.log" || true
-            if grep -Eqi "ANR in ${FIREBASE_PACKAGE_NAME}|ANR.*${FIREBASE_PACKAGE_NAME}" "${RUNNER_TEMP}/rc3-anr-system.log" && grep -Eqi 'Input dispatching timed out' "${RUNNER_TEMP}/rc3-anr-system.log"; then
-              anr_seen=true
-              break
-            fi
-            sleep 1
-          done
-          test "${anr_seen}" = "true"
-          sleep 5
-          "${ADB_BIN}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
-          "${ADB_BIN}" logcat -c
-          "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary flush >/dev/null
-          flush_started=false
-          for _ in $(seq 1 20); do
-            if "${ADB_BIN}" shell pidof "${FIREBASE_PACKAGE_NAME}" >/dev/null 2>&1; then flush_started=true; break; fi
-            sleep 1
-          done
-          test "${flush_started}" = "true"
-
-          delivered=false
-          for _ in $(seq 1 60); do
-            "${ADB_BIN}" logcat -d -s FirebaseCrashlytics > "${RUNNER_TEMP}/rc3-anr-upload.log" || true
-            if grep -Eqi 'Crashlytics report successfully enqueued to DataTransport|Crashlytics report upload complete|[[:space:]]204[[:space:]]' "${RUNNER_TEMP}/rc3-anr-upload.log"; then delivered=true; break; fi
-            sleep 2
-          done
-          test "${delivered}" = "true"
-          "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary disable >/dev/null || true
-          cat "${RUNNER_TEMP}/rc3-anr-block-marker.log"
-          grep -Ei "ANR in ${FIREBASE_PACKAGE_NAME}|ANR.*${FIREBASE_PACKAGE_NAME}|Input dispatching timed out" "${RUNNER_TEMP}/rc3-anr-system.log" | tail -n 12
-          grep -Ei 'Crashlytics report successfully enqueued to DataTransport|Crashlytics report upload complete|[[:space:]]204[[:space:]]' "${RUNNER_TEMP}/rc3-anr-upload.log" | tail -n 10
+        run: bash scripts/rc3/prove-crashlytics-anr.sh
 
       - name: Upload sanitized RC3 diagnostics
         if: always()
@@ -292,6 +231,8 @@ jobs:
             ${{ runner.temp }}/rc3-anr-block-marker.log
             ${{ runner.temp }}/rc3-anr-system.log
             ${{ runner.temp }}/rc3-anr-upload.log
+            ${{ runner.temp }}/rc3-am-monitor.log
+            ${{ runner.temp }}/rc3-anr-exit-info.log
           if-no-files-found: warn
           retention-days: 14
 
@@ -308,6 +249,7 @@ jobs:
             echo "- Fatal crash Crashlytics/DataTransport delivery: \`PASS\`"
             echo "- Focus-synchronized ANR blocker: \`PASS\`"
             echo "- Android input-dispatch ANR signal: \`PASS\`"
+            echo "- Android historical exit reason: \`REASON_ANR\`"
             echo "- Post-ANR Crashlytics/DataTransport delivery: \`PASS\`"
             echo "- Automatic collection default: \`disabled\`"
             echo "- Analytics SDK: \`not added\`"
