@@ -182,7 +182,6 @@ firebaseextensions.configs.list
 iam.roles.get
 resourcemanager.projects.get
 resourcemanager.projects.getIamPolicy
-resourcemanager.projects.list
 serviceusage.services.get
 EOF
 )"
