@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       source_sha:
-        description: Exact reviewed DIREKT commit already merged to main
+        description: Exact reviewed DIREKT commit that must equal current main
         required: true
         type: string
 
@@ -62,13 +62,13 @@ jobs:
           ref: ${{ inputs.source_sha }}
           fetch-depth: 0
 
-      - name: Verify source identity and main ancestry
+      - name: Verify source identity and exact current main
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
           git fetch origin main --no-tags
-          git merge-base --is-ancestor "${SOURCE_SHA}" origin/main
+          test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"
 
       - name: Set up Java 17
         uses: actions/setup-java@v5
