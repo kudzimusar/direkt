@@ -75,7 +75,7 @@ internal object CrashlyticsCanary {
                 activity.window.decorView.postDelayed(
                     {
                         Log.i(TAG, ANR_BLOCK_STARTED_MARKER)
-                        Thread.sleep(30_000L)
+                        Thread.sleep(20_000L)
                     },
                     5_000L,
                 )
