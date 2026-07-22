@@ -1,4 +1,5 @@
 name: DIREKT RC5 source-status reconciliation
+# Branch-local one-shot reconciler; delete after it commits the two authoritative status files.
 
 on:
   pull_request:
@@ -29,7 +30,6 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          import re
 
           def replace_once(text: str, old: str, new: str, label: str) -> str:
               count = text.count(old)
