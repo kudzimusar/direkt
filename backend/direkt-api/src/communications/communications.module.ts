@@ -11,6 +11,21 @@ import { PushDeviceTokenService } from './push-device-token.service';
 import { PushOutboxService } from './push-outbox.service';
 import { ResendEmailProviderAdapter } from './resend-email-provider.adapter';
 
+function readIntegerConfig(
+  configService: ConfigService,
+  key: string,
+  fallback: number,
+  minimum: number,
+  maximum: number,
+): number {
+  const raw = configService.get<string | number>(key) ?? fallback;
+  const value = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isInteger(value) || value < minimum || value > maximum) {
+    throw new Error(`${key} must be an integer from ${minimum} to ${maximum}.`);
+  }
+  return value;
+}
+
 @Module({
   controllers: [PushDeviceController],
   providers: [
@@ -51,10 +66,14 @@ import { ResendEmailProviderAdapter } from './resend-email-provider.adapter';
         if (!/^[a-z][a-z0-9-]{4,29}$/.test(projectId)) {
           throw new Error('FCM provider requires a valid FIREBASE_PROJECT_ID.');
         }
-        return new FcmPushProviderAdapter(
-          projectId,
-          configService.get<number>('PUSH_REQUEST_TIMEOUT_MS') ?? 8_000,
+        const timeoutMs = readIntegerConfig(
+          configService,
+          'PUSH_REQUEST_TIMEOUT_MS',
+          8_000,
+          1_000,
+          30_000,
         );
+        return new FcmPushProviderAdapter(projectId, timeoutMs);
       },
     },
     EmailOutboxService,
