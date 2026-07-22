@@ -2,6 +2,7 @@ package com.kudzimusar.direkt.observability
 
 import android.app.Activity
 import android.content.Intent
+import android.util.Log
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.crashlytics.FirebaseCrashlytics
@@ -28,6 +29,10 @@ internal object CrashlyticsCanaryPolicy {
 
 internal object CrashlyticsCanary {
     const val EXTRA_MODE = "direkt_rc3_crashlytics_canary"
+    private const val LOG_TAG = "DirektCrashlyticsCanary"
+    private const val ANR_BLOCK_MARKER = "DIREKT_RC3_ANR_BLOCK_BEGIN"
+    private const val FOCUS_POLL_DELAY_MS = 250L
+    private const val POST_FOCUS_SETTLE_DELAY_MS = 500L
 
     fun handleLaunch(activity: Activity, intent: Intent) {
         val policyAllowsCanary =
@@ -57,17 +62,38 @@ internal object CrashlyticsCanary {
             }
             "anr" -> {
                 enableSyntheticCollection(crashlytics, "anr")
-                // Let onCreate complete and a frame become interactive before blocking the main
-                // looper. The managed canary then sends an input event and requires Android's
-                // ActivityManager ANR signal before the report is flushed from a clean process.
-                activity.window.decorView.postDelayed(
-                    {
-                        Thread.sleep(20_000L)
-                    },
-                    1_500L,
-                )
+                scheduleFocusedInputDispatchAnr(activity)
             }
         }
+    }
+
+    private fun scheduleFocusedInputDispatchAnr(activity: Activity) {
+        val decorView = activity.window.decorView
+        lateinit var waitForFocus: Runnable
+        waitForFocus =
+            Runnable {
+                if (activity.isFinishing || activity.isDestroyed) return@Runnable
+                if (!activity.hasWindowFocus()) {
+                    decorView.postDelayed(waitForFocus, FOCUS_POLL_DELAY_MS)
+                    return@Runnable
+                }
+
+                // The managed proof must inject input only after the Activity has a real focused
+                // window. A fixed, synthetic-only logcat marker makes that synchronization
+                // deterministic without weakening the required Android ANR evidence.
+                decorView.postDelayed(
+                    {
+                        if (!activity.hasWindowFocus()) {
+                            decorView.post(waitForFocus)
+                            return@postDelayed
+                        }
+                        Log.i(LOG_TAG, ANR_BLOCK_MARKER)
+                        Thread.sleep(20_000L)
+                    },
+                    POST_FOCUS_SETTLE_DELAY_MS,
+                )
+            }
+        decorView.post(waitForFocus)
     }
 
     private fun configuredCrashlytics(activity: Activity): FirebaseCrashlytics {
