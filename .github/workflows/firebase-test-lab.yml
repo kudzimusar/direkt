@@ -193,7 +193,7 @@ EOF
           fi
 
           results_permissions="$(gcloud iam roles describe direktTestLabResultsWriter --project "${GCP_PROJECT_ID}" --format='value(includedPermissions)' | tr ';' '\n' | sed '/^$/d' | sort -u)"
-          expected_results_permissions=$'storage.buckets.get\nstorage.buckets.getIamPolicy\nstorage.buckets.update\nstorage.objects.create\nstorage.objects.delete\nstorage.objects.get\nstorage.objects.list'
+          expected_results_permissions=$'storage.buckets.get\nstorage.buckets.getIamPolicy\nstorage.objects.create'
           test "${results_permissions}" = "${expected_results_permissions}"
 
           bucket_record="$(gcloud storage buckets describe "${GCP_TEST_LAB_RESULTS_BUCKET}" --project "${GCP_PROJECT_ID}" --format=json)"
@@ -207,7 +207,6 @@ EOF
           printf '{"kind":"direkt_rc5_storage_preflight","sourceSha":"%s","runAttempt":"%s"}\n' "${SOURCE_SHA}" "${GITHUB_RUN_ATTEMPT}" > "${RUNNER_TEMP}/rc5-storage-preflight.json"
           preflight_object="${GCP_TEST_LAB_RESULTS_BUCKET}/rc5/preflight/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}.json"
           gcloud storage cp "${RUNNER_TEMP}/rc5-storage-preflight.json" "${preflight_object}" --quiet
-          gcloud storage rm "${preflight_object}" --quiet
 
       - name: Discover live virtual Test Lab catalog and select bounded matrix
         shell: bash
