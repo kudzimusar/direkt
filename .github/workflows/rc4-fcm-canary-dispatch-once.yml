@@ -63,8 +63,8 @@ jobs:
           conclusion="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}" --jq '.conclusion // empty')"
           if [[ "${conclusion}" = "failure" ]]; then
             gh run view "${run_id}" --repo "${GITHUB_REPOSITORY}" --log-failed 2>/dev/null \
-              | grep -Ei 'PERMISSION_DENIED|permission denied|does not have permission|ERROR:|INVALID_ARGUMENT|FAILED_PRECONDITION|cloudmessaging|iam\.roles|services\.enable|serviceusage|fcm.googleapis.com|direktFcmSender|direktFcmBootstrapVerifier' \
-              | tail -n 120 \
+              | grep -Ei 'PERMISSION_DENIED|permission denied|does not have permission|ERROR:|INVALID_ARGUMENT|FAILED_PRECONDITION|cloudmessaging|serviceusage|fcm.googleapis.com|direktFcmSender|FirebaseMessaging|FirebaseInstallations|SERVICE_NOT_AVAILABLE|AUTHENTICATION_FAILED|FIS|rc4-fcm-token|token_ready|INSTALLATION' \
+              | tail -n 160 \
               > .github/rc4-fcm-failure-summary.txt || true
           else
             rm -f .github/rc4-fcm-failure-summary.txt
@@ -77,4 +77,4 @@ jobs:
           git commit -m "chore(rc4): record FCM canary dispatch diagnostics" || true
           git push origin HEAD:integration/rc4-fcm-canary-dispatch
 
-# diagnostic refresh
+# token diagnostic refresh
