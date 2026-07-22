@@ -175,14 +175,13 @@ firebase.links.list
 firebase.playLinks.get
 firebase.playLinks.list
 firebase.projects.get
-firebase.projects.list
 firebaseanalytics.resources.googleAnalyticsReadAndAnalyze
-firebaseextensions.configs.get
 firebaseextensions.configs.list
 iam.roles.get
 resourcemanager.projects.get
 resourcemanager.projects.getIamPolicy
 resourcemanager.projects.list
+serviceusage.services.get
 EOF
 )"
           test "${runner_permissions}" = "${expected_runner_permissions}"
