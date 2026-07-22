@@ -2,6 +2,13 @@ name: DIREKT RC5 source-status reconciliation
 # Branch-local one-shot reconciler; delete after it commits the two authoritative status files.
 
 on:
+  push:
+    branches:
+      - integration/rc5-firebase-test-lab
+    paths:
+      - .github/workflows/rc5-source-status-reconcile.yml
+      - docs/integrations/CURRENT_INTEGRATION_STATUS.md
+      - docs/integrations/LIVE_INTEGRATION_LEDGER.md
   pull_request:
     branches:
       - main
@@ -15,7 +22,7 @@ permissions:
 
 jobs:
   reconcile:
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'integration/rc5-firebase-test-lab'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/integration/rc5-firebase-test-lab') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'integration/rc5-firebase-test-lab')
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
