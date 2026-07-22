@@ -5,6 +5,7 @@ import android.content.Intent
 import com.google.firebase.messaging.FirebaseMessaging
 import com.kudzimusar.direkt.BuildConfig
 import java.io.File
+import java.util.Locale
 import org.json.JSONObject
 
 internal object FcmCanary {
@@ -29,7 +30,7 @@ internal object FcmCanary {
                     writeStatusLocked(
                         context,
                         "failed",
-                        task.exception?.javaClass?.simpleName ?: "UnknownError",
+                        sanitizedRegistrationErrorType(task.exception),
                     )
                     return@addOnCompleteListener
                 }
@@ -51,6 +52,26 @@ internal object FcmCanary {
             File(context.filesDir, TOKEN_FILE).writeText(installationId, Charsets.UTF_8)
             writeStatusLocked(context, "registered", null)
         }
+    }
+
+    private fun sanitizedRegistrationErrorType(error: Throwable?): String {
+        val type = error?.javaClass?.simpleName ?: "UnknownError"
+        val normalizedMessages =
+            generateSequence(error) { it.cause }
+                .mapNotNull { it.message }
+                .joinToString(" | ")
+                .uppercase(Locale.US)
+        val category =
+            when {
+                "SERVICE_NOT_AVAILABLE" in normalizedMessages -> "SERVICE_NOT_AVAILABLE"
+                "AUTHENTICATION_FAILED" in normalizedMessages -> "AUTHENTICATION_FAILED"
+                "INVALID ARGUMENT FOR THE GIVEN FID" in normalizedMessages -> "INVALID_FID"
+                "TOO_MANY_REGISTRATIONS" in normalizedMessages -> "TOO_MANY_REGISTRATIONS"
+                "PHONE_REGISTRATION_ERROR" in normalizedMessages -> "PHONE_REGISTRATION_ERROR"
+                "MISSING_INSTANCEID_SERVICE" in normalizedMessages -> "MISSING_INSTANCEID_SERVICE"
+                else -> "UNCLASSIFIED"
+            }
+        return "${type}_${category}"
     }
 
     private fun writeStatus(
