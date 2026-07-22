@@ -34,8 +34,9 @@ gcloud services enable \
 workdir="$(mktemp -d)"
 trap 'rm -rf "${workdir}"' EXIT
 
-# Exact non-Storage Test Lab + Firebase Analytics execution union, plus only the
-# narrow IAM introspection permission required to verify these custom roles live.
+# Exact current non-Storage Firebase Test Lab Admin + Firebase Analytics Viewer
+# execution permissions, plus only the two read permissions used by managed
+# preflight: iam.roles.get and serviceusage.services.get.
 cat > "${workdir}/test-lab-runner-permissions.txt" <<'EOF'
 cloudnotifications.activities.list
 cloudtestservice.environmentcatalog.get
@@ -63,14 +64,13 @@ firebase.links.list
 firebase.playLinks.get
 firebase.playLinks.list
 firebase.projects.get
-firebase.projects.list
 firebaseanalytics.resources.googleAnalyticsReadAndAnalyze
-firebaseextensions.configs.get
 firebaseextensions.configs.list
 iam.roles.get
 resourcemanager.projects.get
 resourcemanager.projects.getIamPolicy
 resourcemanager.projects.list
+serviceusage.services.get
 EOF
 
 # This role is bound only on the dedicated RC5 results bucket. The IAM-policy
@@ -120,7 +120,7 @@ upsert_role() {
 upsert_role \
   "${runner_role_id}" \
   "DIREKT Firebase Test Lab Runner" \
-  "Run bounded Firebase Test Lab matrices and verify custom role definitions without project-wide Cloud Storage permissions." \
+  "Run bounded Firebase Test Lab matrices and verify only required API/custom-role state without project-wide Cloud Storage permissions." \
   "${runner_permissions}"
 
 upsert_role \
@@ -209,7 +209,7 @@ test "$(jq -r --argjson age "${retention_days}" '[.[] | select(.action.type == "
 printf 'RC5 Firebase Test Lab bootstrap verified.\n'
 printf 'Project: %s\n' "${project_id}"
 printf 'Testing APIs: testing.googleapis.com and toolresults.googleapis.com enabled.\n'
-printf 'Runner role: %s (exact Test Lab/Analytics non-Storage execution permissions plus iam.roles.get only).\n' "${runner_role}"
+printf 'Runner role: %s (current Test Lab/Analytics non-Storage execution set plus iam.roles.get and serviceusage.services.get only).\n' "${runner_role}"
 printf 'Results bucket: %s (uniform access, %s-day delete lifecycle).\n' "${bucket_uri}" "${retention_days}"
 printf 'Results role: %s bound only on the dedicated results bucket; includes bucket IAM read only for binding verification.\n' "${results_role}"
 printf 'GitHub identity: %s via existing Workload Identity Federation; no service-account key created.\n' "${deployer_sa}"
