@@ -63,7 +63,9 @@ API 33 and a current API 35–36 target are mandatory. If the live catalog canno
 It:
 
 - enables `testing.googleapis.com` and `toolresults.googleapis.com`;
-- creates/updates custom project role `direktTestLabRunner` from the current non-Storage Firebase Test Lab Admin + Firebase Analytics Viewer execution permissions, plus only `iam.roles.get` for exact live custom-role verification and `serviceusage.services.get` for read-only verification that the two Test Lab APIs remain enabled; the project-scoped runner role has **no Cloud Storage permissions**;
+- creates/updates custom project role `direktTestLabRunner` from the **project-applicable** non-Storage Firebase Test Lab Admin + Firebase Analytics Viewer execution permissions, plus only `iam.roles.get` for exact live custom-role verification and `serviceusage.services.get` for read-only verification that the two Test Lab APIs remain enabled; parent-only `resourcemanager.projects.list` is intentionally excluded because Google rejects it in a project-level custom role, and the managed proof does not enumerate projects;
+- queries Google IAM `list-testable-permissions` for `//cloudresourcemanager.googleapis.com/projects/direkt-dev-502701` before custom-role mutation and fails early if any requested permission is no longer valid for a project-level custom role;
+- keeps the project-scoped runner role free of **all Cloud Storage permissions**;
 - creates/updates custom bucket-only role `direktTestLabResultsWriter` with exactly `storage.buckets.get`, `storage.buckets.getIamPolicy`, and `storage.objects.create`; it can verify the dedicated bucket and append new result objects but cannot mutate lifecycle/IAM, read prior objects, overwrite them, or delete evidence;
 - creates dedicated bucket `gs://direkt-test-lab-results-264358173369` with uniform bucket-level access in `asia-northeast1` and a 30-day delete lifecycle set by the owner bootstrap, not by the runtime proof identity;
 - binds `direktTestLabRunner` to the existing GitHub deployer at project scope;
@@ -71,7 +73,7 @@ It:
 - enumerates every direct project IAM role bound to the GitHub deployer, resolves its live permissions, and fails closed if any project-scoped role contains `storage.*`; the dedicated results role remains bucket-only and absent from project scope;
 - fails if the GitHub deployer has project-level `roles/owner`, `roles/editor`, `roles/cloudtestservice.testAdmin`, `roles/firebase.analyticsViewer`, `roles/storage.admin` or `roles/storage.objectAdmin`.
 
-This deliberately avoids Google’s broad predefined Test Lab role path because the DIREKT Firebase project also contains private application storage. Firebase’s documented gcloud Test Lab role pair is used only as the permission baseline; storage access is split to the dedicated bucket instead of granting those predefined roles project-wide.
+This deliberately avoids Google’s broad predefined Test Lab role path because the DIREKT Firebase project also contains private application storage. Firebase’s documented gcloud Test Lab role pair is used only as the permission baseline; permissions that are not applicable at project custom-role scope are excluded, and storage access is split to the dedicated bucket instead of granting those predefined roles project-wide.
 
 ## Evidence boundary
 
