@@ -35,7 +35,7 @@ Android CI now installs the built debug APK plus `debugAndroidTest` APK on its m
 6. queries the live virtual Android catalog instead of pinning stale device IDs;
 7. selects a deterministic 2–3 device matrix through `scripts/rc5/select-test-lab-matrix.py`;
 8. runs only `com.kudzimusar.direkt.DirektAppSmokeTest` as instrumentation;
-9. disables flaky reruns, Test Orchestrator, video and performance metrics for this bounded proof;
+9. disables flaky reruns, Test Orchestrator, video, performance metrics and automatic Google-account login for this bounded proof;
 10. stores detailed provider results only under the dedicated 30-day lifecycle bucket and uploads only a sanitized matrix/receipt to GitHub artifacts.
 
 Test Lab non-zero outcomes remain hard failures. A failed first execution is not erased by automatic flaky reruns because `--num-flaky-test-attempts 0` is explicit.
@@ -64,7 +64,7 @@ It:
 
 - enables `testing.googleapis.com` and `toolresults.googleapis.com`;
 - creates/updates custom project role `direktTestLabRunner` containing Test Lab matrix, Tool Results and required read-only Firebase/project permissions but **no Cloud Storage permissions**;
-- creates/updates custom role `direktTestLabResultsWriter` containing only the bucket/object permissions needed for Test Lab results;
+- creates/updates custom role `direktTestLabResultsWriter` containing only `storage.buckets.get`, `storage.buckets.update` and the object create/delete/get/list permissions needed by Test Lab, and binds that role only at the dedicated bucket scope;
 - creates dedicated bucket `gs://direkt-test-lab-results-264358173369` with uniform bucket-level access in `asia-northeast1` and a 30-day delete lifecycle;
 - binds `direktTestLabRunner` to the existing GitHub deployer at project scope;
 - binds `direktTestLabResultsWriter` only on the dedicated results bucket;
@@ -83,7 +83,7 @@ The managed proof may retain:
 - synthetic screenshots/logs produced by the current default-off participant-auth UI;
 - sanitized pass/fail receipt.
 
-It must not retain production credentials, raw auth/FCM tokens, participant contact data, private evidence, reviewer notes, exact private provider coordinates or production endpoints.
+It must not retain production credentials, raw auth/FCM tokens, participant contact data, private evidence, reviewer notes, exact private provider coordinates or production endpoints. Automatic Google-account login is explicitly disabled for the managed matrix.
 
 ## Source-phase state
 
