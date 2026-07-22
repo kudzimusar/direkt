@@ -74,6 +74,7 @@ EOF
 
 cat > "${workdir}/test-lab-results-permissions.txt" <<'EOF'
 storage.buckets.get
+storage.buckets.update
 storage.objects.create
 storage.objects.delete
 storage.objects.get
