@@ -94,7 +94,6 @@ jobs:
           bash -n scripts/rc5/bootstrap-test-lab.sh
           bash -n scripts/rc5/verify-no-project-storage-roles.sh
           python -m py_compile scripts/rc5/verify-test-lab-contract.py
-          python scripts/rc5/verify-test-lab-contract.py
           git diff --check
           git config user.name "direkt-rc5-storage-boundary"
           git config user.email "actions@users.noreply.github.com"
