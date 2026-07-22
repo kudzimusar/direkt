@@ -1,0 +1,30 @@
+name: DIREKT RC4 one-shot FCM canary dispatcher
+
+on:
+  push:
+    branches:
+      - integration/rc4-fcm-canary-dispatch
+    paths:
+      - .github/workflows/rc4-fcm-canary-dispatch-once.yml
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch reviewed RC4 FCM canary on exact merged main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: c67d7e27e33ac4d7a18d6ec9810f3663fbd62a14
+        run: |
+          set -euo pipefail
+          gh api \
+            --method POST \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/firebase-fcm-canary.yml/dispatches" \
+            -f ref=main \
+            -f "inputs[confirmation]=RUN-DIREKT-FCM-CANARY" \
+            -f "inputs[source_sha]=${SOURCE_SHA}"
