@@ -221,9 +221,11 @@ jobs:
         run: |
           set -euo pipefail
           component="${FIREBASE_PACKAGE_NAME}/com.kudzimusar.direkt.MainActivity"
+          block_marker='DIREKT_RC3_ANR_BLOCK_STARTED'
           "${ADB_BIN}" logcat -c
           "${ADB_BIN}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
           "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary anr >/dev/null
+
           anr_process_started=false
           for _ in $(seq 1 20); do
             if "${ADB_BIN}" shell pidof "${FIREBASE_PACKAGE_NAME}" >/dev/null 2>&1; then anr_process_started=true; break; fi
@@ -231,11 +233,35 @@ jobs:
           done
           test "${anr_process_started}" = "true"
 
-          # The debug-only Activity finishes its first frame, then blocks the main looper. Send a
-          # real input event while it is blocked so ActivityManager must produce an input-dispatch
-          # ANR rather than relying on an implementation-specific launch timeout.
-          sleep 3
-          "${ADB_BIN}" shell input tap 160 320 || true
+          # A PID is not enough: on a cold API-35 emulator the process can exist while the launcher
+          # still owns input. Require DIREKT to be the focused or top-resumed Activity before the
+          # debug canary is allowed to trigger an input-dispatch ANR.
+          anr_activity_ready=false
+          for _ in $(seq 1 30); do
+            "${ADB_BIN}" shell dumpsys window windows > "${RUNNER_TEMP}/rc3-anr-window-state.log" || true
+            "${ADB_BIN}" shell dumpsys activity activities > "${RUNNER_TEMP}/rc3-anr-activity-state.log" || true
+            if { grep -E 'mCurrentFocus|mFocusedApp' "${RUNNER_TEMP}/rc3-anr-window-state.log" | grep -Fq "${FIREBASE_PACKAGE_NAME}"; } || \
+               { grep -E 'mResumedActivity|topResumedActivity' "${RUNNER_TEMP}/rc3-anr-activity-state.log" | grep -Fq "${FIREBASE_PACKAGE_NAME}"; }; then
+              anr_activity_ready=true
+              break
+            fi
+            sleep 1
+          done
+          test "${anr_activity_ready}" = "true"
+
+          # The debug-only canary emits an exact marker immediately before it blocks the main
+          # looper. Inject input only after both Activity readiness and that block marker are proven.
+          block_started=false
+          for _ in $(seq 1 20); do
+            "${ADB_BIN}" logcat -d -s DirektCrashlyticsCanary > "${RUNNER_TEMP}/rc3-anr-block-marker.log" || true
+            if grep -Fq "${block_marker}" "${RUNNER_TEMP}/rc3-anr-block-marker.log"; then
+              block_started=true
+              break
+            fi
+            sleep 1
+          done
+          test "${block_started}" = "true"
+          "${ADB_BIN}" shell input tap 160 320
 
           anr_seen=false
           for _ in $(seq 1 40); do
@@ -279,6 +305,9 @@ jobs:
             ${{ runner.temp }}/rc3-crash-upload.log
             ${{ runner.temp }}/rc3-anr-system.log
             ${{ runner.temp }}/rc3-anr-upload.log
+            ${{ runner.temp }}/rc3-anr-window-state.log
+            ${{ runner.temp }}/rc3-anr-activity-state.log
+            ${{ runner.temp }}/rc3-anr-block-marker.log
           if-no-files-found: warn
           retention-days: 14
 
