@@ -1,7 +1,7 @@
 export const PUSH_PROVIDER = Symbol('PUSH_PROVIDER');
 
 export interface PushProviderSendRequest {
-  token: string;
+  registrationId: string;
   deliveryId: string;
   sourceSha: string;
   phase: 'foreground' | 'background';
