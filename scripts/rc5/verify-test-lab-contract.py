@@ -46,6 +46,7 @@ def main() -> int:
     workflow = read(".github/workflows/firebase-test-lab.yml")
     bootstrap = read("scripts/rc5/bootstrap-test-lab.sh")
     selector = read("scripts/rc5/select-test-lab-matrix.py")
+    storage_boundary = read("scripts/rc5/verify-no-project-storage-roles.sh")
     notes = read("docs/integrations/RC5_FIREBASE_TEST_LAB_IMPLEMENTATION_NOTES.md")
 
     require(lock, "CLAIMED — RC5 Firebase Test Lab device-matrix closure", "active RC5 lock")
@@ -115,6 +116,7 @@ def main() -> int:
         "storage.buckets.getIamPolicy",
         "iam.roles.get",
         "serviceusage.services.get",
+        'bash scripts/rc5/verify-no-project-storage-roles.sh "${GCP_PROJECT_ID}" "${member}"',
         "retention-days: 30",
         'productionAuthorization: false',
         'dataMode: "synthetic-public-safe-only"',
@@ -165,6 +167,7 @@ def main() -> int:
         "storage.objects.create",
         "gcloud projects add-iam-policy-binding",
         "gcloud storage buckets add-iam-policy-binding",
+        'bash scripts/rc5/verify-no-project-storage-roles.sh "${project_id}" "${deployer_member}"',
         "roles/cloudtestservice.testAdmin",
         "roles/firebase.analyticsViewer",
         "roles/storage.admin",
@@ -238,6 +241,16 @@ def main() -> int:
     prohibit(bootstrap, r"gcloud\s+iam\s+service-accounts\s+keys\s+create", "service-account key creation")
     prohibit(bootstrap, r"gcloud\s+secrets\s+(create|versions\s+add)", "secret creation")
     prohibit(bootstrap, r"--role\s+roles/(owner|editor)(?:\s|$)", "broad owner/editor grant")
+
+    for needle in (
+        "gcloud projects get-iam-policy",
+        "gcloud iam roles describe",
+        "organizations/*/roles/*",
+        "Project-scoped role ${role}",
+        "contains prohibited Cloud Storage permissions",
+        "grep -Eq '^storage\.'",
+    ):
+        require(storage_boundary, needle, "project-scoped Storage-role verifier")
 
     for needle in (
         "MIN_SDK = 23",

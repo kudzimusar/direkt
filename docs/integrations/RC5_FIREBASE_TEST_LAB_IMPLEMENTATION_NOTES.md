@@ -68,6 +68,7 @@ It:
 - creates dedicated bucket `gs://direkt-test-lab-results-264358173369` with uniform bucket-level access in `asia-northeast1` and a 30-day delete lifecycle;
 - binds `direktTestLabRunner` to the existing GitHub deployer at project scope;
 - binds `direktTestLabResultsWriter` only on the dedicated results bucket and explicitly fails if that role is present for the deployer at project scope;
+- enumerates every direct project IAM role bound to the GitHub deployer, resolves its live permissions, and fails closed if any project-scoped role contains `storage.*`; the dedicated results role remains bucket-only and absent from project scope;
 - fails if the GitHub deployer has project-level `roles/owner`, `roles/editor`, `roles/cloudtestservice.testAdmin`, `roles/firebase.analyticsViewer`, `roles/storage.admin` or `roles/storage.objectAdmin`.
 
 This deliberately avoids Google’s broad predefined Test Lab role path because the DIREKT Firebase project also contains private application storage. Firebase’s documented gcloud Test Lab role pair is used only as the permission baseline; storage access is split to the dedicated bucket instead of granting those predefined roles project-wide.

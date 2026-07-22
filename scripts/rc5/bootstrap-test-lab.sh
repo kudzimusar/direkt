@@ -200,6 +200,8 @@ for prohibited_role in roles/owner roles/editor roles/cloudtestservice.testAdmin
   fi
 done
 
+bash scripts/rc5/verify-no-project-storage-roles.sh "${project_id}" "${deployer_member}"
+
 bucket_policy="$(gcloud storage buckets get-iam-policy "${bucket_uri}" --format=json)"
 test "$(jq -r --arg member "${deployer_member}" --arg role "${results_role}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${bucket_policy}")" = "1"
 
