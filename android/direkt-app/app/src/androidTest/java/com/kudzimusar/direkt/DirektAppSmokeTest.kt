@@ -13,17 +13,19 @@ class DirektAppSmokeTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun phase11ControlledPilotShellIsVisibleAndAuthDefaultsClosed() {
+    fun currentCustomerShellIsVisibleAndParticipantAuthDefaultsClosed() {
         composeRule.onNodeWithTag("foundation-root").assertIsDisplayed()
         composeRule.onNodeWithText("DIREKT").assertIsDisplayed()
-        composeRule.onNodeWithText("Phase 11 — controlled pilot entry").assertIsDisplayed()
-        composeRule.onNodeWithText("Find a provider").assertIsDisplayed()
-        composeRule.onNodeWithText("Search area").assertIsDisplayed()
-        composeRule.onNodeWithText("Background location: Off").assertIsDisplayed()
+        composeRule.onNodeWithText("Find the right local service").assertIsDisplayed()
 
         composeRule.onNodeWithText("Account").performClick()
         composeRule.onNodeWithTag("pilot-auth-card").assertIsDisplayed()
-        composeRule.onNodeWithText("Real participant sign-in is disabled.", substring = true)
-            .assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "Real participant sign-in is disabled.",
+            substring = true,
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "No production credential or participant endpoint is embedded in this build.",
+        ).assertIsDisplayed()
     }
 }
