@@ -41,7 +41,12 @@ def prohibit(text: str, pattern: str, label: str) -> None:
 def dependencies(path: str) -> set[str]:
     package = json.loads(read(path))
     result: set[str] = set()
-    for key in ("dependencies", "devDependencies", "peerDependencies", "optionalDependencies"):
+    for key in (
+        "dependencies",
+        "devDependencies",
+        "peerDependencies",
+        "optionalDependencies",
+    ):
         result.update((package.get(key) or {}).keys())
     return result
 
@@ -52,7 +57,17 @@ def scan_tree(relative: str, patterns: dict[str, re.Pattern[str]]) -> list[str]:
     root = ROOT / relative
     if not root.exists():
         return matches
-    ignored_suffixes = {".png", ".jpg", ".jpeg", ".webp", ".ico", ".jar", ".aab", ".apk", ".zip"}
+    ignored_suffixes = {
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".webp",
+        ".ico",
+        ".jar",
+        ".aab",
+        ".apk",
+        ".zip",
+    }
     ignored_parts = {
         "node_modules",
         "build",
@@ -99,6 +114,18 @@ def main() -> None:
     android_crashlytics = read(
         "android/direkt-app/app/src/main/java/com/kudzimusar/direkt/observability/CrashlyticsCanary.kt"
     )
+    android_fcm_canary = read(
+        "android/direkt-app/app/src/main/java/com/kudzimusar/direkt/notifications/FcmCanary.kt"
+    )
+    android_fcm_service = read(
+        "android/direkt-app/app/src/main/java/com/kudzimusar/direkt/notifications/DirektFirebaseMessagingService.kt"
+    )
+    android_push_registration = read(
+        "android/direkt-app/app/src/main/java/com/kudzimusar/direkt/notifications/PushRegistrationCoordinator.kt"
+    )
+    android_notification_permission = read(
+        "android/direkt-app/app/src/main/java/com/kudzimusar/direkt/notifications/NotificationPermissionController.kt"
+    )
     storage_module = read(
         "backend/direkt-api/src/verification-evidence/verification-evidence.module.ts"
     )
@@ -110,13 +137,31 @@ def main() -> None:
     sentry_canary = read(".github/workflows/cloud-run-sentry-canary.yml")
     firebase_distribution = read(".github/workflows/firebase-internal-distribution.yml")
     crashlytics_canary = read(".github/workflows/firebase-crashlytics-canary.yml")
+    fcm_canary = read(".github/workflows/firebase-fcm-canary.yml")
     openapi_generate = read("backend/direkt-api/scripts/generate-openapi.ts")
     openapi_check = read("backend/direkt-api/scripts/check-openapi.ts")
     platform_migration = read("database/migrations/202607141430_platform_foundation.sql")
-    communications_module = read("backend/direkt-api/src/communications/communications.module.ts")
-    resend_adapter = read("backend/direkt-api/src/communications/resend-email-provider.adapter.ts")
+    fcm_migration = read("database/migrations/202607221130_rc4_fcm_push.sql")
+    communications_module = read(
+        "backend/direkt-api/src/communications/communications.module.ts"
+    )
+    resend_adapter = read(
+        "backend/direkt-api/src/communications/resend-email-provider.adapter.ts"
+    )
     email_outbox = read("backend/direkt-api/src/communications/email-outbox.service.ts")
-    resend_canary_entrypoint = read("backend/direkt-api/src/communications/resend-canary.ts")
+    resend_canary_entrypoint = read(
+        "backend/direkt-api/src/communications/resend-canary.ts"
+    )
+    fcm_adapter = read(
+        "backend/direkt-api/src/communications/fcm-push-provider.adapter.ts"
+    )
+    push_outbox = read("backend/direkt-api/src/communications/push-outbox.service.ts")
+    push_token_service = read(
+        "backend/direkt-api/src/communications/push-device-token.service.ts"
+    )
+    push_canary_entrypoint = read(
+        "backend/direkt-api/src/communications/push-canary.ts"
+    )
     backend_sentry = read("backend/direkt-api/src/instrument.ts")
     backend_sentry_runtime = read(
         "backend/direkt-api/src/platform/observability/sentry-runtime.ts"
@@ -127,8 +172,12 @@ def main() -> None:
     backend_sentry_canary = read(
         "backend/direkt-api/src/platform/observability/sentry-canary.ts"
     )
-    portal_instrumentation = read("admin/direkt-operations-portal/src/instrumentation.ts")
-    portal_sentry = read("admin/direkt-operations-portal/src/sentry.server.config.ts")
+    portal_instrumentation = read(
+        "admin/direkt-operations-portal/src/instrumentation.ts"
+    )
+    portal_sentry = read(
+        "admin/direkt-operations-portal/src/sentry.server.config.ts"
+    )
     portal_sentry_runtime = read(
         "admin/direkt-operations-portal/src/lib/observability/sentry-runtime.ts"
     )
@@ -150,11 +199,23 @@ def main() -> None:
     ):
         require(status, needle, "Supabase status evidence")
     require(storage_module, "new SupabasePrivateStorageAdapter", "Supabase storage binding")
-    require(storage_adapter, "/storage/v1/object/upload/sign/", "signed private upload path")
+    require(
+        storage_adapter,
+        "/storage/v1/object/upload/sign/",
+        "signed private upload path",
+    )
     require(storage_adapter, "createSignedReadUrl", "short-lived private read grants")
     require(backend_env, "EVIDENCE_STORAGE_PROVIDER", "Supabase storage mode")
-    require(cloud_run, 'EVIDENCE_STORAGE_PROVIDER: "supabase"', "managed staging storage mode")
-    require(cloud_run, "SUPABASE_SECRET_KEY=direkt-supabase-secret-key:", "Secret Manager binding")
+    require(
+        cloud_run,
+        'EVIDENCE_STORAGE_PROVIDER: "supabase"',
+        "managed staging storage mode",
+    )
+    require(
+        cloud_run,
+        "SUPABASE_SECRET_KEY=direkt-supabase-secret-key:",
+        "Secret Manager binding",
+    )
 
     privileged_client_patterns = {
         "server Supabase secret": re.compile(r"SUPABASE_(?:SECRET_KEY|SERVICE_ROLE_KEY)"),
@@ -165,7 +226,10 @@ def main() -> None:
     for client_root in ("android", "web", "admin"):
         leaked.extend(scan_tree(client_root, privileged_client_patterns))
     if leaked:
-        fail("privileged Supabase material/reference entered a deployable client tree: " + ", ".join(leaked))
+        fail(
+            "privileged Supabase material/reference entered a deployable client tree: "
+            + ", ".join(leaked)
+        )
 
     # Google Cloud: immutable images, WIF, Secret Manager and private Cloud Run.
     for needle in (
@@ -183,24 +247,79 @@ def main() -> None:
         fail("both API and operations portal Cloud Run services must remain private")
     prohibit(cloud_run, r"--allow-unauthenticated", "public Cloud Run invocation")
 
-    # Firebase Auth/App Distribution remain intact while RC3 promotes Crashlytics under a
-    # narrower synthetic-only, collection-default-off contract.
+    # Firebase Auth/App Distribution remain intact and RC3 Crashlytics stays closed/proven.
     require(android_gradle, "implementation(libs.firebase.auth)", "Firebase Auth Android binding")
-    require(android_gradle, "implementation(libs.firebase.crashlytics)", "Crashlytics Android SDK binding")
-    require(android_catalog, 'firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }', "Crashlytics version-catalog binding")
-    require(android_catalog, 'googleServicesPlugin = "4.5.0"', "Google Services plugin reviewed version")
-    require(android_catalog, 'crashlyticsPlugin = "3.0.7"', "Crashlytics Gradle plugin reviewed version")
-    require(android_root_gradle, "alias(libs.plugins.google.services) apply false", "conditional Google Services plugin classpath")
-    require(android_root_gradle, "alias(libs.plugins.crashlytics) apply false", "conditional Crashlytics plugin classpath")
-    require(android_gradle, 'pluginManager.apply("com.google.gms.google-services")', "managed-canary Google Services plugin application")
-    require(android_gradle, 'pluginManager.apply("com.google.firebase.crashlytics")', "managed-canary Crashlytics plugin application")
+    require(
+        android_gradle,
+        "implementation(libs.firebase.crashlytics)",
+        "Crashlytics Android SDK binding",
+    )
+    require(
+        android_catalog,
+        'firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }',
+        "Crashlytics version-catalog binding",
+    )
+    require(
+        android_catalog,
+        'googleServicesPlugin = "4.5.0"',
+        "Google Services plugin reviewed version",
+    )
+    require(
+        android_catalog,
+        'crashlyticsPlugin = "3.0.7"',
+        "Crashlytics Gradle plugin reviewed version",
+    )
+    require(
+        android_root_gradle,
+        "alias(libs.plugins.google.services) apply false",
+        "conditional Google Services plugin classpath",
+    )
+    require(
+        android_root_gradle,
+        "alias(libs.plugins.crashlytics) apply false",
+        "conditional Crashlytics plugin classpath",
+    )
+    require(
+        android_gradle,
+        'pluginManager.apply("com.google.gms.google-services")',
+        "managed-canary Google Services plugin application",
+    )
+    require(
+        android_gradle,
+        'pluginManager.apply("com.google.firebase.crashlytics")',
+        "managed-canary Crashlytics plugin application",
+    )
     require(android_gradle, "DIREKT_CRASHLYTICS_BUILD_ENABLED", "Crashlytics build kill switch")
-    require(android_gradle, "DIREKT_CRASHLYTICS_CANARY_ENABLED", "Crashlytics canary kill switch")
-    require(android_gradle, 'crashlyticsDataMode == "synthetic-only"', "Crashlytics synthetic-only build gate")
-    require(android_gradle, 'Regex("^[0-9a-f]{40}$")', "Crashlytics exact-source build gate")
-    require(android_manifest, 'android:name="firebase_crashlytics_collection_enabled"', "Crashlytics manifest collection control")
-    require(android_manifest, 'android:value="false"', "Crashlytics default collection disabled")
-    require(android_main_activity, "CrashlyticsCanary.handleLaunch(this, intent)", "guarded Crashlytics canary launch")
+    require(
+        android_gradle,
+        "DIREKT_CRASHLYTICS_CANARY_ENABLED",
+        "Crashlytics canary kill switch",
+    )
+    require(
+        android_gradle,
+        'crashlyticsDataMode == "synthetic-only"',
+        "Crashlytics synthetic-only build gate",
+    )
+    require(
+        android_gradle,
+        'Regex("^[0-9a-f]{40}$")',
+        "Crashlytics exact-source build gate",
+    )
+    require(
+        android_manifest,
+        'android:name="firebase_crashlytics_collection_enabled"',
+        "Crashlytics manifest collection control",
+    )
+    require(
+        android_manifest,
+        'android:value="false"',
+        "Crashlytics default collection disabled",
+    )
+    require(
+        android_main_activity,
+        "CrashlyticsCanary.handleLaunch(this, intent)",
+        "guarded Crashlytics canary launch",
+    )
     for needle in (
         'const val EXTRA_MODE = "direkt_rc3_crashlytics_canary"',
         'dataMode == "synthetic-only"',
@@ -216,13 +335,17 @@ def main() -> None:
     ):
         require(android_crashlytics, needle, "Crashlytics synthetic canary invariant")
     prohibit(android_crashlytics, r"setUserId\s*\(", "Crashlytics stable user identifier")
-    prohibit(android_crashlytics, r"recordException\s*\(", "unbounded application exception telemetry outside canary proof")
+    prohibit(
+        android_crashlytics,
+        r"recordException\s*\(",
+        "unbounded application exception telemetry outside canary proof",
+    )
 
     for needle in (
         "RUN-DIREKT-CRASHLYTICS-CANARY",
         "com.kudzimusar.direkt.debug",
-        "DIREKT_CRASHLYTICS_BUILD_ENABLED: \"true\"",
-        "DIREKT_CRASHLYTICS_CANARY_ENABLED: \"true\"",
+        'DIREKT_CRASHLYTICS_BUILD_ENABLED: "true"',
+        'DIREKT_CRASHLYTICS_CANARY_ENABLED: "true"',
         "DIREKT_CRASHLYTICS_DATA_MODE: synthetic-only",
         "DIREKT_SOURCE_SHA: ${{ inputs.source_sha }}",
         "firebase.googleapis.com/v1beta1/projects/${GCP_PROJECT_ID}/androidApps",
@@ -233,21 +356,225 @@ def main() -> None:
         "Real participant telemetry: `disabled`",
     ):
         require(crashlytics_canary, needle, "managed Crashlytics canary invariant")
-    require(crashlytics_canary, "workloadIdentityPools/direkt-github/providers/direkt-main", "Crashlytics canary WIF auth")
+    require(
+        crashlytics_canary,
+        "workloadIdentityPools/direkt-github/providers/direkt-main",
+        "Crashlytics canary WIF auth",
+    )
     require(firebase_distribution, "com.kudzimusar.direkt.debug", "Firebase debug app package")
     require(firebase_distribution, "direkt-internal-testers", "internal tester group")
-    require(firebase_distribution, "workloadIdentityPools/direkt-github/providers/direkt-main", "WIF distribution auth")
+    require(
+        firebase_distribution,
+        "workloadIdentityPools/direkt-github/providers/direkt-main",
+        "WIF distribution auth",
+    )
     require(backend_env, "FIREBASE_AUTH_MODE", "backend Firebase auth gate")
     require(backend_env, "PILOT_ENTRY_APPROVED", "pilot entry gate")
-    require(android_manifest, 'android:usesCleartextTraffic="false"', "Android HTTPS-only network policy")
+    require(
+        android_manifest,
+        'android:usesCleartextTraffic="false"',
+        "Android HTTPS-only network policy",
+    )
     require(
         status,
         "Firebase Crashlytics | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY**",
         "RC3 closed synthetic-only managed status",
     )
 
+    # RC4 FCM: backend-owned, outbox-backed, identity-bound and participant-fail-closed.
+    require(
+        android_catalog,
+        'firebase-messaging = { module = "com.google.firebase:firebase-messaging" }',
+        "FCM version-catalog binding",
+    )
+    require(
+        android_gradle,
+        "implementation(libs.firebase.messaging)",
+        "FCM Android SDK binding",
+    )
+    require(
+        android_manifest,
+        'android.permission.POST_NOTIFICATIONS',
+        "Android notification permission declaration",
+    )
+    require(
+        android_manifest,
+        '.notifications.DirektFirebaseMessagingService',
+        "FCM Android service declaration",
+    )
+    require(
+        android_manifest,
+        'android:name="com.google.firebase.MESSAGING_EVENT"',
+        "FCM messaging service intent",
+    )
+    require(
+        android_manifest,
+        'android:exported="false"',
+        "non-exported Android messaging service",
+    )
+    require(
+        android_main_activity,
+        "FcmCanary.handleLaunch(this, intent)",
+        "guarded FCM token canary launch",
+    )
+    require(
+        android_main_activity,
+        "NotificationPermissionController.requestIfRequired(this)",
+        "notification permission hook",
+    )
+    for needle in (
+        'const val EXTRA_MODE = "direkt_rc4_fcm_canary"',
+        'BuildConfig.DIREKT_CRASHLYTICS_DATA_MODE == "synthetic-only"',
+        'sourceShaPattern = Regex("^[0-9a-f]{40}$")',
+        "FirebaseMessaging.getInstance().token",
+        'File(context.filesDir, TOKEN_FILE)',
+    ):
+        require(android_fcm_canary, needle, "FCM synthetic token canary invariant")
+    for needle in (
+        "FirebaseMessagingService",
+        'data["direkt_kind"] != "rc4_synthetic_canary"',
+        'data["direkt_source_sha"]',
+        'data["direkt_delivery_id"]',
+        'data["direkt_phase"]',
+        "markDeliveryOnce",
+        "rc4-fcm-receipt-$phase.json",
+        "POST_NOTIFICATIONS",
+        "PushRegistrationCoordinator(applicationContext).registerRotatedToken(token)",
+    ):
+        require(android_fcm_service, needle, "FCM Android receipt invariant")
+    prohibit(android_fcm_service, r"Log\.", "FCM payload/token logging")
+    require(
+        android_push_registration,
+        "const val PARTICIPANT_REGISTRATION_ENABLED = false",
+        "participant push registration kill switch",
+    )
+    require(
+        android_push_registration,
+        "/api/v1/notifications/push/devices",
+        "authenticated push registration API boundary",
+    )
+    require(
+        android_push_registration,
+        'setRequestProperty("Authorization", "Bearer ${session.accessToken}")',
+        "DIREKT session-bound push registration",
+    )
+    require(
+        android_notification_permission,
+        "PushRuntimePolicy.PARTICIPANT_REGISTRATION_ENABLED",
+        "permission request participant gate",
+    )
+
+    require(
+        communications_module,
+        "new DisabledPushProviderAdapter()",
+        "default-disabled push provider",
+    )
+    require(
+        communications_module,
+        "new FcmPushProviderAdapter",
+        "FCM provider adapter binding",
+    )
+    require(
+        communications_module,
+        "FCM provider activation currently permits synthetic-only non-production use.",
+        "FCM synthetic-only runtime gate",
+    )
+    require(
+        fcm_adapter,
+        "https://fcm.googleapis.com/v1/projects/",
+        "FCM HTTP v1 endpoint",
+    )
+    require(
+        fcm_adapter,
+        "metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
+        "managed identity credential path",
+    )
+    require(fcm_adapter, "Authorization: `Bearer ${accessToken}`", "FCM OAuth bearer auth")
+    require(fcm_adapter, "UNREGISTERED", "FCM invalid-token recognition")
+    for needle in (
+        "communications.push.send.v1",
+        "FOR UPDATE SKIP LOCKED",
+        "provider_token_invalid",
+        "provider_unavailable",
+        "dataClassification: 'synthetic'",
+        "deliveryId: claimed.id",
+        "invalidateToken",
+    ):
+        require(push_outbox, needle, "FCM durable outbox invariant")
+    require(
+        push_token_service,
+        "PUSH_REGISTRATION_MODE",
+        "push registration runtime kill switch",
+    )
+    require(
+        push_token_service,
+        "dataMode !== 'controlled-pilot'",
+        "controlled-pilot data-mode gate",
+    )
+    require(
+        push_token_service,
+        "tokenLogged: false",
+        "push token audit minimization",
+    )
+    prohibit(
+        push_token_service,
+        r"JSON\.stringify\([^\n]*token",
+        "raw push token audit serialization",
+    )
+    for needle in (
+        "CREATE TABLE platform.push_device_tokens",
+        "push_token_identity_boundary",
+        "data_classification IN ('synthetic', 'controlled-pilot')",
+        "UNIQUE (token_hash)",
+        "protect_push_token_classification",
+        "controlled-pilot push token cannot be reclassified as synthetic",
+    ):
+        require(fcm_migration, needle, "FCM server-only token persistence invariant")
+    require(push_canary_entrypoint, "runSyntheticCanary", "FCM managed canary entrypoint")
+    prohibit(push_canary_entrypoint, r"deviceToken\s*[,}]", "raw FCM token receipt output")
+    for needle in (
+        "RUN-DIREKT-FCM-CANARY",
+        "com.kudzimusar.direkt.debug",
+        "fcm.googleapis.com",
+        "cloudmessaging.messages.create",
+        "direktFcmSender",
+        "DIREKT_CRASHLYTICS_BUILD_ENABLED: \"true\"",
+        "DIREKT_CRASHLYTICS_CANARY_ENABLED: \"true\"",
+        "DIREKT_CRASHLYTICS_DATA_MODE: synthetic-only",
+        "direkt_rc4_fcm_canary",
+        "rc4-fcm-token",
+        "direkt-fcm-canary-token-${GITHUB_RUN_ID}",
+        "PUSH_PROVIDER_MODE=fcm",
+        "PUSH_REGISTRATION_MODE=disabled",
+        "FCM_CANARY_PHASE=foreground",
+        "FCM_CANARY_PHASE=background",
+        "rc4-fcm-receipt-foreground.json",
+        "rc4-fcm-receipt-background.json",
+        "Participant push registration: disabled",
+    ):
+        require(fcm_canary, needle, "managed FCM canary invariant")
+    prohibit(
+        fcm_canary,
+        r"roles/firebasecloudmessaging\.admin",
+        "broad predefined FCM admin role",
+    )
+    prohibit(
+        fcm_canary,
+        r"echo\s+.*FCM_DEVICE_TOKEN",
+        "raw FCM token logging",
+    )
+    require(
+        status,
+        "FCM | **IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING**",
+        "RC4 source-integrated gated status",
+    )
+    require(
+        status,
+        "Controlled-pilot participant and production push delivery also remain disabled during RC4.",
+        "RC4 participant/production push stop gate",
+    )
+
     prohibited_android_integrations = (
-        "firebase-messaging",
         "play-services-maps",
         "places",
         "sentry",
@@ -257,11 +584,20 @@ def main() -> None:
     gradle_lower = android_gradle.lower()
     for integration in prohibited_android_integrations:
         if integration in catalog_lower or integration in gradle_lower:
-            fail(f"{integration} became Android-runtime active without integration-status promotion")
+            fail(
+                f"{integration} became Android-runtime active without integration-status promotion"
+            )
+
+    if any("firebase" in dependency.lower() for dependency in backend_pkg):
+        fail("Firebase server SDK dependency entered backend; RC4 uses reviewed HTTP v1 + managed identity")
 
     # RC2 Sentry remains active only for the proven synthetic-only API/private portal boundary.
-    backend_sentry_dependencies = {dependency for dependency in backend_pkg if "sentry" in dependency.lower()}
-    portal_sentry_dependencies = {dependency for dependency in portal_pkg if "sentry" in dependency.lower()}
+    backend_sentry_dependencies = {
+        dependency for dependency in backend_pkg if "sentry" in dependency.lower()
+    }
+    portal_sentry_dependencies = {
+        dependency for dependency in portal_pkg if "sentry" in dependency.lower()
+    }
     if backend_sentry_dependencies != {"@sentry/nestjs"}:
         fail(f"unexpected backend Sentry dependency set: {sorted(backend_sentry_dependencies)}")
     if portal_sentry_dependencies != {"@sentry/nextjs"}:
@@ -270,7 +606,9 @@ def main() -> None:
     for dependency in backend_pkg | portal_pkg:
         lowered = dependency.lower()
         if lowered == "resend" or lowered.startswith("@resend/"):
-            fail("Resend vendor SDK dependency entered runtime; RC1 requires the reviewed provider-neutral HTTP adapter")
+            fail(
+                "Resend vendor SDK dependency entered runtime; RC1 requires the reviewed provider-neutral HTTP adapter"
+            )
         if "googlemaps" in lowered or "google-maps" in lowered:
             fail("Google Maps server SDK became runtime-active without reviewed location promotion")
         if "twilio" in lowered:
@@ -280,27 +618,55 @@ def main() -> None:
     require(backend_sentry, "tracesSampleRate: 0", "API Sentry tracing kill switch")
     require(backend_sentry, "enableLogs: false", "API Sentry logs disabled control")
     require(backend_sentry, "maxBreadcrumbs: 0", "API Sentry breadcrumb minimization")
-    require(backend_sentry, "includeLocalVariables: false", "API local-variable capture disabled")
+    require(
+        backend_sentry,
+        "includeLocalVariables: false",
+        "API local-variable capture disabled",
+    )
     require(backend_sentry, "delete event.user", "API Sentry user scrubbing")
     require(backend_sentry, "delete event.extra", "API Sentry extra-data scrubbing")
-    require(backend_sentry_runtime, "DIREKT_DATA_MODE !== 'synthetic-only'", "API synthetic-only Sentry gate")
+    require(
+        backend_sentry_runtime,
+        "DIREKT_DATA_MODE !== 'synthetic-only'",
+        "API synthetic-only Sentry gate",
+    )
     require(backend_sentry_runtime, "SENTRY_RELEASE", "API exact release binding")
-    require(backend_sentry_privacy, "[redacted-coordinates]", "API private-coordinate redaction")
+    require(
+        backend_sentry_privacy,
+        "[redacted-coordinates]",
+        "API private-coordinate redaction",
+    )
     require(backend_sentry_privacy, "[redacted-token]", "API credential redaction")
     require(backend_sentry_canary, "DIREKT_SENTRY_API_OK", "API managed canary receipt")
     require(backend_sentry_canary, "Sentry.flush(10_000)", "API managed canary flush")
 
-    require(portal_instrumentation, "captureRequestError", "portal server request-error instrumentation")
+    require(
+        portal_instrumentation,
+        "captureRequestError",
+        "portal server request-error instrumentation",
+    )
     require(portal_sentry, "sendDefaultPii: false", "portal Sentry PII default-off control")
     require(portal_sentry, "tracesSampleRate: 0", "portal Sentry tracing kill switch")
     require(portal_sentry, "enableLogs: false", "portal Sentry logs disabled control")
     require(portal_sentry, "maxBreadcrumbs: 0", "portal Sentry breadcrumb minimization")
-    require(portal_sentry, "includeLocalVariables: false", "portal local-variable capture disabled")
+    require(
+        portal_sentry,
+        "includeLocalVariables: false",
+        "portal local-variable capture disabled",
+    )
     require(portal_sentry, "delete event.user", "portal Sentry user scrubbing")
     require(portal_sentry, "delete event.extra", "portal Sentry extra-data scrubbing")
-    require(portal_sentry_runtime, "DIREKT_DATA_MODE !== 'synthetic-only'", "portal synthetic-only Sentry gate")
+    require(
+        portal_sentry_runtime,
+        "DIREKT_DATA_MODE !== 'synthetic-only'",
+        "portal synthetic-only Sentry gate",
+    )
     require(portal_sentry_runtime, "SENTRY_RELEASE", "portal exact release binding")
-    require(portal_sentry_privacy, "[redacted-coordinates]", "portal private-coordinate redaction")
+    require(
+        portal_sentry_privacy,
+        "[redacted-coordinates]",
+        "portal private-coordinate redaction",
+    )
     require(portal_sentry_privacy, "[redacted-token]", "portal credential redaction")
     require(portal_sentry_canary, "SENTRY_CANARY_ENABLED", "portal canary kill switch")
     require(portal_sentry_canary, "DIREKT_SENTRY_PORTAL_OK", "portal managed canary receipt")
@@ -314,8 +680,8 @@ def main() -> None:
         "direkt-portal-runtime@direkt-dev-502701.iam.gserviceaccount.com",
         "direkt-sentry-api-dsn",
         "direkt-sentry-portal-dsn",
-        'DIREKT_DATA_MODE=synthetic-only',
-        'SENTRY_MODE=enabled',
+        "DIREKT_DATA_MODE=synthetic-only",
+        "SENTRY_MODE=enabled",
         "SENTRY_RELEASE=${SOURCE_SHA}",
         "--max-retries 0",
         "--no-allow-unauthenticated",
@@ -323,7 +689,11 @@ def main() -> None:
         "Sentry auth token must never bind",
     ):
         require(sentry_canary, needle, "managed Sentry canary invariant")
-    prohibit(sentry_canary, r"SENTRY_AUTH_TOKEN\s*=", "Sentry auth token runtime environment binding")
+    prohibit(
+        sentry_canary,
+        r"SENTRY_AUTH_TOKEN\s*=",
+        "Sentry auth token runtime environment binding",
+    )
     require(
         status,
         "Sentry API/portal | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY**",
@@ -334,14 +704,30 @@ def main() -> None:
         "Participant/production Sentry telemetry remains disabled.",
         "RC2 participant/production telemetry stop gate",
     )
-    require(reconciliation, "externally provisioned/runtime-unproven", "historical Maps/Sentry reconciliation truth")
+    require(
+        reconciliation,
+        "externally provisioned/runtime-unproven",
+        "historical Maps/Sentry reconciliation truth",
+    )
 
     # RC1 Resend remains provider-neutral and synthetic-only.
     require(backend_env, "EMAIL_PROVIDER_MODE", "email provider kill switch")
-    require(backend_env, "EMAIL_RESEND_API_KEY", "server-only Resend credential contract")
-    require(backend_env, "Email provider activation currently permits synthetic-only data mode", "email data-mode gate")
+    require(
+        backend_env,
+        "EMAIL_RESEND_API_KEY",
+        "server-only Resend credential contract",
+    )
+    require(
+        backend_env,
+        "Email provider activation currently permits synthetic-only data mode",
+        "email data-mode gate",
+    )
     require(backend_env, "notify\\.direkt\\.forum", "verified Resend sender-domain gate")
-    require(communications_module, "ResendEmailProviderAdapter", "Resend provider adapter binding")
+    require(
+        communications_module,
+        "ResendEmailProviderAdapter",
+        "Resend provider adapter binding",
+    )
     require(resend_adapter, "https://api.resend.com/emails", "Resend send endpoint")
     require(resend_adapter, "'idempotency-key'", "Resend provider idempotency header")
     require(email_outbox, "communications.email.send.v1", "email outbox event contract")
@@ -381,7 +767,9 @@ def main() -> None:
     }
     direct_portal = forbidden_portal_dependencies & portal_pkg
     if direct_portal:
-        fail(f"operations portal acquired a privileged direct data dependency: {sorted(direct_portal)}")
+        fail(
+            f"operations portal acquired a privileged direct data dependency: {sorted(direct_portal)}"
+        )
     require(cloud_run, "DIREKT_API_BASE_URL=${API_URL}", "portal-to-API runtime binding")
     require(cloud_run, "roles/run.invoker", "portal-to-API IAM invocation boundary")
 
@@ -397,8 +785,16 @@ def main() -> None:
     require(status, "FCM", "FCM status")
 
     # Payments/registries: domain/sandbox foundation only, no real provider path.
-    require(backend_env, "Production payment provider mode must remain disabled", "payment production gate")
-    require(openapi_check, "Unapproved payment-provider paths were exposed", "real payment route guard")
+    require(
+        backend_env,
+        "Production payment provider mode must remain disabled",
+        "payment production gate",
+    )
+    require(
+        openapi_check,
+        "Unapproved payment-provider paths were exposed",
+        "real payment route guard",
+    )
     for real_provider in ("mtn momo", "airtel money"):
         require(status.lower(), real_provider, "payment candidate status")
     require(status, "PACRA", "registry status")
@@ -440,11 +836,15 @@ def main() -> None:
     print("google_cloud=active_private_staging")
     print("firebase_auth=implemented_gated")
     print("firebase_app_distribution=active_internal")
-    print("firebase_crashlytics=active_synthetic_only_managed_canary_collection_default_off_participant_disabled")
+    print(
+        "firebase_crashlytics=active_synthetic_only_managed_canary_collection_default_off_participant_disabled"
+    )
+    print("fcm=implemented_gated_synthetic_canary_pending_participant_disabled")
     print("maps=external_runtime_unproven_manual_fallback_active")
-    print("sentry=active_synthetic_only_managed_canary_cloud_logging_authoritative_participant_disabled")
+    print(
+        "sentry=active_synthetic_only_managed_canary_cloud_logging_authoritative_participant_disabled"
+    )
     print("resend=active_synthetic_only_managed_canary_real_participant_disabled")
-    print("fcm=planned")
     print("whatsapp=planned_domain_handoff_only")
     print("payments=domain_foundation_real_provider_disabled")
     print("registries=manual_evidence_only")
