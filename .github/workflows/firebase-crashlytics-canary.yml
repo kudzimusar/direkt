@@ -216,11 +216,12 @@ jobs:
           test "${delivered}" = "true"
           grep -Ei "${delivery_pattern}" "${RUNNER_TEMP}/rc3-crash-system.log" "${RUNNER_TEMP}/rc3-crash-upload.log" | tail -n 10
 
-      - name: Prove ANR signal and Crashlytics delivery
+      - name: Prove ANR exit reason and Crashlytics delivery
         shell: bash
         run: |
           set -euo pipefail
           component="${FIREBASE_PACKAGE_NAME}/com.kudzimusar.direkt.MainActivity"
+          delivery_pattern='Crashlytics report successfully enqueued to DataTransport|Crashlytics report upload complete|[[:space:]]204[[:space:]]'
           "${ADB_BIN}" logcat -c
           "${ADB_BIN}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
           "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary anr >/dev/null
@@ -258,28 +259,91 @@ jobs:
             sleep 1
           done
           test "${anr_seen}" = "true"
-          sleep 5
-          "${ADB_BIN}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
-          "${ADB_BIN}" logcat -c
-          "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary flush >/dev/null
-          flush_started=false
-          for _ in $(seq 1 20); do
-            if "${ADB_BIN}" shell pidof "${FIREBASE_PACKAGE_NAME}" >/dev/null 2>&1; then flush_started=true; break; fi
+
+          # Android's ANR dialog owns the authoritative user-termination path. Locate its stable
+          # framework resource ID rather than relying on localized button text or guessed coordinates.
+          dialog_closed=false
+          for _ in $(seq 1 25); do
+            "${ADB_BIN}" shell uiautomator dump /sdcard/rc3-anr-window.xml >/dev/null 2>&1 || true
+            "${ADB_BIN}" exec-out cat /sdcard/rc3-anr-window.xml > "${RUNNER_TEMP}/rc3-anr-window.xml" 2>/dev/null || true
+            if grep -Eq 'resource-id="[^"]*:id/aerr_close"' "${RUNNER_TEMP}/rc3-anr-window.xml"; then
+              coordinates="$(python3 - "${RUNNER_TEMP}/rc3-anr-window.xml" <<'PY'
+import re
+import sys
+import xml.etree.ElementTree as ET
+
+root = ET.parse(sys.argv[1]).getroot()
+for node in root.iter("node"):
+    resource_id = node.attrib.get("resource-id", "")
+    if not resource_id.endswith(":id/aerr_close"):
+        continue
+    match = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", node.attrib.get("bounds", ""))
+    if not match:
+        continue
+    left, top, right, bottom = map(int, match.groups())
+    print((left + right) // 2, (top + bottom) // 2)
+    break
+PY
+)"
+              if [[ "${coordinates}" =~ ^[0-9]+[[:space:]][0-9]+$ ]]; then
+                read -r close_x close_y <<< "${coordinates}"
+                "${ADB_BIN}" shell input tap "${close_x}" "${close_y}"
+                dialog_closed=true
+                break
+              fi
+            fi
             sleep 1
           done
-          test "${flush_started}" = "true"
+          test "${dialog_closed}" = "true"
 
+          # The framework ANR close path must actually terminate the unresponsive process. Do not
+          # use `am force-stop`: that records a user-requested exit and invalidates Crashlytics ANR proof.
+          anr_process_exited=false
+          for _ in $(seq 1 20); do
+            if ! "${ADB_BIN}" shell pidof "${FIREBASE_PACKAGE_NAME}" >/dev/null 2>&1; then
+              anr_process_exited=true
+              break
+            fi
+            sleep 1
+          done
+          test "${anr_process_exited}" = "true"
+          "${ADB_BIN}" logcat -d > "${RUNNER_TEMP}/rc3-anr-system.log" || true
+
+          # On next start the debug-only canary queries its own ApplicationExitInfo before manually
+          # initializing/flushing Crashlytics. Only an exact REASON_ANR (6) is accepted.
+          "${ADB_BIN}" logcat -c
+          "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary anr-flush >/dev/null
+          restart_started=false
+          for _ in $(seq 1 20); do
+            if "${ADB_BIN}" shell pidof "${FIREBASE_PACKAGE_NAME}" >/dev/null 2>&1; then restart_started=true; break; fi
+            sleep 1
+          done
+          test "${restart_started}" = "true"
+
+          exit_reason_seen=false
           delivered=false
           for _ in $(seq 1 60); do
+            "${ADB_BIN}" logcat -d > "${RUNNER_TEMP}/rc3-anr-restart.log" || true
             "${ADB_BIN}" logcat -d -s FirebaseCrashlytics > "${RUNNER_TEMP}/rc3-anr-upload.log" || true
-            if grep -Eqi 'Crashlytics report successfully enqueued to DataTransport|Crashlytics report upload complete|[[:space:]]204[[:space:]]' "${RUNNER_TEMP}/rc3-anr-upload.log"; then delivered=true; break; fi
+            if grep -Fq 'DIREKT_RC3_ANR_EXIT_REASON=6' "${RUNNER_TEMP}/rc3-anr-restart.log"; then
+              exit_reason_seen=true
+            fi
+            if grep -Eqi "${delivery_pattern}" "${RUNNER_TEMP}/rc3-anr-upload.log"; then
+              delivered=true
+            fi
+            if [[ "${exit_reason_seen}" = "true" && "${delivered}" = "true" ]]; then
+              break
+            fi
             sleep 2
           done
+          test "${exit_reason_seen}" = "true"
           test "${delivered}" = "true"
           "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary disable >/dev/null || true
+
           cat "${RUNNER_TEMP}/rc3-anr-block-marker.log"
           grep -Ei "ANR in ${FIREBASE_PACKAGE_NAME}|ANR.*${FIREBASE_PACKAGE_NAME}|Input dispatching timed out" "${RUNNER_TEMP}/rc3-anr-system.log" | tail -n 12
-          grep -Ei 'Crashlytics report successfully enqueued to DataTransport|Crashlytics report upload complete|[[:space:]]204[[:space:]]' "${RUNNER_TEMP}/rc3-anr-upload.log" | tail -n 10
+          grep -F 'DIREKT_RC3_ANR_EXIT_REASON=6' "${RUNNER_TEMP}/rc3-anr-restart.log" | tail -n 4
+          grep -Ei "${delivery_pattern}" "${RUNNER_TEMP}/rc3-anr-upload.log" | tail -n 10
 
       - name: Upload sanitized RC3 diagnostics
         if: always()
@@ -290,7 +354,9 @@ jobs:
             ${{ runner.temp }}/rc3-crash-system.log
             ${{ runner.temp }}/rc3-crash-upload.log
             ${{ runner.temp }}/rc3-anr-block-marker.log
+            ${{ runner.temp }}/rc3-anr-window.xml
             ${{ runner.temp }}/rc3-anr-system.log
+            ${{ runner.temp }}/rc3-anr-restart.log
             ${{ runner.temp }}/rc3-anr-upload.log
           if-no-files-found: warn
           retention-days: 14
@@ -308,6 +374,7 @@ jobs:
             echo "- Fatal crash Crashlytics/DataTransport delivery: \`PASS\`"
             echo "- Focus-synchronized ANR blocker: \`PASS\`"
             echo "- Android input-dispatch ANR signal: \`PASS\`"
+            echo "- Android historical exit reason: \`REASON_ANR\`"
             echo "- Post-ANR Crashlytics/DataTransport delivery: \`PASS\`"
             echo "- Automatic collection default: \`disabled\`"
             echo "- Analytics SDK: \`not added\`"
