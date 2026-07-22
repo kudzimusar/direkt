@@ -116,7 +116,9 @@ jobs:
           completed=false
           conclusion="unknown"
 
-          for _ in $(seq 1 90); do
+          # The managed canary itself may run for up to 55 minutes. Keep this bounded poll window
+          # long enough for that contract while remaining inside this bridge job's 70-minute limit.
+          for _ in $(seq 1 720); do
             run_json="$(gh run view "${run_id}" --repo "${REPO}" --json status,conclusion,headSha)"
             status="$(jq -r '.status // "unknown"' <<< "${run_json}")"
             head_sha="$(jq -r '.headSha // ""' <<< "${run_json}")"
