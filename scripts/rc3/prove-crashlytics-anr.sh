@@ -35,10 +35,9 @@ mkfifo "${monitor_fifo}"
 # same shell command before validating REASON_ANR historical exit records.
 "${ADB_BIN}" shell am clear-exit-info --user all "${FIREBASE_PACKAGE_NAME}" || true
 
-# Register an ActivityManager controller before launching the canary. We deliberately do
-# not use am monitor -k: that option can kill at the early-ANR callback before full ANR
-# processing. Instead, continue early ANR processing and request the kill only from the
-# full appNotResponding callback, matching Android's CTS REASON_ANR verification path.
+# Register an ActivityManager controller before launching the canary. Continue the early
+# ANR first so Android can collect normal traces, then wait for the full ANR callback and
+# request the kill there, matching the CTS ApplicationExitInfo REASON_ANR sequence.
 "${ADB_BIN}" shell am monitor -s -p "${FIREBASE_PACKAGE_NAME}" \
   < "${monitor_fifo}" > "${monitor_log}" 2>&1 &
 monitor_pid=$!
@@ -68,7 +67,7 @@ test "${anr_process_started}" = "true"
 
 # Wait until the debug-only canary confirms a focused Activity and emits its marker
 # immediately before blocking the main looper. Persist the marker before later logcat
-# snapshots can rotate it away, then inject the real input event.
+# snapshots can rotate it away.
 block_started=false
 for _ in $(seq 1 40); do
   "${ADB_BIN}" logcat -d > "${RUNNER_TEMP}/rc3-anr-system.log" || true
@@ -82,19 +81,29 @@ for _ in $(seq 1 40); do
   sleep 1
 done
 test "${block_started}" = "true"
-"${ADB_BIN}" shell input tap 160 320
 
-# Android can call the controller twice: early ANR, then the full ANR. Continue the
-# early callback so traces and normal ANR processing complete; hold the full callback
-# until package-scoped input-dispatch evidence has been captured.
-early_continued=false
-controller_anr_seen=false
-for _ in $(seq 1 50); do
-  if [[ "${early_continued}" != "true" ]] \
-    && grep -Fq "** EARLY PROCESS NOT RESPONDING: ${FIREBASE_PACKAGE_NAME}" "${monitor_log}" 2>/dev/null; then
-    printf 'c\n' >&9
-    early_continued=true
+# A normal `input tap` uses WAIT_FOR_FINISH injection and can couple the shell command to
+# the intentionally blocked app. Use an asynchronous key event instead: it is dispatched
+# to the focused DIREKT window but the shell returns immediately, leaving this controller
+# free to service Android's early/full ANR callbacks deterministically.
+"${ADB_BIN}" shell input keyevent --async KEYCODE_DPAD_CENTER
+
+# Mirror Android CTS ordering: wait for early ANR, continue it so traces are collected,
+# then wait separately for the full ANR. Keep independent budgets because full ANR trace
+# collection on the cold API-35 emulator can complete well after the 20-second block ends.
+early_anr_seen=false
+for _ in $(seq 1 30); do
+  if grep -Fq "** EARLY PROCESS NOT RESPONDING: ${FIREBASE_PACKAGE_NAME}" "${monitor_log}" 2>/dev/null; then
+    early_anr_seen=true
+    break
   fi
+  sleep 1
+done
+test "${early_anr_seen}" = "true"
+printf 'c\n' >&9
+
+controller_anr_seen=false
+for _ in $(seq 1 90); do
   if grep -Fq "** PROCESS NOT RESPONDING: ${FIREBASE_PACKAGE_NAME}" "${monitor_log}" 2>/dev/null; then
     controller_anr_seen=true
     break
@@ -104,7 +113,7 @@ done
 test "${controller_anr_seen}" = "true"
 
 anr_seen=false
-for _ in $(seq 1 20); do
+for _ in $(seq 1 30); do
   "${ADB_BIN}" logcat -d > "${RUNNER_TEMP}/rc3-anr-system.log" || true
   if grep -Eqi "ANR in ${FIREBASE_PACKAGE_NAME}|ANR.*${FIREBASE_PACKAGE_NAME}" "${RUNNER_TEMP}/rc3-anr-system.log" \
     && grep -Eqi 'Input dispatching timed out' "${RUNNER_TEMP}/rc3-anr-system.log"; then
@@ -115,14 +124,13 @@ for _ in $(seq 1 20); do
 done
 test "${anr_seen}" = "true"
 
-# Kill through ActivityManager's ANR controller, not am force-stop. Send only the kill
-# result first and wait until ActivityManager has consumed it and the app process is gone.
-# Sending a following quit result before the waiting controller thread consumes "kill"
-# can overwrite the shared result and leave the app alive without REASON_ANR.
+# Kill through ActivityManager's full-ANR controller, not am force-stop. Send only the
+# kill result first and wait until ActivityManager has consumed it and the app process is
+# gone; only then terminate the interactive monitor.
 printf 'k\n' >&9
 
 anr_process_gone=false
-for _ in $(seq 1 20); do
+for _ in $(seq 1 30); do
   if ! "${ADB_BIN}" shell pidof "${FIREBASE_PACKAGE_NAME}" >/dev/null 2>&1; then
     anr_process_gone=true
     break
@@ -131,8 +139,6 @@ for _ in $(seq 1 20); do
 done
 test "${anr_process_gone}" = "true"
 
-# The kill result has now been consumed and the target process is gone, so it is safe to
-# terminate the interactive monitor without changing the ANR decision that killed the app.
 printf 'q\n' >&9 || true
 exec 9>&-
 monitor_fd_open=false
@@ -148,10 +154,10 @@ fi
 wait "${monitor_pid}" 2>/dev/null || true
 monitor_pid=""
 
-# Crashlytics Android 11+ collects ANRs from getHistoricalProcessExitReasons. Prove the
+# Crashlytics Android 11+ collects ANRs from historical process exit reasons. Prove the
 # OS recorded this exact process death as reason 6 (ANR) before starting the flush process.
 exit_reason_seen=false
-for _ in $(seq 1 20); do
+for _ in $(seq 1 30); do
   "${ADB_BIN}" shell dumpsys activity exit-info "${FIREBASE_PACKAGE_NAME}" > "${exit_info_log}" || true
   if grep -Fq "process=${FIREBASE_PACKAGE_NAME} reason=6 (ANR)" "${exit_info_log}"; then
     exit_reason_seen=true
