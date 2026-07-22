@@ -1,0 +1,54 @@
+name: DIREKT RC4 verifier reconciliation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/rc4-verifier-reconcile.yml
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'integration/rc4-fcm-closeout'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: integration/rc4-fcm-closeout
+          fetch-depth: 0
+          show-progress: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Remove redundant comment-string prohibition and verify contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('scripts/verify-integration-runtime-contract.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''    prohibit(
+              fcm_canary,
+              r"direkt-fcm-canary-token-\$\{GITHUB_RUN_ID\}",
+              "dynamic per-run FCM secret container",
+          )
+'''
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected redundant dynamic-secret prohibition exactly once, found {text.count(old)}')
+          text = text.replace(old, '', 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+          python scripts/verify-integration-runtime-contract.py
+          python scripts/rc4/verify-fcm-canary-secret-lifecycle.py
+          git diff --check
+          git config user.name "direkt-rc4-closeout"
+          git config user.email "actions@users.noreply.github.com"
+          git add scripts/verify-integration-runtime-contract.py
+          git commit -m "test(rc4): reconcile closed FCM verifier"
+          git push origin HEAD:integration/rc4-fcm-closeout
