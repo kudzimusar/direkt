@@ -47,7 +47,14 @@ export class PushDeviceTokenService {
            updated_at = now(),
            last_seen_at = now(),
            invalidated_at = NULL`,
-        [actor.identityId, dto.installationId, dto.token, tokenHash, dto.platform, dto.appVersion ?? null],
+        [
+          actor.identityId,
+          dto.installationId,
+          dto.token,
+          tokenHash,
+          dto.platform,
+          dto.appVersion ?? null,
+        ],
       );
       await client.query(
         `INSERT INTO platform.audit_events (
@@ -105,10 +112,14 @@ export class PushDeviceTokenService {
   }
 
   private assertControlledPilotRegistrationEnabled(): void {
-    const registrationMode = this.configService.getOrThrow<string>('PUSH_REGISTRATION_MODE');
+    const registrationMode = this.configService.get<string>('PUSH_REGISTRATION_MODE') ?? 'disabled';
     const dataMode = this.configService.getOrThrow<string>('DIREKT_DATA_MODE');
     const pilotApproved = this.configService.getOrThrow<boolean>('PILOT_ENTRY_APPROVED');
-    if (registrationMode !== 'controlled-pilot' || dataMode !== 'controlled-pilot' || !pilotApproved) {
+    if (
+      registrationMode !== 'controlled-pilot' ||
+      dataMode !== 'controlled-pilot' ||
+      !pilotApproved
+    ) {
       throw new ServiceUnavailableException('Push device registration is not enabled.');
     }
   }
