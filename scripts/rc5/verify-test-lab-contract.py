@@ -97,13 +97,6 @@ def main() -> int:
     ):
         require(android_ci, needle, "local instrumentation execution control")
 
-    expected_results_permissions_line = (
-        "expected_results_permissions=$'storage.buckets.get"
-        + chr(92)
-        + "nstorage.buckets.getIamPolicy"
-        + chr(92)
-        + "nstorage.objects.create'"
-    )
     for needle in (
         "workflow_dispatch:",
         'DIREKT_CONFIRMATION: ${{ inputs.confirmation }}',
@@ -111,11 +104,11 @@ def main() -> int:
         'test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"',
         "google-github-actions/auth@v3",
         "direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com",
-        "projects/264358173369/locations/globalWorkloadIdentityPools/direkt-github/providers/direkt-main".replace("globalWorkloadIdentityPools", "locations/global/workloadIdentityPools"),
+        "projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main",
         'bash scripts/rc5/verify-no-project-storage-roles.sh "${GCP_PROJECT_ID}" "${member}"',
         "storage.buckets.getIamPolicy",
         "storage.objects.create",
-        expected_results_permissions_line,
+        "expected_results_permissions=$'storage.buckets.get\\nstorage.buckets.getIamPolicy\\nstorage.objects.create'",
         'results_dir="rc5/${SOURCE_SHA}/${GITHUB_RUN_ID}/attempt-${GITHUB_RUN_ATTEMPT}"',
         "gcloud firebase test android models list",
         "--filter=virtual",
@@ -125,7 +118,7 @@ def main() -> int:
         "--no-record-video",
         "--no-performance-metrics",
         "--no-auto-google-login",
-        '--results-bucket "${GCP_TEST_LAB_RESULTS_BUCKET}"',
+        "--results-bucket \"${GCP_TEST_LAB_RESULTS_BUCKET}\"",
         'productionAuthorization: false',
         'dataMode: "synthetic-public-safe-only"',
         "retention-days: 30",
