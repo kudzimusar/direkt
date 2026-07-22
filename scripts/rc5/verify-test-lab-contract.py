@@ -139,6 +139,7 @@ def main() -> int:
         "gcloud projects add-iam-policy-binding",
         "gcloud storage buckets add-iam-policy-binding",
         "roles/cloudtestservice.testAdmin",
+        "roles/firebase.analyticsViewer",
         "roles/storage.admin",
         "roles/storage.objectAdmin",
     ):
@@ -146,8 +147,48 @@ def main() -> int:
 
     runner_block = heredoc(bootstrap, "test-lab-runner-permissions.txt")
     results_block = heredoc(bootstrap, "test-lab-results-permissions.txt")
+    expected_runner_permissions = {
+        "cloudnotifications.activities.list",
+        "cloudtestservice.environmentcatalog.get",
+        "cloudtestservice.matrices.create",
+        "cloudtestservice.matrices.get",
+        "cloudtestservice.matrices.update",
+        "cloudtoolresults.executions.create",
+        "cloudtoolresults.executions.get",
+        "cloudtoolresults.executions.list",
+        "cloudtoolresults.executions.update",
+        "cloudtoolresults.histories.create",
+        "cloudtoolresults.histories.get",
+        "cloudtoolresults.histories.list",
+        "cloudtoolresults.settings.create",
+        "cloudtoolresults.settings.get",
+        "cloudtoolresults.settings.update",
+        "cloudtoolresults.steps.create",
+        "cloudtoolresults.steps.get",
+        "cloudtoolresults.steps.list",
+        "cloudtoolresults.steps.update",
+        "firebase.billingPlans.get",
+        "firebase.clients.get",
+        "firebase.clients.list",
+        "firebase.links.list",
+        "firebase.playLinks.get",
+        "firebase.playLinks.list",
+        "firebase.projects.get",
+        "firebase.projects.list",
+        "firebaseanalytics.resources.googleAnalyticsReadAndAnalyze",
+        "firebaseextensions.configs.get",
+        "firebaseextensions.configs.list",
+        "resourcemanager.projects.get",
+        "resourcemanager.projects.getIamPolicy",
+        "resourcemanager.projects.list",
+    }
+    if set(runner_block.splitlines()) != expected_runner_permissions:
+        raise AssertionError(
+            "RC5 runner role drifted from the reviewed non-Storage union of Firebase Test Lab Admin and Firebase Analytics Viewer."
+        )
     if "storage." in runner_block:
         raise AssertionError("RC5 Test Lab runner custom role must not contain Cloud Storage permissions.")
+
     expected_results_permissions = {
         "storage.buckets.get",
         "storage.buckets.update",
@@ -193,6 +234,7 @@ def main() -> int:
     print("instrumentation=current_post_vc_semantics_local_execution_required")
     print("test_lab=implemented_gated_managed_matrix_pending")
     print("identity=github_oidc_no_service_account_keys")
+    print("iam=documented_test_lab_plus_analytics_non_storage_union")
     print("storage=dedicated_bucket_scope_30_day_lifecycle")
     print("matrix=live_virtual_2_to_3_devices_api33_current_required")
     print("auto_google_login=false")
