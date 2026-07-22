@@ -149,8 +149,15 @@ jobs:
           test "${GCP_FCM_ROLE_ID}" = "direktFcmSender"
           test "${GCP_FCM_VERIFIER_ROLE_ID}" = "direktFcmBootstrapVerifier"
 
-          service_name="$(gcloud services list --enabled --project "${GCP_PROJECT_ID}" --filter="config.name:${GCP_FCM_API}" --format='value(config.name)' | head -n 1)"
-          test "${service_name}" = "${GCP_FCM_API}"
+          project_number="$(gcloud projects describe "${GCP_PROJECT_ID}" --format='value(projectNumber)')"
+          [[ "${project_number}" =~ ^[0-9]+$ ]]
+          access_token="$(gcloud auth print-access-token)"
+          printf '::add-mask::%s\n' "${access_token}"
+          service_state="$(curl --fail --silent --show-error \
+            --header "Authorization: Bearer ${access_token}" \
+            "https://serviceusage.googleapis.com/v1/projects/${project_number}/services/${GCP_FCM_API}" \
+            | jq -r '.state // empty')"
+          test "${service_state}" = "ENABLED"
 
           permissions="$(gcloud iam roles describe "${GCP_FCM_ROLE_ID}" --project "${GCP_PROJECT_ID}" --format='value(includedPermissions)' | tr ';' '\n' | sed '/^$/d' | sort -u)"
           test "${permissions}" = "${GCP_FCM_SEND_PERMISSION}"
