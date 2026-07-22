@@ -12,6 +12,7 @@ on:
       - "web/direkt-pwa/**"
       - "database/**"
       - "scripts/verify-integration-runtime-contract.py"
+      - "scripts/verify-rc4-fcm-secret-boundary.py"
       - "scripts/verify-phase12-play-readiness.py"
       - "docs/integrations/**"
       - "docs/phase12/play/**"
@@ -30,6 +31,7 @@ on:
       - "web/direkt-pwa/**"
       - "database/**"
       - "scripts/verify-integration-runtime-contract.py"
+      - "scripts/verify-rc4-fcm-secret-boundary.py"
       - "scripts/verify-phase12-play-readiness.py"
       - "docs/integrations/**"
       - "docs/phase12/play/**"
@@ -70,6 +72,7 @@ jobs:
         run: |
           set -o pipefail
           python scripts/verify-integration-runtime-contract.py 2>&1 | tee integration-runtime-contract.txt
+          python scripts/verify-rc4-fcm-secret-boundary.py 2>&1 | tee -a integration-runtime-contract.txt
       - name: Validate public PWA JavaScript syntax
         run: |
           node --check web/direkt-pwa/app.js
