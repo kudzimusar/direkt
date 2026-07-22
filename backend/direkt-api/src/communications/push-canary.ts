@@ -18,7 +18,11 @@ async function main(): Promise<void> {
   });
   try {
     const outbox = app.get(PushOutboxService);
-    const receipt = await outbox.runSyntheticCanary(deviceToken, sourceSha, phase);
+    const receipt = await outbox.runSyntheticCanary(
+      deviceToken,
+      sourceSha,
+      phase,
+    );
     process.stdout.write(
       `${JSON.stringify({
         event: 'fcm_synthetic_canary_passed',
