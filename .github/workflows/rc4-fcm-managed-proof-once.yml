@@ -84,14 +84,16 @@ jobs:
               echo "Managed FCM canary ${RUN_ID} concluded: ${conclusion}"
               if [[ "${conclusion}" != "success" ]]; then
                 sanitized_error="$(gh run view "${RUN_ID}" --repo "${GITHUB_REPOSITORY}" --log-failed 2>/dev/null \
-                  | grep -E '::error title=FCM registration (failed|timed out)::' \
+                  | sed -E 's/\x1B\[[0-9;]*[A-Za-z]//g' \
+                  | grep -E 'No registration identifier was produced; sanitized status=[a-z0-9_-]{1,80}\.|Synthetic FCM registration failed with [A-Za-z0-9._$-]{1,120}\.' \
+                  | grep -Fv '${' \
                   | tail -n 1 \
-                  | sed -E 's/.*::error title=/FCM registration /; s/\x1B\[[0-9;]*[A-Za-z]//g' \
+                  | sed -E 's/^.*##\[error\]//' \
                   | cut -c1-240 || true)"
                 [[ -n "${sanitized_error}" ]] || sanitized_error="FCM registration failure detail unavailable; inspect managed run ${RUN_ID}."
                 gh issue create --repo "${GITHUB_REPOSITORY}" \
                   --title "RC4 FCM proof failure run ${RUN_ID}" \
-                  --body "Exact source: \`${SOURCE_SHA}\`. Sanitized managed-canary result: ${sanitized_error}. No participant/production push was enabled. Parent: #261."
+                  --body "Exact source: \`${SOURCE_SHA}\`. Sanitized managed-canary result: ${sanitized_error} No participant/production push was enabled. Parent: #261."
                 exit 1
               fi
               exit 0
