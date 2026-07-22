@@ -34,9 +34,8 @@ gcloud services enable \
 workdir="$(mktemp -d)"
 trap 'rm -rf "${workdir}"' EXIT
 
-# Exact union of the documented non-Storage permissions in
-# roles/cloudtestservice.testAdmin + roles/firebase.analyticsViewer.
-# Storage is intentionally split into a dedicated bucket-scoped role below.
+# Exact non-Storage Test Lab + Firebase Analytics execution union, plus only the
+# narrow IAM introspection permission required to verify these custom roles live.
 cat > "${workdir}/test-lab-runner-permissions.txt" <<'EOF'
 cloudnotifications.activities.list
 cloudtestservice.environmentcatalog.get
@@ -68,13 +67,17 @@ firebase.projects.list
 firebaseanalytics.resources.googleAnalyticsReadAndAnalyze
 firebaseextensions.configs.get
 firebaseextensions.configs.list
+iam.roles.get
 resourcemanager.projects.get
 resourcemanager.projects.getIamPolicy
 resourcemanager.projects.list
 EOF
 
+# This role is bound only on the dedicated RC5 results bucket. The IAM-policy
+# read is required only to verify that exact bucket-scoped binding during proof.
 cat > "${workdir}/test-lab-results-permissions.txt" <<'EOF'
 storage.buckets.get
+storage.buckets.getIamPolicy
 storage.buckets.update
 storage.objects.create
 storage.objects.delete
@@ -117,13 +120,13 @@ upsert_role() {
 upsert_role \
   "${runner_role_id}" \
   "DIREKT Firebase Test Lab Runner" \
-  "Run bounded Firebase Test Lab matrices and read Tool Results without project-wide Cloud Storage permissions." \
+  "Run bounded Firebase Test Lab matrices and verify custom role definitions without project-wide Cloud Storage permissions." \
   "${runner_permissions}"
 
 upsert_role \
   "${results_role_id}" \
   "DIREKT Firebase Test Lab Results Writer" \
-  "Read/write only the dedicated DIREKT Test Lab results bucket when bound at bucket scope." \
+  "Read/write and verify IAM only on the dedicated DIREKT Test Lab results bucket when bound at bucket scope." \
   "${results_permissions}"
 
 if ! gcloud storage buckets describe "${bucket_uri}" --project "${project_id}" >/dev/null 2>&1; then
@@ -188,6 +191,7 @@ assert_role_permissions "${results_role_id}" "${workdir}/test-lab-results-permis
 
 project_policy="$(gcloud projects get-iam-policy "${project_id}" --format=json)"
 test "$(jq -r --arg member "${deployer_member}" --arg role "${runner_role}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${project_policy}")" = "1"
+test "$(jq -r --arg member "${deployer_member}" --arg role "${results_role}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${project_policy}")" = "0"
 
 for prohibited_role in roles/owner roles/editor roles/cloudtestservice.testAdmin roles/firebase.analyticsViewer roles/storage.admin roles/storage.objectAdmin; do
   if jq -e --arg member "${deployer_member}" --arg role "${prohibited_role}" '.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)' <<< "${project_policy}" >/dev/null; then
@@ -205,8 +209,8 @@ test "$(jq -r --argjson age "${retention_days}" '[.[] | select(.action.type == "
 printf 'RC5 Firebase Test Lab bootstrap verified.\n'
 printf 'Project: %s\n' "${project_id}"
 printf 'Testing APIs: testing.googleapis.com and toolresults.googleapis.com enabled.\n'
-printf 'Runner role: %s (documented Test Lab + Analytics non-Storage union only).\n' "${runner_role}"
+printf 'Runner role: %s (exact Test Lab/Analytics non-Storage execution permissions plus iam.roles.get only).\n' "${runner_role}"
 printf 'Results bucket: %s (uniform access, %s-day delete lifecycle).\n' "${bucket_uri}" "${retention_days}"
-printf 'Results role: %s bound only on the dedicated results bucket.\n' "${results_role}"
+printf 'Results role: %s bound only on the dedicated results bucket; includes bucket IAM read only for binding verification.\n' "${results_role}"
 printf 'GitHub identity: %s via existing Workload Identity Federation; no service-account key created.\n' "${deployer_sa}"
 printf 'No secret, credential, participant data, or production authorization was created by this bootstrap.\n'
