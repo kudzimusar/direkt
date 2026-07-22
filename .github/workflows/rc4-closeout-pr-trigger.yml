@@ -42,6 +42,23 @@ jobs:
           lines = raw.splitlines()
           body = '\n'.join(line[10:] if line.startswith('          ') else line for line in lines) + '\n'
           body = body.replace('f"exact-main managed proof run `{RUN}`" if False else "29916381754"', '"29916381754"')
+          body = body.replace(
+              'fcm = replace_once(fcm, sentinel, "\\n", "remove obsolete FCM verifier sentinel")',
+              'fcm = replace_once(fcm, sentinel, "", "remove obsolete FCM verifier sentinel")',
+          )
+          old = 'write(path, verifier)\n\n          # The permanent canary remains; remove the obsolete compatibility sentinel.'
+          new = '''verifier = replace_once(
+              verifier,
+              '    print("fcm=implemented_gated_synthetic_canary_pending_participant_disabled")\\n',
+              '    print("fcm=active_synthetic_only_managed_canary_participant_disabled")\\n',
+              "FCM verifier summary promotion",
+          )
+          write(path, verifier)
+
+          # The permanent canary remains; remove the obsolete compatibility sentinel.'''
+          if body.count(old) != 1:
+              raise SystemExit(f'Unable to inject verifier summary promotion exactly once: {body.count(old)}')
+          body = body.replace(old, new, 1)
           Path('/tmp/rc4-closeout.sh').write_text(body, encoding='utf-8')
           PY
 
