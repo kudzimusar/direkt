@@ -561,7 +561,9 @@ def main() -> None:
         "DIREKT_CRASHLYTICS_DATA_MODE: synthetic-only",
         "direkt_rc4_fcm_canary",
         "rc4-fcm-token",
-        "direkt-fcm-canary-token-${GITHUB_RUN_ID}",
+        "GCP_FCM_TOKEN_SECRET: direkt-fcm-canary-token",
+        "gcloud secrets versions add",
+        "gcloud secrets versions destroy",
         "PUSH_PROVIDER_MODE=fcm",
         "PUSH_REGISTRATION_MODE=disabled",
         "FCM_CANARY_PHASE=foreground",
@@ -578,18 +580,28 @@ def main() -> None:
     )
     prohibit(
         fcm_canary,
+        r"direkt-fcm-canary-token-\$\{GITHUB_RUN_ID\}",
+        "dynamic per-run FCM secret container",
+    )
+    require(
+        status,
+        "29916381754",
+        "RC4 managed proof receipt",
+    )
+    prohibit(
+        fcm_canary,
         r"echo\s+.*FCM_DEVICE_TOKEN",
         "raw FCM token logging",
     )
     require(
         status,
-        "FCM | **IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING**",
-        "RC4 source-integrated gated status",
+        "FCM | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY**",
+        "RC4 closed synthetic-only managed status",
     )
     require(
         status,
-        "Controlled-pilot participant and production push delivery also remain disabled during RC4.",
-        "RC4 participant/production push stop gate",
+        "Participant/production push remains disabled",
+        "RC4 post-closure participant/production push stop gate",
     )
 
     prohibited_android_integrations = (
@@ -857,7 +869,7 @@ def main() -> None:
     print(
         "firebase_crashlytics=active_synthetic_only_managed_canary_collection_default_off_participant_disabled"
     )
-    print("fcm=implemented_gated_synthetic_canary_pending_participant_disabled")
+    print("fcm=active_synthetic_only_managed_canary_participant_disabled")
     print("maps=external_runtime_unproven_manual_fallback_active")
     print(
         "sentry=active_synthetic_only_managed_canary_cloud_logging_authoritative_participant_disabled"

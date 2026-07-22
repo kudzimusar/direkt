@@ -6,13 +6,13 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED — RC4 Firebase Cloud Messaging runtime closure |
-| Owner/agent | Active repository agent — Issue #261 runtime integration closure workstream |
-| Authorized scope | Firebase Cloud Messaging only: provider-neutral backend send adapter through the transactional outbox, authenticated device-token registration/rotation/deletion, Android foreground/background handling, Android 13+ notification permission UX, retry/idempotency/privacy controls, exact-source managed synthetic push canary, permanent verifier promotion, and status/ledger reconciliation. No Test Lab, Maps, payment, WhatsApp or unrelated backend/PWA/portal feature work is authorized in RC4. |
-| Protected surface | Backend/database/OpenAPI, web/PWA, operations portal, trust/privacy, payments, integrations, VC1–VC8 completion, Phase 11/12 gates, Android auth/distribution/signing/Play/Data Safety and RC0–RC3 evidence remain regression-protected. |
-| Implementation branch | `integration/rc4-fcm` from merged RC3 closeout baseline `0d7d29313990c37b25bd985588866a85bbe10f83`. |
-| Stable baseline | RC3 closure PR #338 merged at `0d7d29313990c37b25bd985588866a85bbe10f83`; Crashlytics exact-source managed proof run `29885635547` succeeded and the RC3 lock was released. |
-| Current task | RC4 — add FCM without weakening auth/privacy/release boundaries, prove durable outbox send plus Android receipt on a synthetic managed device, then reconcile status and release/transition the lane. |
+| Status | RELEASED — RC4 Firebase Cloud Messaging runtime closure complete; RC5 Firebase Test Lab is the next checkpoint |
+| Owner/agent | No active implementation writer after RC4 closeout; the next repository agent must explicitly claim RC5 under Issue #261 before Test Lab source changes begin. |
+| Authorized scope | RC4 closeout only: managed-proof receipt promotion, permanent verifier/status/ledger reconciliation and removal of the completed one-shot proof bridge. No Test Lab, Maps, payment, WhatsApp or unrelated backend/PWA/portal feature work is authorized until the next explicit claim. |
+| Protected surface | Backend/database/OpenAPI, web/PWA, operations portal, trust/privacy, payments, integrations, VC1–VC8 completion, Phase 11/12 gates, Android auth/distribution/signing/Play/Data Safety and RC0–RC4 evidence remain regression-protected. |
+| Implementation branch | `integration/rc4-fcm-closeout` from exact proven RC4 source `f05ff19105cb8dc7c4621c044c110b6029f63300`. |
+| Stable baseline | RC4 exact-main managed proof run `29916381754` succeeded on `f05ff19105cb8dc7c4621c044c110b6029f63300`: least-privilege bootstrap verification, synthetic registration, foreground/background outbox → FCM → Android receipts, sanitized evidence and ordered cleanup all passed. |
+| Current task | Promote RC4 closure evidence, remove the completed one-shot bridge, merge exact-head regression-clean closeout, then allow an explicit RC5 Firebase Test Lab claim. |
 | Governing issue | Issue #261 — Runtime integration closure after W8; Issue #259 VC1–VC8 is closed and preserved as baseline. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
@@ -30,7 +30,7 @@ This file prevents overlapping writes in the single-lane build process.
 9. The permanent integration verifier positively asserts Crashlytics/privacy/canary controls and remains mandatory.
 10. RC3 is `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY`; participant/production crash telemetry remains separately gated.
 
-## RC4 implementation contract — ACTIVE
+## RC4 implementation contract — CLOSED AND PRESERVED
 
 1. FCM send authority is backend-owned. Android/browser clients never receive server credentials or decide delivery truth.
 2. Push delivery originates from a DIREKT-controlled transactional outbox event and records durable success/failure state.
@@ -41,7 +41,7 @@ This file prevents overlapping writes in the single-lane build process.
 7. Retries are bounded and idempotency/deduplication identifiers are stable across retry attempts.
 8. The managed canary must prove exact reviewed source, a registered synthetic device token, backend outbox/provider send success, and Android receipt on the managed emulator/device.
 9. RC4 must not activate Firebase Test Lab, Maps, Analytics or unrelated Firebase products early.
-10. RC4 is not `ACTIVE` until source integration, privacy controls, managed synthetic delivery evidence, exact-head regressions and status reconciliation are complete.
+10. RC4 is `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY`; participant registration and participant/production push remain separately gated.
 
 ## Runtime integration closure contract
 
@@ -63,8 +63,8 @@ This file prevents overlapping writes in the single-lane build process.
 - RC1 — Resend transactional-outbox runtime. **Closed; synthetic managed execution proven; real-participant/production email remains disabled.**
 - RC2 — Sentry for approved NestJS/Next.js surfaces. **Closed — PR #275 source + managed synthetic API/private-portal canary + closure PR #280; participant/production telemetry remains disabled.**
 - RC3 — Firebase Crashlytics Android. **Closed — exact source `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; managed bridge run `29885635547` successful; closure PR #338 merged at `0d7d29313990c37b25bd985588866a85bbe10f83`.**
-- RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary. **ACTIVE CHECKPOINT.**
-- RC5 — Firebase Test Lab device-matrix automation after Android runtime dependencies stabilize through RC3–RC4.
+- RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary. **CLOSED — exact source `f05ff19105cb8dc7c4621c044c110b6029f63300`; managed run `29916381754` successful; participant/production push disabled.**
+- RC5 — Firebase Test Lab device-matrix automation after Android runtime dependencies stabilize through RC3–RC4. **NEXT CHECKPOINT — requires explicit lane claim after RC4 closeout merge.**
 - RC6 — WhatsApp Cloud API application adapter using outbox/idempotency/consent/template/delivery-receipt rules; production sends remain gated until provider/legal approvals exist.
 - RC7 — Google Maps runtime activation with separate restricted Android/backend credentials, privacy-safe publication semantics, quotas, manual/list fallback and kill switch.
 - RC8 — sandbox-only payment-provider adapter closure/reconciliation for already proven MTN, DPO, Stripe and PayPal rails; Airtel remains provider-pending and Flutterwave deferred; real money remains disabled.
@@ -89,4 +89,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-No second agent may write to overlapping RC4 FCM backend/Android/notification surfaces while this claim is active. Read-only review may continue. RC5+ source work must not begin until RC4 has exact-head source/regression evidence, managed synthetic push evidence, status reconciliation, merge promotion and a released/transitioned lock.
+RC4 is closed. No new RC4 implementation writes are authorized. RC5+ source work must not begin until this closeout is merged and the next agent explicitly claims RC5 Firebase Test Lab under Issue #261 from the resulting exact `main` baseline.
