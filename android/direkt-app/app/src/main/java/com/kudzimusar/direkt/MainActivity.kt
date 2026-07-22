@@ -19,6 +19,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import com.kudzimusar.direkt.notifications.FcmCanary
+import com.kudzimusar.direkt.notifications.NotificationPermissionController
 import com.kudzimusar.direkt.observability.CrashlyticsCanary
 import com.kudzimusar.direkt.ui.DirektApp
 import com.kudzimusar.direkt.ui.theme.DirektTheme
@@ -27,6 +29,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         CrashlyticsCanary.handleLaunch(this, intent)
+        FcmCanary.handleLaunch(this, intent)
+        NotificationPermissionController.requestIfRequired(this)
         enableEdgeToEdge()
         setContent {
             DirektTheme {
