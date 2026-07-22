@@ -115,10 +115,11 @@ for _ in $(seq 1 20); do
 done
 test "${anr_seen}" = "true"
 
-# Kill through ActivityManager's ANR controller, not am force-stop. AOSP maps this
-# user action after an ANR to ApplicationExitInfo.REASON_ANR; force-stop is recorded as
-# REASON_USER_REQUESTED and prevents Crashlytics from finding the historical ANR exit.
-printf 'k\nq\n' >&9
+# Kill through ActivityManager's ANR controller, not am force-stop. Send only the kill
+# result first and wait until ActivityManager has consumed it and the app process is gone.
+# Sending a following quit result before the waiting controller thread consumes "kill"
+# can overwrite the shared result and leave the app alive without REASON_ANR.
+printf 'k\n' >&9
 
 anr_process_gone=false
 for _ in $(seq 1 20); do
@@ -130,6 +131,9 @@ for _ in $(seq 1 20); do
 done
 test "${anr_process_gone}" = "true"
 
+# The kill result has now been consumed and the target process is gone, so it is safe to
+# terminate the interactive monitor without changing the ANR decision that killed the app.
+printf 'q\n' >&9 || true
 exec 9>&-
 monitor_fd_open=false
 for _ in $(seq 1 10); do
