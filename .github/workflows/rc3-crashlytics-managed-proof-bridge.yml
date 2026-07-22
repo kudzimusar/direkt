@@ -107,16 +107,52 @@ jobs:
             --repo "${REPO}" \
             --body "RC3 managed Crashlytics canary dispatched for exact merged source \`${SOURCE_SHA}\`. Run: \`${run_id}\`. Boundary is synthetic-only debug crash/ANR proof; participant/production telemetry remains disabled."
 
-      - name: Wait for managed canary result
+      - name: Wait for exact managed canary conclusion
         id: watch
         shell: bash
         run: |
-          set +e
+          set -euo pipefail
           run_id="${{ steps.dispatch.outputs.run_id }}"
-          gh run watch "${run_id}" --repo "${REPO}" --exit-status
-          status=$?
-          set -e
-          echo "watch_status=${status}" >> "${GITHUB_OUTPUT}"
+          completed=false
+          conclusion="unknown"
+          queue_polls=0
+          active_polls=0
+
+          # The canary concurrency group may queue this run before its own 55-minute timeout begins.
+          # Preserve a bounded 10-minute queue allowance plus 57.5 minutes of active execution,
+          # keeping the entire watcher inside this bridge job's 70-minute limit.
+          while true; do
+            run_json="$(gh run view "${run_id}" --repo "${REPO}" --json status,conclusion,headSha)"
+            status="$(jq -r '.status // "unknown"' <<< "${run_json}")"
+            head_sha="$(jq -r '.headSha // ""' <<< "${run_json}")"
+            test "${head_sha}" = "${SOURCE_SHA}"
+
+            if [[ "${status}" = "completed" ]]; then
+              conclusion="$(jq -r '.conclusion // "unknown"' <<< "${run_json}")"
+              completed=true
+              break
+            fi
+
+            case "${status}" in
+              queued|pending|requested|waiting)
+                queue_polls=$((queue_polls + 1))
+                test "${queue_polls}" -le 120
+                ;;
+              *)
+                active_polls=$((active_polls + 1))
+                test "${active_polls}" -le 690
+                ;;
+            esac
+            sleep 5
+          done
+
+          test "${completed}" = "true"
+          echo "conclusion=${conclusion}" >> "${GITHUB_OUTPUT}"
+          if [[ "${conclusion}" = "success" ]]; then
+            echo "watch_status=0" >> "${GITHUB_OUTPUT}"
+          else
+            echo "watch_status=1" >> "${GITHUB_OUTPUT}"
+          fi
 
       - name: Publish sanitized managed canary receipt
         if: always() && steps.dispatch.outputs.run_id != ''
@@ -125,12 +161,15 @@ jobs:
           set -euo pipefail
           run_id="${{ steps.dispatch.outputs.run_id }}"
           run_json="$(gh run view "${run_id}" --repo "${REPO}" --json status,conclusion,url,headSha)"
+          status="$(jq -r '.status // "unknown"' <<< "${run_json}")"
           conclusion="$(jq -r '.conclusion // "unknown"' <<< "${run_json}")"
           run_url="$(jq -r '.url' <<< "${run_json}")"
           head_sha="$(jq -r '.headSha' <<< "${run_json}")"
 
           if [[ "${head_sha}" != "${SOURCE_SHA}" ]]; then
             conclusion="source-mismatch"
+          elif [[ "${status}" != "completed" ]]; then
+            conclusion="incomplete"
           fi
 
           gh issue comment "${ISSUE_NUMBER}" \
@@ -144,3 +183,4 @@ jobs:
         run: |
           set -euo pipefail
           test "${{ steps.watch.outputs.watch_status }}" = "0"
+          test "${{ steps.watch.outputs.conclusion }}" = "success"
