@@ -39,7 +39,7 @@ jobs:
       project_ready: ${{ steps.detect.outputs.project_ready }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.SOURCE_SHA }}
       - name: Detect Android project
@@ -68,7 +68,7 @@ jobs:
         working-directory: android/direkt-app
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.SOURCE_SHA }}
           fetch-depth: 0
@@ -81,7 +81,7 @@ jobs:
           distribution: temurin
           java-version: "17"
       - name: Configure pinned Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: ${{ env.DIREKT_GRADLE_VERSION }}
       - name: Bootstrap standard Gradle wrapper JAR
@@ -110,7 +110,7 @@ jobs:
             2>&1 | tee "${RUNNER_TEMP}/direkt-android-build.log"
       - name: Upload Android build diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: direkt-android-build-log-${{ github.run_number }}
           path: ${{ runner.temp }}/direkt-android-build.log
@@ -118,7 +118,7 @@ jobs:
           retention-days: 14
       - name: Upload test and lint reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: direkt-android-reports-${{ github.run_number }}
           path: |
@@ -127,14 +127,14 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
       - name: Upload debug APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: direkt-debug-apk-${{ github.run_number }}-${{ env.SOURCE_SHA }}
           path: android/direkt-app/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
       - name: Upload Compose test APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: direkt-compose-test-apk-${{ github.run_number }}-${{ env.SOURCE_SHA }}
           path: android/direkt-app/app/build/outputs/apk/androidTest/debug/*.apk
@@ -146,7 +146,7 @@ jobs:
         run: bash scripts/vc8/provision-android-emulator.sh
       - name: Upload Android emulator diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: direkt-vc8-emulator-diagnostics-${{ github.run_number }}-${{ env.SOURCE_SHA }}
           path: |
@@ -163,14 +163,14 @@ jobs:
         run: bash scripts/vc8/capture-android-evidence.sh
       - name: Upload Android capture diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: direkt-vc8-android-capture-diagnostics-${{ github.run_number }}-${{ env.SOURCE_SHA }}
           path: ${{ runner.temp }}/vc8-android-capture/**
           if-no-files-found: warn
           retention-days: 14
       - name: Upload Android visual evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: direkt-vc8-android-visual-evidence-${{ env.SOURCE_SHA }}
           path: visual-evidence/android/**
