@@ -34,7 +34,7 @@ export class FcmPushProviderAdapter implements PushProviderPort {
         },
         body: JSON.stringify({
           message: {
-            fid: request.registrationId,
+            fid: request.token,
             data: {
               direkt_kind: 'rc4_synthetic_canary',
               direkt_delivery_id: request.deliveryId,
