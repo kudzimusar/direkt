@@ -140,10 +140,43 @@ jobs:
           path: android/direkt-app/app/build/outputs/apk/androidTest/debug/*.apk
           if-no-files-found: error
           retention-days: 14
-      - name: Provision headless Android emulator for VC8 evidence
+      - name: Provision headless Android emulator for VC8 evidence and instrumentation
         working-directory: .
         shell: bash
         run: bash scripts/vc8/provision-android-emulator.sh
+      - name: Execute current Android instrumentation smoke test
+        working-directory: .
+        shell: bash
+        run: |
+          set -euo pipefail
+          adb_bin="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}/platform-tools/adb"
+          test -x "${adb_bin}"
+          app_apk="$(find android/direkt-app/app/build/outputs/apk/debug -maxdepth 1 -type f -name '*-debug.apk' | head -n 1)"
+          test_apk="$(find android/direkt-app/app/build/outputs/apk/androidTest/debug -maxdepth 1 -type f -name '*-debug-androidTest.apk' | head -n 1)"
+          test -n "${app_apk}"
+          test -s "${app_apk}"
+          test -n "${test_apk}"
+          test -s "${test_apk}"
+          "${adb_bin}" install -r "${app_apk}"
+          "${adb_bin}" install -r "${test_apk}"
+          "${adb_bin}" shell am force-stop com.kudzimusar.direkt.debug || true
+          "${adb_bin}" shell am instrument -w -r \
+            -e class com.kudzimusar.direkt.DirektAppSmokeTest \
+            com.kudzimusar.direkt.debug.test/androidx.test.runner.AndroidJUnitRunner \
+            | tee "${RUNNER_TEMP}/direkt-android-instrumentation.log"
+          grep -Fq 'OK (1 test)' "${RUNNER_TEMP}/direkt-android-instrumentation.log"
+          if grep -Eq 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed' "${RUNNER_TEMP}/direkt-android-instrumentation.log"; then
+            echo "Instrumentation smoke test reported a failure marker." >&2
+            exit 1
+          fi
+      - name: Upload Android instrumentation diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-android-instrumentation-${{ github.run_number }}-${{ env.SOURCE_SHA }}
+          path: ${{ runner.temp }}/direkt-android-instrumentation.log
+          if-no-files-found: warn
+          retention-days: 14
       - name: Upload Android emulator diagnostics
         if: always()
         uses: actions/upload-artifact@v4
@@ -183,8 +216,9 @@ jobs:
           echo "- Commit: \`${SOURCE_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Branch: \`${GITHUB_REF_NAME}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Application ID: \`com.kudzimusar.direkt.debug\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Instrumentation: \`DirektAppSmokeTest\` executed on the managed local emulator" >> "$GITHUB_STEP_SUMMARY"
           echo "- Toolchain: Gradle ${DIREKT_GRADLE_VERSION}, AGP 9.0.0, Kotlin 2.3.0, API 36" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Result: unit tests, lint, debug APK, Compose test APK and synthetic native screenshots completed" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Result: unit tests, lint, debug APK, Compose test APK, instrumentation smoke and synthetic native screenshots completed" >> "$GITHUB_STEP_SUMMARY"
 
   incomplete-scaffold:
     name: Android project scaffold incomplete
