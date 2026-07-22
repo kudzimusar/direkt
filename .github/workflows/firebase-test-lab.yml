@@ -147,6 +147,8 @@ jobs:
             fi
           done
 
+          bash scripts/rc5/verify-no-project-storage-roles.sh "${GCP_PROJECT_ID}" "${member}"
+
           runner_permissions="$(gcloud iam roles describe direktTestLabRunner --project "${GCP_PROJECT_ID}" --format='value(includedPermissions)' | tr ';' '\n' | sed '/^$/d' | sort -u)"
           expected_runner_permissions="$(cat <<'EOF'
 cloudnotifications.activities.list
