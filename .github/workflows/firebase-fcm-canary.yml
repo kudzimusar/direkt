@@ -33,7 +33,10 @@ jobs:
       GCP_ARTIFACT_REGISTRY: direkt-containers
       GCP_IMAGE_NAME: direkt-api
       GCP_CANARY_JOB: direkt-fcm-canary
+      GCP_FCM_API: fcm.googleapis.com
+      GCP_FCM_SEND_PERMISSION: cloudmessaging.messages.create
       GCP_FCM_ROLE_ID: direktFcmSender
+      GCP_FCM_VERIFIER_ROLE_ID: direktFcmBootstrapVerifier
       GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
       GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
       GCP_RUNTIME_SERVICE_ACCOUNT: direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com
@@ -137,30 +140,28 @@ jobs:
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Enable required managed APIs and bind least-privilege FCM sender role
+      - name: Verify owner-provisioned least-privilege FCM bootstrap boundary
         shell: bash
         run: |
           set -euo pipefail
-          gcloud services enable fcm.googleapis.com iam.googleapis.com --project "${GCP_PROJECT_ID}" --quiet
+          test "${GCP_FCM_API}" = "fcm.googleapis.com"
+          test "${GCP_FCM_SEND_PERMISSION}" = "cloudmessaging.messages.create"
+          test "${GCP_FCM_ROLE_ID}" = "direktFcmSender"
+          test "${GCP_FCM_VERIFIER_ROLE_ID}" = "direktFcmBootstrapVerifier"
 
-          if ! gcloud iam roles describe "${GCP_FCM_ROLE_ID}" --project "${GCP_PROJECT_ID}" >/dev/null 2>&1; then
-            gcloud iam roles create "${GCP_FCM_ROLE_ID}" \
-              --project "${GCP_PROJECT_ID}" \
-              --title "DIREKT FCM Sender" \
-              --description "Least-privilege DIREKT runtime role for FCM HTTP v1 device sends" \
-              --permissions "cloudmessaging.messages.create" \
-              --stage GA \
-              --quiet
-          fi
+          service_state="$(gcloud services describe "${GCP_FCM_API}" --project "${GCP_PROJECT_ID}" --format='value(state)')"
+          test "${service_state}" = "ENABLED"
 
           permissions="$(gcloud iam roles describe "${GCP_FCM_ROLE_ID}" --project "${GCP_PROJECT_ID}" --format='value(includedPermissions)' | tr ';' '\n' | sed '/^$/d' | sort -u)"
-          test "${permissions}" = "cloudmessaging.messages.create"
+          test "${permissions}" = "${GCP_FCM_SEND_PERMISSION}"
 
-          gcloud projects add-iam-policy-binding "${GCP_PROJECT_ID}" \
-            --member "serviceAccount:${GCP_RUNTIME_SERVICE_ACCOUNT}" \
-            --role "projects/${GCP_PROJECT_ID}/roles/${GCP_FCM_ROLE_ID}" \
-            --condition=None \
-            --quiet >/dev/null
+          role_name="projects/${GCP_PROJECT_ID}/roles/${GCP_FCM_ROLE_ID}"
+          runtime_member="serviceAccount:${GCP_RUNTIME_SERVICE_ACCOUNT}"
+          bound_role="$(gcloud projects get-iam-policy "${GCP_PROJECT_ID}" \
+            --flatten='bindings[].members' \
+            --filter="bindings.role:${role_name} AND bindings.members:${runtime_member}" \
+            --format='value(bindings.role)' | head -n 1)"
+          test "${bound_role}" = "${role_name}"
 
       - name: Resolve registered debug Firebase app and temporary config
         shell: bash
