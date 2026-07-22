@@ -1,3 +1,4 @@
+# RC4 one-shot helper; never merge to main.
 name: DIREKT RC4 one-shot FCM preflight patch
 
 on:
