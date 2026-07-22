@@ -225,11 +225,20 @@ jobs:
           done
           test "${anr_process_started}" = "true"
 
-          # The debug-only Activity finishes its first frame, then blocks the main looper. Send a
-          # real input event while it is blocked so ActivityManager must produce an input-dispatch
-          # ANR rather than relying on an implementation-specific launch timeout.
-          sleep 3
-          "${ADB_BIN}" shell input tap 160 320 || true
+          # Wait until the debug-only canary confirms a real focused Activity window and emits its
+          # synthetic marker immediately before blocking the main looper. Only then inject input,
+          # eliminating the prior race where the tap arrived before the window could receive it.
+          block_started=false
+          for _ in $(seq 1 40); do
+            "${ADB_BIN}" logcat -d > "${RUNNER_TEMP}/rc3-anr-system.log" || true
+            if grep -Fq 'DIREKT_RC3_ANR_BLOCK_BEGIN' "${RUNNER_TEMP}/rc3-anr-system.log"; then
+              block_started=true
+              break
+            fi
+            sleep 1
+          done
+          test "${block_started}" = "true"
+          "${ADB_BIN}" shell input tap 160 320
 
           anr_seen=false
           for _ in $(seq 1 40); do
@@ -260,6 +269,7 @@ jobs:
           done
           test "${delivered}" = "true"
           "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary disable >/dev/null || true
+          grep -F 'DIREKT_RC3_ANR_BLOCK_BEGIN' "${RUNNER_TEMP}/rc3-anr-system.log" | tail -n 4
           grep -Ei "ANR in ${FIREBASE_PACKAGE_NAME}|ANR.*${FIREBASE_PACKAGE_NAME}|Input dispatching timed out" "${RUNNER_TEMP}/rc3-anr-system.log" | tail -n 12
           grep -Ei 'Crashlytics report successfully enqueued to DataTransport|Crashlytics report upload complete|[[:space:]]204[[:space:]]' "${RUNNER_TEMP}/rc3-anr-upload.log" | tail -n 10
 
@@ -287,7 +297,8 @@ jobs:
             echo "- Data mode: \`synthetic-only\`"
             echo "- Fatal crash OS termination: \`PASS\`"
             echo "- Fatal crash Crashlytics/DataTransport delivery: \`PASS\`"
-            echo "- Android ANR signal: \`PASS\`"
+            echo "- Focus-synchronized ANR blocker: \`PASS\`"
+            echo "- Android input-dispatch ANR signal: \`PASS\`"
             echo "- Post-ANR Crashlytics/DataTransport delivery: \`PASS\`"
             echo "- Automatic collection default: \`disabled\`"
             echo "- Analytics SDK: \`not added\`"
