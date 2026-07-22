@@ -37,6 +37,7 @@ ALLOWED_RELEASE_DIRECT_MODULES = {
     "com.google.firebase:firebase-auth",
     "com.google.firebase:firebase-bom",
     "com.google.firebase:firebase-crashlytics",
+    "com.google.firebase:firebase-messaging",
     "org.jetbrains.kotlin:kotlin-stdlib",
 }
 
@@ -167,6 +168,7 @@ def fallback_declared_modules(gradle: str) -> set[str]:
         "platform(libs.firebase.bom)": "com.google.firebase:firebase-bom",
         "libs.firebase.auth": "com.google.firebase:firebase-auth",
         "libs.firebase.crashlytics": "com.google.firebase:firebase-crashlytics",
+        "libs.firebase.messaging": "com.google.firebase:firebase-messaging",
     }
     modules: set[str] = set()
     dependency_call = re.compile(
@@ -239,8 +241,23 @@ def main() -> None:
             f"manifest={manifest_permissions}, inventory={inventory_permissions}, path={inspected_manifest}"
         )
 
-    if any(item.get("runtime_prompt") is not False for item in permissions.get("declared_permissions", [])):
-        fail("current preauthorization permission inventory must not contain a runtime-prompt permission")
+    declared_permissions = permissions.get("declared_permissions", [])
+    notification_permission = next(
+        (item for item in declared_permissions if item.get("name") == "android.permission.POST_NOTIFICATIONS"),
+        None,
+    )
+    if not isinstance(notification_permission, dict):
+        fail("POST_NOTIFICATIONS is declared by RC4 but absent from the permission inventory")
+    if notification_permission.get("runtime_prompt") is not True:
+        fail("POST_NOTIFICATIONS must be classified as a runtime-prompt permission")
+    if notification_permission.get("runtime_request_enabled_current_release") is not False:
+        fail("current preauthorization participant notification permission request must remain disabled")
+    if any(
+        item.get("runtime_prompt") is not False
+        for item in declared_permissions
+        if item.get("name") != "android.permission.POST_NOTIFICATIONS"
+    ):
+        fail("POST_NOTIFICATIONS must remain the only runtime-prompt permission in the current inventory")
     if permissions.get("current_play_declaration_assessment", {}).get(
         "sensitive_or_high_risk_permission_form_expected"
     ) is not False:
@@ -253,6 +270,7 @@ def main() -> None:
         "targetSdk = 36",
         "implementation(libs.firebase.auth)",
         "implementation(libs.firebase.crashlytics)",
+        "implementation(libs.firebase.messaging)",
         "DIREKT_CRASHLYTICS_CANARY_ENABLED",
     ):
         if required not in gradle:
@@ -261,6 +279,14 @@ def main() -> None:
     source_manifest = SOURCE_MANIFEST.read_text(encoding="utf-8")
     if 'android:name="firebase_crashlytics_collection_enabled"' not in source_manifest or 'android:value="false"' not in source_manifest:
         fail("Crashlytics SDK is present but automatic collection is not explicitly disabled in the source manifest")
+    if 'android:name="firebase_messaging_auto_init_enabled"' not in source_manifest:
+        fail("Firebase Messaging SDK is present but auto-init is not explicitly controlled")
+    messaging_auto_init = re.search(
+        r'android:name="firebase_messaging_auto_init_enabled"\s+android:value="([^"]+)"',
+        source_manifest,
+    )
+    if messaging_auto_init is None or messaging_auto_init.group(1) != "false":
+        fail("Firebase Messaging auto-init must remain explicitly disabled in the preauthorization source manifest")
 
     release_modules = release_runtime_modules(gradle)
     unexpected = sorted(release_modules - ALLOWED_RELEASE_DIRECT_MODULES)
@@ -288,6 +314,8 @@ def main() -> None:
         fail("Firebase Authentication dependency exists but is absent from Data Safety SDK inventory")
     if "Firebase Crashlytics" not in sdk_names:
         fail("Firebase Crashlytics dependency exists but is absent from Data Safety SDK inventory")
+    if "Firebase Cloud Messaging" not in sdk_names:
+        fail("Firebase Messaging dependency exists but is absent from Data Safety SDK inventory")
 
     crashlytics_inventory = next(
         (item for item in data_safety.get("sdk_inventory", []) if item.get("sdk") == "Firebase Crashlytics"),
@@ -299,6 +327,19 @@ def main() -> None:
         fail("Crashlytics Data Safety inventory must record automatic collection default-off")
     if crashlytics_inventory.get("production_participant_collection_authorized") is not False:
         fail("Crashlytics Data Safety inventory must not authorize production participant telemetry")
+
+    messaging_inventory = next(
+        (item for item in data_safety.get("sdk_inventory", []) if item.get("sdk") == "Firebase Cloud Messaging"),
+        None,
+    )
+    if not isinstance(messaging_inventory, dict):
+        fail("Firebase Cloud Messaging SDK inventory entry is invalid")
+    if messaging_inventory.get("automatic_initialization_default") is not False:
+        fail("FCM Data Safety inventory must record auto-init default-off")
+    if messaging_inventory.get("participant_registration_authorized") is not False:
+        fail("FCM Data Safety inventory must not authorize participant registration")
+    if messaging_inventory.get("production_push_authorized") is not False:
+        fail("FCM Data Safety inventory must not authorize production push")
 
     data_entries = data_safety.get("play_data_types", [])
     if not any("Phone number" in item.get("play_category", "") for item in data_entries):
@@ -346,6 +387,10 @@ def main() -> None:
     print("crashlytics_sdk_present=true")
     print("crashlytics_automatic_collection_default=false")
     print("crashlytics_production_participant_collection_authorized=false")
+    print("fcm_sdk_present=true")
+    print("fcm_auto_init_default=false")
+    print("fcm_participant_registration_authorized=false")
+    print("fcm_production_push_authorized=false")
     print("account_deletion_end_to_end=false")
     print("synthetic_preview_release_blocker=" + ("true" if synthetic_markers else "false"))
     for marker in synthetic_markers:

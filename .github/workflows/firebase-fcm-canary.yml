@@ -1,0 +1,411 @@
+name: DIREKT Firebase FCM synthetic canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN-DIREKT-FCM-CANARY to continue
+        required: true
+        type: string
+      source_sha:
+        description: Exact reviewed DIREKT commit already merged to main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: direkt-firebase-fcm-canary
+  cancel-in-progress: false
+
+jobs:
+  fcm-canary:
+    name: Prove outbox-to-FCM foreground and background delivery
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    env:
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_REGION: asia-northeast1
+      GCP_ARTIFACT_REGISTRY: direkt-containers
+      GCP_IMAGE_NAME: direkt-api
+      GCP_CANARY_JOB: direkt-fcm-canary
+      GCP_FCM_ROLE_ID: direktFcmSender
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_RUNTIME_SERVICE_ACCOUNT: direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com
+      FIREBASE_PACKAGE_NAME: com.kudzimusar.direkt.debug
+      DIREKT_GRADLE_VERSION: "9.4.0"
+      SOURCE_SHA: ${{ inputs.source_sha }}
+
+    steps:
+      - name: Validate canary controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ inputs.confirmation }}" = "RUN-DIREKT-FCM-CANARY"
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
+
+      - name: Check out exact reviewed source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify source identity and main ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
+          git fetch origin main --no-tags
+          git merge-base --is-ancestor "${SOURCE_SHA}" origin/main
+          echo "IMAGE_URI=${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/${GCP_IMAGE_NAME}:${SOURCE_SHA}" >> "${GITHUB_ENV}"
+
+      - name: Verify exact backend source
+        working-directory: backend/direkt-api
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npm run format:check
+          npm run lint
+          npm run typecheck
+          npm run authorization:check
+          npm run migration:check
+          npm run test
+          npm run build
+          npm run openapi:check
+
+      - name: Authenticate to Google Cloud through GitHub OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Enable required managed APIs and bind least-privilege FCM sender role
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud services enable fcm.googleapis.com iam.googleapis.com --project "${GCP_PROJECT_ID}" --quiet
+
+          if ! gcloud iam roles describe "${GCP_FCM_ROLE_ID}" --project "${GCP_PROJECT_ID}" >/dev/null 2>&1; then
+            gcloud iam roles create "${GCP_FCM_ROLE_ID}" \
+              --project "${GCP_PROJECT_ID}" \
+              --title "DIREKT FCM Sender" \
+              --description "Least-privilege DIREKT runtime role for FCM HTTP v1 device sends" \
+              --permissions "cloudmessaging.messages.create" \
+              --stage GA \
+              --quiet
+          fi
+
+          permissions="$(gcloud iam roles describe "${GCP_FCM_ROLE_ID}" --project "${GCP_PROJECT_ID}" --format='value(includedPermissions)' | tr ';' '\n' | sed '/^$/d' | sort -u)"
+          test "${permissions}" = "cloudmessaging.messages.create"
+
+          gcloud projects add-iam-policy-binding "${GCP_PROJECT_ID}" \
+            --member "serviceAccount:${GCP_RUNTIME_SERVICE_ACCOUNT}" \
+            --role "projects/${GCP_PROJECT_ID}/roles/${GCP_FCM_ROLE_ID}" \
+            --condition=None \
+            --quiet >/dev/null
+
+      - name: Resolve registered debug Firebase app and temporary config
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(gcloud auth print-access-token)"
+          printf '::add-mask::%s\n' "${token}"
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer ${token}" \
+            "https://firebase.googleapis.com/v1beta1/projects/${GCP_PROJECT_ID}/androidApps?pageSize=100" \
+            > "${RUNNER_TEMP}/firebase-android-apps.json"
+          FIREBASE_APP_ID="$(jq -r --arg package "${FIREBASE_PACKAGE_NAME}" '[.apps[]? | select(.packageName == $package) | .appId][0] // empty' "${RUNNER_TEMP}/firebase-android-apps.json")"
+          test -n "${FIREBASE_APP_ID}"
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer ${token}" \
+            "https://firebase.googleapis.com/v1beta1/projects/${GCP_PROJECT_ID}/androidApps/${FIREBASE_APP_ID}/config" \
+            > "${RUNNER_TEMP}/firebase-app-config.json"
+          jq -r '.configFileContents // empty' "${RUNNER_TEMP}/firebase-app-config.json" | base64 --decode > android/direkt-app/app/google-services.json
+          test -s android/direkt-app/app/google-services.json
+          FIREBASE_API_KEY="$(jq -r --arg package "${FIREBASE_PACKAGE_NAME}" '[.client[] | select(.client_info.android_client_info.package_name == $package) | .api_key[0].current_key][0] // empty' android/direkt-app/app/google-services.json)"
+          CONFIG_APP_ID="$(jq -r --arg package "${FIREBASE_PACKAGE_NAME}" '[.client[] | select(.client_info.android_client_info.package_name == $package) | .client_info.mobilesdk_app_id][0] // empty' android/direkt-app/app/google-services.json)"
+          CONFIG_PROJECT_ID="$(jq -r '.project_info.project_id // empty' android/direkt-app/app/google-services.json)"
+          test -n "${FIREBASE_API_KEY}"
+          test "${CONFIG_APP_ID}" = "${FIREBASE_APP_ID}"
+          test "${CONFIG_PROJECT_ID}" = "${GCP_PROJECT_ID}"
+          printf '::add-mask::%s\n' "${FIREBASE_API_KEY}"
+          echo "DIREKT_FIREBASE_API_KEY=${FIREBASE_API_KEY}" >> "${GITHUB_ENV}"
+          echo "DIREKT_FIREBASE_APP_ID=${CONFIG_APP_ID}" >> "${GITHUB_ENV}"
+          echo "DIREKT_FIREBASE_PROJECT_ID=${CONFIG_PROJECT_ID}" >> "${GITHUB_ENV}"
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Configure pinned Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ env.DIREKT_GRADLE_VERSION }}
+
+      - name: Build exact synthetic FCM canary APK
+        working-directory: android/direkt-app
+        shell: bash
+        env:
+          DIREKT_CRASHLYTICS_BUILD_ENABLED: "true"
+          DIREKT_CRASHLYTICS_CANARY_ENABLED: "true"
+          DIREKT_CRASHLYTICS_DATA_MODE: synthetic-only
+          DIREKT_SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          set -euo pipefail
+          trap 'rm -f app/google-services.json' EXIT
+          if [[ ! -f gradle/wrapper/gradle-wrapper.jar ]]; then
+            wrapper_checksum="$(sed -n 's/^distributionSha256Sum=//p' gradle/wrapper/gradle-wrapper.properties)"
+            [[ "${wrapper_checksum}" =~ ^[0-9a-f]{64}$ ]]
+            gradle wrapper --gradle-version "${DIREKT_GRADLE_VERSION}" --distribution-type bin --gradle-distribution-sha256-sum "${wrapper_checksum}"
+          fi
+          chmod +x gradlew
+          ./gradlew --no-daemon --no-configuration-cache testDebugUnitTest lintDebug assembleDebug
+          APK_PATH="$(find app/build/outputs/apk/debug -maxdepth 1 -type f -name '*-debug.apk' | head -n 1)"
+          test -n "${APK_PATH}"
+          test -s "${APK_PATH}"
+          echo "APK_PATH=${PWD}/${APK_PATH}" >> "${GITHUB_ENV}"
+          echo "APK_SHA256=$(sha256sum "${APK_PATH}" | awk '{print $1}')" >> "${GITHUB_ENV}"
+
+      - name: Verify temporary Firebase config was removed
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e android/direkt-app/app/google-services.json
+
+      - name: Provision headless Android emulator
+        shell: bash
+        env:
+          ANDROID_AVD_HOME: ${{ runner.temp }}/direkt-rc4-avd
+        run: bash scripts/vc8/provision-android-emulator.sh
+
+      - name: Install exact canary APK and obtain private FCM token
+        shell: bash
+        run: |
+          set -euo pipefail
+          adb_bin="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}/platform-tools/adb"
+          test -x "${adb_bin}"
+          "${adb_bin}" install -r "${APK_PATH}"
+          "${adb_bin}" shell pm path "${FIREBASE_PACKAGE_NAME}" >/dev/null
+          "${adb_bin}" shell pm grant "${FIREBASE_PACKAGE_NAME}" android.permission.POST_NOTIFICATIONS
+          component="${FIREBASE_PACKAGE_NAME}/com.kudzimusar.direkt.MainActivity"
+          "${adb_bin}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
+          "${adb_bin}" shell am start -n "${component}" --es direkt_rc4_fcm_canary token >/dev/null
+
+          token_ready=false
+          for _ in $(seq 1 60); do
+            FCM_DEVICE_TOKEN="$("${adb_bin}" shell run-as "${FIREBASE_PACKAGE_NAME}" cat files/rc4-fcm-token 2>/dev/null | tr -d '\r\n' || true)"
+            if [[ ${#FCM_DEVICE_TOKEN} -ge 20 ]]; then
+              token_ready=true
+              break
+            fi
+            sleep 2
+          done
+          test "${token_ready}" = "true"
+          printf '::add-mask::%s\n' "${FCM_DEVICE_TOKEN}"
+          printf '%s' "${FCM_DEVICE_TOKEN}" > "${RUNNER_TEMP}/fcm-device-token"
+          chmod 600 "${RUNNER_TEMP}/fcm-device-token"
+          "${adb_bin}" shell run-as "${FIREBASE_PACKAGE_NAME}" rm -f files/rc4-fcm-token
+          echo "ADB_BIN=${adb_bin}" >> "${GITHUB_ENV}"
+
+      - name: Resolve enabled database secret version
+        shell: bash
+        run: |
+          set -euo pipefail
+          record="$(gcloud secrets versions describe latest --secret direkt-database-url --project "${GCP_PROJECT_ID}" --format=json)"
+          version="$(jq -r '.name | split("/") | last' <<< "${record}")"
+          state="$(jq -r '.state' <<< "${record}")"
+          [[ "${version}" =~ ^[1-9][0-9]*$ ]]
+          test "${state}" = "ENABLED"
+          echo "DIREKT_DATABASE_URL_SECRET_VERSION=${version}" >> "${GITHUB_ENV}"
+
+      - name: Store synthetic FCM token as one-run Secret Manager secret
+        shell: bash
+        run: |
+          set -euo pipefail
+          secret_name="direkt-fcm-canary-token-${GITHUB_RUN_ID}"
+          gcloud secrets create "${secret_name}" \
+            --project "${GCP_PROJECT_ID}" \
+            --replication-policy automatic \
+            --quiet
+          gcloud secrets versions add "${secret_name}" \
+            --project "${GCP_PROJECT_ID}" \
+            --data-file "${RUNNER_TEMP}/fcm-device-token" \
+            --quiet >/dev/null
+          rm -f "${RUNNER_TEMP}/fcm-device-token"
+          gcloud secrets add-iam-policy-binding "${secret_name}" \
+            --project "${GCP_PROJECT_ID}" \
+            --member "serviceAccount:${GCP_RUNTIME_SERVICE_ACCOUNT}" \
+            --role roles/secretmanager.secretAccessor \
+            --quiet >/dev/null
+          echo "FCM_TOKEN_SECRET=${secret_name}" >> "${GITHUB_ENV}"
+
+      - name: Configure Artifact Registry authentication
+        shell: bash
+        run: gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+
+      - name: Build and push immutable backend image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build \
+            --file backend/direkt-api/Dockerfile \
+            --tag "${IMAGE_URI}" \
+            backend/direkt-api
+          docker push "${IMAGE_URI}"
+
+      - name: Deploy private synthetic FCM canary job
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run jobs deploy "${GCP_CANARY_JOB}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --image "${IMAGE_URI}" \
+            --service-account "${GCP_RUNTIME_SERVICE_ACCOUNT}" \
+            --tasks 1 \
+            --max-retries 0 \
+            --task-timeout 2m \
+            --cpu 1 \
+            --memory 512Mi \
+            --command node \
+            --args dist/communications/push-canary.js \
+            --set-env-vars "NODE_ENV=development,DIREKT_ENVIRONMENT=staging,DIREKT_DATA_MODE=synthetic-only,DIREKT_TRAFFIC_MODE=internal,RATE_LIMITS_ENABLED=false,EVIDENCE_STORAGE_PROVIDER=synthetic,PAYMENT_PROVIDER_MODE=disabled,AI_PROVIDER_MODE=disabled,AI_FALLBACK_PROVIDER=disabled,EMAIL_PROVIDER_MODE=disabled,PUSH_PROVIDER_MODE=fcm,PUSH_REGISTRATION_MODE=disabled,FIREBASE_PROJECT_ID=${GCP_PROJECT_ID},PUSH_REQUEST_TIMEOUT_MS=8000,PUSH_MAX_ATTEMPTS=4,PUSH_OUTBOX_LOCK_TIMEOUT_MS=300000,DIREKT_SOURCE_SHA=${SOURCE_SHA},FCM_CANARY_PHASE=foreground" \
+            --set-secrets "DATABASE_URL=direkt-database-url:${DIREKT_DATABASE_URL_SECRET_VERSION},FCM_SYNTHETIC_DEVICE_TOKEN=${FCM_TOKEN_SECRET}:1" \
+            --labels "direkt-environment=staging,direkt-data-mode=synthetic-only,direkt-integration=fcm-canary" \
+            --quiet
+
+      - name: Verify deployed FCM job identity and secret boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          job_export="${RUNNER_TEMP}/direkt-fcm-canary-job.yaml"
+          gcloud run jobs describe "${GCP_CANARY_JOB}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --format=export > "${job_export}"
+          grep -Fq "${GCP_RUNTIME_SERVICE_ACCOUNT}" "${job_export}"
+          grep -Fq "direkt-database-url" "${job_export}"
+          grep -Fq "${FCM_TOKEN_SECRET}" "${job_export}"
+          grep -Fq "PUSH_PROVIDER_MODE" "${job_export}"
+          grep -Fq "synthetic-only" "${job_export}"
+          grep -Fq "${SOURCE_SHA}" "${job_export}"
+          if grep -Fq 'key: latest' "${job_export}" || \
+             grep -Fq 'key: "latest"' "${job_export}" || \
+             grep -Fq "key: 'latest'" "${job_export}"; then
+            echo "::error title=Unpinned canary secret::Cloud Run Job contains a latest secret reference."
+            exit 1
+          fi
+
+      - name: Prove foreground outbox to FCM to Android delivery
+        shell: bash
+        run: |
+          set -euo pipefail
+          "${ADB_BIN}" shell run-as "${FIREBASE_PACKAGE_NAME}" rm -f files/rc4-fcm-receipt-foreground.json
+          gcloud run jobs execute "${GCP_CANARY_JOB}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --wait \
+            --quiet
+          FOREGROUND_EXECUTION="$(gcloud run jobs executions list --job "${GCP_CANARY_JOB}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --sort-by='~metadata.creationTimestamp' --limit=1 --format='value(metadata.name)')"
+          test -n "${FOREGROUND_EXECUTION}"
+          receipt_ready=false
+          for _ in $(seq 1 40); do
+            if "${ADB_BIN}" shell run-as "${FIREBASE_PACKAGE_NAME}" cat files/rc4-fcm-receipt-foreground.json > "${RUNNER_TEMP}/rc4-fcm-foreground.json" 2>/dev/null; then
+              receipt_ready=true
+              break
+            fi
+            sleep 2
+          done
+          test "${receipt_ready}" = "true"
+          test "$(jq -r '.kind' "${RUNNER_TEMP}/rc4-fcm-foreground.json")" = "rc4_synthetic_canary"
+          test "$(jq -r '.sourceSha' "${RUNNER_TEMP}/rc4-fcm-foreground.json")" = "${SOURCE_SHA}"
+          test "$(jq -r '.phase' "${RUNNER_TEMP}/rc4-fcm-foreground.json")" = "foreground"
+          [[ "$(jq -r '.deliveryId' "${RUNNER_TEMP}/rc4-fcm-foreground.json")" =~ ^[0-9a-f-]{36}$ ]]
+          echo "FOREGROUND_EXECUTION=${FOREGROUND_EXECUTION}" >> "${GITHUB_ENV}"
+
+      - name: Prove background outbox to FCM to Android delivery
+        shell: bash
+        run: |
+          set -euo pipefail
+          "${ADB_BIN}" shell input keyevent KEYCODE_HOME
+          "${ADB_BIN}" shell run-as "${FIREBASE_PACKAGE_NAME}" rm -f files/rc4-fcm-receipt-background.json
+          gcloud run jobs update "${GCP_CANARY_JOB}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --update-env-vars "FCM_CANARY_PHASE=background" \
+            --quiet
+          gcloud run jobs execute "${GCP_CANARY_JOB}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --wait \
+            --quiet
+          BACKGROUND_EXECUTION="$(gcloud run jobs executions list --job "${GCP_CANARY_JOB}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --sort-by='~metadata.creationTimestamp' --limit=1 --format='value(metadata.name)')"
+          test -n "${BACKGROUND_EXECUTION}"
+          receipt_ready=false
+          for _ in $(seq 1 40); do
+            if "${ADB_BIN}" shell run-as "${FIREBASE_PACKAGE_NAME}" cat files/rc4-fcm-receipt-background.json > "${RUNNER_TEMP}/rc4-fcm-background.json" 2>/dev/null; then
+              receipt_ready=true
+              break
+            fi
+            sleep 2
+          done
+          test "${receipt_ready}" = "true"
+          test "$(jq -r '.kind' "${RUNNER_TEMP}/rc4-fcm-background.json")" = "rc4_synthetic_canary"
+          test "$(jq -r '.sourceSha' "${RUNNER_TEMP}/rc4-fcm-background.json")" = "${SOURCE_SHA}"
+          test "$(jq -r '.phase' "${RUNNER_TEMP}/rc4-fcm-background.json")" = "background"
+          [[ "$(jq -r '.deliveryId' "${RUNNER_TEMP}/rc4-fcm-background.json")" =~ ^[0-9a-f-]{36}$ ]]
+          echo "BACKGROUND_EXECUTION=${BACKGROUND_EXECUTION}" >> "${GITHUB_ENV}"
+
+      - name: Publish sanitized FCM canary evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc4-fcm-canary-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/rc4-fcm-foreground.json
+            ${{ runner.temp }}/rc4-fcm-background.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish sanitized canary summary
+        shell: bash
+        run: |
+          {
+            echo "### DIREKT managed FCM synthetic canary"
+            echo "- Source: \`${SOURCE_SHA}\`"
+            echo "- APK SHA-256: \`${APK_SHA256}\`"
+            echo "- Project: \`${GCP_PROJECT_ID}\`"
+            echo "- Runtime identity: \`${GCP_RUNTIME_SERVICE_ACCOUNT}\`"
+            echo "- Runtime role: \`projects/${GCP_PROJECT_ID}/roles/${GCP_FCM_ROLE_ID}\` (cloudmessaging.messages.create only)"
+            echo "- Foreground execution: \`${FOREGROUND_EXECUTION}\`"
+            echo "- Background execution: \`${BACKGROUND_EXECUTION}\`"
+            echo "- Outbox → FCM → Android foreground: passed"
+            echo "- Outbox → FCM → Android background: passed"
+            echo "- Data mode: \`synthetic-only\`"
+            echo "- Participant push registration: disabled"
+            echo "- FCM token: temporary one-run Secret Manager value; not logged or retained in artifacts"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Cleanup temporary FCM token and canary job
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          rm -f "${RUNNER_TEMP}/fcm-device-token"
+          if [[ -n "${FCM_TOKEN_SECRET:-}" ]]; then
+            gcloud secrets delete "${FCM_TOKEN_SECRET}" --project "${GCP_PROJECT_ID}" --quiet
+          fi
+          gcloud run jobs delete "${GCP_CANARY_JOB}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --quiet

@@ -6,13 +6,13 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | RELEASED — RC3 Firebase Crashlytics Android runtime closure complete; RC4 FCM is the next checkpoint |
-| Owner/agent | No active implementation writer after RC3 closeout; the next repository agent must explicitly claim RC4 under Issue #261 before FCM source changes begin. |
-| Authorized scope | RC3 closeout only: managed-proof receipt promotion, status/ledger reconciliation and removal of temporary one-shot authorization/dispatch controls. No FCM, Test Lab, Maps, payment, WhatsApp or unrelated backend/PWA/portal feature work is authorized until the next claim. |
+| Status | CLAIMED — RC4 Firebase Cloud Messaging runtime closure |
+| Owner/agent | Active repository agent — Issue #261 runtime integration closure workstream |
+| Authorized scope | Firebase Cloud Messaging only: provider-neutral backend send adapter through the transactional outbox, authenticated device-token registration/rotation/deletion, Android foreground/background handling, Android 13+ notification permission UX, retry/idempotency/privacy controls, exact-source managed synthetic push canary, permanent verifier promotion, and status/ledger reconciliation. No Test Lab, Maps, payment, WhatsApp or unrelated backend/PWA/portal feature work is authorized in RC4. |
 | Protected surface | Backend/database/OpenAPI, web/PWA, operations portal, trust/privacy, payments, integrations, VC1–VC8 completion, Phase 11/12 gates, Android auth/distribution/signing/Play/Data Safety and RC0–RC3 evidence remain regression-protected. |
-| Implementation branch | `integration/rc3-crashlytics-closeout-final` from exact proven RC3 source `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`. |
-| Stable baseline | RC3 exact-source managed proof succeeded for `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; managed bridge run `29885635547` passed pinned-source validation, terminal canary success, sanitized receipt and enforcement. Fatal delivery, focused input-dispatch ANR, historical `REASON_ANR`, restart pickup and post-ANR Crashlytics/DataTransport delivery are proven. |
-| Current task | Promote RC3 closure evidence, remove temporary proof triggers, merge exact-head regression-clean closeout, then allow RC4 FCM to claim the lane. |
+| Implementation branch | `integration/rc4-fcm` from merged RC3 closeout baseline `0d7d29313990c37b25bd985588866a85bbe10f83`. |
+| Stable baseline | RC3 closure PR #338 merged at `0d7d29313990c37b25bd985588866a85bbe10f83`; Crashlytics exact-source managed proof run `29885635547` succeeded and the RC3 lock was released. |
+| Current task | RC4 — add FCM without weakening auth/privacy/release boundaries, prove durable outbox send plus Android receipt on a synthetic managed device, then reconcile status and release/transition the lane. |
 | Governing issue | Issue #261 — Runtime integration closure after W8; Issue #259 VC1–VC8 is closed and preserved as baseline. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
@@ -26,10 +26,22 @@ This file prevents overlapping writes in the single-lane build process.
 5. No stable participant identifier is set as a Crashlytics user ID; synthetic canaries use non-identifying bounded metadata only.
 6. Release/build mapping remains source-controlled and compatible with existing preauthorization signing/version controls.
 7. Synthetic crash and ANR proof does not create a production-accessible crash trigger; the canary entry point remains debug/test-only and absent from the release manifest/runtime.
-8. Existing Firebase Auth/App Distribution behavior remains intact; RC3 did not activate FCM or Test Lab early.
-9. The permanent integration verifier was promoted from “Crashlytics prohibited” to positive exact Crashlytics/privacy/canary assertions and remains mandatory.
-10. RC3 is `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` because source integration, privacy controls, exact-source managed fatal+ANR evidence, exact-head regressions and status reconciliation are complete.
-11. Real participant/production crash telemetry remains separately gated unless a later privacy/data-use decision explicitly authorizes it.
+8. Existing Firebase Auth/App Distribution behavior remains intact.
+9. The permanent integration verifier positively asserts Crashlytics/privacy/canary controls and remains mandatory.
+10. RC3 is `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY`; participant/production crash telemetry remains separately gated.
+
+## RC4 implementation contract — ACTIVE
+
+1. FCM send authority is backend-owned. Android/browser clients never receive server credentials or decide delivery truth.
+2. Push delivery originates from a DIREKT-controlled transactional outbox event and records durable success/failure state.
+3. Device tokens are identity-bound server-side, may be registered/rotated/deleted only by the authenticated identity, are never logged, and are removed/disabled on provider invalid-token responses.
+4. FCM is fail-closed by default. Production and controlled-pilot participant push remain disabled during RC4; the managed canary is synthetic-only.
+5. Android must support foreground/background receipt and Android 13+ notification permission without making permission grant an authentication, trust, verification or service-access prerequisite.
+6. Push payloads contain only bounded routing/display identifiers; no raw evidence, auth tokens, contact data, exact private coordinates, reviewer notes or unrestricted free text.
+7. Retries are bounded and idempotency/deduplication identifiers are stable across retry attempts.
+8. The managed canary must prove exact reviewed source, a registered synthetic device token, backend outbox/provider send success, and Android receipt on the managed emulator/device.
+9. RC4 must not activate Firebase Test Lab, Maps, Analytics or unrelated Firebase products early.
+10. RC4 is not `ACTIVE` until source integration, privacy controls, managed synthetic delivery evidence, exact-head regressions and status reconciliation are complete.
 
 ## Runtime integration closure contract
 
@@ -50,8 +62,8 @@ This file prevents overlapping writes in the single-lane build process.
 - AI0 — provider-neutral AI foundation. **Closed — PR #265; runtime activation remains per-use-case and data-classification gated.**
 - RC1 — Resend transactional-outbox runtime. **Closed; synthetic managed execution proven; real-participant/production email remains disabled.**
 - RC2 — Sentry for approved NestJS/Next.js surfaces. **Closed — PR #275 source + managed synthetic API/private-portal canary + closure PR #280; participant/production telemetry remains disabled.**
-- RC3 — Firebase Crashlytics Android activation with privacy/release mapping and synthetic crash/ANR evidence. **Closed — exact source `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; managed bridge run `29885635547` successful; participant/production telemetry remains disabled.**
-- RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary. **NEXT CHECKPOINT — requires explicit lane claim after RC3 closeout merge.**
+- RC3 — Firebase Crashlytics Android. **Closed — exact source `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; managed bridge run `29885635547` successful; closure PR #338 merged at `0d7d29313990c37b25bd985588866a85bbe10f83`.**
+- RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary. **ACTIVE CHECKPOINT.**
 - RC5 — Firebase Test Lab device-matrix automation after Android runtime dependencies stabilize through RC3–RC4.
 - RC6 — WhatsApp Cloud API application adapter using outbox/idempotency/consent/template/delivery-receipt rules; production sends remain gated until provider/legal approvals exist.
 - RC7 — Google Maps runtime activation with separate restricted Android/backend credentials, privacy-safe publication semantics, quotas, manual/list fallback and kill switch.
@@ -59,16 +71,6 @@ This file prevents overlapping writes in the single-lane build process.
 - RC9 — OpenAPI-generated Kotlin and TypeScript client adoption/decision after backend integration/API shape stabilizes; migrate incrementally with cross-client regressions.
 - RC10 — Turnstile threat-model decision; implement only if a reviewed public abuse-sensitive flow requires it, otherwise close as not currently justified.
 - RC11 — combined integration regression, managed evidence index, live ledger/status reconciliation and lane release.
-
-## VC7–VC8 AI contract preserved
-
-1. AI is assistive, never authoritative: it cannot approve/reject verification, publish trust, suspend providers, decide serious complaints/appeals, mutate payment truth, widen permissions or make legal/regulatory conclusions.
-2. Customer discovery AI remains optional and reversible; deterministic category/search/area flows continue when AI is disabled, unavailable, invalid or rejected.
-3. AI output is schema/allowlist validated and model-invented canonical IDs are rejected server-side.
-4. Browser and Android clients use DIREKT-controlled API/BFF boundaries; no model/provider credential, privileged database credential or restricted retrieval authority enters client code.
-5. Implemented AI use cases are customer discovery/category assistance, grounded public Help, provider onboarding/readiness guidance and provider public-profile drafting. Gemini/Groq remain sandbox-proven but are not bound to the managed DIREKT runtime by default.
-6. Restricted evidence/OCR/operations-case AI remains hard-disabled until separate approval and runtime evidence exist.
-7. AI cannot create or strengthen verification, publication, ranking or commercial state. Payment remains independent from trust.
 
 ## Persistent stop conditions
 
@@ -87,4 +89,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-RC3 is closed. No new RC3 implementation writes are authorized. RC4+ source work must not begin until this closeout is merged and the next agent explicitly claims RC4 FCM under Issue #261 from the resulting exact `main` baseline.
+No second agent may write to overlapping RC4 FCM backend/Android/notification surfaces while this claim is active. Read-only review may continue. RC5+ source work must not begin until RC4 has exact-head source/regression evidence, managed synthetic push evidence, status reconciliation, merge promotion and a released/transitioned lock.
