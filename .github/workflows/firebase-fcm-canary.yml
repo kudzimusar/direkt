@@ -149,8 +149,8 @@ jobs:
           test "${GCP_FCM_ROLE_ID}" = "direktFcmSender"
           test "${GCP_FCM_VERIFIER_ROLE_ID}" = "direktFcmBootstrapVerifier"
 
-          service_state="$(gcloud services describe "${GCP_FCM_API}" --project "${GCP_PROJECT_ID}" --format='value(state)')"
-          test "${service_state}" = "ENABLED"
+          service_name="$(gcloud services list --enabled --project "${GCP_PROJECT_ID}" --filter="config.name:${GCP_FCM_API}" --format='value(config.name)' | head -n 1)"
+          test "${service_name}" = "${GCP_FCM_API}"
 
           permissions="$(gcloud iam roles describe "${GCP_FCM_ROLE_ID}" --project "${GCP_PROJECT_ID}" --format='value(includedPermissions)' | tr ';' '\n' | sed '/^$/d' | sort -u)"
           test "${permissions}" = "${GCP_FCM_SEND_PERMISSION}"
