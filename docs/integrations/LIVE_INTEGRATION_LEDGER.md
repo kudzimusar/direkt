@@ -1,7 +1,7 @@
 # DIREKT Live Integration Ledger
 
 **Repository:** `kudzimusar/direkt`  
-**Last reconciled:** 2026-07-21 (Asia/Tokyo)  
+**Last reconciled:** 2026-07-22 (Asia/Tokyo)  
 **Governing issue:** #261 — Runtime integration closure after W8  
 **Purpose:** Canonical cross-agent source of truth for integration existence, state, evidence, blockers and next actions.
 
@@ -182,9 +182,9 @@ No payment provider secret is attached to Cloud Run until adapter/config/runtime
 | Transactional outbox | `ACTIVE` | Canonical asynchronous delivery source of truth. |
 | Resend | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | Managed Cloud Run execution `direkt-resend-canary-ct9mp` succeeded on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`, proving outbox insert → claim → Resend send → durable `published` state. Sending key is sending-only/domain-restricted to verified `notify.direkt.forum`; `direkt-resend-api-key` v1 enabled; runtime secret access proven. Continuous, controlled-pilot participant and production email remain disabled. |
 | Firebase phone OTP | `IMPLEMENTED_GATED` | Real approved participant path, OTP canary, abuse/rate-limit/privacy/legal evidence. |
-| FCM | `PLANNED` | Server send path, device-token lifecycle, Android handling/permission UX, retries/privacy/canary. |
+| FCM | `PLANNED` | RC4 server send path, device-token lifecycle, Android handling/permission UX, retries/privacy/canary. |
 | WhatsApp Cloud API | `EXTERNALLY CONFIGURED / RUNTIME GATED` | Runtime adapter, approved templates/phone identity where needed, consent-at-send, opt-out, idempotency, receipts/retries/privacy controls. |
-| Firebase Crashlytics | `PLANNED` | Android plugin/runtime setup, privacy, release mapping, synthetic crash/ANR evidence and alerts. |
+| Firebase Crashlytics | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | RC3 exact-source managed proof succeeded for `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; bridge run `29885635547` enforced marker-pinned source identity and terminal canary success for fatal delivery, focused input-dispatch ANR, historical `REASON_ANR`, restart pickup and post-ANR Crashlytics/DataTransport delivery. Automatic collection remains default-off; Firebase Analytics and stable participant user IDs are absent; participant/production telemetry remains disabled. |
 | Firebase Test Lab | `PLANNED` | CI/device matrix, test APKs, artifact/report retention. |
 | Cloudflare Turnstile | `PLANNED / WHERE NEEDED` | Only for reviewed abuse-sensitive public flows with server verification, accessibility fallback and kill switch. |
 | Cloud Tasks / Pub/Sub / Scheduler | `PLANNED ON DEMAND` | Add only when retry/fan-out/scheduling needs justify them. |
@@ -195,9 +195,28 @@ No payment provider secret is attached to Cloud Run until adapter/config/runtime
 |---|---|---|
 | Cloud Logging / Monitoring | `ACTIVE` | Infrastructure/runtime baseline. |
 | Sentry API/portal | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | Source PR #275 merged at `15210c5b0bf1832e32f8c33a7618c69f61f65275`. Managed Sentry canary #1 completed SUCCESS in 4m15s for separate `direkt-api` and `direkt-operations-portal` projects. DSNs are separately bound through `direkt-sentry-api-dsn` v1 and `direkt-sentry-portal-dsn` v1; `direkt-sentry-auth-token` v2 is CI/release-only and absent from application runtime. Default PII, traces, SDK logs, breadcrumbs, local variables and replay are disabled; privacy scrubbers redact sensitive text/coordinates. Exact SHA release binding is required. Cloud Logging remains authoritative. Participant/production Sentry telemetry remains disabled. |
-| Firebase Crashlytics | `PLANNED` | Preferred Android crash/ANR path unless architecture explicitly changes. |
+| Firebase Crashlytics | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | Android crash/ANR ownership is proven under RC3 on exact source `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; managed bridge run `29885635547` passed all exact-source and terminal-proof controls. Default collection remains off outside the bounded debug canary and production/participant telemetry is not authorized. |
 
 Never send raw evidence, auth tokens, cookies, contact data, exact private coordinates or unnecessary free text to telemetry providers.
+
+### RC3 Crashlytics closure receipt
+
+```text
+Integration: Firebase Crashlytics Android (RC3)
+Previous state: IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING
+New state: CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY
+External provisioning: Firebase project direkt-dev-502701; registered debug application package com.kudzimusar.direkt.debug
+Repo/source changes: Crashlytics SDK/plugin integration, default-off collection/privacy guards, exact-source synthetic fatal+ANR canary, deterministic focus/input-dispatch and REASON_ANR proof harness, exact-source dispatch enforcement; exact proven source 9098f7eb333baf096163f1564b3d8e5e5da3fcf0
+Secret Manager names/versions: no new Crashlytics application secret; GitHub OIDC and temporary Firebase app configuration retrieval remain managed and non-persistent
+Runtime binding: debug/staging synthetic-only canary path; release/participant automatic collection remains disabled
+Managed canary evidence: RC3 managed proof bridge run 29885635547 SUCCESS; marker-pinned SHA validation, exact-source canary dispatch, terminal success watch, sanitized receipt and success enforcement all passed; underlying canary proved fatal Crashlytics/DataTransport delivery, focused package-scoped Input dispatching timed out ANR, historical REASON_ANR, restart pickup and post-ANR delivery
+Privacy/security checks: Firebase Analytics absent; no stable participant Crashlytics user ID; bounded non-identifying synthetic metadata only; no raw evidence/contact/auth token/private-coordinate payloads; release trigger remains absent
+Fallback/kill switch: automatic collection default-off; build/canary/data-mode gates fail closed; Cloud Logging remains infrastructure authority
+Production authorization: NOT AUTHORIZED; participant/production crash telemetry remains disabled
+Known blockers: none for RC3 closure
+Next exact step: RC4 FCM source/runtime closure
+Ledger updated: YES
+```
 
 ## Maps and location
 
@@ -235,8 +254,8 @@ The authoritative sequence is maintained in `WORKSTREAM_LOCK.md` and `RUNTIME_IN
 2. AI0 provider-neutral AI foundation — **CLOSED** in PR #265 at `eafee4e5f54df9b216365cf2b8217b9a52cb1ada`; Gemini/Groq remain runtime-gated.
 3. RC1 Resend — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Source PR #269 merged; least-privilege sending/domain restriction and runtime secret access proven; Cloud Run execution `direkt-resend-canary-ct9mp` succeeded on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`; workflow-reporting compatibility hotfixes #271/#272 merged. Real-participant/production email remains disabled.
 4. RC2 Sentry API/portal — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. PR #275 merged at `15210c5b0bf1832e32f8c33a7618c69f61f65275`; managed API + private portal canary #1 completed successfully. Separate DSN v1 bindings proven; Sentry auth token v2 remained CI/release-only; participant/production telemetry disabled.
-5. RC3 Crashlytics Android — **NEXT CHECKPOINT after RC2 closure merge.**
-6. RC4 FCM.
+5. RC3 Crashlytics Android — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Exact source `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; managed bridge run `29885635547` passed marker-pinned exact-source enforcement and terminal fatal+ANR delivery proof. Participant/production telemetry remains disabled.
+6. RC4 FCM — **NEXT CHECKPOINT**.
 7. RC5 Firebase Test Lab.
 8. RC6 WhatsApp runtime adapter.
 9. RC7 Google Maps runtime.

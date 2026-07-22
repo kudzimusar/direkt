@@ -6,30 +6,30 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED — RC3 Firebase Crashlytics Android runtime closure |
-| Owner/agent | Active repository agent — Issue #261 runtime integration closure workstream |
-| Authorized scope | Firebase Crashlytics on native Android only: reviewed SDK/plugin integration, fail-closed collection/privacy controls, exact release/build mapping, synthetic crash/ANR canaries, managed Firebase evidence, permanent verifier promotion, and exact-head Android/integration/security/release regressions. No FCM, Test Lab, Maps, payment, WhatsApp or unrelated backend/PWA/portal feature work is authorized in RC3. |
-| Protected surface | Backend/database/OpenAPI, web/PWA, operations portal, trust/privacy, payments, integrations, VC1–VC8 completion, Phase 11/12 gates, Android auth/distribution/signing/Play/Data Safety and RC0–RC2 evidence remain regression-protected. |
-| Implementation branch | `integration/rc3-crashlytics-android` from merged RC2 closure baseline `c9cce1bb688ecb9c746d2ebd9d57dfe2f8c275b6`. |
-| Stable baseline | RC2 source PR #275 merged at `15210c5b0bf1832e32f8c33a7618c69f61f65275`; managed Sentry synthetic canary #1 succeeded; RC2 closure PR #280 merged at `c9cce1bb688ecb9c746d2ebd9d57dfe2f8c275b6` with exact-head documentation, integration, W7/W8 and PWA gates green. |
-| Current task | RC3 — integrate Crashlytics without Analytics, default collection off, add synthetic-only opt-in crash/ANR proof, preserve release/Data Safety boundaries, then reconcile managed Firebase evidence and status before promotion. |
+| Status | RELEASED — RC3 Firebase Crashlytics Android runtime closure complete; RC4 FCM is the next checkpoint |
+| Owner/agent | No active implementation writer after RC3 closeout; the next repository agent must explicitly claim RC4 under Issue #261 before FCM source changes begin. |
+| Authorized scope | RC3 closeout only: managed-proof receipt promotion, status/ledger reconciliation and removal of temporary one-shot authorization/dispatch controls. No FCM, Test Lab, Maps, payment, WhatsApp or unrelated backend/PWA/portal feature work is authorized until the next claim. |
+| Protected surface | Backend/database/OpenAPI, web/PWA, operations portal, trust/privacy, payments, integrations, VC1–VC8 completion, Phase 11/12 gates, Android auth/distribution/signing/Play/Data Safety and RC0–RC3 evidence remain regression-protected. |
+| Implementation branch | `integration/rc3-crashlytics-closeout-final` from exact proven RC3 source `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`. |
+| Stable baseline | RC3 exact-source managed proof succeeded for `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; managed bridge run `29885635547` passed pinned-source validation, terminal canary success, sanitized receipt and enforcement. Fatal delivery, focused input-dispatch ANR, historical `REASON_ANR`, restart pickup and post-ANR Crashlytics/DataTransport delivery are proven. |
+| Current task | Promote RC3 closure evidence, remove temporary proof triggers, merge exact-head regression-clean closeout, then allow RC4 FCM to claim the lane. |
 | Governing issue | Issue #261 — Runtime integration closure after W8; Issue #259 VC1–VC8 is closed and preserved as baseline. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
 
-## RC3 implementation contract
+## RC3 implementation contract — CLOSED AND PRESERVED
 
 1. Crashlytics is the Android crash/ANR telemetry path; Android Sentry remains inactive.
-2. Automatic Crashlytics collection must be disabled by default. Only an explicit synthetic/debug canary path may opt in during RC3 proof.
-3. RC3 must not add Firebase Analytics merely to obtain breadcrumbs or session context.
+2. Automatic Crashlytics collection is disabled by default. Only the explicit synthetic/debug canary path may opt in for bounded proof.
+3. RC3 did not add Firebase Analytics merely to obtain breadcrumbs or session context.
 4. No raw evidence, contact data, auth tokens, cookies, precise private coordinates, provider-reviewer notes or unrestricted free text may be attached to Crashlytics.
-5. No stable participant identifier may be set as a Crashlytics user ID during RC3; synthetic canaries use non-identifying bounded metadata only.
-6. Release/build mapping must remain source-controlled and compatible with existing preauthorization signing/version controls.
-7. Synthetic crash and ANR proof must not create a production-accessible crash trigger. Any canary entry point must be debug/test-only and absent from the release manifest/runtime.
-8. Existing Firebase Auth/App Distribution behavior must remain intact; RC3 must not activate FCM or Test Lab early.
-9. The permanent integration verifier must be promoted from “Crashlytics prohibited” to positive exact Crashlytics/privacy/canary assertions. Do not weaken or bypass the verifier.
-10. RC3 is not `ACTIVE` until source integration, privacy controls, managed Firebase crash/ANR evidence, exact-head regressions and status reconciliation are all complete.
-11. Real participant/production crash telemetry remains separately gated even after synthetic RC3 proof unless a later privacy/data-use decision explicitly authorizes it.
+5. No stable participant identifier is set as a Crashlytics user ID; synthetic canaries use non-identifying bounded metadata only.
+6. Release/build mapping remains source-controlled and compatible with existing preauthorization signing/version controls.
+7. Synthetic crash and ANR proof does not create a production-accessible crash trigger; the canary entry point remains debug/test-only and absent from the release manifest/runtime.
+8. Existing Firebase Auth/App Distribution behavior remains intact; RC3 did not activate FCM or Test Lab early.
+9. The permanent integration verifier was promoted from “Crashlytics prohibited” to positive exact Crashlytics/privacy/canary assertions and remains mandatory.
+10. RC3 is `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` because source integration, privacy controls, exact-source managed fatal+ANR evidence, exact-head regressions and status reconciliation are complete.
+11. Real participant/production crash telemetry remains separately gated unless a later privacy/data-use decision explicitly authorizes it.
 
 ## Runtime integration closure contract
 
@@ -42,7 +42,7 @@ This file prevents overlapping writes in the single-lane build process.
 7. AI output cannot independently verify providers, change trust/ranking/publication, authorize payments/escrow, decide disputes, override consent/authorization or act as legal/regulatory authority.
 8. Exact private provider coordinates, raw evidence, contact data, credentials and tokens must not leak into telemetry, public maps, browser caches or provider payloads.
 9. Sentry auth tokens remain CI/release tooling only and must never bind to API, portal, Android or browser runtime.
-10. The workstream releases the lane only after status/ledger reconciliation, exact-head regression matrix, managed evidence and handoff are promoted.
+10. The workstream releases or transitions the lane only after status/ledger reconciliation, exact-head regression matrix, managed evidence and handoff are promoted.
 
 ## Dependency-safe implementation sequence
 
@@ -50,8 +50,8 @@ This file prevents overlapping writes in the single-lane build process.
 - AI0 — provider-neutral AI foundation. **Closed — PR #265; runtime activation remains per-use-case and data-classification gated.**
 - RC1 — Resend transactional-outbox runtime. **Closed; synthetic managed execution proven; real-participant/production email remains disabled.**
 - RC2 — Sentry for approved NestJS/Next.js surfaces. **Closed — PR #275 source + managed synthetic API/private-portal canary + closure PR #280; participant/production telemetry remains disabled.**
-- RC3 — Firebase Crashlytics Android activation with privacy/release mapping and synthetic crash/ANR evidence. **ACTIVE CHECKPOINT.**
-- RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary.
+- RC3 — Firebase Crashlytics Android activation with privacy/release mapping and synthetic crash/ANR evidence. **Closed — exact source `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; managed bridge run `29885635547` successful; participant/production telemetry remains disabled.**
+- RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary. **NEXT CHECKPOINT — requires explicit lane claim after RC3 closeout merge.**
 - RC5 — Firebase Test Lab device-matrix automation after Android runtime dependencies stabilize through RC3–RC4.
 - RC6 — WhatsApp Cloud API application adapter using outbox/idempotency/consent/template/delivery-receipt rules; production sends remain gated until provider/legal approvals exist.
 - RC7 — Google Maps runtime activation with separate restricted Android/backend credentials, privacy-safe publication semantics, quotas, manual/list fallback and kill switch.
@@ -87,4 +87,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-No second agent may write to overlapping RC3 Android/Crashlytics runtime surfaces while this claim is active. Read-only review may continue. RC4+ source work must not begin until RC3 has exact-head source/regression evidence, managed synthetic crash/ANR evidence, status reconciliation, merge promotion and a released/transitioned lock.
+RC3 is closed. No new RC3 implementation writes are authorized. RC4+ source work must not begin until this closeout is merged and the next agent explicitly claims RC4 FCM under Issue #261 from the resulting exact `main` baseline.
