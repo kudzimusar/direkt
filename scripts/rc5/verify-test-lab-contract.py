@@ -114,6 +114,7 @@ def main() -> int:
         '--arg role "${GCP_TEST_LAB_RESULTS_ROLE}"',
         "storage.buckets.getIamPolicy",
         "iam.roles.get",
+        "serviceusage.services.get",
         "retention-days: 30",
         'productionAuthorization: false',
         'dataMode: "synthetic-public-safe-only"',
@@ -156,6 +157,7 @@ def main() -> int:
         "cloudtoolresults.executions.create",
         "firebaseanalytics.resources.googleAnalyticsReadAndAnalyze",
         "iam.roles.get",
+        "serviceusage.services.get",
         "storage.buckets.get",
         "storage.buckets.getIamPolicy",
         "storage.buckets.update",
@@ -198,18 +200,17 @@ def main() -> int:
         "firebase.playLinks.get",
         "firebase.playLinks.list",
         "firebase.projects.get",
-        "firebase.projects.list",
         "firebaseanalytics.resources.googleAnalyticsReadAndAnalyze",
-        "firebaseextensions.configs.get",
         "firebaseextensions.configs.list",
         "iam.roles.get",
         "resourcemanager.projects.get",
         "resourcemanager.projects.getIamPolicy",
         "resourcemanager.projects.list",
+        "serviceusage.services.get",
     }
     if set(runner_block.splitlines()) != expected_runner_permissions:
         raise AssertionError(
-            "RC5 runner role drifted from the reviewed Test Lab/Analytics non-Storage execution set plus iam.roles.get."
+            "RC5 runner role drifted from the current Test Lab/Analytics non-Storage execution set plus the two narrow managed-preflight reads."
         )
     if "storage." in runner_block:
         raise AssertionError("RC5 Test Lab runner custom role must not contain Cloud Storage permissions.")
@@ -253,6 +254,7 @@ def main() -> int:
         "IMPLEMENTED_GATED / MANAGED MATRIX PENDING",
         "no Cloud Storage permissions",
         "iam.roles.get",
+        "serviceusage.services.get",
         "storage.buckets.getIamPolicy",
         "30-day",
         "live virtual Android catalog",
@@ -271,7 +273,7 @@ def main() -> int:
     print("test_lab=implemented_gated_managed_matrix_pending")
     print("identity=github_oidc_no_service_account_keys")
     print("dispatch_confirmation=environment_bound_no_raw_shell_interpolation")
-    print("iam=exact_live_role_definitions_with_narrow_introspection")
+    print("iam=minimal_exact_live_role_definitions_with_narrow_preflight_reads")
     print("storage=dedicated_bucket_scope_30_day_lifecycle")
     print("matrix=live_virtual_2_to_3_devices_api33_current_required")
     print("evidence=github_run_attempt_isolated")
