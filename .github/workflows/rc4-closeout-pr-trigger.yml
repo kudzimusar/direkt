@@ -50,8 +50,8 @@ jobs:
           new = (
               'verifier = replace_once(\n'
               '    verifier,\n'
-              '    \'    print("fcm=implemented_gated_synthetic_canary_pending_participant_disabled")\\\\n\',\n'
-              '    \'    print("fcm=active_synthetic_only_managed_canary_participant_disabled")\\\\n\',\n'
+              '    "fcm=implemented_gated_synthetic_canary_pending_participant_disabled",\n'
+              '    "fcm=active_synthetic_only_managed_canary_participant_disabled",\n'
               '    "FCM verifier summary promotion",\n'
               ')\n'
               'write(path, verifier)\n\n'
