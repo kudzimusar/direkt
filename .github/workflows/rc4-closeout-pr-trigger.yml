@@ -64,7 +64,7 @@ jobs:
           substitutions = {
               'git rm .github/workflows/rc4-fcm-managed-proof-once.yml': 'git checkout -- .github/workflows/rc4-fcm-managed-proof-once.yml',
               'git rm .github/workflows/rc4-closeout-patcher.yml': 'git checkout -- .github/workflows/rc4-closeout-patcher.yml',
-              '  .github/workflows/firebase-fcm-canary.yml\n': '',
+              '  scripts/verify-integration-runtime-contract.py \\\n  .github/workflows/firebase-fcm-canary.yml\n': '  scripts/verify-integration-runtime-contract.py\n',
           }
           for old_text, new_text in substitutions.items():
               count = body.count(old_text)
