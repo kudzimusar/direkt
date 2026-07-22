@@ -33,6 +33,8 @@ jobs:
       GCP_ARTIFACT_REGISTRY: direkt-containers
       GCP_IMAGE_NAME: direkt-api
       GCP_CANARY_JOB: direkt-fcm-canary
+      GCP_FCM_API: fcm.googleapis.com
+      GCP_FCM_SEND_PERMISSION: cloudmessaging.messages.create
       GCP_FCM_ROLE_ID: direktFcmSender
       GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
       GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
@@ -141,8 +143,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          test "${GCP_FCM_API}" = "fcm.googleapis.com"
+          test "${GCP_FCM_SEND_PERMISSION}" = "cloudmessaging.messages.create"
           test "${GCP_FCM_ROLE_ID}" = "direktFcmSender"
-          echo "FCM API enablement and runtime IAM grant are owner-provisioned prerequisites; this canary does not mutate project-level Service Usage or IAM policy."
+          echo "Owner-provisioned prerequisites: ${GCP_FCM_API}; projects/${GCP_PROJECT_ID}/roles/${GCP_FCM_ROLE_ID} with ${GCP_FCM_SEND_PERMISSION}. This canary does not mutate project-level Service Usage or IAM policy."
 
       - name: Resolve registered debug Firebase app and temporary config
         shell: bash
