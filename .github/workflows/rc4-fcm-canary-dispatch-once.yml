@@ -77,4 +77,4 @@ jobs:
           git commit -m "chore(rc4): record FCM canary dispatch diagnostics" || true
           git push origin HEAD:integration/rc4-fcm-canary-dispatch
 
-# sanitized registration diagnostic proof
+# sanitized registration diagnostic proof retry
