@@ -58,7 +58,7 @@ jobs:
 
   reconcile-source-status:
     name: Reconcile RC5 source-phase status once
-    if: github.event_name == 'push' && github.ref == 'refs/heads/integration/rc5-firebase-test-lab'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/integration/rc5-firebase-test-lab') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'integration/rc5-firebase-test-lab')
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -73,60 +73,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-
-          def replace_once(text: str, old: str, new: str, label: str) -> str:
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f"{label}: expected one match, found {count}")
-              return text.replace(old, new, 1)
-
-          status_path = Path('docs/integrations/CURRENT_INTEGRATION_STATUS.md')
-          status = status_path.read_text(encoding='utf-8')
-          target_status = '| Firebase Test Lab | **IMPLEMENTED_GATED / MANAGED MATRIX PENDING** | RC5 source now repairs the current Android instrumentation contract, executes it in Android CI, builds an exact-source Test Lab workflow, selects a 2–3 device matrix from the live virtual catalog, and defines an owner-provisioned custom-role/dedicated-results-bucket boundary. Owner bootstrap and exact-main managed matrix evidence remain required before ACTIVE status. |'
-          if target_status not in status:
-              status = replace_once(status, '| Firebase Test Lab | **PLANNED** | RC5 after RC4 managed foreground/background proof and closeout. |', target_status, 'current status Test Lab row')
-          target_sequence = '7. RC5 Firebase Test Lab — **ACTIVE CHECKPOINT / IMPLEMENTED_GATED — MANAGED MATRIX PENDING**; source contract and local instrumentation execution are integrated, while owner bootstrap and exact-main managed Test Lab evidence remain pending.'
-          if target_sequence not in status:
-              status = replace_once(status, '7. RC5 Firebase Test Lab — **NEXT CHECKPOINT** after an explicit workstream claim from the RC4 closeout baseline.', target_sequence, 'current status RC5 sequence')
-          status_path.write_text(status, encoding='utf-8')
-
-          ledger_path = Path('docs/integrations/LIVE_INTEGRATION_LEDGER.md')
-          ledger = ledger_path.read_text(encoding='utf-8')
-          target_ledger = '| Firebase Test Lab | `IMPLEMENTED_GATED / MANAGED MATRIX PENDING` | RC5 repairs stale post-VC instrumentation assertions, executes the smoke test in Android CI, adds an exact-source managed workflow, live virtual-catalog 2–3 device selection, dedicated 30-day results storage and least-privilege custom-role bootstrap. Owner bootstrap and exact-main managed matrix proof remain pending; no production/participant authorization is created. |'
-          if target_ledger not in ledger:
-              ledger = replace_once(ledger, '| Firebase Test Lab | `PLANNED` | CI/device matrix, test APKs, artifact/report retention. |', target_ledger, 'ledger Test Lab row')
-          target_queue = '7. RC5 Firebase Test Lab — **ACTIVE CHECKPOINT / IMPLEMENTED_GATED — MANAGED MATRIX PENDING**. Source integration and local instrumentation execution are present; owner bootstrap plus exact-main managed matrix evidence remain required before closure.'
-          if target_queue not in ledger:
-              ledger = replace_once(ledger, '7. RC5 Firebase Test Lab — **NEXT CHECKPOINT; explicit lane claim required after RC4 closeout merge**.', target_queue, 'ledger RC5 queue')
-          if '### RC5 Firebase Test Lab source-phase receipt' not in ledger:
-              anchor = '\n## Maps and location\n'
-              if ledger.count(anchor) != 1:
-                  raise SystemExit(f'RC5 receipt insertion anchor count: {ledger.count(anchor)}')
-              receipt = '''
-### RC5 Firebase Test Lab source-phase receipt
-
-```text
-Integration: Firebase Test Lab Android (RC5)
-Previous state: PLANNED
-New state: IMPLEMENTED_GATED / MANAGED MATRIX PENDING
-External provisioning: source-controlled owner bootstrap prepared for testing.googleapis.com, toolresults.googleapis.com, custom project role direktTestLabRunner, bucket-scoped role direktTestLabResultsWriter and dedicated gs://direkt-test-lab-results-264358173369; owner provisioning not yet claimed as complete
-Repo/source changes: stale DirektAppSmokeTest aligned to current post-VC semantics; Android CI now executes the app/test APK pair; exact-source Firebase Test Lab workflow; live virtual-catalog matrix selector capped at 2–3 devices; permanent fail-closed RC5 contract verifier
-Secret Manager names/versions: none; RC5 creates no application secret and prohibits service-account keys/static Google credentials
-Runtime binding: test/evidence only; exact reviewed source already merged to main is required for managed proof; no participant or production runtime binding
-Managed canary evidence: PENDING — exact-main Test Lab matrix must pass after owner bootstrap; source/local evidence alone does not promote ACTIVE status
-Privacy/security checks: synthetic/public-safe test data only; automatic Google login disabled; no production Firebase config; no raw auth/FCM tokens, participant contact data, private evidence, reviewer notes or exact private provider coordinates; project-level Editor/Owner/Test Lab Admin and broad Storage roles prohibited
-Fallback/kill switch: Test Lab is manual/exact-source only; any matrix/infrastructure/test failure blocks RC5; automatic flaky reruns are disabled; local instrumentation remains a permanent CI baseline
-Production authorization: NOT AUTHORIZED
-Known blockers: owner bootstrap and exact-main managed Test Lab matrix proof
-Next exact step: complete exact-head source regression/review, perform the reviewed owner bootstrap, then dispatch exact-main managed Test Lab evidence without activating participant/production paths
-Ledger updated: YES
-```
-'''
-              ledger = ledger.replace(anchor, receipt + anchor, 1)
-          ledger_path.write_text(ledger, encoding='utf-8')
-          PY
+          python scripts/rc5/reconcile-source-status.py
           git diff --check
           if git diff --quiet -- docs/integrations/CURRENT_INTEGRATION_STATUS.md docs/integrations/LIVE_INTEGRATION_LEDGER.md; then
             echo 'RC5 source-phase status already reconciled.'
