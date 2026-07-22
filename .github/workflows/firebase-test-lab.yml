@@ -53,6 +53,7 @@ jobs:
           test "${GCP_PROJECT_ID}" = "direkt-dev-502701"
           test "${GCP_PROJECT_NUMBER}" = "264358173369"
           test "${GCP_TEST_LAB_RESULTS_BUCKET}" = "gs://direkt-test-lab-results-${GCP_PROJECT_NUMBER}"
+          [[ "${GITHUB_RUN_ATTEMPT}" =~ ^[1-9][0-9]*$ ]]
 
       - name: Check out exact reviewed source
         uses: actions/checkout@v6
@@ -137,20 +138,37 @@ jobs:
           project_policy="$(gcloud projects get-iam-policy "${GCP_PROJECT_ID}" --format=json)"
           member="serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}"
           test "$(jq -r --arg member "${member}" --arg role "${GCP_TEST_LAB_RUNNER_ROLE}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${project_policy}")" = "1"
-          for prohibited_role in roles/owner roles/editor roles/cloudtestservice.testAdmin roles/storage.admin roles/storage.objectAdmin; do
+          for prohibited_role in roles/owner roles/editor roles/cloudtestservice.testAdmin roles/firebase.analyticsViewer roles/storage.admin roles/storage.objectAdmin; do
             if jq -e --arg member "${member}" --arg role "${prohibited_role}" '.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)' <<< "${project_policy}" >/dev/null; then
               echo "Prohibited broad project-level role ${prohibited_role} is bound to the GitHub deployer." >&2
               exit 1
             fi
           done
 
+          runner_permissions="$(gcloud iam roles describe direktTestLabRunner --project "${GCP_PROJECT_ID}" --format='value(includedPermissions)' | tr ';' '\n' | sed '/^$/d' | sort -u)"
+          test -n "${runner_permissions}"
+          if grep -Eq '^storage\.' <<< "${runner_permissions}"; then
+            echo "The project-scoped Test Lab runner role contains prohibited Cloud Storage permissions." >&2
+            exit 1
+          fi
+          for permission in cloudtestservice.environmentcatalog.get cloudtestservice.matrices.create cloudtoolresults.executions.create firebaseanalytics.resources.googleAnalyticsReadAndAnalyze; do
+            grep -Fxq "${permission}" <<< "${runner_permissions}"
+          done
+
+          results_permissions="$(gcloud iam roles describe direktTestLabResultsWriter --project "${GCP_PROJECT_ID}" --format='value(includedPermissions)' | tr ';' '\n' | sed '/^$/d' | sort -u)"
+          expected_results_permissions=$'storage.buckets.get\nstorage.buckets.update\nstorage.objects.create\nstorage.objects.delete\nstorage.objects.get\nstorage.objects.list'
+          test "${results_permissions}" = "${expected_results_permissions}"
+
           bucket_record="$(gcloud storage buckets describe "${GCP_TEST_LAB_RESULTS_BUCKET}" --project "${GCP_PROJECT_ID}" --format=json)"
           test "$(jq -r '.location' <<< "${bucket_record}" | tr '[:upper:]' '[:lower:]')" = "${GCP_TEST_LAB_RESULTS_LOCATION}"
           test "$(jq -r '.iamConfiguration.uniformBucketLevelAccess.enabled' <<< "${bucket_record}")" = "true"
           test "$(jq -r --argjson age "${GCP_TEST_LAB_RESULTS_RETENTION_DAYS}" '[.lifecycle.rule[]? | select(.action.type == "Delete" and .condition.age == $age)] | length' <<< "${bucket_record}")" = "1"
 
-          printf '{"kind":"direkt_rc5_storage_preflight","sourceSha":"%s"}\n' "${SOURCE_SHA}" > "${RUNNER_TEMP}/rc5-storage-preflight.json"
-          preflight_object="${GCP_TEST_LAB_RESULTS_BUCKET}/rc5/preflight/${GITHUB_RUN_ID}.json"
+          bucket_policy="$(gcloud storage buckets get-iam-policy "${GCP_TEST_LAB_RESULTS_BUCKET}" --format=json)"
+          test "$(jq -r --arg member "${member}" --arg role "${GCP_TEST_LAB_RESULTS_ROLE}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${bucket_policy}")" = "1"
+
+          printf '{"kind":"direkt_rc5_storage_preflight","sourceSha":"%s","runAttempt":"%s"}\n' "${SOURCE_SHA}" "${GITHUB_RUN_ATTEMPT}" > "${RUNNER_TEMP}/rc5-storage-preflight.json"
+          preflight_object="${GCP_TEST_LAB_RESULTS_BUCKET}/rc5/preflight/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}.json"
           gcloud storage cp "${RUNNER_TEMP}/rc5-storage-preflight.json" "${preflight_object}" --quiet
           gcloud storage rm "${preflight_object}" --quiet
 
@@ -187,7 +205,7 @@ jobs:
             exit 1
           fi
 
-          results_dir="rc5/${SOURCE_SHA}/${GITHUB_RUN_ID}"
+          results_dir="rc5/${SOURCE_SHA}/${GITHUB_RUN_ID}/attempt-${GITHUB_RUN_ATTEMPT}"
           set +e
           gcloud firebase test android run \
             --project "${GCP_PROJECT_ID}" \
@@ -205,7 +223,7 @@ jobs:
             --results-bucket "${GCP_TEST_LAB_RESULTS_BUCKET}" \
             --results-dir "${results_dir}" \
             --results-history-name "direkt-rc5-android" \
-            --client-details "matrixLabel=DIREKT RC5 ${SOURCE_SHA:0:12}" \
+            --client-details "matrixLabel=DIREKT RC5 ${SOURCE_SHA:0:12} attempt ${GITHUB_RUN_ATTEMPT}" \
             2>&1 | tee "${RUNNER_TEMP}/rc5-test-lab-command.log"
           exit_code="${PIPESTATUS[0]}"
           set -e
@@ -233,6 +251,8 @@ jobs:
           set -euo pipefail
           jq -n \
             --arg sourceSha "${SOURCE_SHA}" \
+            --arg runId "${GITHUB_RUN_ID}" \
+            --arg runAttempt "${GITHUB_RUN_ATTEMPT}" \
             --arg appSha256 "${APP_APK_SHA256}" \
             --arg testSha256 "${TEST_APK_SHA256}" \
             --arg project "${GCP_PROJECT_ID}" \
@@ -243,6 +263,8 @@ jobs:
             '{
               schema: "direkt.rc5.test-lab-receipt.v1",
               sourceSha: $sourceSha,
+              githubRunId: $runId,
+              githubRunAttempt: ($runAttempt | tonumber),
               appApkSha256: $appSha256,
               testApkSha256: $testSha256,
               project: $project,
@@ -263,6 +285,7 @@ jobs:
           {
             echo "### DIREKT RC5 Firebase Test Lab"
             echo "- Source: \`${SOURCE_SHA}\`"
+            echo "- GitHub run/attempt: \`${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}\`"
             echo "- App APK SHA-256: \`${APP_APK_SHA256}\`"
             echo "- Test APK SHA-256: \`${TEST_APK_SHA256}\`"
             echo "- Test: \`${DIREKT_TEST_CLASS}\`"
@@ -278,7 +301,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: rc5-firebase-test-lab-${{ github.run_id }}
+          name: rc5-firebase-test-lab-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             ${{ runner.temp }}/rc5-test-lab-matrix.json
             ${{ runner.temp }}/rc5-test-lab-receipt.json
