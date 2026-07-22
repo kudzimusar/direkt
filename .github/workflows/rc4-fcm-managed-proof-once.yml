@@ -83,14 +83,29 @@ jobs:
             if [[ "${status}" = "completed" ]]; then
               echo "Managed FCM canary ${RUN_ID} concluded: ${conclusion}"
               if [[ "${conclusion}" != "success" ]]; then
-                sanitized_error="$(gh run view "${RUN_ID}" --repo "${GITHUB_REPOSITORY}" --log-failed 2>/dev/null \
-                  | sed -E 's/\x1B\[[0-9;]*[A-Za-z]//g' \
+                failed_log="$(gh run view "${RUN_ID}" --repo "${GITHUB_REPOSITORY}" --log-failed 2>/dev/null \
+                  | sed -E 's/\x1B\[[0-9;]*[A-Za-z]//g' || true)"
+                sanitized_error="$(printf '%s\n' "${failed_log}" \
                   | grep -E 'No registration identifier was produced; sanitized status=[a-z0-9_-]{1,80}\.|Synthetic FCM registration failed with [A-Za-z0-9._$-]{1,120}\.' \
                   | grep -Fv '${' \
                   | tail -n 1 \
                   | sed -E 's/^.*##\[error\]//' \
                   | cut -c1-240 || true)"
-                [[ -n "${sanitized_error}" ]] || sanitized_error="FCM registration failure detail unavailable; inspect managed run ${RUN_ID}."
+                if [[ -z "${sanitized_error}" ]]; then
+                  if grep -Eqi 'PERMISSION_DENIED|does not have permission|permission .*denied|secretmanager\.secrets\.create' <<< "${failed_log}"; then
+                    sanitized_error="Secret Manager bootstrap failed: PERMISSION_DENIED."
+                  elif grep -Eqi 'ALREADY_EXISTS|already exists' <<< "${failed_log}"; then
+                    sanitized_error="Secret Manager bootstrap failed: ALREADY_EXISTS."
+                  elif grep -Eqi 'INVALID_ARGUMENT|invalid argument|unrecognized arguments|invalid choice' <<< "${failed_log}"; then
+                    sanitized_error="Secret Manager bootstrap failed: INVALID_ARGUMENT."
+                  elif grep -Eqi 'FAILED_PRECONDITION|failed precondition' <<< "${failed_log}"; then
+                    sanitized_error="Secret Manager bootstrap failed: FAILED_PRECONDITION."
+                  elif grep -Eqi 'secretmanager\.googleapis\.com.*not.*enabled|API .*secretmanager.*not.*enabled' <<< "${failed_log}"; then
+                    sanitized_error="Secret Manager bootstrap failed: API_DISABLED."
+                  else
+                    sanitized_error="Managed FCM proof failed after registration; sanitized category=UNCLASSIFIED."
+                  fi
+                fi
                 gh issue create --repo "${GITHUB_REPOSITORY}" \
                   --title "RC4 FCM proof failure run ${RUN_ID}" \
                   --body "Exact source: \`${SOURCE_SHA}\`. Sanitized managed-canary result: ${sanitized_error} No participant/production push was enabled. Parent: #261."
@@ -103,4 +118,4 @@ jobs:
           echo "Timed out waiting for managed FCM canary ${RUN_ID}." >&2
           exit 1
 
-# RC4 classified registration-error proof trigger.
+# RC4 Secret Manager bootstrap classification trigger.
