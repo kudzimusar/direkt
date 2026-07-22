@@ -53,7 +53,15 @@ internal object CrashlyticsCanary {
             }
             "crash" -> {
                 enableSyntheticCollection(crashlytics, "crash")
-                throw RuntimeException("DIREKT_RC3_SYNTHETIC_CRASH")
+                // Let onCreate complete and give Crashlytics time to finish installing its
+                // uncaught-exception handler before producing the synthetic fatal exception.
+                // The managed RC3 workflow verifies both the exact fatal marker and process death.
+                activity.window.decorView.postDelayed(
+                    {
+                        throw RuntimeException("DIREKT_RC3_SYNTHETIC_CRASH")
+                    },
+                    1_500L,
+                )
             }
             "anr" -> {
                 enableSyntheticCollection(crashlytics, "anr")
