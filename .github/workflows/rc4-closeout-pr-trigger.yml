@@ -25,7 +25,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - name: Execute reviewed closeout patch and remove temporary triggers
+      - name: Execute validated non-workflow closeout patch
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -60,6 +60,18 @@ jobs:
           if body.count(old) != 1:
               raise SystemExit(f'Unable to inject verifier summary promotion exactly once: {body.count(old)}')
           body = body.replace(old, new, 1)
+
+          substitutions = {
+              'git rm .github/workflows/rc4-fcm-managed-proof-once.yml': 'git checkout -- .github/workflows/rc4-fcm-managed-proof-once.yml',
+              'git rm .github/workflows/rc4-closeout-patcher.yml': 'git checkout -- .github/workflows/rc4-closeout-patcher.yml',
+              '  .github/workflows/firebase-fcm-canary.yml\n': '',
+          }
+          for old_text, new_text in substitutions.items():
+              count = body.count(old_text)
+              if count != 1:
+                  raise SystemExit(f'Workflow-split substitution expected once, found {count}: {old_text!r}')
+              body = body.replace(old_text, new_text, 1)
+
           Path('/tmp/rc4-closeout.sh').write_text(body, encoding='utf-8')
           PY
 
@@ -76,6 +88,5 @@ jobs:
             exit 1
           fi
 
-          git rm .github/workflows/rc4-closeout-pr-trigger.yml
-          git commit -m "chore(rc4): remove temporary closeout trigger"
-          git push origin HEAD:integration/rc4-fcm-closeout
+          tail -n 25 /tmp/rc4-closeout.log
+          echo 'Non-workflow RC4 closeout commit pushed successfully; workflow cleanup is deferred to the repository connector.'
