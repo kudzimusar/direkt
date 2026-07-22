@@ -33,6 +33,24 @@ CREATE INDEX push_device_tokens_installation_active_idx
   ON platform.push_device_tokens (installation_id)
   WHERE invalidated_at IS NULL;
 
+CREATE FUNCTION platform.protect_push_token_classification()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF OLD.data_classification = 'controlled-pilot'
+     AND NEW.data_classification = 'synthetic' THEN
+    RAISE EXCEPTION 'controlled-pilot push token cannot be reclassified as synthetic';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER push_device_tokens_protect_classification
+BEFORE UPDATE ON platform.push_device_tokens
+FOR EACH ROW
+EXECUTE FUNCTION platform.protect_push_token_classification();
+
 COMMENT ON TABLE platform.push_device_tokens IS
   'Server-only FCM registration tokens. Tokens are identity-bound outside bounded synthetic canaries and must never be logged or exposed through browser/client-direct data access.';
 COMMENT ON COLUMN platform.push_device_tokens.token IS
