@@ -37,7 +37,6 @@ internal object CrashlyticsCanary {
     private const val ANR_EXIT_REASON_MARKER = "DIREKT_RC3_ANR_EXIT_REASON"
     private const val FOCUS_POLL_DELAY_MS = 250L
     private const val POST_FOCUS_SETTLE_DELAY_MS = 500L
-    private const val ANR_BLOCK_DURATION_MS = 120_000L
 
     fun handleLaunch(activity: Activity, intent: Intent) {
         val policyAllowsCanary =
@@ -106,8 +105,8 @@ internal object CrashlyticsCanary {
                 }
 
                 // The managed proof injects input only after the Activity has a real focused window.
-                // Keep the main looper blocked long enough for Android's ANR dialog to terminate the
-                // unresponsive process; a self-recovering synthetic hang cannot satisfy RC3.
+                // Keep the main looper blocked for up to 120 seconds so Android's ANR dialog can
+                // terminate the unresponsive process; a self-recovering 20-second hang cannot pass.
                 decorView.postDelayed(
                     {
                         if (!activity.hasWindowFocus()) {
@@ -115,7 +114,9 @@ internal object CrashlyticsCanary {
                             return@postDelayed
                         }
                         Log.i(LOG_TAG, ANR_BLOCK_MARKER)
-                        Thread.sleep(ANR_BLOCK_DURATION_MS)
+                        repeat(6) {
+                            Thread.sleep(20_000L)
+                        }
                     },
                     POST_FOCUS_SETTLE_DELAY_MS,
                 )
