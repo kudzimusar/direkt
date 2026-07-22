@@ -8,6 +8,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
+import com.kudzimusar.direkt.notifications.PushRegistrationCoordinator
 import org.json.JSONObject
 import java.net.URL
 import java.util.concurrent.Executors
@@ -31,6 +32,7 @@ internal class PilotAuthenticationCoordinator(
     private val configuration: PilotAuthConfiguration = PilotAuthConfiguration.fromBuildConfig(),
 ) {
     private val sessionStore = PilotSessionStore(context)
+    private val pushRegistrationCoordinator = PushRegistrationCoordinator(context)
     private val executor = Executors.newSingleThreadExecutor()
     private var verificationId: String? = null
     private var consentAcceptedForVerification = false
@@ -121,6 +123,7 @@ internal class PilotAuthenticationCoordinator(
     }
 
     fun signOut() {
+        sessionStore.load()?.let(pushRegistrationCoordinator::unregisterCurrentDevice)
         if (enabled) {
             runCatching { firebaseAuth().signOut() }
         }
@@ -211,6 +214,7 @@ internal class PilotAuthenticationCoordinator(
                 result.fold(
                     onSuccess = { session ->
                         sessionStore.save(session)
+                        pushRegistrationCoordinator.registerCurrentToken(session)
                         verificationId = null
                         consentAcceptedForVerification = false
                         onResult(PilotAuthResult.SignedIn(session.sessionId))
