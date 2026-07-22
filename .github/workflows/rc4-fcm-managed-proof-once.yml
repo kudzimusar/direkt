@@ -73,6 +73,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_ID: ${{ steps.dispatch.outputs.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
         shell: bash
         run: |
           set -euo pipefail
@@ -81,7 +82,18 @@ jobs:
             conclusion="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}" --jq '.conclusion // empty')"
             if [[ "${status}" = "completed" ]]; then
               echo "Managed FCM canary ${RUN_ID} concluded: ${conclusion}"
-              test "${conclusion}" = "success"
+              if [[ "${conclusion}" != "success" ]]; then
+                sanitized_error="$(gh run view "${RUN_ID}" --repo "${GITHUB_REPOSITORY}" --log-failed 2>/dev/null \
+                  | grep -E '::error title=FCM registration (failed|timed out)::' \
+                  | tail -n 1 \
+                  | sed -E 's/.*::error title=/FCM registration /; s/\x1B\[[0-9;]*[A-Za-z]//g' \
+                  | cut -c1-240 || true)"
+                [[ -n "${sanitized_error}" ]] || sanitized_error="FCM registration failure detail unavailable; inspect managed run ${RUN_ID}."
+                gh issue create --repo "${GITHUB_REPOSITORY}" \
+                  --title "RC4 FCM proof failure run ${RUN_ID}" \
+                  --body "Exact source: \`${SOURCE_SHA}\`. Sanitized managed-canary result: ${sanitized_error}. No participant/production push was enabled. Parent: #261."
+                exit 1
+              fi
               exit 0
             fi
             sleep 10
