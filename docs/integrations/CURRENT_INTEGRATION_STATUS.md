@@ -1,6 +1,6 @@
 # DIREKT Current Integration Status Register
 
-**Authoritative as-of date:** 2026-07-21 (Asia/Tokyo)  
+**Authoritative as-of date:** 2026-07-22 (Asia/Tokyo)  
 **Scope:** repository `kudzimusar/direkt`, managed development/staging evidence, live Supabase verification and owner-configured external services  
 **Purpose:** prevent external provisioning, source integration and runtime activation from being conflated.  
 **Detailed live receipts:** `LIVE_INTEGRATION_LEDGER.md`
@@ -59,12 +59,12 @@ Live Supabase hardening remains proven through migration `202607191200_integrati
 | Firebase project | **ACTIVE foundation** | Attached to `direkt-dev-502701`. |
 | Firebase App Distribution | **ACTIVE** | Controlled Android delivery to `direkt-internal-testers`. |
 | Firebase Authentication / phone OTP | **IMPLEMENTED_GATED** | Phone-possession proof/session exchange behind invite/consent/Phase 11 gates. |
-| Firebase Crashlytics | **IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING** | RC3 source integration: SDK present; automatic collection default-off; Analytics absent; exact-source synthetic debug crash/ANR canary required before ACTIVE status. |
+| Firebase Crashlytics | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY** | RC3 exact-source managed proof succeeded for `9098f7eb333baf096163f1564b3d8e5e5da3fcf0` through bridge run `29885635547`: fatal delivery, focused package-scoped input-dispatch ANR, historical `REASON_ANR`, restart pickup and Crashlytics/DataTransport delivery all passed. Automatic collection remains default-off, Analytics is absent, and participant/production crash telemetry remains disabled. |
 | FCM | **PLANNED** | RC4 server send path, token lifecycle, Android notification handling/permissions, retries and managed canary. |
 | Firebase Test Lab | **PLANNED** | RC5 after RC3–RC4 Android runtime dependencies stabilize. |
 | Google Play | **IMPLEMENTED_GATED** | Release engineering prepared; no production release authorized. |
 
-RC3 does not authorize participant/production crash telemetry. Crashlytics is fail-closed by default and the synthetic canary path is debug-only, exact-source-bound and `synthetic-only`.
+RC3 closure does not authorize participant/production crash telemetry. Crashlytics remains fail-closed by default outside the debug-only, exact-source-bound `synthetic-only` proof path.
 
 ## AI provider foundation and current AI behavior
 
@@ -112,7 +112,7 @@ Continuous, controlled-pilot participant and production external email remain di
 | Cloud Logging / Monitoring | **ACTIVE** | Authoritative infrastructure/runtime telemetry. |
 | Sentry API/portal | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY** | RC2 source + managed API/private-portal canary proven with separate DSNs, exact release SHA, PII minimization and kill switch. |
 | Sentry Android | **NOT DEFAULT / NOT ACTIVE** | Android crash/ANR ownership is Firebase Crashlytics under RC3. |
-| Firebase Crashlytics | **IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING** | Android SDK/runtime guard and managed synthetic crash/ANR workflow are source-controlled; managed proof still required. |
+| Firebase Crashlytics | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY** | Exact-source RC3 proof on `9098f7eb333baf096163f1564b3d8e5e5da3fcf0` passed through managed bridge run `29885635547`; default collection remains off, Firebase Analytics is absent, and production/participant telemetry is not authorized. |
 
 Participant/production Sentry telemetry remains disabled.
 
@@ -165,8 +165,8 @@ Clients never decide payment success. Payment state cannot create verification/p
 2. AI0 provider-neutral AI foundation — **CLOSED / RUNTIME GATED**.
 3. RC1 Resend — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**.
 4. RC2 Sentry API/portal — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**.
-5. RC3 Firebase Crashlytics — **IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING**.
-6. RC4 FCM.
+5. RC3 Firebase Crashlytics — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**.
+6. RC4 FCM — **NEXT CHECKPOINT**.
 7. RC5 Firebase Test Lab.
 8. RC6 WhatsApp Cloud API application adapter.
 9. RC7 Google Maps runtime.
