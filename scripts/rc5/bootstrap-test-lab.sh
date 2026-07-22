@@ -95,7 +95,10 @@ assert_project_role_permissions_testable() {
   local expected_file="$1"
   local label="$2"
   local unsupported_file="${workdir}/${label}-unsupported.txt"
-  comm -23 \
+  # `comm` validates input ordering using its own locale, so bind the comparison
+  # to the same C collation used to sort both inputs. This keeps Cloud Shell and
+  # GitHub-hosted runners deterministic even when their ambient locales differ.
+  LC_ALL=C comm -23 \
     <(LC_ALL=C sort -u "${expected_file}") \
     "${workdir}/project-testable-permissions.txt" > "${unsupported_file}"
   if [[ -s "${unsupported_file}" ]]; then
