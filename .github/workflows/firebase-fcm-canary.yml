@@ -37,6 +37,7 @@ jobs:
       GCP_FCM_SEND_PERMISSION: cloudmessaging.messages.create
       GCP_FCM_ROLE_ID: direktFcmSender
       GCP_FCM_VERIFIER_ROLE_ID: direktFcmBootstrapVerifier
+      GCP_FCM_CANARY_SECRET: direkt-fcm-canary-token
       GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
       GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
       GCP_RUNTIME_SERVICE_ACCOUNT: direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com
@@ -148,6 +149,7 @@ jobs:
           test "${GCP_FCM_SEND_PERMISSION}" = "cloudmessaging.messages.create"
           test "${GCP_FCM_ROLE_ID}" = "direktFcmSender"
           test "${GCP_FCM_VERIFIER_ROLE_ID}" = "direktFcmBootstrapVerifier"
+          test "${GCP_FCM_CANARY_SECRET}" = "direkt-fcm-canary-token"
 
           project_number="$(gcloud projects describe "${GCP_PROJECT_ID}" --format='value(projectNumber)')"
           [[ "${project_number}" =~ ^[0-9]+$ ]]
@@ -169,6 +171,14 @@ jobs:
             --filter="bindings.role:${role_name} AND bindings.members:${runtime_member}" \
             --format='value(bindings.role)' | head -n 1)"
           test "${bound_role}" = "${role_name}"
+
+          if ! gcloud secrets versions list "${GCP_FCM_CANARY_SECRET}" \
+            --project "${GCP_PROJECT_ID}" \
+            --limit 1 \
+            --format='value(name)' >/dev/null 2>&1; then
+            echo "::error title=FCM canary secret boundary missing::Preprovisioned canary secret or version-manager permission is unavailable."
+            exit 1
+          fi
 
       - name: Resolve registered debug Firebase app and temporary config
         shell: bash
@@ -311,26 +321,26 @@ jobs:
           test "${state}" = "ENABLED"
           echo "DIREKT_DATABASE_URL_SECRET_VERSION=${version}" >> "${GITHUB_ENV}"
 
-      - name: Store synthetic FCM token as one-run Secret Manager secret
+      - name: Store synthetic FCM token as one-run secret version
         shell: bash
         run: |
           set -euo pipefail
-          secret_name="direkt-fcm-canary-token-${GITHUB_RUN_ID}"
-          gcloud secrets create "${secret_name}" \
-            --project "${GCP_PROJECT_ID}" \
-            --replication-policy automatic \
-            --quiet
-          gcloud secrets versions add "${secret_name}" \
+          secret_name="${GCP_FCM_CANARY_SECRET}"
+          version_record="${RUNNER_TEMP}/fcm-secret-version.json"
+          error_record="${RUNNER_TEMP}/fcm-secret-version-error.txt"
+          if ! gcloud secrets versions add "${secret_name}" \
             --project "${GCP_PROJECT_ID}" \
             --data-file "${RUNNER_TEMP}/fcm-device-token" \
-            --quiet >/dev/null
-          rm -f "${RUNNER_TEMP}/fcm-device-token"
-          gcloud secrets add-iam-policy-binding "${secret_name}" \
-            --project "${GCP_PROJECT_ID}" \
-            --member "serviceAccount:${GCP_RUNTIME_SERVICE_ACCOUNT}" \
-            --role roles/secretmanager.secretAccessor \
-            --quiet >/dev/null
+            --format=json > "${version_record}" 2> "${error_record}"; then
+            rm -f "${RUNNER_TEMP}/fcm-device-token" "${error_record}"
+            echo "::error title=FCM canary secret version write denied::Preprovisioned canary secret version write failed; verify secret-scoped version-manager binding."
+            exit 1
+          fi
+          rm -f "${RUNNER_TEMP}/fcm-device-token" "${error_record}"
+          version="$(jq -r '.name | split("/") | last' "${version_record}")"
+          [[ "${version}" =~ ^[1-9][0-9]*$ ]]
           echo "FCM_TOKEN_SECRET=${secret_name}" >> "${GITHUB_ENV}"
+          echo "FCM_TOKEN_SECRET_VERSION=${version}" >> "${GITHUB_ENV}"
 
       - name: Configure Artifact Registry authentication
         shell: bash
@@ -363,7 +373,7 @@ jobs:
             --command node \
             --args dist/communications/push-canary.js \
             --set-env-vars "NODE_ENV=development,DIREKT_ENVIRONMENT=staging,DIREKT_DATA_MODE=synthetic-only,DIREKT_TRAFFIC_MODE=internal,RATE_LIMITS_ENABLED=false,EVIDENCE_STORAGE_PROVIDER=synthetic,PAYMENT_PROVIDER_MODE=disabled,AI_PROVIDER_MODE=disabled,AI_FALLBACK_PROVIDER=disabled,EMAIL_PROVIDER_MODE=disabled,PUSH_PROVIDER_MODE=fcm,PUSH_REGISTRATION_MODE=disabled,FIREBASE_PROJECT_ID=${GCP_PROJECT_ID},PUSH_REQUEST_TIMEOUT_MS=8000,PUSH_MAX_ATTEMPTS=4,PUSH_OUTBOX_LOCK_TIMEOUT_MS=300000,DIREKT_SOURCE_SHA=${SOURCE_SHA},FCM_CANARY_PHASE=foreground" \
-            --set-secrets "DATABASE_URL=direkt-database-url:${DIREKT_DATABASE_URL_SECRET_VERSION},FCM_SYNTHETIC_DEVICE_TOKEN=${FCM_TOKEN_SECRET}:1" \
+            --set-secrets "DATABASE_URL=direkt-database-url:${DIREKT_DATABASE_URL_SECRET_VERSION},FCM_SYNTHETIC_DEVICE_TOKEN=${FCM_TOKEN_SECRET}:${FCM_TOKEN_SECRET_VERSION}" \
             --labels "direkt-environment=staging,direkt-data-mode=synthetic-only,direkt-integration=fcm-canary" \
             --quiet
 
@@ -379,6 +389,9 @@ jobs:
           grep -Fq "${GCP_RUNTIME_SERVICE_ACCOUNT}" "${job_export}"
           grep -Fq "direkt-database-url" "${job_export}"
           grep -Fq "${FCM_TOKEN_SECRET}" "${job_export}"
+          grep -Fq "key: ${FCM_TOKEN_SECRET_VERSION}" "${job_export}" || \
+            grep -Fq "key: \"${FCM_TOKEN_SECRET_VERSION}\"" "${job_export}" || \
+            grep -Fq "key: '${FCM_TOKEN_SECRET_VERSION}'" "${job_export}"
           grep -Fq "PUSH_PROVIDER_MODE" "${job_export}"
           grep -Fq "synthetic-only" "${job_export}"
           grep -Fq "${SOURCE_SHA}" "${job_export}"
@@ -475,7 +488,7 @@ jobs:
             echo "- Outbox → FCM → Android background: passed"
             echo "- Data mode: \`synthetic-only\`"
             echo "- Participant push registration: disabled"
-            echo "- FCM token: temporary one-run Secret Manager value; not logged or retained in artifacts"
+            echo "- FCM token: temporary version of preprovisioned Secret Manager container; not logged or retained in artifacts"
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Cleanup temporary FCM token and canary job
@@ -483,8 +496,11 @@ jobs:
         shell: bash
         run: |
           set +e
-          rm -f "${RUNNER_TEMP}/fcm-device-token"
-          if [[ -n "${FCM_TOKEN_SECRET:-}" ]]; then
-            gcloud secrets delete "${FCM_TOKEN_SECRET}" --project "${GCP_PROJECT_ID}" --quiet
+          rm -f "${RUNNER_TEMP}/fcm-device-token" "${RUNNER_TEMP}/fcm-secret-version.json" "${RUNNER_TEMP}/fcm-secret-version-error.txt"
+          if [[ -n "${FCM_TOKEN_SECRET:-}" && -n "${FCM_TOKEN_SECRET_VERSION:-}" ]]; then
+            gcloud secrets versions destroy "${FCM_TOKEN_SECRET_VERSION}" \
+              --secret "${FCM_TOKEN_SECRET}" \
+              --project "${GCP_PROJECT_ID}" \
+              --quiet >/dev/null
           fi
           gcloud run jobs delete "${GCP_CANARY_JOB}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --quiet
