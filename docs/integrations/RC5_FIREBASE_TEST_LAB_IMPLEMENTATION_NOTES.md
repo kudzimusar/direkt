@@ -27,18 +27,18 @@ Android CI now installs the built debug APK plus `debugAndroidTest` APK on its m
 
 `.github/workflows/firebase-test-lab.yml` is manual/exact-source managed proof only:
 
-1. requires `RUN-DIREKT-TEST-LAB` plus an exact 40-character source SHA;
+1. requires `RUN-DIREKT-TEST-LAB` plus an exact 40-character source SHA, with the confirmation value passed through the workflow environment rather than interpolated directly into shell source;
 2. checks out that SHA and proves it is already merged into `main`;
 3. builds unit/lint/debug/instrumentation artifacts without persistent Firebase config or production credentials;
 4. authenticates with existing GitHub Workload Identity Federation;
-5. verifies the owner-provisioned Test Lab APIs, custom runner role and dedicated results-bucket boundary;
+5. verifies the owner-provisioned Test Lab APIs, exact live custom-role definitions, absence of a project-scoped results role, and the dedicated results-bucket boundary;
 6. queries the live virtual Android catalog instead of pinning stale device IDs;
 7. selects a deterministic 2–3 device matrix through `scripts/rc5/select-test-lab-matrix.py`;
 8. runs only `com.kudzimusar.direkt.DirektAppSmokeTest` as instrumentation;
 9. disables flaky reruns, Test Orchestrator, video, performance metrics and automatic Google-account login for this bounded proof;
-10. stores detailed provider results only under the dedicated 30-day lifecycle bucket and uploads only a sanitized matrix/receipt to GitHub artifacts.
+10. stores detailed provider results only under an attempt-isolated path in the dedicated 30-day lifecycle bucket and uploads only a sanitized matrix/receipt to GitHub artifacts.
 
-Test Lab non-zero outcomes remain hard failures. A failed first execution is not erased by automatic flaky reruns because `--num-flaky-test-attempts 0` is explicit.
+Test Lab non-zero outcomes remain hard failures. A failed first execution is not erased by automatic flaky reruns because `--num-flaky-test-attempts 0` is explicit, and GitHub reruns use a distinct `GITHUB_RUN_ATTEMPT` results path.
 
 ## Device-matrix policy
 
@@ -63,14 +63,14 @@ API 33 and a current API 35–36 target are mandatory. If the live catalog canno
 It:
 
 - enables `testing.googleapis.com` and `toolresults.googleapis.com`;
-- creates/updates custom project role `direktTestLabRunner` containing Test Lab matrix, Tool Results and required read-only Firebase/project permissions but **no Cloud Storage permissions**;
-- creates/updates custom role `direktTestLabResultsWriter` containing only `storage.buckets.get`, `storage.buckets.update` and the object create/delete/get/list permissions needed by Test Lab, and binds that role only at the dedicated bucket scope;
+- creates/updates custom project role `direktTestLabRunner` containing the reviewed Test Lab/Analytics non-Storage execution permissions plus only `iam.roles.get`, which is required for managed proof to read and compare the exact live custom-role definitions;
+- creates/updates custom role `direktTestLabResultsWriter` containing only `storage.buckets.get`, `storage.buckets.getIamPolicy`, `storage.buckets.update` and object create/delete/get/list; it is bound only at the dedicated bucket scope, and `storage.buckets.getIamPolicy` exists solely so managed proof can verify that bucket-scoped binding;
 - creates dedicated bucket `gs://direkt-test-lab-results-264358173369` with uniform bucket-level access in `asia-northeast1` and a 30-day delete lifecycle;
 - binds `direktTestLabRunner` to the existing GitHub deployer at project scope;
-- binds `direktTestLabResultsWriter` only on the dedicated results bucket;
-- fails if the GitHub deployer has project-level `roles/owner`, `roles/editor`, `roles/cloudtestservice.testAdmin`, `roles/storage.admin` or `roles/storage.objectAdmin`.
+- binds `direktTestLabResultsWriter` only on the dedicated results bucket and explicitly fails if that role is present for the deployer at project scope;
+- fails if the GitHub deployer has project-level `roles/owner`, `roles/editor`, `roles/cloudtestservice.testAdmin`, `roles/firebase.analyticsViewer`, `roles/storage.admin` or `roles/storage.objectAdmin`.
 
-This deliberately avoids Google’s broad predefined Test Lab role path because the DIREKT Firebase project also contains private application storage.
+This deliberately avoids Google’s broad predefined Test Lab role path because the DIREKT Firebase project also contains private application storage. Firebase’s documented gcloud Test Lab role pair is used only as the permission baseline; storage access is split to the dedicated bucket instead of granting those predefined roles project-wide.
 
 ## Evidence boundary
 
