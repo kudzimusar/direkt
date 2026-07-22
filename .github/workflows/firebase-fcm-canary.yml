@@ -36,6 +36,7 @@ jobs:
       GCP_FCM_API: fcm.googleapis.com
       GCP_FCM_SEND_PERMISSION: cloudmessaging.messages.create
       GCP_FCM_ROLE_ID: direktFcmSender
+      GCP_FCM_VERIFIER_ROLE_ID: direktFcmBootstrapVerifier
       GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
       GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
       GCP_RUNTIME_SERVICE_ACCOUNT: direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com
@@ -139,14 +140,28 @@ jobs:
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Enforce owner-provisioned FCM bootstrap boundary
+      - name: Verify owner-provisioned least-privilege FCM bootstrap boundary
         shell: bash
         run: |
           set -euo pipefail
           test "${GCP_FCM_API}" = "fcm.googleapis.com"
           test "${GCP_FCM_SEND_PERMISSION}" = "cloudmessaging.messages.create"
           test "${GCP_FCM_ROLE_ID}" = "direktFcmSender"
-          echo "Owner-provisioned prerequisites: ${GCP_FCM_API}; projects/${GCP_PROJECT_ID}/roles/${GCP_FCM_ROLE_ID} with ${GCP_FCM_SEND_PERMISSION}. This canary does not mutate project-level Service Usage or IAM policy."
+          test "${GCP_FCM_VERIFIER_ROLE_ID}" = "direktFcmBootstrapVerifier"
+
+          service_state="$(gcloud services describe "${GCP_FCM_API}" --project "${GCP_PROJECT_ID}" --format='value(state)')"
+          test "${service_state}" = "ENABLED"
+
+          permissions="$(gcloud iam roles describe "${GCP_FCM_ROLE_ID}" --project "${GCP_PROJECT_ID}" --format='value(includedPermissions)' | tr ';' '\n' | sed '/^$/d' | sort -u)"
+          test "${permissions}" = "${GCP_FCM_SEND_PERMISSION}"
+
+          role_name="projects/${GCP_PROJECT_ID}/roles/${GCP_FCM_ROLE_ID}"
+          runtime_member="serviceAccount:${GCP_RUNTIME_SERVICE_ACCOUNT}"
+          bound_role="$(gcloud projects get-iam-policy "${GCP_PROJECT_ID}" \
+            --flatten='bindings[].members' \
+            --filter="bindings.role:${role_name} AND bindings.members:${runtime_member}" \
+            --format='value(bindings.role)' | head -n 1)"
+          test "${bound_role}" = "${role_name}"
 
       - name: Resolve registered debug Firebase app and temporary config
         shell: bash
