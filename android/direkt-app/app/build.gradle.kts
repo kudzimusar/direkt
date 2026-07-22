@@ -304,7 +304,6 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.messaging)
-    implementation(libs.firebase.installations)
 
     testImplementation(libs.junit)
 
