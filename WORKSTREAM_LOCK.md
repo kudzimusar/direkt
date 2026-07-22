@@ -6,14 +6,14 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED — RC5 Firebase Test Lab device-matrix closure |
-| Owner/agent | Active repository agent — Issue #261 runtime integration closure workstream. |
-| Authorized scope | Firebase Test Lab only: repair the current Android instrumentation smoke contract, build exact-reviewed debug/app-test APKs, add least-privilege GitHub OIDC Test Lab execution, run a small controlled device/API matrix, retain sanitized bounded artifacts/results, promote a permanent verifier, and reconcile status/ledger. No UIA browser/operations promotion, Maps, WhatsApp, payment, production auth or unrelated backend/PWA/portal feature work is authorized in RC5. |
-| Protected surface | Backend/database/OpenAPI, web/PWA, operations portal, trust/privacy, payments, integrations, VC1–VC8 completion, Phase 11/12 gates, Android auth/distribution/signing/Play/Data Safety and RC0–RC4 evidence remain regression-protected. |
-| Implementation branch | `integration/rc5-firebase-test-lab` from merged RC4 closeout baseline `9ce693c8a9d248283ff5bef30bf1842fee78faf7`. |
-| Stable baseline | RC4 closure PR #376 merged at `9ce693c8a9d248283ff5bef30bf1842fee78faf7`; exact-main FCM managed proof run `29916381754` succeeded on `f05ff19105cb8dc7c4621c044c110b6029f63300`; participant/production push remains disabled. |
-| Current task | RC5 — repair stale instrumentation assertions without weakening the UI, add exact-source Firebase Test Lab automation and a bounded supported-device matrix, prove managed instrumentation execution and artifact retention, then reconcile status and release/transition the lane. |
-| Governing issue | Issue #261 — Runtime integration closure after W8; Issue #259 VC1–VC8 is closed and preserved as baseline. |
+| Status | CLAIMED — UIA owner-review promotion; RC5 parked at owner-controlled infrastructure boundary |
+| Owner/agent | Active repository agent — Issue #354 runnable surfaces acceptance and connected UI review. |
+| Authorized scope | UIA promotion only: promote an exact merged post-VC/current `main` source to the synthetic owner-review browser runtime, refresh/verify the approved internal Android App Distribution build, refresh/verify the protected operations review surface where the existing deployment path permits it, capture clean production-built responsive evidence, and reconcile owner-access acceptance. No redesign, RC5 Test Lab source change, Maps, WhatsApp, payment, production auth, real-participant activation or unrelated backend feature work is authorized. |
+| Protected surface | RC5 Firebase Test Lab source/workflows and draft proof bridge PR #378, backend/database/OpenAPI trust and authorization boundaries, private API/BFF IAM, operations authorization/private evidence controls, payments, integrations, VC1–VC8 design baseline, Phase 11/12 gates, Android auth/signing/Play/Data Safety and RC0–RC4 evidence remain regression-protected. |
+| Implementation branch | `integration/uia-owner-review-promotion` from `main@7e718ce0a1a5d5e58b04566e7f14c8fbc5ddc463`. |
+| Stable baseline | RC5 source PR #377 merged at `7e718ce0a1a5d5e58b04566e7f14c8fbc5ddc463` with exact-head regressions green. RC5 remains `IMPLEMENTED_GATED / MANAGED MATRIX PENDING` at an owner-controlled Google Cloud bootstrap boundary; draft PR #378 is preserved and must remain unmerged while UIA owns exact-current-main promotion. RC4 remains closed with managed FCM proof run `29916381754` successful. |
+| Current task | UIA — make the already-completed VC1–VC8 product directly reviewable by the owner on the canonical browser host, current internal Android build and protected operations surface, without changing the approved visual direction or weakening synthetic/real-participant boundaries. |
+| Governing issue | Issue #354 — UIA runnable surfaces acceptance and connected UI review. Issue #261 RC5 remains parked, not closed. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
 
@@ -43,7 +43,7 @@ This file prevents overlapping writes in the single-lane build process.
 9. RC4 must not activate Firebase Test Lab, Maps, Analytics or unrelated Firebase products early.
 10. RC4 is `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY`; participant registration and participant/production push remain separately gated.
 
-## RC5 implementation contract — ACTIVE
+## RC5 implementation contract — SOURCE COMPLETE; MANAGED MATRIX PENDING
 
 1. Firebase Test Lab is a testing/evidence service only; it does not authorize production release, participant enrollment, production auth, real communications or real private evidence.
 2. The Test Lab workflow must build and test an exact reviewed source SHA that is already merged to `main` for managed proof, while pull-request CI may validate source changes before merge.
@@ -54,7 +54,20 @@ This file prevents overlapping writes in the single-lane build process.
 7. GitHub Actions must authenticate through existing Workload Identity Federation and use the narrowest practical Test Lab/result-storage permissions; project Editor/Owner and long-lived service-account keys are prohibited.
 8. Test results must be machine-enforced: a matrix/infrastructure/test failure cannot be documented as passing, and flaky reruns must not erase the original failed evidence.
 9. Existing Android unit/lint/build, App Distribution, Crashlytics, FCM, signing, Play/Data Safety and cross-client regression gates remain intact.
-10. RC5 is not `ACTIVE` until exact-head source/regression evidence, managed Test Lab execution, sanitized result/artifact evidence, permanent verifier promotion and status/ledger reconciliation are complete.
+10. RC5 remains `IMPLEMENTED_GATED / MANAGED MATRIX PENDING` until owner-controlled bootstrap, exact-current-main managed Test Lab execution, sanitized result/artifact evidence, permanent verifier promotion and status/ledger reconciliation are complete. Draft PR #378 remains the preserved one-shot proof bridge and must not merge while UIA owns the exact-current-main lane.
+
+## UIA owner-review promotion contract — ACTIVE
+
+1. UIA is an acceptance/promotion checkpoint, not a new visual-design phase. The approved VC1–VC8 Structured Trust + Neighbourhood Marketplace + Field Utility direction is preserved.
+2. Every promoted owner-review surface must be tied to an exact merged source on `main`; no stale prototype or pre-VC deployment may be represented as the current product.
+3. The canonical browser review remains synthetic/public-safe and must preserve the private API/BFF IAM boundary, privacy controls, offline/PWA contract and `https://direkt.forum/preview/` historical preview separation.
+4. Android distribution remains internal/preauthorization only through the approved Firebase App Distribution tester group; no Play production release or unrestricted tester enrollment is authorized.
+5. Operations remains protected/private. Synthetic supervisor/session/queue/evidence presentation may be used for visual review but must not be represented as connected real-operations UAT or grant consequential decision authority.
+6. No real participant data, production auth, private evidence activation, real communications, real money movement or Phase 11/12 release authority is introduced by UIA.
+7. Owner-facing evidence must come from production-built or equivalent clean runtime presentation with no Next.js development toolbar, `1 Issue` badge, debug/canary labels or other developer-only UI leakage.
+8. Existing backend, Android, PWA, portal, supply-chain, privacy, authorization and integration regressions remain mandatory; UIA must not weaken them to obtain a visual pass.
+9. RC5 owner-side Google Cloud provisioning may proceed independently because it does not modify repository source, but PR #378 must remain draft/unmerged until UIA releases the exact-current-main lane; after UIA closure RC5 resumes from its preserved `7e718ce...` source baseline plus the then-current reconciled `main` as required by its exact-current-main proof contract.
+10. UIA closes only after the owner has straightforward current access to the final VC browser, Android and protected operations surfaces and Issue #354 explicitly distinguishes visual/synthetic review, connected development/staging UI testing, real Phase 11 participant UAT and production release.
 
 ## Runtime integration closure contract
 
@@ -77,7 +90,8 @@ This file prevents overlapping writes in the single-lane build process.
 - RC2 — Sentry for approved NestJS/Next.js surfaces. **Closed — PR #275 source + managed synthetic API/private-portal canary + closure PR #280; participant/production telemetry remains disabled.**
 - RC3 — Firebase Crashlytics Android. **Closed — exact source `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; managed bridge run `29885635547` successful; closure PR #338 merged at `0d7d29313990c37b25bd985588866a85bbe10f83`.**
 - RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary. **CLOSED — exact source `f05ff19105cb8dc7c4621c044c110b6029f63300`; managed run `29916381754` successful; participant/production push disabled.**
-- RC5 — Firebase Test Lab device-matrix automation after Android runtime dependencies stabilize through RC3–RC4. **ACTIVE CHECKPOINT.**
+- RC5 — Firebase Test Lab device-matrix automation after Android runtime dependencies stabilize through RC3–RC4. **PARKED — source PR #377 merged at `7e718ce0a1a5d5e58b04566e7f14c8fbc5ddc463`; exact-head regressions green; owner-controlled Google Cloud bootstrap and managed matrix proof remain pending; draft PR #378 preserved.**
+- UIA — post-VC owner-review promotion. **ACTIVE COORDINATED TRANSITION — bounded browser/Android/operations review promotion only; no redesign or participant/production activation.**
 - RC6 — WhatsApp Cloud API application adapter using outbox/idempotency/consent/template/delivery-receipt rules; production sends remain gated until provider/legal approvals exist.
 - RC7 — Google Maps runtime activation with separate restricted Android/backend credentials, privacy-safe publication semantics, quotas, manual/list fallback and kill switch.
 - RC8 — sandbox-only payment-provider adapter closure/reconciliation for already proven MTN, DPO, Stripe and PayPal rails; Airtel remains provider-pending and Flutterwave deferred; real money remains disabled.
@@ -102,4 +116,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-RC5 Firebase Test Lab is the sole active implementation lane. UIA Issue #354 may continue read-only evidence analysis but must not deploy or write overlapping Android/backend/PWA/portal surfaces until RC5 releases or explicitly coordinates a non-overlapping transition. RC6+ source work must not begin until RC5 has exact-head regressions, managed Test Lab evidence, status reconciliation, merge promotion and a released/transitioned lock.
+UIA Issue #354 is the sole active implementation lane during this coordinated transition. RC5 source/workflow changes and PR #378 merge are frozen; owner-controlled Google Cloud provisioning may proceed independently because it does not change repository source. RC6+ source work must not begin until UIA releases the lane and RC5 is either resumed for its exact-current-main managed proof or explicitly re-coordinated. UIA must not modify RC5 Test Lab files or broaden Android/backend/PWA/portal authority beyond the bounded owner-review promotion contract above.
