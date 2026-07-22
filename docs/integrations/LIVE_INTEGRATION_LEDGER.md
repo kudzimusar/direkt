@@ -185,7 +185,7 @@ No payment provider secret is attached to Cloud Run until adapter/config/runtime
 | FCM | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | RC4 exact-main run `29916381754` on `f05ff19105cb8dc7c4621c044c110b6029f63300` proved synthetic registration, private backend outbox → FCM HTTP v1 → Android foreground/background delivery, sanitized evidence publication and ordered cleanup. Fixed secret `direkt-fcm-canary-token` remains an empty owner-provisioned container between proofs; the temporary numeric token version was destroyed after Cloud Run Job deletion. Participant registration and participant/production push remain disabled. |
 | WhatsApp Cloud API | `EXTERNALLY CONFIGURED / RUNTIME GATED` | Runtime adapter, approved templates/phone identity where needed, consent-at-send, opt-out, idempotency, receipts/retries/privacy controls. |
 | Firebase Crashlytics | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | RC3 exact-source managed proof succeeded for `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; bridge run `29885635547` enforced marker-pinned source identity and terminal canary success for fatal delivery, focused input-dispatch ANR, historical `REASON_ANR`, restart pickup and post-ANR Crashlytics/DataTransport delivery. Automatic collection remains default-off; Firebase Analytics and stable participant user IDs are absent; participant/production telemetry remains disabled. |
-| Firebase Test Lab | `PLANNED` | CI/device matrix, test APKs, artifact/report retention. |
+| Firebase Test Lab | `IMPLEMENTED_GATED / MANAGED MATRIX PENDING` | RC5 repairs stale post-VC instrumentation assertions, executes the smoke test in Android CI, adds an exact-source managed workflow, live virtual-catalog 2–3 device selection, dedicated 30-day results storage and least-privilege custom-role bootstrap. Owner bootstrap and exact-main managed matrix proof remain pending; no production/participant authorization is created. |
 | Cloudflare Turnstile | `PLANNED / WHERE NEEDED` | Only for reviewed abuse-sensitive public flows with server verification, accessibility fallback and kill switch. |
 | Cloud Tasks / Pub/Sub / Scheduler | `PLANNED ON DEMAND` | Add only when retry/fan-out/scheduling needs justify them. |
 
@@ -239,6 +239,25 @@ Next exact step: merge exact-head RC4 closeout, release the RC4 lock, then expli
 Ledger updated: YES
 ```
 
+### RC5 Firebase Test Lab source-phase receipt
+
+```text
+Integration: Firebase Test Lab Android (RC5)
+Previous state: PLANNED
+New state: IMPLEMENTED_GATED / MANAGED MATRIX PENDING
+External provisioning: source-controlled owner bootstrap prepared for testing.googleapis.com, toolresults.googleapis.com, custom project role direktTestLabRunner, bucket-scoped role direktTestLabResultsWriter and dedicated gs://direkt-test-lab-results-264358173369; owner provisioning not yet claimed as complete
+Repo/source changes: stale DirektAppSmokeTest aligned to current post-VC semantics; Android CI now executes the app/test APK pair; exact-source Firebase Test Lab workflow; live virtual-catalog matrix selector capped at 2–3 devices; permanent fail-closed RC5 contract verifier
+Secret Manager names/versions: none; RC5 creates no application secret and prohibits service-account keys/static Google credentials
+Runtime binding: test/evidence only; exact reviewed source already merged to main is required for managed proof; no participant or production runtime binding
+Managed canary evidence: PENDING — exact-main Test Lab matrix must pass after owner bootstrap; source/local evidence alone does not promote ACTIVE status
+Privacy/security checks: synthetic/public-safe test data only; automatic Google login disabled; no production Firebase config; no raw auth/FCM tokens, participant contact data, private evidence, reviewer notes or exact private provider coordinates; project-level Editor/Owner/Test Lab Admin and broad Storage roles prohibited
+Fallback/kill switch: Test Lab is manual/exact-source only; any matrix/infrastructure/test failure blocks RC5; automatic flaky reruns are disabled; local instrumentation remains a permanent CI baseline
+Production authorization: NOT AUTHORIZED
+Known blockers: owner bootstrap and exact-main managed Test Lab matrix proof
+Next exact step: complete exact-head source regression/review, perform the reviewed owner bootstrap, then dispatch exact-main managed Test Lab evidence without activating participant/production paths
+Ledger updated: YES
+```
+
 ## Maps and location
 
 | Integration | State | Direction |
@@ -277,7 +296,7 @@ The authoritative sequence is maintained in `WORKSTREAM_LOCK.md` and `RUNTIME_IN
 4. RC2 Sentry API/portal — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. PR #275 merged at `15210c5b0bf1832e32f8c33a7618c69f61f65275`; managed API + private portal canary #1 completed successfully. Separate DSN v1 bindings proven; Sentry auth token v2 remained CI/release-only; participant/production telemetry disabled.
 5. RC3 Crashlytics Android — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Exact source `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; managed bridge run `29885635547` passed marker-pinned exact-source enforcement and terminal fatal+ANR delivery proof. Participant/production telemetry remains disabled.
 6. RC4 FCM — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Exact-main run `29916381754` on `f05ff19105cb8dc7c4621c044c110b6029f63300` passed foreground/background outbox → FCM → Android receipt proof, sanitized evidence and ordered cleanup. Participant registration and participant/production push remain disabled.
-7. RC5 Firebase Test Lab — **NEXT CHECKPOINT; explicit lane claim required after RC4 closeout merge**.
+7. RC5 Firebase Test Lab — **ACTIVE CHECKPOINT / IMPLEMENTED_GATED — MANAGED MATRIX PENDING**. Source integration and local instrumentation execution are present; owner bootstrap plus exact-main managed matrix evidence remain required before closure.
 8. RC6 WhatsApp runtime adapter.
 9. RC7 Google Maps runtime.
 10. RC8 sandbox-only payment adapters/evidence reconciliation.

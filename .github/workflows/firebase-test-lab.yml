@@ -1,0 +1,345 @@
+name: DIREKT Firebase Test Lab Android matrix
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN-DIREKT-TEST-LAB to continue
+        required: true
+        type: string
+      source_sha:
+        description: Exact reviewed DIREKT commit that must equal current main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: direkt-firebase-test-lab
+  cancel-in-progress: false
+
+jobs:
+  android-matrix:
+    name: Prove current Android instrumentation on bounded Test Lab matrix
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      DIREKT_CONFIRMATION: ${{ inputs.confirmation }}
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_PROJECT_NUMBER: "264358173369"
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_TEST_LAB_RUNNER_ROLE: projects/direkt-dev-502701/roles/direktTestLabRunner
+      GCP_TEST_LAB_RESULTS_ROLE: projects/direkt-dev-502701/roles/direktTestLabResultsWriter
+      GCP_TEST_LAB_RESULTS_BUCKET: gs://direkt-test-lab-results-264358173369
+      GCP_TEST_LAB_RESULTS_LOCATION: asia-northeast1
+      GCP_TEST_LAB_RESULTS_RETENTION_DAYS: "30"
+      DIREKT_GRADLE_VERSION: "9.4.0"
+      DIREKT_TEST_CLASS: com.kudzimusar.direkt.DirektAppSmokeTest
+      DIREKT_TEST_PACKAGE: com.kudzimusar.direkt.debug.test
+      DIREKT_TEST_RUNNER: androidx.test.runner.AndroidJUnitRunner
+      SOURCE_SHA: ${{ inputs.source_sha }}
+
+    steps:
+      - name: Validate Test Lab controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${DIREKT_CONFIRMATION}" = "RUN-DIREKT-TEST-LAB"
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          test "${GCP_PROJECT_ID}" = "direkt-dev-502701"
+          test "${GCP_PROJECT_NUMBER}" = "264358173369"
+          test "${GCP_TEST_LAB_RESULTS_BUCKET}" = "gs://direkt-test-lab-results-${GCP_PROJECT_NUMBER}"
+          [[ "${GITHUB_RUN_ATTEMPT}" =~ ^[1-9][0-9]*$ ]]
+
+      - name: Check out exact reviewed source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify source identity and exact current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
+          git fetch origin main --no-tags
+          test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Configure pinned Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ env.DIREKT_GRADLE_VERSION }}
+
+      - name: Build exact app and instrumentation APKs
+        working-directory: android/direkt-app
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e app/google-services.json
+          if [[ ! -f gradle/wrapper/gradle-wrapper.jar ]]; then
+            wrapper_checksum="$(sed -n 's/^distributionSha256Sum=//p' gradle/wrapper/gradle-wrapper.properties)"
+            [[ "${wrapper_checksum}" =~ ^[0-9a-f]{64}$ ]]
+            gradle wrapper \
+              --gradle-version "${DIREKT_GRADLE_VERSION}" \
+              --distribution-type bin \
+              --gradle-distribution-sha256-sum "${wrapper_checksum}"
+          fi
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
+
+          app_apk="$(find app/build/outputs/apk/debug -maxdepth 1 -type f -name '*-debug.apk' | head -n 1)"
+          test_apk="$(find app/build/outputs/apk/androidTest/debug -maxdepth 1 -type f -name '*-debug-androidTest.apk' | head -n 1)"
+          test -n "${app_apk}"
+          test -s "${app_apk}"
+          test -n "${test_apk}"
+          test -s "${test_apk}"
+          test ! -e app/google-services.json
+
+          echo "APP_APK=${PWD}/${app_apk}" >> "${GITHUB_ENV}"
+          echo "TEST_APK=${PWD}/${test_apk}" >> "${GITHUB_ENV}"
+          echo "APP_APK_SHA256=$(sha256sum "${app_apk}" | awk '{print $1}')" >> "${GITHUB_ENV}"
+          echo "TEST_APK_SHA256=$(sha256sum "${test_apk}" | awk '{print $1}')" >> "${GITHUB_ENV}"
+
+      - name: Self-test live-catalog matrix selector
+        shell: bash
+        run: python scripts/rc5/select-test-lab-matrix.py --self-test
+
+      - name: Authenticate to Google Cloud through GitHub OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Verify least-privilege Test Lab bootstrap boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          for service in testing.googleapis.com toolresults.googleapis.com; do
+            state="$(gcloud services describe "${service}" --project "${GCP_PROJECT_ID}" --format='value(state)')"
+            test "${state}" = "ENABLED"
+          done
+
+          project_policy="$(gcloud projects get-iam-policy "${GCP_PROJECT_ID}" --format=json)"
+          member="serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}"
+          test "$(jq -r --arg member "${member}" --arg role "${GCP_TEST_LAB_RUNNER_ROLE}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${project_policy}")" = "1"
+          test "$(jq -r --arg member "${member}" --arg role "${GCP_TEST_LAB_RESULTS_ROLE}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${project_policy}")" = "0"
+          for prohibited_role in roles/owner roles/editor roles/cloudtestservice.testAdmin roles/firebase.analyticsViewer roles/storage.admin roles/storage.objectAdmin; do
+            if jq -e --arg member "${member}" --arg role "${prohibited_role}" '.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)' <<< "${project_policy}" >/dev/null; then
+              echo "Prohibited broad project-level role ${prohibited_role} is bound to the GitHub deployer." >&2
+              exit 1
+            fi
+          done
+
+          bash scripts/rc5/verify-no-project-storage-roles.sh "${GCP_PROJECT_ID}" "${member}"
+
+          runner_permissions="$(gcloud iam roles describe direktTestLabRunner --project "${GCP_PROJECT_ID}" --format='value(includedPermissions)' | tr ';' '\n' | sed '/^$/d' | sort -u)"
+          expected_runner_permissions="$(cat <<'EOF'
+cloudnotifications.activities.list
+cloudtestservice.environmentcatalog.get
+cloudtestservice.matrices.create
+cloudtestservice.matrices.get
+cloudtestservice.matrices.update
+cloudtoolresults.executions.create
+cloudtoolresults.executions.get
+cloudtoolresults.executions.list
+cloudtoolresults.executions.update
+cloudtoolresults.histories.create
+cloudtoolresults.histories.get
+cloudtoolresults.histories.list
+cloudtoolresults.settings.create
+cloudtoolresults.settings.get
+cloudtoolresults.settings.update
+cloudtoolresults.steps.create
+cloudtoolresults.steps.get
+cloudtoolresults.steps.list
+cloudtoolresults.steps.update
+firebase.billingPlans.get
+firebase.clients.get
+firebase.clients.list
+firebase.links.list
+firebase.playLinks.get
+firebase.playLinks.list
+firebase.projects.get
+firebaseanalytics.resources.googleAnalyticsReadAndAnalyze
+firebaseextensions.configs.list
+iam.roles.get
+resourcemanager.projects.get
+resourcemanager.projects.getIamPolicy
+resourcemanager.projects.list
+serviceusage.services.get
+EOF
+)"
+          test "${runner_permissions}" = "${expected_runner_permissions}"
+          if grep -Eq '^storage\.' <<< "${runner_permissions}"; then
+            echo "The project-scoped Test Lab runner role contains prohibited Cloud Storage permissions." >&2
+            exit 1
+          fi
+
+          results_permissions="$(gcloud iam roles describe direktTestLabResultsWriter --project "${GCP_PROJECT_ID}" --format='value(includedPermissions)' | tr ';' '\n' | sed '/^$/d' | sort -u)"
+          expected_results_permissions=$'storage.buckets.get\nstorage.buckets.getIamPolicy\nstorage.objects.create'
+          test "${results_permissions}" = "${expected_results_permissions}"
+
+          bucket_record="$(gcloud storage buckets describe "${GCP_TEST_LAB_RESULTS_BUCKET}" --project "${GCP_PROJECT_ID}" --format=json)"
+          test "$(jq -r '.location' <<< "${bucket_record}" | tr '[:upper:]' '[:lower:]')" = "${GCP_TEST_LAB_RESULTS_LOCATION}"
+          test "$(jq -r '.iamConfiguration.uniformBucketLevelAccess.enabled' <<< "${bucket_record}")" = "true"
+          test "$(jq -r --argjson age "${GCP_TEST_LAB_RESULTS_RETENTION_DAYS}" '[.lifecycle.rule[]? | select(.action.type == "Delete" and .condition.age == $age)] | length' <<< "${bucket_record}")" = "1"
+
+          bucket_policy="$(gcloud storage buckets get-iam-policy "${GCP_TEST_LAB_RESULTS_BUCKET}" --format=json)"
+          test "$(jq -r --arg member "${member}" --arg role "${GCP_TEST_LAB_RESULTS_ROLE}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${bucket_policy}")" = "1"
+
+          printf '{"kind":"direkt_rc5_storage_preflight","sourceSha":"%s","runAttempt":"%s"}\n' "${SOURCE_SHA}" "${GITHUB_RUN_ATTEMPT}" > "${RUNNER_TEMP}/rc5-storage-preflight.json"
+          preflight_object="${GCP_TEST_LAB_RESULTS_BUCKET}/rc5/preflight/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}.json"
+          gcloud storage cp "${RUNNER_TEMP}/rc5-storage-preflight.json" "${preflight_object}" --quiet
+
+      - name: Discover live virtual Test Lab catalog and select bounded matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud firebase test android models list \
+            --project "${GCP_PROJECT_ID}" \
+            --filter=virtual \
+            --format=json > "${RUNNER_TEMP}/rc5-test-lab-models.json"
+          gcloud firebase test android versions list \
+            --project "${GCP_PROJECT_ID}" \
+            --format=json > "${RUNNER_TEMP}/rc5-test-lab-versions.json"
+          test "$(jq 'length' "${RUNNER_TEMP}/rc5-test-lab-models.json")" -gt 0
+          test "$(jq 'length' "${RUNNER_TEMP}/rc5-test-lab-versions.json")" -gt 0
+
+          python scripts/rc5/select-test-lab-matrix.py \
+            --models "${RUNNER_TEMP}/rc5-test-lab-models.json" \
+            --output "${RUNNER_TEMP}/rc5-test-lab-matrix.json"
+          device_count="$(jq -r '.deviceCount' "${RUNNER_TEMP}/rc5-test-lab-matrix.json")"
+          [[ "${device_count}" =~ ^[23]$ ]]
+          test "$(jq -r '[.targets[] | select(.version == "33")] | length' "${RUNNER_TEMP}/rc5-test-lab-matrix.json")" = "1"
+          test "$(jq -r '[.targets[] | (.version | tonumber) | select(. >= 35 and . <= 36)] | length' "${RUNNER_TEMP}/rc5-test-lab-matrix.json")" = "1"
+
+      - name: Run exact instrumentation test on bounded Test Lab matrix
+        id: testlab
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t devices < <(jq -r '.targets[] | "--device=model=\(.model),version=\(.version),locale=\(.locale),orientation=\(.orientation)"' "${RUNNER_TEMP}/rc5-test-lab-matrix.json")
+          if [[ "${#devices[@]}" -lt 2 || "${#devices[@]}" -gt 3 ]]; then
+            echo "RC5 matrix escaped the 2-3 device cost boundary." >&2
+            exit 1
+          fi
+
+          results_dir="rc5/${SOURCE_SHA}/${GITHUB_RUN_ID}/attempt-${GITHUB_RUN_ATTEMPT}"
+          set +e
+          gcloud firebase test android run \
+            --project "${GCP_PROJECT_ID}" \
+            --type instrumentation \
+            --app "${APP_APK}" \
+            --test "${TEST_APK}" \
+            --test-targets "class ${DIREKT_TEST_CLASS}" \
+            "${devices[@]}" \
+            --timeout 5m \
+            --num-flaky-test-attempts 0 \
+            --no-use-orchestrator \
+            --no-record-video \
+            --no-performance-metrics \
+            --no-auto-google-login \
+            --results-bucket "${GCP_TEST_LAB_RESULTS_BUCKET}" \
+            --results-dir "${results_dir}" \
+            --results-history-name "direkt-rc5-android" \
+            --client-details "matrixLabel=DIREKT RC5 ${SOURCE_SHA:0:12} attempt ${GITHUB_RUN_ATTEMPT}" \
+            2>&1 | tee "${RUNNER_TEMP}/rc5-test-lab-command.log"
+          exit_code="${PIPESTATUS[0]}"
+          set -e
+          echo "exit_code=${exit_code}" >> "${GITHUB_OUTPUT}"
+          echo "results_dir=${results_dir}" >> "${GITHUB_OUTPUT}"
+          if [[ "${exit_code}" -ne 0 ]]; then
+            case "${exit_code}" in
+              10) category="TEST_CASE_FAILED" ;;
+              15) category="INDETERMINATE" ;;
+              18) category="UNSUPPORTED_DIMENSION" ;;
+              19) category="CANCELED" ;;
+              20) category="INFRASTRUCTURE_ERROR" ;;
+              *) category="GENERAL_ERROR_${exit_code}" ;;
+            esac
+            echo "::error title=Firebase Test Lab failed::RC5 managed matrix failed with ${category}."
+            exit "${exit_code}"
+          fi
+
+      - name: Publish sanitized RC5 matrix receipt
+        if: success()
+        shell: bash
+        env:
+          RESULTS_DIR: ${{ steps.testlab.outputs.results_dir }}
+        run: |
+          set -euo pipefail
+          jq -n \
+            --arg sourceSha "${SOURCE_SHA}" \
+            --arg runId "${GITHUB_RUN_ID}" \
+            --arg runAttempt "${GITHUB_RUN_ATTEMPT}" \
+            --arg appSha256 "${APP_APK_SHA256}" \
+            --arg testSha256 "${TEST_APK_SHA256}" \
+            --arg project "${GCP_PROJECT_ID}" \
+            --arg resultsBucket "${GCP_TEST_LAB_RESULTS_BUCKET}" \
+            --arg resultsDir "${RESULTS_DIR}" \
+            --arg testClass "${DIREKT_TEST_CLASS}" \
+            --argjson matrix "$(cat "${RUNNER_TEMP}/rc5-test-lab-matrix.json")" \
+            '{
+              schema: "direkt.rc5.test-lab-receipt.v1",
+              sourceSha: $sourceSha,
+              githubRunId: $runId,
+              githubRunAttempt: ($runAttempt | tonumber),
+              appApkSha256: $appSha256,
+              testApkSha256: $testSha256,
+              project: $project,
+              resultsBucket: $resultsBucket,
+              resultsDir: $resultsDir,
+              testClass: $testClass,
+              flakyRetries: 0,
+              orchestrator: false,
+              video: false,
+              performanceMetrics: false,
+              automaticGoogleLogin: false,
+              result: "passed",
+              dataMode: "synthetic-public-safe-only",
+              productionAuthorization: false,
+              matrix: $matrix
+            }' > "${RUNNER_TEMP}/rc5-test-lab-receipt.json"
+
+          {
+            echo "### DIREKT RC5 Firebase Test Lab"
+            echo "- Source: \`${SOURCE_SHA}\`"
+            echo "- GitHub run/attempt: \`${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}\`"
+            echo "- App APK SHA-256: \`${APP_APK_SHA256}\`"
+            echo "- Test APK SHA-256: \`${TEST_APK_SHA256}\`"
+            echo "- Test: \`${DIREKT_TEST_CLASS}\`"
+            echo "- Device count: \`$(jq -r '.deviceCount' "${RUNNER_TEMP}/rc5-test-lab-matrix.json")\`"
+            jq -r '.targets[] | "- Matrix: `\(.purpose)` → `\(.model)` / API `\(.version)`"' "${RUNNER_TEMP}/rc5-test-lab-matrix.json"
+            echo "- Results: \`${GCP_TEST_LAB_RESULTS_BUCKET}/${RESULTS_DIR}\` (30-day lifecycle)"
+            echo "- Flaky retries: \`0\`"
+            echo "- Automatic Google login: \`false\`"
+            echo "- Participant/production authorization: \`false\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload sanitized RC5 evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc5-firebase-test-lab-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/rc5-test-lab-matrix.json
+            ${{ runner.temp }}/rc5-test-lab-receipt.json
+          if-no-files-found: error
+          retention-days: 30

@@ -6,13 +6,13 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | RELEASED — RC4 Firebase Cloud Messaging runtime closure complete; RC5 Firebase Test Lab is the next checkpoint |
-| Owner/agent | No active implementation writer after RC4 closeout; the next repository agent must explicitly claim RC5 under Issue #261 before Test Lab source changes begin. |
-| Authorized scope | RC4 closeout only: managed-proof receipt promotion, permanent verifier/status/ledger reconciliation and removal of the completed one-shot proof bridge. No Test Lab, Maps, payment, WhatsApp or unrelated backend/PWA/portal feature work is authorized until the next explicit claim. |
+| Status | CLAIMED — RC5 Firebase Test Lab device-matrix closure |
+| Owner/agent | Active repository agent — Issue #261 runtime integration closure workstream. |
+| Authorized scope | Firebase Test Lab only: repair the current Android instrumentation smoke contract, build exact-reviewed debug/app-test APKs, add least-privilege GitHub OIDC Test Lab execution, run a small controlled device/API matrix, retain sanitized bounded artifacts/results, promote a permanent verifier, and reconcile status/ledger. No UIA browser/operations promotion, Maps, WhatsApp, payment, production auth or unrelated backend/PWA/portal feature work is authorized in RC5. |
 | Protected surface | Backend/database/OpenAPI, web/PWA, operations portal, trust/privacy, payments, integrations, VC1–VC8 completion, Phase 11/12 gates, Android auth/distribution/signing/Play/Data Safety and RC0–RC4 evidence remain regression-protected. |
-| Implementation branch | `integration/rc4-fcm-closeout` from exact proven RC4 source `f05ff19105cb8dc7c4621c044c110b6029f63300`. |
-| Stable baseline | RC4 exact-main managed proof run `29916381754` succeeded on `f05ff19105cb8dc7c4621c044c110b6029f63300`: least-privilege bootstrap verification, synthetic registration, foreground/background outbox → FCM → Android receipts, sanitized evidence and ordered cleanup all passed. |
-| Current task | Promote RC4 closure evidence, remove the completed one-shot bridge, merge exact-head regression-clean closeout, then allow an explicit RC5 Firebase Test Lab claim. |
+| Implementation branch | `integration/rc5-firebase-test-lab` from merged RC4 closeout baseline `9ce693c8a9d248283ff5bef30bf1842fee78faf7`. |
+| Stable baseline | RC4 closure PR #376 merged at `9ce693c8a9d248283ff5bef30bf1842fee78faf7`; exact-main FCM managed proof run `29916381754` succeeded on `f05ff19105cb8dc7c4621c044c110b6029f63300`; participant/production push remains disabled. |
+| Current task | RC5 — repair stale instrumentation assertions without weakening the UI, add exact-source Firebase Test Lab automation and a bounded supported-device matrix, prove managed instrumentation execution and artifact retention, then reconcile status and release/transition the lane. |
 | Governing issue | Issue #261 — Runtime integration closure after W8; Issue #259 VC1–VC8 is closed and preserved as baseline. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
@@ -43,6 +43,19 @@ This file prevents overlapping writes in the single-lane build process.
 9. RC4 must not activate Firebase Test Lab, Maps, Analytics or unrelated Firebase products early.
 10. RC4 is `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY`; participant registration and participant/production push remain separately gated.
 
+## RC5 implementation contract — ACTIVE
+
+1. Firebase Test Lab is a testing/evidence service only; it does not authorize production release, participant enrollment, production auth, real communications or real private evidence.
+2. The Test Lab workflow must build and test an exact reviewed source SHA that is already merged to `main` for managed proof, while pull-request CI may validate source changes before merge.
+3. Android instrumentation assertions must reflect the current post-VC product semantics and stable accessibility/test tags; stale copy must be repaired rather than changing the approved UI merely to satisfy an old test.
+4. The managed matrix must remain small, explicit and cost-bounded, and must use currently supported Firebase Test Lab model/version pairs discovered from the live catalog rather than guessed/stale device identifiers.
+5. Coverage must include the minimum supported Android boundary where feasible, the Android 13 notification-permission era, and a current platform baseline without multiplying redundant devices.
+6. Test APKs, app APKs, result summaries and retained artifacts must contain only synthetic/public-safe data and no production credentials, participant data, raw tokens, private evidence or exact private provider coordinates.
+7. GitHub Actions must authenticate through existing Workload Identity Federation and use the narrowest practical Test Lab/result-storage permissions; project Editor/Owner and long-lived service-account keys are prohibited.
+8. Test results must be machine-enforced: a matrix/infrastructure/test failure cannot be documented as passing, and flaky reruns must not erase the original failed evidence.
+9. Existing Android unit/lint/build, App Distribution, Crashlytics, FCM, signing, Play/Data Safety and cross-client regression gates remain intact.
+10. RC5 is not `ACTIVE` until exact-head source/regression evidence, managed Test Lab execution, sanitized result/artifact evidence, permanent verifier promotion and status/ledger reconciliation are complete.
+
 ## Runtime integration closure contract
 
 1. Close one bounded integration checkpoint at a time; do not batch unrelated SDK/provider activation.
@@ -64,7 +77,7 @@ This file prevents overlapping writes in the single-lane build process.
 - RC2 — Sentry for approved NestJS/Next.js surfaces. **Closed — PR #275 source + managed synthetic API/private-portal canary + closure PR #280; participant/production telemetry remains disabled.**
 - RC3 — Firebase Crashlytics Android. **Closed — exact source `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; managed bridge run `29885635547` successful; closure PR #338 merged at `0d7d29313990c37b25bd985588866a85bbe10f83`.**
 - RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary. **CLOSED — exact source `f05ff19105cb8dc7c4621c044c110b6029f63300`; managed run `29916381754` successful; participant/production push disabled.**
-- RC5 — Firebase Test Lab device-matrix automation after Android runtime dependencies stabilize through RC3–RC4. **NEXT CHECKPOINT — requires explicit lane claim after RC4 closeout merge.**
+- RC5 — Firebase Test Lab device-matrix automation after Android runtime dependencies stabilize through RC3–RC4. **ACTIVE CHECKPOINT.**
 - RC6 — WhatsApp Cloud API application adapter using outbox/idempotency/consent/template/delivery-receipt rules; production sends remain gated until provider/legal approvals exist.
 - RC7 — Google Maps runtime activation with separate restricted Android/backend credentials, privacy-safe publication semantics, quotas, manual/list fallback and kill switch.
 - RC8 — sandbox-only payment-provider adapter closure/reconciliation for already proven MTN, DPO, Stripe and PayPal rails; Airtel remains provider-pending and Flutterwave deferred; real money remains disabled.
@@ -89,4 +102,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-RC4 is closed. No new RC4 implementation writes are authorized. RC5+ source work must not begin until this closeout is merged and the next agent explicitly claims RC5 Firebase Test Lab under Issue #261 from the resulting exact `main` baseline.
+RC5 Firebase Test Lab is the sole active implementation lane. UIA Issue #354 may continue read-only evidence analysis but must not deploy or write overlapping Android/backend/PWA/portal surfaces until RC5 releases or explicitly coordinates a non-overlapping transition. RC6+ source work must not begin until RC5 has exact-head regressions, managed Test Lab evidence, status reconciliation, merge promotion and a released/transitioned lock.

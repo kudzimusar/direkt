@@ -1,0 +1,70 @@
+name: DIREKT RC5 Firebase Test Lab contract
+
+on:
+  push:
+    branches:
+      - main
+      - integration/rc5-firebase-test-lab
+    paths:
+      - "android/direkt-app/app/src/androidTest/**"
+      - ".github/workflows/android-ci.yml"
+      - ".github/workflows/firebase-test-lab.yml"
+      - ".github/workflows/rc5-test-lab-contract.yml"
+      - "scripts/rc5/**"
+      - "docs/integrations/RC5_FIREBASE_TEST_LAB_IMPLEMENTATION_NOTES.md"
+      - "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
+      - "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
+      - "WORKSTREAM_LOCK.md"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "android/direkt-app/app/src/androidTest/**"
+      - ".github/workflows/android-ci.yml"
+      - ".github/workflows/firebase-test-lab.yml"
+      - ".github/workflows/rc5-test-lab-contract.yml"
+      - "scripts/rc5/**"
+      - "docs/integrations/RC5_FIREBASE_TEST_LAB_IMPLEMENTATION_NOTES.md"
+      - "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
+      - "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
+      - "WORKSTREAM_LOCK.md"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify RC5 Test Lab source and safety contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Verify bootstrap shell syntax
+        shell: bash
+        run: |
+          bash -n scripts/rc5/bootstrap-test-lab.sh
+          bash -n scripts/rc5/verify-no-project-storage-roles.sh
+      - name: Verify Python syntax and selector self-test
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile scripts/rc5/select-test-lab-matrix.py scripts/rc5/verify-test-lab-contract.py
+          python scripts/rc5/select-test-lab-matrix.py --self-test
+      - name: Verify permanent RC5 contract
+        shell: bash
+        run: |
+          set -o pipefail
+          python scripts/rc5/verify-test-lab-contract.py 2>&1 | tee "${RUNNER_TEMP}/rc5-test-lab-contract.log"
+      - name: Upload RC5 contract diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc5-test-lab-contract-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/rc5-test-lab-contract.log
+          if-no-files-found: warn
+          retention-days: 14
