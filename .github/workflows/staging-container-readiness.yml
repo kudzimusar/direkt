@@ -86,15 +86,39 @@ jobs:
             --env POSTGRES_PASSWORD=direkt_ci \
             postgis/postgis:18-3.6
 
-          for attempt in {1..30}; do
-            if docker exec direkt-postgres-readiness pg_isready -U direkt -d direkt_test >/dev/null 2>&1; then
+          init_complete=false
+          for attempt in {1..60}; do
+            if docker logs direkt-postgres-readiness 2>&1 | grep -Fq "PostgreSQL init process complete; ready for start up."; then
+              init_complete=true
               break
             fi
-            if [[ "${attempt}" -eq 30 ]]; then
-              echo "Disposable PostGIS did not become ready." >&2
+            if [[ "$(docker inspect --format='{{.State.Running}}' direkt-postgres-readiness)" != "true" ]]; then
+              echo "Disposable PostGIS exited before initialization completed." >&2
+              docker logs direkt-postgres-readiness >&2 || true
               exit 1
             fi
-            sleep 2
+            sleep 1
+          done
+          if [[ "${init_complete}" != "true" ]]; then
+            echo "Disposable PostGIS initialization did not complete." >&2
+            exit 1
+          fi
+
+          stable_ready=0
+          for attempt in {1..30}; do
+            if docker exec direkt-postgres-readiness pg_isready -U direkt -d direkt_test >/dev/null 2>&1; then
+              stable_ready=$((stable_ready + 1))
+              if [[ "${stable_ready}" -ge 3 ]]; then
+                break
+              fi
+            else
+              stable_ready=0
+            fi
+            if [[ "${attempt}" -eq 30 ]]; then
+              echo "Disposable PostGIS did not become stably ready after initialization." >&2
+              exit 1
+            fi
+            sleep 1
           done
 
           DATABASE_URL=postgresql://direkt:direkt_ci@localhost:55432/direkt_test \
