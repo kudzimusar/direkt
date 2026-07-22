@@ -34,9 +34,9 @@ gcloud services enable \
 workdir="$(mktemp -d)"
 trap 'rm -rf "${workdir}"' EXIT
 
-# Exact current non-Storage Firebase Test Lab Admin + Firebase Analytics Viewer
-# execution permissions, plus only the two read permissions used by managed
-# preflight: iam.roles.get and serviceusage.services.get.
+# Exact current project-applicable non-Storage Firebase Test Lab Admin + Firebase
+# Analytics Viewer execution permissions, plus only the two read permissions used
+# by managed preflight: iam.roles.get and serviceusage.services.get.
 cat > "${workdir}/test-lab-runner-permissions.txt" <<'EOF'
 cloudnotifications.activities.list
 cloudtestservice.environmentcatalog.get
@@ -69,7 +69,6 @@ firebaseextensions.configs.list
 iam.roles.get
 resourcemanager.projects.get
 resourcemanager.projects.getIamPolicy
-resourcemanager.projects.list
 serviceusage.services.get
 EOF
 
@@ -81,6 +80,33 @@ storage.buckets.get
 storage.buckets.getIamPolicy
 storage.objects.create
 EOF
+
+# Fail before custom-role mutation if Google currently reports any requested
+# permission as unavailable for a project-level custom role. This prevents
+# copying a permission from a predefined role that is valid only at a parent
+# resource level (for example resourcemanager.projects.list).
+project_resource="//cloudresourcemanager.googleapis.com/projects/${project_id}"
+gcloud iam list-testable-permissions "${project_resource}" \
+  --filter="customRolesSupportLevel!=NOT_SUPPORTED" \
+  --format='value(name)' \
+  | LC_ALL=C sort -u > "${workdir}/project-testable-permissions.txt"
+
+assert_project_role_permissions_testable() {
+  local expected_file="$1"
+  local label="$2"
+  local unsupported_file="${workdir}/${label}-unsupported.txt"
+  comm -23 \
+    <(LC_ALL=C sort -u "${expected_file}") \
+    "${workdir}/project-testable-permissions.txt" > "${unsupported_file}"
+  if [[ -s "${unsupported_file}" ]]; then
+    echo "${label} contains permissions that Google does not currently allow in this project-level custom role:" >&2
+    cat "${unsupported_file}" >&2
+    exit 1
+  fi
+}
+
+assert_project_role_permissions_testable "${workdir}/test-lab-runner-permissions.txt" "direktTestLabRunner"
+assert_project_role_permissions_testable "${workdir}/test-lab-results-permissions.txt" "direktTestLabResultsWriter"
 
 normalize_permissions() {
   LC_ALL=C sort -u "$1" | paste -sd, -
@@ -208,7 +234,7 @@ test "$(jq -r --argjson age "${retention_days}" '[.[] | select(.action.type == "
 printf 'RC5 Firebase Test Lab bootstrap verified.\n'
 printf 'Project: %s\n' "${project_id}"
 printf 'Testing APIs: testing.googleapis.com and toolresults.googleapis.com enabled.\n'
-printf 'Runner role: %s (current Test Lab/Analytics non-Storage execution set plus iam.roles.get and serviceusage.services.get only).\n' "${runner_role}"
+printf 'Runner role: %s (project-applicable Test Lab/Analytics non-Storage execution set plus iam.roles.get and serviceusage.services.get only).\n' "${runner_role}"
 printf 'Results bucket: %s (uniform access, %s-day delete lifecycle).\n' "${bucket_uri}" "${retention_days}"
 printf 'Results role: %s is bucket-only and append-only for result objects; retention is owner-controlled.\n' "${results_role}"
 printf 'GitHub identity: %s via existing Workload Identity Federation; no service-account key created.\n' "${deployer_sa}"
