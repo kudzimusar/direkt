@@ -218,7 +218,12 @@ jobs:
 
       - name: Prove ANR signal, ANR exit reason and Crashlytics delivery
         shell: bash
-        run: bash scripts/rc3/prove-crashlytics-anr.sh
+        run: |
+          set -euo pipefail
+          bash scripts/rc3/prove-crashlytics-anr.sh
+          grep -Eqi "ANR in ${FIREBASE_PACKAGE_NAME}|ANR.*${FIREBASE_PACKAGE_NAME}" "${RUNNER_TEMP}/rc3-anr-system.log"
+          grep -Eqi 'Input dispatching timed out' "${RUNNER_TEMP}/rc3-anr-system.log"
+          grep -Fq "process=${FIREBASE_PACKAGE_NAME} reason=6 (ANR)" "${RUNNER_TEMP}/rc3-anr-exit-info.log"
 
       - name: Upload sanitized RC3 diagnostics
         if: always()
