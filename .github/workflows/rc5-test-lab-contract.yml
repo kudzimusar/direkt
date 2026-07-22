@@ -29,11 +29,12 @@ on:
       - "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
       - "WORKSTREAM_LOCK.md"
 
+permissions:
+  contents: read
+
 jobs:
   verify:
     name: Verify RC5 Test Lab source and safety contract
-    permissions:
-      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -55,32 +56,3 @@ jobs:
       - name: Verify permanent RC5 contract
         shell: bash
         run: python scripts/rc5/verify-test-lab-contract.py
-
-  reconcile-source-status:
-    name: Reconcile RC5 source-phase status once
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/integration/rc5-firebase-test-lab') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'integration/rc5-firebase-test-lab')
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    timeout-minutes: 8
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: integration/rc5-firebase-test-lab
-          fetch-depth: 0
-          show-progress: false
-      - name: Reconcile authoritative RC5 source-phase status
-        shell: bash
-        run: |
-          set -euo pipefail
-          python scripts/rc5/reconcile-source-status.py
-          git diff --check
-          if git diff --quiet -- docs/integrations/CURRENT_INTEGRATION_STATUS.md docs/integrations/LIVE_INTEGRATION_LEDGER.md; then
-            echo 'RC5 source-phase status already reconciled.'
-            exit 0
-          fi
-          git config user.name "direkt-rc5-status"
-          git config user.email "actions@users.noreply.github.com"
-          git add docs/integrations/CURRENT_INTEGRATION_STATUS.md docs/integrations/LIVE_INTEGRATION_LEDGER.md
-          git commit -m "docs(rc5): reconcile Test Lab source phase"
-          git push origin HEAD:integration/rc5-firebase-test-lab
