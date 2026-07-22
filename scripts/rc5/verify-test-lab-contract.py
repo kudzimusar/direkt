@@ -28,6 +28,17 @@ def prohibit(text: str, pattern: str, label: str) -> None:
         raise AssertionError(f"Prohibited {label}: pattern {pattern}")
 
 
+def heredoc(text: str, name: str) -> str:
+    match = re.search(
+        rf'cat > "\$\{{workdir\}}/{re.escape(name)}" <<\'EOF\'\n(.*?)\nEOF',
+        text,
+        flags=re.DOTALL,
+    )
+    if match is None:
+        raise AssertionError(f"Missing exact bootstrap heredoc: {name}")
+    return match.group(1)
+
+
 def main() -> int:
     lock = read("WORKSTREAM_LOCK.md")
     smoke = read("android/direkt-app/app/src/androidTest/java/com/kudzimusar/direkt/DirektAppSmokeTest.kt")
@@ -89,6 +100,7 @@ def main() -> int:
         "--no-use-orchestrator",
         "--no-record-video",
         "--no-performance-metrics",
+        "--no-auto-google-login",
         "--results-bucket \"${GCP_TEST_LAB_RESULTS_BUCKET}\"",
         "--results-dir \"${results_dir}\"",
         "--timeout 5m",
@@ -105,7 +117,9 @@ def main() -> int:
     prohibit(workflow, r"gcloud\s+storage\s+buckets\s+create", "runtime results-bucket creation")
     prohibit(workflow, r"--num-flaky-test-attempts\s+[1-9]", "automatic flaky reruns")
     prohibit(workflow, r"--use-orchestrator(?:\s|$)", "unvalidated Test Orchestrator enablement")
-    prohibit(workflow, r"--device=(?!model=\\\$\\\()", "hard-coded Test Lab device flags")
+    for line in workflow.splitlines():
+        if "--device=model=" in line and r"\(.model)" not in line:
+            raise AssertionError(f"Hard-coded Test Lab device flag is prohibited: {line.strip()}")
 
     for needle in (
         "testing.googleapis.com",
@@ -120,6 +134,7 @@ def main() -> int:
         "cloudtoolresults.executions.create",
         "firebaseanalytics.resources.googleAnalyticsReadAndAnalyze",
         "storage.buckets.get",
+        "storage.buckets.update",
         "storage.objects.create",
         "gcloud projects add-iam-policy-binding",
         "gcloud storage buckets add-iam-policy-binding",
@@ -129,9 +144,20 @@ def main() -> int:
     ):
         require(bootstrap, needle, "owner bootstrap boundary")
 
-    runner_block = bootstrap.split("test-lab-runner-permissions.txt", 1)[1].split("EOF", 1)[0]
+    runner_block = heredoc(bootstrap, "test-lab-runner-permissions.txt")
+    results_block = heredoc(bootstrap, "test-lab-results-permissions.txt")
     if "storage." in runner_block:
         raise AssertionError("RC5 Test Lab runner custom role must not contain Cloud Storage permissions.")
+    expected_results_permissions = {
+        "storage.buckets.get",
+        "storage.buckets.update",
+        "storage.objects.create",
+        "storage.objects.delete",
+        "storage.objects.get",
+        "storage.objects.list",
+    }
+    if set(results_block.splitlines()) != expected_results_permissions:
+        raise AssertionError("RC5 bucket-scoped results role permission set drifted from the reviewed contract.")
     prohibit(bootstrap, r"gcloud\s+iam\s+service-accounts\s+keys\s+create", "service-account key creation")
     prohibit(bootstrap, r"gcloud\s+secrets\s+(create|versions\s+add)", "secret creation")
     prohibit(bootstrap, r"--role\s+roles/(owner|editor)(?:\s|$)", "broad owner/editor grant")
@@ -169,6 +195,7 @@ def main() -> int:
     print("identity=github_oidc_no_service_account_keys")
     print("storage=dedicated_bucket_scope_30_day_lifecycle")
     print("matrix=live_virtual_2_to_3_devices_api33_current_required")
+    print("auto_google_login=false")
     print("production_authorization=false")
     return 0
 
