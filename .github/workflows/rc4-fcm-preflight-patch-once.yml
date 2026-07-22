@@ -15,7 +15,7 @@ on:
       - .github/workflows/rc4-fcm-preflight-patch-once.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   patch:
@@ -121,16 +121,12 @@ jobs:
               raise SystemExit('expected FCM canary backend verification fragment not found')
           target.write_text(text.replace(old, new, 1))
           PY
-
-          rm -f .github/workflows/rc4-fcm-preflight-patch-once.yml
           git diff --check
 
-      - name: Commit exact canary preflight fix
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/workflows/firebase-fcm-canary.yml .github/workflows/rc4-fcm-preflight-patch-once.yml
-          git commit -m 'fix(rc4): provision PostGIS for FCM canary preflight'
-          git push origin HEAD:integration/rc4-fcm-canary-preflight-fix
+      - name: Upload exact patched canary workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc4-fcm-canary-preflight-patch-${{ github.run_id }}
+          path: .github/workflows/firebase-fcm-canary.yml
+          if-no-files-found: error
+          retention-days: 2
