@@ -13,7 +13,7 @@ import javax.net.ssl.HttpsURLConnection
 
 internal object PushRuntimePolicy {
     // RC4 proves synthetic delivery only. A later controlled-pilot privacy/release decision must
-    // explicitly change this source-controlled kill switch before participant tokens are registered.
+    // explicitly change this source-controlled kill switch before participant registrations are uploaded.
     const val PARTICIPANT_REGISTRATION_ENABLED = false
 }
 
@@ -24,18 +24,14 @@ internal class PushRegistrationCoordinator(
     private val sessionStore = PilotSessionStore(context)
 
     fun registerCurrentToken(session: PilotSession) {
-        if (!PushRuntimePolicy.PARTICIPANT_REGISTRATION_ENABLED) return
-        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            val token = task.result?.takeIf { task.isSuccessful && it.length in 20..4096 }
-                ?: return@addOnCompleteListener
-            registerToken(session, token)
-        }
+        if (!PushRuntimePolicy.PARTICIPANT_REGISTRATION_ENABLED || session.accessToken.isBlank()) return
+        FirebaseMessaging.getInstance().register()
     }
 
-    fun registerRotatedToken(token: String) {
-        if (!PushRuntimePolicy.PARTICIPANT_REGISTRATION_ENABLED || token.length !in 20..4096) return
+    fun registerRegisteredInstallation(installationId: String) {
+        if (!PushRuntimePolicy.PARTICIPANT_REGISTRATION_ENABLED || installationId.length !in 20..4096) return
         val session = sessionStore.load() ?: return
-        registerToken(session, token)
+        registerTarget(session, installationId)
     }
 
     fun unregisterCurrentDevice(session: PilotSession) {
@@ -58,13 +54,14 @@ internal class PushRegistrationCoordinator(
                 } finally {
                     connection.disconnect()
                 }
+                FirebaseMessaging.getInstance().unregister()
             }
         }
     }
 
-    private fun registerToken(
+    private fun registerTarget(
         session: PilotSession,
-        token: String,
+        registrationId: String,
     ) {
         executor.execute {
             runCatching {
@@ -83,7 +80,7 @@ internal class PushRegistrationCoordinator(
                     val body =
                         JSONObject()
                             .put("installationId", installationId())
-                            .put("token", token)
+                            .put("token", registrationId)
                             .put("platform", "android")
                             .put("appVersion", BuildConfig.VERSION_NAME)
                             .toString()

@@ -5,10 +5,12 @@ import android.content.Intent
 import com.google.firebase.messaging.FirebaseMessaging
 import com.kudzimusar.direkt.BuildConfig
 import java.io.File
+import org.json.JSONObject
 
 internal object FcmCanary {
     const val EXTRA_MODE = "direkt_rc4_fcm_canary"
     const val TOKEN_FILE = "rc4-fcm-token"
+    const val STATUS_FILE = "rc4-fcm-registration-status.json"
 
     private val sourceShaPattern = Regex("^[0-9a-f]{40}$")
 
@@ -16,12 +18,40 @@ internal object FcmCanary {
         if (!canRun()) return
         if (intent.getStringExtra(EXTRA_MODE)?.trim()?.lowercase() != "token") return
 
-        val tokenFile = File(context.filesDir, TOKEN_FILE)
-        tokenFile.delete()
-        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            val token = task.result?.takeIf { task.isSuccessful && it.length in 20..4096 } ?: return@addOnCompleteListener
-            tokenFile.writeText(token, Charsets.UTF_8)
+        File(context.filesDir, TOKEN_FILE).delete()
+        File(context.filesDir, STATUS_FILE).delete()
+        FirebaseMessaging.getInstance().register().addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                writeStatus(
+                    context,
+                    "failed",
+                    task.exception?.javaClass?.simpleName ?: "UnknownError",
+                )
+            }
         }
+    }
+
+    fun recordRegisteredInstallation(
+        context: Context,
+        installationId: String,
+    ) {
+        if (!canRun() || installationId.length !in 20..4096) return
+        File(context.filesDir, TOKEN_FILE).writeText(installationId, Charsets.UTF_8)
+        writeStatus(context, "registered", null)
+    }
+
+    private fun writeStatus(
+        context: Context,
+        status: String,
+        errorType: String?,
+    ) {
+        File(context.filesDir, STATUS_FILE).writeText(
+            JSONObject()
+                .put("status", status)
+                .put("errorType", errorType ?: JSONObject.NULL)
+                .toString(),
+            Charsets.UTF_8,
+        )
     }
 
     fun canRun(): Boolean =
