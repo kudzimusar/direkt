@@ -28,6 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 55
     env:
+      DIREKT_CONFIRMATION: ${{ inputs.confirmation }}
       GCP_PROJECT_ID: direkt-dev-502701
       GCP_PROJECT_NUMBER: "264358173369"
       GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
@@ -48,7 +49,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "${{ inputs.confirmation }}" = "RUN-DIREKT-TEST-LAB"
+          test "${DIREKT_CONFIRMATION}" = "RUN-DIREKT-TEST-LAB"
           [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
           test "${GCP_PROJECT_ID}" = "direkt-dev-502701"
           test "${GCP_PROJECT_NUMBER}" = "264358173369"
@@ -138,6 +139,7 @@ jobs:
           project_policy="$(gcloud projects get-iam-policy "${GCP_PROJECT_ID}" --format=json)"
           member="serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}"
           test "$(jq -r --arg member "${member}" --arg role "${GCP_TEST_LAB_RUNNER_ROLE}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${project_policy}")" = "1"
+          test "$(jq -r --arg member "${member}" --arg role "${GCP_TEST_LAB_RESULTS_ROLE}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${project_policy}")" = "0"
           for prohibited_role in roles/owner roles/editor roles/cloudtestservice.testAdmin roles/firebase.analyticsViewer roles/storage.admin roles/storage.objectAdmin; do
             if jq -e --arg member "${member}" --arg role "${prohibited_role}" '.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)' <<< "${project_policy}" >/dev/null; then
               echo "Prohibited broad project-level role ${prohibited_role} is bound to the GitHub deployer." >&2
@@ -146,17 +148,51 @@ jobs:
           done
 
           runner_permissions="$(gcloud iam roles describe direktTestLabRunner --project "${GCP_PROJECT_ID}" --format='value(includedPermissions)' | tr ';' '\n' | sed '/^$/d' | sort -u)"
-          test -n "${runner_permissions}"
+          expected_runner_permissions="$(cat <<'EOF'
+cloudnotifications.activities.list
+cloudtestservice.environmentcatalog.get
+cloudtestservice.matrices.create
+cloudtestservice.matrices.get
+cloudtestservice.matrices.update
+cloudtoolresults.executions.create
+cloudtoolresults.executions.get
+cloudtoolresults.executions.list
+cloudtoolresults.executions.update
+cloudtoolresults.histories.create
+cloudtoolresults.histories.get
+cloudtoolresults.histories.list
+cloudtoolresults.settings.create
+cloudtoolresults.settings.get
+cloudtoolresults.settings.update
+cloudtoolresults.steps.create
+cloudtoolresults.steps.get
+cloudtoolresults.steps.list
+cloudtoolresults.steps.update
+firebase.billingPlans.get
+firebase.clients.get
+firebase.clients.list
+firebase.links.list
+firebase.playLinks.get
+firebase.playLinks.list
+firebase.projects.get
+firebase.projects.list
+firebaseanalytics.resources.googleAnalyticsReadAndAnalyze
+firebaseextensions.configs.get
+firebaseextensions.configs.list
+iam.roles.get
+resourcemanager.projects.get
+resourcemanager.projects.getIamPolicy
+resourcemanager.projects.list
+EOF
+)"
+          test "${runner_permissions}" = "${expected_runner_permissions}"
           if grep -Eq '^storage\.' <<< "${runner_permissions}"; then
             echo "The project-scoped Test Lab runner role contains prohibited Cloud Storage permissions." >&2
             exit 1
           fi
-          for permission in cloudtestservice.environmentcatalog.get cloudtestservice.matrices.create cloudtoolresults.executions.create firebaseanalytics.resources.googleAnalyticsReadAndAnalyze; do
-            grep -Fxq "${permission}" <<< "${runner_permissions}"
-          done
 
           results_permissions="$(gcloud iam roles describe direktTestLabResultsWriter --project "${GCP_PROJECT_ID}" --format='value(includedPermissions)' | tr ';' '\n' | sed '/^$/d' | sort -u)"
-          expected_results_permissions=$'storage.buckets.get\nstorage.buckets.update\nstorage.objects.create\nstorage.objects.delete\nstorage.objects.get\nstorage.objects.list'
+          expected_results_permissions=$'storage.buckets.get\nstorage.buckets.getIamPolicy\nstorage.buckets.update\nstorage.objects.create\nstorage.objects.delete\nstorage.objects.get\nstorage.objects.list'
           test "${results_permissions}" = "${expected_results_permissions}"
 
           bucket_record="$(gcloud storage buckets describe "${GCP_TEST_LAB_RESULTS_BUCKET}" --project "${GCP_PROJECT_ID}" --format=json)"
