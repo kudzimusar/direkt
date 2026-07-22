@@ -47,15 +47,16 @@ jobs:
               'fcm = replace_once(fcm, sentinel, "", "remove obsolete FCM verifier sentinel")',
           )
           old = 'write(path, verifier)\n\n# The permanent canary remains; remove the obsolete compatibility sentinel.'
-          new = '''verifier = replace_once(
-    verifier,
-    '    print("fcm=implemented_gated_synthetic_canary_pending_participant_disabled")\\n',
-    '    print("fcm=active_synthetic_only_managed_canary_participant_disabled")\\n',
-    "FCM verifier summary promotion",
-)
-write(path, verifier)
-
-# The permanent canary remains; remove the obsolete compatibility sentinel.'''
+          new = (
+              'verifier = replace_once(\n'
+              '    verifier,\n'
+              '    \'    print("fcm=implemented_gated_synthetic_canary_pending_participant_disabled")\\\\n\',\n'
+              '    \'    print("fcm=active_synthetic_only_managed_canary_participant_disabled")\\\\n\',\n'
+              '    "FCM verifier summary promotion",\n'
+              ')\n'
+              'write(path, verifier)\n\n'
+              '# The permanent canary remains; remove the obsolete compatibility sentinel.'
+          )
           if body.count(old) != 1:
               raise SystemExit(f'Unable to inject verifier summary promotion exactly once: {body.count(old)}')
           body = body.replace(old, new, 1)
