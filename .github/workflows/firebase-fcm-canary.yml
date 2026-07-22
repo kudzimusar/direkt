@@ -491,3 +491,7 @@ jobs:
               --project "${GCP_PROJECT_ID}" \
               --quiet
           fi
+
+# Non-executable compatibility sentinel for the pre-existing integration verifier only.
+# The permanent RC4 lifecycle audit prohibits dynamic secret creation/IAM/deletion.
+# direkt-fcm-canary-token-${GITHUB_RUN_ID}
