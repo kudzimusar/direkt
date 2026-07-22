@@ -65,15 +65,20 @@ internal object CrashlyticsCanary {
             }
             "anr" -> {
                 enableSyntheticCollection(crashlytics, "anr")
-                // Let onCreate complete and a frame become interactive before blocking the main
-                // looper. The managed canary then sends an input event and requires Android's
-                // ActivityManager ANR signal before the report is flushed from a clean process.
-                activity.window.decorView.postDelayed(
-                    {
-                        Thread.sleep(20_000L)
-                    },
-                    1_500L,
-                )
+                // Arm the synthetic ANR only after Android reports that this Activity owns the
+                // focused window. The managed workflow then injects a real input event and accepts
+                // only a package-scoped `Input dispatching timed out` framework ANR.
+                val blockWhenFocused =
+                    object : Runnable {
+                        override fun run() {
+                            if (!activity.hasWindowFocus()) {
+                                activity.window.decorView.postDelayed(this, 250L)
+                                return
+                            }
+                            Thread.sleep(20_000L)
+                        }
+                    }
+                activity.window.decorView.post(blockWhenFocused)
             }
         }
     }
