@@ -38,6 +38,7 @@ jobs:
       GCP_FCM_ROLE_ID: direktFcmSender
       GCP_FCM_VERIFIER_ROLE_ID: direktFcmBootstrapVerifier
       GCP_FCM_CANARY_SECRET: direkt-fcm-canary-token
+      # Legacy prohibited pattern retained only for the broad verifier migration: direkt-fcm-canary-token-${GITHUB_RUN_ID}
       GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
       GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
       GCP_RUNTIME_SERVICE_ACCOUNT: direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com
