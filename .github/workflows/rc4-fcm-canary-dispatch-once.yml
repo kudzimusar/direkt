@@ -9,22 +9,59 @@ on:
 
 permissions:
   actions: write
-  contents: read
+  contents: write
 
 jobs:
   dispatch:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Dispatch reviewed RC4 FCM canary on exact merged main
+      - uses: actions/checkout@v6
+        with:
+          ref: integration/rc4-fcm-canary-dispatch
+          fetch-depth: 0
+
+      - name: Resolve or dispatch reviewed RC4 FCM canary
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_SHA: c67d7e27e33ac4d7a18d6ec9810f3663fbd62a14
         run: |
           set -euo pipefail
-          gh api \
-            --method POST \
-            "repos/${GITHUB_REPOSITORY}/actions/workflows/firebase-fcm-canary.yml/dispatches" \
-            -f ref=main \
-            -f "inputs[confirmation]=RUN-DIREKT-FCM-CANARY" \
-            -f "inputs[source_sha]=${SOURCE_SHA}"
+
+          find_run() {
+            gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/firebase-fcm-canary.yml/runs?event=workflow_dispatch&per_page=50" \
+              --jq ".workflow_runs | map(select(.head_sha == \"${SOURCE_SHA}\")) | sort_by(.created_at) | last | .id // empty"
+          }
+
+          run_id="$(find_run)"
+          dispatched=false
+          if [[ -z "${run_id}" ]]; then
+            gh api \
+              --method POST \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/firebase-fcm-canary.yml/dispatches" \
+              -f ref=main \
+              -f "inputs[confirmation]=RUN-DIREKT-FCM-CANARY" \
+              -f "inputs[source_sha]=${SOURCE_SHA}"
+            dispatched=true
+
+            for _ in $(seq 1 30); do
+              sleep 2
+              run_id="$(find_run)"
+              [[ -n "${run_id}" ]] && break
+            done
+          fi
+
+          [[ "${run_id}" =~ ^[0-9]+$ ]]
+          mkdir -p .github
+          jq -n \
+            --arg source_sha "${SOURCE_SHA}" \
+            --argjson run_id "${run_id}" \
+            --argjson dispatched "${dispatched}" \
+            '{source_sha: $source_sha, run_id: $run_id, dispatched_now: $dispatched}' \
+            > .github/rc4-fcm-dispatch-result.json
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/rc4-fcm-dispatch-result.json
+          git commit -m "chore(rc4): record FCM canary dispatch" || true
+          git push origin HEAD:integration/rc4-fcm-canary-dispatch
