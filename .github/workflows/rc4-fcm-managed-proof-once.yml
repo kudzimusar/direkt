@@ -1,0 +1,76 @@
+name: DIREKT RC4 one-shot exact-main FCM proof bridge
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/rc4-fcm-managed-proof-once.yml
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch-and-enforce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - name: Validate exact-main trigger
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF}" = "refs/heads/main"
+          [[ "${GITHUB_SHA}" =~ ^[0-9a-f]{40}$ ]]
+
+      - name: Dispatch exact-source managed FCM canary
+        id: dispatch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          existing="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/firebase-fcm-canary.yml/runs?event=workflow_dispatch&per_page=50" \
+            --jq ".workflow_runs | map(select(.head_sha == \"${SOURCE_SHA}\")) | sort_by(.created_at) | last | .id // empty")"
+          if [[ -n "${existing}" ]]; then
+            run_id="${existing}"
+          else
+            before="$(date -u +%s)"
+            gh api \
+              --method POST \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/firebase-fcm-canary.yml/dispatches" \
+              -f ref=main \
+              -f "inputs[confirmation]=RUN-DIREKT-FCM-CANARY" \
+              -f "inputs[source_sha]=${SOURCE_SHA}"
+            run_id=""
+            for _ in $(seq 1 45); do
+              sleep 2
+              run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/firebase-fcm-canary.yml/runs?event=workflow_dispatch&per_page=50" \
+                --jq ".workflow_runs | map(select(.head_sha == \"${SOURCE_SHA}\" and (.created_at | fromdateiso8601) >= ${before})) | sort_by(.created_at) | last | .id // empty")"
+              [[ -n "${run_id}" ]] && break
+            done
+          fi
+          [[ "${run_id}" =~ ^[0-9]+$ ]]
+          echo "run_id=${run_id}" >> "${GITHUB_OUTPUT}"
+          echo "Managed FCM canary run: ${run_id}"
+
+      - name: Wait for exact managed canary conclusion
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ steps.dispatch.outputs.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for _ in $(seq 1 390); do
+            status="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}" --jq '.status')"
+            conclusion="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}" --jq '.conclusion // empty')"
+            if [[ "${status}" = "completed" ]]; then
+              echo "Managed FCM canary ${RUN_ID} concluded: ${conclusion}"
+              test "${conclusion}" = "success"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Timed out waiting for managed FCM canary ${RUN_ID}." >&2
+          exit 1
