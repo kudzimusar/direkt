@@ -52,15 +52,21 @@ export class FcmPushProviderAdapter implements PushProviderPort {
       },
     ).catch((error: unknown) => {
       throw new PushProviderUnavailableError(
-        error instanceof Error ? `FCM request failed: ${error.name}` : 'FCM request failed.',
+        error instanceof Error
+          ? `FCM request failed: ${error.name}`
+          : 'FCM request failed.',
       );
     });
 
     const responseText = await response.text();
     if (!response.ok) {
-      const invalidToken = /UNREGISTERED|registration-token-not-registered/i.test(responseText);
+      const invalidToken = /UNREGISTERED|registration-token-not-registered/i.test(
+        responseText,
+      );
       if (response.status === 429 || response.status >= 500) {
-        throw new PushProviderUnavailableError(`FCM request unavailable with HTTP ${response.status}.`);
+        throw new PushProviderUnavailableError(
+          `FCM request unavailable with HTTP ${response.status}.`,
+        );
       }
       throw new PushProviderRejectedError(
         response.status,
@@ -75,8 +81,13 @@ export class FcmPushProviderAdapter implements PushProviderPort {
     } catch {
       throw new PushProviderUnavailableError('FCM returned a malformed success response.');
     }
-    if (typeof parsed.name !== 'string' || !parsed.name.startsWith(`projects/${this.projectId}/messages/`)) {
-      throw new PushProviderUnavailableError('FCM success response did not contain a valid message name.');
+    if (
+      typeof parsed.name !== 'string' ||
+      !parsed.name.startsWith(`projects/${this.projectId}/messages/`)
+    ) {
+      throw new PushProviderUnavailableError(
+        'FCM success response did not contain a valid message name.',
+      );
     }
     return { provider: 'fcm', messageId: parsed.name };
   }
@@ -102,7 +113,9 @@ export class FcmPushProviderAdapter implements PushProviderPort {
     }
     const payload = (await response.json()) as MetadataTokenResponse;
     if (typeof payload.access_token !== 'string' || payload.access_token.length < 20) {
-      throw new PushProviderUnavailableError('Google metadata credential response was invalid.');
+      throw new PushProviderUnavailableError(
+        'Google metadata credential response was invalid.',
+      );
     }
     return payload.access_token;
   }
