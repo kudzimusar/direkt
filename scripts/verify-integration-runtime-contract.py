@@ -409,6 +409,16 @@ def main() -> None:
     )
     require(
         android_manifest,
+        'android:name="firebase_messaging_installation_id_enabled"',
+        "FCM FID registration callback enablement",
+    )
+    require(
+        android_manifest,
+        'android:name="firebase_messaging_auto_init_enabled"',
+        "FCM auto-init manifest control",
+    )
+    require(
+        android_manifest,
         'android:exported="false"',
         "non-exported Android messaging service",
     )
@@ -426,10 +436,15 @@ def main() -> None:
         'const val EXTRA_MODE = "direkt_rc4_fcm_canary"',
         'BuildConfig.DIREKT_CRASHLYTICS_DATA_MODE == "synthetic-only"',
         'sourceShaPattern = Regex("^[0-9a-f]{40}$")',
-        "FirebaseMessaging.getInstance().token",
+        "FirebaseMessaging.getInstance().register()",
         'File(context.filesDir, TOKEN_FILE)',
     ):
         require(android_fcm_canary, needle, "FCM synthetic token canary invariant")
+    prohibit(
+        android_fcm_canary,
+        r"FirebaseMessaging\.getInstance\(\)\.token",
+        "deprecated FCM token retrieval in RC4 canary",
+    )
     for needle in (
         "FirebaseMessagingService",
         'data["direkt_kind"] != "rc4_synthetic_canary"',
@@ -439,7 +454,9 @@ def main() -> None:
         "markDeliveryOnce",
         "rc4-fcm-receipt-$phase.json",
         "POST_NOTIFICATIONS",
-        "PushRegistrationCoordinator(applicationContext).registerRotatedToken(token)",
+        "override fun onRegistered(installationId: String)",
+        "FcmCanary.recordRegisteredInstallation(applicationContext, installationId)",
+        "registerRegisteredInstallation(installationId)",
     ):
         require(android_fcm_service, needle, "FCM Android receipt invariant")
     prohibit(android_fcm_service, r"Log\.", "FCM payload/token logging")
@@ -484,6 +501,7 @@ def main() -> None:
         "https://fcm.googleapis.com/v1/projects/",
         "FCM HTTP v1 endpoint",
     )
+    require(fcm_adapter, "fid: request.token", "FCM FID target")
     require(
         fcm_adapter,
         "metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
