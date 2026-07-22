@@ -10,6 +10,7 @@ on:
 permissions:
   actions: write
   contents: read
+  issues: write
 
 jobs:
   dispatch-and-enforce:
@@ -54,6 +55,16 @@ jobs:
           [[ "${run_id}" =~ ^[0-9]+$ ]]
           echo "run_id=${run_id}" >> "${GITHUB_OUTPUT}"
           echo "Managed FCM canary run: ${run_id}"
+
+      - name: Record managed canary start
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ steps.dispatch.outputs.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh issue comment 261 --repo "${GITHUB_REPOSITORY}" --body "RC4 managed FCM proof started. Exact source: \`${SOURCE_SHA}\`. Managed canary run: \`${RUN_ID}\`. This is synthetic-only; participant/production push remains disabled."
 
       - name: Wait for exact managed canary conclusion
         env:
