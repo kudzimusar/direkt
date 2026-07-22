@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "status": "verified-against-merged-release-manifest",
   "manifest_source": "Gradle merged release manifest including dependency contributions",
   "declared_permissions": [
@@ -7,6 +7,7 @@
       "name": "android.permission.ACCESS_NETWORK_STATE",
       "classification": "normal-non-runtime",
       "runtime_prompt": false,
+      "runtime_request_enabled_current_release": false,
       "play_sensitive_permission_declaration_expected": false,
       "purpose": "Basic network connectivity state used by bundled networking and authentication components."
     },
@@ -14,20 +15,31 @@
       "name": "android.permission.INTERNET",
       "classification": "normal-non-runtime",
       "runtime_prompt": false,
+      "runtime_request_enabled_current_release": false,
       "play_sensitive_permission_declaration_expected": false,
-      "purpose": "HTTPS access to DIREKT API and approved authentication services."
+      "purpose": "HTTPS access to DIREKT API and approved authentication/notification services."
+    },
+    {
+      "name": "android.permission.POST_NOTIFICATIONS",
+      "classification": "dangerous-runtime-user-controlled",
+      "runtime_prompt": true,
+      "runtime_request_enabled_current_release": false,
+      "play_sensitive_permission_declaration_expected": false,
+      "purpose": "Allows visible push notifications on Android 13+ only after a later approved participant push activation. RC4 keeps participant registration and the runtime permission request source-controlled off; the managed synthetic canary grants permission directly on its test emulator."
     },
     {
       "name": "com.google.android.providers.gsf.permission.READ_GSERVICES",
       "classification": "dependency-contributed-non-runtime",
       "runtime_prompt": false,
+      "runtime_request_enabled_current_release": false,
       "play_sensitive_permission_declaration_expected": false,
-      "purpose": "Google/Firebase service support contributed by the authentication dependency surface."
+      "purpose": "Google/Firebase service support contributed by the reviewed Firebase dependency surface."
     },
     {
       "name": "com.kudzimusar.direkt.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
       "classification": "app-scoped-receiver-protection",
       "runtime_prompt": false,
+      "runtime_request_enabled_current_release": false,
       "play_sensitive_permission_declaration_expected": false,
       "purpose": "AndroidX-generated protection for non-exported dynamic receivers inside the app boundary."
     }
@@ -46,19 +58,18 @@
     "android.permission.MANAGE_EXTERNAL_STORAGE",
     "android.permission.READ_MEDIA_IMAGES",
     "android.permission.READ_MEDIA_VIDEO",
-    "android.permission.RECORD_AUDIO",
-    "android.permission.POST_NOTIFICATIONS"
+    "android.permission.RECORD_AUDIO"
   ],
   "current_play_declaration_assessment": {
     "sensitive_or_high_risk_permission_form_expected": false,
-    "reason": "The merged release manifest contains two normal network permissions plus dependency/app-scoped service and receiver-protection declarations. None adds a dangerous runtime permission. Any future permission change must update this inventory and pass merged-manifest review."
+    "reason": "POST_NOTIFICATIONS is a user-controlled runtime permission but does not use a restricted/sensitive Play permission declaration form. The current preauthorization build keeps the runtime request and participant FCM registration disabled. All other merged permissions are normal, dependency-contributed, or app-scoped."
   },
   "planned_feature_rule": {
     "location": "Manual area search remains the required fallback. Do not add background location. Foreground location requires a separate evidence-backed change and Play review.",
     "camera_and_media": "Prefer system photo/file pickers and scoped access rather than broad storage permissions.",
     "phone_sms": "Do not request SMS or call-log permissions for OTP or contact handoff.",
     "contacts": "Not required for MVP. Use minimum-scope platform picker if a future approved feature genuinely needs contacts.",
-    "notifications": "Add POST_NOTIFICATIONS only when production notification delivery is implemented and the user-facing rationale/fallback is tested."
+    "notifications": "POST_NOTIFICATIONS is declared for the reviewed FCM client path, but the current participant runtime request remains source-controlled disabled. Before participant activation, validate rationale, denial fallback, opt-out/token deletion and exact release-candidate behavior."
   },
   "submission_boundary": "Play Console makes the final permissions determination from the uploaded AAB. Recheck this inventory against the exact release candidate merged manifest before submission."
 }
