@@ -161,6 +161,7 @@ jobs:
         run: |
           set -euo pipefail
           component="${FIREBASE_PACKAGE_NAME}/com.kudzimusar.direkt.MainActivity"
+          delivery_pattern='Crashlytics report successfully enqueued to DataTransport|Crashlytics report upload complete'
           "${ADB_BIN}" shell setprop log.tag.FirebaseCrashlytics DEBUG
           "${ADB_BIN}" logcat -c
           "${ADB_BIN}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
@@ -187,28 +188,33 @@ jobs:
           test "${fatal_seen}" = "true"
           ! "${ADB_BIN}" shell pidof "${FIREBASE_PACKAGE_NAME}" >/dev/null 2>&1
 
-          # Let Android finish the default uncaught-exception teardown before launching the
-          # dedicated flush process. The synthetic crash is now produced only after startup and
-          # Crashlytics handler installation have had time to complete.
-          sleep 5
-          "${ADB_BIN}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
-          "${ADB_BIN}" logcat -c
-          "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary flush >/dev/null
-          flush_started=false
-          for _ in $(seq 1 20); do
-            if "${ADB_BIN}" shell pidof "${FIREBASE_PACKAGE_NAME}" >/dev/null 2>&1; then flush_started=true; break; fi
-            sleep 1
-          done
-          test "${flush_started}" = "true"
-
+          # Crashlytics may enqueue the fatal report during uncaught-exception processing before
+          # Android tears down the process. If that already happened, the report is complete and
+          # deleted from the local queue; otherwise start a clean process to flush the stored report.
           delivered=false
-          for _ in $(seq 1 60); do
-            "${ADB_BIN}" logcat -d -s FirebaseCrashlytics > "${RUNNER_TEMP}/rc3-crash-upload.log" || true
-            if grep -Eqi 'Crashlytics report successfully enqueued to DataTransport|Crashlytics report upload complete|[[:space:]]204[[:space:]]' "${RUNNER_TEMP}/rc3-crash-upload.log"; then delivered=true; break; fi
-            sleep 2
-          done
+          : > "${RUNNER_TEMP}/rc3-crash-upload.log"
+          if grep -Eqi "${delivery_pattern}" "${RUNNER_TEMP}/rc3-crash-system.log"; then
+            delivered=true
+          else
+            sleep 5
+            "${ADB_BIN}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
+            "${ADB_BIN}" logcat -c
+            "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary flush >/dev/null
+            flush_started=false
+            for _ in $(seq 1 20); do
+              if "${ADB_BIN}" shell pidof "${FIREBASE_PACKAGE_NAME}" >/dev/null 2>&1; then flush_started=true; break; fi
+              sleep 1
+            done
+            test "${flush_started}" = "true"
+
+            for _ in $(seq 1 60); do
+              "${ADB_BIN}" logcat -d -s FirebaseCrashlytics > "${RUNNER_TEMP}/rc3-crash-upload.log" || true
+              if grep -Eqi "${delivery_pattern}" "${RUNNER_TEMP}/rc3-crash-upload.log"; then delivered=true; break; fi
+              sleep 2
+            done
+          fi
           test "${delivered}" = "true"
-          grep -Ei 'Crashlytics report successfully enqueued to DataTransport|Crashlytics report upload complete|[[:space:]]204[[:space:]]' "${RUNNER_TEMP}/rc3-crash-upload.log" | tail -n 10
+          grep -Ei "${delivery_pattern}" "${RUNNER_TEMP}/rc3-crash-system.log" "${RUNNER_TEMP}/rc3-crash-upload.log" | tail -n 10
 
       - name: Prove ANR signal and Crashlytics delivery
         shell: bash
