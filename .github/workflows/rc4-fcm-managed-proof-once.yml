@@ -118,4 +118,4 @@ jobs:
           echo "Timed out waiting for managed FCM canary ${RUN_ID}." >&2
           exit 1
 
-# RC4 Secret Manager bootstrap classification trigger.
+# RC4 Firebase BoM 34.16.0 plus bounded registration retry proof trigger.
