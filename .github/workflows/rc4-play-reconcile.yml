@@ -1,0 +1,84 @@
+name: DIREKT RC4 one-shot Play verifier reconciler
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: direkt-rc4-play-reconcile
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    if: github.event.pull_request.head.ref == 'integration/rc4-fcm' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: integration/rc4-fcm
+          fetch-depth: 0
+      - name: Reconcile Phase 12B verifier with reviewed RC4 boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/verify-phase12-play-readiness.py')
+          s = p.read_text()
+          replacements = [
+            (
+              '    "com.google.firebase:firebase-crashlytics",\n    "org.jetbrains.kotlin:kotlin-stdlib",',
+              '    "com.google.firebase:firebase-crashlytics",\n    "com.google.firebase:firebase-messaging",\n    "org.jetbrains.kotlin:kotlin-stdlib",'
+            ),
+            (
+              '        "libs.firebase.crashlytics": "com.google.firebase:firebase-crashlytics",\n',
+              '        "libs.firebase.crashlytics": "com.google.firebase:firebase-crashlytics",\n        "libs.firebase.messaging": "com.google.firebase:firebase-messaging",\n'
+            ),
+            (
+              '    if any(item.get("runtime_prompt") is not False for item in permissions.get("declared_permissions", [])):\n        fail("current preauthorization permission inventory must not contain a runtime-prompt permission")\n',
+              '    declared_permissions = permissions.get("declared_permissions", [])\n    notification_permission = next(\n        (item for item in declared_permissions if item.get("name") == "android.permission.POST_NOTIFICATIONS"),\n        None,\n    )\n    if not isinstance(notification_permission, dict):\n        fail("POST_NOTIFICATIONS is declared by RC4 but absent from the permission inventory")\n    if notification_permission.get("runtime_prompt") is not True:\n        fail("POST_NOTIFICATIONS must be classified as a runtime-prompt permission")\n    if notification_permission.get("runtime_request_enabled_current_release") is not False:\n        fail("current preauthorization participant notification permission request must remain disabled")\n    if any(\n        item.get("runtime_prompt") is not False\n        for item in declared_permissions\n        if item.get("name") != "android.permission.POST_NOTIFICATIONS"\n    ):\n        fail("POST_NOTIFICATIONS must remain the only runtime-prompt permission in the current inventory")\n'
+            ),
+            (
+              '        "implementation(libs.firebase.crashlytics)",\n        "DIREKT_CRASHLYTICS_CANARY_ENABLED",',
+              '        "implementation(libs.firebase.crashlytics)",\n        "implementation(libs.firebase.messaging)",\n        "DIREKT_CRASHLYTICS_CANARY_ENABLED",'
+            ),
+            (
+              '    if \'android:name="firebase_crashlytics_collection_enabled"\' not in source_manifest or \'android:value="false"\' not in source_manifest:\n        fail("Crashlytics SDK is present but automatic collection is not explicitly disabled in the source manifest")\n',
+              '    if \'android:name="firebase_crashlytics_collection_enabled"\' not in source_manifest or \'android:value="false"\' not in source_manifest:\n        fail("Crashlytics SDK is present but automatic collection is not explicitly disabled in the source manifest")\n    if \'android:name="firebase_messaging_auto_init_enabled"\' not in source_manifest:\n        fail("Firebase Messaging SDK is present but auto-init is not explicitly controlled")\n    messaging_auto_init = re.search(\n        r\'android:name="firebase_messaging_auto_init_enabled"\\s+android:value="([^"]+)"\',\n        source_manifest,\n    )\n    if messaging_auto_init is None or messaging_auto_init.group(1) != "false":\n        fail("Firebase Messaging auto-init must remain explicitly disabled in the preauthorization source manifest")\n'
+            ),
+            (
+              '    if "Firebase Crashlytics" not in sdk_names:\n        fail("Firebase Crashlytics dependency exists but is absent from Data Safety SDK inventory")\n',
+              '    if "Firebase Crashlytics" not in sdk_names:\n        fail("Firebase Crashlytics dependency exists but is absent from Data Safety SDK inventory")\n    if "Firebase Cloud Messaging" not in sdk_names:\n        fail("Firebase Messaging dependency exists but is absent from Data Safety SDK inventory")\n'
+            ),
+            (
+              '    if crashlytics_inventory.get("production_participant_collection_authorized") is not False:\n        fail("Crashlytics Data Safety inventory must not authorize production participant telemetry")\n',
+              '    if crashlytics_inventory.get("production_participant_collection_authorized") is not False:\n        fail("Crashlytics Data Safety inventory must not authorize production participant telemetry")\n\n    messaging_inventory = next(\n        (item for item in data_safety.get("sdk_inventory", []) if item.get("sdk") == "Firebase Cloud Messaging"),\n        None,\n    )\n    if not isinstance(messaging_inventory, dict):\n        fail("Firebase Cloud Messaging SDK inventory entry is invalid")\n    if messaging_inventory.get("automatic_initialization_default") is not False:\n        fail("FCM Data Safety inventory must record auto-init default-off")\n    if messaging_inventory.get("participant_registration_authorized") is not False:\n        fail("FCM Data Safety inventory must not authorize participant registration")\n    if messaging_inventory.get("production_push_authorized") is not False:\n        fail("FCM Data Safety inventory must not authorize production push")\n'
+            ),
+            (
+              '    print("crashlytics_production_participant_collection_authorized=false")\n',
+              '    print("crashlytics_production_participant_collection_authorized=false")\n    print("fcm_sdk_present=true")\n    print("fcm_auto_init_default=false")\n    print("fcm_participant_registration_authorized=false")\n    print("fcm_production_push_authorized=false")\n'
+            ),
+          ]
+          for old, new in replacements:
+              if old not in s:
+                  raise SystemExit(f'missing expected verifier fragment: {old[:80]!r}')
+              s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+          python -m py_compile scripts/verify-phase12-play-readiness.py
+          git diff --check
+      - name: Commit exact verifier reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- scripts/verify-phase12-play-readiness.py; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/verify-phase12-play-readiness.py
+          git commit -m 'test(rc4): reconcile Play and Data Safety verifier'
+          git push origin HEAD:integration/rc4-fcm
