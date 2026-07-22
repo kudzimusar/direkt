@@ -177,7 +177,7 @@ def main() -> int:
     for needle in (
         'bash scripts/rc5/verify-no-project-storage-roles.sh "${project_id}" "${deployer_member}"',
         "gcloud storage buckets update",
-        "30-day delete lifecycle",
+        'retention_days="${GCP_TEST_LAB_RESULTS_RETENTION_DAYS:-30}"',
         "no lifecycle mutation, object read, overwrite or delete",
     ):
         require(bootstrap, needle, "owner bootstrap boundary")
