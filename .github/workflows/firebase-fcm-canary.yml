@@ -33,7 +33,6 @@ jobs:
       GCP_ARTIFACT_REGISTRY: direkt-containers
       GCP_IMAGE_NAME: direkt-api
       GCP_CANARY_JOB: direkt-fcm-canary
-      GCP_MIGRATION_JOB: direkt-fcm-canary-migrate
       GCP_FCM_ROLE_ID: direktFcmSender
       GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
       GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
@@ -122,7 +121,7 @@ jobs:
         run: |
           set -euo pipefail
           token="$(gcloud auth print-access-token)"
-          echo "::add-mask::${token}"
+          printf '::add-mask::%s\n' "${token}"
           curl --fail --silent --show-error \
             --header "Authorization: Bearer ${token}" \
             "https://firebase.googleapis.com/v1beta1/projects/${GCP_PROJECT_ID}/androidApps?pageSize=100" \
@@ -141,7 +140,7 @@ jobs:
           test -n "${FIREBASE_API_KEY}"
           test "${CONFIG_APP_ID}" = "${FIREBASE_APP_ID}"
           test "${CONFIG_PROJECT_ID}" = "${GCP_PROJECT_ID}"
-          echo "::add-mask::${FIREBASE_API_KEY}"
+          printf '::add-mask::%s\n' "${FIREBASE_API_KEY}"
           echo "DIREKT_FIREBASE_API_KEY=${FIREBASE_API_KEY}" >> "${GITHUB_ENV}"
           echo "DIREKT_FIREBASE_APP_ID=${CONFIG_APP_ID}" >> "${GITHUB_ENV}"
           echo "DIREKT_FIREBASE_PROJECT_ID=${CONFIG_PROJECT_ID}" >> "${GITHUB_ENV}"
@@ -216,7 +215,7 @@ jobs:
             sleep 2
           done
           test "${token_ready}" = "true"
-          echo "::add-mask::${FCM_DEVICE_TOKEN}"
+          printf '::add-mask::%s\n' "${FCM_DEVICE_TOKEN}"
           printf '%s' "${FCM_DEVICE_TOKEN}" > "${RUNNER_TEMP}/fcm-device-token"
           chmod 600 "${RUNNER_TEMP}/fcm-device-token"
           "${adb_bin}" shell run-as "${FIREBASE_PACKAGE_NAME}" rm -f files/rc4-fcm-token
@@ -268,31 +267,6 @@ jobs:
             backend/direkt-api
           docker push "${IMAGE_URI}"
 
-      - name: Apply exact RC4 database migration through private Cloud Run Job
-        shell: bash
-        run: |
-          set -euo pipefail
-          gcloud run jobs deploy "${GCP_MIGRATION_JOB}" \
-            --project "${GCP_PROJECT_ID}" \
-            --region "${GCP_REGION}" \
-            --image "${IMAGE_URI}" \
-            --service-account "${GCP_RUNTIME_SERVICE_ACCOUNT}" \
-            --tasks 1 \
-            --max-retries 0 \
-            --task-timeout 3m \
-            --cpu 1 \
-            --memory 512Mi \
-            --command node \
-            --args dist/scripts/migrate.js \
-            --set-secrets "DATABASE_URL=direkt-database-url:${DIREKT_DATABASE_URL_SECRET_VERSION}" \
-            --labels "direkt-environment=staging,direkt-data-mode=synthetic-only,direkt-integration=fcm-canary-migration" \
-            --quiet
-          gcloud run jobs execute "${GCP_MIGRATION_JOB}" \
-            --project "${GCP_PROJECT_ID}" \
-            --region "${GCP_REGION}" \
-            --wait \
-            --quiet
-
       - name: Deploy private synthetic FCM canary job
         shell: bash
         run: |
@@ -340,7 +314,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          "${ADB_BIN}" shell rm -f /data/local/tmp/unused >/dev/null 2>&1 || true
           "${ADB_BIN}" shell run-as "${FIREBASE_PACKAGE_NAME}" rm -f files/rc4-fcm-receipt-foreground.json
           gcloud run jobs execute "${GCP_CANARY_JOB}" \
             --project "${GCP_PROJECT_ID}" \
@@ -426,7 +399,7 @@ jobs:
             echo "- FCM token: temporary one-run Secret Manager value; not logged or retained in artifacts"
           } >> "${GITHUB_STEP_SUMMARY}"
 
-      - name: Cleanup temporary FCM token and canary jobs
+      - name: Cleanup temporary FCM token and canary job
         if: always()
         shell: bash
         run: |
@@ -436,4 +409,3 @@ jobs:
             gcloud secrets delete "${FCM_TOKEN_SECRET}" --project "${GCP_PROJECT_ID}" --quiet
           fi
           gcloud run jobs delete "${GCP_CANARY_JOB}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --quiet
-          gcloud run jobs delete "${GCP_MIGRATION_JOB}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --quiet
