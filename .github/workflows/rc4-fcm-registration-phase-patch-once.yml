@@ -1,0 +1,80 @@
+name: DIREKT RC4 one-shot registration phase patcher
+
+on:
+  push:
+    branches:
+      - integration/rc4-fcm-registration-phase-diagnostics
+    paths:
+      - .github/workflows/rc4-fcm-registration-phase-patch-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: integration/rc4-fcm-registration-phase-diagnostics
+          fetch-depth: 0
+
+      - name: Harden RC4 registration phase diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/firebase-fcm-canary.yml')
+          text = path.read_text()
+
+          replacements = [
+              (
+                  '      GCP_FCM_API: fcm.googleapis.com\n      GCP_FCM_SEND_PERMISSION:',
+                  '      GCP_FCM_API: fcm.googleapis.com\n      GCP_FIS_API: firebaseinstallations.googleapis.com\n      GCP_FCM_SEND_PERMISSION:',
+              ),
+              (
+                  '          test "${GCP_FCM_API}" = "fcm.googleapis.com"\n          test "${GCP_FCM_SEND_PERMISSION}"',
+                  '          test "${GCP_FCM_API}" = "fcm.googleapis.com"\n          test "${GCP_FIS_API}" = "firebaseinstallations.googleapis.com"\n          test "${GCP_FCM_SEND_PERMISSION}"',
+              ),
+              (
+                  '''          service_state="$(curl --fail --silent --show-error \\\n            --header "Authorization: Bearer ${access_token}" \\\n            "https://serviceusage.googleapis.com/v1/projects/${project_number}/services/${GCP_FCM_API}" \\\n            | jq -r '.state // empty')"\n          test "${service_state}" = "ENABLED"\n''',
+                  '''          for service in "${GCP_FCM_API}" "${GCP_FIS_API}"; do\n            service_state="$(curl --fail --silent --show-error \\\n              --header "Authorization: Bearer ${access_token}" \\\n              "https://serviceusage.googleapis.com/v1/projects/${project_number}/services/${service}" \\\n              | jq -r '.state // empty')"\n            test "${service_state}" = "ENABLED"\n          done\n''',
+              ),
+              (
+                  '      - name: Install exact canary APK and obtain private FCM token',
+                  '      - name: Install exact canary APK and obtain private FCM registration identifier',
+              ),
+              (
+                  '''          adb_bin="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}/platform-tools/adb"\n          test -x "${adb_bin}"\n          "${adb_bin}" install -r "${APK_PATH}"\n''',
+                  '''          adb_bin="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}/platform-tools/adb"\n          test -x "${adb_bin}"\n          gms_path="$("${adb_bin}" shell pm path com.google.android.gms 2>/dev/null | tr -d '\\r' | head -n 1)"\n          test -n "${gms_path}"\n          gms_version="$("${adb_bin}" shell dumpsys package com.google.android.gms 2>/dev/null | sed -n 's/.*versionName=//p' | head -n 1 | tr -d '\\r')"\n          [[ "${gms_version}" =~ ^[0-9A-Za-z._+-]{1,80}$ ]]\n          echo "Google Play services package present; version ${gms_version}."\n          "${adb_bin}" install -r "${APK_PATH}"\n''',
+              ),
+              (
+                  '''          if [[ "${registration_failed}" = "true" ]]; then\n            echo "::error title=FCM registration failed::Synthetic FCM registration failed with ${registration_error_type}."\n            exit 1\n          fi\n''',
+                  '''          if [[ "${registration_failed}" = "true" ]]; then\n            echo "RC4_FCM_REGISTRATION_DIAG status=failed errorType=${registration_error_type}"\n            echo "::error title=FCM registration failed::Synthetic FCM registration failed with ${registration_error_type}."\n            exit 1\n          fi\n''',
+              ),
+              (
+                  '''          if [[ "${token_ready}" != "true" ]]; then\n            registration_status="$("${adb_bin}" shell run-as "${FIREBASE_PACKAGE_NAME}" cat files/rc4-fcm-registration-status.json 2>/dev/null | tr -d '\\r\\n' || true)"\n            status="$(jq -r '.status // "missing"' <<< "${registration_status:-{}}" 2>/dev/null || echo missing)"\n            echo "::error title=FCM registration timed out::No registration identifier was produced; sanitized status=${status}."\n            exit 1\n          fi\n''',
+                  '''          if [[ "${token_ready}" != "true" ]]; then\n            registration_status="$("${adb_bin}" shell run-as "${FIREBASE_PACKAGE_NAME}" cat files/rc4-fcm-registration-status.json 2>/dev/null | tr -d '\\r\\n' || true)"\n            status="$(jq -r '.status // "missing"' <<< "${registration_status:-{}}" 2>/dev/null || echo missing)"\n            if [[ ! "${status}" =~ ^[a-z0-9_-]{1,80}$ ]]; then\n              status="unknown"\n            fi\n            echo "RC4_FCM_REGISTRATION_DIAG status=${status} errorType=none"\n            echo "::error title=FCM registration timed out::No registration identifier was produced; sanitized status=${status}."\n            exit 1\n          fi\n          echo "RC4_FCM_REGISTRATION_DIAG status=registered errorType=none"\n''',
+              ),
+          ]
+
+          for old, new in replacements:
+              if old not in text:
+                  raise SystemExit(f'expected RC4 workflow fragment not found: {old[:120]!r}')
+              text = text.replace(old, new, 1)
+
+          path.write_text(text)
+          PY
+          git diff --check
+
+      - name: Commit RC4 diagnostic promotion
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189824+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/firebase-fcm-canary.yml
+          git commit -m 'test(rc4): expose FCM registration phase boundary'
+          git push origin HEAD:integration/rc4-fcm-registration-phase-diagnostics
