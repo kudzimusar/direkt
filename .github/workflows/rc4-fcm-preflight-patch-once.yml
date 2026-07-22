@@ -7,12 +7,19 @@ on:
       - integration/rc4-fcm-canary-preflight-fix
     paths:
       - .github/workflows/rc4-fcm-preflight-patch-once.yml
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/rc4-fcm-preflight-patch-once.yml
 
 permissions:
   contents: write
 
 jobs:
   patch:
+    if: github.event_name == 'push' || github.event.pull_request.head.ref == 'integration/rc4-fcm-canary-preflight-fix'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
