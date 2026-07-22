@@ -65,6 +65,9 @@ jobs:
         run: |
           set -euo pipefail
           gh issue comment 261 --repo "${GITHUB_REPOSITORY}" --body "RC4 managed FCM proof started. Exact source: \`${SOURCE_SHA}\`. Managed canary run: \`${RUN_ID}\`. This is synthetic-only; participant/production push remains disabled."
+          gh issue create --repo "${GITHUB_REPOSITORY}" \
+            --title "RC4 FCM proof run ${RUN_ID} source ${SOURCE_SHA}" \
+            --body "Temporary machine-readable receipt for RC4 managed proof. Parent: #261. Synthetic-only; participant/production push disabled. Close this receipt during RC4 closeout."
 
       - name: Wait for exact managed canary conclusion
         env:
