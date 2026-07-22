@@ -164,16 +164,32 @@ jobs:
           "${ADB_BIN}" shell setprop log.tag.FirebaseCrashlytics DEBUG
           "${ADB_BIN}" logcat -c
           "${ADB_BIN}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
-          "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary crash >/dev/null 2>&1 || true
+          "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary crash >/dev/null
+
+          crash_process_started=false
           for _ in $(seq 1 20); do
-            if ! "${ADB_BIN}" shell pidof "${FIREBASE_PACKAGE_NAME}" >/dev/null 2>&1; then break; fi
+            if "${ADB_BIN}" shell pidof "${FIREBASE_PACKAGE_NAME}" >/dev/null 2>&1; then crash_process_started=true; break; fi
             sleep 1
           done
+          test "${crash_process_started}" = "true"
+
+          fatal_seen=false
+          for _ in $(seq 1 30); do
+            "${ADB_BIN}" logcat -d > "${RUNNER_TEMP}/rc3-crash-system.log" || true
+            if grep -Fq 'DIREKT_RC3_SYNTHETIC_CRASH' "${RUNNER_TEMP}/rc3-crash-system.log" && grep -Eqi 'FATAL EXCEPTION' "${RUNNER_TEMP}/rc3-crash-system.log"; then
+              fatal_seen=true
+            fi
+            if [[ "${fatal_seen}" = "true" ]] && ! "${ADB_BIN}" shell pidof "${FIREBASE_PACKAGE_NAME}" >/dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+          test "${fatal_seen}" = "true"
           ! "${ADB_BIN}" shell pidof "${FIREBASE_PACKAGE_NAME}" >/dev/null 2>&1
 
           # Let Android finish the default uncaught-exception teardown before launching the
-          # dedicated flush process. Prior managed evidence shows the cached report is delivered
-          # reliably once this clean second process starts with Crashlytics settings available.
+          # dedicated flush process. The synthetic crash is now produced only after startup and
+          # Crashlytics handler installation have had time to complete.
           sleep 5
           "${ADB_BIN}" shell am force-stop "${FIREBASE_PACKAGE_NAME}" || true
           "${ADB_BIN}" logcat -c
@@ -253,6 +269,7 @@ jobs:
         with:
           name: direkt-rc3-crashlytics-canary-${{ github.run_number }}-${{ inputs.source_sha }}
           path: |
+            ${{ runner.temp }}/rc3-crash-system.log
             ${{ runner.temp }}/rc3-crash-upload.log
             ${{ runner.temp }}/rc3-anr-system.log
             ${{ runner.temp }}/rc3-anr-upload.log
