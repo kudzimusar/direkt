@@ -32,13 +32,26 @@ import { ResendEmailProviderAdapter } from './resend-email-provider.adapter';
       provide: PUSH_PROVIDER,
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const mode = configService.getOrThrow<string>('PUSH_PROVIDER_MODE');
+        const mode = configService.get<string>('PUSH_PROVIDER_MODE') ?? 'disabled';
         if (mode === 'disabled') {
           return new DisabledPushProviderAdapter();
         }
+        if (mode !== 'fcm') {
+          throw new Error('Unsupported PUSH_PROVIDER_MODE.');
+        }
+        if (
+          configService.get<string>('NODE_ENV') === 'production' ||
+          configService.get<string>('DIREKT_DATA_MODE') !== 'synthetic-only'
+        ) {
+          throw new Error('FCM provider activation currently permits synthetic-only non-production use.');
+        }
+        const projectId = configService.get<string>('FIREBASE_PROJECT_ID')?.trim() ?? '';
+        if (!/^[a-z][a-z0-9-]{4,29}$/.test(projectId)) {
+          throw new Error('FCM provider requires a valid FIREBASE_PROJECT_ID.');
+        }
         return new FcmPushProviderAdapter(
-          configService.getOrThrow<string>('FIREBASE_PROJECT_ID'),
-          configService.getOrThrow<number>('PUSH_REQUEST_TIMEOUT_MS'),
+          projectId,
+          configService.get<number>('PUSH_REQUEST_TIMEOUT_MS') ?? 8_000,
         );
       },
     },
