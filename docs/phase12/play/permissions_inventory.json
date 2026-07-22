@@ -28,6 +28,22 @@
       "purpose": "Allows visible push notifications on Android 13+ only after a later approved participant push activation. RC4 keeps participant registration and the runtime permission request source-controlled off; the managed synthetic canary grants permission directly on its test emulator."
     },
     {
+      "name": "android.permission.WAKE_LOCK",
+      "classification": "dependency-contributed-normal-non-runtime",
+      "runtime_prompt": false,
+      "runtime_request_enabled_current_release": false,
+      "play_sensitive_permission_declaration_expected": false,
+      "purpose": "Firebase Messaging dependency support for bounded background message processing; this is a normal permission with no user runtime prompt."
+    },
+    {
+      "name": "com.google.android.c2dm.permission.RECEIVE",
+      "classification": "dependency-contributed-non-runtime",
+      "runtime_prompt": false,
+      "runtime_request_enabled_current_release": false,
+      "play_sensitive_permission_declaration_expected": false,
+      "purpose": "Firebase Messaging transport permission contributed by the reviewed FCM SDK for receiving messages addressed to the application."
+    },
+    {
       "name": "com.google.android.providers.gsf.permission.READ_GSERVICES",
       "classification": "dependency-contributed-non-runtime",
       "runtime_prompt": false,
@@ -62,7 +78,7 @@
   ],
   "current_play_declaration_assessment": {
     "sensitive_or_high_risk_permission_form_expected": false,
-    "reason": "POST_NOTIFICATIONS is a user-controlled runtime permission but does not use a restricted/sensitive Play permission declaration form. The current preauthorization build keeps the runtime request and participant FCM registration disabled. All other merged permissions are normal, dependency-contributed, or app-scoped."
+    "reason": "POST_NOTIFICATIONS is the only user-controlled runtime permission and does not use a restricted/sensitive Play permission declaration form. The current preauthorization build keeps its runtime request and participant FCM registration disabled. WAKE_LOCK and com.google.android.c2dm.permission.RECEIVE are reviewed non-runtime permissions contributed by Firebase Messaging; the remaining merged permissions are normal, dependency-contributed, or app-scoped."
   },
   "planned_feature_rule": {
     "location": "Manual area search remains the required fallback. Do not add background location. Foreground location requires a separate evidence-backed change and Play review.",
