@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   apply-closeout:
@@ -20,11 +21,14 @@ jobs:
         with:
           ref: integration/rc4-fcm-closeout
           fetch-depth: 0
+          show-progress: false
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Execute reviewed closeout patch and remove temporary triggers
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -39,7 +43,19 @@ jobs:
           body = body.replace('f"exact-main managed proof run `{RUN}`" if False else "29916381754"', '"29916381754"')
           Path('/tmp/rc4-closeout.sh').write_text(body, encoding='utf-8')
           PY
-          bash /tmp/rc4-closeout.sh
+
+          if ! bash /tmp/rc4-closeout.sh > /tmp/rc4-closeout.log 2>&1; then
+            {
+              echo '### RC4 closeout patch helper failed safely'
+              echo
+              echo 'No closeout commit was pushed. Sanitized tail:'
+              echo '```text'
+              tail -n 40 /tmp/rc4-closeout.log | sed -E 's/(token|secret|password)=([^ ]+)/\1=[REDACTED]/Ig'
+              echo '```'
+            } > /tmp/rc4-closeout-comment.md
+            gh pr comment "${{ github.event.pull_request.number }}" --body-file /tmp/rc4-closeout-comment.md
+            exit 1
+          fi
 
           git rm .github/workflows/rc4-closeout-pr-trigger.yml
           git commit -m "chore(rc4): remove temporary closeout trigger"
