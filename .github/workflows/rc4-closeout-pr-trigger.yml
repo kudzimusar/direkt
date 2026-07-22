@@ -1,0 +1,46 @@
+name: DIREKT RC4 PR-scoped closeout trigger
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/rc4-closeout-pr-trigger.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply-closeout:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'integration/rc4-fcm-closeout'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: integration/rc4-fcm-closeout
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Execute reviewed closeout patch and remove temporary triggers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+
+          workflow = Path('.github/workflows/rc4-closeout-patcher.yml').read_text(encoding='utf-8')
+          marker = '      - name: Apply exact RC4 closeout reconciliation\n        shell: bash\n        run: |\n'
+          if workflow.count(marker) != 1:
+              raise SystemExit('Unable to locate the controlled closeout script exactly once.')
+          body = textwrap.dedent(workflow.split(marker, 1)[1])
+          body = body.replace('f"exact-main managed proof run `{RUN}`" if False else "29916381754"', '"29916381754"')
+          Path('/tmp/rc4-closeout.sh').write_text(body, encoding='utf-8')
+          PY
+          bash /tmp/rc4-closeout.sh
+
+          git rm .github/workflows/rc4-closeout-pr-trigger.yml
+          git commit -m "chore(rc4): remove temporary closeout trigger"
+          git push origin HEAD:integration/rc4-fcm-closeout
