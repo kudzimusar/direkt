@@ -13,6 +13,7 @@ internal object FcmCanary {
     const val STATUS_FILE = "rc4-fcm-registration-status.json"
 
     private val sourceShaPattern = Regex("^[0-9a-f]{40}$")
+    private val statusLock = Any()
 
     fun handleLaunch(context: Context, intent: Intent) {
         if (!canRun()) return
@@ -20,13 +21,23 @@ internal object FcmCanary {
 
         File(context.filesDir, TOKEN_FILE).delete()
         File(context.filesDir, STATUS_FILE).delete()
+        writeStatus(context, "started", null)
+
         FirebaseMessaging.getInstance().register().addOnCompleteListener { task ->
-            if (!task.isSuccessful) {
-                writeStatus(
-                    context,
-                    "failed",
-                    task.exception?.javaClass?.simpleName ?: "UnknownError",
-                )
+            synchronized(statusLock) {
+                if (!task.isSuccessful) {
+                    writeStatusLocked(
+                        context,
+                        "failed",
+                        task.exception?.javaClass?.simpleName ?: "UnknownError",
+                    )
+                    return@addOnCompleteListener
+                }
+
+                val registrationFile = File(context.filesDir, TOKEN_FILE)
+                if (!registrationFile.isFile || registrationFile.length() == 0L) {
+                    writeStatusLocked(context, "register_task_succeeded_waiting_callback", null)
+                }
             }
         }
     }
@@ -36,11 +47,23 @@ internal object FcmCanary {
         installationId: String,
     ) {
         if (!canRun() || installationId.length !in 20..4096) return
-        File(context.filesDir, TOKEN_FILE).writeText(installationId, Charsets.UTF_8)
-        writeStatus(context, "registered", null)
+        synchronized(statusLock) {
+            File(context.filesDir, TOKEN_FILE).writeText(installationId, Charsets.UTF_8)
+            writeStatusLocked(context, "registered", null)
+        }
     }
 
     private fun writeStatus(
+        context: Context,
+        status: String,
+        errorType: String?,
+    ) {
+        synchronized(statusLock) {
+            writeStatusLocked(context, status, errorType)
+        }
+    }
+
+    private fun writeStatusLocked(
         context: Context,
         status: String,
         errorType: String?,
