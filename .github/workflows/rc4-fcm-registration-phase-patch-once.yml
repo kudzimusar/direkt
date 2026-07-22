@@ -1,9 +1,9 @@
 name: DIREKT RC4 one-shot registration phase patcher
 
 on:
-  push:
+  pull_request:
     branches:
-      - integration/rc4-fcm-registration-phase-diagnostics
+      - main
     paths:
       - .github/workflows/rc4-fcm-registration-phase-patch-once.yml
 
@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   patch:
+    if: github.head_ref == 'integration/rc4-fcm-registration-phase-diagnostics'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -74,7 +75,7 @@ jobs:
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
-          git config user.email '4189824+github-actions[bot]@users.noreply.github.com'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add .github/workflows/firebase-fcm-canary.yml
           git commit -m 'test(rc4): expose FCM registration phase boundary'
           git push origin HEAD:integration/rc4-fcm-registration-phase-diagnostics
