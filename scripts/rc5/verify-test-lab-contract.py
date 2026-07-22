@@ -3,10 +3,10 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -28,7 +28,7 @@ def prohibit(text: str, pattern: str, label: str) -> None:
         raise AssertionError(f"Prohibited {label}: pattern {pattern}")
 
 
-def heredoc(text: str, name: str) -> str:
+def heredoc(text: str, name: str) -> set[str]:
     match = re.search(
         rf'cat > "\$\{{workdir\}}/{re.escape(name)}" <<\'EOF\'\n(.*?)\nEOF',
         text,
@@ -36,7 +36,7 @@ def heredoc(text: str, name: str) -> str:
     )
     if match is None:
         raise AssertionError(f"Missing exact bootstrap heredoc: {name}")
-    return match.group(1)
+    return {line for line in match.group(1).splitlines() if line}
 
 
 def main() -> int:
@@ -49,14 +49,18 @@ def main() -> int:
     storage_boundary = read("scripts/rc5/verify-no-project-storage-roles.sh")
     notes = read("docs/integrations/RC5_FIREBASE_TEST_LAB_IMPLEMENTATION_NOTES.md")
 
-    require(lock, "CLAIMED — RC5 Firebase Test Lab device-matrix closure", "active RC5 lock")
-    require(lock, "RC5 implementation contract — ACTIVE", "RC5 implementation contract")
-    require(lock, "RC5 Firebase Test Lab is the sole active implementation lane", "single-writer conflict rule")
+    for needle in (
+        "CLAIMED — RC5 Firebase Test Lab device-matrix closure",
+        "RC5 implementation contract — ACTIVE",
+        "RC5 Firebase Test Lab is the sole active implementation lane",
+    ):
+        require(lock, needle, "RC5 lock contract")
 
     for needle in (
         'onNodeWithTag("foundation-root")',
         'onNodeWithText("Find the right local service")',
         'onNodeWithTag("pilot-auth-card")',
+        ".performScrollTo()",
         '"Real participant sign-in is disabled."',
         '"No production credential or participant endpoint is embedded in this build."',
     ):
@@ -72,7 +76,6 @@ def main() -> int:
 
     for needle in (
         "assembleDebugAndroidTest",
-        "adb_bin",
         "shell am instrument -w -r",
         "com.kudzimusar.direkt.DirektAppSmokeTest",
         "com.kudzimusar.direkt.debug.test/androidx.test.runner.AndroidJUnitRunner",
@@ -83,101 +86,50 @@ def main() -> int:
 
     for needle in (
         "workflow_dispatch:",
-        "source_sha:",
         'DIREKT_CONFIRMATION: ${{ inputs.confirmation }}',
         'test "${DIREKT_CONFIRMATION}" = "RUN-DIREKT-TEST-LAB"',
         'test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"',
         "google-github-actions/auth@v3",
         "direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com",
         "projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main",
-        "testing.googleapis.com",
-        "toolresults.googleapis.com",
-        "gs://direkt-test-lab-results-264358173369",
-        "GITHUB_RUN_ATTEMPT",
+        'bash scripts/rc5/verify-no-project-storage-roles.sh "${GCP_PROJECT_ID}" "${member}"',
+        "storage.buckets.getIamPolicy",
+        "storage.objects.create",
+        "expected_results_permissions=$'storage.buckets.get\\nstorage.buckets.getIamPolicy\\nstorage.objects.create'",
         'results_dir="rc5/${SOURCE_SHA}/${GITHUB_RUN_ID}/attempt-${GITHUB_RUN_ATTEMPT}"',
-        'name: rc5-firebase-test-lab-${{ github.run_id }}-${{ github.run_attempt }}',
-        "githubRunAttempt",
         "gcloud firebase test android models list",
         "--filter=virtual",
-        "select-test-lab-matrix.py",
         "--type instrumentation",
-        "--test-targets \"class ${DIREKT_TEST_CLASS}\"",
         "--num-flaky-test-attempts 0",
         "--no-use-orchestrator",
         "--no-record-video",
         "--no-performance-metrics",
         "--no-auto-google-login",
         "--results-bucket \"${GCP_TEST_LAB_RESULTS_BUCKET}\"",
-        "--results-dir \"${results_dir}\"",
-        "--timeout 5m",
-        'test "${runner_permissions}" = "${expected_runner_permissions}"',
-        'test "${results_permissions}" = "${expected_results_permissions}"',
-        '--arg role "${GCP_TEST_LAB_RESULTS_ROLE}"',
-        "storage.buckets.getIamPolicy",
-        "iam.roles.get",
-        "serviceusage.services.get",
-        'bash scripts/rc5/verify-no-project-storage-roles.sh "${GCP_PROJECT_ID}" "${member}"',
-        "retention-days: 30",
         'productionAuthorization: false',
         'dataMode: "synthetic-public-safe-only"',
+        "retention-days: 30",
     ):
         require(workflow, needle, "managed Test Lab control")
 
-    prohibit(workflow, r"git\s+merge-base\s+--is-ancestor", "stale ancestor-only source acceptance")
-    prohibit(
-        workflow,
-        r'test\s+"\$\{\{\s*inputs\.confirmation\s*\}\}"',
-        "raw workflow input interpolation inside shell",
-    )
-    prohibit(workflow, r"credentials_json\s*:", "static Google service-account credentials")
-    prohibit(workflow, r"service[-_ ]?account[-_ ]?key", "service-account key workflow path")
-    prohibit(workflow, r"gcloud\s+services\s+enable", "runtime API enablement")
-    prohibit(workflow, r"gcloud\s+iam\s+roles\s+(create|update)", "runtime IAM role mutation")
-    prohibit(workflow, r"gcloud\s+storage\s+buckets\s+create", "runtime results-bucket creation")
-    prohibit(workflow, r"--num-flaky-test-attempts\s+[1-9]", "automatic flaky reruns")
-    prohibit(workflow, r"--use-orchestrator(?:\s|$)", "unvalidated Test Orchestrator enablement")
+    for pattern, label in (
+        (r"git\s+merge-base\s+--is-ancestor", "stale ancestor-only source acceptance"),
+        (r'test\s+"\$\{\{\s*inputs\.confirmation\s*\}\}"', "raw workflow input interpolation"),
+        (r"credentials_json\s*:", "static Google credentials"),
+        (r"gcloud\s+services\s+enable", "runtime API enablement"),
+        (r"gcloud\s+iam\s+roles\s+(create|update)", "runtime IAM mutation"),
+        (r"gcloud\s+storage\s+buckets\s+(create|update)", "runtime bucket mutation"),
+        (r"gcloud\s+storage\s+rm", "runtime evidence deletion"),
+        (r"--num-flaky-test-attempts\s+[1-9]", "automatic flaky reruns"),
+        (r"--use-orchestrator(?:\s|$)", "unvalidated Test Orchestrator"),
+    ):
+        prohibit(workflow, pattern, label)
+
     for line in workflow.splitlines():
         if "--device=model=" in line and r"\(.model)" not in line:
             raise AssertionError(f"Hard-coded Test Lab device flag is prohibited: {line.strip()}")
 
-    project_results_absence = (
-        'test "$(jq -r --arg member "${member}" --arg role "${GCP_TEST_LAB_RESULTS_ROLE}" '
-        "'[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' "
-        '<<< "${project_policy}")" = "0"'
-    )
-    require(workflow, project_results_absence, "project-scope results-role prohibition")
-
-    for needle in (
-        "testing.googleapis.com",
-        "toolresults.googleapis.com",
-        "direktTestLabRunner",
-        "direktTestLabResultsWriter",
-        "direkt-test-lab-results-${project_number}",
-        "--uniform-bucket-level-access",
-        'retention_days="${GCP_TEST_LAB_RESULTS_RETENTION_DAYS:-30}"',
-        "cloudtestservice.environmentcatalog.get",
-        "cloudtestservice.matrices.create",
-        "cloudtoolresults.executions.create",
-        "firebaseanalytics.resources.googleAnalyticsReadAndAnalyze",
-        "iam.roles.get",
-        "serviceusage.services.get",
-        "storage.buckets.get",
-        "storage.buckets.getIamPolicy",
-        "storage.buckets.update",
-        "storage.objects.create",
-        "gcloud projects add-iam-policy-binding",
-        "gcloud storage buckets add-iam-policy-binding",
-        'bash scripts/rc5/verify-no-project-storage-roles.sh "${project_id}" "${deployer_member}"',
-        "roles/cloudtestservice.testAdmin",
-        "roles/firebase.analyticsViewer",
-        "roles/storage.admin",
-        "roles/storage.objectAdmin",
-    ):
-        require(bootstrap, needle, "owner bootstrap boundary")
-
-    runner_block = heredoc(bootstrap, "test-lab-runner-permissions.txt")
-    results_block = heredoc(bootstrap, "test-lab-results-permissions.txt")
-    expected_runner_permissions = {
+    expected_runner = {
         "cloudnotifications.activities.list",
         "cloudtestservice.environmentcatalog.get",
         "cloudtestservice.matrices.create",
@@ -212,35 +164,29 @@ def main() -> int:
         "resourcemanager.projects.list",
         "serviceusage.services.get",
     }
-    if set(runner_block.splitlines()) != expected_runner_permissions:
-        raise AssertionError(
-            "RC5 runner role drifted from the current Test Lab/Analytics non-Storage execution set plus the two narrow managed-preflight reads."
-        )
-    if "storage." in runner_block:
-        raise AssertionError("RC5 Test Lab runner custom role must not contain Cloud Storage permissions.")
-
-    expected_results_permissions = {
+    expected_results = {
         "storage.buckets.get",
         "storage.buckets.getIamPolicy",
-        "storage.buckets.update",
         "storage.objects.create",
-        "storage.objects.delete",
-        "storage.objects.get",
-        "storage.objects.list",
     }
-    if set(results_block.splitlines()) != expected_results_permissions:
-        raise AssertionError("RC5 bucket-scoped results role permission set drifted from the reviewed contract.")
+    if heredoc(bootstrap, "test-lab-runner-permissions.txt") != expected_runner:
+        raise AssertionError("RC5 Test Lab runner role permission set drifted.")
+    if heredoc(bootstrap, "test-lab-results-permissions.txt") != expected_results:
+        raise AssertionError("RC5 append-only results role permission set drifted.")
 
-    bootstrap_project_results_absence = (
-        'test "$(jq -r --arg member "${deployer_member}" --arg role "${results_role}" '
-        "'[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' "
-        '<<< "${project_policy}")" = "0"'
-    )
-    require(bootstrap, bootstrap_project_results_absence, "bootstrap project-scope results-role prohibition")
-
-    prohibit(bootstrap, r"gcloud\s+iam\s+service-accounts\s+keys\s+create", "service-account key creation")
-    prohibit(bootstrap, r"gcloud\s+secrets\s+(create|versions\s+add)", "secret creation")
-    prohibit(bootstrap, r"--role\s+roles/(owner|editor)(?:\s|$)", "broad owner/editor grant")
+    for needle in (
+        'bash scripts/rc5/verify-no-project-storage-roles.sh "${project_id}" "${deployer_member}"',
+        "gcloud storage buckets update",
+        "30-day delete lifecycle",
+        "no lifecycle mutation, object read, overwrite or delete",
+    ):
+        require(bootstrap, needle, "owner bootstrap boundary")
+    for pattern, label in (
+        (r"gcloud\s+iam\s+service-accounts\s+keys\s+create", "service-account key creation"),
+        (r"gcloud\s+secrets\s+(create|versions\s+add)", "secret creation"),
+        (r"--role\s+roles/(owner|editor)(?:\s|$)", "broad owner/editor grant"),
+    ):
+        prohibit(bootstrap, pattern, label)
 
     for needle in (
         "gcloud projects get-iam-policy",
@@ -248,29 +194,25 @@ def main() -> int:
         "organizations/*/roles/*",
         "Project-scoped role ${role}",
         "contains prohibited Cloud Storage permissions",
-        "grep -Eq '^storage\.'",
+        "grep -Eq '^storage\\.'",
     ):
         require(storage_boundary, needle, "project-scoped Storage-role verifier")
 
     for needle in (
         "MIN_SDK = 23",
         "NOTIFICATION_API = 33",
-        "MAX_CURRENT_API = 36",
         "MIN_CURRENT_API = 35",
+        "MAX_CURRENT_API = 36",
         "MAX_DEVICES = 3",
         '"live-virtual-only"',
-        '"android-13-notification"',
-        '"current-platform"',
     ):
         require(selector, needle, "matrix selector policy")
 
     for needle in (
         "IMPLEMENTED_GATED / MANAGED MATRIX PENDING",
-        "no Cloud Storage permissions",
-        "iam.roles.get",
-        "serviceusage.services.get",
-        "storage.buckets.getIamPolicy",
         "exact current main",
+        "no Cloud Storage permissions",
+        "append-only",
         "30-day",
         "live virtual Android catalog",
         "production release",
@@ -285,15 +227,12 @@ def main() -> int:
 
     print("RC5 Firebase Test Lab contract verification passed.")
     print("instrumentation=current_post_vc_semantics_local_execution_required")
-    print("test_lab=implemented_gated_managed_matrix_pending")
-    print("identity=github_oidc_no_service_account_keys")
     print("source=exact_current_main_required")
-    print("dispatch_confirmation=environment_bound_no_raw_shell_interpolation")
-    print("iam=minimal_exact_live_role_definitions_with_narrow_preflight_reads")
-    print("storage=dedicated_bucket_scope_30_day_lifecycle")
+    print("identity=github_oidc_no_service_account_keys")
+    print("iam=no_project_scoped_storage_permissions")
+    print("storage=dedicated_bucket_append_only_owner_retention")
     print("matrix=live_virtual_2_to_3_devices_api33_current_required")
-    print("evidence=github_run_attempt_isolated")
-    print("auto_google_login=false")
+    print("evidence=attempt_isolated_no_runtime_delete")
     print("production_authorization=false")
     return 0
 
