@@ -55,4 +55,14 @@ jobs:
           python scripts/rc5/select-test-lab-matrix.py --self-test
       - name: Verify permanent RC5 contract
         shell: bash
-        run: python scripts/rc5/verify-test-lab-contract.py
+        run: |
+          set -o pipefail
+          python scripts/rc5/verify-test-lab-contract.py 2>&1 | tee "${RUNNER_TEMP}/rc5-test-lab-contract.log"
+      - name: Upload RC5 contract diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc5-test-lab-contract-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/rc5-test-lab-contract.log
+          if-no-files-found: warn
+          retention-days: 14
