@@ -73,16 +73,13 @@ resourcemanager.projects.list
 serviceusage.services.get
 EOF
 
-# This role is bound only on the dedicated RC5 results bucket. The IAM-policy
-# read is required only to verify that exact bucket-scoped binding during proof.
+# This role is bound only on the dedicated RC5 results bucket. It can read the
+# bucket metadata/IAM boundary and create new result objects, but cannot change
+# lifecycle/IAM, read prior results, overwrite them, or delete evidence.
 cat > "${workdir}/test-lab-results-permissions.txt" <<'EOF'
 storage.buckets.get
 storage.buckets.getIamPolicy
-storage.buckets.update
 storage.objects.create
-storage.objects.delete
-storage.objects.get
-storage.objects.list
 EOF
 
 normalize_permissions() {
@@ -126,7 +123,7 @@ upsert_role \
 upsert_role \
   "${results_role_id}" \
   "DIREKT Firebase Test Lab Results Writer" \
-  "Read/write and verify IAM only on the dedicated DIREKT Test Lab results bucket when bound at bucket scope." \
+  "Read dedicated-bucket metadata/IAM and append new Test Lab result objects; no lifecycle mutation, object read, overwrite or delete." \
   "${results_permissions}"
 
 if ! gcloud storage buckets describe "${bucket_uri}" --project "${project_id}" >/dev/null 2>&1; then
@@ -213,6 +210,6 @@ printf 'Project: %s\n' "${project_id}"
 printf 'Testing APIs: testing.googleapis.com and toolresults.googleapis.com enabled.\n'
 printf 'Runner role: %s (current Test Lab/Analytics non-Storage execution set plus iam.roles.get and serviceusage.services.get only).\n' "${runner_role}"
 printf 'Results bucket: %s (uniform access, %s-day delete lifecycle).\n' "${bucket_uri}" "${retention_days}"
-printf 'Results role: %s bound only on the dedicated results bucket; includes bucket IAM read only for binding verification.\n' "${results_role}"
+printf 'Results role: %s is bucket-only and append-only for result objects; retention is owner-controlled.\n' "${results_role}"
 printf 'GitHub identity: %s via existing Workload Identity Federation; no service-account key created.\n' "${deployer_sa}"
 printf 'No secret, credential, participant data, or production authorization was created by this bootstrap.\n'
