@@ -63,7 +63,7 @@ API 33 and a current API 35–36 target are mandatory. If the live catalog canno
 It:
 
 - enables `testing.googleapis.com` and `toolresults.googleapis.com`;
-- creates/updates custom project role `direktTestLabRunner` containing the reviewed Test Lab/Analytics non-Storage execution permissions plus only `iam.roles.get`, which is required for managed proof to read and compare the exact live custom-role definitions;
+- creates/updates custom project role `direktTestLabRunner` containing the reviewed Test Lab/Analytics non-Storage execution permissions plus only `iam.roles.get`, which is required for managed proof to read and compare the exact live custom-role definitions; the project-scoped runner role has **no Cloud Storage permissions**;
 - creates/updates custom role `direktTestLabResultsWriter` containing only `storage.buckets.get`, `storage.buckets.getIamPolicy`, `storage.buckets.update` and object create/delete/get/list; it is bound only at the dedicated bucket scope, and `storage.buckets.getIamPolicy` exists solely so managed proof can verify that bucket-scoped binding;
 - creates dedicated bucket `gs://direkt-test-lab-results-264358173369` with uniform bucket-level access in `asia-northeast1` and a 30-day delete lifecycle;
 - binds `direktTestLabRunner` to the existing GitHub deployer at project scope;
