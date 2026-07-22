@@ -183,6 +183,7 @@ def main() -> int:
         '//cloudresourcemanager.googleapis.com/projects/${project_id}',
         'customRolesSupportLevel!=NOT_SUPPORTED',
         "assert_project_role_permissions_testable",
+        "LC_ALL=C comm -23",
         "project-applicable",
     ):
         require(bootstrap, needle, "owner bootstrap boundary")
