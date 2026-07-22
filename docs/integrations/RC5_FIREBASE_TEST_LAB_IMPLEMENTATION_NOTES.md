@@ -31,7 +31,7 @@ Android CI now installs the built debug APK plus `debugAndroidTest` APK on its m
 2. checks out that SHA, fetches `origin/main`, and requires the dispatched SHA to equal the **exact current main** head; an older ancestor of `main` cannot produce promotable RC5 evidence;
 3. builds unit/lint/debug/instrumentation artifacts without persistent Firebase config or production credentials;
 4. authenticates with existing GitHub Workload Identity Federation;
-5. verifies the owner-provisioned Test Lab APIs, exact live custom-role definitions, absence of a project-scoped results role, and the dedicated results-bucket boundary;
+5. verifies the owner-provisioned Test Lab APIs, exact live custom-role definitions, absence of a project-scoped results role, absence of any project-scoped `storage.*` permission, and the dedicated results-bucket boundary;
 6. queries the live virtual Android catalog instead of pinning stale device IDs;
 7. selects a deterministic 2–3 device matrix through `scripts/rc5/select-test-lab-matrix.py`;
 8. runs only `com.kudzimusar.direkt.DirektAppSmokeTest` as instrumentation;
@@ -64,8 +64,8 @@ It:
 
 - enables `testing.googleapis.com` and `toolresults.googleapis.com`;
 - creates/updates custom project role `direktTestLabRunner` from the current non-Storage Firebase Test Lab Admin + Firebase Analytics Viewer execution permissions, plus only `iam.roles.get` for exact live custom-role verification and `serviceusage.services.get` for read-only verification that the two Test Lab APIs remain enabled; the project-scoped runner role has **no Cloud Storage permissions**;
-- creates/updates custom role `direktTestLabResultsWriter` containing only `storage.buckets.get`, `storage.buckets.getIamPolicy`, `storage.buckets.update` and object create/delete/get/list; it is bound only at the dedicated bucket scope, and `storage.buckets.getIamPolicy` exists solely so managed proof can verify that bucket-scoped binding;
-- creates dedicated bucket `gs://direkt-test-lab-results-264358173369` with uniform bucket-level access in `asia-northeast1` and a 30-day delete lifecycle;
+- creates/updates custom bucket-only role `direktTestLabResultsWriter` with exactly `storage.buckets.get`, `storage.buckets.getIamPolicy`, and `storage.objects.create`; it can verify the dedicated bucket and append new result objects but cannot mutate lifecycle/IAM, read prior objects, overwrite them, or delete evidence;
+- creates dedicated bucket `gs://direkt-test-lab-results-264358173369` with uniform bucket-level access in `asia-northeast1` and a 30-day delete lifecycle set by the owner bootstrap, not by the runtime proof identity;
 - binds `direktTestLabRunner` to the existing GitHub deployer at project scope;
 - binds `direktTestLabResultsWriter` only on the dedicated results bucket and explicitly fails if that role is present for the deployer at project scope;
 - enumerates every direct project IAM role bound to the GitHub deployer, resolves its live permissions, and fails closed if any project-scoped role contains `storage.*`; the dedicated results role remains bucket-only and absent from project scope;
@@ -83,6 +83,8 @@ The managed proof may retain:
 - Test Lab matrix/result metadata;
 - synthetic screenshots/logs produced by the current default-off participant-auth UI;
 - sanitized pass/fail receipt.
+
+The results path is **append-only** for the GitHub deployer: each run attempt gets a unique object prefix, and the proof identity cannot delete or overwrite prior objects or change the 30-day lifecycle. The preflight probe is also retained under its unique attempt path until lifecycle deletion rather than being removed by the workflow.
 
 It must not retain production credentials, raw auth/FCM tokens, participant contact data, private evidence, reviewer notes, exact private provider coordinates or production endpoints. Automatic Google-account login is explicitly disabled for the managed matrix.
 
