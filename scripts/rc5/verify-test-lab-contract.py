@@ -49,12 +49,25 @@ def main() -> int:
     storage_boundary = read("scripts/rc5/verify-no-project-storage-roles.sh")
     notes = read("docs/integrations/RC5_FIREBASE_TEST_LAB_IMPLEMENTATION_NOTES.md")
 
-    for needle in (
+    active_lock_needles = (
         "CLAIMED — RC5 Firebase Test Lab device-matrix closure",
         "RC5 implementation contract — ACTIVE",
         "RC5 Firebase Test Lab is the sole active implementation lane",
-    ):
-        require(lock, needle, "RC5 lock contract")
+    )
+    parked_lock_needles = (
+        "CLAIMED — UIA owner-review promotion; RC5 parked at owner-controlled infrastructure boundary",
+        "RC5 implementation contract — SOURCE COMPLETE; MANAGED MATRIX PENDING",
+        "RC5 remains `IMPLEMENTED_GATED / MANAGED MATRIX PENDING`",
+        "draft PR #378 is preserved and must remain unmerged while UIA owns the exact-current-main lane",
+        "UIA Issue #354 is the sole active implementation lane during this coordinated transition",
+        "RC5 source/workflow changes and PR #378 merge are frozen",
+    )
+    active_lock = all(needle in lock for needle in active_lock_needles)
+    parked_lock = all(needle in lock for needle in parked_lock_needles)
+    if active_lock == parked_lock:
+        raise AssertionError(
+            "RC5 lock must be exactly one supported state: active RC5 or the bounded parked-RC5/UIA transition."
+        )
 
     for needle in (
         'onNodeWithTag("foundation-root")',
@@ -95,7 +108,7 @@ def main() -> int:
         'bash scripts/rc5/verify-no-project-storage-roles.sh "${GCP_PROJECT_ID}" "${member}"',
         "storage.buckets.getIamPolicy",
         "storage.objects.create",
-        "expected_results_permissions=$'storage.buckets.get\\nstorage.buckets.getIamPolicy\\nstorage.objects.create'",
+        "expected_results_permissions=$'storage.buckets.get\nstorage.buckets.getIamPolicy\nstorage.objects.create'",
         'results_dir="rc5/${SOURCE_SHA}/${GITHUB_RUN_ID}/attempt-${GITHUB_RUN_ATTEMPT}"',
         "gcloud firebase test android models list",
         "--filter=virtual",
@@ -105,7 +118,7 @@ def main() -> int:
         "--no-record-video",
         "--no-performance-metrics",
         "--no-auto-google-login",
-        "--results-bucket \"${GCP_TEST_LAB_RESULTS_BUCKET}\"",
+        '--results-bucket "${GCP_TEST_LAB_RESULTS_BUCKET}"',
         'productionAuthorization: false',
         'dataMode: "synthetic-public-safe-only"',
         "retention-days: 30",
@@ -232,6 +245,7 @@ def main() -> int:
     )
 
     print("RC5 Firebase Test Lab contract verification passed.")
+    print(f"lock_state={'active_rc5' if active_lock else 'parked_rc5_uia_transition'}")
     print("instrumentation=current_post_vc_semantics_local_execution_required")
     print("source=exact_current_main_required")
     print("identity=github_oidc_no_service_account_keys")
