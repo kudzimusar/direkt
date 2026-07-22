@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Temporary deterministic patcher for the final RC5 project-scoped Storage-role review fix."""
+"""Temporary deterministic patcher for non-workflow parts of the final RC5 Storage-role review fix."""
 
 from pathlib import Path
 
@@ -12,23 +12,6 @@ def replace_once(path: str, old: str, new: str, label: str) -> None:
         raise SystemExit(f"{label}: expected one match, found {count}")
     file.write_text(text.replace(old, new, 1), encoding="utf-8")
 
-
-workflow_old = """          done
-
-          runner_permissions="$(gcloud iam roles describe direktTestLabRunner --project "${GCP_PROJECT_ID}" --format='value(includedPermissions)' | tr ';' '\\n' | sed '/^$/d' | sort -u)"
-"""
-workflow_new = """          done
-
-          bash scripts/rc5/verify-no-project-storage-roles.sh "${GCP_PROJECT_ID}" "${member}"
-
-          runner_permissions="$(gcloud iam roles describe direktTestLabRunner --project "${GCP_PROJECT_ID}" --format='value(includedPermissions)' | tr ';' '\\n' | sed '/^$/d' | sort -u)"
-"""
-replace_once(
-    ".github/workflows/firebase-test-lab.yml",
-    workflow_old,
-    workflow_new,
-    "managed workflow Storage boundary insertion",
-)
 
 bootstrap_old = """done
 
@@ -97,4 +80,4 @@ if notes.count(old_note) != 1:
     raise SystemExit(f"implementation notes Storage-role insertion: expected one match, found {notes.count(old_note)}")
 notes_path.write_text(notes.replace(old_note, new_note, 1), encoding="utf-8")
 
-print("RC5 project-scoped Storage-role reconciliation patch applied deterministically.")
+print("RC5 non-workflow Storage-role reconciliation patch applied deterministically.")
