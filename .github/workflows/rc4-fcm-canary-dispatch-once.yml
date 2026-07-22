@@ -24,7 +24,7 @@ jobs:
       - name: Resolve or dispatch reviewed RC4 FCM canary
         env:
           GH_TOKEN: ${{ github.token }}
-          SOURCE_SHA: 1fcbd749a8f475009d96f14ddd5d65122b71123c
+          SOURCE_SHA: d9f6b2b50e57244a18e3973ea3bf171ab77cbd09
         run: |
           set -euo pipefail
 
@@ -77,4 +77,4 @@ jobs:
           git commit -m "chore(rc4): record FCM canary dispatch diagnostics" || true
           git push origin HEAD:integration/rc4-fcm-canary-dispatch
 
-# token diagnostic refresh
+# exact-main FID proof
