@@ -85,7 +85,7 @@ def main() -> int:
         "source_sha:",
         'DIREKT_CONFIRMATION: ${{ inputs.confirmation }}',
         'test "${DIREKT_CONFIRMATION}" = "RUN-DIREKT-TEST-LAB"',
-        "git merge-base --is-ancestor",
+        'test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"',
         "google-github-actions/auth@v3",
         "direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com",
         "projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main",
@@ -121,6 +121,7 @@ def main() -> int:
     ):
         require(workflow, needle, "managed Test Lab control")
 
+    prohibit(workflow, r"git\s+merge-base\s+--is-ancestor", "stale ancestor-only source acceptance")
     prohibit(
         workflow,
         r'test\s+"\$\{\{\s*inputs\.confirmation\s*\}\}"',
@@ -256,6 +257,7 @@ def main() -> int:
         "iam.roles.get",
         "serviceusage.services.get",
         "storage.buckets.getIamPolicy",
+        "exact current main",
         "30-day",
         "live virtual Android catalog",
         "production release",
@@ -272,6 +274,7 @@ def main() -> int:
     print("instrumentation=current_post_vc_semantics_local_execution_required")
     print("test_lab=implemented_gated_managed_matrix_pending")
     print("identity=github_oidc_no_service_account_keys")
+    print("source=exact_current_main_required")
     print("dispatch_confirmation=environment_bound_no_raw_shell_interpolation")
     print("iam=minimal_exact_live_role_definitions_with_narrow_preflight_reads")
     print("storage=dedicated_bucket_scope_30_day_lifecycle")
