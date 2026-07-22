@@ -33,13 +33,14 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          import textwrap
 
           workflow = Path('.github/workflows/rc4-closeout-patcher.yml').read_text(encoding='utf-8')
           marker = '      - name: Apply exact RC4 closeout reconciliation\n        shell: bash\n        run: |\n'
           if workflow.count(marker) != 1:
               raise SystemExit('Unable to locate the controlled closeout script exactly once.')
-          body = textwrap.dedent(workflow.split(marker, 1)[1])
+          raw = workflow.split(marker, 1)[1]
+          lines = raw.splitlines()
+          body = '\n'.join(line[10:] if line.startswith('          ') else line for line in lines) + '\n'
           body = body.replace('f"exact-main managed proof run `{RUN}`" if False else "29916381754"', '"29916381754"')
           Path('/tmp/rc4-closeout.sh').write_text(body, encoding='utf-8')
           PY
