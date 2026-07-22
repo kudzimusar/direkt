@@ -260,19 +260,44 @@ jobs:
           "${adb_bin}" shell am start -n "${component}" --es direkt_rc4_fcm_canary token >/dev/null
 
           token_ready=false
+          registration_failed=false
+          registration_error_type=""
           for _ in $(seq 1 60); do
             FCM_DEVICE_TOKEN="$("${adb_bin}" shell run-as "${FIREBASE_PACKAGE_NAME}" cat files/rc4-fcm-token 2>/dev/null | tr -d '\r\n' || true)"
             if [[ ${#FCM_DEVICE_TOKEN} -ge 20 ]]; then
               token_ready=true
               break
             fi
+
+            registration_status="$("${adb_bin}" shell run-as "${FIREBASE_PACKAGE_NAME}" cat files/rc4-fcm-registration-status.json 2>/dev/null | tr -d '\r\n' || true)"
+            if [[ -n "${registration_status}" ]]; then
+              status="$(jq -r '.status // empty' <<< "${registration_status}" 2>/dev/null || true)"
+              if [[ "${status}" = "failed" ]]; then
+                registration_error_type="$(jq -r '.errorType // "UnknownError"' <<< "${registration_status}" 2>/dev/null || true)"
+                if [[ ! "${registration_error_type}" =~ ^[A-Za-z0-9._$-]{1,120}$ ]]; then
+                  registration_error_type="UnknownError"
+                fi
+                registration_failed=true
+                break
+              fi
+            fi
             sleep 2
           done
-          test "${token_ready}" = "true"
+
+          if [[ "${registration_failed}" = "true" ]]; then
+            echo "::error title=FCM registration failed::Synthetic FCM registration failed with ${registration_error_type}."
+            exit 1
+          fi
+          if [[ "${token_ready}" != "true" ]]; then
+            registration_status="$("${adb_bin}" shell run-as "${FIREBASE_PACKAGE_NAME}" cat files/rc4-fcm-registration-status.json 2>/dev/null | tr -d '\r\n' || true)"
+            status="$(jq -r '.status // "missing"' <<< "${registration_status:-{}}" 2>/dev/null || echo missing)"
+            echo "::error title=FCM registration timed out::No registration identifier was produced; sanitized status=${status}."
+            exit 1
+          fi
           printf '::add-mask::%s\n' "${FCM_DEVICE_TOKEN}"
           printf '%s' "${FCM_DEVICE_TOKEN}" > "${RUNNER_TEMP}/fcm-device-token"
           chmod 600 "${RUNNER_TEMP}/fcm-device-token"
-          "${adb_bin}" shell run-as "${FIREBASE_PACKAGE_NAME}" rm -f files/rc4-fcm-token
+          "${adb_bin}" shell run-as "${FIREBASE_PACKAGE_NAME}" rm -f files/rc4-fcm-token files/rc4-fcm-registration-status.json
           echo "ADB_BIN=${adb_bin}" >> "${GITHUB_ENV}"
 
       - name: Resolve enabled database secret version
