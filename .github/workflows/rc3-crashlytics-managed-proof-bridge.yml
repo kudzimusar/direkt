@@ -36,16 +36,34 @@ jobs:
       SOURCE_SHA: ${{ github.event.pull_request.base.sha }}
       CANARY_WORKFLOW: firebase-crashlytics-canary.yml
       ISSUE_NUMBER: "261"
+      MARKER_PATH: docs/integrations/RC3_CRASHLYTICS_CANARY_AUTHORIZATION.md
 
     steps:
-      - name: Validate bounded RC3 trigger
+      - name: Check out bounded authorization marker
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 1
+          sparse-checkout: |
+            docs/integrations/RC3_CRASHLYTICS_CANARY_AUTHORIZATION.md
+          sparse-checkout-cone-mode: false
+
+      - name: Validate bounded RC3 trigger and pinned source
         shell: bash
         run: |
           set -euo pipefail
           test "${{ github.event_name }}" = "pull_request"
           test "${{ github.head_ref }}" = "integration/rc3-crashlytics-managed-run"
-          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
           test "${{ github.event.pull_request.head.repo.full_name }}" = "${REPO}"
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          test -f "${MARKER_PATH}"
+          grep -Fq 'RUN-DIREKT-CRASHLYTICS-CANARY' "${MARKER_PATH}"
+          grep -Fq 'synthetic-only debug crash and ANR canary' "${MARKER_PATH}"
+
+          pinned_sha="$(sed -nE 's/^\*\*Exact merged source under proof:\*\* `([0-9a-f]{40})`\.$/\1/p' "${MARKER_PATH}")"
+          test "$(printf '%s\n' "${pinned_sha}" | grep -Ec '^[0-9a-f]{40}$')" -eq 1
+          test "${pinned_sha}" = "${SOURCE_SHA}"
+          test "${{ github.event.pull_request.base.sha }}" = "${SOURCE_SHA}"
 
       - name: Dispatch exact-source managed Crashlytics canary
         id: dispatch
@@ -118,9 +136,6 @@ jobs:
           queue_polls=0
           active_polls=0
 
-          # The canary concurrency group may queue this run before its own 55-minute timeout begins.
-          # Preserve a bounded 10-minute queue allowance plus 57.5 minutes of active execution,
-          # keeping the entire watcher inside this bridge job's 70-minute limit.
           while true; do
             run_json="$(gh run view "${run_id}" --repo "${REPO}" --json status,conclusion,headSha)"
             status="$(jq -r '.status // "unknown"' <<< "${run_json}")"

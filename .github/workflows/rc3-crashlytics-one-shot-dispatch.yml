@@ -24,9 +24,10 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       REPO: ${{ github.repository }}
-      SOURCE_SHA: ${{ github.sha }}
+      PUSH_SHA: ${{ github.sha }}
       CANARY_WORKFLOW: firebase-crashlytics-canary.yml
       ISSUE_NUMBER: "261"
+      MARKER_PATH: docs/integrations/RC3_CRASHLYTICS_CANARY_AUTHORIZATION.md
 
     steps:
       - name: Check out exact main source
@@ -35,20 +36,27 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
 
-      - name: Validate one-shot authorization marker
+      - name: Validate one-shot authorization marker and pinned source
         shell: bash
         run: |
           set -euo pipefail
           test "${GITHUB_REF}" = "refs/heads/main"
-          test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
-          grep -Fq 'RUN-DIREKT-CRASHLYTICS-CANARY' docs/integrations/RC3_CRASHLYTICS_CANARY_AUTHORIZATION.md
-          grep -Fq 'synthetic-only debug crash and ANR canary' docs/integrations/RC3_CRASHLYTICS_CANARY_AUTHORIZATION.md
+          test "$(git rev-parse HEAD)" = "${PUSH_SHA}"
+          grep -Fq 'RUN-DIREKT-CRASHLYTICS-CANARY' "${MARKER_PATH}"
+          grep -Fq 'synthetic-only debug crash and ANR canary' "${MARKER_PATH}"
+
+          source_sha="$(sed -nE 's/^\*\*Exact merged source under proof:\*\* `([0-9a-f]{40})`\.$/\1/p' "${MARKER_PATH}")"
+          test "$(printf '%s\n' "${source_sha}" | grep -Ec '^[0-9a-f]{40}$')" -eq 1
+          git cat-file -e "${source_sha}^{commit}"
+          git merge-base --is-ancestor "${source_sha}" "${PUSH_SHA}"
+          echo "SOURCE_SHA=${source_sha}" >> "${GITHUB_ENV}"
 
       - name: Dispatch exact-source managed Crashlytics canary
         id: dispatch
         shell: bash
         run: |
           set -euo pipefail
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
           previous_id="$(gh run list \
             --repo "${REPO}" \
             --workflow "${CANARY_WORKFLOW}" \
@@ -87,7 +95,7 @@ jobs:
           if [[ -z "${run_id}" ]]; then
             gh issue comment "${ISSUE_NUMBER}" \
               --repo "${REPO}" \
-              --body "RC3 one-shot dispatcher could not resolve the managed Crashlytics canary run for exact source \`${SOURCE_SHA}\`. RC3 remains IMPLEMENTED_GATED; no ACTIVE claim was made."
+              --body "RC3 one-shot dispatcher could not resolve the managed Crashlytics canary run for marker-pinned exact source \`${SOURCE_SHA}\`. RC3 remains IMPLEMENTED_GATED; no ACTIVE claim was made."
             exit 1
           fi
 
@@ -101,7 +109,7 @@ jobs:
           run_id="${{ steps.dispatch.outputs.run_id }}"
           gh issue comment "${ISSUE_NUMBER}" \
             --repo "${REPO}" \
-            --body "RC3 managed Firebase Crashlytics canary dispatched for exact merged source \`${SOURCE_SHA}\`. Run: \`${run_id}\`. Boundary remains synthetic-only debug crash/ANR proof; participant/production crash telemetry is not authorized."
+            --body "RC3 managed Firebase Crashlytics canary dispatched for marker-pinned exact merged source \`${SOURCE_SHA}\`. Run: \`${run_id}\`. Boundary remains synthetic-only debug crash/ANR proof; participant/production crash telemetry is not authorized."
 
       - name: Wait for managed canary result
         id: watch
@@ -131,7 +139,7 @@ jobs:
 
           gh issue comment "${ISSUE_NUMBER}" \
             --repo "${REPO}" \
-            --body "RC3 managed Crashlytics canary result for exact source \`${SOURCE_SHA}\`: **${conclusion}**. Run \`${run_id}\`: ${run_url}. Receipt covers synthetic debug crash/ANR proof only and does not authorize participant/production telemetry."
+            --body "RC3 managed Crashlytics canary result for marker-pinned exact source \`${SOURCE_SHA}\`: **${conclusion}**. Run \`${run_id}\`: ${run_url}. Receipt covers synthetic debug crash/ANR proof only and does not authorize participant/production telemetry."
 
           test "${conclusion}" = "success"
 
