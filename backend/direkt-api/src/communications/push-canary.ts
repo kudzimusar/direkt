@@ -18,11 +18,7 @@ async function main(): Promise<void> {
   });
   try {
     const outbox = app.get(PushOutboxService);
-    const receipt = await outbox.runSyntheticCanary(
-      deviceToken,
-      sourceSha,
-      phase,
-    );
+    const receipt = await outbox.runSyntheticCanary(deviceToken, sourceSha, phase);
     process.stdout.write(
       `${JSON.stringify({
         event: 'fcm_synthetic_canary_passed',
@@ -42,8 +38,6 @@ async function main(): Promise<void> {
 
 void main().catch((error: unknown) => {
   const errorName = error instanceof Error ? error.name : 'UnknownError';
-  process.stderr.write(
-    `${JSON.stringify({ event: 'fcm_synthetic_canary_failed', errorName })}\n`,
-  );
+  process.stderr.write(`${JSON.stringify({ event: 'fcm_synthetic_canary_failed', errorName })}\n`);
   process.exitCode = 1;
 });

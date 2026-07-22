@@ -29,11 +29,7 @@ export class PushDeviceController {
     @Body() dto: RegisterPushDeviceDto,
     @Req() request: DirektRequest,
   ): ReturnType<PushDeviceTokenService['register']> {
-    return this.pushDeviceTokenService.register(
-      request.actor,
-      dto,
-      request.requestId,
-    );
+    return this.pushDeviceTokenService.register(request.actor, dto, request.requestId);
   }
 
   @Delete(':installationId')
@@ -45,10 +41,6 @@ export class PushDeviceController {
     @Param('installationId', ParseUUIDPipe) installationId: string,
     @Req() request: DirektRequest,
   ): ReturnType<PushDeviceTokenService['unregister']> {
-    return this.pushDeviceTokenService.unregister(
-      request.actor,
-      installationId,
-      request.requestId,
-    );
+    return this.pushDeviceTokenService.unregister(request.actor, installationId, request.requestId);
   }
 }

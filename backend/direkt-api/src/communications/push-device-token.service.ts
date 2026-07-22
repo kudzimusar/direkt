@@ -18,9 +18,7 @@ export class PushDeviceTokenService {
     requestId: string,
   ): Promise<{ installationId: string; status: 'registered' }> {
     this.assertControlledPilotRegistrationEnabled();
-    const tokenHash = createHash('sha256')
-      .update(dto.token, 'utf8')
-      .digest('hex');
+    const tokenHash = createHash('sha256').update(dto.token, 'utf8').digest('hex');
 
     await this.database.transaction(async (client) => {
       await client.query(
@@ -114,19 +112,15 @@ export class PushDeviceTokenService {
   }
 
   private assertControlledPilotRegistrationEnabled(): void {
-    const registrationMode =
-      this.configService.get<string>('PUSH_REGISTRATION_MODE') ?? 'disabled';
+    const registrationMode = this.configService.get<string>('PUSH_REGISTRATION_MODE') ?? 'disabled';
     const dataMode = this.configService.getOrThrow<string>('DIREKT_DATA_MODE');
-    const pilotApproved =
-      this.configService.getOrThrow<boolean>('PILOT_ENTRY_APPROVED');
+    const pilotApproved = this.configService.getOrThrow<boolean>('PILOT_ENTRY_APPROVED');
     if (
       registrationMode !== 'controlled-pilot' ||
       dataMode !== 'controlled-pilot' ||
       !pilotApproved
     ) {
-      throw new ServiceUnavailableException(
-        'Push device registration is not enabled.',
-      );
+      throw new ServiceUnavailableException('Push device registration is not enabled.');
     }
   }
 }

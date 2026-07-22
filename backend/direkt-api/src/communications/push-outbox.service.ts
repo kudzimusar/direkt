@@ -73,11 +73,7 @@ export class PushOutboxService {
     this.assertSyntheticFcmMode(sourceSha, deviceToken);
     const deviceTokenId = await this.insertSyntheticToken(deviceToken);
     try {
-      const eventId = await this.enqueueSyntheticCanary(
-        deviceTokenId,
-        sourceSha,
-        phase,
-      );
+      const eventId = await this.enqueueSyntheticCanary(deviceTokenId, sourceSha, phase);
       const receipt = await this.processEvent(eventId);
       if (!receipt) {
         throw new PushProviderUnavailableError(
@@ -114,9 +110,7 @@ export class PushOutboxService {
   }
 
   private assertSyntheticFcmMode(sourceSha: string, deviceToken: string): void {
-    if (
-      this.configService.getOrThrow<string>('DIREKT_DATA_MODE') !== 'synthetic-only'
-    ) {
+    if (this.configService.getOrThrow<string>('DIREKT_DATA_MODE') !== 'synthetic-only') {
       throw new Error('FCM canary is restricted to synthetic-only data mode.');
     }
     if (this.pushProvider.provider !== 'fcm') {
@@ -131,9 +125,7 @@ export class PushOutboxService {
   }
 
   private async insertSyntheticToken(deviceToken: string): Promise<string> {
-    const tokenHash = createHash('sha256')
-      .update(deviceToken, 'utf8')
-      .digest('hex');
+    const tokenHash = createHash('sha256').update(deviceToken, 'utf8').digest('hex');
     const result = await this.database.query<InsertedRow>(
       `INSERT INTO platform.push_device_tokens (
          identity_id,
@@ -201,9 +193,7 @@ export class PushOutboxService {
   }
 
   private async recoverStaleLocks(): Promise<void> {
-    const lockTimeoutMs = this.configService.getOrThrow<number>(
-      'PUSH_OUTBOX_LOCK_TIMEOUT_MS',
-    );
+    const lockTimeoutMs = this.configService.getOrThrow<number>('PUSH_OUTBOX_LOCK_TIMEOUT_MS');
     await this.database.query(
       `UPDATE platform.outbox_events
           SET status = 'failed',
@@ -248,9 +238,7 @@ export class PushOutboxService {
     return row ? { id: row.id, payload: row.payload, attempts: row.attempts } : null;
   }
 
-  private async deliverClaimed(
-    claimed: ClaimedPushEvent,
-  ): Promise<PushOutboxDeliveryReceipt> {
+  private async deliverClaimed(claimed: ClaimedPushEvent): Promise<PushOutboxDeliveryReceipt> {
     const payload = this.parsePayload(claimed.payload);
     try {
       const token = await this.loadActiveToken(payload.deviceTokenId);
@@ -270,8 +258,7 @@ export class PushOutboxService {
         phase: payload.phase,
       };
     } catch (error) {
-      const maxAttempts =
-        this.configService.getOrThrow<number>('PUSH_MAX_ATTEMPTS');
+      const maxAttempts = this.configService.getOrThrow<number>('PUSH_MAX_ATTEMPTS');
       const terminal =
         error instanceof PushOutboxPayloadRejectedError ||
         error instanceof PushProviderRejectedError ||
@@ -296,9 +283,7 @@ export class PushOutboxService {
 
   private parsePayload(value: unknown): PushOutboxPayload {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
-      throw new PushOutboxPayloadRejectedError(
-        'Push outbox payload must be an object.',
-      );
+      throw new PushOutboxPayloadRejectedError('Push outbox payload must be an object.');
     }
     const payload = value as Record<string, unknown>;
     if (
@@ -367,15 +352,9 @@ export class PushOutboxService {
     terminal: boolean,
     failureCode: string,
   ): Promise<void> {
-    const maxAttempts =
-      this.configService.getOrThrow<number>('PUSH_MAX_ATTEMPTS');
-    const backoffSeconds = Math.min(
-      300,
-      15 * 2 ** Math.max(0, attempts - 1),
-    );
-    const availableAt = new Date(
-      Date.now() + backoffSeconds * 1000,
-    ).toISOString();
+    const maxAttempts = this.configService.getOrThrow<number>('PUSH_MAX_ATTEMPTS');
+    const backoffSeconds = Math.min(300, 15 * 2 ** Math.max(0, attempts - 1));
+    const availableAt = new Date(Date.now() + backoffSeconds * 1000).toISOString();
     await this.database.query(
       `UPDATE platform.outbox_events
           SET status = 'failed',
@@ -387,14 +366,7 @@ export class PushOutboxService {
         WHERE id = $1::uuid
           AND event_type = $6
           AND status = 'processing'`,
-      [
-        eventId,
-        failureCode,
-        terminal,
-        maxAttempts,
-        availableAt,
-        PUSH_EVENT_TYPE,
-      ],
+      [eventId, failureCode, terminal, maxAttempts, availableAt, PUSH_EVENT_TYPE],
     );
   }
 }

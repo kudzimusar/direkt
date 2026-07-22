@@ -47,8 +47,7 @@ import { ResendEmailProviderAdapter } from './resend-email-provider.adapter';
             'FCM provider activation currently permits synthetic-only non-production use.',
           );
         }
-        const projectId =
-          configService.get<string>('FIREBASE_PROJECT_ID')?.trim() ?? '';
+        const projectId = configService.get<string>('FIREBASE_PROJECT_ID')?.trim() ?? '';
         if (!/^[a-z][a-z0-9-]{4,29}$/.test(projectId)) {
           throw new Error('FCM provider requires a valid FIREBASE_PROJECT_ID.');
         }
