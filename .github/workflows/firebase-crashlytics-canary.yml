@@ -218,7 +218,10 @@ jobs:
           anr_seen=false
           for _ in $(seq 1 40); do
             "${ADB_BIN}" logcat -d > "${RUNNER_TEMP}/rc3-anr-system.log" || true
-            if grep -Eqi "ANR in ${FIREBASE_PACKAGE_NAME}|ANR.*${FIREBASE_PACKAGE_NAME}|Input dispatching timed out.*${FIREBASE_PACKAGE_NAME}" "${RUNNER_TEMP}/rc3-anr-system.log"; then anr_seen=true; break; fi
+            if grep -Eqi "ANR in ${FIREBASE_PACKAGE_NAME}|ANR.*${FIREBASE_PACKAGE_NAME}" "${RUNNER_TEMP}/rc3-anr-system.log" && grep -Eqi 'Input dispatching timed out' "${RUNNER_TEMP}/rc3-anr-system.log"; then
+              anr_seen=true
+              break
+            fi
             sleep 1
           done
           test "${anr_seen}" = "true"
@@ -241,7 +244,7 @@ jobs:
           done
           test "${delivered}" = "true"
           "${ADB_BIN}" shell am start -n "${component}" --es direkt_rc3_crashlytics_canary disable >/dev/null || true
-          grep -Ei "ANR in ${FIREBASE_PACKAGE_NAME}|ANR.*${FIREBASE_PACKAGE_NAME}|Input dispatching timed out.*${FIREBASE_PACKAGE_NAME}" "${RUNNER_TEMP}/rc3-anr-system.log" | tail -n 10
+          grep -Ei "ANR in ${FIREBASE_PACKAGE_NAME}|ANR.*${FIREBASE_PACKAGE_NAME}|Input dispatching timed out" "${RUNNER_TEMP}/rc3-anr-system.log" | tail -n 12
           grep -Ei 'Crashlytics report successfully enqueued to DataTransport|Crashlytics report upload complete|[[:space:]]204[[:space:]]' "${RUNNER_TEMP}/rc3-anr-upload.log" | tail -n 10
 
       - name: Upload sanitized RC3 diagnostics
