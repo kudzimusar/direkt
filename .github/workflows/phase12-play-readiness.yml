@@ -38,10 +38,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -52,7 +52,7 @@ jobs:
           java-version: "17"
 
       - name: Configure pinned Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: ${{ env.DIREKT_GRADLE_VERSION }}
 
@@ -144,7 +144,7 @@ jobs:
           EOF
 
       - name: Upload short-lived readiness evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: direkt-phase12b-play-readiness-${{ github.run_number }}-${{ github.sha }}
           path: phase12b-evidence/**

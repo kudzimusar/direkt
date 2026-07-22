@@ -63,7 +63,7 @@ jobs:
           [[ "${{ inputs.source_sha }}" =~ ^[0-9a-f]{40}$ ]]
 
       - name: Check out exact reviewed source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.source_sha }}
           fetch-depth: 0
@@ -83,7 +83,7 @@ jobs:
           echo "IMAGE_URI=${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/${GCP_CLOUD_RUN_SERVICE}:${SOURCE_SHA}" >> "${GITHUB_ENV}"
 
       - name: Set up Node.js 24
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm

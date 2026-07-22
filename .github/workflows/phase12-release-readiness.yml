@@ -39,7 +39,7 @@ jobs:
 
     steps:
       - name: Check out exact evidence source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ env.SOURCE_SHA }}
@@ -59,7 +59,7 @@ jobs:
           java-version: "17"
 
       - name: Configure pinned Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: ${{ env.DIREKT_GRADLE_VERSION }}
 
@@ -310,7 +310,7 @@ jobs:
           echo "sha256=${SHA256}" >> "$GITHUB_OUTPUT"
 
       - name: Upload non-publishable Phase 12A evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: direkt-phase12a-preauthorization-aab-${{ github.run_number }}-${{ env.SOURCE_SHA }}
           path: android/direkt-app/release-readiness/**

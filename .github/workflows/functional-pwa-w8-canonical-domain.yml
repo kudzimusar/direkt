@@ -23,7 +23,7 @@ jobs:
       PREVIEW_URL: https://direkt.forum/preview/
       SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SOURCE_SHA }}
           fetch-depth: 0
@@ -41,7 +41,7 @@ jobs:
 
       - name: Upload sanitized canonical-domain evidence
         if: always() && steps.canonical_evidence.conclusion == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: direkt-w8-canonical-domain-${{ env.SOURCE_SHA }}
           path: ${{ runner.temp }}/w8-canonical-domain-evidence.json

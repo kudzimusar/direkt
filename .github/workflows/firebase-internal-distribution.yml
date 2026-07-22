@@ -46,7 +46,7 @@ jobs:
           [[ "${{ inputs.source_sha }}" =~ ^[0-9a-f]{40}$ ]]
 
       - name: Check out exact reviewed source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.source_sha }}
           fetch-depth: 0
@@ -66,7 +66,7 @@ jobs:
           java-version: "17"
 
       - name: Configure pinned Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: ${{ env.DIREKT_GRADLE_VERSION }}
 

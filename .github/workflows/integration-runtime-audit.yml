@@ -57,12 +57,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SOURCE_SHA }}
       - name: Verify exact checkout
         run: test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Validate integration runtime contract
@@ -75,7 +75,7 @@ jobs:
           node --check web/direkt-pwa/app.js
           node --check web/direkt-pwa/sw.js
       - name: Upload integration contract evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: direkt-integration-runtime-contract-${{ github.run_number }}-${{ env.SOURCE_SHA }}
           path: integration-runtime-contract.txt
@@ -107,13 +107,13 @@ jobs:
       run:
         working-directory: backend/direkt-api
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SOURCE_SHA }}
       - name: Verify exact checkout
         working-directory: .
         run: test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
@@ -136,13 +136,13 @@ jobs:
       run:
         working-directory: admin/direkt-operations-portal
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SOURCE_SHA }}
       - name: Verify exact checkout
         working-directory: .
         run: test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
@@ -162,20 +162,20 @@ jobs:
       run:
         working-directory: android/direkt-app
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SOURCE_SHA }}
       - name: Verify exact checkout
         working-directory: .
         run: test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: ${{ env.DIREKT_GRADLE_VERSION }}
       - name: Bootstrap pinned Gradle wrapper
@@ -214,7 +214,7 @@ jobs:
           python scripts/verify-phase12-play-readiness.py 2>&1 | tee "${RUNNER_TEMP}/phase12b-integration-audit.txt"
       - name: Upload Android integration diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: direkt-android-integration-audit-${{ github.run_number }}-${{ env.SOURCE_SHA }}
           path: |
