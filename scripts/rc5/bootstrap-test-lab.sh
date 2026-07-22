@@ -34,10 +34,11 @@ gcloud services enable \
 workdir="$(mktemp -d)"
 trap 'rm -rf "${workdir}"' EXIT
 
+# Exact union of the documented non-Storage permissions in
+# roles/cloudtestservice.testAdmin + roles/firebase.analyticsViewer.
+# Storage is intentionally split into a dedicated bucket-scoped role below.
 cat > "${workdir}/test-lab-runner-permissions.txt" <<'EOF'
-apikeys.keys.get
-apikeys.keys.list
-apikeys.keys.lookup
+cloudnotifications.activities.list
 cloudtestservice.environmentcatalog.get
 cloudtestservice.matrices.create
 cloudtestservice.matrices.get
@@ -60,16 +61,16 @@ firebase.billingPlans.get
 firebase.clients.get
 firebase.clients.list
 firebase.links.list
+firebase.playLinks.get
+firebase.playLinks.list
 firebase.projects.get
+firebase.projects.list
 firebaseanalytics.resources.googleAnalyticsReadAndAnalyze
+firebaseextensions.configs.get
+firebaseextensions.configs.list
 resourcemanager.projects.get
 resourcemanager.projects.getIamPolicy
 resourcemanager.projects.list
-serviceusage.operations.get
-serviceusage.operations.list
-serviceusage.quotas.get
-serviceusage.services.get
-serviceusage.services.list
 EOF
 
 cat > "${workdir}/test-lab-results-permissions.txt" <<'EOF'
@@ -188,7 +189,7 @@ assert_role_permissions "${results_role_id}" "${workdir}/test-lab-results-permis
 project_policy="$(gcloud projects get-iam-policy "${project_id}" --format=json)"
 test "$(jq -r --arg member "${deployer_member}" --arg role "${runner_role}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${project_policy}")" = "1"
 
-for prohibited_role in roles/owner roles/editor roles/cloudtestservice.testAdmin roles/storage.admin roles/storage.objectAdmin; do
+for prohibited_role in roles/owner roles/editor roles/cloudtestservice.testAdmin roles/firebase.analyticsViewer roles/storage.admin roles/storage.objectAdmin; do
   if jq -e --arg member "${deployer_member}" --arg role "${prohibited_role}" '.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)' <<< "${project_policy}" >/dev/null; then
     echo "Prohibited broad project-level role ${prohibited_role} is bound to ${deployer_sa}." >&2
     exit 1
@@ -204,7 +205,7 @@ test "$(jq -r --argjson age "${retention_days}" '[.[] | select(.action.type == "
 printf 'RC5 Firebase Test Lab bootstrap verified.\n'
 printf 'Project: %s\n' "${project_id}"
 printf 'Testing APIs: testing.googleapis.com and toolresults.googleapis.com enabled.\n'
-printf 'Runner role: %s (no Cloud Storage permissions).\n' "${runner_role}"
+printf 'Runner role: %s (documented Test Lab + Analytics non-Storage union only).\n' "${runner_role}"
 printf 'Results bucket: %s (uniform access, %s-day delete lifecycle).\n' "${bucket_uri}" "${retention_days}"
 printf 'Results role: %s bound only on the dedicated results bucket.\n' "${results_role}"
 printf 'GitHub identity: %s via existing Workload Identity Federation; no service-account key created.\n' "${deployer_sa}"
