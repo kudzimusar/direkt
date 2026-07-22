@@ -69,6 +69,52 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          postgres_name="direkt-rc4-postgres-${GITHUB_RUN_ID}"
+          cleanup_postgres() {
+            docker rm --force "${postgres_name}" >/dev/null 2>&1 || true
+          }
+          trap cleanup_postgres EXIT
+
+          docker run --detach \
+            --name "${postgres_name}" \
+            --publish 55432:5432 \
+            --env POSTGRES_DB=direkt_test \
+            --env POSTGRES_USER=direkt \
+            --env POSTGRES_PASSWORD=direkt_ci \
+            postgis/postgis:18-3.6 >/dev/null
+
+          init_complete=false
+          for attempt in {1..60}; do
+            if docker logs "${postgres_name}" 2>&1 | grep -Fq "PostgreSQL init process complete; ready for start up."; then
+              init_complete=true
+              break
+            fi
+            if [[ "$(docker inspect --format='{{.State.Running}}' "${postgres_name}")" != "true" ]]; then
+              echo "Disposable PostGIS exited before initialization completed." >&2
+              docker logs "${postgres_name}" >&2 || true
+              exit 1
+            fi
+            sleep 1
+          done
+          test "${init_complete}" = "true"
+
+          stable_ready=0
+          for attempt in {1..30}; do
+            if docker exec "${postgres_name}" pg_isready -U direkt -d direkt_test >/dev/null 2>&1; then
+              stable_ready=$((stable_ready + 1))
+              [[ "${stable_ready}" -ge 3 ]] && break
+            else
+              stable_ready=0
+            fi
+            [[ "${attempt}" -lt 30 ]]
+            sleep 1
+          done
+          [[ "${stable_ready}" -ge 3 ]]
+
+          export DATABASE_URL=postgresql://direkt:direkt_ci@localhost:55432/direkt_test
+          export DIRECT_DATABASE_URL="${DATABASE_URL}"
+          export NODE_ENV=test
+
           npm ci --ignore-scripts
           npm run format:check
           npm run lint
