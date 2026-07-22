@@ -1,0 +1,16 @@
+Prove outbox-to-FCM foreground and background delivery	Verify owner-provisioned least-privilege FCM bootstrap boundary	2026-07-22T06:16:14.2223382Z ^[[36;1mtest "${GCP_FCM_API}" = "fcm.googleapis.com"^[[0m
+Prove outbox-to-FCM foreground and background delivery	Verify owner-provisioned least-privilege FCM bootstrap boundary	2026-07-22T06:16:14.2223806Z ^[[36;1mtest "${GCP_FCM_SEND_PERMISSION}" = "cloudmessaging.messages.create"^[[0m
+Prove outbox-to-FCM foreground and background delivery	Verify owner-provisioned least-privilege FCM bootstrap boundary	2026-07-22T06:16:14.2224230Z ^[[36;1mtest "${GCP_FCM_ROLE_ID}" = "direktFcmSender"^[[0m
+Prove outbox-to-FCM foreground and background delivery	Verify owner-provisioned least-privilege FCM bootstrap boundary	2026-07-22T06:16:14.2224628Z ^[[36;1mtest "${GCP_FCM_VERIFIER_ROLE_ID}" = "direktFcmBootstrapVerifier"^[[0m
+Prove outbox-to-FCM foreground and background delivery	Verify owner-provisioned least-privilege FCM bootstrap boundary	2026-07-22T06:16:14.2294367Z   GCP_FCM_API: fcm.googleapis.com
+Prove outbox-to-FCM foreground and background delivery	Verify owner-provisioned least-privilege FCM bootstrap boundary	2026-07-22T06:16:14.2294668Z   GCP_FCM_SEND_PERMISSION: cloudmessaging.messages.create
+Prove outbox-to-FCM foreground and background delivery	Verify owner-provisioned least-privilege FCM bootstrap boundary	2026-07-22T06:16:14.2294995Z   GCP_FCM_ROLE_ID: direktFcmSender
+Prove outbox-to-FCM foreground and background delivery	Verify owner-provisioned least-privilege FCM bootstrap boundary	2026-07-22T06:16:14.2295294Z   GCP_FCM_VERIFIER_ROLE_ID: direktFcmBootstrapVerifier
+Prove outbox-to-FCM foreground and background delivery	Verify owner-provisioned least-privilege FCM bootstrap boundary	2026-07-22T06:16:14.8961611Z ERROR: (gcloud.services.list) [direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com] does not have permission to access projects instance [direkt-dev-502701] (or it may not exist): Permission denied to list services for consumer container [projects/264358173369]
+Prove outbox-to-FCM foreground and background delivery	Verify owner-provisioned least-privilege FCM bootstrap boundary	2026-07-22T06:16:14.8971029Z   domain: serviceusage.googleapis.com
+Prove outbox-to-FCM foreground and background delivery	Verify owner-provisioned least-privilege FCM bootstrap boundary	2026-07-22T06:16:14.8971458Z   reason: AUTH_PERMISSION_DENIED
+Prove outbox-to-FCM foreground and background delivery	Cleanup temporary FCM token and canary job	2026-07-22T06:16:15.0132521Z   GCP_FCM_API: fcm.googleapis.com
+Prove outbox-to-FCM foreground and background delivery	Cleanup temporary FCM token and canary job	2026-07-22T06:16:15.0132873Z   GCP_FCM_SEND_PERMISSION: cloudmessaging.messages.create
+Prove outbox-to-FCM foreground and background delivery	Cleanup temporary FCM token and canary job	2026-07-22T06:16:15.0133203Z   GCP_FCM_ROLE_ID: direktFcmSender
+Prove outbox-to-FCM foreground and background delivery	Cleanup temporary FCM token and canary job	2026-07-22T06:16:15.0133494Z   GCP_FCM_VERIFIER_ROLE_ID: direktFcmBootstrapVerifier
+Prove outbox-to-FCM foreground and background delivery	Cleanup temporary FCM token and canary job	2026-07-22T06:16:17.0577652Z ERROR: (gcloud.run.jobs.delete) Job [direkt-fcm-canary] could not be found.
