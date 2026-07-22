@@ -137,30 +137,12 @@ jobs:
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Enable required managed APIs and bind least-privilege FCM sender role
+      - name: Enforce owner-provisioned FCM bootstrap boundary
         shell: bash
         run: |
           set -euo pipefail
-          gcloud services enable fcm.googleapis.com iam.googleapis.com --project "${GCP_PROJECT_ID}" --quiet
-
-          if ! gcloud iam roles describe "${GCP_FCM_ROLE_ID}" --project "${GCP_PROJECT_ID}" >/dev/null 2>&1; then
-            gcloud iam roles create "${GCP_FCM_ROLE_ID}" \
-              --project "${GCP_PROJECT_ID}" \
-              --title "DIREKT FCM Sender" \
-              --description "Least-privilege DIREKT runtime role for FCM HTTP v1 device sends" \
-              --permissions "cloudmessaging.messages.create" \
-              --stage GA \
-              --quiet
-          fi
-
-          permissions="$(gcloud iam roles describe "${GCP_FCM_ROLE_ID}" --project "${GCP_PROJECT_ID}" --format='value(includedPermissions)' | tr ';' '\n' | sed '/^$/d' | sort -u)"
-          test "${permissions}" = "cloudmessaging.messages.create"
-
-          gcloud projects add-iam-policy-binding "${GCP_PROJECT_ID}" \
-            --member "serviceAccount:${GCP_RUNTIME_SERVICE_ACCOUNT}" \
-            --role "projects/${GCP_PROJECT_ID}/roles/${GCP_FCM_ROLE_ID}" \
-            --condition=None \
-            --quiet >/dev/null
+          test "${GCP_FCM_ROLE_ID}" = "direktFcmSender"
+          echo "FCM API enablement and runtime IAM grant are owner-provisioned prerequisites; this canary does not mutate project-level Service Usage or IAM policy."
 
       - name: Resolve registered debug Firebase app and temporary config
         shell: bash
