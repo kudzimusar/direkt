@@ -242,8 +242,8 @@ def main() -> None:
     require(android_manifest, 'android:usesCleartextTraffic="false"', "Android HTTPS-only network policy")
     require(
         status,
-        "Firebase Crashlytics | **IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING**",
-        "RC3 source-integrated gated status",
+        "Firebase Crashlytics | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY**",
+        "RC3 closed synthetic-only managed status",
     )
 
     prohibited_android_integrations = (
@@ -440,7 +440,7 @@ def main() -> None:
     print("google_cloud=active_private_staging")
     print("firebase_auth=implemented_gated")
     print("firebase_app_distribution=active_internal")
-    print("firebase_crashlytics=implemented_gated_synthetic_canary_pending_collection_default_off")
+    print("firebase_crashlytics=active_synthetic_only_managed_canary_collection_default_off_participant_disabled")
     print("maps=external_runtime_unproven_manual_fallback_active")
     print("sentry=active_synthetic_only_managed_canary_cloud_logging_authoritative_participant_disabled")
     print("resend=active_synthetic_only_managed_canary_real_participant_disabled")
