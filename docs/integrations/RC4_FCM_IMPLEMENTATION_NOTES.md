@@ -11,14 +11,10 @@ Scope is limited to Firebase Cloud Messaging: backend provider-neutral send adap
 - PR #371 replaced that obsolete runtime-admin behavior with one owner-provisioned empty Secret Manager container named `direkt-fcm-canary-token`. The canary may create only a temporary numeric secret version, pin that exact version into the private Cloud Run Job, delete the job, and destroy that version during cleanup.
 - `scripts/rc4/verify-fcm-canary-secret-lifecycle.py` and its dedicated workflow fail closed on runtime secret creation, IAM mutation, `latest`, hard-coded version 1, whole-secret deletion or broad Secret Manager admin.
 
-## Required least-privilege owner bootstrap
+## Least-privilege bootstrap and managed closure
 
-Run `scripts/rc4/bootstrap-fcm-canary-secret.sh` once with an owner/admin-authenticated Google Cloud CLI before the next managed proof. It creates no secret value and verifies only this boundary:
+The owner bootstrap completed successfully on 2026-07-22 for the fixed `direkt-fcm-canary-token` container. It created no secret value and verified only secret-scoped `roles/secretmanager.secretVersionManager` for the GitHub deployer and `roles/secretmanager.secretAccessor` for the runtime identity.
 
-- fixed container: `direkt-fcm-canary-token` in `direkt-dev-502701`;
-- `direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com`: secret-scoped `roles/secretmanager.secretVersionManager`;
-- `direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com`: secret-scoped `roles/secretmanager.secretAccessor`.
+Exact-main managed run `29916381754` on `f05ff19105cb8dc7c4621c044c110b6029f63300` then passed the complete RC4 proof: synthetic Firebase registration, temporary numeric secret version creation, immutable backend image/private Cloud Run Job deployment, foreground and background outbox → FCM → Android receipts, sanitized evidence publication, Cloud Run Job deletion, and temporary secret-version destruction. Artifact `rc4-fcm-canary-29916381754` has digest `sha256:f45d1924ee6138f86ec15a222e97f28ff67bbe9c610ff75f57666fd03929526c`.
 
-Do not grant project-wide Secret Manager Admin and do not store a participant or production token in this container. The workflow-generated value is synthetic test-device material and is destroyed after the run.
-
-No Test Lab, Maps, WhatsApp, payment activation, participant/production push, Phase 11 exit or Phase 12 production release is authorized by this claim.
+RC4 is therefore closed as `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY`. Participant registration, participant/production push, Test Lab, Maps, WhatsApp, payment activation, Phase 11 exit and Phase 12 production release remain separately gated. RC5 Firebase Test Lab is the next integration checkpoint after an explicit lane claim.
