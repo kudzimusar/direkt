@@ -92,8 +92,10 @@ jobs:
                   | sed -E 's/^.*##\[error\]//' \
                   | cut -c1-240 || true)"
                 if [[ -z "${sanitized_error}" ]]; then
-                  if grep -Eqi 'PERMISSION_DENIED|does not have permission|permission .*denied|secretmanager\.secrets\.create' <<< "${failed_log}"; then
-                    sanitized_error="Secret Manager bootstrap failed: PERMISSION_DENIED."
+                  if grep -Eqi 'PERMISSION_DENIED|does not have permission|permission .*denied' <<< "${failed_log}"; then
+                    sanitized_error="Secret Manager/bootstrap boundary failed: PERMISSION_DENIED."
+                  elif grep -Eqi 'NOT_FOUND|not found|does not exist' <<< "${failed_log}"; then
+                    sanitized_error="Secret Manager/bootstrap boundary failed: NOT_FOUND."
                   elif grep -Eqi 'ALREADY_EXISTS|already exists' <<< "${failed_log}"; then
                     sanitized_error="Secret Manager bootstrap failed: ALREADY_EXISTS."
                   elif grep -Eqi 'INVALID_ARGUMENT|invalid argument|unrecognized arguments|invalid choice' <<< "${failed_log}"; then
@@ -118,4 +120,4 @@ jobs:
           echo "Timed out waiting for managed FCM canary ${RUN_ID}." >&2
           exit 1
 
-# RC4 Firebase BoM 34.16.0 plus bounded registration retry proof trigger.
+# RC4 pre-provisioned Secret Manager version boundary exact-main proof trigger.

@@ -60,11 +60,11 @@ Live Supabase hardening remains proven through migration `202607191200_integrati
 | Firebase App Distribution | **ACTIVE** | Controlled Android delivery to `direkt-internal-testers`. |
 | Firebase Authentication / phone OTP | **IMPLEMENTED_GATED** | Phone-possession proof/session exchange behind invite/consent/Phase 11 gates. |
 | Firebase Crashlytics | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY** | RC3 exact-source managed proof succeeded for `9098f7eb333baf096163f1564b3d8e5e5da3fcf0` through bridge run `29885635547`: fatal delivery, focused package-scoped input-dispatch ANR, historical `REASON_ANR`, restart pickup and Crashlytics/DataTransport delivery all passed. Automatic collection remains default-off, Analytics is absent, and participant/production crash telemetry remains disabled. |
-| FCM | **IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING** | RC4 source integration adds backend-owned HTTP v1 delivery through the transactional outbox, server-only identity-bound token lifecycle, Android foreground/background handling and notification permission controls. Participant registration is source-controlled disabled; exact-source managed synthetic push proof is still required before ACTIVE status. |
-| Firebase Test Lab | **PLANNED** | RC5 after RC3–RC4 Android runtime dependencies stabilize. |
+| FCM | **IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING** | RC4 source integration adds backend-owned HTTP v1 delivery through the transactional outbox, server-only identity-bound token lifecycle, Android foreground/background handling and notification permission controls. Exact-main run `29909954329` on source `b8d62fc0bc1470766dc6ef55aa807fa5ebdbb5c1` proved synthetic Firebase registration, FCM API/role preflight and the managed Android setup before the obsolete dynamic Secret Manager create boundary failed with sanitized `PERMISSION_DENIED`. PR #371 replaced that boundary with fixed secret `direkt-fcm-canary-token` and version-only lifecycle; the owner bootstrap for its secret-scoped deployer/runtime roles was verified on 2026-07-22. Managed foreground/background push proof remains required before ACTIVE status. Participant registration remains source-controlled disabled. |
+| Firebase Test Lab | **PLANNED** | RC5 after RC4 managed foreground/background proof and closeout. |
 | Google Play | **IMPLEMENTED_GATED** | Release engineering prepared; no production release authorized. |
 
-RC3 closure does not authorize participant/production crash telemetry. Crashlytics remains fail-closed by default outside the debug-only, exact-source-bound `synthetic-only` proof path. RC4 does not authorize participant/production push: participant token registration remains disabled until a later controlled-pilot privacy/release decision.
+RC3 closure does not authorize participant/production crash telemetry. Crashlytics remains fail-closed by default outside the debug-only, exact-source-bound `synthetic-only` proof path. RC4 does not authorize participant/production push: participant token registration remains disabled. The fixed `direkt-fcm-canary-token` container grants only secret-scoped `roles/secretmanager.secretVersionManager` to the GitHub deployer and `roles/secretmanager.secretAccessor` to the runtime identity; proof runs may add one temporary numeric version, pin that exact version into the private Cloud Run Job, delete the job, then destroy only that version.
 
 ## AI provider foundation and current AI behavior
 
@@ -100,10 +100,10 @@ Current managed DIREKT runtime does **not** bind Gemini/Groq as active applicati
 | Resend | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY** | Cloud Run execution `direkt-resend-canary-ct9mp` proved outbox → Resend → durable `published`; key is sending-only/domain-restricted to verified `notify.direkt.forum`. |
 | Firebase phone OTP | **IMPLEMENTED_GATED** | Current pilot phone-possession direction. |
 | WhatsApp Cloud API | **EXTERNALLY CONFIGURED / RUNTIME GATED** | RC6 adapter/consent/template/idempotency/receipt/retry/privacy closure required. |
-| FCM push | **IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING** | Provider-neutral backend adapter, durable push outbox, server-only token lifecycle and Android receive/permission path are source-integrated. The participant-registration kill switch remains off and managed foreground/background synthetic delivery evidence is pending. |
+| FCM push | **IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING** | Provider-neutral backend adapter, durable push outbox, server-only token lifecycle and Android receive/permission path are source-integrated. Exact-main run `29909954329` proved synthetic Firebase registration and managed preflight; PR #371 replaced the failed runtime secret-create path with the owner-bootstrapped fixed `direkt-fcm-canary-token` version-only boundary. The participant-registration kill switch remains off and managed foreground/background synthetic delivery evidence is pending. |
 | Cloud Tasks / Pub/Sub / Scheduler | **PLANNED ON DEMAND** | Add only for a justified retry/fan-out/scheduling need. |
 
-Continuous, controlled-pilot participant and production external email remain disabled. Controlled-pilot participant and production push delivery also remain disabled during RC4.
+Continuous, controlled-pilot participant and production external email remain disabled. Controlled-pilot participant and production push delivery also remain disabled during RC4. The 2026-07-22 owner bootstrap verified the fixed FCM canary secret container and its secret-scoped least-privilege bindings without creating, reading or printing a secret value.
 
 ## Observability
 
@@ -166,7 +166,7 @@ Clients never decide payment success. Payment state cannot create verification/p
 3. RC1 Resend — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**.
 4. RC2 Sentry API/portal — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**.
 5. RC3 Firebase Crashlytics — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**.
-6. RC4 FCM — **IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING**.
+6. RC4 FCM — **IMPLEMENTED_GATED / SYNTHETIC CANARY PENDING**; exact-main registration/preflight proven, fixed canary secret boundary owner-bootstrap verified, managed foreground/background delivery still required.
 7. RC5 Firebase Test Lab.
 8. RC6 WhatsApp Cloud API application adapter.
 9. RC7 Google Maps runtime.
