@@ -122,6 +122,7 @@ def main() -> int:
         (r"gcloud\s+storage\s+rm", "runtime evidence deletion"),
         (r"--num-flaky-test-attempts\s+[1-9]", "automatic flaky reruns"),
         (r"--use-orchestrator(?:\s|$)", "unvalidated Test Orchestrator"),
+        (r"^resourcemanager\.projects\.list$", "parent-only project list permission in managed runner allowlist"),
     ):
         prohibit(workflow, pattern, label)
 
@@ -161,7 +162,6 @@ def main() -> int:
         "iam.roles.get",
         "resourcemanager.projects.get",
         "resourcemanager.projects.getIamPolicy",
-        "resourcemanager.projects.list",
         "serviceusage.services.get",
     }
     expected_results = {
@@ -179,6 +179,11 @@ def main() -> int:
         "gcloud storage buckets update",
         'retention_days="${GCP_TEST_LAB_RESULTS_RETENTION_DAYS:-30}"',
         "no lifecycle mutation, object read, overwrite or delete",
+        "gcloud iam list-testable-permissions",
+        '//cloudresourcemanager.googleapis.com/projects/${project_id}',
+        'customRolesSupportLevel!=NOT_SUPPORTED',
+        "assert_project_role_permissions_testable",
+        "project-applicable",
     ):
         require(bootstrap, needle, "owner bootstrap boundary")
     for pattern, label in (
@@ -216,6 +221,7 @@ def main() -> int:
         "30-day",
         "live virtual Android catalog",
         "production release",
+        "project-applicable",
     ):
         require(notes, needle, "RC5 source-phase documentation")
 
@@ -229,7 +235,7 @@ def main() -> int:
     print("instrumentation=current_post_vc_semantics_local_execution_required")
     print("source=exact_current_main_required")
     print("identity=github_oidc_no_service_account_keys")
-    print("iam=no_project_scoped_storage_permissions")
+    print("iam=project_applicable_custom_role_no_project_scoped_storage_permissions")
     print("storage=dedicated_bucket_append_only_owner_retention")
     print("matrix=live_virtual_2_to_3_devices_api33_current_required")
     print("evidence=attempt_isolated_no_runtime_delete")
