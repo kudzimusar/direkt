@@ -115,19 +115,34 @@ jobs:
           run_id="${{ steps.dispatch.outputs.run_id }}"
           completed=false
           conclusion="unknown"
+          queue_polls=0
+          active_polls=0
 
-          # The managed canary may run for up to 55 minutes. Keep this bounded polling window long
-          # enough for that contract while remaining inside this bridge job's 70-minute timeout.
-          for _ in $(seq 1 720); do
+          # The canary concurrency group may queue this run before its own 55-minute timeout begins.
+          # Preserve a bounded 10-minute queue allowance plus 57.5 minutes of active execution,
+          # keeping the entire watcher inside this bridge job's 70-minute limit.
+          while true; do
             run_json="$(gh run view "${run_id}" --repo "${REPO}" --json status,conclusion,headSha)"
             status="$(jq -r '.status // "unknown"' <<< "${run_json}")"
             head_sha="$(jq -r '.headSha // ""' <<< "${run_json}")"
             test "${head_sha}" = "${SOURCE_SHA}"
+
             if [[ "${status}" = "completed" ]]; then
               conclusion="$(jq -r '.conclusion // "unknown"' <<< "${run_json}")"
               completed=true
               break
             fi
+
+            case "${status}" in
+              queued|pending|requested|waiting)
+                queue_polls=$((queue_polls + 1))
+                test "${queue_polls}" -le 120
+                ;;
+              *)
+                active_polls=$((active_polls + 1))
+                test "${active_polls}" -le 690
+                ;;
+            esac
             sleep 5
           done
 
