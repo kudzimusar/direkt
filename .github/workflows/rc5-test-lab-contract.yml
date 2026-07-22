@@ -71,7 +71,7 @@ jobs:
 
   reconcile-project-storage-boundary:
     name: Reconcile project-scoped Storage prohibition once
-    if: github.event_name == 'push' && github.ref == 'refs/heads/integration/rc5-firebase-test-lab'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/integration/rc5-firebase-test-lab') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'integration/rc5-firebase-test-lab')
     permissions:
       contents: write
     runs-on: ubuntu-latest
