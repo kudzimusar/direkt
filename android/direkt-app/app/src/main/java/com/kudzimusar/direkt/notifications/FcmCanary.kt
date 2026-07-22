@@ -2,6 +2,8 @@ package com.kudzimusar.direkt.notifications
 
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import com.google.firebase.messaging.FirebaseMessaging
 import com.kudzimusar.direkt.BuildConfig
 import java.io.File
@@ -13,8 +15,11 @@ internal object FcmCanary {
     const val TOKEN_FILE = "rc4-fcm-token"
     const val STATUS_FILE = "rc4-fcm-registration-status.json"
 
+    private const val MAX_REGISTRATION_ATTEMPTS = 3
+    private val retryDelaysMs = longArrayOf(2_000L, 5_000L)
     private val sourceShaPattern = Regex("^[0-9a-f]{40}$")
     private val statusLock = Any()
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     fun handleLaunch(context: Context, intent: Intent) {
         if (!canRun()) return
@@ -23,15 +28,30 @@ internal object FcmCanary {
         File(context.filesDir, TOKEN_FILE).delete()
         File(context.filesDir, STATUS_FILE).delete()
         writeStatus(context, "started", null)
+        registerWithBoundedRetry(context.applicationContext, attempt = 1)
+    }
 
+    private fun registerWithBoundedRetry(
+        context: Context,
+        attempt: Int,
+    ) {
         FirebaseMessaging.getInstance().register().addOnCompleteListener { task ->
             synchronized(statusLock) {
                 if (!task.isSuccessful) {
-                    writeStatusLocked(
-                        context,
-                        "failed",
-                        sanitizedRegistrationErrorType(task.exception),
-                    )
+                    val errorType = sanitizedRegistrationErrorType(task.exception)
+                    val retryable =
+                        errorType.endsWith("_AUTHENTICATION_FAILED") ||
+                            errorType.endsWith("_SERVICE_NOT_AVAILABLE")
+                    if (retryable && attempt < MAX_REGISTRATION_ATTEMPTS) {
+                        writeStatusLocked(context, "retrying", errorType)
+                        val delayMs = retryDelaysMs[attempt - 1]
+                        mainHandler.postDelayed(
+                            { registerWithBoundedRetry(context, attempt + 1) },
+                            delayMs,
+                        )
+                        return@addOnCompleteListener
+                    }
+                    writeStatusLocked(context, "failed", errorType)
                     return@addOnCompleteListener
                 }
 
