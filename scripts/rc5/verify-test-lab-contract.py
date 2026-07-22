@@ -91,6 +91,10 @@ def main() -> int:
         "testing.googleapis.com",
         "toolresults.googleapis.com",
         "gs://direkt-test-lab-results-264358173369",
+        "GITHUB_RUN_ATTEMPT",
+        'results_dir="rc5/${SOURCE_SHA}/${GITHUB_RUN_ID}/attempt-${GITHUB_RUN_ATTEMPT}"',
+        'name: rc5-firebase-test-lab-${{ github.run_id }}-${{ github.run_attempt }}',
+        "githubRunAttempt",
         "gcloud firebase test android models list",
         "--filter=virtual",
         "select-test-lab-matrix.py",
@@ -237,6 +241,7 @@ def main() -> int:
     print("iam=documented_test_lab_plus_analytics_non_storage_union")
     print("storage=dedicated_bucket_scope_30_day_lifecycle")
     print("matrix=live_virtual_2_to_3_devices_api33_current_required")
+    print("evidence=github_run_attempt_isolated")
     print("auto_google_login=false")
     print("production_authorization=false")
     return 0
