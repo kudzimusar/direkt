@@ -82,71 +82,20 @@ jobs:
           ref: integration/rc5-firebase-test-lab
           fetch-depth: 0
           show-progress: false
-      - name: Patch permanent RC5 Storage-role enforcement
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Apply deterministic permanent patch
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-
-          def replace_once(path: str, old: str, new: str, label: str) -> None:
-              file = Path(path)
-              text = file.read_text(encoding="utf-8")
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f"{label}: expected one match, found {count}")
-              file.write_text(text.replace(old, new, 1), encoding="utf-8")
-
-          workflow_old = "          done\n\n          runner_permissions=\"$(gcloud iam roles describe direktTestLabRunner --project \"${GCP_PROJECT_ID}\" --format='value(includedPermissions)' | tr ';' '\\\\n' | sed '/^$/d' | sort -u)\"\n"
-          workflow_new = "          done\n\n          bash scripts/rc5/verify-no-project-storage-roles.sh \"${GCP_PROJECT_ID}\" \"${member}\"\n\n          runner_permissions=\"$(gcloud iam roles describe direktTestLabRunner --project \"${GCP_PROJECT_ID}\" --format='value(includedPermissions)' | tr ';' '\\\\n' | sed '/^$/d' | sort -u)\"\n"
-          replace_once(".github/workflows/firebase-test-lab.yml", workflow_old, workflow_new, "managed workflow Storage boundary insertion")
-
-          bootstrap_old = "done\n\nbucket_policy=\"$(gcloud storage buckets get-iam-policy \"${bucket_uri}\" --format=json)\"\n"
-          bootstrap_new = "done\n\nbash scripts/rc5/verify-no-project-storage-roles.sh \"${project_id}\" \"${deployer_member}\"\n\nbucket_policy=\"$(gcloud storage buckets get-iam-policy \"${bucket_uri}\" --format=json)\"\n"
-          replace_once("scripts/rc5/bootstrap-test-lab.sh", bootstrap_old, bootstrap_new, "owner bootstrap Storage boundary insertion")
-
-          verifier_path = Path("scripts/rc5/verify-test-lab-contract.py")
-          verifier = verifier_path.read_text(encoding="utf-8")
-          old_read = "    selector = read(\"scripts/rc5/select-test-lab-matrix.py\")\n    notes = read(\"docs/integrations/RC5_FIREBASE_TEST_LAB_IMPLEMENTATION_NOTES.md\")\n"
-          new_read = "    selector = read(\"scripts/rc5/select-test-lab-matrix.py\")\n    storage_boundary = read(\"scripts/rc5/verify-no-project-storage-roles.sh\")\n    notes = read(\"docs/integrations/RC5_FIREBASE_TEST_LAB_IMPLEMENTATION_NOTES.md\")\n"
-          if verifier.count(old_read) != 1:
-              raise SystemExit("verifier helper read insertion mismatch")
-          verifier = verifier.replace(old_read, new_read, 1)
-
-          old_workflow_requirement = "        \"serviceusage.services.get\",\n        \"retention-days: 30\",\n"
-          new_workflow_requirement = "        \"serviceusage.services.get\",\n        'bash scripts/rc5/verify-no-project-storage-roles.sh \"${GCP_PROJECT_ID}\" \"${member}\"',\n        \"retention-days: 30\",\n"
-          if verifier.count(old_workflow_requirement) != 1:
-              raise SystemExit("verifier managed helper requirement insertion mismatch")
-          verifier = verifier.replace(old_workflow_requirement, new_workflow_requirement, 1)
-
-          old_bootstrap_requirement = "        \"gcloud storage buckets add-iam-policy-binding\",\n        \"roles/cloudtestservice.testAdmin\",\n"
-          new_bootstrap_requirement = "        \"gcloud storage buckets add-iam-policy-binding\",\n        'bash scripts/rc5/verify-no-project-storage-roles.sh \"${project_id}\" \"${deployer_member}\"',\n        \"roles/cloudtestservice.testAdmin\",\n"
-          if verifier.count(old_bootstrap_requirement) != 1:
-              raise SystemExit("verifier bootstrap helper requirement insertion mismatch")
-          verifier = verifier.replace(old_bootstrap_requirement, new_bootstrap_requirement, 1)
-
-          anchor = "    prohibit(bootstrap, r\"--role\\\\s+roles/(owner|editor)(?:\\\\s|$)\", \"broad owner/editor grant\")\n\n"
-          helper_checks = "    for needle in (\n        \"gcloud projects get-iam-policy\",\n        \"gcloud iam roles describe\",\n        \"organizations/*/roles/*\",\n        \"Project-scoped role ${role}\",\n        \"contains prohibited Cloud Storage permissions\",\n        \"^storage\\\\\\\\.\",\n    ):\n        require(storage_boundary, needle, \"project-scoped Storage-role verifier\")\n\n"
-          if verifier.count(anchor) != 1:
-              raise SystemExit("verifier helper-check insertion anchor mismatch")
-          verifier = verifier.replace(anchor, anchor + helper_checks, 1)
-          verifier_path.write_text(verifier, encoding="utf-8")
-
-          notes_path = Path("docs/integrations/RC5_FIREBASE_TEST_LAB_IMPLEMENTATION_NOTES.md")
-          notes = notes_path.read_text(encoding="utf-8")
-          old_note = "- binds `direktTestLabResultsWriter` only on the dedicated results bucket and explicitly fails if that role is present for the deployer at project scope;\n"
-          new_note = old_note + "- enumerates every direct project IAM role bound to the GitHub deployer, resolves its live permissions, and fails closed if any project-scoped role contains `storage.*`; the dedicated results role remains bucket-only and absent from project scope;\n"
-          if notes.count(old_note) != 1:
-              raise SystemExit("implementation notes Storage-role insertion mismatch")
-          notes_path.write_text(notes.replace(old_note, new_note, 1), encoding="utf-8")
-          PY
-
+          python -m py_compile scripts/rc5/reconcile-project-storage-boundary.py
+          python scripts/rc5/reconcile-project-storage-boundary.py 2>&1 | tee "${RUNNER_TEMP}/rc5-storage-reconcile.log"
           bash -n scripts/rc5/bootstrap-test-lab.sh
           bash -n scripts/rc5/verify-no-project-storage-roles.sh
           python -m py_compile scripts/rc5/verify-test-lab-contract.py
           python scripts/rc5/verify-test-lab-contract.py
           git diff --check
-
           git config user.name "direkt-rc5-storage-boundary"
           git config user.email "actions@users.noreply.github.com"
           git add .github/workflows/firebase-test-lab.yml scripts/rc5/bootstrap-test-lab.sh scripts/rc5/verify-test-lab-contract.py docs/integrations/RC5_FIREBASE_TEST_LAB_IMPLEMENTATION_NOTES.md
@@ -156,3 +105,11 @@ jobs:
           fi
           git commit -m "fix(rc5): reject all project-scoped Storage roles"
           git push origin HEAD:integration/rc5-firebase-test-lab
+      - name: Upload reconciliation diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc5-storage-reconcile-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/rc5-storage-reconcile.log
+          if-no-files-found: warn
+          retention-days: 7
