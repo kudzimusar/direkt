@@ -19,9 +19,10 @@ import java.io.File
 import java.util.UUID
 
 class DirektFirebaseMessagingService : FirebaseMessagingService() {
-    override fun onNewToken(token: String) {
-        super.onNewToken(token)
-        PushRegistrationCoordinator(applicationContext).registerRotatedToken(token)
+    override fun onRegistered(installationId: String) {
+        super.onRegistered(installationId)
+        FcmCanary.recordRegisteredInstallation(applicationContext, installationId)
+        PushRegistrationCoordinator(applicationContext).registerRegisteredInstallation(installationId)
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
