@@ -1,11 +1,11 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "status": "preauthorization-candidate-requires-final-release-candidate-revalidation",
   "artifact_scope": {
     "application_id": "com.kudzimusar.direkt",
     "release_channel": "preauthorization",
     "version_name": "0.12.0-preauth.1",
-    "note": "This inventory describes the current Android code path, Firebase Authentication usage, and the RC3 Crashlytics SDK boundary. Crashlytics automatic collection is disabled by default; only an exact-source synthetic debug canary may opt in during RC3 proof."
+    "note": "This inventory describes the current Android code path, Firebase Authentication usage, RC3 Crashlytics boundary, and RC4 Firebase Cloud Messaging source integration. Crashlytics collection and FCM auto-init are disabled by default. RC4 participant token registration and notification permission prompting remain source-controlled disabled; only an exact-source synthetic managed canary may explicitly obtain a test token and deliver bounded test pushes."
   },
   "sdk_inventory": [
     {
@@ -28,7 +28,7 @@
     {
       "sdk": "Firebase Crashlytics",
       "dependency": "com.google.firebase:firebase-crashlytics",
-      "active_use": "RC3 synthetic/debug canary only while runtime evidence is being established; normal preauthorization and production-participant collection are not authorized.",
+      "active_use": "RC3 managed synthetic/debug canary proven; normal preauthorization and production-participant collection are not authorized.",
       "automatic_collection_default": false,
       "production_participant_collection_authorized": false,
       "analytics_sdk_added": false,
@@ -47,7 +47,23 @@
         "exact private provider coordinates",
         "unbounded free-text logs or breadcrumbs"
       ],
-      "sharing_assessment": "synthetic-canary-only during RC3; final Play/Data Safety mapping must be revalidated before any participant or production telemetry is authorized"
+      "sharing_assessment": "synthetic-canary-only under RC3; final Play/Data Safety mapping must be revalidated before any participant or production telemetry is authorized"
+    },
+    {
+      "sdk": "Firebase Cloud Messaging",
+      "dependency": "com.google.firebase:firebase-messaging",
+      "active_use": "RC4 source-integrated with firebase_messaging_auto_init_enabled=false, participant registration disabled, and managed synthetic foreground/background canary pending.",
+      "automatic_initialization_default": false,
+      "participant_registration_authorized": false,
+      "production_push_authorized": false,
+      "synthetic_canary_processing": [
+        "temporary Firebase registration token on the managed synthetic test device",
+        "Firebase installation/device identifiers required by FCM for the synthetic test delivery",
+        "bounded synthetic routing fields: delivery ID, source SHA and foreground/background phase",
+        "network/device metadata processed by Firebase for message delivery"
+      ],
+      "token_handling": "The synthetic token is read from app-private storage, masked, transferred through a one-run Secret Manager secret, used only by the backend FCM HTTP v1 canary job, excluded from logs/artifacts/API responses, and deleted after the run. Participant token registration remains disabled.",
+      "sharing_assessment": "synthetic-managed-canary-only during RC4; final Play/Data Safety mapping and consent/notification controls must be revalidated before participant or production push is authorized"
     }
   ],
   "play_data_types": [
@@ -81,13 +97,13 @@
       "play_category": "Device or other IDs / Device metadata and network identifiers",
       "collected": true,
       "shared": false,
-      "collection_condition": "Firebase Authentication automatically processes IP address, user-agent/platform metadata and Firebase app metadata for service operation, security and abuse prevention.",
-      "required_or_optional": "automatic when Firebase Authentication is used",
+      "collection_condition": "Firebase Authentication automatically processes service metadata when authentication is used. FCM auto-init is disabled in the normal release path; RC4's exact-source synthetic canary may explicitly create a temporary registration token/device identifier solely for managed test delivery.",
+      "required_or_optional": "automatic for approved Firebase Authentication use; synthetic-only and temporary for RC4 FCM proof while participant push remains disabled",
       "purposes": [
         "app functionality",
         "fraud prevention, security and compliance"
       ],
-      "retention_and_deletion": "Provider-controlled service retention applies; exact final form mapping must be revalidated using the Firebase Android data-disclosure guidance for the exact shipped SDK version."
+      "retention_and_deletion": "Provider-controlled service retention applies. RC4 synthetic token material is temporary and deleted from DIREKT-managed storage after the run. Final participant-push form mapping must be revalidated against the exact shipped Firebase SDK and policy before activation."
     },
     {
       "play_category": "App activity / Consent and authentication events",
@@ -114,6 +130,7 @@
     "advertising identifiers",
     "analytics events through an analytics SDK",
     "participant or production crash/ANR telemetry while Crashlytics automatic collection remains default-off",
+    "participant FCM registration tokens or participant push-delivery metadata while FCM auto-init and participant registration remain disabled",
     "real provider evidence bytes through an Android upload flow",
     "real enquiry/review/complaint text through the current synthetic preview interaction surfaces"
   ],
@@ -127,6 +144,11 @@
       "data": "participant/production crash and ANR telemetry",
       "status": "Crashlytics SDK is source-integrated with automatic collection disabled; RC3 managed synthetic proof does not authorize participant/production collection. A separate reviewed privacy/data-use decision and exact release-candidate revalidation are required before enabling it.",
       "source_register": "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
+    },
+    {
+      "data": "participant FCM registration tokens and push delivery metadata",
+      "status": "Firebase Messaging is source-integrated with auto-init disabled and participant registration disabled. RC4 managed synthetic proof does not authorize participant/production push. Separate consent/privacy/release authorization and exact release-candidate revalidation are required before activation.",
+      "source_register": "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
     }
   ],
   "security_answers_candidate": {
@@ -134,7 +156,7 @@
     "request_account_deletion_supported_end_to_end": false,
     "request_account_deletion_blocker": "Google Play requires an in-app path and public web request route when account creation is supported. DIREKT has sign-out/session revocation but the final account deletion request/fulfillment workflow and public route are not yet production-approved.",
     "independent_security_review": false,
-    "notes": "Do not claim optional Play security badges, deletion support, or participant crash telemetry until evidence and authorization exist."
+    "notes": "Do not claim optional Play security badges, deletion support, participant crash telemetry, or participant push delivery until evidence and authorization exist."
   },
-  "submission_boundary": "The Play developer is responsible for the final declaration. Revalidate this inventory against the exact release candidate, merged manifest, SDK versions, backend behavior, approved privacy policy, telemetry configuration and live account-deletion flow before submitting any closed/open/production release."
+  "submission_boundary": "The Play developer is responsible for the final declaration. Revalidate this inventory against the exact release candidate, merged manifest, SDK versions, backend behavior, approved privacy policy, telemetry/messaging configuration and live account-deletion flow before submitting any closed/open/production release."
 }
