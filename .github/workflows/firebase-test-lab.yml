@@ -201,6 +201,7 @@ jobs:
             --no-use-orchestrator \
             --no-record-video \
             --no-performance-metrics \
+            --no-auto-google-login \
             --results-bucket "${GCP_TEST_LAB_RESULTS_BUCKET}" \
             --results-dir "${results_dir}" \
             --results-history-name "direkt-rc5-android" \
@@ -252,6 +253,7 @@ jobs:
               orchestrator: false,
               video: false,
               performanceMetrics: false,
+              automaticGoogleLogin: false,
               result: "passed",
               dataMode: "synthetic-public-safe-only",
               productionAuthorization: false,
@@ -268,6 +270,7 @@ jobs:
             jq -r '.targets[] | "- Matrix: `\(.purpose)` → `\(.model)` / API `\(.version)`"' "${RUNNER_TEMP}/rc5-test-lab-matrix.json"
             echo "- Results: \`${GCP_TEST_LAB_RESULTS_BUCKET}/${RESULTS_DIR}\` (30-day lifecycle)"
             echo "- Flaky retries: \`0\`"
+            echo "- Automatic Google login: \`false\`"
             echo "- Participant/production authorization: \`false\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
