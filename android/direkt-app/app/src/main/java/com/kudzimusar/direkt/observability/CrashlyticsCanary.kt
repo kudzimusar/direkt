@@ -87,8 +87,9 @@ internal object CrashlyticsCanary {
                 }
 
                 // The managed proof must inject input only after the Activity has a real focused
-                // window. A fixed, synthetic-only logcat marker makes that synchronization
-                // deterministic without weakening the required Android ANR evidence.
+                // window. Keep the debug-only main looper blocked beyond Android's full-ANR
+                // processing window so the ActivityManager controller can terminate a still-
+                // unresponsive process and preserve REASON_ANR for Crashlytics next-start proof.
                 decorView.postDelayed(
                     {
                         if (!activity.hasWindowFocus()) {
@@ -96,7 +97,9 @@ internal object CrashlyticsCanary {
                             return@postDelayed
                         }
                         Log.i(LOG_TAG, ANR_BLOCK_MARKER)
-                        Thread.sleep(20_000L)
+                        repeat(6) {
+                            Thread.sleep(20_000L)
+                        }
                     },
                     POST_FOCUS_SETTLE_DELAY_MS,
                 )
