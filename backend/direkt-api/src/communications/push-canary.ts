@@ -3,10 +3,10 @@ import { AppModule } from '../app.module';
 import { PushOutboxService } from './push-outbox.service';
 
 async function main(): Promise<void> {
-  const deviceToken = process.env.FCM_SYNTHETIC_DEVICE_TOKEN?.trim() ?? '';
+  const registrationToken = process.env.FCM_SYNTHETIC_DEVICE_TOKEN?.trim() ?? '';
   const sourceSha = process.env.DIREKT_SOURCE_SHA?.trim() ?? '';
   const phase = process.env.FCM_CANARY_PHASE?.trim();
-  if (deviceToken.length < 20 || !/^[0-9a-f]{40}$/.test(sourceSha)) {
+  if (registrationToken.length < 20 || !/^[0-9a-f]{40}$/.test(sourceSha)) {
     throw new Error('RC4 canary inputs are invalid.');
   }
   if (phase !== 'foreground' && phase !== 'background') {
@@ -18,7 +18,7 @@ async function main(): Promise<void> {
   });
   try {
     const outbox = app.get(PushOutboxService);
-    const receipt = await outbox.runSyntheticCanary(deviceToken, sourceSha, phase);
+    const receipt = await outbox.runSyntheticCanary(registrationToken, sourceSha, phase);
     process.stdout.write(
       `${JSON.stringify({
         event: 'fcm_synthetic_canary_passed',
