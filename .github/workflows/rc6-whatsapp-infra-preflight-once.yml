@@ -1,4 +1,5 @@
 name: DIREKT RC6 one-shot infrastructure preflight bridge
+# Retrigger checkpoint after scoped webhook IAM inspection bootstrap.
 
 on:
   push:
