@@ -8,6 +8,7 @@ on:
       - "scripts/rc6/**"
       - "docs/integrations/**"
       - "WORKSTREAM_LOCK.md"
+      - ".github/workflows/cloud-run-whatsapp-canary.yml"
       - ".github/workflows/rc6-whatsapp-contract.yml"
   push:
     branches:
@@ -18,6 +19,7 @@ on:
       - "scripts/rc6/**"
       - "docs/integrations/**"
       - "WORKSTREAM_LOCK.md"
+      - ".github/workflows/cloud-run-whatsapp-canary.yml"
       - ".github/workflows/rc6-whatsapp-contract.yml"
 
 permissions:
