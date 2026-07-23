@@ -49,6 +49,18 @@ gcloud iam service-accounts add-iam-policy-binding "${webhook_runtime_sa}" \
   --role roles/iam.serviceAccountUser \
   --quiet >/dev/null
 
+gcloud iam service-accounts add-iam-policy-binding "${webhook_runtime_sa}" \
+  --project "${project_id}" \
+  --member "serviceAccount:${deployer_sa}" \
+  --role roles/iam.serviceAccountViewer \
+  --quiet >/dev/null
+
+service_account_policy="$(gcloud iam service-accounts get-iam-policy "${webhook_runtime_sa}" --project "${project_id}" --format=json)"
+test "$(jq -r '[.bindings[]? | select(.role == "roles/iam.serviceAccountUser") | .members[]?] | unique | length' <<< "${service_account_policy}")" = "1"
+test "$(jq -r --arg member "serviceAccount:${deployer_sa}" '[.bindings[]? | select(.role == "roles/iam.serviceAccountUser") | .members[]? | select(. == $member)] | length' <<< "${service_account_policy}")" = "1"
+test "$(jq -r '[.bindings[]? | select(.role == "roles/iam.serviceAccountViewer") | .members[]?] | unique | length' <<< "${service_account_policy}")" = "1"
+test "$(jq -r --arg member "serviceAccount:${deployer_sa}" '[.bindings[]? | select(.role == "roles/iam.serviceAccountViewer") | .members[]? | select(. == $member)] | length' <<< "${service_account_policy}")" = "1"
+
 for secret_name in "${secret_names[@]}"; do
   if ! gcloud secrets describe "${secret_name}" --project "${project_id}" >/dev/null 2>&1; then
     gcloud secrets create "${secret_name}" \
@@ -106,5 +118,5 @@ printf 'Project: %s\n' "${project_id}"
 printf 'Secret containers: %s\n' "${secret_names[*]}"
 printf 'Send runtime: %s — send secrets available only through secret-level accessor grants.\n' "${send_runtime_sa}"
 printf 'Webhook runtime: %s — zero project-level roles; database/app-secret/verify-token only; no access-token or recipient-secret access.\n' "${webhook_runtime_sa}"
-printf 'Deployer scope: secretVersionManager on each RC6 secret plus serviceAccountUser on the isolated webhook identity.\n'
+printf 'Deployer scope: secretVersionManager on each RC6 secret plus serviceAccountUser and serviceAccountViewer only on the isolated webhook identity.\n'
 printf 'No secret value was created, read, or printed by this bootstrap.\n'
