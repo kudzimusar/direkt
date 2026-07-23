@@ -99,7 +99,7 @@ Current managed DIREKT runtime does **not** bind Gemini/Groq as active applicati
 | Transactional outbox | **ACTIVE domain foundation** | Durable asynchronous-event source of truth. |
 | Resend | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY** | Cloud Run execution `direkt-resend-canary-ct9mp` proved outbox → Resend → durable `published`; key is sending-only/domain-restricted to verified `notify.direkt.forum`. |
 | Firebase phone OTP | **IMPLEMENTED_GATED** | Current pilot phone-possession direction. |
-| WhatsApp Cloud API | **EXTERNALLY CONFIGURED / RUNTIME GATED** | RC6 adapter/consent/template/idempotency/receipt/retry/privacy closure required. |
+| WhatsApp Cloud API | **IMPLEMENTED_GATED / MANAGED CANARY PENDING** | RC6 backend-only provider-neutral Meta adapter, transactional outbox, hashed opt-out, template-only payload boundary, raw-body HMAC webhook verification, durable idempotent receipts/retries and synthetic canary entrypoint are implemented. Provider business/phone/template/secret state and managed synthetic proof are not yet verified. Only Meta test/synthetic assets plus one owner-controlled verified recipient may be used for proof; participant/production delivery remains disabled. |
 | FCM push | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY** | Exact-main run `29916381754` on `f05ff19105cb8dc7c4621c044c110b6029f63300` passed synthetic Firebase registration, immutable backend image/private Cloud Run Job deployment, foreground and background outbox → FCM → Android receipt proof, sanitized artifact publication and ordered cleanup. Artifact `rc4-fcm-canary-29916381754` digest `sha256:f45d1924ee6138f86ec15a222e97f28ff67bbe9c610ff75f57666fd03929526c`. Participant registration and participant/production push remain disabled. |
 | Cloud Tasks / Pub/Sub / Scheduler | **PLANNED ON DEMAND** | Add only for a justified retry/fan-out/scheduling need. |
 
@@ -167,8 +167,8 @@ Clients never decide payment success. Payment state cannot create verification/p
 4. RC2 Sentry API/portal — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**.
 5. RC3 Firebase Crashlytics — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**.
 6. RC4 FCM — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**; exact-main managed proof run `29916381754` succeeded on `f05ff19105cb8dc7c4621c044c110b6029f63300` for foreground/background delivery and cleanup; participant/production push remains disabled.
-7. RC5 Firebase Test Lab — **ACTIVE CHECKPOINT / IMPLEMENTED_GATED — MANAGED MATRIX PENDING**; source contract and local instrumentation execution are integrated, while owner bootstrap and exact-main managed Test Lab evidence remain pending.
-8. RC6 WhatsApp Cloud API application adapter.
+7. RC5 Firebase Test Lab — **PARKED / NOT CLOSED — IMPLEMENTED_GATED / MANAGED MATRIX PENDING**; source contract, local instrumentation, least-privilege roles and dedicated results bucket are preserved. Final owner-side read-only verification and exact-current-main managed Test Lab evidence remain pending because Cloud Shell is temporarily quota-blocked.
+8. RC6 WhatsApp Cloud API application adapter — **ACTIVE CHECKPOINT / IMPLEMENTED_GATED — MANAGED CANARY PENDING**; fail-closed backend/outbox/webhook/opt-out source is implemented and regression-proven; managed provider proof remains pending. Meta test/synthetic number plus one owner-controlled verified recipient only; production phone registration, production templates and participant/live WhatsApp traffic remain gated.
 9. RC7 Google Maps runtime.
 10. RC8 sandbox payment adapters/reconciliation.
 11. RC9 generated Kotlin/TypeScript clients.
