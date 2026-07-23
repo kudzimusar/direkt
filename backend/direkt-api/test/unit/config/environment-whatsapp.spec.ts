@@ -43,7 +43,7 @@ describe('RC6 WhatsApp environment boundary', () => {
       NODE_ENV: 'production',
       DIREKT_DATA_MODE: 'production',
       DIREKT_TRAFFIC_MODE: 'disabled',
-      DATABASE_URL: 'postgresql://direkt:password@db.example.com:5432/direkt',
+      DATABASE_URL: 'postgresql://direkt:direkt_dev@localhost:5432/direkt',
       ACCESS_TOKEN_SECRET: 'a'.repeat(64),
       CONTACT_HASH_PEPPER: 'b'.repeat(64),
       CHALLENGE_HASH_PEPPER: 'c'.repeat(64),
