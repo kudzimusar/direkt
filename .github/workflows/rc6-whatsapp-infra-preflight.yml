@@ -34,6 +34,7 @@ jobs:
       WHATSAPP_APP_SECRET_SECRET: direkt-whatsapp-app-secret
       WHATSAPP_WEBHOOK_VERIFY_TOKEN_SECRET: direkt-whatsapp-webhook-verify-token
       WHATSAPP_SYNTHETIC_RECIPIENT_SECRET: direkt-whatsapp-synthetic-recipient
+      RC6_PREFLIGHT_RECEIPT: rc6-preflight/findings.txt
 
     steps:
       - name: Validate source input
@@ -63,6 +64,18 @@ jobs:
           python3 scripts/rc6/verify-whatsapp-managed-identity.py
           python3 scripts/rc6/verify-whatsapp-infra-preflight.py
 
+      - name: Initialize sanitized preflight receipt
+        shell: bash
+        env:
+          SOURCE_INPUT: ${{ inputs.source_sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "${RC6_PREFLIGHT_RECEIPT}")"
+          printf 'SOURCE|%s\n' "${SOURCE_INPUT}" > "${RC6_PREFLIGHT_RECEIPT}"
+          printf 'MODE|metadata_and_iam_only\n' >> "${RC6_PREFLIGHT_RECEIPT}"
+          printf 'SECRET_VALUES_ACCESSED|false\n' >> "${RC6_PREFLIGHT_RECEIPT}"
+          printf 'PRODUCTION_AUTHORIZATION|false\n' >> "${RC6_PREFLIGHT_RECEIPT}"
+
       - name: Authenticate to Google Cloud through GitHub OIDC
         uses: google-github-actions/auth@v3
         with:
@@ -86,10 +99,12 @@ jobs:
 
           mark_fail() {
             echo "- ❌ $1" >> "${GITHUB_STEP_SUMMARY}"
+            printf 'FAIL|%s\n' "$1" >> "${RC6_PREFLIGHT_RECEIPT}"
             failures=$((failures + 1))
           }
           mark_pass() {
             echo "- ✅ $1" >> "${GITHUB_STEP_SUMMARY}"
+            printf 'PASS|%s\n' "$1" >> "${RC6_PREFLIGHT_RECEIPT}"
           }
 
           {
@@ -179,7 +194,20 @@ jobs:
           fi
 
           if (( failures > 0 )); then
+            printf 'RESULT|not_ready\n' >> "${RC6_PREFLIGHT_RECEIPT}"
+            printf 'FAILURE_COUNT|%s\n' "${failures}" >> "${RC6_PREFLIGHT_RECEIPT}"
             echo "::error title=RC6 infrastructure not ready::${failures} metadata/IAM prerequisite(s) are missing or incorrect."
             exit 1
           fi
           mark_pass "RC6 GCP secret and identity metadata boundary is ready for Meta test-asset configuration"
+          printf 'RESULT|ready\n' >> "${RC6_PREFLIGHT_RECEIPT}"
+          printf 'FAILURE_COUNT|0\n' >> "${RC6_PREFLIGHT_RECEIPT}"
+
+      - name: Upload sanitized RC6 infrastructure preflight receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc6-whatsapp-infra-preflight-${{ github.run_id }}
+          path: ${{ env.RC6_PREFLIGHT_RECEIPT }}
+          if-no-files-found: warn
+          retention-days: 30
