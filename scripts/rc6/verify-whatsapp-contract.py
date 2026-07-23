@@ -64,10 +64,19 @@ def main() -> int:
     webhook_controller = read(
         "backend/direkt-api/src/communications/whatsapp-webhook.controller.ts"
     )
+    webhook_canary_module = read(
+        "backend/direkt-api/src/communications/whatsapp-webhook-canary.module.ts"
+    )
+    webhook_canary_entry = read(
+        "backend/direkt-api/src/communications/whatsapp-webhook-canary.ts"
+    )
+    canary_entry = read("backend/direkt-api/src/communications/whatsapp-canary.ts")
     opt_out = read("backend/direkt-api/src/communications/whatsapp-opt-out.service.ts")
     handoff = read("backend/direkt-api/src/interaction/interaction-handoff.repository.ts")
     handoff_types = read("backend/direkt-api/src/interaction/interaction-handoff.types.ts")
     migration = read("database/migrations/202607230230_rc6_whatsapp_runtime.sql")
+    managed_workflow = read(".github/workflows/cloud-run-whatsapp-canary.yml")
+    bootstrap = read("scripts/rc6/bootstrap-whatsapp-secrets.sh")
 
     for needle in (
         "CLAIMED — RC6 WhatsApp Cloud API",
@@ -156,6 +165,41 @@ def main() -> int:
     prohibit(webhook, r"console\.(log|error|warn)", "raw WhatsApp webhook logging")
 
     for needle in (
+        "ConfigModule.forRoot",
+        "DatabaseModule",
+        "WhatsAppWebhookController",
+        "WhatsAppWebhookService",
+    ):
+        require(webhook_canary_module, needle, "isolated webhook canary module")
+    for prohibited_module in (
+        "AppModule",
+        "CommunicationsModule",
+        "AuthModule",
+        "OperationsModule",
+        "ProviderModule",
+    ):
+        if prohibited_module in webhook_canary_module:
+            raise AssertionError(
+                f"Webhook canary surface must not import broad application module {prohibited_module}."
+            )
+    for needle in (
+        "WhatsAppWebhookCanaryModule",
+        "rawBody: true",
+        "setGlobalPrefix('api/v1')",
+    ):
+        require(webhook_canary_entry, needle, "isolated webhook canary entrypoint")
+
+    for needle in (
+        "waitForSignedReceipt",
+        "whatsapp_delivery_receipts",
+        "provider_status_at",
+        "signedWebhookReceipt: true",
+        "productionAuthorization: false",
+        "timed out waiting for a signed provider receipt",
+    ):
+        require(canary_entry, needle, "managed signed-receipt proof")
+
+    for needle in (
         "authenticated_account_opt_out",
         "value_hash",
         "rawContactIncluded: false",
@@ -182,6 +226,61 @@ def main() -> int:
     ):
         require(migration, needle, "durable RC6 database state")
 
+    for needle in (
+        "workflow_dispatch:",
+        "PREPARE-DIREKT-WHATSAPP-WEBHOOK",
+        "RUN-DIREKT-WHATSAPP-CANARY",
+        "test \"$(git rev-parse origin/main)\" = \"${SOURCE_SHA}\"",
+        "google-github-actions/auth@v3",
+        "direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com",
+        "direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com",
+        "direkt-whatsapp-access-token",
+        "direkt-whatsapp-app-secret",
+        "direkt-whatsapp-webhook-verify-token",
+        "direkt-whatsapp-synthetic-recipient",
+        "versions describe latest",
+        "--allow-unauthenticated",
+        "whatsapp-webhook-canary.js",
+        "WHATSAPP_PROVIDER_MODE: \"disabled\"",
+        "WHATSAPP_SYNTHETIC_SEND_APPROVED: \"true\"",
+        "whatsapp-canary.js",
+        "Outbox → Meta acceptance → signed webhook receipt: passed",
+        "Participant/production delivery: disabled",
+        "Production authorization: false",
+    ):
+        require(managed_workflow, needle, "managed WhatsApp canary control")
+    for pattern, label in (
+        (r"gcloud\s+secrets\s+create", "runtime secret-container creation"),
+        (r"gcloud\s+secrets\s+add-iam-policy-binding", "runtime secret IAM mutation"),
+        (r"gcloud\s+secrets\s+versions\s+access", "runtime secret-value read"),
+        (r"--set-secrets[^\n]*:latest", "unpinned Cloud Run secret reference"),
+        (r"WHATSAPP_SYNTHETIC_RECIPIENT\s*:\s*\$\{\{\s*inputs", "recipient as workflow input"),
+        (r"WHATSAPP_ACCESS_TOKEN\s*:\s*\$\{\{\s*inputs", "access token as workflow input"),
+    ):
+        prohibit(managed_workflow, pattern, label)
+
+    expected_secrets = (
+        "direkt-whatsapp-access-token",
+        "direkt-whatsapp-app-secret",
+        "direkt-whatsapp-webhook-verify-token",
+        "direkt-whatsapp-synthetic-recipient",
+    )
+    for secret in expected_secrets:
+        require(bootstrap, secret, "owner-preprovisioned WhatsApp secret container")
+    for needle in (
+        "roles/secretmanager.secretVersionManager",
+        "roles/secretmanager.secretAccessor",
+        "Broad roles/secretmanager.admin is prohibited",
+        "No secret value was created, read, or printed by this bootstrap.",
+    ):
+        require(bootstrap, needle, "owner-scoped WhatsApp secret bootstrap")
+    for pattern, label in (
+        (r"secrets\s+versions\s+add", "bootstrap secret-value creation"),
+        (r"secrets\s+versions\s+access", "bootstrap secret-value read"),
+        (r"roles/secretmanager\.admin\s+--quiet", "broad Secret Manager admin grant"),
+    ):
+        prohibit(bootstrap, pattern, label)
+
     scan_clients(
         {
             "WhatsApp access token env": re.compile(r"WHATSAPP_ACCESS_TOKEN"),
@@ -197,6 +296,8 @@ def main() -> int:
     print("consent=send_time_opt_out_rechecked")
     print("payload=template_only_no_identity_or_evidence_documents")
     print("webhook=hmac_sha256_raw_body_verified")
+    print("webhook_surface=isolated_public_canary_only")
+    print("managed_proof=exact_current_main_pinned_secrets_signed_receipt_required")
     print("receipts=durable_idempotent_out_of_order_guarded")
     print("production_authorization=false")
     return 0
