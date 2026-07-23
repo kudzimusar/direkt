@@ -1,0 +1,41 @@
+name: DIREKT RC5 Test Lab managed proof bridge
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/rc5-test-lab-managed-proof-once.yml
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch:
+    name: Dispatch exact-current-main Test Lab proof once
+    if: github.repository == 'kudzimusar/direkt' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Dispatch Firebase Test Lab workflow for this exact main commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${GITHUB_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          payload="$(jq -n \
+            --arg sha "${GITHUB_SHA}" \
+            '{ref:"main",inputs:{confirmation:"RUN-DIREKT-TEST-LAB",source_sha:$sha}}')"
+          response_code="$(curl --silent --show-error \
+            --output "${RUNNER_TEMP}/dispatch-response.txt" \
+            --write-out '%{http_code}' \
+            --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/firebase-test-lab.yml/dispatches" \
+            --data "${payload}")"
+          test "${response_code}" = "204"
+          echo "Dispatched firebase-test-lab.yml for exact current main ${GITHUB_SHA}."
