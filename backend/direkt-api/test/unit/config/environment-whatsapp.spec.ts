@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  type DirektEnvironment,
-  environmentSchema,
-} from '../../../src/config/environment';
+import { type DirektEnvironment, environmentSchema } from '../../../src/config/environment';
 
 const META_CONFIG = {
   WHATSAPP_PROVIDER_MODE: 'meta_cloud',
