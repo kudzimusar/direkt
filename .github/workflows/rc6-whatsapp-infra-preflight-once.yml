@@ -1,0 +1,88 @@
+name: DIREKT RC6 one-shot infrastructure preflight bridge
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/rc6-whatsapp-infra-preflight-once.yml
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+
+concurrency:
+  group: direkt-rc6-whatsapp-infra-preflight-once
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    name: Dispatch exact-main read-only RC6 infrastructure preflight
+    if: github.repository == 'kudzimusar/direkt'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Dispatch inspect wait and record Issue #261 receipt
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          repo="${GITHUB_REPOSITORY}"
+          source_sha="${GITHUB_SHA}"
+          [[ "${source_sha}" =~ ^[0-9a-f]{40}$ ]]
+
+          main_sha="$(gh api "repos/${repo}/git/ref/heads/main" --jq '.object.sha')"
+          test "${main_sha}" = "${source_sha}"
+
+          payload="$(jq -nc --arg sha "${source_sha}" '{"ref":"main","inputs":{"source_sha":$sha}}')"
+          gh api --method POST \
+            "repos/${repo}/actions/workflows/rc6-whatsapp-infra-preflight.yml/dispatches" \
+            --input - <<< "${payload}"
+
+          run_id=""
+          for _ in $(seq 1 60); do
+            runs_json="$(gh api "repos/${repo}/actions/workflows/rc6-whatsapp-infra-preflight.yml/runs?event=workflow_dispatch&branch=main&per_page=20")"
+            run_id="$(jq -r --arg sha "${source_sha}" '[.workflow_runs[] | select(.head_sha == $sha)] | sort_by(.created_at) | last | .id // empty' <<< "${runs_json}")"
+            [[ -n "${run_id}" ]] && break
+            sleep 5
+          done
+          if [[ -z "${run_id}" ]]; then
+            echo "::error title=RC6 preflight dispatch not observed::No workflow_dispatch run was found for exact current main."
+            exit 1
+          fi
+
+          status=""
+          conclusion=""
+          for _ in $(seq 1 180); do
+            run_json="$(gh api "repos/${repo}/actions/runs/${run_id}")"
+            status="$(jq -r '.status' <<< "${run_json}")"
+            conclusion="$(jq -r '.conclusion // ""' <<< "${run_json}")"
+            [[ "${status}" = "completed" ]] && break
+            sleep 5
+          done
+
+          run_url="https://github.com/${repo}/actions/runs/${run_id}"
+          receipt="$(cat <<EOF
+          RC6 read-only infrastructure preflight execution receipt.
+
+          - Exact current main: \`${source_sha}\`
+          - Managed preflight run: \`${run_id}\`
+          - Status: \`${status}\`
+          - Conclusion: \`${conclusion:-not-completed}\`
+          - Boundary: metadata/IAM inspection only; secret values were not accessed; no IAM/secret mutation; production authorization remains false.
+          - Sanitized pass/fail findings are retained only in the run artifact \`rc6-whatsapp-infra-preflight-${run_id}\`.
+          - Run: ${run_url}
+          EOF
+          )"
+          gh api --method POST "repos/${repo}/issues/261/comments" -f body="${receipt}" >/dev/null
+
+          if [[ "${status}" != "completed" ]]; then
+            echo "::error title=RC6 infrastructure preflight timed out::Run ${run_id} did not complete in the bounded wait."
+            exit 1
+          fi
+          if [[ "${conclusion}" != "success" ]]; then
+            echo "::error title=RC6 infrastructure preflight not ready::Run ${run_id} concluded ${conclusion}. Inspect the sanitized receipt artifact; no secret values were accessed."
+            exit 1
+          fi
