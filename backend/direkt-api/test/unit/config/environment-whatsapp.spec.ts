@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { environmentSchema } from '../../../src/config/environment';
+import {
+  type DirektEnvironment,
+  environmentSchema,
+} from '../../../src/config/environment';
 
 const META_CONFIG = {
   WHATSAPP_PROVIDER_MODE: 'meta_cloud',
@@ -21,10 +24,11 @@ describe('RC6 WhatsApp environment boundary', () => {
       DIREKT_DATA_MODE: 'synthetic-only',
       ...META_CONFIG,
     });
+    const value = result.value as DirektEnvironment;
 
     expect(result.error).toBeUndefined();
-    expect(result.value.WHATSAPP_SYNTHETIC_SEND_APPROVED).toBe(true);
-    expect(result.value.WHATSAPP_PROVIDER_MODE).toBe('meta_cloud');
+    expect(value.WHATSAPP_SYNTHETIC_SEND_APPROVED).toBe(true);
+    expect(value.WHATSAPP_PROVIDER_MODE).toBe('meta_cloud');
   });
 
   it('rejects Meta activation when the explicit synthetic-send latch is false', () => {
