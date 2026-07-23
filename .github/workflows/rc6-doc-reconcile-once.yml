@@ -56,7 +56,7 @@ jobs:
           replace_once(
               ledger,
               r'^\*\*Last reconciled:\*\* .*$',
-              '**Last reconciled:** 2026-07-23 (Asia/Tokyo)  ',
+              '**Last reconciled:** 2026-07-23 (Asia/Tokyo)',
           )
           replace_once(
               ledger,
