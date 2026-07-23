@@ -41,21 +41,26 @@ jobs:
           path.write_text(text, encoding='utf-8')
           PY
           git diff --check
-          bash -n <(python3 - <<'PY'
+          python3 - <<'PY' > /tmp/rc6-run-blocks.sh
           from pathlib import Path
           import re
           text = Path('.github/workflows/cloud-run-whatsapp-canary.yml').read_text(encoding='utf-8')
           for block in re.findall(r'        run: \|\n((?:          .*\n)+)', text):
               print('\n'.join(line[10:] for line in block.splitlines()))
+              print()
           PY
-          )
+          bash -n /tmp/rc6-run-blocks.sh
 
-      - name: Commit managed workflow correction
+      - name: Commit and push managed workflow correction safely
         shell: bash
+        env:
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .github/workflows/cloud-run-whatsapp-canary.yml
           git commit -m "fix(rc6): correct managed workflow secret-version check"
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          git fetch origin "${HEAD_BRANCH}"
+          git rebase "origin/${HEAD_BRANCH}"
+          git push origin HEAD:"${HEAD_BRANCH}"
