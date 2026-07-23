@@ -10,15 +10,17 @@ ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = (ROOT / ".github/workflows/rc6-whatsapp-infra-preflight.yml").read_text(
     encoding="utf-8"
 )
+BRIDGE_PATH = ROOT / ".github/workflows/rc6-whatsapp-infra-preflight-once.yml"
+BRIDGE = BRIDGE_PATH.read_text(encoding="utf-8") if BRIDGE_PATH.is_file() else ""
 
 
-def require(needle: str, label: str) -> None:
-    if needle not in WORKFLOW:
+def require(text: str, needle: str, label: str) -> None:
+    if needle not in text:
         raise AssertionError(f"Missing {label}: {needle}")
 
 
-def prohibit(pattern: str, label: str) -> None:
-    if re.search(pattern, WORKFLOW, flags=re.IGNORECASE | re.MULTILINE):
+def prohibit(text: str, pattern: str, label: str) -> None:
+    if re.search(pattern, text, flags=re.IGNORECASE | re.MULTILINE):
         raise AssertionError(f"Prohibited {label}: {pattern}")
 
 
@@ -43,8 +45,15 @@ def main() -> int:
         "unexpected secretVersionManager member set",
         "unexpected secretAccessor member set",
         "metadata/IAM only; secret values are never accessed",
+        "RC6_PREFLIGHT_RECEIPT",
+        "FAIL|%s",
+        "RESULT|not_ready",
+        "RESULT|ready",
+        "actions/upload-artifact@v4",
+        "rc6-whatsapp-infra-preflight-${{ github.run_id }}",
+        "retention-days: 30",
     ):
-        require(needle, "read-only RC6 infrastructure preflight control")
+        require(WORKFLOW, needle, "read-only RC6 infrastructure preflight control")
 
     for pattern, label in (
         (r"gcloud\s+secrets\s+create", "secret container creation"),
@@ -63,13 +72,37 @@ def main() -> int:
             "secret workflow input",
         ),
     ):
-        prohibit(pattern, label)
+        prohibit(WORKFLOW, pattern, label)
+
+    if BRIDGE:
+        for needle in (
+            "push:",
+            "rc6-whatsapp-infra-preflight-once.yml",
+            "actions: write",
+            "issues: write",
+            "rc6-whatsapp-infra-preflight.yml/dispatches",
+            '"inputs":{"source_sha":$sha}',
+            "Issue #261",
+            "secret values were not accessed",
+        ):
+            require(BRIDGE, needle, "one-shot RC6 preflight bridge control")
+        for pattern, label in (
+            (r"gcloud\s+", "Google Cloud mutation/read in one-shot dispatcher"),
+            (r"secrets\s+versions\s+access", "secret value read in dispatcher"),
+            (
+                r"WHATSAPP_(ACCESS_TOKEN|APP_SECRET|WEBHOOK_VERIFY_TOKEN|SYNTHETIC_RECIPIENT)",
+                "provider secret material in dispatcher",
+            ),
+        ):
+            prohibit(BRIDGE, pattern, label)
 
     print("RC6 WhatsApp infrastructure preflight contract verification passed.")
     print("mode=read_only_metadata_and_iam")
     print("secret_values_accessed=false")
     print("iam_membership=exact_allowlists_required")
     print("webhook_actas=deployer_only_required")
+    print("sanitized_receipt=artifact_30_day_retention")
+    print(f"one_shot_bridge={'present' if BRIDGE else 'absent'}")
     print("iam_mutation=false")
     print("production_authorization=false")
     return 0
