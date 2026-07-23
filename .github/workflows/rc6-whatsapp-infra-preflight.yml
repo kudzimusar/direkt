@@ -149,14 +149,15 @@ jobs:
           check_secret() {
             local secret_name="$1"
             local webhook_required="$2"
-            if ! gcloud secrets describe "${secret_name}" --project "${GCP_PROJECT_ID}" >/dev/null 2>&1; then
-              mark_fail "secret container ${secret_name} is missing"
+            local secret_metadata
+            if ! secret_metadata="$(gcloud secrets describe "${secret_name}" --project "${GCP_PROJECT_ID}" --format=json 2>/dev/null)"; then
+              mark_fail "preflight deployer cannot inspect secret container ${secret_name}"
               return
             fi
             mark_pass "secret container ${secret_name} exists"
 
             local latest_record latest_version latest_state policy
-            local actual_version_members expected_version_members actual_accessor_members expected_accessor_members
+            local actual_version_members expected_version_members actual_viewer_members expected_viewer_members actual_accessor_members expected_accessor_members
             if ! latest_record="$(gcloud secrets versions describe latest --secret "${secret_name}" --project "${GCP_PROJECT_ID}" --format=json 2>/dev/null)"; then
               mark_fail "secret ${secret_name} has no inspectable latest version"
               return
@@ -169,13 +170,24 @@ jobs:
               mark_fail "secret ${secret_name} latest version is not enabled numeric evidence"
             fi
 
-            policy="$(gcloud secrets get-iam-policy "${secret_name}" --project "${GCP_PROJECT_ID}" --format=json)"
+            if ! policy="$(gcloud secrets get-iam-policy "${secret_name}" --project "${GCP_PROJECT_ID}" --format=json 2>/dev/null)"; then
+              mark_fail "preflight deployer cannot inspect secret IAM policy for ${secret_name}"
+              return
+            fi
             actual_version_members="$(jq -c '[.bindings[]? | select(.role == "roles/secretmanager.secretVersionManager") | .members[]?] | unique | sort' <<< "${policy}")"
             expected_version_members="$(jq -nc --arg member "${deployer_member}" '[$member] | sort')"
             if [[ "${actual_version_members}" = "${expected_version_members}" ]]; then
               mark_pass "${secret_name}: exact deployer-only secretVersionManager allowlist"
             else
               mark_fail "${secret_name}: unexpected secretVersionManager member set"
+            fi
+
+            actual_viewer_members="$(jq -c '[.bindings[]? | select(.role == "roles/secretmanager.viewer") | .members[]?] | unique | sort' <<< "${policy}")"
+            expected_viewer_members="$(jq -nc --arg member "${deployer_member}" '[$member] | sort')"
+            if [[ "${actual_viewer_members}" = "${expected_viewer_members}" ]]; then
+              mark_pass "${secret_name}: exact deployer-only secretManagerViewer allowlist"
+            else
+              mark_fail "${secret_name}: unexpected secretManagerViewer member set"
             fi
 
             actual_accessor_members="$(jq -c '[.bindings[]? | select(.role == "roles/secretmanager.secretAccessor") | .members[]?] | unique | sort' <<< "${policy}")"
