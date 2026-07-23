@@ -174,7 +174,6 @@ jobs:
           set -euo pipefail
           cat > "${RUNNER_TEMP}/whatsapp-webhook-env.yaml" <<EOF
           NODE_ENV: "development"
-          PORT: "8080"
           LOG_LEVEL: "warn"
           DIREKT_ENVIRONMENT: "staging"
           DIREKT_DATA_MODE: "synthetic-only"
