@@ -1,0 +1,167 @@
+name: DIREKT RC6 WhatsApp infrastructure preflight
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact current main source to inspect against
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: direkt-rc6-whatsapp-infra-preflight
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    name: Inspect RC6 GCP secret and identity readiness
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_SEND_RUNTIME_SERVICE_ACCOUNT: direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_WEBHOOK_SERVICE_ACCOUNT: direkt-whatsapp-webhook@direkt-dev-502701.iam.gserviceaccount.com
+      DIREKT_DATABASE_SECRET: direkt-database-url
+      WHATSAPP_ACCESS_TOKEN_SECRET: direkt-whatsapp-access-token
+      WHATSAPP_APP_SECRET_SECRET: direkt-whatsapp-app-secret
+      WHATSAPP_WEBHOOK_VERIFY_TOKEN_SECRET: direkt-whatsapp-webhook-verify-token
+      WHATSAPP_SYNTHETIC_RECIPIENT_SECRET: direkt-whatsapp-synthetic-recipient
+
+    steps:
+      - name: Validate source input
+        shell: bash
+        env:
+          SOURCE_INPUT: ${{ inputs.source_sha }}
+        run: |
+          set -euo pipefail
+          [[ "${SOURCE_INPUT}" =~ ^[0-9a-f]{40}$ ]]
+
+      - name: Check out exact current main
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify exact current main
+        shell: bash
+        env:
+          SOURCE_INPUT: ${{ inputs.source_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${SOURCE_INPUT}"
+          git fetch origin main --no-tags
+          test "$(git rev-parse origin/main)" = "${SOURCE_INPUT}"
+          python3 scripts/rc6/verify-whatsapp-contract.py
+          python3 scripts/rc6/verify-whatsapp-managed-identity.py
+
+      - name: Authenticate to Google Cloud through GitHub OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Inspect secret containers versions and IAM without reading values
+        shell: bash
+        run: |
+          set -euo pipefail
+          failures=0
+          webhook_member="serviceAccount:${GCP_WEBHOOK_SERVICE_ACCOUNT}"
+          deployer_member="serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}"
+          send_member="serviceAccount:${GCP_SEND_RUNTIME_SERVICE_ACCOUNT}"
+
+          mark_fail() {
+            echo "- ❌ $1" >> "${GITHUB_STEP_SUMMARY}"
+            failures=$((failures + 1))
+          }
+          mark_pass() {
+            echo "- ✅ $1" >> "${GITHUB_STEP_SUMMARY}"
+          }
+
+          {
+            echo "### RC6 WhatsApp GCP infrastructure preflight"
+            echo "- Exact current main: \`${{ inputs.source_sha }}\`"
+            echo "- Inspection mode: metadata/IAM only; secret values are never accessed"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          if gcloud iam service-accounts describe "${GCP_WEBHOOK_SERVICE_ACCOUNT}" --project "${GCP_PROJECT_ID}" >/dev/null 2>&1; then
+            mark_pass "isolated webhook service account exists"
+          else
+            mark_fail "isolated webhook service account is missing"
+          fi
+
+          project_policy="$(gcloud projects get-iam-policy "${GCP_PROJECT_ID}" --format=json)"
+          project_role_count="$(jq -r --arg member "${webhook_member}" '[.bindings[]? | select((.members // []) | index($member))] | length' <<< "${project_policy}")"
+          if [[ "${project_role_count}" = "0" ]]; then
+            mark_pass "webhook identity has zero project-level IAM roles"
+          else
+            mark_fail "webhook identity has ${project_role_count} prohibited project-level IAM binding(s)"
+          fi
+
+          check_secret() {
+            local secret_name="$1"
+            local webhook_required="$2"
+            if ! gcloud secrets describe "${secret_name}" --project "${GCP_PROJECT_ID}" >/dev/null 2>&1; then
+              mark_fail "secret container ${secret_name} is missing"
+              return
+            fi
+            mark_pass "secret container ${secret_name} exists"
+
+            local latest_record latest_version latest_state policy
+            if ! latest_record="$(gcloud secrets versions describe latest --secret "${secret_name}" --project "${GCP_PROJECT_ID}" --format=json 2>/dev/null)"; then
+              mark_fail "secret ${secret_name} has no inspectable latest version"
+              return
+            fi
+            latest_version="$(jq -r '.name | split("/") | last' <<< "${latest_record}")"
+            latest_state="$(jq -r '.state' <<< "${latest_record}")"
+            if [[ "${latest_version}" =~ ^[1-9][0-9]*$ ]] && [[ "${latest_state}" = "ENABLED" ]]; then
+              mark_pass "secret ${secret_name} has an enabled numeric version"
+            else
+              mark_fail "secret ${secret_name} latest version is not enabled numeric evidence"
+            fi
+
+            policy="$(gcloud secrets get-iam-policy "${secret_name}" --project "${GCP_PROJECT_ID}" --format=json)"
+            deployer_count="$(jq -r --arg member "${deployer_member}" '[.bindings[]? | select(.role == "roles/secretmanager.secretVersionManager") | .members[]? | select(. == $member)] | length' <<< "${policy}")"
+            send_count="$(jq -r --arg member "${send_member}" '[.bindings[]? | select(.role == "roles/secretmanager.secretAccessor") | .members[]? | select(. == $member)] | length' <<< "${policy}")"
+            webhook_count="$(jq -r --arg member "${webhook_member}" '[.bindings[]? | select(.role == "roles/secretmanager.secretAccessor") | .members[]? | select(. == $member)] | length' <<< "${policy}")"
+
+            [[ "${deployer_count}" = "1" ]] && mark_pass "${secret_name}: deployer has secret-scoped version management" || mark_fail "${secret_name}: deployer version-management binding missing or duplicated"
+            [[ "${send_count}" = "1" ]] && mark_pass "${secret_name}: private send runtime has secret accessor" || mark_fail "${secret_name}: private send runtime accessor missing or duplicated"
+            if [[ "${webhook_required}" = "yes" ]]; then
+              [[ "${webhook_count}" = "1" ]] && mark_pass "${secret_name}: webhook identity has required accessor" || mark_fail "${secret_name}: webhook required accessor missing or duplicated"
+            else
+              [[ "${webhook_count}" = "0" ]] && mark_pass "${secret_name}: webhook identity correctly has no accessor" || mark_fail "${secret_name}: webhook identity has prohibited send-secret accessor"
+            fi
+          }
+
+          check_secret "${WHATSAPP_ACCESS_TOKEN_SECRET}" no
+          check_secret "${WHATSAPP_APP_SECRET_SECRET}" yes
+          check_secret "${WHATSAPP_WEBHOOK_VERIFY_TOKEN_SECRET}" yes
+          check_secret "${WHATSAPP_SYNTHETIC_RECIPIENT_SECRET}" no
+
+          if gcloud secrets describe "${DIREKT_DATABASE_SECRET}" --project "${GCP_PROJECT_ID}" >/dev/null 2>&1; then
+            database_policy="$(gcloud secrets get-iam-policy "${DIREKT_DATABASE_SECRET}" --project "${GCP_PROJECT_ID}" --format=json)"
+            db_webhook_count="$(jq -r --arg member "${webhook_member}" '[.bindings[]? | select(.role == "roles/secretmanager.secretAccessor") | .members[]? | select(. == $member)] | length' <<< "${database_policy}")"
+            [[ "${db_webhook_count}" = "1" ]] && mark_pass "database secret grants webhook identity accessor" || mark_fail "database secret webhook accessor missing or duplicated"
+          else
+            mark_fail "existing database secret ${DIREKT_DATABASE_SECRET} is missing"
+          fi
+
+          if (( failures > 0 )); then
+            echo "::error title=RC6 infrastructure not ready::${failures} metadata/IAM prerequisite(s) are missing or incorrect."
+            exit 1
+          fi
+          mark_pass "RC6 GCP secret and identity metadata boundary is ready for Meta test-asset configuration"
