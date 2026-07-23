@@ -1,9 +1,7 @@
 name: DIREKT RC6 format diagnostics once
 
 on:
-  push:
-    branches:
-      - integration/rc6-whatsapp-runtime-3b4fd6b
+  pull_request:
     paths:
       - ".github/workflows/rc6-format-diagnostics-once.yml"
 
