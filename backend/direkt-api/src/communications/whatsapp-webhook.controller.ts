@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Headers, Post, Query, Req } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
-import { Public } from '../authorization/public.decorator';
+import { PublicRoute } from '../authorization/public.decorator';
 import { WhatsAppWebhookService } from './whatsapp-webhook.service';
 
 interface RawBodyRequestLike {
@@ -13,7 +13,7 @@ export class WhatsAppWebhookController {
   constructor(private readonly webhookService: WhatsAppWebhookService) {}
 
   @Get()
-  @Public()
+  @PublicRoute()
   @ApiExcludeEndpoint()
   verify(
     @Query('hub.mode') mode: unknown,
@@ -24,7 +24,7 @@ export class WhatsAppWebhookController {
   }
 
   @Post()
-  @Public()
+  @PublicRoute()
   @ApiExcludeEndpoint()
   receive(
     @Req() request: RawBodyRequestLike,
