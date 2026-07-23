@@ -1,0 +1,61 @@
+name: DIREKT RC6 managed workflow quote fix once
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc6-proof-workflow-patch-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    name: Replace invalid latest-secret shell quoting
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Apply exact two-line shell correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/cloud-run-whatsapp-canary.yml')
+          text = path.read_text(encoding='utf-8')
+          old_service = "          if grep -Eq 'key: [\"'\"']?latest[\"'\"']?' \"${service_export}\"; then"
+          new_service = "          if grep -Fq 'key: latest' \"${service_export}\" || grep -Fq 'key: \"latest\"' \"${service_export}\" || grep -Fq \"key: 'latest'\" \"${service_export}\"; then"
+          old_job = "          if grep -Eq 'key: [\"'\"']?latest[\"'\"']?' \"${job_export}\"; then"
+          new_job = "          if grep -Fq 'key: latest' \"${job_export}\" || grep -Fq 'key: \"latest\"' \"${job_export}\" || grep -Fq \"key: 'latest'\" \"${job_export}\"; then"
+          for old, new in ((old_service, new_service), (old_job, new_job)):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'Expected exactly one managed-workflow quote match, found {count}')
+              text = text.replace(old, new)
+          path.write_text(text, encoding='utf-8')
+          PY
+          git diff --check
+          bash -n <(python3 - <<'PY'
+          from pathlib import Path
+          import re
+          text = Path('.github/workflows/cloud-run-whatsapp-canary.yml').read_text(encoding='utf-8')
+          for block in re.findall(r'        run: \|\n((?:          .*\n)+)', text):
+              print('\n'.join(line[10:] for line in block.splitlines()))
+          PY
+          )
+
+      - name: Commit managed workflow correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/cloud-run-whatsapp-canary.yml
+          git commit -m "fix(rc6): correct managed workflow secret-version check"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
