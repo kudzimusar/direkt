@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Dispatch inspect wait and publish sanitized receipt
+      - name: Dispatch corrected preflight and publish Issue 261 sanitized receipt
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}

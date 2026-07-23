@@ -90,7 +90,7 @@ def main() -> int:
             "PRODUCTION_AUTHORIZATION\\|false",
             "Sanitized findings",
             'gh api --method POST "repos/${repo}/issues"',
-            "Issue #261",
+            'gh api --method POST "repos/${repo}/issues/261/comments"',
             "secret values were not accessed",
         ):
             require(BRIDGE, needle, "one-shot RC6 preflight bridge control")
@@ -112,6 +112,7 @@ def main() -> int:
     print("webhook_actas=deployer_only_required")
     print("sanitized_receipt=artifact_30_day_retention_and_schema_validated_issue")
     print(f"one_shot_bridge={'present' if BRIDGE else 'absent'}")
+    print("tracker=issue_261_concrete_endpoint_required")
     print("iam_mutation=false")
     print("production_authorization=false")
     return 0
