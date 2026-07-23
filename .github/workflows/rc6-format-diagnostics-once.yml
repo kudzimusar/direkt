@@ -6,16 +6,18 @@ on:
       - ".github/workflows/rc6-format-diagnostics-once.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  diagnose:
-    name: Produce exact backend Prettier patch
+  format-once:
+    name: Apply exact pinned backend Prettier patch
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
         with:
+          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
       - uses: actions/setup-node@v6
@@ -28,22 +30,31 @@ jobs:
         working-directory: backend/direkt-api
         run: npm ci --ignore-scripts
 
-      - name: Apply pinned Prettier locally and capture patch
+      - name: Apply pinned Prettier and require only expected RC6 files changed
         shell: bash
         run: |
           set -euo pipefail
           cd backend/direkt-api
           npm run format
           cd ../..
-          git diff -- backend/direkt-api > /tmp/rc6-prettier.patch
-          git diff --name-only -- backend/direkt-api > /tmp/rc6-prettier-files.txt
-          test -s /tmp/rc6-prettier.patch
+          git diff --name-only > /tmp/changed.txt
+          cat > /tmp/expected.txt <<'EOF'
+          backend/direkt-api/src/communications/whatsapp-outbox.service.ts
+          backend/direkt-api/src/config/environment.ts
+          backend/direkt-api/test/unit/communications/whatsapp-outbox.service.spec.ts
+          backend/direkt-api/test/unit/communications/whatsapp-webhook.service.spec.ts
+          EOF
+          LC_ALL=C sort -u /tmp/changed.txt -o /tmp/changed.txt
+          LC_ALL=C sort -u /tmp/expected.txt -o /tmp/expected.txt
+          diff -u /tmp/expected.txt /tmp/changed.txt
+          git diff --check
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: rc6-prettier-diagnostics-${{ github.run_id }}
-          path: |
-            /tmp/rc6-prettier.patch
-            /tmp/rc6-prettier-files.txt
-          if-no-files-found: error
-          retention-days: 2
+      - name: Commit exact formatting patch to RC6 branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/direkt-api
+          git commit -m "style(rc6): apply pinned backend formatting"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
