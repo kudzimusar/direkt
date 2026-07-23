@@ -1,0 +1,41 @@
+name: DIREKT RC6 WhatsApp Cloud API contract
+
+on:
+  pull_request:
+    paths:
+      - "backend/direkt-api/**"
+      - "database/migrations/**"
+      - "scripts/rc6/**"
+      - "docs/integrations/**"
+      - "WORKSTREAM_LOCK.md"
+      - ".github/workflows/rc6-whatsapp-contract.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/direkt-api/**"
+      - "database/migrations/**"
+      - "scripts/rc6/**"
+      - "docs/integrations/**"
+      - "WORKSTREAM_LOCK.md"
+      - ".github/workflows/rc6-whatsapp-contract.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify RC6 WhatsApp source and safety contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Verify permanent RC6 contract
+        run: python3 scripts/rc6/verify-whatsapp-contract.py

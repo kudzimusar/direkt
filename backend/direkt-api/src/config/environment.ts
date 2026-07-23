@@ -8,6 +8,7 @@ export type AiProviderMode = 'disabled' | 'gemini';
 export type AiFallbackProviderMode = 'disabled' | 'groq';
 export type AiUseCaseMode = 'disabled' | 'synthetic';
 export type EmailProviderMode = 'disabled' | 'resend';
+export type WhatsAppProviderMode = 'disabled' | 'meta_cloud';
 export type DirektTrafficMode = 'disabled' | 'internal' | 'synthetic-public' | 'controlled-pilot';
 export type DirektDataMode = 'synthetic-only' | 'controlled-pilot' | 'production';
 export type DirektDeploymentEnvironment =
@@ -68,6 +69,20 @@ export interface DirektEnvironment {
   EMAIL_REQUEST_TIMEOUT_MS: number;
   EMAIL_MAX_ATTEMPTS: number;
   EMAIL_OUTBOX_LOCK_TIMEOUT_MS: number;
+  WHATSAPP_PROVIDER_MODE: WhatsAppProviderMode;
+  WHATSAPP_ACCESS_TOKEN?: string;
+  WHATSAPP_PHONE_NUMBER_ID?: string;
+  WHATSAPP_BUSINESS_ACCOUNT_ID?: string;
+  WHATSAPP_APP_SECRET?: string;
+  WHATSAPP_WEBHOOK_VERIFY_TOKEN?: string;
+  WHATSAPP_GRAPH_API_VERSION?: string;
+  WHATSAPP_REQUEST_TIMEOUT_MS: number;
+  WHATSAPP_MAX_ATTEMPTS: number;
+  WHATSAPP_OUTBOX_LOCK_TIMEOUT_MS: number;
+  WHATSAPP_SYNTHETIC_SEND_APPROVED: boolean;
+  WHATSAPP_SYNTHETIC_RECIPIENT?: string;
+  WHATSAPP_SYNTHETIC_TEMPLATE_NAME?: string;
+  WHATSAPP_SYNTHETIC_TEMPLATE_LANGUAGE: string;
 }
 
 const databaseUrlSchema = Joi.string().uri({ scheme: ['postgresql', 'postgres'] });
@@ -78,6 +93,13 @@ const supabaseServerKey = Joi.string().min(20).max(2048);
 const bucketName = Joi.string().pattern(/^[a-z0-9][a-z0-9-]{1,62}$/);
 const firebaseProjectId = Joi.string().pattern(/^[a-z][a-z0-9-]{4,29}$/);
 const resendFromAddress = Joi.string().trim().min(10).max(320);
+const whatsappNumericId = Joi.string().pattern(/^\d{5,32}$/);
+const whatsappGraphVersion = Joi.string().pattern(/^v\d{1,3}\.\d{1,2}$/);
+const whatsappVerifyToken = Joi.string().trim().min(20).max(256);
+const whatsappAppSecret = Joi.string().trim().min(32).max(512);
+const whatsappRecipient = Joi.string().pattern(/^\+[1-9]\d{7,14}$/);
+const whatsappTemplateName = Joi.string().pattern(/^[a-z][a-z0-9_]{2,79}$/);
+const whatsappTemplateLanguage = Joi.string().pattern(/^[a-z]{2,3}(_[A-Z]{2})?$/);
 
 export const environmentSchema = Joi.object<DirektEnvironment>({
   NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
@@ -235,6 +257,56 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
   EMAIL_REQUEST_TIMEOUT_MS: Joi.number().integer().min(1000).max(30000).default(8000),
   EMAIL_MAX_ATTEMPTS: Joi.number().integer().min(1).max(6).default(4),
   EMAIL_OUTBOX_LOCK_TIMEOUT_MS: Joi.number().integer().min(30000).max(900000).default(300000),
+  WHATSAPP_PROVIDER_MODE: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.valid('disabled').default('disabled'),
+    otherwise: Joi.valid('disabled', 'meta_cloud').default('disabled'),
+  }),
+  WHATSAPP_ACCESS_TOKEN: providerApiKey.when('WHATSAPP_PROVIDER_MODE', {
+    is: 'meta_cloud',
+    then: providerApiKey.required(),
+    otherwise: providerApiKey.optional(),
+  }),
+  WHATSAPP_PHONE_NUMBER_ID: whatsappNumericId.when('WHATSAPP_PROVIDER_MODE', {
+    is: 'meta_cloud',
+    then: whatsappNumericId.required(),
+    otherwise: whatsappNumericId.optional(),
+  }),
+  WHATSAPP_BUSINESS_ACCOUNT_ID: whatsappNumericId.when('WHATSAPP_PROVIDER_MODE', {
+    is: 'meta_cloud',
+    then: whatsappNumericId.required(),
+    otherwise: whatsappNumericId.optional(),
+  }),
+  WHATSAPP_APP_SECRET: whatsappAppSecret.when('WHATSAPP_PROVIDER_MODE', {
+    is: 'meta_cloud',
+    then: whatsappAppSecret.required(),
+    otherwise: whatsappAppSecret.optional(),
+  }),
+  WHATSAPP_WEBHOOK_VERIFY_TOKEN: whatsappVerifyToken.when('WHATSAPP_PROVIDER_MODE', {
+    is: 'meta_cloud',
+    then: whatsappVerifyToken.required(),
+    otherwise: whatsappVerifyToken.optional(),
+  }),
+  WHATSAPP_GRAPH_API_VERSION: whatsappGraphVersion.when('WHATSAPP_PROVIDER_MODE', {
+    is: 'meta_cloud',
+    then: whatsappGraphVersion.required(),
+    otherwise: whatsappGraphVersion.optional(),
+  }),
+  WHATSAPP_REQUEST_TIMEOUT_MS: Joi.number().integer().min(1000).max(30000).default(8000),
+  WHATSAPP_MAX_ATTEMPTS: Joi.number().integer().min(1).max(6).default(4),
+  WHATSAPP_OUTBOX_LOCK_TIMEOUT_MS: Joi.number().integer().min(30000).max(900000).default(300000),
+  WHATSAPP_SYNTHETIC_SEND_APPROVED: Joi.boolean().truthy('true').falsy('false').default(false),
+  WHATSAPP_SYNTHETIC_RECIPIENT: whatsappRecipient.when('WHATSAPP_PROVIDER_MODE', {
+    is: 'meta_cloud',
+    then: whatsappRecipient.required(),
+    otherwise: whatsappRecipient.optional(),
+  }),
+  WHATSAPP_SYNTHETIC_TEMPLATE_NAME: whatsappTemplateName.when('WHATSAPP_PROVIDER_MODE', {
+    is: 'meta_cloud',
+    then: whatsappTemplateName.required(),
+    otherwise: whatsappTemplateName.optional(),
+  }),
+  WHATSAPP_SYNTHETIC_TEMPLATE_LANGUAGE: whatsappTemplateLanguage.default('en_US'),
 }).custom((value: DirektEnvironment, helpers) => {
   if (
     value.EVIDENCE_STORAGE_PROVIDER === 'supabase' &&
@@ -259,6 +331,12 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
   if (value.NODE_ENV === 'production' && value.EMAIL_PROVIDER_MODE !== 'disabled') {
     return helpers.message({
       custom: 'Production email provider mode must remain disabled until a later approval gate.',
+    });
+  }
+  if (value.NODE_ENV === 'production' && value.WHATSAPP_PROVIDER_MODE !== 'disabled') {
+    return helpers.message({
+      custom:
+        'Production WhatsApp provider mode must remain disabled until later provider/legal/privacy and release gates.',
     });
   }
   if (value.AI_PROVIDER_MODE !== 'disabled' && value.DIREKT_DATA_MODE !== 'synthetic-only') {
@@ -299,6 +377,18 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     return helpers.message({
       custom: 'Resend sender must use the verified notify.direkt.forum domain.',
     });
+  }
+  if (value.WHATSAPP_PROVIDER_MODE !== 'disabled') {
+    if (value.DIREKT_DATA_MODE !== 'synthetic-only') {
+      return helpers.message({
+        custom: 'WhatsApp provider activation currently permits synthetic-only data mode.',
+      });
+    }
+    if (!value.WHATSAPP_SYNTHETIC_SEND_APPROVED) {
+      return helpers.message({
+        custom: 'WhatsApp provider activation requires the explicit synthetic-send approval latch.',
+      });
+    }
   }
   if (
     value.DIREKT_TRAFFIC_MODE === 'synthetic-public' &&
@@ -377,6 +467,12 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
       return helpers.message({
         custom:
           'Controlled-pilot data mode requires external email delivery to remain disabled until separately approved.',
+      });
+    }
+    if (value.WHATSAPP_PROVIDER_MODE !== 'disabled') {
+      return helpers.message({
+        custom:
+          'Controlled-pilot data mode requires WhatsApp delivery to remain disabled until separately approved.',
       });
     }
     if (!['disabled', 'controlled-pilot'].includes(value.DIREKT_TRAFFIC_MODE)) {
