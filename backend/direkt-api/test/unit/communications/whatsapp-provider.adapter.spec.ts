@@ -39,7 +39,11 @@ describe('MetaWhatsAppProviderAdapter', () => {
     const init = call?.[1];
     const headers = init?.headers as Record<string, string> | undefined;
     expect(headers?.Authorization).toBe('Bearer EAAGsynthetic_token_12345678901234567890');
-    const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    expect(typeof init?.body).toBe('string');
+    if (typeof init?.body !== 'string') {
+      throw new Error('Expected WhatsApp provider request body to be a JSON string.');
+    }
+    const body = JSON.parse(init.body) as Record<string, unknown>;
     expect(body).toMatchObject({
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
