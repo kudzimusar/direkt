@@ -50,12 +50,15 @@ def main() -> int:
         "roles/iam.serviceAccountUser",
         "roles/iam.serviceAccountViewer",
         "gcloud iam service-accounts get-iam-policy",
+        "roles/secretmanager.secretVersionManager",
+        "roles/secretmanager.viewer",
         "gcloud projects get-iam-policy",
         "Public webhook identity must not hold any project-level IAM role.",
         'for secret_name in "${database_secret}" "${app_secret}" "${verify_token_secret}"',
         'for secret_name in "${access_token_secret}" "${recipient_secret}"',
         "Public webhook identity must not access send-only secret",
         "zero project-level roles",
+        "secretVersionManager and secretManagerViewer on each RC6 secret",
         "serviceAccountUser and serviceAccountViewer only on the isolated webhook identity",
         "no access-token or recipient-secret access",
     ):
@@ -69,6 +72,7 @@ def main() -> int:
     print(f"send_identity={SEND_SA}")
     print("webhook_project_roles=none")
     print("deployer_webhook_policy_read=service_account_scoped")
+    print("deployer_secret_policy_read=secret_scoped_viewer_only")
     print("webhook_send_secret_access=false")
     print("public_surface=webhook_only")
     print("production_authorization=false")
