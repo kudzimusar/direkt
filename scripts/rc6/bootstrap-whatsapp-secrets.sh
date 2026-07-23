@@ -37,6 +37,12 @@ if ! gcloud iam service-accounts describe "${webhook_runtime_sa}" --project "${p
     --quiet
 fi
 
+project_policy="$(gcloud projects get-iam-policy "${project_id}" --format=json)"
+if jq -e --arg member "serviceAccount:${webhook_runtime_sa}" '.bindings[]? | .members[]? | select(. == $member)' <<< "${project_policy}" >/dev/null; then
+  echo "Public webhook identity must not hold any project-level IAM role." >&2
+  exit 1
+fi
+
 gcloud iam service-accounts add-iam-policy-binding "${webhook_runtime_sa}" \
   --project "${project_id}" \
   --member "serviceAccount:${deployer_sa}" \
@@ -99,6 +105,6 @@ printf 'RC6 WhatsApp secret bootstrap verified.\n'
 printf 'Project: %s\n' "${project_id}"
 printf 'Secret containers: %s\n' "${secret_names[*]}"
 printf 'Send runtime: %s — send secrets available only through secret-level accessor grants.\n' "${send_runtime_sa}"
-printf 'Webhook runtime: %s — database/app-secret/verify-token only; no access-token or recipient-secret access.\n' "${webhook_runtime_sa}"
+printf 'Webhook runtime: %s — zero project-level roles; database/app-secret/verify-token only; no access-token or recipient-secret access.\n' "${webhook_runtime_sa}"
 printf 'Deployer scope: secretVersionManager on each RC6 secret plus serviceAccountUser on the isolated webhook identity.\n'
 printf 'No secret value was created, read, or printed by this bootstrap.\n'
