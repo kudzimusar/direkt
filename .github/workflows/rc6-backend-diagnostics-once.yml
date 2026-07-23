@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
 
+# Diagnostic revision 3: evaluate the corrected RC6 source head.
 jobs:
   diagnose:
     name: Capture ESLint fixes and TypeScript diagnostics
