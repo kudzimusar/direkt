@@ -61,6 +61,7 @@ jobs:
           test "$(git rev-parse origin/main)" = "${SOURCE_INPUT}"
           python3 scripts/rc6/verify-whatsapp-contract.py
           python3 scripts/rc6/verify-whatsapp-managed-identity.py
+          python3 scripts/rc6/verify-whatsapp-infra-preflight.py
 
       - name: Authenticate to Google Cloud through GitHub OIDC
         uses: google-github-actions/auth@v3
@@ -93,12 +94,20 @@ jobs:
 
           {
             echo "### RC6 WhatsApp GCP infrastructure preflight"
-            echo "- Exact current main: \`${{ inputs.source_sha }}\`"
+            echo "- Exact current main: `${{ inputs.source_sha }}`"
             echo "- Inspection mode: metadata/IAM only; secret values are never accessed"
           } >> "${GITHUB_STEP_SUMMARY}"
 
           if gcloud iam service-accounts describe "${GCP_WEBHOOK_SERVICE_ACCOUNT}" --project "${GCP_PROJECT_ID}" >/dev/null 2>&1; then
             mark_pass "isolated webhook service account exists"
+            service_account_policy="$(gcloud iam service-accounts get-iam-policy "${GCP_WEBHOOK_SERVICE_ACCOUNT}" --project "${GCP_PROJECT_ID}" --format=json)"
+            actual_actas_members="$(jq -c '[.bindings[]? | select(.role == "roles/iam.serviceAccountUser") | .members[]?] | unique | sort' <<< "${service_account_policy}")"
+            expected_actas_members="$(jq -nc --arg member "${deployer_member}" '[$member] | sort')"
+            if [[ "${actual_actas_members}" = "${expected_actas_members}" ]]; then
+              mark_pass "webhook identity has exact deployer-only serviceAccountUser binding"
+            else
+              mark_fail "webhook identity serviceAccountUser members differ from the exact deployer-only allowlist"
+            fi
           else
             mark_fail "isolated webhook service account is missing"
           fi
@@ -121,6 +130,7 @@ jobs:
             mark_pass "secret container ${secret_name} exists"
 
             local latest_record latest_version latest_state policy
+            local actual_version_members expected_version_members actual_accessor_members expected_accessor_members
             if ! latest_record="$(gcloud secrets versions describe latest --secret "${secret_name}" --project "${GCP_PROJECT_ID}" --format=json 2>/dev/null)"; then
               mark_fail "secret ${secret_name} has no inspectable latest version"
               return
@@ -134,16 +144,24 @@ jobs:
             fi
 
             policy="$(gcloud secrets get-iam-policy "${secret_name}" --project "${GCP_PROJECT_ID}" --format=json)"
-            deployer_count="$(jq -r --arg member "${deployer_member}" '[.bindings[]? | select(.role == "roles/secretmanager.secretVersionManager") | .members[]? | select(. == $member)] | length' <<< "${policy}")"
-            send_count="$(jq -r --arg member "${send_member}" '[.bindings[]? | select(.role == "roles/secretmanager.secretAccessor") | .members[]? | select(. == $member)] | length' <<< "${policy}")"
-            webhook_count="$(jq -r --arg member "${webhook_member}" '[.bindings[]? | select(.role == "roles/secretmanager.secretAccessor") | .members[]? | select(. == $member)] | length' <<< "${policy}")"
-
-            [[ "${deployer_count}" = "1" ]] && mark_pass "${secret_name}: deployer has secret-scoped version management" || mark_fail "${secret_name}: deployer version-management binding missing or duplicated"
-            [[ "${send_count}" = "1" ]] && mark_pass "${secret_name}: private send runtime has secret accessor" || mark_fail "${secret_name}: private send runtime accessor missing or duplicated"
-            if [[ "${webhook_required}" = "yes" ]]; then
-              [[ "${webhook_count}" = "1" ]] && mark_pass "${secret_name}: webhook identity has required accessor" || mark_fail "${secret_name}: webhook required accessor missing or duplicated"
+            actual_version_members="$(jq -c '[.bindings[]? | select(.role == "roles/secretmanager.secretVersionManager") | .members[]?] | unique | sort' <<< "${policy}")"
+            expected_version_members="$(jq -nc --arg member "${deployer_member}" '[$member] | sort')"
+            if [[ "${actual_version_members}" = "${expected_version_members}" ]]; then
+              mark_pass "${secret_name}: exact deployer-only secretVersionManager allowlist"
             else
-              [[ "${webhook_count}" = "0" ]] && mark_pass "${secret_name}: webhook identity correctly has no accessor" || mark_fail "${secret_name}: webhook identity has prohibited send-secret accessor"
+              mark_fail "${secret_name}: unexpected secretVersionManager member set"
+            fi
+
+            actual_accessor_members="$(jq -c '[.bindings[]? | select(.role == "roles/secretmanager.secretAccessor") | .members[]?] | unique | sort' <<< "${policy}")"
+            if [[ "${webhook_required}" = "yes" ]]; then
+              expected_accessor_members="$(jq -nc --arg send "${send_member}" --arg webhook "${webhook_member}" '[$send, $webhook] | unique | sort')"
+            else
+              expected_accessor_members="$(jq -nc --arg send "${send_member}" '[$send] | sort')"
+            fi
+            if [[ "${actual_accessor_members}" = "${expected_accessor_members}" ]]; then
+              mark_pass "${secret_name}: exact secretAccessor allowlist"
+            else
+              mark_fail "${secret_name}: unexpected secretAccessor member set"
             fi
           }
 
