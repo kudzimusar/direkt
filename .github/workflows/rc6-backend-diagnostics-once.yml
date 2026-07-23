@@ -1,0 +1,60 @@
+name: DIREKT RC6 backend diagnostics once
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc6-backend-diagnostics-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    name: Capture ESLint fixes and TypeScript diagnostics
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+
+      - name: Install pinned backend dependencies
+        working-directory: backend/direkt-api
+        run: npm ci --ignore-scripts
+
+      - name: Capture lint fixes and typecheck diagnostics
+        shell: bash
+        run: |
+          set -u
+          cd backend/direkt-api
+          npm run format:check > /tmp/format.log 2>&1
+          format_status=$?
+          npm run lint -- --fix > /tmp/lint.log 2>&1
+          lint_status=$?
+          cd ../..
+          git diff -- backend/direkt-api > /tmp/eslint-fix.patch
+          git diff --name-only -- backend/direkt-api > /tmp/eslint-fix-files.txt
+          cd backend/direkt-api
+          npm run typecheck > /tmp/typecheck.log 2>&1
+          typecheck_status=$?
+          printf 'format=%s\nlint=%s\ntypecheck=%s\n' "$format_status" "$lint_status" "$typecheck_status" > /tmp/status.txt
+          exit 0
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rc6-backend-diagnostics-${{ github.run_id }}
+          path: |
+            /tmp/status.txt
+            /tmp/format.log
+            /tmp/lint.log
+            /tmp/typecheck.log
+            /tmp/eslint-fix.patch
+            /tmp/eslint-fix-files.txt
+          if-no-files-found: error
+          retention-days: 2
