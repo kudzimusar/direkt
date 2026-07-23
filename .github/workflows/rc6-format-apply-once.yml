@@ -1,0 +1,64 @@
+name: DIREKT RC6 format apply once
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc6-format-apply-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  format-once:
+    name: Apply pinned Prettier to corrected RC6 files
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+
+      - name: Install pinned backend dependencies
+        working-directory: backend/direkt-api
+        run: npm ci --ignore-scripts
+
+      - name: Apply Prettier and enforce allowed path set
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd backend/direkt-api
+          npm run format
+          cd ../..
+          while IFS= read -r path; do
+            case "$path" in
+              backend/direkt-api/src/communications/disabled-whatsapp-provider.adapter.ts|\
+              backend/direkt-api/src/communications/whatsapp-webhook.controller.ts|\
+              backend/direkt-api/src/communications/whatsapp-webhook.service.ts|\
+              backend/direkt-api/test/unit/communications/whatsapp-outbox.service.spec.ts|\
+              backend/direkt-api/test/unit/communications/whatsapp-provider.adapter.spec.ts|\
+              backend/direkt-api/test/unit/config/environment-whatsapp.spec.ts)
+                ;;
+              "") ;;
+              *) echo "Unexpected formatter path: $path" >&2; exit 1 ;;
+            esac
+          done < <(git diff --name-only)
+          test -n "$(git diff --name-only)"
+          git diff --check
+
+      - name: Commit exact formatting patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/direkt-api
+          git commit -m "style(rc6): format corrected WhatsApp sources"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
