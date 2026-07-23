@@ -74,7 +74,7 @@ def main() -> int:
         "RC6 implementation contract — ACTIVE OWNER-AUTHORIZED CHECKPOINT",
         "RC6 under Issue #261 is the sole active implementation lane",
         "RC5 remains parked/not closed",
-        "participant/production WhatsApp delivery remains disabled",
+        "Production/participant WhatsApp delivery remains disabled",
     ):
         require(lock, needle, "RC6 lock boundary")
 
