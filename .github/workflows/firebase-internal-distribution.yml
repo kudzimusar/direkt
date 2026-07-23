@@ -51,13 +51,14 @@ jobs:
           ref: ${{ inputs.source_sha }}
           fetch-depth: 0
 
-      - name: Verify source identity and main ancestry
+      - name: Verify source identity and exact current main
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${{ inputs.source_sha }}"
           git fetch origin main --no-tags
           git merge-base --is-ancestor "${{ inputs.source_sha }}" origin/main
+          test "$(git rev-parse origin/main)" = "${{ inputs.source_sha }}"
 
       - name: Set up Java 17
         uses: actions/setup-java@v5
