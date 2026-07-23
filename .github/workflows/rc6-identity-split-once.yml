@@ -1,0 +1,74 @@
+name: DIREKT RC6 webhook identity split once
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc6-identity-split-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    name: Enforce isolated webhook runtime identity
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Apply exact identity separation patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          workflow = Path('.github/workflows/cloud-run-whatsapp-canary.yml')
+          text = workflow.read_text(encoding='utf-8')
+          anchor = '      GCP_RUNTIME_SERVICE_ACCOUNT: direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com\n'
+          addition = anchor + '      GCP_WEBHOOK_SERVICE_ACCOUNT: direkt-whatsapp-webhook@direkt-dev-502701.iam.gserviceaccount.com\n'
+          if text.count(anchor) != 1:
+              raise SystemExit('Expected one runtime service-account anchor.')
+          text = text.replace(anchor, addition)
+          old = '--image "${IMAGE_URI}" --service-account "${GCP_RUNTIME_SERVICE_ACCOUNT}" \\\n            --command node --args dist/communications/whatsapp-webhook-canary.js'
+          new = '--image "${IMAGE_URI}" --service-account "${GCP_WEBHOOK_SERVICE_ACCOUNT}" \\\n            --command node --args dist/communications/whatsapp-webhook-canary.js'
+          if text.count(old) != 1:
+              raise SystemExit('Expected one webhook deploy service-account binding.')
+          text = text.replace(old, new)
+          old = '          grep -Fq "${GCP_RUNTIME_SERVICE_ACCOUNT}" "${export_file}"\n          grep -Fq "whatsapp-webhook-canary.js" "${export_file}"'
+          new = '          grep -Fq "${GCP_WEBHOOK_SERVICE_ACCOUNT}" "${export_file}"\n          grep -Fq "whatsapp-webhook-canary.js" "${export_file}"'
+          if text.count(old) != 1:
+              raise SystemExit('Expected one webhook identity verification anchor.')
+          text = text.replace(old, new)
+          workflow.write_text(text, encoding='utf-8')
+
+          verifier = Path('scripts/rc6/verify-whatsapp-contract.py')
+          text = verifier.read_text(encoding='utf-8')
+          anchor = '        "direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com",\n'
+          addition = anchor + '        "direkt-whatsapp-webhook@direkt-dev-502701.iam.gserviceaccount.com",\n        "GCP_WEBHOOK_SERVICE_ACCOUNT",\n        \'--service-account "${GCP_WEBHOOK_SERVICE_ACCOUNT}"\',\n'
+          if text.count(anchor) != 1:
+              raise SystemExit('Expected one managed runtime verifier anchor.')
+          text = text.replace(anchor, addition)
+          anchor = '        "roles/secretmanager.secretAccessor",\n'
+          addition = anchor + '        "roles/iam.serviceAccountUser",\n        "no access-token or recipient-secret access",\n'
+          if text.count(anchor) != 1:
+              raise SystemExit('Expected one bootstrap role verifier anchor.')
+          text = text.replace(anchor, addition)
+          verifier.write_text(text, encoding='utf-8')
+          PY
+          git diff --check
+          python3 scripts/rc6/verify-whatsapp-contract.py
+
+      - name: Commit identity separation patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/cloud-run-whatsapp-canary.yml scripts/rc6/verify-whatsapp-contract.py
+          git commit -m "fix(rc6): isolate public webhook identity"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
