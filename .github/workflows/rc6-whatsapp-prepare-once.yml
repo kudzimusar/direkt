@@ -1,0 +1,203 @@
+name: DIREKT RC6 one-shot WhatsApp webhook prepare bridge
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/rc6-whatsapp-prepare-once.yml
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+  id-token: write
+
+concurrency:
+  group: direkt-rc6-whatsapp-prepare-once
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    name: Prepare exact-main RC6 WhatsApp webhook
+    if: github.repository == 'kudzimusar/direkt'
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_REGION: asia-northeast1
+      GCP_WEBHOOK_SERVICE: direkt-whatsapp-canary-webhook
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_WEBHOOK_SERVICE_ACCOUNT: direkt-whatsapp-webhook@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_SEND_SERVICE_ACCOUNT: direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com
+    steps:
+      - name: Dispatch exact-main managed PREPARE and wait
+        id: dispatch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          repo="${GITHUB_REPOSITORY}"
+          source_sha="${GITHUB_SHA}"
+          [[ "${source_sha}" =~ ^[0-9a-f]{40}$ ]]
+
+          main_sha="$(gh api "repos/${repo}/git/ref/heads/main" --jq '.object.sha')"
+          test "${main_sha}" = "${source_sha}"
+
+          # These are non-secret Meta test/synthetic asset identifiers already approved for RC6.
+          payload="$(jq -nc \
+            --arg sha "${source_sha}" \
+            --arg phone "1146158541925026" \
+            --arg waba "904315252104562" \
+            --arg graph "v25.0" \
+            --arg template "hello_world" \
+            --arg language "en_US" \
+            '{"ref":"main","inputs":{"confirmation":"PREPARE-DIREKT-WHATSAPP-WEBHOOK","source_sha":$sha,"phone_number_id":$phone,"business_account_id":$waba,"graph_api_version":$graph,"template_name":$template,"template_language":$language}}')"
+          gh api --method POST \
+            "repos/${repo}/actions/workflows/cloud-run-whatsapp-canary.yml/dispatches" \
+            --input - <<< "${payload}"
+
+          run_id=""
+          for _ in $(seq 1 60); do
+            runs_json="$(gh api "repos/${repo}/actions/workflows/cloud-run-whatsapp-canary.yml/runs?event=workflow_dispatch&branch=main&per_page=20")"
+            run_id="$(jq -r --arg sha "${source_sha}" '[.workflow_runs[] | select(.head_sha == $sha)] | sort_by(.created_at) | last | .id // empty' <<< "${runs_json}")"
+            [[ -n "${run_id}" ]] && break
+            sleep 5
+          done
+          if [[ -z "${run_id}" ]]; then
+            echo "::error title=RC6 PREPARE dispatch not observed::No managed WhatsApp workflow_dispatch run was found for exact current main."
+            exit 1
+          fi
+
+          status=""
+          conclusion=""
+          for _ in $(seq 1 480); do
+            run_json="$(gh api "repos/${repo}/actions/runs/${run_id}")"
+            status="$(jq -r '.status' <<< "${run_json}")"
+            conclusion="$(jq -r '.conclusion // ""' <<< "${run_json}")"
+            [[ "${status}" = "completed" ]] && break
+            sleep 5
+          done
+
+          run_url="https://github.com/${repo}/actions/runs/${run_id}"
+          echo "source_sha=${source_sha}" >> "${GITHUB_OUTPUT}"
+          echo "run_id=${run_id}" >> "${GITHUB_OUTPUT}"
+          echo "run_url=${run_url}" >> "${GITHUB_OUTPUT}"
+          echo "status=${status}" >> "${GITHUB_OUTPUT}"
+          echo "conclusion=${conclusion}" >> "${GITHUB_OUTPUT}"
+
+          if [[ "${status}" != "completed" || "${conclusion}" != "success" ]]; then
+            failure_body="$(cat <<EOF
+          RC6 managed WhatsApp webhook PREPARE did not complete successfully.
+
+          - Exact source: \`${source_sha}\`
+          - Managed run: \`${run_id}\`
+          - Status: \`${status}\`
+          - Conclusion: \`${conclusion:-not-completed}\`
+          - Run: ${run_url}
+          - Boundary: synthetic/test assets only; participant/production WhatsApp delivery remains disabled; no production authorization.
+
+          No later RC6 canary step is authorized from this failed PREPARE receipt.
+          EOF
+          )"
+            gh api --method POST "repos/${repo}/issues/261/comments" -f body="${failure_body}" >/dev/null
+            exit 1
+          fi
+
+          # Do not promote a stale prepared endpoint if another source replaced current main.
+          main_after="$(gh api "repos/${repo}/git/ref/heads/main" --jq '.object.sha')"
+          if [[ "${main_after}" != "${source_sha}" ]]; then
+            stale_body="$(cat <<EOF
+          RC6 managed WhatsApp webhook PREPARE completed, but current main advanced before receipt publication.
+
+          - Prepared source: \`${source_sha}\`
+          - Current main: \`${main_after}\`
+          - Managed run: \`${run_id}\`
+          - Run: ${run_url}
+
+          The prepared endpoint is not promoted as current evidence. Participant/production delivery remains disabled.
+          EOF
+          )"
+            gh api --method POST "repos/${repo}/issues/261/comments" -f body="${stale_body}" >/dev/null
+            exit 1
+          fi
+
+      - name: Authenticate for read-only prepared-service receipt
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Verify prepared webhook boundary and publish receipt
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ steps.dispatch.outputs.source_sha }}
+          RUN_ID: ${{ steps.dispatch.outputs.run_id }}
+          RUN_URL: ${{ steps.dispatch.outputs.run_url }}
+        run: |
+          set -euo pipefail
+          repo="${GITHUB_REPOSITORY}"
+          test -n "${SOURCE_SHA}"
+          test -n "${RUN_ID}"
+
+          main_sha="$(gh api "repos/${repo}/git/ref/heads/main" --jq '.object.sha')"
+          test "${main_sha}" = "${SOURCE_SHA}"
+
+          export_file="${RUNNER_TEMP}/rc6-whatsapp-prepared-service.yaml"
+          gcloud run services describe "${GCP_WEBHOOK_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format=export > "${export_file}"
+
+          grep -Fq "${GCP_WEBHOOK_SERVICE_ACCOUNT}" "${export_file}"
+          if grep -Fq "${GCP_SEND_SERVICE_ACCOUNT}" "${export_file}"; then
+            echo "::error title=RC6 webhook identity overlap::Prepared public webhook uses the private send runtime identity."
+            exit 1
+          fi
+          grep -Fq 'WHATSAPP_PROVIDER_MODE' "${export_file}"
+          grep -Fq 'disabled' "${export_file}"
+          if grep -Fq 'direkt-whatsapp-access-token' "${export_file}" || grep -Fq 'direkt-whatsapp-synthetic-recipient' "${export_file}"; then
+            echo "::error title=RC6 send-secret exposure::Prepared public webhook references a send-only secret."
+            exit 1
+          fi
+
+          base_url="$(gcloud run services describe "${GCP_WEBHOOK_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format='value(status.url)')"
+          [[ "${base_url}" == https://* ]]
+          callback_url="${base_url}/api/v1/communications/whatsapp/webhook"
+
+          receipt="$(cat <<EOF
+          RC6 managed WhatsApp webhook PREPARE succeeded.
+
+          - Exact current main: \`${SOURCE_SHA}\`
+          - Managed PREPARE run: \`${RUN_ID}\`
+          - Run: ${RUN_URL}
+          - Callback URL: \`${callback_url}\`
+          - Runtime identity: \`${GCP_WEBHOOK_SERVICE_ACCOUNT}\` (webhook-only)
+          - Provider send mode on public webhook: \`disabled\`
+          - Send-token / synthetic-recipient secret access on public webhook: prohibited and re-verified
+          - POST authenticity: HMAC SHA-256 with the protected Meta App Secret
+          - Verify token: protected owner-known Secret Manager value; not printed or read by this bridge
+          - Participant/production WhatsApp delivery: disabled
+          - Production authorization: false
+
+          Next external RC6 action: register this callback URL with the owner-known verify token in the DIREKT Meta app and subscribe WhatsApp \`messages\` webhooks. Only after that provider callback registration is proven may the bounded synthetic \`RUN-DIREKT-WHATSAPP-CANARY\` execute.
+          EOF
+          )"
+          gh api --method POST "repos/${repo}/issues/261/comments" -f body="${receipt}" >/dev/null
+
+          {
+            echo "### RC6 WhatsApp webhook PREPARE bridge"
+            echo "- Source: \`${SOURCE_SHA}\`"
+            echo "- Managed run: \`${RUN_ID}\`"
+            echo "- Callback: \`${callback_url}\`"
+            echo "- Public webhook provider send mode: disabled"
+            echo "- Production authorization: false"
+          } >> "${GITHUB_STEP_SUMMARY}"
