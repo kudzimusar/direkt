@@ -30,8 +30,8 @@ jobs:
           replacements = {
               Path('docs/integrations/CURRENT_INTEGRATION_STATUS.md'): [
                   (
-                      '| WhatsApp Business / Cloud API | EXTERNALLY CONFIGURED / RUNTIME GATED | Account/business/provider configuration exists, but adapter/runtime proof is not yet complete. | Consent, approved templates, delivery webhooks and retries. |',
-                      '| WhatsApp Business / Cloud API | IMPLEMENTED_GATED / MANAGED CANARY PENDING | RC6 backend-only provider-neutral Meta adapter, transactional outbox, hashed opt-out, template-only payload boundary, raw-body HMAC webhook verification, durable idempotent receipts/retries and synthetic canary entrypoint are implemented. Provider business/phone/template/secret state and managed synthetic proof are not yet verified. Participant/production delivery remains disabled. | Verify Meta test/synthetic assets and one owner-controlled verified recipient, then run exact-current-main managed synthetic canary if provider prerequisites are available. |',
+                      '| WhatsApp Cloud API | **EXTERNALLY CONFIGURED / RUNTIME GATED** | RC6 adapter/consent/template/idempotency/receipt/retry/privacy closure required. |',
+                      '| WhatsApp Cloud API | **IMPLEMENTED_GATED / MANAGED CANARY PENDING** | RC6 backend-only provider-neutral Meta adapter, transactional outbox, hashed opt-out, template-only payload boundary, raw-body HMAC webhook verification, durable idempotent receipts/retries and synthetic canary entrypoint are implemented. Provider business/phone/template/secret state and managed synthetic proof are not yet verified. Only Meta test/synthetic assets plus one owner-controlled verified recipient may be used for proof; participant/production delivery remains disabled. |',
                   ),
                   (
                       '7. RC5 Firebase Test Lab — **ACTIVE CHECKPOINT / IMPLEMENTED_GATED — MANAGED MATRIX PENDING**; source contract and local instrumentation execution are integrated, while owner bootstrap and exact-main managed Test Lab evidence remain pending.',
