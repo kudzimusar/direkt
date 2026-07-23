@@ -39,13 +39,18 @@ def main() -> int:
         "gcloud iam service-accounts get-iam-policy",
         "roles/iam.serviceAccountUser",
         "roles/iam.serviceAccountViewer",
+        "roles/secretmanager.viewer",
         "exact deployer-only serviceAccountUser binding",
         "exact deployer-only serviceAccountViewer binding",
         "preflight deployer cannot inspect webhook service-account IAM policy",
+        "preflight deployer cannot inspect secret container",
+        "preflight deployer cannot inspect secret IAM policy",
         "zero project-level IAM roles",
         "exact deployer-only secretVersionManager allowlist",
+        "exact deployer-only secretManagerViewer allowlist",
         "exact secretAccessor allowlist",
         "unexpected secretVersionManager member set",
+        "unexpected secretManagerViewer member set",
         "unexpected secretAccessor member set",
         "metadata/IAM only; secret values are never accessed",
         "RC6_PREFLIGHT_RECEIPT",
@@ -114,6 +119,7 @@ def main() -> int:
     print("iam_membership=exact_allowlists_required")
     print("webhook_actas=deployer_only_required")
     print("webhook_policy_read=service_account_scoped")
+    print("secret_policy_read=secret_scoped_viewer_only")
     print("sanitized_receipt=artifact_30_day_retention_and_schema_validated_issue")
     print(f"one_shot_bridge={'present' if BRIDGE else 'absent'}")
     print("tracker=issue_261_concrete_endpoint_required")
