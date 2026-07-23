@@ -31,6 +31,7 @@ jobs:
       - name: Capture lint fixes and typecheck diagnostics
         shell: bash
         run: |
+          set +e
           set -u
           cd backend/direkt-api
           npm run format:check > /tmp/format.log 2>&1
