@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   promote:
-    name: Dispatch exact-main browser and Android owner-review promotion
+    name: Dispatch exact-main browser Android and operations owner-review promotion
     runs-on: ubuntu-latest
     timeout-minutes: 95
     env:
@@ -26,6 +26,7 @@ jobs:
       SOURCE_SHA: ${{ github.sha }}
       WEB_WORKFLOW: functional-pwa-w8-managed-cutover.yml
       ANDROID_WORKFLOW: firebase-internal-distribution.yml
+      OPERATIONS_WORKFLOW: cloud-run-staging-deploy-v2.yml
       CANONICAL_WORKFLOW: functional-pwa-w8-canonical-domain.yml
     steps:
       - uses: actions/checkout@v6
@@ -44,7 +45,7 @@ jobs:
           grep -Fq "CLAIMED — UIA owner-review promotion; RC5 parked at owner-controlled infrastructure boundary" WORKSTREAM_LOCK.md
           grep -Fq "UIA Issue #354 is the sole active implementation lane during this coordinated transition" WORKSTREAM_LOCK.md
 
-      - name: Dispatch exact-source browser and Android promotion
+      - name: Dispatch exact-source browser Android and operations promotion
         shell: bash
         run: |
           set -euo pipefail
@@ -57,6 +58,11 @@ jobs:
             --repo "${GITHUB_REPOSITORY}" \
             --ref main \
             -f confirmation=DISTRIBUTE-DIREKT-INTERNAL \
+            -f source_sha="${SOURCE_SHA}"
+          gh workflow run "${OPERATIONS_WORKFLOW}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --ref main \
+            -f confirmation=DEPLOY-DIREKT-STAGING \
             -f source_sha="${SOURCE_SHA}"
 
       - name: Resolve exact dispatched run IDs
@@ -88,12 +94,15 @@ jobs:
 
           WEB_RUN_ID="$(resolve_run "${WEB_WORKFLOW}")"
           ANDROID_RUN_ID="$(resolve_run "${ANDROID_WORKFLOW}")"
+          OPERATIONS_RUN_ID="$(resolve_run "${OPERATIONS_WORKFLOW}")"
           [[ "${WEB_RUN_ID}" =~ ^[0-9]+$ ]]
           [[ "${ANDROID_RUN_ID}" =~ ^[0-9]+$ ]]
+          [[ "${OPERATIONS_RUN_ID}" =~ ^[0-9]+$ ]]
           echo "WEB_RUN_ID=${WEB_RUN_ID}" >> "${GITHUB_ENV}"
           echo "ANDROID_RUN_ID=${ANDROID_RUN_ID}" >> "${GITHUB_ENV}"
+          echo "OPERATIONS_RUN_ID=${OPERATIONS_RUN_ID}" >> "${GITHUB_ENV}"
 
-      - name: Require browser and Android promotion success
+      - name: Require browser Android and operations promotion success
         shell: bash
         run: |
           set -euo pipefail
@@ -102,13 +111,17 @@ jobs:
           web_pid=$!
           gh run watch "${ANDROID_RUN_ID}" --repo "${GITHUB_REPOSITORY}" --exit-status &
           android_pid=$!
+          gh run watch "${OPERATIONS_RUN_ID}" --repo "${GITHUB_REPOSITORY}" --exit-status &
+          operations_pid=$!
           wait "${web_pid}"
           web_status=$?
           wait "${android_pid}"
           android_status=$?
+          wait "${operations_pid}"
+          operations_status=$?
           set -e
-          if [[ "${web_status}" -ne 0 || "${android_status}" -ne 0 ]]; then
-            echo "Browser promotion status=${web_status}; Android distribution status=${android_status}." >&2
+          if [[ "${web_status}" -ne 0 || "${android_status}" -ne 0 || "${operations_status}" -ne 0 ]]; then
+            echo "Browser promotion status=${web_status}; Android distribution status=${android_status}; Operations staging status=${operations_status}." >&2
             exit 1
           fi
 
@@ -156,18 +169,21 @@ jobs:
 
           - Browser/PWA managed cutover run: \`${WEB_RUN_ID}\` — success required
           - Firebase internal Android distribution run: \`${ANDROID_RUN_ID}\` — success required
+          - Private API + Operations staging deployment run: \`${OPERATIONS_RUN_ID}\` — success required
           - Canonical app-domain verification run: \`${CANONICAL_RUN_ID}\` — success required
           - Data boundary: synthetic/public-safe owner review only
+          - Operations boundary: IAM-private; synthetic staging; no consequential real-operations authority
           - RC5: parked, not closed; draft PR #378 remains frozen
           - Real participants / production auth / private evidence / production release: not authorized
 
-          Next UIA step: capture clean production-built responsive evidence and verify the protected operations owner-review surface."
+          Next UIA step: capture clean production-built owner-review evidence and verify straightforward owner access paths."
           gh issue comment 354 --repo "${GITHUB_REPOSITORY}" --body "${body}"
           {
             echo "### DIREKT UIA owner-review promotion"
             echo "- Exact source: \`${SOURCE_SHA}\`"
             echo "- Browser run: \`${WEB_RUN_ID}\`"
             echo "- Android distribution run: \`${ANDROID_RUN_ID}\`"
+            echo "- Operations staging run: \`${OPERATIONS_RUN_ID}\`"
             echo "- Canonical verification run: \`${CANONICAL_RUN_ID}\`"
             echo "- Production release: disabled"
           } >> "${GITHUB_STEP_SUMMARY}"
