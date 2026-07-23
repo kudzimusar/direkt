@@ -158,7 +158,7 @@ export class WhatsAppWebhookService {
 
   private failureCode(errors: unknown): string {
     if (Array.isArray(errors)) {
-      const first = errors[0];
+      const first: unknown = errors[0];
       if (first && typeof first === 'object' && !Array.isArray(first)) {
         const code = (first as Record<string, unknown>).code;
         if (typeof code === 'number' && Number.isInteger(code)) return `meta_${code}`;
