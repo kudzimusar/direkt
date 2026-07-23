@@ -1,0 +1,51 @@
+name: DIREKT RC6 format diagnostics once
+
+on:
+  push:
+    branches:
+      - integration/rc6-whatsapp-runtime-3b4fd6b
+    paths:
+      - ".github/workflows/rc6-format-diagnostics-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    name: Produce exact backend Prettier patch
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+
+      - name: Install pinned backend dependencies
+        working-directory: backend/direkt-api
+        run: npm ci --ignore-scripts
+
+      - name: Apply pinned Prettier locally and capture patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd backend/direkt-api
+          npm run format
+          cd ../..
+          git diff -- backend/direkt-api > /tmp/rc6-prettier.patch
+          git diff --name-only -- backend/direkt-api > /tmp/rc6-prettier-files.txt
+          test -s /tmp/rc6-prettier.patch
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rc6-prettier-diagnostics-${{ github.run_id }}
+          path: |
+            /tmp/rc6-prettier.patch
+            /tmp/rc6-prettier-files.txt
+          if-no-files-found: error
+          retention-days: 2
