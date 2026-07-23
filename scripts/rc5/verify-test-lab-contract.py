@@ -54,7 +54,7 @@ def main() -> int:
         "RC5 implementation contract — ACTIVE",
         "RC5 Firebase Test Lab is the sole active implementation lane",
     )
-    parked_lock_needles = (
+    parked_uia_lock_needles = (
         "CLAIMED — UIA owner-review promotion; RC5 parked at owner-controlled infrastructure boundary",
         "RC5 implementation contract — SOURCE COMPLETE; MANAGED MATRIX PENDING",
         "RC5 remains `IMPLEMENTED_GATED / MANAGED MATRIX PENDING`",
@@ -62,11 +62,21 @@ def main() -> int:
         "UIA Issue #354 is the sole active implementation lane during this coordinated transition",
         "RC5 source/workflow changes and PR #378 merge are frozen",
     )
+    parked_rc6_lock_needles = (
+        "CLAIMED — RC6 WhatsApp Cloud API; RC5 and UIA parked by explicit owner sequencing override",
+        "RC5 implementation contract — SOURCE COMPLETE; MANAGED MATRIX PENDING",
+        "RC5 remains `IMPLEMENTED_GATED / MANAGED MATRIX PENDING`",
+        "Draft PR #378 remains preserved and parked until RC5 resumes after RC6",
+        "RC6 under Issue #261 is the sole active implementation lane",
+        "RC5 remains parked/not closed and PR #378 must not merge while RC6 owns the lane",
+    )
     active_lock = all(needle in lock for needle in active_lock_needles)
-    parked_lock = all(needle in lock for needle in parked_lock_needles)
-    if active_lock == parked_lock:
+    parked_uia_lock = all(needle in lock for needle in parked_uia_lock_needles)
+    parked_rc6_lock = all(needle in lock for needle in parked_rc6_lock_needles)
+    lock_states = (active_lock, parked_uia_lock, parked_rc6_lock)
+    if sum(lock_states) != 1:
         raise AssertionError(
-            "RC5 lock must be exactly one supported state: active RC5 or the bounded parked-RC5/UIA transition."
+            "RC5 lock must be exactly one supported state: active RC5, bounded parked-RC5/UIA transition, or owner-authorized parked-RC5/RC6 transition."
         )
 
     for needle in (
@@ -118,7 +128,7 @@ def main() -> int:
         "--no-record-video",
         "--no-performance-metrics",
         "--no-auto-google-login",
-        "--results-bucket \"${GCP_TEST_LAB_RESULTS_BUCKET}\"",
+        '--results-bucket "${GCP_TEST_LAB_RESULTS_BUCKET}"',
         'productionAuthorization: false',
         'dataMode: "synthetic-public-safe-only"',
         "retention-days: 30",
@@ -244,8 +254,14 @@ def main() -> int:
         check=True,
     )
 
+    if active_lock:
+        lock_state = "active_rc5"
+    elif parked_uia_lock:
+        lock_state = "parked_rc5_uia_transition"
+    else:
+        lock_state = "parked_rc5_rc6_owner_override"
     print("RC5 Firebase Test Lab contract verification passed.")
-    print(f"lock_state={'active_rc5' if active_lock else 'parked_rc5_uia_transition'}")
+    print(f"lock_state={lock_state}")
     print("instrumentation=current_post_vc_semantics_local_execution_required")
     print("source=exact_current_main_required")
     print("identity=github_oidc_no_service_account_keys")

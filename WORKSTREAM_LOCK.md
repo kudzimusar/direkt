@@ -6,14 +6,14 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED — UIA owner-review promotion; RC5 parked at owner-controlled infrastructure boundary |
-| Owner/agent | Active repository agent — Issue #354 runnable surfaces acceptance and connected UI review. |
-| Authorized scope | UIA promotion only: promote an exact merged post-VC/current `main` source to the synthetic owner-review browser runtime, refresh/verify the approved internal Android App Distribution build, refresh/verify the protected operations review surface where the existing deployment path permits it, capture clean production-built responsive evidence, and reconcile owner-access acceptance. No redesign, RC5 Test Lab source change, Maps, WhatsApp, payment, production auth, real-participant activation or unrelated backend feature work is authorized. |
-| Protected surface | RC5 Firebase Test Lab source/workflows and draft proof bridge PR #378, backend/database/OpenAPI trust and authorization boundaries, private API/BFF IAM, operations authorization/private evidence controls, payments, integrations, VC1–VC8 design baseline, Phase 11/12 gates, Android auth/signing/Play/Data Safety and RC0–RC4 evidence remain regression-protected. |
-| Implementation branch | `integration/uia-owner-review-promotion-afe47` from `main@afe47a50b981cae1cf653e51f1f2717f02c6e2a4`. |
-| Stable baseline | UIA coordinated-transition PR #384 merged at current `main@afe47a50b981cae1cf653e51f1f2717f02c6e2a4`; RC5 source PR #377, Next.js security PR #380 and RC5 IAM correction PR #379 are preserved beneath it. RC5 remains `IMPLEMENTED_GATED / MANAGED MATRIX PENDING` at an owner-controlled Google Cloud bootstrap boundary; draft PR #378 is preserved and must remain unmerged while UIA owns the exact-current-main lane. RC4 remains closed with managed FCM proof run `29916381754` successful. |
-| Current task | UIA — make the already-completed VC1–VC8 product directly reviewable by the owner on the canonical browser host, current internal Android build and protected operations surface, without changing the approved visual direction or weakening synthetic/real-participant boundaries. |
-| Governing issue | Issue #354 — UIA runnable surfaces acceptance and connected UI review. Issue #261 RC5 remains parked, not closed. |
+| Status | CLAIMED — RC6 WhatsApp Cloud API; RC5 and UIA parked by explicit owner sequencing override |
+| Owner/agent | Active repository agent — Issue #261 runtime integration closure, RC6 WhatsApp Cloud API checkpoint. |
+| Authorized scope | RC6 only: implement the application-managed WhatsApp Cloud API backend adapter through the transactional outbox, consent-at-send and opt-out enforcement, approved-template controls, signed webhook verification, durable idempotency/retry/delivery-receipt state, privacy-safe payload rules, fail-closed configuration/kill switch, and a synthetic managed canary only where provider state permits. No RC5 Test Lab proof-bridge merge, Maps, payments, generated-client migration, Turnstile, production auth, real-participant activation or production release is authorized in this lane. |
+| Protected surface | RC5 Firebase Test Lab source/workflows and draft proof bridge PR #378; UIA browser/Android/operations owner-review surfaces and Issue #354; backend/database/OpenAPI trust and authorization boundaries; private API/BFF IAM; operations authorization/private evidence controls; payments; VC1–VC8 Design DNA; Phase 11/12 gates; Android auth/signing/Play/Data Safety; RC0–RC4 closure evidence. |
+| Implementation branch | `integration/rc6-whatsapp-sequencing-fed6db8` from exact current `main@fed6db8ab7c479b5e47095b4f0a752514122a4f6`. |
+| Stable baseline | UIA promotion PR #385 is merged at `fed6db8ab7c479b5e47095b4f0a752514122a4f6`. RC5 source PR #377, IAM correction PR #379 and the owner-created least-privilege custom roles/results bucket are preserved, but RC5 remains `IMPLEMENTED_GATED / MANAGED MATRIX PENDING`: final owner-side read-only verification and exact-current-main managed Test Lab proof are not complete because Google Cloud Shell is temporarily quota-blocked. Draft PR #378 remains parked. UIA Issue #354 remains open for remaining owner-access acceptance evidence and is parked/read-only during RC6. RC4 remains closed with managed FCM proof run `29916381754` successful. |
+| Current task | RC6 — close the WhatsApp Cloud API application adapter at a fail-closed synthetic/runtime boundary without activating real participant or production delivery. |
+| Governing issue | Issue #261 — Runtime integration closure after W8. Owner sequencing override recorded 2026-07-23; Issue #354 UIA remains parked/open; RC5 remains parked/open. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
 
@@ -24,7 +24,7 @@ The following strings are historical closure evidence required by the permanent 
 - Historical lock row: `Status | RELEASED`.
 - W8 — controlled route/deployment cutover completed with a dedicated least-privilege runtime identity.
 - Canonical owner-review host: `https://app.direkt.forum`; historical preview remains `https://direkt.forum/preview/`.
-- W8 implementation claim is **RELEASED**. Current implementation ownership is UIA Issue #354 under the Current lock table above.
+- W8 implementation claim is **RELEASED**. Current implementation ownership is RC6 under Issue #261 as declared in the Current lock table above.
 
 ## RC3 implementation contract — CLOSED AND PRESERVED
 
@@ -63,9 +63,9 @@ The following strings are historical closure evidence required by the permanent 
 7. GitHub Actions must authenticate through existing Workload Identity Federation and use the narrowest practical Test Lab/result-storage permissions; project Editor/Owner and long-lived service-account keys are prohibited.
 8. Test results must be machine-enforced: a matrix/infrastructure/test failure cannot be documented as passing, and flaky reruns must not erase the original failed evidence.
 9. Existing Android unit/lint/build, App Distribution, Crashlytics, FCM, signing, Play/Data Safety and cross-client regression gates remain intact.
-10. RC5 remains `IMPLEMENTED_GATED / MANAGED MATRIX PENDING` until owner-controlled bootstrap, exact-current-main managed Test Lab execution, sanitized result/artifact evidence, permanent verifier promotion and status/ledger reconciliation are complete. Draft PR #378 remains the preserved one-shot proof bridge and must not merge while UIA owns the exact-current-main lane.
+10. RC5 remains `IMPLEMENTED_GATED / MANAGED MATRIX PENDING` until owner-controlled bootstrap verification, exact-current-main managed Test Lab execution, sanitized result/artifact evidence, permanent verifier promotion and status/ledger reconciliation are complete. Draft PR #378 remains preserved and parked until RC5 resumes after RC6 or an explicit later coordination decision.
 
-## UIA owner-review promotion contract — ACTIVE
+## UIA owner-review promotion contract — PARKED AND PRESERVED
 
 1. UIA is an acceptance/promotion checkpoint, not a new visual-design phase. The approved VC1–VC8 Structured Trust + Neighbourhood Marketplace + Field Utility direction is preserved.
 2. Every promoted owner-review surface must be tied to an exact merged source on `main`; no stale prototype or pre-VC deployment may be represented as the current product.
@@ -74,9 +74,22 @@ The following strings are historical closure evidence required by the permanent 
 5. Operations remains protected/private. Synthetic supervisor/session/queue/evidence presentation may be used for visual review but must not be represented as connected real-operations UAT or grant consequential decision authority.
 6. No real participant data, production auth, private evidence activation, real communications, real money movement or Phase 11/12 release authority is introduced by UIA.
 7. Owner-facing evidence must come from production-built or equivalent clean runtime presentation with no Next.js development toolbar, `1 Issue` badge, debug/canary labels or other developer-only UI leakage.
-8. Existing backend, Android, PWA, portal, supply-chain, privacy, authorization and integration regressions remain mandatory; UIA must not weaken them to obtain a visual pass.
-9. RC5 owner-side Google Cloud provisioning may proceed independently because it does not modify repository source, but PR #378 must remain draft/unmerged until UIA releases the exact-current-main lane; after UIA closure RC5 resumes from the then-current reconciled `main` as required by its exact-current-main proof contract.
+8. Existing backend, Android, PWA, portal, supply-chain, privacy, authorization and integration regressions remain mandatory; RC6 must not weaken them.
+9. UIA Issue #354 remains open for remaining owner-access/acceptance evidence but is read-only/parked while RC6 owns the single write lane.
 10. UIA closes only after the owner has straightforward current access to the final VC browser, Android and protected operations surfaces and Issue #354 explicitly distinguishes visual/synthetic review, connected development/staging UI testing, real Phase 11 participant UAT and production release.
+
+## RC6 implementation contract — ACTIVE OWNER-AUTHORIZED CHECKPOINT
+
+1. WhatsApp send authority is backend-owned and application-managed; Android/browser clients never receive Meta/WhatsApp credentials or directly decide provider delivery state.
+2. Outbound WhatsApp delivery originates from the DIREKT transactional outbox and must preserve stable idempotency across retries.
+3. Consent and opt-out state are checked at send time; a queued event cannot bypass a later withdrawal or channel-specific opt-out.
+4. Only approved/template-governed payloads may be sent where Meta policy requires templates; unrestricted free-form participant messaging is not introduced by RC6.
+5. Payloads must not include identity documents, certificates, raw evidence, auth tokens, exact private coordinates, reviewer notes or other restricted/private evidence.
+6. Webhook authenticity must be verified before delivery/read/failure receipts affect durable DIREKT state; duplicate/out-of-order webhook events must be handled idempotently.
+7. Retries are bounded, observable and fail-closed; provider errors cannot silently become `delivered` or erase original failure evidence.
+8. A kill switch/provider enablement gate must default real/participant delivery off. Synthetic managed proof may run only with bounded synthetic/non-personal data and approved provider state.
+9. Production/participant WhatsApp delivery remains disabled until business/phone/template/provider/legal/privacy approvals and later release authorization are explicitly evidenced.
+10. Existing RC0–RC5, UIA, backend/database/OpenAPI, Android/PWA/portal, payment, privacy, authorization and production-release gates remain regression-protected.
 
 ## Runtime integration closure contract
 
@@ -99,9 +112,9 @@ The following strings are historical closure evidence required by the permanent 
 - RC2 — Sentry for approved NestJS/Next.js surfaces. **Closed — PR #275 source + managed synthetic API/private-portal canary + closure PR #280; participant/production telemetry remains disabled.**
 - RC3 — Firebase Crashlytics Android. **Closed — exact source `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; managed bridge run `29885635547` successful; closure PR #338 merged at `0d7d29313990c37b25bd985588866a85bbe10f83`.**
 - RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary. **CLOSED — exact source `f05ff19105cb8dc7c4621c044c110b6029f63300`; managed run `29916381754` successful; participant/production push disabled.**
-- RC5 — Firebase Test Lab device-matrix automation after Android runtime dependencies stabilize through RC3–RC4. **PARKED — source PR #377 plus IAM correction PR #379 are merged; exact-head regressions are green; owner-controlled Google Cloud bootstrap and managed matrix proof remain pending; draft PR #378 preserved.**
-- UIA — post-VC owner-review promotion. **ACTIVE COORDINATED TRANSITION — bounded browser/Android/operations review promotion only; no redesign or participant/production activation.**
-- RC6 — WhatsApp Cloud API application adapter using outbox/idempotency/consent/template/delivery-receipt rules; production sends remain gated until provider/legal approvals exist.
+- RC5 — Firebase Test Lab device-matrix automation. **PARKED / NOT CLOSED — source PR #377 plus IAM correction PR #379 are merged; least-privilege custom roles and dedicated results bucket have been created/partially verified; final owner-side verification and exact-current-main managed matrix proof are pending because Cloud Shell is temporarily quota-blocked; draft PR #378 preserved.**
+- UIA — post-VC owner-review promotion. **PARKED / OPEN — PR #385 merged at `fed6db8ab7c479b5e47095b4f0a752514122a4f6`; Issue #354 remains open for remaining owner-access evidence; read-only while RC6 owns the lane.**
+- RC6 — WhatsApp Cloud API application adapter. **ACTIVE OWNER-AUTHORIZED CHECKPOINT — sequencing override permits RC6 source/runtime work while RC5 remains parked; production/participant sends remain gated.**
 - RC7 — Google Maps runtime activation with separate restricted Android/backend credentials, privacy-safe publication semantics, quotas, manual/list fallback and kill switch.
 - RC8 — sandbox-only payment-provider adapter closure/reconciliation for already proven MTN, DPO, Stripe and PayPal rails; Airtel remains provider-pending and Flutterwave deferred; real money remains disabled.
 - RC9 — OpenAPI-generated Kotlin and TypeScript client adoption/decision after backend integration/API shape stabilizes; migrate incrementally with cross-client regressions.
@@ -125,4 +138,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-UIA Issue #354 is the sole active implementation lane during this coordinated transition. RC5 source/workflow changes and PR #378 merge are frozen; owner-controlled Google Cloud provisioning may proceed independently because it does not change repository source. RC6+ source work must not begin until UIA releases the lane and RC5 is either resumed for its exact-current-main managed proof or explicitly re-coordinated. UIA must not modify RC5 Test Lab files or broaden Android/backend/PWA/portal authority beyond the bounded owner-review promotion contract above.
+RC6 under Issue #261 is the sole active implementation lane under the owner-authorized 2026-07-23 sequencing override. RC5 remains parked/not closed and PR #378 must not merge while RC6 owns the lane; owner-side RC5 read-only verification may resume when Cloud Shell access returns but cannot be represented as RC5 closure without exact-current-main managed Test Lab proof. UIA Issue #354 remains parked/read-only and its protected surfaces must not be modified outside RC6 necessity. RC7+ source work must not begin until RC6 releases or is explicitly re-coordinated.
