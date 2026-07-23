@@ -82,6 +82,14 @@ def main() -> int:
             "issues: write",
             "rc6-whatsapp-infra-preflight.yml/dispatches",
             '"inputs":{"source_sha":$sha}',
+            'gh run download "${run_id}"',
+            'artifact_name="rc6-whatsapp-infra-preflight-${run_id}"',
+            'findings_file="${receipt_dir}/findings.txt"',
+            "SOURCE\\|[0-9a-f]{40}",
+            "SECRET_VALUES_ACCESSED\\|false",
+            "PRODUCTION_AUTHORIZATION\\|false",
+            "Sanitized findings",
+            'gh api --method POST "repos/${repo}/issues"',
             "Issue #261",
             "secret values were not accessed",
         ):
@@ -93,6 +101,7 @@ def main() -> int:
                 r"WHATSAPP_(ACCESS_TOKEN|APP_SECRET|WEBHOOK_VERIFY_TOKEN|SYNTHETIC_RECIPIENT)",
                 "provider secret material in dispatcher",
             ),
+            (r"cat\s+[^\n]*google.*credentials", "credential file publication"),
         ):
             prohibit(BRIDGE, pattern, label)
 
@@ -101,7 +110,7 @@ def main() -> int:
     print("secret_values_accessed=false")
     print("iam_membership=exact_allowlists_required")
     print("webhook_actas=deployer_only_required")
-    print("sanitized_receipt=artifact_30_day_retention")
+    print("sanitized_receipt=artifact_30_day_retention_and_schema_validated_issue")
     print(f"one_shot_bridge={'present' if BRIDGE else 'absent'}")
     print("iam_mutation=false")
     print("production_authorization=false")
