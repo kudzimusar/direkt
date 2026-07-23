@@ -40,4 +40,6 @@ jobs:
           python-version: "3.13"
 
       - name: Verify permanent RC6 contract
-        run: python3 scripts/rc6/verify-whatsapp-contract.py
+        run: |
+          python3 scripts/rc6/verify-whatsapp-contract.py
+          python3 scripts/rc6/verify-whatsapp-managed-identity.py
