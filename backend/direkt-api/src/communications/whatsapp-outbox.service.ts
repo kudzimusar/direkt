@@ -233,9 +233,7 @@ export class WhatsAppOutboxService {
       const delivery = await this.whatsappProvider.send({
         to: recipient,
         templateName: this.configService.getOrThrow<string>('WHATSAPP_SYNTHETIC_TEMPLATE_NAME'),
-        languageCode: this.configService.getOrThrow<string>(
-          'WHATSAPP_SYNTHETIC_TEMPLATE_LANGUAGE',
-        ),
+        languageCode: this.configService.getOrThrow<string>('WHATSAPP_SYNTHETIC_TEMPLATE_LANGUAGE'),
         deliveryId: claimed.id,
       });
 
@@ -289,7 +287,9 @@ export class WhatsAppOutboxService {
 
   private async assertSendConsent(payload: WhatsAppOutboxPayload): Promise<string> {
     if (this.configService.getOrThrow<string>('DIREKT_DATA_MODE') !== 'synthetic-only') {
-      throw new WhatsAppOutboxPayloadRejectedError('WhatsApp send-time data mode is not synthetic.');
+      throw new WhatsAppOutboxPayloadRejectedError(
+        'WhatsApp send-time data mode is not synthetic.',
+      );
     }
     if (this.configService.getOrThrow<boolean>('WHATSAPP_SYNTHETIC_SEND_APPROVED') !== true) {
       throw new WhatsAppOutboxPayloadRejectedError(
@@ -301,7 +301,9 @@ export class WhatsAppOutboxService {
       this.configService.getOrThrow<string>('WHATSAPP_SYNTHETIC_RECIPIENT'),
     ).value;
     if (this.hashContact(recipient) !== payload.recipientHash) {
-      throw new WhatsAppOutboxPayloadRejectedError('WhatsApp recipient binding changed before send.');
+      throw new WhatsAppOutboxPayloadRejectedError(
+        'WhatsApp recipient binding changed before send.',
+      );
     }
     const optedOut = await this.database.query<{ opted_out: boolean }>(
       `SELECT EXISTS (
@@ -390,10 +392,7 @@ export class WhatsAppOutboxService {
   }
 
   private hashContact(normalizedValue: string): string {
-    return createHmac(
-      'sha256',
-      this.configService.getOrThrow<string>('CONTACT_HASH_PEPPER'),
-    )
+    return createHmac('sha256', this.configService.getOrThrow<string>('CONTACT_HASH_PEPPER'))
       .update(normalizedValue, 'utf8')
       .digest('hex');
   }

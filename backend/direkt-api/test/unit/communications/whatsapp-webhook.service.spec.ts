@@ -107,9 +107,7 @@ describe('WhatsAppWebhookService', () => {
               field: 'messages',
               value: {
                 metadata: { phone_number_id: '999999999999999' },
-                statuses: [
-                  { id: 'wamid.synthetic-123', status: 'read', timestamp: '1784760001' },
-                ],
+                statuses: [{ id: 'wamid.synthetic-123', status: 'read', timestamp: '1784760001' }],
               },
             },
           ],

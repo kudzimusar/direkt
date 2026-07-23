@@ -335,7 +335,8 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
   }
   if (value.NODE_ENV === 'production' && value.WHATSAPP_PROVIDER_MODE !== 'disabled') {
     return helpers.message({
-      custom: 'Production WhatsApp provider mode must remain disabled until later provider/legal/privacy and release gates.',
+      custom:
+        'Production WhatsApp provider mode must remain disabled until later provider/legal/privacy and release gates.',
     });
   }
   if (value.AI_PROVIDER_MODE !== 'disabled' && value.DIREKT_DATA_MODE !== 'synthetic-only') {

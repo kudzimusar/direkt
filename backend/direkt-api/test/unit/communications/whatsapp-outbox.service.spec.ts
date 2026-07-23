@@ -42,13 +42,17 @@ function buildHarness(optedOut = false) {
   });
   const database = {
     query,
-    transaction: vi.fn(async (callback: (client: { query: typeof clientQuery }) => Promise<unknown>) =>
-      callback({ query: clientQuery }),
+    transaction: vi.fn(
+      async (callback: (client: { query: typeof clientQuery }) => Promise<unknown>) =>
+        callback({ query: clientQuery }),
     ),
   };
   const provider: WhatsAppProviderPort = {
     provider: 'meta_cloud',
-    send: vi.fn(async () => ({ provider: 'meta_cloud' as const, messageId: 'wamid.synthetic-123' })),
+    send: vi.fn(async () => ({
+      provider: 'meta_cloud' as const,
+      messageId: 'wamid.synthetic-123',
+    })),
   };
   const config = new ConfigService({
     DIREKT_DATA_MODE: 'synthetic-only',
@@ -73,8 +77,9 @@ describe('WhatsAppOutboxService', () => {
 
     // Align the synthetic claimed payload with the same protected contact hash used by the service.
     const originalProcessEvent = harness.service.processEvent.bind(harness.service);
-    const database = (harness.service as unknown as { database: { query: ReturnType<typeof vi.fn> } })
-      .database;
+    const database = (
+      harness.service as unknown as { database: { query: ReturnType<typeof vi.fn> } }
+    ).database;
     database.query.mockImplementation(async (sql: string) => {
       if (sql.includes('WITH candidate AS')) {
         return {
@@ -92,7 +97,8 @@ describe('WhatsAppOutboxService', () => {
           ],
         };
       }
-      if (sql.includes('SELECT provider_message_id')) return { rows: [{ provider_message_id: null }] };
+      if (sql.includes('SELECT provider_message_id'))
+        return { rows: [{ provider_message_id: null }] };
       if (sql.includes('communication_channel_opt_outs')) return { rows: [{ opted_out: false }] };
       return { rows: [] };
     });
@@ -116,8 +122,9 @@ describe('WhatsAppOutboxService', () => {
     const hash = (harness.service as unknown as { hashContact(value: string): string }).hashContact(
       '+260971000000',
     );
-    const database = (harness.service as unknown as { database: { query: ReturnType<typeof vi.fn> } })
-      .database;
+    const database = (
+      harness.service as unknown as { database: { query: ReturnType<typeof vi.fn> } }
+    ).database;
     database.query.mockImplementation(async (sql: string) => {
       if (sql.includes('WITH candidate AS')) {
         return {
@@ -135,7 +142,8 @@ describe('WhatsAppOutboxService', () => {
           ],
         };
       }
-      if (sql.includes('SELECT provider_message_id')) return { rows: [{ provider_message_id: null }] };
+      if (sql.includes('SELECT provider_message_id'))
+        return { rows: [{ provider_message_id: null }] };
       if (sql.includes('communication_channel_opt_outs')) return { rows: [{ opted_out: true }] };
       return { rows: [] };
     });
