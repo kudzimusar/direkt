@@ -92,7 +92,7 @@ jobs:
                   [[ "${line}" =~ ^FAILURE_COUNT\|[0-9]+$ ]] || exit 1
                   ;;
                 PASS\|*|FAIL\|*)
-                  [[ "${line}" =~ ^(PASS|FAIL)\|[A-Za-z0-9._:@/()+,=-][A-Za-z0-9[:space:]._'":@/()+,=-]*$ ]] || exit 1
+                  [[ "${line}" =~ ^(PASS|FAIL)\|[-A-Za-z0-9._:@/()+,=][-A-Za-z0-9[:space:].:@/()+,=]*$ ]] || exit 1
                   ;;
                 *)
                   echo "::error title=Unexpected RC6 preflight receipt line::Sanitized receipt schema validation failed."
