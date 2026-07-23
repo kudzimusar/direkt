@@ -1,0 +1,84 @@
+name: DIREKT RC6 integration register reconcile once
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc6-doc-reconcile-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    name: Reconcile RC5 parked and RC6 source state
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Apply exact integration-register replacements
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              Path('docs/integrations/CURRENT_INTEGRATION_STATUS.md'): [
+                  (
+                      '| WhatsApp Business / Cloud API | EXTERNALLY CONFIGURED / RUNTIME GATED | Account/business/provider configuration exists, but adapter/runtime proof is not yet complete. | Consent, approved templates, delivery webhooks and retries. |',
+                      '| WhatsApp Business / Cloud API | IMPLEMENTED_GATED / MANAGED CANARY PENDING | RC6 backend-only provider-neutral Meta adapter, transactional outbox, hashed opt-out, template-only payload boundary, raw-body HMAC webhook verification, durable idempotent receipts/retries and synthetic canary entrypoint are implemented. Provider business/phone/template/secret state and managed synthetic proof are not yet verified. Participant/production delivery remains disabled. | Verify Meta test/synthetic assets and one owner-controlled verified recipient, then run exact-current-main managed synthetic canary if provider prerequisites are available. |',
+                  ),
+                  (
+                      '7. RC5 Firebase Test Lab — **ACTIVE CHECKPOINT / IMPLEMENTED_GATED — MANAGED MATRIX PENDING**; source contract and local instrumentation execution are integrated, while owner bootstrap and exact-main managed Test Lab evidence remain pending.',
+                      '7. RC5 Firebase Test Lab — **PARKED / NOT CLOSED — IMPLEMENTED_GATED / MANAGED MATRIX PENDING**; source contract, local instrumentation, least-privilege roles and dedicated results bucket are preserved. Final owner-side read-only verification and exact-current-main managed Test Lab evidence remain pending because Cloud Shell is temporarily quota-blocked.',
+                  ),
+                  (
+                      '8. RC6 WhatsApp Cloud API application adapter.',
+                      '8. RC6 WhatsApp Cloud API application adapter — **ACTIVE CHECKPOINT / IMPLEMENTED_GATED — MANAGED CANARY PENDING**; fail-closed backend/outbox/webhook/opt-out source is implemented and regression-proven; managed provider proof remains pending. Meta test/synthetic number plus one owner-controlled verified recipient only; production phone registration, production templates and participant/live WhatsApp traffic remain gated.',
+                  ),
+              ],
+              Path('docs/integrations/LIVE_INTEGRATION_LEDGER.md'): [
+                  (
+                      '**Last reconciled:** 2026-07-22 (Asia/Tokyo)',
+                      '**Last reconciled:** 2026-07-23 (Asia/Tokyo)',
+                  ),
+                  (
+                      '| WhatsApp Cloud API | `EXTERNALLY CONFIGURED / RUNTIME GATED` | Runtime adapter, approved templates/phone identity where needed, consent-at-send, opt-out, idempotency, receipts/retries/privacy controls. |',
+                      '| WhatsApp Cloud API | `IMPLEMENTED_GATED / MANAGED CANARY PENDING` | RC6 implements a backend-only provider-neutral Meta template adapter through the transactional outbox, send-time synthetic approval/opt-out re-check, hashed opt-out state, bounded retry/idempotency, raw-body HMAC webhook verification, durable out-of-order-safe receipts and a synthetic canary entrypoint. Provider business/WABA/phone/template/secret state and managed proof are not yet verified. Only Meta test/synthetic assets plus one owner-controlled verified recipient may be used for proof; participant/production delivery, production phone registration and production templates remain disabled/gated. |',
+                  ),
+                  (
+                      '| Firebase Test Lab | `IMPLEMENTED_GATED / MANAGED MATRIX PENDING` | RC5 repairs stale post-VC instrumentation assertions, executes the smoke test in Android CI, adds an exact-source managed workflow, live virtual-catalog 2–3 device selection, dedicated 30-day results storage and least-privilege custom-role bootstrap. Owner bootstrap and exact-main managed matrix proof remain pending; no production/participant authorization is created. |',
+                      '| Firebase Test Lab | `PARKED / NOT CLOSED — IMPLEMENTED_GATED / MANAGED MATRIX PENDING` | RC5 source and local instrumentation are integrated; least-privilege custom roles and dedicated 30-day results bucket were created and partially verified. Final owner-side read-only verification and exact-current-main managed matrix proof remain pending because Cloud Shell is temporarily quota-blocked. Draft proof bridge #378 remains preserved; no production/participant authorization is created. |',
+                  ),
+              ],
+          }
+
+          for path, pairs in replacements.items():
+              text = path.read_text(encoding='utf-8')
+              for old, new in pairs:
+                  count = text.count(old)
+                  if count != 1:
+                      raise SystemExit(f'{path}: expected exactly one match, found {count}: {old[:120]}')
+                  text = text.replace(old, new)
+              path.write_text(text, encoding='utf-8')
+          PY
+
+          changed="$(git diff --name-only)"
+          expected=$'docs/integrations/CURRENT_INTEGRATION_STATUS.md\ndocs/integrations/LIVE_INTEGRATION_LEDGER.md'
+          test "$(printf '%s\n' "$changed" | LC_ALL=C sort)" = "$(printf '%s\n' "$expected" | LC_ALL=C sort)"
+          git diff --check
+
+      - name: Commit reconciled source state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/integrations/CURRENT_INTEGRATION_STATUS.md docs/integrations/LIVE_INTEGRATION_LEDGER.md
+          git commit -m "docs(rc6): reconcile WhatsApp source state"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
