@@ -1,0 +1,189 @@
+name: DIREKT UIA owner-review promotion once
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/uia-owner-review-promotion-once.yml"
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+
+concurrency:
+  group: direkt-uia-owner-review-promotion-once
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: Dispatch exact-main browser Android and operations owner-review promotion
+    runs-on: ubuntu-latest
+    timeout-minutes: 95
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: ${{ github.sha }}
+      WEB_WORKFLOW: functional-pwa-w8-managed-cutover.yml
+      ANDROID_WORKFLOW: firebase-internal-distribution.yml
+      OPERATIONS_WORKFLOW: cloud-run-staging-deploy-v2.yml
+      CANONICAL_WORKFLOW: functional-pwa-w8-canonical-domain.yml
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+
+      - name: Verify exact current main and UIA lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
+          git fetch origin main --no-tags
+          test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"
+          grep -Fq "CLAIMED — UIA owner-review promotion; RC5 parked at owner-controlled infrastructure boundary" WORKSTREAM_LOCK.md
+          grep -Fq "UIA Issue #354 is the sole active implementation lane during this coordinated transition" WORKSTREAM_LOCK.md
+
+      - name: Dispatch exact-source browser Android and operations promotion
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run "${WEB_WORKFLOW}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --ref main \
+            -f confirmation=RUN-DIREKT-W8-PUBLIC-WEB \
+            -f source_sha="${SOURCE_SHA}"
+          gh workflow run "${ANDROID_WORKFLOW}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --ref main \
+            -f confirmation=DISTRIBUTE-DIREKT-INTERNAL \
+            -f source_sha="${SOURCE_SHA}"
+          gh workflow run "${OPERATIONS_WORKFLOW}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --ref main \
+            -f confirmation=DEPLOY-DIREKT-STAGING \
+            -f source_sha="${SOURCE_SHA}"
+
+      - name: Resolve exact dispatched run IDs
+        shell: bash
+        run: |
+          set -euo pipefail
+          resolve_run() {
+            local workflow="$1"
+            local run_id=""
+            for _ in $(seq 1 30); do
+              runs="$(gh run list \
+                --repo "${GITHUB_REPOSITORY}" \
+                --workflow "${workflow}" \
+                --branch main \
+                --event workflow_dispatch \
+                --limit 30 \
+                --json databaseId,headSha,createdAt,status)"
+              run_id="$(jq -r --arg sha "${SOURCE_SHA}" \
+                '[.[] | select(.headSha == $sha)] | sort_by(.createdAt) | last | .databaseId // empty' \
+                <<< "${runs}")"
+              if [[ "${run_id}" =~ ^[0-9]+$ ]]; then
+                printf '%s' "${run_id}"
+                return 0
+              fi
+              sleep 2
+            done
+            return 1
+          }
+
+          WEB_RUN_ID="$(resolve_run "${WEB_WORKFLOW}")"
+          ANDROID_RUN_ID="$(resolve_run "${ANDROID_WORKFLOW}")"
+          OPERATIONS_RUN_ID="$(resolve_run "${OPERATIONS_WORKFLOW}")"
+          [[ "${WEB_RUN_ID}" =~ ^[0-9]+$ ]]
+          [[ "${ANDROID_RUN_ID}" =~ ^[0-9]+$ ]]
+          [[ "${OPERATIONS_RUN_ID}" =~ ^[0-9]+$ ]]
+          echo "WEB_RUN_ID=${WEB_RUN_ID}" >> "${GITHUB_ENV}"
+          echo "ANDROID_RUN_ID=${ANDROID_RUN_ID}" >> "${GITHUB_ENV}"
+          echo "OPERATIONS_RUN_ID=${OPERATIONS_RUN_ID}" >> "${GITHUB_ENV}"
+
+      - name: Require browser Android and operations promotion success
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          gh run watch "${WEB_RUN_ID}" --repo "${GITHUB_REPOSITORY}" --exit-status &
+          web_pid=$!
+          gh run watch "${ANDROID_RUN_ID}" --repo "${GITHUB_REPOSITORY}" --exit-status &
+          android_pid=$!
+          gh run watch "${OPERATIONS_RUN_ID}" --repo "${GITHUB_REPOSITORY}" --exit-status &
+          operations_pid=$!
+          wait "${web_pid}"
+          web_status=$?
+          wait "${android_pid}"
+          android_status=$?
+          wait "${operations_pid}"
+          operations_status=$?
+          set -e
+          if [[ "${web_status}" -ne 0 || "${android_status}" -ne 0 || "${operations_status}" -ne 0 ]]; then
+            echo "Browser promotion status=${web_status}; Android distribution status=${android_status}; Operations staging status=${operations_status}." >&2
+            exit 1
+          fi
+
+      - name: Reconfirm current main before canonical verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --no-tags
+          test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"
+
+      - name: Dispatch canonical owner-review host verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run "${CANONICAL_WORKFLOW}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --ref main
+
+          CANONICAL_RUN_ID=""
+          for _ in $(seq 1 30); do
+            runs="$(gh run list \
+              --repo "${GITHUB_REPOSITORY}" \
+              --workflow "${CANONICAL_WORKFLOW}" \
+              --branch main \
+              --event workflow_dispatch \
+              --limit 30 \
+              --json databaseId,headSha,createdAt,status)"
+            CANONICAL_RUN_ID="$(jq -r --arg sha "${SOURCE_SHA}" \
+              '[.[] | select(.headSha == $sha)] | sort_by(.createdAt) | last | .databaseId // empty' \
+              <<< "${runs}")"
+            [[ "${CANONICAL_RUN_ID}" =~ ^[0-9]+$ ]] && break
+            sleep 2
+          done
+          [[ "${CANONICAL_RUN_ID}" =~ ^[0-9]+$ ]]
+          echo "CANONICAL_RUN_ID=${CANONICAL_RUN_ID}" >> "${GITHUB_ENV}"
+          gh run watch "${CANONICAL_RUN_ID}" --repo "${GITHUB_REPOSITORY}" --exit-status
+
+      - name: Publish UIA promotion receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="## UIA managed owner-review promotion receipt
+
+          Exact source: \`${SOURCE_SHA}\`
+
+          - Browser/PWA managed cutover run: \`${WEB_RUN_ID}\` — success required
+          - Firebase internal Android distribution run: \`${ANDROID_RUN_ID}\` — success required
+          - Private API + Operations staging deployment run: \`${OPERATIONS_RUN_ID}\` — success required
+          - Canonical app-domain verification run: \`${CANONICAL_RUN_ID}\` — success required
+          - Data boundary: synthetic/public-safe owner review only
+          - Operations boundary: IAM-private; synthetic staging; no consequential real-operations authority
+          - RC5: parked, not closed; draft PR #378 remains frozen
+          - Real participants / production auth / private evidence / production release: not authorized
+
+          Next UIA step: capture clean production-built owner-review evidence and verify straightforward owner access paths."
+          gh issue comment 354 --repo "${GITHUB_REPOSITORY}" --body "${body}"
+          {
+            echo "### DIREKT UIA owner-review promotion"
+            echo "- Exact source: \`${SOURCE_SHA}\`"
+            echo "- Browser run: \`${WEB_RUN_ID}\`"
+            echo "- Android distribution run: \`${ANDROID_RUN_ID}\`"
+            echo "- Operations staging run: \`${OPERATIONS_RUN_ID}\`"
+            echo "- Canonical verification run: \`${CANONICAL_RUN_ID}\`"
+            echo "- Production release: disabled"
+          } >> "${GITHUB_STEP_SUMMARY}"

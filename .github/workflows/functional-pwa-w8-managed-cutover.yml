@@ -52,7 +52,7 @@ jobs:
           ref: ${{ steps.source.outputs.source_sha }}
           fetch-depth: 0
 
-      - name: Verify exact reviewed source
+      - name: Verify exact reviewed source and current main
         shell: bash
         run: |
           set -euo pipefail
@@ -60,6 +60,7 @@ jobs:
           test "${SOURCE_SHA}" = "${{ steps.source.outputs.source_sha }}"
           git fetch origin main --no-tags
           git merge-base --is-ancestor "${SOURCE_SHA}" origin/main
+          test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"
           echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
           echo "WEB_IMAGE_URI=${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/${GCP_WEB_SERVICE}:w8-${SOURCE_SHA}" >> "${GITHUB_ENV}"
 
