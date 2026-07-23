@@ -9,6 +9,9 @@ import re
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 BRIDGE = (ROOT / ".github/workflows/rc6-whatsapp-run-once.yml").read_text(encoding="utf-8")
 MANAGED = (ROOT / ".github/workflows/cloud-run-whatsapp-canary.yml").read_text(encoding="utf-8")
+CANARY = (
+    ROOT / "backend/direkt-api/src/communications/whatsapp-canary.ts"
+).read_text(encoding="utf-8")
 
 
 def require(text: str, needle: str, label: str) -> None:
@@ -54,7 +57,7 @@ def main() -> int:
         require(BRIDGE, needle, "one-shot RUN control")
 
     # The managed workflow remains the only runtime authority. It must retain the exact-source,
-    # pinned-secret, synthetic approval, isolated identities and signed-receipt terminal proof.
+    # pinned-secret, synthetic approval, isolated identities and terminal-proof receipt.
     for needle in (
         "workflow_dispatch:",
         "RUN-DIREKT-WHATSAPP-CANARY",
@@ -62,12 +65,21 @@ def main() -> int:
         "WHATSAPP_SYNTHETIC_SEND_APPROVED: \"true\"",
         "WHATSAPP_SYNTHETIC_RECIPIENT_SECRET_VERSION",
         "--max-retries 0",
-        "waitForSignedReceipt",
+        "whatsapp-canary.js",
         "Outbox → Meta acceptance → signed webhook receipt: passed",
         "Participant/production delivery: disabled",
         "Production authorization: false",
     ):
         require(MANAGED, needle, "managed signed-receipt boundary")
+
+    for needle in (
+        "waitForSignedReceipt",
+        "whatsapp_delivery_receipts",
+        "signedWebhookReceipt: true",
+        "timed out waiting for a signed provider receipt",
+        "productionAuthorization: false",
+    ):
+        require(CANARY, needle, "terminal signed-receipt canary implementation")
 
     for pattern, label in (
         (r'"confirmation":"PREPARE-DIREKT-WHATSAPP-WEBHOOK"', "PREPARE dispatch in RUN-only bridge"),
