@@ -67,7 +67,7 @@ def main() -> int:
         require(MANAGED, needle, "managed canary boundary")
 
     for pattern, label in (
-        (r"RUN-DIREKT-WHATSAPP-CANARY", "send-canary dispatch authority in PREPARE bridge"),
+        (r'"confirmation":"RUN-DIREKT-WHATSAPP-CANARY"', "send-canary dispatch authority in PREPARE bridge"),
         (r"graph\.facebook\.com", "direct Meta Graph API call"),
         (r"gcloud\s+secrets", "Secret Manager command"),
         (r"secrets\s+versions\s+access", "secret-value read"),
