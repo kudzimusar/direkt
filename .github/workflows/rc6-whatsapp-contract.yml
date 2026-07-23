@@ -11,6 +11,7 @@ on:
       - ".github/workflows/cloud-run-whatsapp-canary.yml"
       - ".github/workflows/rc6-whatsapp-infra-preflight.yml"
       - ".github/workflows/rc6-whatsapp-infra-preflight-once.yml"
+      - ".github/workflows/rc6-whatsapp-prepare-once.yml"
       - ".github/workflows/rc6-whatsapp-contract.yml"
   push:
     branches:
@@ -24,6 +25,7 @@ on:
       - ".github/workflows/cloud-run-whatsapp-canary.yml"
       - ".github/workflows/rc6-whatsapp-infra-preflight.yml"
       - ".github/workflows/rc6-whatsapp-infra-preflight-once.yml"
+      - ".github/workflows/rc6-whatsapp-prepare-once.yml"
       - ".github/workflows/rc6-whatsapp-contract.yml"
 
 permissions:
@@ -48,3 +50,4 @@ jobs:
           python3 scripts/rc6/verify-whatsapp-contract.py
           python3 scripts/rc6/verify-whatsapp-managed-identity.py
           python3 scripts/rc6/verify-whatsapp-infra-preflight.py
+          python3 scripts/rc6/verify-whatsapp-prepare-bridge.py
