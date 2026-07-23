@@ -115,13 +115,24 @@ jobs:
 
           if gcloud iam service-accounts describe "${GCP_WEBHOOK_SERVICE_ACCOUNT}" --project "${GCP_PROJECT_ID}" >/dev/null 2>&1; then
             mark_pass "isolated webhook service account exists"
-            service_account_policy="$(gcloud iam service-accounts get-iam-policy "${GCP_WEBHOOK_SERVICE_ACCOUNT}" --project "${GCP_PROJECT_ID}" --format=json)"
-            actual_actas_members="$(jq -c '[.bindings[]? | select(.role == "roles/iam.serviceAccountUser") | .members[]?] | unique | sort' <<< "${service_account_policy}")"
-            expected_actas_members="$(jq -nc --arg member "${deployer_member}" '[$member] | sort')"
-            if [[ "${actual_actas_members}" = "${expected_actas_members}" ]]; then
-              mark_pass "webhook identity has exact deployer-only serviceAccountUser binding"
+            if service_account_policy="$(gcloud iam service-accounts get-iam-policy "${GCP_WEBHOOK_SERVICE_ACCOUNT}" --project "${GCP_PROJECT_ID}" --format=json 2>/dev/null)"; then
+              actual_actas_members="$(jq -c '[.bindings[]? | select(.role == "roles/iam.serviceAccountUser") | .members[]?] | unique | sort' <<< "${service_account_policy}")"
+              expected_actas_members="$(jq -nc --arg member "${deployer_member}" '[$member] | sort')"
+              if [[ "${actual_actas_members}" = "${expected_actas_members}" ]]; then
+                mark_pass "webhook identity has exact deployer-only serviceAccountUser binding"
+              else
+                mark_fail "webhook identity serviceAccountUser members differ from the exact deployer-only allowlist"
+              fi
+
+              actual_viewer_members="$(jq -c '[.bindings[]? | select(.role == "roles/iam.serviceAccountViewer") | .members[]?] | unique | sort' <<< "${service_account_policy}")"
+              expected_viewer_members="$(jq -nc --arg member "${deployer_member}" '[$member] | sort')"
+              if [[ "${actual_viewer_members}" = "${expected_viewer_members}" ]]; then
+                mark_pass "webhook identity has exact deployer-only serviceAccountViewer binding"
+              else
+                mark_fail "webhook identity serviceAccountViewer members differ from the exact deployer-only allowlist"
+              fi
             else
-              mark_fail "webhook identity serviceAccountUser members differ from the exact deployer-only allowlist"
+              mark_fail "preflight deployer cannot inspect webhook service-account IAM policy"
             fi
           else
             mark_fail "isolated webhook service account is missing"
