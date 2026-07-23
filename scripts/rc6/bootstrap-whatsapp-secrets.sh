@@ -77,6 +77,12 @@ for secret_name in "${secret_names[@]}"; do
 
   gcloud secrets add-iam-policy-binding "${secret_name}" \
     --project "${project_id}" \
+    --member "serviceAccount:${deployer_sa}" \
+    --role roles/secretmanager.viewer \
+    --quiet >/dev/null
+
+  gcloud secrets add-iam-policy-binding "${secret_name}" \
+    --project "${project_id}" \
     --member "serviceAccount:${send_runtime_sa}" \
     --role roles/secretmanager.secretAccessor \
     --quiet >/dev/null
@@ -100,7 +106,10 @@ done
 
 for secret_name in "${secret_names[@]}"; do
   policy="$(gcloud secrets get-iam-policy "${secret_name}" --project "${project_id}" --format=json)"
+  test "$(jq -r '[.bindings[]? | select(.role == "roles/secretmanager.secretVersionManager") | .members[]?] | unique | length' <<< "${policy}")" = "1"
   test "$(jq -r --arg member "serviceAccount:${deployer_sa}" '[.bindings[]? | select(.role == "roles/secretmanager.secretVersionManager") | .members[]? | select(. == $member)] | length' <<< "${policy}")" = "1"
+  test "$(jq -r '[.bindings[]? | select(.role == "roles/secretmanager.viewer") | .members[]?] | unique | length' <<< "${policy}")" = "1"
+  test "$(jq -r --arg member "serviceAccount:${deployer_sa}" '[.bindings[]? | select(.role == "roles/secretmanager.viewer") | .members[]? | select(. == $member)] | length' <<< "${policy}")" = "1"
   test "$(jq -r --arg member "serviceAccount:${send_runtime_sa}" '[.bindings[]? | select(.role == "roles/secretmanager.secretAccessor") | .members[]? | select(. == $member)] | length' <<< "${policy}")" = "1"
   if jq -e '.bindings[]? | select(.role == "roles/secretmanager.admin")' <<< "${policy}" >/dev/null; then
     echo "Broad roles/secretmanager.admin is prohibited on ${secret_name}." >&2
@@ -118,5 +127,5 @@ printf 'Project: %s\n' "${project_id}"
 printf 'Secret containers: %s\n' "${secret_names[*]}"
 printf 'Send runtime: %s — send secrets available only through secret-level accessor grants.\n' "${send_runtime_sa}"
 printf 'Webhook runtime: %s — zero project-level roles; database/app-secret/verify-token only; no access-token or recipient-secret access.\n' "${webhook_runtime_sa}"
-printf 'Deployer scope: secretVersionManager on each RC6 secret plus serviceAccountUser and serviceAccountViewer only on the isolated webhook identity.\n'
+printf 'Deployer scope: secretVersionManager and secretManagerViewer on each RC6 secret plus serviceAccountUser and serviceAccountViewer only on the isolated webhook identity.\n'
 printf 'No secret value was created, read, or printed by this bootstrap.\n'
