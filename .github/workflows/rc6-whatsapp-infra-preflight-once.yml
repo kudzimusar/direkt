@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Dispatch inspect wait and record Issue #261 receipt
+      - name: Dispatch inspect wait and publish sanitized receipt
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -31,6 +31,7 @@ jobs:
           set -euo pipefail
           repo="${GITHUB_REPOSITORY}"
           source_sha="${GITHUB_SHA}"
+          short_sha="${source_sha:0:12}"
           [[ "${source_sha}" =~ ^[0-9a-f]{40}$ ]]
 
           main_sha="$(gh api "repos/${repo}/git/ref/heads/main" --jq '.object.sha')"
@@ -64,25 +65,92 @@ jobs:
           done
 
           run_url="https://github.com/${repo}/actions/runs/${run_id}"
-          receipt="$(cat <<EOF
+          artifact_name="rc6-whatsapp-infra-preflight-${run_id}"
+          receipt_dir="$(mktemp -d)"
+          artifact_downloaded=false
+          for _ in $(seq 1 12); do
+            if gh run download "${run_id}" --repo "${repo}" --name "${artifact_name}" --dir "${receipt_dir}" >/dev/null 2>&1; then
+              artifact_downloaded=true
+              break
+            fi
+            sleep 5
+          done
+
+          findings_file="${receipt_dir}/findings.txt"
+          findings_status="artifact_unavailable"
+          findings_body="Sanitized preflight artifact was not retrievable. No secret value was accessed by this bridge."
+
+          if [[ "${artifact_downloaded}" = "true" && -f "${findings_file}" ]]; then
+            while IFS= read -r line || [[ -n "${line}" ]]; do
+              case "${line}" in
+                SOURCE\|*)
+                  [[ "${line}" =~ ^SOURCE\|[0-9a-f]{40}$ ]] || exit 1
+                  ;;
+                MODE\|metadata_and_iam_only|SECRET_VALUES_ACCESSED\|false|PRODUCTION_AUTHORIZATION\|false|RESULT\|ready|RESULT\|not_ready)
+                  ;;
+                FAILURE_COUNT\|*)
+                  [[ "${line}" =~ ^FAILURE_COUNT\|[0-9]+$ ]] || exit 1
+                  ;;
+                PASS\|*|FAIL\|*)
+                  [[ "${line}" =~ ^(PASS|FAIL)\|[-A-Za-z0-9._:@/()+,=][-A-Za-z0-9[:space:].:@/()+,=]*$ ]] || exit 1
+                  ;;
+                *)
+                  echo "::error title=Unexpected RC6 preflight receipt line::Sanitized receipt schema validation failed."
+                  exit 1
+                  ;;
+              esac
+            done < "${findings_file}"
+            grep -Fxq "SOURCE|${source_sha}" "${findings_file}"
+            grep -Fxq "SECRET_VALUES_ACCESSED|false" "${findings_file}"
+            grep -Fxq "PRODUCTION_AUTHORIZATION|false" "${findings_file}"
+            findings_status="available_and_schema_validated"
+            findings_body="$(cat "${findings_file}")"
+          fi
+
+          issue_title="RC6 preflight receipt — ${conclusion:-not-completed} — ${short_sha} — run ${run_id}"
+          issue_body="$(cat <<EOF
+          ## RC6 read-only infrastructure preflight receipt
+
+          - Exact current main: \`${source_sha}\`
+          - Managed preflight run: \`${run_id}\`
+          - Status: \`${status}\`
+          - Conclusion: \`${conclusion:-not-completed}\`
+          - Sanitized findings artifact: \`${artifact_name}\` — \`${findings_status}\`
+          - Boundary: metadata/IAM inspection only; secret values were not accessed; no IAM/secret mutation; production authorization remains false.
+          - Run: ${run_url}
+          - Tracker: #261
+
+          ### Sanitized findings
+
+          \`\`\`text
+          ${findings_body}
+          \`\`\`
+          EOF
+          )"
+          receipt_issue_url="$(gh api --method POST "repos/${repo}/issues" -f title="${issue_title}" -f body="${issue_body}" --jq '.html_url')"
+
+          tracker_receipt="$(cat <<EOF
           RC6 read-only infrastructure preflight execution receipt.
 
           - Exact current main: \`${source_sha}\`
           - Managed preflight run: \`${run_id}\`
           - Status: \`${status}\`
           - Conclusion: \`${conclusion:-not-completed}\`
+          - Sanitized findings: ${receipt_issue_url}
           - Boundary: metadata/IAM inspection only; secret values were not accessed; no IAM/secret mutation; production authorization remains false.
-          - Sanitized pass/fail findings are retained only in the run artifact \`rc6-whatsapp-infra-preflight-${run_id}\`.
-          - Run: ${run_url}
           EOF
           )"
-          gh api --method POST "repos/${repo}/issues/261/comments" -f body="${receipt}" >/dev/null
+          gh api --method POST "repos/${repo}/issues/261/comments" -f body="${tracker_receipt}" >/dev/null
 
+          if [[ "${artifact_downloaded}" != "true" || ! -f "${findings_file}" ]]; then
+            echo "::error title=RC6 preflight receipt unavailable::Run ${run_id} did not expose the expected sanitized receipt artifact."
+            exit 1
+          fi
           if [[ "${status}" != "completed" ]]; then
             echo "::error title=RC6 infrastructure preflight timed out::Run ${run_id} did not complete in the bounded wait."
             exit 1
           fi
           if [[ "${conclusion}" != "success" ]]; then
-            echo "::error title=RC6 infrastructure preflight not ready::Run ${run_id} concluded ${conclusion}. Inspect the sanitized receipt artifact; no secret values were accessed."
+            echo "::error title=RC6 infrastructure preflight not ready::Run ${run_id} concluded ${conclusion}; see the dedicated sanitized receipt issue."
             exit 1
           fi
