@@ -24,6 +24,8 @@ jobs:
       github.event.pull_request.head.ref == 'integration/rc6-close-rc5-resume-8838b7a'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      DIAGNOSTICS_DIR: ${{ github.workspace }}/artifacts/rc6-closeout
     steps:
       - uses: actions/checkout@v6
         with:
@@ -80,8 +82,25 @@ jobs:
       - name: Verify permanent RC5 contract
         run: python3 scripts/rc5/verify-test-lab-contract.py
 
-      - name: Verify closed RC6 source contract
-        run: python3 scripts/rc6/verify-whatsapp-contract.py
+      - name: Capture closed RC6 source-contract result
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p "${DIAGNOSTICS_DIR}"
+          python3 scripts/rc6/verify-whatsapp-contract.py > "${DIAGNOSTICS_DIR}/rc6-verifier.txt" 2>&1
+          status=$?
+          echo "status=${status}" > "${DIAGNOSTICS_DIR}/summary.txt"
+          cat "${DIAGNOSTICS_DIR}/rc6-verifier.txt"
+          exit "${status}"
+
+      - name: Upload sanitized closeout diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc6-closeout-diagnostics-${{ github.run_id }}
+          path: artifacts/rc6-closeout
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Verify RC6 identity boundary
         run: python3 scripts/rc6/verify-whatsapp-managed-identity.py
