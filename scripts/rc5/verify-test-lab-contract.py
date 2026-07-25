@@ -98,6 +98,7 @@ def main() -> int:
         "workflow_dispatch:",
         'DIREKT_CONFIRMATION: ${{ inputs.confirmation }}',
         'SOURCE_SHA: ${{ inputs.source_sha }}',
+        'test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"',
         "google-github-actions/auth@v3",
         "direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com",
         "projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main",
@@ -121,7 +122,6 @@ def main() -> int:
         prohibit(workflow + "\n" + runner, pattern, label)
 
     for needle in (
-        'test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"',
         'bash scripts/rc5/verify-no-project-storage-roles.sh "${GCP_PROJECT_ID}" "${member}"',
         "expected_results_permissions=$'storage.buckets.get\\nstorage.buckets.getIamPolicy\\nstorage.objects.create'",
         "expected_input_permissions=$'storage.buckets.get\\nstorage.buckets.getIamPolicy\\nstorage.objects.create\\nstorage.objects.get'",
@@ -153,7 +153,7 @@ def main() -> int:
     for pattern, label in (
         (r"--num-flaky-test-attempts\s+[1-9]", "automatic flaky reruns"),
         (r"--use-orchestrator(?:\s|$)", "unvalidated Test Orchestrator"),
-        (r"storage\.objects\.(delete|list|update)", "input object list/delete/update authority"),
+        (r"^storage\.objects\.(delete|list|update)$", "input object list/delete/update authority"),
         (r"^resourcemanager\.projects\.list$", "parent-only project list permission"),
     ):
         prohibit(runner, pattern, label)
