@@ -9,11 +9,12 @@ on:
     paths:
       - "android/direkt-app/app/src/androidTest/**"
       - ".github/workflows/android-ci.yml"
-      - ".github/workflows/firebase-test-lab.yml"
+      - ".github/workflows/firebase-test-lab-managed.yml"
       - ".github/workflows/rc5-test-lab-preflight.yml"
       - ".github/workflows/rc5-test-lab-preflight-once.yml"
-      - ".github/workflows/rc5-test-lab-managed-proof-once.yml"
+      - ".github/workflows/rc5-test-lab-managed-v2-retry-once.yml"
       - ".github/workflows/rc5-test-lab-contract.yml"
+      - ".github/workflows/rc5-test-lab-managed-v2-contract.yml"
       - "scripts/rc5/**"
       - "docs/integrations/RC5_FIREBASE_TEST_LAB_IMPLEMENTATION_NOTES.md"
       - "docs/integrations/RC5_TEST_LAB_READONLY_PREFLIGHT.md"
@@ -26,11 +27,12 @@ on:
     paths:
       - "android/direkt-app/app/src/androidTest/**"
       - ".github/workflows/android-ci.yml"
-      - ".github/workflows/firebase-test-lab.yml"
+      - ".github/workflows/firebase-test-lab-managed.yml"
       - ".github/workflows/rc5-test-lab-preflight.yml"
       - ".github/workflows/rc5-test-lab-preflight-once.yml"
-      - ".github/workflows/rc5-test-lab-managed-proof-once.yml"
+      - ".github/workflows/rc5-test-lab-managed-v2-retry-once.yml"
       - ".github/workflows/rc5-test-lab-contract.yml"
+      - ".github/workflows/rc5-test-lab-managed-v2-contract.yml"
       - "scripts/rc5/**"
       - "docs/integrations/RC5_FIREBASE_TEST_LAB_IMPLEMENTATION_NOTES.md"
       - "docs/integrations/RC5_TEST_LAB_READONLY_PREFLIGHT.md"
@@ -53,12 +55,15 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
-      - name: Verify bootstrap and preflight shell syntax
+      - name: Verify bootstrap, preflight and managed shell syntax
         shell: bash
         run: |
+          set -euo pipefail
           bash -n scripts/rc5/bootstrap-test-lab.sh
           bash -n scripts/rc5/verify-no-project-storage-roles.sh
           bash -n scripts/rc5/run-test-lab-preflight.sh
+          bash -n scripts/rc5/run-test-lab-managed.sh
+          bash -n scripts/rc5/append-only-storage-upload.sh
       - name: Verify Python syntax and selector self-test
         shell: bash
         run: |
