@@ -1,0 +1,107 @@
+name: DIREKT Firebase Test Lab Android matrix v2
+
+"on":
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN-DIREKT-TEST-LAB to continue
+        required: true
+        type: string
+      source_sha:
+        description: Exact reviewed DIREKT commit that must equal current main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: direkt-firebase-test-lab
+  cancel-in-progress: false
+
+jobs:
+  android-matrix:
+    name: Prove current Android instrumentation on bounded Test Lab matrix
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      DIREKT_CONFIRMATION: ${{ inputs.confirmation }}
+      SOURCE_SHA: ${{ inputs.source_sha }}
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_PROJECT_NUMBER: "264358173369"
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_TEST_LAB_RUNNER_ROLE: projects/direkt-dev-502701/roles/direktTestLabRunner
+      GCP_TEST_LAB_RESULTS_ROLE: projects/direkt-dev-502701/roles/direktTestLabResultsWriter
+      GCP_TEST_LAB_RESULTS_BUCKET: gs://direkt-test-lab-results-264358173369
+      GCP_TEST_LAB_RESULTS_LOCATION: asia-northeast1
+      GCP_TEST_LAB_RESULTS_RETENTION_DAYS: "30"
+      DIREKT_GRADLE_VERSION: "9.4.0"
+      DIREKT_TEST_CLASS: com.kudzimusar.direkt.DirektAppSmokeTest
+      DIREKT_TEST_PACKAGE: com.kudzimusar.direkt.debug.test
+      DIREKT_TEST_RUNNER: androidx.test.runner.AndroidJUnitRunner
+
+    steps:
+      - name: Validate dispatch controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${DIREKT_CONFIRMATION}" = "RUN-DIREKT-TEST-LAB"
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
+
+      - name: Check out exact reviewed source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify exact source equals current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
+          git fetch origin main --no-tags
+          test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Configure pinned Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ env.DIREKT_GRADLE_VERSION }}
+
+      - name: Authenticate to Google Cloud through GitHub OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Execute bounded managed Test Lab proof
+        id: managed
+        shell: bash
+        run: bash scripts/rc5/run-test-lab-managed.sh
+
+      - name: Upload sanitized RC5 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc5-firebase-test-lab-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/rc5-test-lab-matrix.json
+            ${{ runner.temp }}/rc5-test-lab-receipt.json
+            ${{ runner.temp }}/rc5-test-lab-command.log
+          if-no-files-found: warn
+          retention-days: 30
