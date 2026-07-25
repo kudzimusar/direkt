@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   inspect:
-    name: Inspect RC5 APIs IAM bucket and live device catalog
+    name: Inspect RC5 APIs IAM buckets and live device catalog
     if: github.ref == 'refs/heads/main'
     environment: staging
     runs-on: ubuntu-latest
@@ -35,9 +35,12 @@ jobs:
       GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
       GCP_TEST_LAB_RUNNER_ROLE_ID: direktTestLabRunner
       GCP_TEST_LAB_RESULTS_ROLE_ID: direktTestLabResultsWriter
+      GCP_TEST_LAB_INPUT_ROLE_ID: direktTestLabInputStager
       GCP_TEST_LAB_RESULTS_BUCKET: gs://direkt-test-lab-results-264358173369
+      GCP_TEST_LAB_INPUT_BUCKET: gs://direkt-test-lab-inputs-264358173369
       GCP_TEST_LAB_RESULTS_LOCATION: asia-northeast1
       GCP_TEST_LAB_RESULTS_RETENTION_DAYS: "30"
+      GCP_TEST_LAB_INPUT_RETENTION_DAYS: "1"
       SOURCE_SHA: ${{ inputs.source_sha }}
       RC5_PREFLIGHT_CORRELATION: ${{ inputs.correlation_id }}
       RC5_PREFLIGHT_RECEIPT: /tmp/rc5-test-lab-preflight/receipt.txt
@@ -53,6 +56,7 @@ jobs:
           test "${GCP_PROJECT_ID}" = "direkt-dev-502701"
           test "${GCP_PROJECT_NUMBER}" = "264358173369"
           test "${GCP_TEST_LAB_RESULTS_BUCKET}" = "gs://direkt-test-lab-results-${GCP_PROJECT_NUMBER}"
+          test "${GCP_TEST_LAB_INPUT_BUCKET}" = "gs://direkt-test-lab-inputs-${GCP_PROJECT_NUMBER}"
 
       - name: Check out exact reviewed source
         uses: actions/checkout@v6
@@ -92,7 +96,7 @@ jobs:
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Execute metadata IAM bucket and catalog inspection only
+      - name: Execute metadata IAM buckets and catalog inspection only
         id: preflight
         continue-on-error: true
         shell: bash
