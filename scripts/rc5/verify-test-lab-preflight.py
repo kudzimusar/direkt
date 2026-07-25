@@ -32,11 +32,13 @@ def main() -> int:
     bridge = read(".github/workflows/rc5-test-lab-preflight-once.yml")
     inspector = read("scripts/rc5/run-test-lab-preflight.sh")
     contract = read(".github/workflows/rc5-test-lab-contract.yml")
+    notes = read("docs/integrations/RC5_TEST_LAB_READONLY_PREFLIGHT.md")
 
     for needle in (
         "CLAIMED — RC5 Firebase Test Lab device-matrix closure",
         "RC5 implementation contract — ACTIVE",
         "RC5 Firebase Test Lab is the sole active implementation lane",
+        "Draft PR #378 is stale and unmergeable",
         "RC7+ source work must not begin until RC5 releases",
         "Production-release authorization | BLOCKED",
     ):
@@ -134,11 +136,26 @@ def main() -> int:
     for needle in (
         '".github/workflows/rc5-test-lab-preflight.yml"',
         '".github/workflows/rc5-test-lab-preflight-once.yml"',
+        '"docs/integrations/RC5_TEST_LAB_READONLY_PREFLIGHT.md"',
         "bash -n scripts/rc5/run-test-lab-preflight.sh",
         "scripts/rc5/verify-test-lab-preflight.py",
         "python scripts/rc5/verify-test-lab-preflight.py",
     ):
         require(contract, needle, "permanent RC5 preflight path ownership")
+
+    for needle in (
+        "RC5 active/resumed; managed matrix not yet authorized",
+        "metadata/IAM/bucket/catalog inspection only",
+        "RESOURCE_MUTATION|false",
+        "MATRIX_EXECUTED|false",
+        "SECRET_VALUES_ACCESSED|false",
+        "PRODUCTION_AUTHORIZATION|false",
+        "RESULT|ready",
+        "FAILURE_COUNT|0",
+        "draft PR #378 must remain unmerged",
+        "RC7+ and production authorization remain blocked",
+    ):
+        require(notes, needle, "permanent RC5 preflight documentation")
 
     print("RC5 read-only Test Lab preflight verification passed.")
     print("source=exact_current_main")
