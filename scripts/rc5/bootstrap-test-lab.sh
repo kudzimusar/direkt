@@ -167,9 +167,9 @@ gcloud storage buckets update "${bucket_uri}" \
   --uniform-bucket-level-access \
   --quiet >/dev/null
 
-bucket_record="$(gcloud storage buckets describe "${bucket_uri}" --project "${project_id}" --format=json)"
+bucket_record="$(gcloud storage buckets describe "${bucket_uri}" --project "${project_id}" --format='json(location,uniform_bucket_level_access)')"
 test "$(jq -r '.location' <<< "${bucket_record}" | tr '[:upper:]' '[:lower:]')" = "${bucket_location}"
-test "$(jq -r '.iamConfiguration.uniformBucketLevelAccess.enabled' <<< "${bucket_record}")" = "true"
+test "$(jq -r '.uniform_bucket_level_access' <<< "${bucket_record}")" = "true"
 
 cat > "${workdir}/lifecycle.json" <<EOF
 {
@@ -235,7 +235,7 @@ bash scripts/rc5/verify-no-project-storage-roles.sh "${project_id}" "${deployer_
 bucket_policy="$(gcloud storage buckets get-iam-policy "${bucket_uri}" --format=json)"
 test "$(jq -r --arg member "${deployer_member}" --arg role "${results_role}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${bucket_policy}")" = "1"
 
-lifecycle="$(gcloud storage buckets describe "${bucket_uri}" --project "${project_id}" --format=json | jq -c '.lifecycle.rule // []')"
+lifecycle="$(gcloud storage buckets describe "${bucket_uri}" --project "${project_id}" --format='json(lifecycle_config)' | jq -c '.lifecycle_config.rule // []')"
 test "$(jq -r --argjson age "${retention_days}" 'length == 1 and .[0].action.type == "Delete" and .[0].condition.age == $age' <<< "${lifecycle}")" = "true"
 
 printf 'RC5 Firebase Test Lab bootstrap verified.\n'
