@@ -1,11 +1,11 @@
 # DIREKT Project Status
 
-**Updated:** 2026-07-21 (Asia/Tokyo)  
+**Updated:** 2026-07-25 (Asia/Tokyo)
 **Stable branch:** `main`  
 **VC1–VC8 promotion:** PR #270 merged at `c7f5985bc20372b4761e063dc3a66ecc736556e2`  
 **Visual Completion issue:** #259 — CLOSED/COMPLETED  
 **Runtime integration tracker:** #261  
-**Active repository write lane:** none; next material work requires a fresh claim
+**Active repository write lane:** RC5 Firebase Test Lab resumed under Issue #261; RC6 closed at its synthetic-only managed boundary
 
 ## 1. Programme state
 
@@ -19,7 +19,7 @@ DIREKT’s current repository state is:
 - functional customer/provider web/PWA W0–W8 — **closed**;
 - VC0 preparation/control — **closed**;
 - VC1–VC8 world-class product/AI modernization — **complete and merged**;
-- runtime integration closure — **RC1 Resend closed at its managed synthetic boundary; RC2 Sentry is the next planned bounded checkpoint after a fresh lane claim**.
+- runtime integration closure — **RC1–RC4 and RC6 are closed at synthetic-only managed boundaries; RC5 Firebase Test Lab is resumed and remains open pending final owner verification plus exact-current-main matrix proof**.
 
 VC1–VC8 completion does not replace or weaken the remaining Phase 11 real-world evidence, privacy/legal, payment, external-communications or production-release gates.
 
@@ -166,7 +166,7 @@ Detailed authority remains:
 Important distinctions:
 
 - Supabase/Postgres/PostGIS/private Storage, canonical backend, Cloud Run, Secret Manager, Workload Identity Federation, Logging and core CI/runtime infrastructure are active within documented environment boundaries;
-- RC1 Resend has managed synthetic outbox → provider proof, while real-participant/continuous production email remains separately gated;
+- RC1 Resend, RC4 FCM and RC6 WhatsApp have managed synthetic outbox → provider/device or authentic provider-receipt proof, while real-participant/continuous production communications remain separately gated;
 - the provider-neutral AI contract and bounded VC7 use cases are implemented, but external model runtime activation remains per-use-case/fail-closed and restricted-data AI remains disabled;
 - Maps and other externally provisioned integrations require their own runtime evidence before being represented as active;
 - payment rails may be sandbox-proven while real money remains disabled;

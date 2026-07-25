@@ -78,14 +78,26 @@ def main() -> int:
     managed_workflow = read(".github/workflows/cloud-run-whatsapp-canary.yml")
     bootstrap = read("scripts/rc6/bootstrap-whatsapp-secrets.sh")
 
-    for needle in (
+    active_lock_needles = (
         "CLAIMED — RC6 WhatsApp Cloud API",
         "RC6 implementation contract — ACTIVE OWNER-AUTHORIZED CHECKPOINT",
         "RC6 under Issue #261 is the sole active implementation lane",
         "RC5 remains parked/not closed",
         "Production/participant WhatsApp delivery remains disabled",
-    ):
-        require(lock, needle, "RC6 lock boundary")
+    )
+    closed_lock_needles = (
+        "CLAIMED — RC5 Firebase Test Lab device-matrix closure",
+        "RC6 implementation contract — CLOSED AND PRESERVED",
+        "exact-current-main managed run `30137700769`",
+        "RC5 Firebase Test Lab is the sole active implementation lane",
+        "production/participant WhatsApp delivery remains disabled",
+    )
+    active_lock = all(needle in lock for needle in active_lock_needles)
+    closed_lock = all(needle in lock for needle in closed_lock_needles)
+    if active_lock == closed_lock:
+        raise AssertionError(
+            "RC6 lock must be exactly one supported state: active RC6 or closed/preserved RC6 with RC5 resumed."
+        )
 
     for needle in (
         "WHATSAPP_PROVIDER_MODE",
