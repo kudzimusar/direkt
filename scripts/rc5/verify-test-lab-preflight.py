@@ -31,6 +31,7 @@ def main() -> int:
     workflow = read(".github/workflows/rc5-test-lab-preflight.yml")
     bridge = read(".github/workflows/rc5-test-lab-preflight-once.yml")
     inspector = read("scripts/rc5/run-test-lab-preflight.sh")
+    managed_matrix = read(".github/workflows/firebase-test-lab.yml")
     contract = read(".github/workflows/rc5-test-lab-contract.yml")
     notes = read("docs/integrations/RC5_TEST_LAB_READONLY_PREFLIGHT.md")
 
@@ -75,8 +76,9 @@ def main() -> int:
         "MATRIX_EXECUTED|false",
         "SECRET_VALUES_ACCESSED|false",
         "PRODUCTION_AUTHORIZATION|false",
-        "gcloud services list --enabled",
-        "value(config.name)",
+        "gcloud auth print-access-token",
+        "https://serviceusage.googleapis.com/v1/projects/${project_number}/services/${service}",
+        "jq -r '.state // empty'",
         "gcloud iam roles describe",
         "gcloud projects get-iam-policy",
         "verify-no-project-storage-roles.sh",
@@ -96,9 +98,19 @@ def main() -> int:
     ):
         require(inspector, needle, "read-only metadata/IAM/catalog inspector")
 
+    for needle in (
+        "gcloud auth print-access-token",
+        "https://serviceusage.googleapis.com/v1/projects/${GCP_PROJECT_NUMBER}/services/${service}",
+        "jq -r '.state'",
+        "serviceusage.services.get",
+    ):
+        require(managed_matrix, needle, "least-privilege managed service inspection")
+
     read_only_surface = workflow + "\n" + inspector
     for pattern, label in (
         (r"gcloud\s+services\s+enable", "API enablement"),
+        (r"gcloud\s+services\s+list", "project-wide Service Usage listing"),
+        (r"serviceusage\.services\.list", "Service Usage list permission"),
         (r"gcloud\s+iam\s+roles\s+(create|update|delete|undelete)", "custom-role mutation"),
         (r"gcloud\s+projects\s+(add|remove)-iam-policy-binding", "project IAM mutation"),
         (r"gcloud\s+storage\s+buckets\s+(create|update|delete|add-iam-policy-binding|remove-iam-policy-binding)", "bucket mutation"),
@@ -110,6 +122,9 @@ def main() -> int:
         (r"--results-bucket", "Test Lab results write target"),
     ):
         prohibit(read_only_surface, pattern, label)
+
+    prohibit(managed_matrix, r"gcloud\s+services\s+list", "managed project-wide Service Usage listing")
+    prohibit(managed_matrix, r"serviceusage\.services\.list", "managed Service Usage list permission")
 
     for needle in (
         "branches:\n      - main",
@@ -179,7 +194,7 @@ def main() -> int:
     print("RC5 read-only Test Lab preflight verification passed.")
     print("source=exact_current_main")
     print("identity=github_oidc_no_static_credentials")
-    print("inspection=services_custom_roles_project_iam_bucket_iam_lifecycle_live_catalog")
+    print("inspection=exact_service_get_custom_roles_project_iam_bucket_iam_lifecycle_live_catalog")
     print("resource_mutation=false")
     print("matrix_executed=false")
     print("secret_value_access=false")
