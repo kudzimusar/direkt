@@ -49,17 +49,31 @@ jobs:
       - name: Apply exact closure reconciliation
         run: python3 scripts/rc6/finalize-rc6-closeout.py
 
-      - name: Verify permanent RC5 and closed RC6 contracts
+      - name: Verify clean patch
+        run: git diff --check
+
+      - name: Verify permanent RC5 contract
+        run: python3 scripts/rc5/verify-test-lab-contract.py
+
+      - name: Verify closed RC6 source contract
+        run: python3 scripts/rc6/verify-whatsapp-contract.py
+
+      - name: Verify RC6 identity boundary
+        run: python3 scripts/rc6/verify-whatsapp-managed-identity.py
+
+      - name: Verify RC6 infrastructure preflight boundary
+        run: python3 scripts/rc6/verify-whatsapp-infra-preflight.py
+
+      - name: Verify RC6 prepare bridge
+        run: python3 scripts/rc6/verify-whatsapp-prepare-bridge.py
+
+      - name: Verify RC6 run bridge
+        run: python3 scripts/rc6/verify-whatsapp-run-bridge.py
+
+      - name: Verify closure receipts and stop gates
         shell: bash
         run: |
           set -euo pipefail
-          git diff --check
-          python3 scripts/rc5/verify-test-lab-contract.py
-          python3 scripts/rc6/verify-whatsapp-contract.py
-          python3 scripts/rc6/verify-whatsapp-managed-identity.py
-          python3 scripts/rc6/verify-whatsapp-infra-preflight.py
-          python3 scripts/rc6/verify-whatsapp-prepare-bridge.py
-          python3 scripts/rc6/verify-whatsapp-run-bridge.py
           grep -Fq 'Managed canary evidence: run 30137700769 SUCCESS on retry' docs/integrations/LIVE_INTEGRATION_LEDGER.md
           grep -Fq 'RC5 Firebase Test Lab is the sole active implementation lane' WORKSTREAM_LOCK.md
           grep -Fq 'Production-release authorization | BLOCKED' WORKSTREAM_LOCK.md
