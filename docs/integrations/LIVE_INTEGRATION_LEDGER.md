@@ -1,7 +1,7 @@
 # DIREKT Live Integration Ledger
 
 **Repository:** `kudzimusar/direkt`  
-**Last reconciled:** 2026-07-23 (Asia/Tokyo)
+**Last reconciled:** 2026-07-25 (Asia/Tokyo)
 **Governing issue:** #261 — Runtime integration closure after W8  
 **Purpose:** Canonical cross-agent source of truth for integration existence, state, evidence, blockers and next actions.
 
@@ -183,13 +183,33 @@ No payment provider secret is attached to Cloud Run until adapter/config/runtime
 | Resend | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | Managed Cloud Run execution `direkt-resend-canary-ct9mp` succeeded on exact source `8e367f47f16b3f9f28a26a62ee8bdd305a286153`, proving outbox insert → claim → Resend send → durable `published` state. Sending key is sending-only/domain-restricted to verified `notify.direkt.forum`; `direkt-resend-api-key` v1 enabled; runtime secret access proven. Continuous, controlled-pilot participant and production email remain disabled. |
 | Firebase phone OTP | `IMPLEMENTED_GATED` | Real approved participant path, OTP canary, abuse/rate-limit/privacy/legal evidence. |
 | FCM | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | RC4 exact-main run `29916381754` on `f05ff19105cb8dc7c4621c044c110b6029f63300` proved synthetic registration, private backend outbox → FCM HTTP v1 → Android foreground/background delivery, sanitized evidence publication and ordered cleanup. Fixed secret `direkt-fcm-canary-token` remains an empty owner-provisioned container between proofs; the temporary numeric token version was destroyed after Cloud Run Job deletion. Participant registration and participant/production push remain disabled. |
-| WhatsApp Cloud API | `IMPLEMENTED_GATED / MANAGED CANARY PENDING` | RC6 implements a backend-only provider-neutral Meta template adapter through the transactional outbox, send-time synthetic approval/opt-out re-check, hashed opt-out state, bounded retry/idempotency, raw-body HMAC webhook verification, durable out-of-order-safe receipts and a synthetic canary entrypoint. Provider business/WABA/phone/template/secret state and managed proof are not yet verified. Only Meta test/synthetic assets plus one owner-controlled verified recipient may be used for proof; participant/production delivery, production phone registration and production templates remain disabled/gated. |
+| WhatsApp Cloud API | `CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY` | RC6 exact-current-main run `30137700769` on source `8838b7a6d726a5aed44ce21a39506c1265a98d15` passed transactional outbox → Meta `hello_world` test-template send → authentic signed webhook receipt on retry. The initial pre-provider Google Cloud CLI setup failure remains preserved in Issue #404. Backend-only credentials, send-time synthetic approval/opt-out, hashed opt-out state, bounded retry/idempotency, HMAC verification, durable out-of-order-safe receipts and fail-closed kill switches remain enforced. Participant/production delivery, production phone registration and production templates remain disabled/gated. |
 | Firebase Crashlytics | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | RC3 exact-source managed proof succeeded for `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; bridge run `29885635547` enforced marker-pinned source identity and terminal canary success for fatal delivery, focused input-dispatch ANR, historical `REASON_ANR`, restart pickup and post-ANR Crashlytics/DataTransport delivery. Automatic collection remains default-off; Firebase Analytics and stable participant user IDs are absent; participant/production telemetry remains disabled. |
-| Firebase Test Lab | `PARKED / NOT CLOSED — IMPLEMENTED_GATED / MANAGED MATRIX PENDING` | RC5 source and local instrumentation are integrated; least-privilege custom roles and dedicated 30-day results bucket were created and partially verified. Final owner-side read-only verification and exact-current-main managed matrix proof remain pending because Cloud Shell is temporarily quota-blocked. Draft proof bridge #378 remains preserved; no production/participant authorization is created. |
+| Firebase Test Lab | `ACTIVE RESUMED / NOT CLOSED — IMPLEMENTED_GATED / MANAGED MATRIX PENDING` | RC5 source and local instrumentation are integrated; least-privilege custom roles and dedicated 30-day results bucket are preserved. Final owner-side read-only verification and exact-current-main managed matrix proof remain required. Draft proof bridge #378 remains preserved and gated on verified infrastructure state; no production/participant authorization is created. |
 | Cloudflare Turnstile | `PLANNED / WHERE NEEDED` | Only for reviewed abuse-sensitive public flows with server verification, accessibility fallback and kill switch. |
 | Cloud Tasks / Pub/Sub / Scheduler | `PLANNED ON DEMAND` | Add only when retry/fan-out/scheduling needs justify them. |
 
 Controlled-pilot participant and production FCM delivery remain disabled during RC4. Device-token registration is fail-closed unless a later controlled-pilot authorization explicitly enables the source-controlled registration gate. The 2026-07-22 owner bootstrap created no secret value and verified `roles/secretmanager.secretVersionManager` only for the GitHub deployer and `roles/secretmanager.secretAccessor` only for the runtime identity on the fixed canary secret.
+
+
+### RC6 WhatsApp Cloud API closure receipt
+
+```text
+Integration: WhatsApp Cloud API application adapter (RC6)
+Previous state: IMPLEMENTED_GATED / MANAGED CANARY PENDING
+New state: CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY
+External provisioning: DIREKT Meta test/synthetic WABA 904315252104562; test phone-number ID 1146158541925026; explicit Graph API v25.0; Meta-provided hello_world template; one owner-controlled verified test recipient; callback and messages subscription owner-confirmed
+Repo/source changes: backend-only provider-neutral Meta adapter, transactional outbox, send-time opt-out re-check, hashed contact state, template-only payloads, bounded retries/idempotency, raw-body HMAC SHA-256 webhook verification, durable out-of-order-safe delivery receipts, isolated webhook identity and exact-main managed proof bridge; exact proven source 8838b7a6d726a5aed44ce21a39506c1265a98d15
+Secret Manager names/versions: direkt-whatsapp-access-token, direkt-whatsapp-app-secret, direkt-whatsapp-webhook-verify-token and direkt-whatsapp-synthetic-recipient resolved to enabled numeric versions at execution; values were never printed or committed
+Runtime binding: public synthetic-only webhook uses direkt-whatsapp-webhook identity with no send-token/recipient access; private send job uses direkt-api-runtime; participant/production provider mode remains disabled
+Managed canary evidence: run 30137700769 SUCCESS on retry; exact-source contract, OIDC, numeric secret resolution, immutable image, isolated webhook identity/secret verification, private send job, transactional outbox → Meta hello_world test-template send → authentic signed webhook receipt and sanitized receipt all passed; initial setup-gcloud failure remains preserved in Issue #404
+Privacy/security checks: one owner-controlled test recipient; raw phone absent from outbox/receipt evidence; no identity/evidence documents, tokens, exact private coordinates, reviewer notes or unrestricted free text; HMAC authenticity and idempotent/out-of-order receipt guards enforced
+Fallback/kill switch: WHATSAPP_PROVIDER_MODE defaults disabled; synthetic activation requires explicit non-production data mode and WHATSAPP_SYNTHETIC_SEND_APPROVED; bounded retries and durable failure evidence preserved
+Production authorization: NOT AUTHORIZED; participant/production WhatsApp delivery, production phone registration and production templates remain disabled
+Known blockers: none for RC6 synthetic-only closure; later participant/production activation remains separately gated
+Next exact step: resume RC5 final owner-side Test Lab verification and exact-current-main managed matrix proof; do not start RC7 while RC5 remains open
+Ledger updated: YES
+```
 
 ## Observability
 
@@ -296,8 +316,8 @@ The authoritative sequence is maintained in `WORKSTREAM_LOCK.md` and `RUNTIME_IN
 4. RC2 Sentry API/portal — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. PR #275 merged at `15210c5b0bf1832e32f8c33a7618c69f61f65275`; managed API + private portal canary #1 completed successfully. Separate DSN v1 bindings proven; Sentry auth token v2 remained CI/release-only; participant/production telemetry disabled.
 5. RC3 Crashlytics Android — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Exact source `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; managed bridge run `29885635547` passed marker-pinned exact-source enforcement and terminal fatal+ANR delivery proof. Participant/production telemetry remains disabled.
 6. RC4 FCM — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Exact-main run `29916381754` on `f05ff19105cb8dc7c4621c044c110b6029f63300` passed foreground/background outbox → FCM → Android receipt proof, sanitized evidence and ordered cleanup. Participant registration and participant/production push remain disabled.
-7. RC5 Firebase Test Lab — **ACTIVE CHECKPOINT / IMPLEMENTED_GATED — MANAGED MATRIX PENDING**. Source integration and local instrumentation execution are present; owner bootstrap plus exact-main managed matrix evidence remain required before closure.
-8. RC6 WhatsApp runtime adapter.
+7. RC5 Firebase Test Lab — **ACTIVE RESUMED / NOT CLOSED — IMPLEMENTED_GATED / MANAGED MATRIX PENDING**. Source integration, local instrumentation and least-privilege resources are preserved; final owner-side verification plus exact-current-main managed matrix evidence remain required before closure.
+8. RC6 WhatsApp runtime adapter — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Exact source `8838b7a6d726a5aed44ce21a39506c1265a98d15`; managed run `30137700769` succeeded on retry; initial failure preserved in Issue #404; participant/production delivery disabled.
 9. RC7 Google Maps runtime.
 10. RC8 sandbox-only payment adapters/evidence reconciliation.
 11. RC9 OpenAPI generated Kotlin/TypeScript client adoption decision/migration.
