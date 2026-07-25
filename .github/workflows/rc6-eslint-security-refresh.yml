@@ -1,9 +1,9 @@
 name: DIREKT temporary RC6 ESLint security lock refresh
 
 on:
-  push:
+  pull_request:
     branches:
-      - integration/rc6-whatsapp-run-bridge-8fe357e
+      - main
     paths:
       - .github/workflows/rc6-eslint-security-refresh.yml
 
@@ -17,13 +17,16 @@ concurrency:
 jobs:
   refresh:
     name: Resolve patched ESLint graph and remove temporary workflow
-    if: github.repository == 'kudzimusar/direkt'
+    if: >-
+      github.repository == 'kudzimusar/direkt' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'integration/rc6-whatsapp-run-bridge-8fe357e'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: integration/rc6-whatsapp-run-bridge-8fe357e
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: true
 
@@ -33,12 +36,17 @@ jobs:
           cache: npm
           cache-dependency-path: backend/direkt-api/package-lock.json
 
-      - name: Verify exact branch head
+      - name: Verify exact PR head
         shell: bash
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          EXPECTED_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
-          test "$(git branch --show-current)" = "integration/rc6-whatsapp-run-bridge-8fe357e"
+          test "$(git rev-parse HEAD)" = "${EXPECTED_HEAD}"
+          test "${EXPECTED_BRANCH}" = "integration/rc6-whatsapp-run-bridge-8fe357e"
+          remote_head="$(git ls-remote origin "refs/heads/${EXPECTED_BRANCH}" | awk '{print $1}')"
+          test "${remote_head}" = "${EXPECTED_HEAD}"
 
       - name: Resolve patched lint toolchain and verify backend
         shell: bash
@@ -57,6 +65,8 @@ jobs:
 
       - name: Commit lock refresh and self-remove
         shell: bash
+        env:
+          EXPECTED_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
           set -euo pipefail
           git rm .github/workflows/rc6-eslint-security-refresh.yml
@@ -69,4 +79,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add backend/direkt-api/package.json backend/direkt-api/package-lock.json
           git commit -m "fix(security): update backend ESLint toolchain"
-          git push origin HEAD:integration/rc6-whatsapp-run-bridge-8fe357e
+          git push origin "HEAD:${EXPECTED_BRANCH}"
