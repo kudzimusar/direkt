@@ -10,6 +10,7 @@ results_bucket="${GCP_TEST_LAB_RESULTS_BUCKET:-gs://direkt-test-lab-results-2643
 results_location="${GCP_TEST_LAB_RESULTS_LOCATION:-asia-northeast1}"
 retention_days="${GCP_TEST_LAB_RESULTS_RETENTION_DAYS:-30}"
 source_sha="${SOURCE_SHA:-}"
+correlation_id="${RC5_PREFLIGHT_CORRELATION:-}"
 receipt="${RC5_PREFLIGHT_RECEIPT:-}"
 matrix_output="${RC5_PREFLIGHT_MATRIX:-}"
 
@@ -22,12 +23,14 @@ matrix_output="${RC5_PREFLIGHT_MATRIX:-}"
 [[ "${results_location}" == "asia-northeast1" ]]
 [[ "${retention_days}" == "30" ]]
 [[ "${source_sha}" =~ ^[0-9a-f]{40}$ ]]
+[[ "${correlation_id}" =~ ^rc5-[0-9]+-[1-9][0-9]*$ ]]
 [[ -n "${receipt}" ]]
 [[ -n "${matrix_output}" ]]
 
 mkdir -p "$(dirname "${receipt}")" "$(dirname "${matrix_output}")"
 cat > "${receipt}" <<EOF
 SOURCE|${source_sha}
+CORRELATION|${correlation_id}
 MODE|metadata_iam_catalog_only
 RESOURCE_MUTATION|false
 MATRIX_EXECUTED|false
@@ -170,10 +173,11 @@ if bucket_record="$(gcloud storage buckets describe "${results_bucket}" --projec
   else
     mark_fail "results bucket uniform access is disabled"
   fi
-  if [[ "$(jq -r --argjson age "${retention_days}" '[.lifecycle.rule[]? | select(.action.type == "Delete" and .condition.age == $age)] | length' <<< "${bucket_record}")" == "1" ]]; then
-    mark_pass "results bucket has one ${retention_days}-day delete lifecycle rule"
+  lifecycle_rules="$(jq -c '.lifecycle.rule // []' <<< "${bucket_record}")"
+  if jq -e --argjson age "${retention_days}" 'length == 1 and .[0].action.type == "Delete" and .[0].condition.age == $age' <<< "${lifecycle_rules}" >/dev/null; then
+    mark_pass "results bucket has exactly one ${retention_days}-day delete lifecycle rule"
   else
-    mark_fail "results bucket lifecycle drifted"
+    mark_fail "results bucket lifecycle has an additional or earlier deletion rule"
   fi
 else
   mark_fail "results bucket is not inspectable"
@@ -182,10 +186,12 @@ fi
 if bucket_policy="$(gcloud storage buckets get-iam-policy "${results_bucket}" --format=json 2>/dev/null)"; then
   actual_results_members="$(jq -c --arg role "${results_role}" '[.bindings[]? | select(.role == $role) | .members[]?] | unique | sort' <<< "${bucket_policy}")"
   expected_results_members="$(jq -nc --arg member "${deployer_member}" '[$member] | sort')"
-  if [[ "${actual_results_members}" == "${expected_results_members}" ]]; then
-    mark_pass "results bucket has exact deployer-only writer-role allowlist"
+  actual_deployer_bucket_roles="$(jq -c --arg member "${deployer_member}" '[.bindings[]? | select([.members[]? | select(. == $member)] | length > 0) | .role] | unique | sort' <<< "${bucket_policy}")"
+  expected_deployer_bucket_roles="$(jq -nc --arg role "${results_role}" '[$role] | sort')"
+  if [[ "${actual_results_members}" == "${expected_results_members}" && "${actual_deployer_bucket_roles}" == "${expected_deployer_bucket_roles}" ]]; then
+    mark_pass "results bucket has exact deployer-only writer-role allowlist and no additional deployer role"
   else
-    mark_fail "results bucket writer-role allowlist drifted"
+    mark_fail "results bucket deployer role or writer-role allowlist drifted"
   fi
 else
   mark_fail "results bucket IAM policy is not inspectable"
