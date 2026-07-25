@@ -39,16 +39,17 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "${DIAGNOSTICS_DIR}"
-          npm install --global npm@11.16.0
-          npm install --save-dev --save-exact eslint@10.8.0 @eslint/js@10.0.1
-          npm audit --audit-level=high
           {
             echo "PR_HEAD=${{ github.event.pull_request.head.sha }}"
-            echo "ESLINT_VERSION=$(npm exec eslint -- --version)"
-            echo "TYPESCRIPT_ESLINT_VERSION=$(node -p \"require('typescript-eslint/package.json').version\")"
             echo "SECRET_VALUES_ACCESSED=false"
             echo "PRODUCTION_AUTHORIZATION=false"
           } > "${DIAGNOSTICS_DIR}/summary.txt"
+          npm install --global npm@11.16.0
+          npm install --save-dev --save-exact eslint@10.8.0 @eslint/js@10.0.1
+          npm audit --audit-level=high
+          npm ls eslint @eslint/js typescript-eslint --depth=0 --json > "${DIAGNOSTICS_DIR}/tool-versions.json"
+          echo "ESLINT_VERSION=$(npm exec eslint -- --version)" >> "${DIAGNOSTICS_DIR}/summary.txt"
+          echo "PASS=install_and_audit" >> "${DIAGNOSTICS_DIR}/summary.txt"
 
       - name: Capture lint result
         shell: bash
