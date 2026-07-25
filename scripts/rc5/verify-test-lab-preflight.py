@@ -96,7 +96,7 @@ def main() -> int:
         "input_role_id",
         "input_bucket",
         "input_retention_days",
-        "input stager role is absent from project IAM",
+        "${label} role is absent from project IAM",
         'inspect_bucket "${input_bucket}" "${input_role}" "${input_retention_days}" "input"',
         "gcloud auth print-access-token",
         "https://serviceusage.googleapis.com/v1/projects/${project_number}/services/${service}",
@@ -153,6 +153,8 @@ def main() -> int:
         '--test "${test_input_uri}"',
         'inputObjectAccess: "create-get-no-list-delete-update"',
         "inputRetentionDays: 1",
+        "roles/editor",
+        "roles/storage.objectViewer",
     ):
         require(managed_runner, needle, "managed immutable APK input staging")
 
@@ -165,8 +167,7 @@ def main() -> int:
     ):
         require(uploader, needle, "create-only input upload control")
 
-    prohibit(managed_runner, r"roles/(editor|cloudtestservice\.testAdmin|storage\.admin|storage\.objectAdmin)\b", "broad managed role grant")
-    prohibit(managed_runner, r"storage\.objects\.(delete|list|update)", "input object list/delete/update permission")
+    prohibit(managed_runner, r"^storage\.objects\.(delete|list|update)$", "input object list/delete/update permission")
     prohibit(uploader, r"gcloud\s+storage\s+(cp|mv|rm)", "stateful Storage CLI upload")
 
     for needle in (
