@@ -12,6 +12,7 @@ on:
       - ".github/workflows/firebase-test-lab.yml"
       - ".github/workflows/rc5-test-lab-preflight.yml"
       - ".github/workflows/rc5-test-lab-preflight-once.yml"
+      - ".github/workflows/rc5-test-lab-managed-proof-once.yml"
       - ".github/workflows/rc5-test-lab-contract.yml"
       - "scripts/rc5/**"
       - "docs/integrations/RC5_FIREBASE_TEST_LAB_IMPLEMENTATION_NOTES.md"
@@ -28,6 +29,7 @@ on:
       - ".github/workflows/firebase-test-lab.yml"
       - ".github/workflows/rc5-test-lab-preflight.yml"
       - ".github/workflows/rc5-test-lab-preflight-once.yml"
+      - ".github/workflows/rc5-test-lab-managed-proof-once.yml"
       - ".github/workflows/rc5-test-lab-contract.yml"
       - "scripts/rc5/**"
       - "docs/integrations/RC5_FIREBASE_TEST_LAB_IMPLEMENTATION_NOTES.md"
@@ -64,7 +66,8 @@ jobs:
           python -m py_compile \
             scripts/rc5/select-test-lab-matrix.py \
             scripts/rc5/verify-test-lab-contract.py \
-            scripts/rc5/verify-test-lab-preflight.py
+            scripts/rc5/verify-test-lab-preflight.py \
+            scripts/rc5/verify-test-lab-managed-bridge.py
           python scripts/rc5/select-test-lab-matrix.py --self-test
       - name: Verify permanent RC5 contract
         shell: bash
@@ -73,6 +76,7 @@ jobs:
           {
             python scripts/rc5/verify-test-lab-contract.py
             python scripts/rc5/verify-test-lab-preflight.py
+            python scripts/rc5/verify-test-lab-managed-bridge.py
           } 2>&1 | tee "${RUNNER_TEMP}/rc5-test-lab-contract.log"
       - name: Upload RC5 contract diagnostics
         if: always()
