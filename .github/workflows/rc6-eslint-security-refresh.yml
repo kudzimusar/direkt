@@ -121,11 +121,11 @@ jobs:
         run: |
           set -euo pipefail
           set +e
-          eslint_js_version="$(npm view @eslint/js@10.8.0 version 2>"${DIAGNOSTICS_DIR}/eslint-js-version-error.txt")"
+          eslint_js_version="$(npm view @eslint/js@10.0.1 version 2>"${DIAGNOSTICS_DIR}/eslint-js-version-error.txt")"
           status=$?
           set -e
           echo "ESLINT_JS_TARGET_RESULT=${eslint_js_version:-unavailable}" >> "${DIAGNOSTICS_DIR}/summary.txt"
-          if [[ "${status}" -ne 0 || "${eslint_js_version}" != "10.8.0" ]]; then
+          if [[ "${status}" -ne 0 || "${eslint_js_version}" != "10.0.1" ]]; then
             echo "FAIL=eslint_js_target_lookup_status_${status}" >> "${DIAGNOSTICS_DIR}/summary.txt"
             exit 1
           fi
@@ -136,7 +136,7 @@ jobs:
         working-directory: backend/direkt-api
         run: |
           set -euo pipefail
-          npm install --save-dev --save-exact eslint@10.8.0 @eslint/js@10.8.0
+          npm install --save-dev --save-exact eslint@10.8.0 @eslint/js@10.0.1
           npm ls eslint @eslint/js brace-expansion minimatch --all --json > "${DIAGNOSTICS_DIR}/resolved-tree.json"
           echo "PASS=dependency_resolution" >> "${DIAGNOSTICS_DIR}/summary.txt"
 
