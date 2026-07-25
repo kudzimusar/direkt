@@ -36,6 +36,7 @@ jobs:
           set -euo pipefail
           repo="${GITHUB_REPOSITORY}"
           source_sha="${GITHUB_SHA}"
+          short_sha="${source_sha:0:12}"
           [[ "${source_sha}" =~ ^[0-9a-f]{40}$ ]]
 
           main_sha="$(gh api "repos/${repo}/git/ref/heads/main" --jq '.object.sha')"
@@ -81,7 +82,7 @@ jobs:
 
           if [[ "${status}" != "completed" || "${conclusion}" != "success" ]]; then
             failure_body="$(cat <<EOF
-          RC6 managed WhatsApp signed-receipt synthetic canary did not complete successfully.
+          ## RC6 managed WhatsApp signed-receipt canary — failure
 
           - Exact source: \`${source_sha}\`
           - Current main at receipt: \`${current_main}\`
@@ -96,31 +97,60 @@ jobs:
           RC6 remains open. This failed receipt must be diagnosed; it must not be rewritten as a pass and does not authorize a retry that bypasses the original evidence.
           EOF
           )"
-            gh api --method POST "repos/${repo}/issues/261/comments" -f body="${failure_body}" >/dev/null
+            receipt_url="$(gh api --method POST "repos/${repo}/issues" \
+              -f title="RC6 managed canary receipt — failure — ${short_sha} — run ${run_id}" \
+              -f body="${failure_body}" --jq '.html_url')"
+            tracker_body="$(cat <<EOF
+          RC6 signed-receipt canary failure receipt.
+
+          - Exact source: \`${source_sha}\`
+          - Managed run: \`${run_id}\`
+          - Dedicated receipt: ${receipt_url}
+          - Participant/production delivery: disabled
+          - Production authorization: false
+          EOF
+          )"
+            gh api --method POST "repos/${repo}/issues/261/comments" -f body="${tracker_body}" >/dev/null
             exit 1
           fi
 
           # Exact-source success is only promotable while the canary source is still current main.
           if [[ "${current_main}" != "${source_sha}" ]]; then
             stale_body="$(cat <<EOF
-          RC6 managed WhatsApp signed-receipt synthetic canary completed successfully, but current main advanced before receipt promotion.
+          ## RC6 managed WhatsApp signed-receipt canary — stale success
 
           - Canary source: \`${source_sha}\`
           - Current main: \`${current_main}\`
           - Managed run: \`${run_id}\`
           - Run: ${run_url}
+          - Participant/production WhatsApp delivery: disabled
+          - Production authorization: false
 
-          The result is retained as historical evidence only and is not promoted as current RC6 closure proof. Participant/production delivery remains disabled.
+          The result is retained as historical evidence only and is not promoted as current RC6 closure proof.
           EOF
           )"
-            gh api --method POST "repos/${repo}/issues/261/comments" -f body="${stale_body}" >/dev/null
+            receipt_url="$(gh api --method POST "repos/${repo}/issues" \
+              -f title="RC6 managed canary receipt — stale success — ${short_sha} — run ${run_id}" \
+              -f body="${stale_body}" --jq '.html_url')"
+            tracker_body="$(cat <<EOF
+          RC6 signed-receipt canary completed from stale source and was not promoted.
+
+          - Canary source: \`${source_sha}\`
+          - Current main: \`${current_main}\`
+          - Managed run: \`${run_id}\`
+          - Dedicated receipt: ${receipt_url}
+          - Participant/production delivery: disabled
+          - Production authorization: false
+          EOF
+          )"
+            gh api --method POST "repos/${repo}/issues/261/comments" -f body="${tracker_body}" >/dev/null
             exit 1
           fi
 
           # The managed workflow can conclude success only after its private job proves:
           # transactional outbox -> Meta acceptance -> authentic signed webhook receipt.
           success_body="$(cat <<EOF
-          RC6 managed WhatsApp signed-receipt synthetic canary succeeded.
+          ## RC6 managed WhatsApp signed-receipt synthetic canary — success
 
           - Exact current main: \`${source_sha}\`
           - Managed run: \`${run_id}\`
@@ -135,12 +165,27 @@ jobs:
           This is bounded RC6 managed evidence only. RC6 may move to closure reconciliation after exact-head regressions and status/ledger updates; it does not authorize production or participant messaging.
           EOF
           )"
-          gh api --method POST "repos/${repo}/issues/261/comments" -f body="${success_body}" >/dev/null
+          receipt_url="$(gh api --method POST "repos/${repo}/issues" \
+            -f title="RC6 managed canary receipt — success — ${short_sha} — run ${run_id}" \
+            -f body="${success_body}" --jq '.html_url')"
+          tracker_body="$(cat <<EOF
+          RC6 managed WhatsApp signed-receipt synthetic canary succeeded.
+
+          - Exact current main: \`${source_sha}\`
+          - Managed run: \`${run_id}\`
+          - Dedicated receipt: ${receipt_url}
+          - Terminal proof: transactional outbox → Meta acceptance → authentic signed webhook receipt
+          - Participant/production WhatsApp delivery: disabled
+          - Production authorization: false
+          EOF
+          )"
+          gh api --method POST "repos/${repo}/issues/261/comments" -f body="${tracker_body}" >/dev/null
 
           {
             echo "### RC6 WhatsApp signed-receipt canary bridge"
             echo "- Source: \`${source_sha}\`"
             echo "- Managed run: \`${run_id}\`"
+            echo "- Dedicated receipt: ${receipt_url}"
             echo "- Managed workflow conclusion: success"
             echo "- Signed-receipt terminal contract: required by managed workflow"
             echo "- Participant/production delivery: disabled"
