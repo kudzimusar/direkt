@@ -142,13 +142,12 @@ export class DiscoveryRepository {
       );
     }
 
-    let originExpression = 'NULL::geography';
     let areaMatchExpression = 'false';
     let distanceExpression = 'NULL::double precision';
     if (dto.latitude !== undefined && dto.longitude !== undefined) {
       const longitudeParameter = parameter(dto.longitude);
       const latitudeParameter = parameter(dto.latitude);
-      originExpression = `ST_SetSRID(ST_MakePoint(${longitudeParameter}, ${latitudeParameter}), 4326)::geography`;
+      const originExpression = `ST_SetSRID(ST_MakePoint(${longitudeParameter}, ${latitudeParameter}), 4326)::geography`;
       distanceExpression = `CASE
            WHEN publications.public_premises IS NULL THEN NULL
            ELSE ST_Distance(publications.public_premises, ${originExpression}) / 1000.0
