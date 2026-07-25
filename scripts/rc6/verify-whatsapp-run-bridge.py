@@ -36,6 +36,7 @@ def main() -> int:
         "actions: write",
         "issues: write",
         'source_sha="${GITHUB_SHA}"',
+        'short_sha="${source_sha:0:12}"',
         'test "${main_sha}" = "${source_sha}"',
         '"confirmation":"RUN-DIREKT-WHATSAPP-CANARY"',
         '"1146158541925026"',
@@ -52,6 +53,11 @@ def main() -> int:
         "one owner-controlled verified test recipient from Secret Manager",
         "Participant/production WhatsApp delivery: disabled",
         "Production authorization: false",
+        'gh api --method POST "repos/${repo}/issues"',
+        "RC6 managed canary receipt — failure — ${short_sha} — run ${run_id}",
+        "RC6 managed canary receipt — stale success — ${short_sha} — run ${run_id}",
+        "RC6 managed canary receipt — success — ${short_sha} — run ${run_id}",
+        "Dedicated receipt: ${receipt_url}",
         "issues/261/comments",
     ):
         require(BRIDGE, needle, "one-shot RUN control")
@@ -105,6 +111,7 @@ def main() -> int:
     print("dispatch_mode=run_only_after_meta_callback_registration")
     print("source=exact_current_main")
     print("runtime_authority=managed_workflow_only")
+    print("receipt=dedicated_issue_plus_tracker_link")
     print("secret_value_access=false")
     print("direct_provider_call=false")
     print("direct_cloud_mutation=false")
