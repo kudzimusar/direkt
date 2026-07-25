@@ -85,8 +85,9 @@ else
   mark_fail "source-controlled expected custom-role permissions unavailable"
 fi
 
+enabled_services="$(gcloud services list --enabled --project "${project_id}" --format='value(config.name)' 2>/dev/null || true)"
 for service in testing.googleapis.com toolresults.googleapis.com; do
-  if state="$(gcloud services describe "${service}" --project "${project_id}" --format='value(state)' 2>/dev/null)" && [[ "${state}" == "ENABLED" ]]; then
+  if grep -Fxq "${service}" <<< "${enabled_services}"; then
     mark_pass "service ${service} enabled"
   else
     mark_fail "service ${service} unavailable or disabled"
