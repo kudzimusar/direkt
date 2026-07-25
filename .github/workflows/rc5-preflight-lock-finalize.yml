@@ -1,0 +1,101 @@
+name: DIREKT temporary RC5 preflight lock finalizer
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/rc5-preflight-lock-finalize.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: direkt-rc5-preflight-lock-finalize
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    name: Reconcile RC5 read-only preflight claim
+    if: >-
+      github.repository == 'kudzimusar/direkt' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'integration/rc5-readonly-preflight-498f606'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Verify exact PR head
+        shell: bash
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          EXPECTED_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${EXPECTED_HEAD}"
+          remote_head="$(git ls-remote origin "refs/heads/${EXPECTED_BRANCH}" | awk '{print $1}')"
+          test "${remote_head}" = "${EXPECTED_HEAD}"
+
+      - name: Apply exact lock reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('WORKSTREAM_LOCK.md')
+          text = path.read_text(encoding='utf-8')
+          replacements = (
+              (
+                  '| Implementation branch | `integration/rc6-close-rc5-resume-8838b7a` from exact current `main@8838b7a6d726a5aed44ce21a39506c1265a98d15`. |',
+                  '| Implementation branch | `integration/rc5-readonly-preflight-498f606` from exact current `main@498f606195edfed75f29535d7b93e8038681287c`. |',
+              ),
+              (
+                  '| Stable baseline | RC6 source and managed-proof bridge PR #403 are merged at `8838b7a6d726a5aed44ce21a39506c1265a98d15`; exact-source managed run `30137700769` succeeded on retry through transactional outbox → Meta test-template send → authentic signed webhook receipt. Initial transient Google Cloud CLI setup failure remains preserved in Issue #404. Participant/production WhatsApp delivery remains disabled. RC5 source PR #377, IAM correction PR #379, owner-created least-privilege custom roles/results bucket and draft proof bridge PR #378 remain preserved; RC5 is resumed but not closed pending final owner-side verification and exact-current-main managed matrix proof. UIA Issue #354 remains parked/open. |',
+                  '| Stable baseline | RC6 is closed/preserved at `main@498f606195edfed75f29535d7b93e8038681287c`; managed run `30137700769` and initial failure Issue #404 remain preserved, with participant/production WhatsApp disabled. RC5 source PR #377, IAM correction PR #379 and the owner-created least-privilege roles/results bucket remain preserved. Draft PR #378 is stale and unmergeable against current main; it must remain unmerged and be replaced only after the new exact-current-main read-only infrastructure preflight proves `RESULT|ready` with no resource mutation or Test Lab matrix execution. UIA Issue #354 remains parked/open. |',
+              ),
+              (
+                  '| Current task | RC5 — complete the preserved Firebase Test Lab owner verification and exact-current-main managed device-matrix proof without activating participant or production paths. |',
+                  '| Current task | RC5 — execute an exact-current-main read-only Test Lab infrastructure/catalog preflight, publish a sanitized dedicated receipt, and authorize a synchronized managed matrix bridge only if the receipt is ready. |',
+              ),
+          )
+          for old, new in replacements:
+              if text.count(old) != 1:
+                  raise SystemExit(f'Expected exactly one lock value: {old[:120]}')
+              text = text.replace(old, new)
+          path.write_text(text, encoding='utf-8')
+          PY
+          git diff --check
+
+      - name: Verify permanent active RC5 and preflight contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/rc5/verify-test-lab-contract.py
+          python3 scripts/rc5/verify-test-lab-preflight.py
+          grep -Fq 'Draft PR #378 is stale and unmergeable' WORKSTREAM_LOCK.md
+          grep -Fq 'no resource mutation or Test Lab matrix execution' WORKSTREAM_LOCK.md
+          grep -Fq 'Production-release authorization | BLOCKED' WORKSTREAM_LOCK.md
+
+      - name: Commit lock reconciliation and self-remove
+        shell: bash
+        env:
+          EXPECTED_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/rc5-preflight-lock-finalize.yml
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add WORKSTREAM_LOCK.md
+          git commit -m "chore(rc5): claim read-only Test Lab preflight"
+          git push origin "HEAD:${EXPECTED_BRANCH}"
