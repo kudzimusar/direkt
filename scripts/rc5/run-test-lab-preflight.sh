@@ -85,14 +85,25 @@ else
   mark_fail "source-controlled expected custom-role permissions unavailable"
 fi
 
-enabled_services="$(gcloud services list --enabled --project "${project_id}" --format='value(config.name)' 2>/dev/null || true)"
+access_token="$(gcloud auth print-access-token 2>/dev/null || true)"
 for service in testing.googleapis.com toolresults.googleapis.com; do
-  if grep -Fxq "${service}" <<< "${enabled_services}"; then
+  service_state=""
+  if [[ -n "${access_token}" ]]; then
+    service_state="$(
+      curl --fail --silent --show-error \
+        --header "Authorization: Bearer ${access_token}" \
+        "https://serviceusage.googleapis.com/v1/projects/${project_number}/services/${service}" 2>/dev/null \
+        | jq -r '.state // empty' 2>/dev/null \
+        || true
+    )"
+  fi
+  if [[ "${service_state}" == "ENABLED" ]]; then
     mark_pass "service ${service} enabled"
   else
     mark_fail "service ${service} unavailable or disabled"
   fi
 done
+unset access_token
 
 runner_role="projects/${project_id}/roles/${runner_role_id}"
 results_role="projects/${project_id}/roles/${results_role_id}"
