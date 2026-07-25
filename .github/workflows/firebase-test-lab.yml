@@ -131,9 +131,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          enabled_services="$(gcloud services list --enabled --project "${GCP_PROJECT_ID}" --format='value(config.name)')"
           for service in testing.googleapis.com toolresults.googleapis.com; do
-            state="$(gcloud services describe "${service}" --project "${GCP_PROJECT_ID}" --format='value(state)')"
-            test "${state}" = "ENABLED"
+            grep -Fxq "${service}" <<< "${enabled_services}"
           done
 
           project_policy="$(gcloud projects get-iam-policy "${GCP_PROJECT_ID}" --format=json)"
@@ -195,10 +195,10 @@ EOF
           expected_results_permissions=$'storage.buckets.get\nstorage.buckets.getIamPolicy\nstorage.objects.create'
           test "${results_permissions}" = "${expected_results_permissions}"
 
-          bucket_record="$(gcloud storage buckets describe "${GCP_TEST_LAB_RESULTS_BUCKET}" --project "${GCP_PROJECT_ID}" --format=json)"
+          bucket_record="$(gcloud storage buckets describe "${GCP_TEST_LAB_RESULTS_BUCKET}" --project "${GCP_PROJECT_ID}" --format='json(location,uniform_bucket_level_access,lifecycle_config)')"
           test "$(jq -r '.location' <<< "${bucket_record}" | tr '[:upper:]' '[:lower:]')" = "${GCP_TEST_LAB_RESULTS_LOCATION}"
-          test "$(jq -r '.iamConfiguration.uniformBucketLevelAccess.enabled' <<< "${bucket_record}")" = "true"
-          test "$(jq -r --argjson age "${GCP_TEST_LAB_RESULTS_RETENTION_DAYS}" '[.lifecycle.rule[]? | select(.action.type == "Delete" and .condition.age == $age)] | length' <<< "${bucket_record}")" = "1"
+          test "$(jq -r '.uniform_bucket_level_access // false' <<< "${bucket_record}")" = "true"
+          test "$(jq -r --argjson age "${GCP_TEST_LAB_RESULTS_RETENTION_DAYS}" '(.lifecycle_config.rule // []) | length == 1 and .[0].action.type == "Delete" and .[0].condition.age == $age' <<< "${bucket_record}")" = "true"
 
           bucket_policy="$(gcloud storage buckets get-iam-policy "${GCP_TEST_LAB_RESULTS_BUCKET}" --format=json)"
           test "$(jq -r --arg member "${member}" --arg role "${GCP_TEST_LAB_RESULTS_ROLE}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${bucket_policy}")" = "1"

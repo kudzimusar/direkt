@@ -163,18 +163,18 @@ else
   mark_fail "deployer project-scoped Cloud Storage boundary failed"
 fi
 
-if bucket_record="$(gcloud storage buckets describe "${results_bucket}" --project "${project_id}" --format=json 2>/dev/null)"; then
+if bucket_record="$(gcloud storage buckets describe "${results_bucket}" --project "${project_id}" --format='json(location,uniform_bucket_level_access,lifecycle_config)' 2>/dev/null)"; then
   if [[ "$(jq -r '.location' <<< "${bucket_record}" | tr '[:upper:]' '[:lower:]')" == "${results_location}" ]]; then
     mark_pass "results bucket location is ${results_location}"
   else
     mark_fail "results bucket location drifted"
   fi
-  if [[ "$(jq -r '.iamConfiguration.uniformBucketLevelAccess.enabled' <<< "${bucket_record}")" == "true" ]]; then
+  if [[ "$(jq -r '.uniform_bucket_level_access // false' <<< "${bucket_record}")" == "true" ]]; then
     mark_pass "results bucket uses uniform access"
   else
     mark_fail "results bucket uniform access is disabled"
   fi
-  lifecycle_rules="$(jq -c '.lifecycle.rule // []' <<< "${bucket_record}")"
+  lifecycle_rules="$(jq -c '.lifecycle_config.rule // []' <<< "${bucket_record}")"
   if jq -e --argjson age "${retention_days}" 'length == 1 and .[0].action.type == "Delete" and .[0].condition.age == $age' <<< "${lifecycle_rules}" >/dev/null; then
     mark_pass "results bucket has exactly one ${retention_days}-day delete lifecycle rule"
   else
