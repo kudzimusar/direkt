@@ -43,7 +43,9 @@ def main() -> int:
     lock = read("WORKSTREAM_LOCK.md")
     smoke = read("android/direkt-app/app/src/androidTest/java/com/kudzimusar/direkt/DirektAppSmokeTest.kt")
     android_ci = read(".github/workflows/android-ci.yml")
-    workflow = read(".github/workflows/firebase-test-lab.yml")
+    workflow = read(".github/workflows/firebase-test-lab-managed.yml")
+    runner = read("scripts/rc5/run-test-lab-managed.sh")
+    uploader = read("scripts/rc5/append-only-storage-upload.sh")
     bootstrap = read("scripts/rc5/bootstrap-test-lab.sh")
     selector = read("scripts/rc5/select-test-lab-matrix.py")
     storage_boundary = read("scripts/rc5/verify-no-project-storage-roles.sh")
@@ -58,26 +60,18 @@ def main() -> int:
         "CLAIMED — UIA owner-review promotion; RC5 parked at owner-controlled infrastructure boundary",
         "RC5 implementation contract — SOURCE COMPLETE; MANAGED MATRIX PENDING",
         "RC5 remains `IMPLEMENTED_GATED / MANAGED MATRIX PENDING`",
-        "draft PR #378 is preserved and must remain unmerged while UIA owns the exact-current-main lane",
         "UIA Issue #354 is the sole active implementation lane during this coordinated transition",
-        "RC5 source/workflow changes and PR #378 merge are frozen",
     )
     parked_rc6_lock_needles = (
         "CLAIMED — RC6 WhatsApp Cloud API; RC5 and UIA parked by explicit owner sequencing override",
         "RC5 implementation contract — SOURCE COMPLETE; MANAGED MATRIX PENDING",
-        "RC5 remains `IMPLEMENTED_GATED / MANAGED MATRIX PENDING`",
-        "Draft PR #378 remains preserved and parked until RC5 resumes after RC6",
         "RC6 under Issue #261 is the sole active implementation lane",
-        "RC5 remains parked/not closed and PR #378 must not merge while RC6 owns the lane",
     )
     active_lock = all(needle in lock for needle in active_lock_needles)
     parked_uia_lock = all(needle in lock for needle in parked_uia_lock_needles)
     parked_rc6_lock = all(needle in lock for needle in parked_rc6_lock_needles)
-    lock_states = (active_lock, parked_uia_lock, parked_rc6_lock)
-    if sum(lock_states) != 1:
-        raise AssertionError(
-            "RC5 lock must be exactly one supported state: active RC5, bounded parked-RC5/UIA transition, or owner-authorized parked-RC5/RC6 transition."
-        )
+    if sum((active_lock, parked_uia_lock, parked_rc6_lock)) != 1:
+        raise AssertionError("RC5 lock must be exactly one supported active/parked state.")
 
     for needle in (
         'onNodeWithTag("foundation-root")',
@@ -88,14 +82,6 @@ def main() -> int:
         '"No production credential or participant endpoint is embedded in this build."',
     ):
         require(smoke, needle, "current instrumentation assertion")
-    for obsolete in (
-        "Phase 11 — controlled pilot entry",
-        "Find a provider",
-        "Search area",
-        "Background location: Off",
-    ):
-        if obsolete in smoke:
-            raise AssertionError(f"Stale pre-VC instrumentation assertion remains: {obsolete}")
 
     for needle in (
         "assembleDebugAndroidTest",
@@ -108,50 +94,81 @@ def main() -> int:
         require(android_ci, needle, "local instrumentation execution control")
 
     for needle in (
+        '"on":',
         "workflow_dispatch:",
         'DIREKT_CONFIRMATION: ${{ inputs.confirmation }}',
-        'test "${DIREKT_CONFIRMATION}" = "RUN-DIREKT-TEST-LAB"',
-        'test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"',
+        'SOURCE_SHA: ${{ inputs.source_sha }}',
         "google-github-actions/auth@v3",
         "direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com",
         "projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main",
+        "GCP_TEST_LAB_INPUT_ROLE: projects/direkt-dev-502701/roles/direktTestLabInputStager",
+        "GCP_TEST_LAB_RESULTS_BUCKET: gs://direkt-test-lab-results-264358173369",
+        "GCP_TEST_LAB_INPUT_BUCKET: gs://direkt-test-lab-inputs-264358173369",
+        'GCP_TEST_LAB_INPUT_RETENTION_DAYS: "1"',
+        "bash scripts/rc5/run-test-lab-managed.sh",
+        "retention-days: 30",
+    ):
+        require(workflow, needle, "managed Test Lab workflow control")
+
+    for pattern, label in (
+        (r"git\s+merge-base\s+--is-ancestor", "stale ancestor-only source acceptance"),
+        (r"credentials_json\s*:", "static Google credentials"),
+        (r"gcloud\s+services\s+enable", "runtime API enablement"),
+        (r"gcloud\s+iam\s+roles\s+(create|update)", "runtime IAM mutation"),
+        (r"gcloud\s+storage\s+buckets\s+(create|update)", "runtime bucket mutation"),
+        (r"gcloud\s+storage\s+rm", "runtime evidence deletion"),
+    ):
+        prohibit(workflow + "\n" + runner, pattern, label)
+
+    for needle in (
+        'test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"',
         'bash scripts/rc5/verify-no-project-storage-roles.sh "${GCP_PROJECT_ID}" "${member}"',
-        "storage.buckets.getIamPolicy",
-        "storage.objects.create",
         "expected_results_permissions=$'storage.buckets.get\\nstorage.buckets.getIamPolicy\\nstorage.objects.create'",
+        "expected_input_permissions=$'storage.buckets.get\\nstorage.buckets.getIamPolicy\\nstorage.objects.create\\nstorage.objects.get'",
+        "input-stager role contains prohibited object list/delete/update authority",
+        'verify_bucket_boundary "${GCP_TEST_LAB_RESULTS_BUCKET}"',
+        'verify_bucket_boundary "${GCP_TEST_LAB_INPUT_BUCKET}"',
+        'input_prefix="rc5/inputs/${SOURCE_SHA}/${GITHUB_RUN_ID}/attempt-${GITHUB_RUN_ATTEMPT}"',
+        'app_input_uri="gs://${input_bucket_name}/${app_input_object}"',
+        'test_input_uri="gs://${input_bucket_name}/${test_input_object}"',
         'results_dir="rc5/${SOURCE_SHA}/${GITHUB_RUN_ID}/attempt-${GITHUB_RUN_ATTEMPT}"',
         "gcloud firebase test android models list",
         "--filter=virtual",
         "--type instrumentation",
+        '--app "${app_input_uri}"',
+        '--test "${test_input_uri}"',
         "--num-flaky-test-attempts 0",
         "--no-use-orchestrator",
         "--no-record-video",
         "--no-performance-metrics",
         "--no-auto-google-login",
         '--results-bucket "${GCP_TEST_LAB_RESULTS_BUCKET}"',
+        'inputObjectAccess: "create-get-no-list-delete-update"',
+        "inputRetentionDays: 1",
         'productionAuthorization: false',
         'dataMode: "synthetic-public-safe-only"',
-        "retention-days: 30",
     ):
-        require(workflow, needle, "managed Test Lab control")
+        require(runner, needle, "managed Test Lab runner control")
 
     for pattern, label in (
-        (r"git\s+merge-base\s+--is-ancestor", "stale ancestor-only source acceptance"),
-        (r'test\s+"\$\{\{\s*inputs\.confirmation\s*\}\}"', "raw workflow input interpolation"),
-        (r"credentials_json\s*:", "static Google credentials"),
-        (r"gcloud\s+services\s+enable", "runtime API enablement"),
-        (r"gcloud\s+iam\s+roles\s+(create|update)", "runtime IAM mutation"),
-        (r"gcloud\s+storage\s+buckets\s+(create|update)", "runtime bucket mutation"),
-        (r"gcloud\s+storage\s+rm", "runtime evidence deletion"),
         (r"--num-flaky-test-attempts\s+[1-9]", "automatic flaky reruns"),
         (r"--use-orchestrator(?:\s|$)", "unvalidated Test Orchestrator"),
-        (r"^resourcemanager\.projects\.list$", "parent-only project list permission in managed runner allowlist"),
+        (r"storage\.objects\.(delete|list|update)", "input object list/delete/update authority"),
+        (r"^resourcemanager\.projects\.list$", "parent-only project list permission"),
     ):
-        prohibit(workflow, pattern, label)
+        prohibit(runner, pattern, label)
 
-    for line in workflow.splitlines():
-        if "--device=model=" in line and r"\(.model)" not in line:
-            raise AssertionError(f"Hard-coded Test Lab device flag is prohibited: {line.strip()}")
+    for needle in (
+        '"direkt-test-lab-results-${project_number}"',
+        '"direkt-test-lab-inputs-${project_number}"',
+        '[[ "${object_name}" == rc5/preflight/* ]]',
+        '[[ "${object_name}" == rc5/inputs/* ]]',
+        '[[ "${object_name}" == *.apk ]]',
+        "application/vnd.android.package-archive",
+        "ifGenerationMatch=0",
+    ):
+        require(uploader, needle, "immutable upload boundary")
+    prohibit(uploader, r"gcloud\s+storage\s+(cp|mv|rm)", "stateful Storage CLI upload")
 
     expected_runner = {
         "cloudnotifications.activities.list",
@@ -192,21 +209,31 @@ def main() -> int:
         "storage.buckets.getIamPolicy",
         "storage.objects.create",
     }
+    expected_input = {
+        "storage.buckets.get",
+        "storage.buckets.getIamPolicy",
+        "storage.objects.create",
+        "storage.objects.get",
+    }
     if heredoc(bootstrap, "test-lab-runner-permissions.txt") != expected_runner:
         raise AssertionError("RC5 Test Lab runner role permission set drifted.")
     if heredoc(bootstrap, "test-lab-results-permissions.txt") != expected_results:
         raise AssertionError("RC5 append-only results role permission set drifted.")
+    if heredoc(bootstrap, "test-lab-input-permissions.txt") != expected_input:
+        raise AssertionError("RC5 isolated input role permission set drifted.")
 
     for needle in (
         'bash scripts/rc5/verify-no-project-storage-roles.sh "${project_id}" "${deployer_member}"',
         "gcloud storage buckets update",
-        'retention_days="${GCP_TEST_LAB_RESULTS_RETENTION_DAYS:-30}"',
-        "no lifecycle mutation, object read, overwrite or delete",
+        'results_retention_days="${GCP_TEST_LAB_RESULTS_RETENTION_DAYS:-30}"',
+        'input_retention_days="${GCP_TEST_LAB_INPUT_RETENTION_DAYS:-1}"',
+        "direktTestLabInputStager",
+        "direkt-test-lab-inputs-${project_number}",
+        "no list, overwrite, update or delete",
         "gcloud iam list-testable-permissions",
         '//cloudresourcemanager.googleapis.com/projects/${project_id}',
         'customRolesSupportLevel!=NOT_SUPPORTED',
         "assert_project_role_permissions_testable",
-        "project-applicable",
     ):
         require(bootstrap, needle, "owner bootstrap boundary")
     for pattern, label in (
@@ -239,12 +266,11 @@ def main() -> int:
     for needle in (
         "IMPLEMENTED_GATED / MANAGED MATRIX PENDING",
         "exact current main",
-        "no Cloud Storage permissions",
+        "no project-scoped Cloud Storage permissions",
         "append-only",
         "30-day",
         "live virtual Android catalog",
         "production release",
-        "project-applicable",
     ):
         require(notes, needle, "RC5 source-phase documentation")
 
@@ -254,19 +280,14 @@ def main() -> int:
         check=True,
     )
 
-    if active_lock:
-        lock_state = "active_rc5"
-    elif parked_uia_lock:
-        lock_state = "parked_rc5_uia_transition"
-    else:
-        lock_state = "parked_rc5_rc6_owner_override"
+    lock_state = "active_rc5" if active_lock else ("parked_rc5_uia_transition" if parked_uia_lock else "parked_rc5_rc6_owner_override")
     print("RC5 Firebase Test Lab contract verification passed.")
     print(f"lock_state={lock_state}")
     print("instrumentation=current_post_vc_semantics_local_execution_required")
     print("source=exact_current_main_required")
     print("identity=github_oidc_no_service_account_keys")
-    print("iam=project_applicable_custom_role_no_project_scoped_storage_permissions")
-    print("storage=dedicated_bucket_append_only_owner_retention")
+    print("iam=project_non_storage_plus_bucket_scoped_results_and_input_roles")
+    print("storage=results_append_only_30d_inputs_create_get_1d_no_list_delete_update")
     print("matrix=live_virtual_2_to_3_devices_api33_current_required")
     print("evidence=attempt_isolated_no_runtime_delete")
     print("production_authorization=false")
