@@ -1,0 +1,89 @@
+name: DIREKT RC5 Test Lab managed v2 proof contract
+
+"on":
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/rc5-test-lab-managed-v2-proof-once.yml
+      - .github/workflows/rc5-test-lab-managed-v2-proof-contract.yml
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/rc5-test-lab-managed-v2-proof-once.yml
+      - .github/workflows/rc5-test-lab-managed-v2-proof-contract.yml
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify fail-closed RC5 v2 proof bridge
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Parse bridge workflow YAML
+        shell: bash
+        run: |
+          set -euo pipefail
+          ruby - <<'RUBY'
+          require "yaml"
+          path = ".github/workflows/rc5-test-lab-managed-v2-proof-once.yml"
+          doc = YAML.safe_load(File.read(path), aliases: true)
+          raise "bridge document must be a mapping" unless doc.is_a?(Hash)
+          raise "unexpected bridge name" unless doc["name"] == "DIREKT RC5 Test Lab managed v2 proof bridge"
+          push = doc.fetch("on").fetch("push")
+          raise "bridge must target main" unless push.fetch("branches") == ["main"]
+          expected_path = ".github/workflows/rc5-test-lab-managed-v2-proof-once.yml"
+          raise "bridge path scope drift" unless push.fetch("paths") == [expected_path]
+          raise "permission drift" unless doc.fetch("permissions") == {"contents" => "read", "actions" => "write", "issues" => "write"}
+          raise "unexpected job set" unless doc.fetch("jobs").keys == ["dispatch"]
+          RUBY
+
+      - name: Verify exact-source dispatch and evidence controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          bridge=.github/workflows/rc5-test-lab-managed-v2-proof-once.yml
+          grep -Fq 'workflow="firebase-test-lab-managed.yml"' "${bridge}"
+          grep -Fq 'expected_name="DIREKT Firebase Test Lab Android matrix v2"' "${bridge}"
+          grep -Fq 'test "${main_sha}" = "${source_sha}"' "${bridge}"
+          grep -Fq 'confirmation:"RUN-DIREKT-TEST-LAB"' "${bridge}"
+          grep -Fq 'source_sha:$sha' "${bridge}"
+          grep -Fq 'candidate_count' "${bridge}"
+          grep -Fq 'available_and_schema_validated' "${bridge}"
+          grep -Fq 'direkt.rc5.test-lab-receipt.v1' "${bridge}"
+          grep -Fq 'synthetic-public-safe-only' "${bridge}"
+          grep -Fq '.productionAuthorization == false' "${bridge}"
+          grep -Fq 'select(.version == "33")' "${bridge}"
+          grep -Fq 'select(. >= 35 and . <= 36)' "${bridge}"
+          grep -Fq 'repos/${repo}/issues/261/comments' "${bridge}"
+
+      - name: Reject direct Google authority and mutations
+        shell: bash
+        run: |
+          set -euo pipefail
+          bridge=.github/workflows/rc5-test-lab-managed-v2-proof-once.yml
+          ! grep -Fq 'google-github-actions/auth' "${bridge}"
+          ! grep -Fq 'id-token: write' "${bridge}"
+          ! grep -Eq '\bgcloud\b' "${bridge}"
+          ! grep -Fq 'firebase test android run' "${bridge}"
+          ! grep -Fq 'secrets versions access' "${bridge}"
+          ! grep -Eq 'projects (add|remove)-iam-policy-binding' "${bridge}"
+          ! grep -Eq 'storage buckets (create|update|delete)' "${bridge}"
+
+      - name: Publish bridge contract summary
+        shell: bash
+        run: |
+          {
+            echo '### RC5 managed v2 proof bridge contract'
+            echo '- YAML: parsed'
+            echo '- Source: exact current main'
+            echo '- Dispatch: uniquely new target run'
+            echo '- Evidence: receipt and standalone matrix equality'
+            echo '- Google Cloud authority: none in bridge'
+            echo '- Participant/production authorization: false'
+          } >> "${GITHUB_STEP_SUMMARY}"
