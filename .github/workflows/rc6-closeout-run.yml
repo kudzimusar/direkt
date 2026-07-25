@@ -1,0 +1,89 @@
+name: DIREKT RC6 closeout reconciliation runner
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/rc6-closeout-run.yml
+      - scripts/rc6/finalize-rc6-closeout.py
+
+permissions:
+  contents: write
+
+concurrency:
+  group: direkt-rc6-closeout-run
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    name: Apply RC6 closure and resume RC5
+    if: >-
+      github.repository == 'kudzimusar/direkt' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'integration/rc6-close-rc5-resume-8838b7a'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Verify exact PR head
+        shell: bash
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          EXPECTED_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${EXPECTED_HEAD}"
+          remote_head="$(git ls-remote origin "refs/heads/${EXPECTED_BRANCH}" | awk '{print $1}')"
+          test "${remote_head}" = "${EXPECTED_HEAD}"
+
+      - name: Apply exact closure reconciliation
+        run: python3 scripts/rc6/finalize-rc6-closeout.py
+
+      - name: Verify permanent RC5 and closed RC6 contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          python3 scripts/rc5/verify-test-lab-contract.py
+          python3 scripts/rc6/verify-whatsapp-contract.py
+          python3 scripts/rc6/verify-whatsapp-managed-identity.py
+          python3 scripts/rc6/verify-whatsapp-infra-preflight.py
+          python3 scripts/rc6/verify-whatsapp-prepare-bridge.py
+          python3 scripts/rc6/verify-whatsapp-run-bridge.py
+          grep -Fq 'Managed canary evidence: run 30137700769 SUCCESS on retry' docs/integrations/LIVE_INTEGRATION_LEDGER.md
+          grep -Fq 'RC5 Firebase Test Lab is the sole active implementation lane' WORKSTREAM_LOCK.md
+          grep -Fq 'Production-release authorization | BLOCKED' WORKSTREAM_LOCK.md
+
+      - name: Commit reconciliation and remove temporary machinery
+        shell: bash
+        env:
+          EXPECTED_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          for temporary in \
+            .github/workflows/rc6-closeout-finalize.yml \
+            .github/workflows/rc6-closeout-run.yml \
+            scripts/rc6/finalize-rc6-closeout.py; do
+            [[ ! -f "${temporary}" ]] || git rm "${temporary}"
+          done
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            WORKSTREAM_LOCK.md \
+            PROJECT_STATUS.md \
+            docs/integrations/CURRENT_INTEGRATION_STATUS.md \
+            docs/integrations/LIVE_INTEGRATION_LEDGER.md \
+            scripts/rc6/verify-whatsapp-contract.py
+          git commit -m "chore(rc6): close managed WhatsApp checkpoint"
+          git push origin "HEAD:${EXPECTED_BRANCH}"
