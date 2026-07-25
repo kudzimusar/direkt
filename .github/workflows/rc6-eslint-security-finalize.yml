@@ -1,0 +1,113 @@
+name: DIREKT temporary RC6 ESLint security finalizer
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/rc6-eslint-security-finalize.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: direkt-rc6-eslint-security-finalize
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    name: Commit audit-clean ESLint graph
+    if: >-
+      github.repository == 'kudzimusar/direkt' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'integration/rc6-whatsapp-run-bridge-8fe357e'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+
+      - name: Verify exact PR head
+        shell: bash
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          EXPECTED_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${EXPECTED_HEAD}"
+          remote_head="$(git ls-remote origin "refs/heads/${EXPECTED_BRANCH}" | awk '{print $1}')"
+          test "${remote_head}" = "${EXPECTED_HEAD}"
+
+      - name: Resolve and audit patched lint graph
+        shell: bash
+        working-directory: backend/direkt-api
+        run: |
+          set -euo pipefail
+          npm install --global npm@11.16.0
+          test "$(npm view eslint@10.8.0 version)" = "10.8.0"
+          test "$(npm view @eslint/js@10.0.1 version)" = "10.0.1"
+          npm install --save-dev --save-exact eslint@10.8.0 @eslint/js@10.0.1
+          npm audit --audit-level=high
+
+      - name: Apply exact ESLint 10 dead-assignment cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('backend/direkt-api/src/discovery/discovery.repository.ts')
+          text = path.read_text(encoding='utf-8')
+          declaration = "    let originExpression = 'NULL::geography';\n"
+          assignment = "      originExpression = `ST_SetSRID(ST_MakePoint(${longitudeParameter}, ${latitudeParameter}), 4326)::geography`;\n"
+          replacement = "      const originExpression = `ST_SetSRID(ST_MakePoint(${longitudeParameter}, ${latitudeParameter}), 4326)::geography`;\n"
+          if text.count(declaration) != 1:
+              raise SystemExit('Expected exactly one unused originExpression declaration.')
+          if text.count(assignment) != 1:
+              raise SystemExit('Expected exactly one originExpression assignment.')
+          path.write_text(text.replace(declaration, '').replace(assignment, replacement), encoding='utf-8')
+          PY
+          git diff --check -- backend/direkt-api/src/discovery/discovery.repository.ts
+
+      - name: Verify backend with patched toolchain
+        shell: bash
+        working-directory: backend/direkt-api
+        run: |
+          set -euo pipefail
+          npm run format:check
+          npm run lint
+          npm run typecheck
+          npm run build
+
+      - name: Commit verified security fix and remove temporary workflows
+        shell: bash
+        env:
+          EXPECTED_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          for temporary in \
+            .github/workflows/rc6-eslint-security-refresh.yml \
+            .github/workflows/rc6-eslint-lint-diagnostic.yml \
+            .github/workflows/rc6-eslint-security-finalize.yml; do
+            [[ ! -f "${temporary}" ]] || git rm "${temporary}"
+          done
+          git diff --check
+          git diff --exit-code -- backend/direkt-api/package.json backend/direkt-api/package-lock.json && exit 1
+          git diff --exit-code -- backend/direkt-api/src/discovery/discovery.repository.ts && exit 1
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            backend/direkt-api/package.json \
+            backend/direkt-api/package-lock.json \
+            backend/direkt-api/src/discovery/discovery.repository.ts
+          git commit -m "fix(security): update backend ESLint toolchain"
+          git push origin "HEAD:${EXPECTED_BRANCH}"
