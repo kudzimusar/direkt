@@ -1,0 +1,71 @@
+name: DIREKT temporary RC6 ESLint 10 lint diagnostic
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/rc6-eslint-lint-diagnostic.yml
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    name: Capture ESLint 10 compatibility output
+    if: >-
+      github.repository == 'kudzimusar/direkt' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'integration/rc6-whatsapp-run-bridge-8fe357e'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DIAGNOSTICS_DIR: ${{ github.workspace }}/artifacts/rc6-eslint-lint-diagnostic
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+
+      - name: Install audit-clean candidate graph
+        shell: bash
+        working-directory: backend/direkt-api
+        run: |
+          set -euo pipefail
+          mkdir -p "${DIAGNOSTICS_DIR}"
+          npm install --global npm@11.16.0
+          npm install --save-dev --save-exact eslint@10.8.0 @eslint/js@10.0.1
+          npm audit --audit-level=high
+          {
+            echo "PR_HEAD=${{ github.event.pull_request.head.sha }}"
+            echo "ESLINT_VERSION=$(npm exec eslint -- --version)"
+            echo "TYPESCRIPT_ESLINT_VERSION=$(node -p \"require('typescript-eslint/package.json').version\")"
+            echo "SECRET_VALUES_ACCESSED=false"
+            echo "PRODUCTION_AUTHORIZATION=false"
+          } > "${DIAGNOSTICS_DIR}/summary.txt"
+
+      - name: Capture lint result
+        shell: bash
+        working-directory: backend/direkt-api
+        run: |
+          set -uo pipefail
+          npm run lint > "${DIAGNOSTICS_DIR}/lint-output.txt" 2>&1
+          status=$?
+          echo "LINT_STATUS=${status}" >> "${DIAGNOSTICS_DIR}/summary.txt"
+          cat "${DIAGNOSTICS_DIR}/lint-output.txt"
+          exit "${status}"
+
+      - name: Upload sanitized lint diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc6-eslint-lint-diagnostic-${{ github.run_id }}
+          path: artifacts/rc6-eslint-lint-diagnostic
+          if-no-files-found: error
+          retention-days: 30
