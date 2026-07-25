@@ -1,5 +1,5 @@
 name: DIREKT RC5 one-shot read-only Test Lab preflight bridge
-# Retrigger exact-main RC5 read-only preflight after the managed workflow runner-context repair.
+# Retrigger exact-main RC5 read-only preflight after Cloud SDK projection repair.
 
 on:
   push:
