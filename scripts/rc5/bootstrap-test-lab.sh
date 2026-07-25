@@ -160,6 +160,13 @@ if ! gcloud storage buckets describe "${bucket_uri}" --project "${project_id}" >
     --quiet >/dev/null
 fi
 
+# Converge both newly created and pre-existing dedicated buckets to the same
+# IAM-only access boundary before verifying or writing managed evidence.
+gcloud storage buckets update "${bucket_uri}" \
+  --project "${project_id}" \
+  --uniform-bucket-level-access \
+  --quiet >/dev/null
+
 bucket_record="$(gcloud storage buckets describe "${bucket_uri}" --project "${project_id}" --format=json)"
 test "$(jq -r '.location' <<< "${bucket_record}" | tr '[:upper:]' '[:lower:]')" = "${bucket_location}"
 test "$(jq -r '.iamConfiguration.uniformBucketLevelAccess.enabled' <<< "${bucket_record}")" = "true"
@@ -229,7 +236,7 @@ bucket_policy="$(gcloud storage buckets get-iam-policy "${bucket_uri}" --format=
 test "$(jq -r --arg member "${deployer_member}" --arg role "${results_role}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${bucket_policy}")" = "1"
 
 lifecycle="$(gcloud storage buckets describe "${bucket_uri}" --project "${project_id}" --format=json | jq -c '.lifecycle.rule // []')"
-test "$(jq -r --argjson age "${retention_days}" '[.[] | select(.action.type == "Delete" and .condition.age == $age)] | length' <<< "${lifecycle}")" = "1"
+test "$(jq -r --argjson age "${retention_days}" 'length == 1 and .[0].action.type == "Delete" and .[0].condition.age == $age' <<< "${lifecycle}")" = "true"
 
 printf 'RC5 Firebase Test Lab bootstrap verified.\n'
 printf 'Project: %s\n' "${project_id}"
