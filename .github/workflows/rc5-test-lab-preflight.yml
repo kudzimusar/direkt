@@ -1,0 +1,121 @@
+name: DIREKT RC5 Test Lab read-only infrastructure preflight
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact reviewed DIREKT commit that must equal current main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: direkt-rc5-test-lab-preflight
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    name: Inspect RC5 APIs IAM bucket and live device catalog
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_PROJECT_NUMBER: "264358173369"
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_TEST_LAB_RUNNER_ROLE_ID: direktTestLabRunner
+      GCP_TEST_LAB_RESULTS_ROLE_ID: direktTestLabResultsWriter
+      GCP_TEST_LAB_RESULTS_BUCKET: gs://direkt-test-lab-results-264358173369
+      GCP_TEST_LAB_RESULTS_LOCATION: asia-northeast1
+      GCP_TEST_LAB_RESULTS_RETENTION_DAYS: "30"
+      SOURCE_SHA: ${{ inputs.source_sha }}
+      RC5_PREFLIGHT_RECEIPT: ${{ runner.temp }}/rc5-test-lab-preflight/receipt.txt
+      RC5_PREFLIGHT_MATRIX: ${{ runner.temp }}/rc5-test-lab-preflight/matrix.json
+
+    steps:
+      - name: Validate read-only preflight controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          test "${GCP_PROJECT_ID}" = "direkt-dev-502701"
+          test "${GCP_PROJECT_NUMBER}" = "264358173369"
+          test "${GCP_TEST_LAB_RESULTS_BUCKET}" = "gs://direkt-test-lab-results-${GCP_PROJECT_NUMBER}"
+
+      - name: Check out exact reviewed source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify exact current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
+          git fetch origin main --no-tags
+          test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Verify permanent preflight source contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n scripts/rc5/run-test-lab-preflight.sh
+          python3 scripts/rc5/select-test-lab-matrix.py --self-test
+          python3 scripts/rc5/verify-test-lab-preflight.py
+
+      - name: Authenticate to Google Cloud through GitHub OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Execute metadata IAM bucket and catalog inspection only
+        id: preflight
+        continue-on-error: true
+        shell: bash
+        run: bash scripts/rc5/run-test-lab-preflight.sh
+
+      - name: Upload sanitized RC5 read-only preflight receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc5-test-lab-preflight-${{ github.run_id }}
+          path: ${{ runner.temp }}/rc5-test-lab-preflight
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Enforce ready result without matrix execution
+        if: always()
+        shell: bash
+        env:
+          PREFLIGHT_OUTCOME: ${{ steps.preflight.outcome }}
+        run: |
+          set -euo pipefail
+          test "${PREFLIGHT_OUTCOME}" = "success"
+          grep -Fxq "SOURCE|${SOURCE_SHA}" "${RC5_PREFLIGHT_RECEIPT}"
+          grep -Fxq "MODE|metadata_iam_catalog_only" "${RC5_PREFLIGHT_RECEIPT}"
+          grep -Fxq "RESOURCE_MUTATION|false" "${RC5_PREFLIGHT_RECEIPT}"
+          grep -Fxq "MATRIX_EXECUTED|false" "${RC5_PREFLIGHT_RECEIPT}"
+          grep -Fxq "SECRET_VALUES_ACCESSED|false" "${RC5_PREFLIGHT_RECEIPT}"
+          grep -Fxq "PRODUCTION_AUTHORIZATION|false" "${RC5_PREFLIGHT_RECEIPT}"
+          grep -Fxq "RESULT|ready" "${RC5_PREFLIGHT_RECEIPT}"
+          grep -Fxq "FAILURE_COUNT|0" "${RC5_PREFLIGHT_RECEIPT}"
+          test "$(jq -r '.selected' "${RC5_PREFLIGHT_MATRIX}")" = "true"
+          test "$(jq -r '.preflightOnly' "${RC5_PREFLIGHT_MATRIX}")" = "true"
+          test "$(jq -r '.matrixExecuted' "${RC5_PREFLIGHT_MATRIX}")" = "false"
