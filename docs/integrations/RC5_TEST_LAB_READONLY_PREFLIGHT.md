@@ -16,7 +16,8 @@ The managed preflight may read only:
 - the `direktTestLabRunner` and `direktTestLabResultsWriter` custom-role definitions;
 - project IAM bindings for the GitHub deployer;
 - absence of prohibited broad and project-scoped Cloud Storage roles;
-- the dedicated `gs://direkt-test-lab-results-264358173369` bucket metadata, uniform access, 30-day delete lifecycle and role-specific IAM allowlist;
+- the dedicated `gs://direkt-test-lab-results-264358173369` bucket metadata, uniform access, exactly one 30-day delete lifecycle rule and role-specific IAM allowlist;
+- every bucket-level role granted to the GitHub deployer, which must resolve to the approved results-writer role only with no additional bucket role;
 - the live Firebase Test Lab virtual Android model and version catalogs;
 - the public-safe 2–3 device candidate selected by the source-controlled RC5 matrix policy.
 
@@ -38,9 +39,10 @@ These prohibitions are enforced by `scripts/rc5/verify-test-lab-preflight.py` an
 
 ## Managed receipt
 
-The managed artifact contains only a schema-validated text receipt and sanitized public device candidate. Its required boundaries are:
+The managed artifact contains only a schema-validated text receipt and sanitized public device candidate. Every dispatch uses a unique bridge correlation identifier, and the receipt is accepted only from the workflow run whose exact `run-name`, source SHA and `CORRELATION` marker match that dispatch. Its required boundaries are:
 
 ```text
+CORRELATION|rc5-<bridge-run-id>-<attempt>
 MODE|metadata_iam_catalog_only
 RESOURCE_MUTATION|false
 MATRIX_EXECUTED|false
