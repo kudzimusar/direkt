@@ -1,0 +1,226 @@
+name: DIREKT RC5 Test Lab managed proof bridge
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/rc5-test-lab-managed-proof-once.yml
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+
+concurrency:
+  group: direkt-rc5-test-lab-managed-proof-once
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    name: Dispatch exact-main Test Lab matrix and publish receipt
+    if: github.repository == 'kudzimusar/direkt' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Dispatch and verify exact-main managed Test Lab proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="${GITHUB_REPOSITORY}"
+          source_sha="${GITHUB_SHA}"
+          short_sha="${source_sha:0:12}"
+          workflow="firebase-test-lab.yml"
+          [[ "${source_sha}" =~ ^[0-9a-f]{40}$ ]]
+
+          main_sha="$(gh api "repos/${repo}/git/ref/heads/main" --jq '.object.sha')"
+          test "${main_sha}" = "${source_sha}"
+
+          before_ids="$(
+            gh api "repos/${repo}/actions/workflows/${workflow}/runs?event=workflow_dispatch&branch=main&per_page=100" \
+              --jq '[.workflow_runs[].id]'
+          )"
+
+          payload="$(jq -nc --arg sha "${source_sha}" '{ref:"main",inputs:{confirmation:"RUN-DIREKT-TEST-LAB",source_sha:$sha}}')"
+          gh api --method POST \
+            "repos/${repo}/actions/workflows/${workflow}/dispatches" \
+            --input - <<< "${payload}"
+
+          run_id=""
+          for _ in $(seq 1 90); do
+            runs_json="$(gh api "repos/${repo}/actions/workflows/${workflow}/runs?event=workflow_dispatch&branch=main&per_page=100")"
+            candidates="$(
+              jq -c \
+                --arg sha "${source_sha}" \
+                --argjson before "${before_ids}" \
+                '[.workflow_runs[] | select(.head_sha == $sha and ((.id as $id | $before | index($id)) == null))] | sort_by(.created_at)' \
+                <<< "${runs_json}"
+            )"
+            candidate_count="$(jq 'length' <<< "${candidates}")"
+            if [[ "${candidate_count}" -gt 1 ]]; then
+              echo "::error title=Ambiguous RC5 managed run::More than one new exact-source workflow run appeared after dispatch."
+              exit 1
+            fi
+            if [[ "${candidate_count}" = "1" ]]; then
+              run_id="$(jq -r '.[0].id' <<< "${candidates}")"
+              break
+            fi
+            sleep 5
+          done
+          if [[ -z "${run_id}" ]]; then
+            echo "::error title=RC5 managed run not observed::No unique new exact-source Test Lab run appeared."
+            exit 1
+          fi
+
+          status=""
+          conclusion=""
+          run_attempt=""
+          for _ in $(seq 1 660); do
+            run_json="$(gh api "repos/${repo}/actions/runs/${run_id}")"
+            test "$(jq -r '.head_sha' <<< "${run_json}")" = "${source_sha}"
+            test "$(jq -r '.event' <<< "${run_json}")" = "workflow_dispatch"
+            status="$(jq -r '.status' <<< "${run_json}")"
+            conclusion="$(jq -r '.conclusion // ""' <<< "${run_json}")"
+            run_attempt="$(jq -r '.run_attempt' <<< "${run_json}")"
+            [[ "${status}" = "completed" ]] && break
+            sleep 5
+          done
+          [[ "${run_attempt}" =~ ^[1-9][0-9]*$ ]]
+
+          run_url="https://github.com/${repo}/actions/runs/${run_id}"
+          artifact_name="rc5-firebase-test-lab-${run_id}-${run_attempt}"
+          evidence_dir="$(mktemp -d)"
+          artifact_downloaded=false
+          if [[ "${status}" = "completed" && "${conclusion}" = "success" ]]; then
+            for _ in $(seq 1 18); do
+              if gh run download "${run_id}" --repo "${repo}" --name "${artifact_name}" --dir "${evidence_dir}" >/dev/null 2>&1; then
+                artifact_downloaded=true
+                break
+              fi
+              sleep 5
+            done
+          fi
+
+          receipt_file="${evidence_dir}/rc5-test-lab-receipt.json"
+          matrix_file="${evidence_dir}/rc5-test-lab-matrix.json"
+          evidence_status="artifact_unavailable"
+          sanitized_receipt='{"schema":"direkt.rc5.test-lab-receipt.v1","result":"unavailable","productionAuthorization":false}'
+          sanitized_matrix='{"schema":"direkt.rc5.test-lab-matrix.v1","deviceCount":0,"targets":[]}'
+
+          if [[ "${artifact_downloaded}" = "true" && -f "${receipt_file}" && -f "${matrix_file}" ]]; then
+            jq -e \
+              --arg sha "${source_sha}" \
+              --arg run "${run_id}" \
+              --argjson attempt "${run_attempt}" \
+              '
+                type == "object" and
+                .schema == "direkt.rc5.test-lab-receipt.v1" and
+                .sourceSha == $sha and
+                .githubRunId == $run and
+                .githubRunAttempt == $attempt and
+                .project == "direkt-dev-502701" and
+                .resultsBucket == "gs://direkt-test-lab-results-264358173369" and
+                .testClass == "com.kudzimusar.direkt.DirektAppSmokeTest" and
+                .flakyRetries == 0 and
+                .orchestrator == false and
+                .video == false and
+                .performanceMetrics == false and
+                .automaticGoogleLogin == false and
+                .result == "passed" and
+                .dataMode == "synthetic-public-safe-only" and
+                .productionAuthorization == false and
+                (.matrix.deviceCount >= 2 and .matrix.deviceCount <= 3) and
+                ([.matrix.targets[] | select(.version == "33")] | length) == 1 and
+                ([.matrix.targets[] | (.version | tonumber) | select(. >= 35 and . <= 36)] | length) == 1
+              ' "${receipt_file}" >/dev/null
+
+            jq -e '
+              type == "object" and
+              .schema == "direkt.rc5.test-lab-matrix.v1" and
+              (.deviceCount >= 2 and .deviceCount <= 3) and
+              ([.targets[] | select(.version == "33")] | length) == 1 and
+              ([.targets[] | (.version | tonumber) | select(. >= 35 and . <= 36)] | length) == 1
+            ' "${matrix_file}" >/dev/null
+
+            jq -S '.matrix' "${receipt_file}" > "${evidence_dir}/receipt-matrix.json"
+            jq -S '.' "${matrix_file}" > "${evidence_dir}/standalone-matrix.json"
+            diff -u "${evidence_dir}/receipt-matrix.json" "${evidence_dir}/standalone-matrix.json"
+
+            evidence_status="available_and_schema_validated"
+            sanitized_receipt="$(jq -S . "${receipt_file}")"
+            sanitized_matrix="$(jq -S . "${matrix_file}")"
+          fi
+
+          current_main="$(gh api "repos/${repo}/git/ref/heads/main" --jq '.object.sha')"
+          receipt_class="${conclusion:-not-completed}"
+          if [[ "${status}" = "completed" && "${conclusion}" = "success" && "${current_main}" != "${source_sha}" ]]; then
+            receipt_class="stale_success"
+          fi
+
+          issue_title="RC5 managed Test Lab receipt — ${receipt_class} — ${short_sha} — run ${run_id}"
+          issue_body="$(cat <<EOF
+          ## RC5 Firebase Test Lab managed device-matrix receipt
+
+          - Exact source: \`${source_sha}\`
+          - Current main at publication: \`${current_main}\`
+          - Managed run/attempt: \`${run_id}/${run_attempt}\`
+          - Status/conclusion: \`${status} / ${conclusion:-not-completed}\`
+          - Sanitized artifact: \`${artifact_name}\` — \`${evidence_status}\`
+          - Results boundary: dedicated append-only bucket with 30-day lifecycle
+          - Data mode: synthetic/public-safe only
+          - Participant/production authorization: false
+          - Run: ${run_url}
+          - Tracker: #261
+
+          ### Sanitized receipt
+
+          \`\`\`json
+          ${sanitized_receipt}
+          \`\`\`
+
+          ### Sanitized matrix
+
+          \`\`\`json
+          ${sanitized_matrix}
+          \`\`\`
+          EOF
+          )"
+          receipt_url="$(gh api --method POST "repos/${repo}/issues" -f title="${issue_title}" -f body="${issue_body}" --jq '.html_url')"
+
+          tracker_body="$(cat <<EOF
+          RC5 managed Firebase Test Lab device-matrix receipt.
+
+          - Exact source: \`${source_sha}\`
+          - Current main at publication: \`${current_main}\`
+          - Managed run/attempt: \`${run_id}/${run_attempt}\`
+          - Status/conclusion: \`${status} / ${conclusion:-not-completed}\`
+          - Evidence: \`${evidence_status}\`
+          - Dedicated receipt: ${receipt_url}
+          - Participant/production authorization: false.
+          EOF
+          )"
+          gh api --method POST "repos/${repo}/issues/261/comments" -f body="${tracker_body}" >/dev/null
+
+          if [[ "${status}" != "completed" || "${conclusion}" != "success" ]]; then
+            echo "::error title=RC5 managed Test Lab failure::See the dedicated receipt for the preserved failed run."
+            exit 1
+          fi
+          if [[ "${current_main}" != "${source_sha}" ]]; then
+            echo "::error title=RC5 managed success became stale::The successful result is historical only."
+            exit 1
+          fi
+          if [[ "${evidence_status}" != "available_and_schema_validated" ]]; then
+            echo "::error title=RC5 managed evidence unavailable::Successful workflow did not expose valid receipt evidence."
+            exit 1
+          fi
+
+          {
+            echo "### RC5 managed Firebase Test Lab proof"
+            echo "- Source: \`${source_sha}\`"
+            echo "- Managed run/attempt: \`${run_id}/${run_attempt}\`"
+            echo "- Dedicated receipt: ${receipt_url}"
+            echo "- Evidence: \`${evidence_status}\`"
+            echo "- Participant/production authorization: \`false\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
