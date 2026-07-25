@@ -5,13 +5,17 @@ on:
     branches:
       - main
       - integration/rc5-firebase-test-lab
+      - integration/rc5-readonly-preflight-498f606
     paths:
       - "android/direkt-app/app/src/androidTest/**"
       - ".github/workflows/android-ci.yml"
       - ".github/workflows/firebase-test-lab.yml"
+      - ".github/workflows/rc5-test-lab-preflight.yml"
+      - ".github/workflows/rc5-test-lab-preflight-once.yml"
       - ".github/workflows/rc5-test-lab-contract.yml"
       - "scripts/rc5/**"
       - "docs/integrations/RC5_FIREBASE_TEST_LAB_IMPLEMENTATION_NOTES.md"
+      - "docs/integrations/RC5_TEST_LAB_READONLY_PREFLIGHT.md"
       - "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
       - "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
       - "WORKSTREAM_LOCK.md"
@@ -22,9 +26,12 @@ on:
       - "android/direkt-app/app/src/androidTest/**"
       - ".github/workflows/android-ci.yml"
       - ".github/workflows/firebase-test-lab.yml"
+      - ".github/workflows/rc5-test-lab-preflight.yml"
+      - ".github/workflows/rc5-test-lab-preflight-once.yml"
       - ".github/workflows/rc5-test-lab-contract.yml"
       - "scripts/rc5/**"
       - "docs/integrations/RC5_FIREBASE_TEST_LAB_IMPLEMENTATION_NOTES.md"
+      - "docs/integrations/RC5_TEST_LAB_READONLY_PREFLIGHT.md"
       - "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
       - "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
       - "WORKSTREAM_LOCK.md"
@@ -43,23 +50,30 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
-      - name: Verify bootstrap shell syntax
+          python-version: "3.13"
+      - name: Verify bootstrap and preflight shell syntax
         shell: bash
         run: |
           bash -n scripts/rc5/bootstrap-test-lab.sh
           bash -n scripts/rc5/verify-no-project-storage-roles.sh
+          bash -n scripts/rc5/run-test-lab-preflight.sh
       - name: Verify Python syntax and selector self-test
         shell: bash
         run: |
           set -euo pipefail
-          python -m py_compile scripts/rc5/select-test-lab-matrix.py scripts/rc5/verify-test-lab-contract.py
+          python -m py_compile \
+            scripts/rc5/select-test-lab-matrix.py \
+            scripts/rc5/verify-test-lab-contract.py \
+            scripts/rc5/verify-test-lab-preflight.py
           python scripts/rc5/select-test-lab-matrix.py --self-test
       - name: Verify permanent RC5 contract
         shell: bash
         run: |
           set -o pipefail
-          python scripts/rc5/verify-test-lab-contract.py 2>&1 | tee "${RUNNER_TEMP}/rc5-test-lab-contract.log"
+          {
+            python scripts/rc5/verify-test-lab-contract.py
+            python scripts/rc5/verify-test-lab-preflight.py
+          } 2>&1 | tee "${RUNNER_TEMP}/rc5-test-lab-contract.log"
       - name: Upload RC5 contract diagnostics
         if: always()
         uses: actions/upload-artifact@v4
