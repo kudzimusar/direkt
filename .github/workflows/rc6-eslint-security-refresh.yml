@@ -79,15 +79,9 @@ jobs:
         working-directory: backend/direkt-api
         run: |
           set -euo pipefail
-          set +e
-          npm_pin="$(npm view npm@11.16.0 version 2>"${DIAGNOSTICS_DIR}/npm-pin-error.txt")"
-          status=$?
-          set -e
-          echo "NPM_PIN_RESULT=${npm_pin:-unavailable}" >> "${DIAGNOSTICS_DIR}/summary.txt"
-          if [[ "${status}" -ne 0 || "${npm_pin}" != "11.16.0" ]]; then
-            echo "FAIL=npm_pin_lookup_status_${status}" >> "${DIAGNOSTICS_DIR}/summary.txt"
-            exit 1
-          fi
+          npm_pin="$(npm view npm@11.16.0 version)"
+          echo "NPM_PIN_RESULT=${npm_pin}" >> "${DIAGNOSTICS_DIR}/summary.txt"
+          test "${npm_pin}" = "11.16.0"
           echo "PASS=npm_pin_published" >> "${DIAGNOSTICS_DIR}/summary.txt"
 
       - name: Install repository npm CLI pin
@@ -99,37 +93,20 @@ jobs:
           test "$(npm --version)" = "11.16.0"
           echo "PASS=npm_pin_active" >> "${DIAGNOSTICS_DIR}/summary.txt"
 
-      - name: Verify ESLint target is published
+      - name: Verify published security targets
         shell: bash
         working-directory: backend/direkt-api
         run: |
           set -euo pipefail
-          set +e
-          eslint_version="$(npm view eslint@10.8.0 version 2>"${DIAGNOSTICS_DIR}/eslint-version-error.txt")"
-          status=$?
-          set -e
-          echo "ESLINT_TARGET_RESULT=${eslint_version:-unavailable}" >> "${DIAGNOSTICS_DIR}/summary.txt"
-          if [[ "${status}" -ne 0 || "${eslint_version}" != "10.8.0" ]]; then
-            echo "FAIL=eslint_target_lookup_status_${status}" >> "${DIAGNOSTICS_DIR}/summary.txt"
-            exit 1
-          fi
-          echo "PASS=eslint_target_published" >> "${DIAGNOSTICS_DIR}/summary.txt"
-
-      - name: Verify ESLint JS target is published
-        shell: bash
-        working-directory: backend/direkt-api
-        run: |
-          set -euo pipefail
-          set +e
-          eslint_js_version="$(npm view @eslint/js@10.0.1 version 2>"${DIAGNOSTICS_DIR}/eslint-js-version-error.txt")"
-          status=$?
-          set -e
-          echo "ESLINT_JS_TARGET_RESULT=${eslint_js_version:-unavailable}" >> "${DIAGNOSTICS_DIR}/summary.txt"
-          if [[ "${status}" -ne 0 || "${eslint_js_version}" != "10.0.1" ]]; then
-            echo "FAIL=eslint_js_target_lookup_status_${status}" >> "${DIAGNOSTICS_DIR}/summary.txt"
-            exit 1
-          fi
-          echo "PASS=eslint_js_target_published" >> "${DIAGNOSTICS_DIR}/summary.txt"
+          eslint_version="$(npm view eslint@10.8.0 version)"
+          eslint_js_version="$(npm view @eslint/js@10.0.1 version)"
+          test "${eslint_version}" = "10.8.0"
+          test "${eslint_js_version}" = "10.0.1"
+          {
+            echo "ESLINT_TARGET=${eslint_version}"
+            echo "ESLINT_JS_TARGET=${eslint_js_version}"
+            echo "PASS=security_targets_published"
+          } >> "${DIAGNOSTICS_DIR}/summary.txt"
 
       - name: Resolve patched package and lock graph
         shell: bash
@@ -145,14 +122,39 @@ jobs:
         working-directory: backend/direkt-api
         run: |
           set -euo pipefail
-          if npm audit --json > "${DIAGNOSTICS_DIR}/npm-audit.json"; then
-            echo "PASS=npm_audit" >> "${DIAGNOSTICS_DIR}/summary.txt"
-          else
-            status=$?
-            echo "FAIL=npm_audit_status_${status}" >> "${DIAGNOSTICS_DIR}/summary.txt"
-            jq '{auditReportVersion, metadata, vulnerabilities}' "${DIAGNOSTICS_DIR}/npm-audit.json" > "${DIAGNOSTICS_DIR}/npm-audit-sanitized.json"
-            exit "${status}"
-          fi
+          npm audit --json > "${DIAGNOSTICS_DIR}/npm-audit.json"
+          echo "PASS=npm_audit" >> "${DIAGNOSTICS_DIR}/summary.txt"
+
+      - name: Apply ESLint 10 dead-assignment cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('backend/direkt-api/src/discovery/discovery.repository.ts')
+          text = path.read_text(encoding='utf-8')
+          before = """    let originExpression = 'NULL::geography';
+              let areaMatchExpression = 'false';
+              let distanceExpression = 'NULL::double precision';
+              if (dto.latitude !== undefined && dto.longitude !== undefined) {
+                const longitudeParameter = parameter(dto.longitude);
+                const latitudeParameter = parameter(dto.latitude);
+                originExpression = `ST_SetSRID(ST_MakePoint(${longitudeParameter}, ${latitudeParameter}), 4326)::geography`;
+          """
+          after = """    let areaMatchExpression = 'false';
+              let distanceExpression = 'NULL::double precision';
+              if (dto.latitude !== undefined && dto.longitude !== undefined) {
+                const longitudeParameter = parameter(dto.longitude);
+                const latitudeParameter = parameter(dto.latitude);
+                const originExpression = `ST_SetSRID(ST_MakePoint(${longitudeParameter}, ${latitudeParameter}), 4326)::geography`;
+          """
+          if text.count(before) != 1:
+              raise SystemExit('Expected exactly one discovery origin-expression pattern.')
+          path.write_text(text.replace(before, after), encoding='utf-8')
+          PY
+          git diff --check -- backend/direkt-api/src/discovery/discovery.repository.ts
+          echo "PASS=no_useless_assignment_cleanup" >> "${DIAGNOSTICS_DIR}/summary.txt"
 
       - name: Verify formatting
         shell: bash
@@ -195,20 +197,30 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Commit lock refresh and self-remove
+      - name: Commit verified security refresh and self-remove
         shell: bash
         env:
           EXPECTED_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
           set -euo pipefail
           git rm .github/workflows/rc6-eslint-security-refresh.yml
+          if [[ -f .github/workflows/rc6-eslint-lint-diagnostic.yml ]]; then
+            git rm .github/workflows/rc6-eslint-lint-diagnostic.yml
+          fi
           git diff --check
           git diff --exit-code -- backend/direkt-api/package.json backend/direkt-api/package-lock.json && {
             echo "::error title=No dependency refresh produced::Expected patched package and lockfile changes."
             exit 1
           }
+          git diff --exit-code -- backend/direkt-api/src/discovery/discovery.repository.ts && {
+            echo "::error title=No lint cleanup produced::Expected the verified dead-assignment cleanup."
+            exit 1
+          }
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add backend/direkt-api/package.json backend/direkt-api/package-lock.json
+          git add \
+            backend/direkt-api/package.json \
+            backend/direkt-api/package-lock.json \
+            backend/direkt-api/src/discovery/discovery.repository.ts
           git commit -m "fix(security): update backend ESLint toolchain"
           git push origin "HEAD:${EXPECTED_BRANCH}"
