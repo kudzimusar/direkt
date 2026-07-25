@@ -8,6 +8,7 @@ name: DIREKT RC5 Test Lab v2 contract
       - .github/workflows/firebase-test-lab-managed.yml
       - .github/workflows/rc5-test-lab-managed-v2-contract.yml
       - scripts/rc5/run-test-lab-managed.sh
+      - scripts/rc5/append-only-storage-upload.sh
       - scripts/rc5/test-lab-runner-permissions.txt
   push:
     branches:
@@ -16,6 +17,7 @@ name: DIREKT RC5 Test Lab v2 contract
       - .github/workflows/firebase-test-lab-managed.yml
       - .github/workflows/rc5-test-lab-managed-v2-contract.yml
       - scripts/rc5/run-test-lab-managed.sh
+      - scripts/rc5/append-only-storage-upload.sh
       - scripts/rc5/test-lab-runner-permissions.txt
 
 permissions:
@@ -60,6 +62,7 @@ jobs:
         run: |
           set -euo pipefail
           bash -n scripts/rc5/run-test-lab-managed.sh
+          bash -n scripts/rc5/append-only-storage-upload.sh
           manifest=scripts/rc5/test-lab-runner-permissions.txt
           test -s "${manifest}"
           test "$(sed '/^$/d' "${manifest}" | wc -l | tr -d ' ')" = "32"
@@ -67,6 +70,21 @@ jobs:
           grep -Fxq serviceusage.services.get "${manifest}"
           ! grep -Fxq serviceusage.services.list "${manifest}"
           ! grep -Eq '^storage\.' "${manifest}"
+
+      - name: Verify create-only evidence upload boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          runner=scripts/rc5/run-test-lab-managed.sh
+          uploader=scripts/rc5/append-only-storage-upload.sh
+          grep -Fq 'bash "${append_only_uploader}"' "${runner}"
+          grep -Fq 'https://storage.googleapis.com/upload/storage/v1/b/' "${uploader}"
+          grep -Fq 'uploadType=media' "${uploader}"
+          grep -Fq 'ifGenerationMatch=0' "${uploader}"
+          grep -Fq 'append_only_object_insert=verified' "${uploader}"
+          ! grep -Fq 'gcloud storage cp' "${runner}" "${uploader}"
+          ! grep -Fq 'userProject=' "${uploader}"
+          ! grep -Eq 'storage\.objects\.(get|list|delete)' "${runner}" "${uploader}" scripts/rc5/test-lab-runner-permissions.txt
 
       - name: Verify bounded managed execution controls
         shell: bash
@@ -99,6 +117,7 @@ jobs:
             echo '- Dispatch inputs: exact and required'
             echo '- GitHub OIDC: required'
             echo '- Runner permission manifest: exact, unique, no Storage permissions'
+            echo '- Evidence upload: create-only JSON media insert, no read/list/delete permission'
             echo '- Matrix: bounded to 2–3 devices with zero flaky retries'
             echo '- Participant/production authorization: false'
           } >> "${GITHUB_STEP_SUMMARY}"
