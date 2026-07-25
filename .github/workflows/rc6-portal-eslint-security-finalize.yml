@@ -22,7 +22,7 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.head.ref == 'integration/rc6-whatsapp-run-bridge-8fe357e'
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     env:
       DIAGNOSTICS_DIR: ${{ github.workspace }}/artifacts/rc6-portal-security
     steps:
@@ -49,17 +49,40 @@ jobs:
           remote_head="$(git ls-remote origin "refs/heads/${EXPECTED_BRANCH}" | awk '{print $1}')"
           test "${remote_head}" = "${EXPECTED_HEAD}"
 
-      - name: Refresh vulnerable transitive ranges without major config changes
+      - name: Apply explicit patched transitive overrides
         shell: bash
         working-directory: admin/direkt-operations-portal
         run: |
           set -euo pipefail
           mkdir -p "${DIAGNOSTICS_DIR}"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('package.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          overrides = data.setdefault('overrides', {})
+          existing_next = overrides.get('next')
+          if existing_next != {'postcss': '8.5.21', 'sharp': '0.35.3'}:
+              raise SystemExit('Existing Next security overrides changed unexpectedly.')
+          overrides['minimatch'] = '10.2.5'
+          overrides['brace-expansion'] = '5.0.8'
+          path.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+          PY
+          git diff --check -- package.json
+
+      - name: Resolve and audit explicit patched graph
+        shell: bash
+        working-directory: admin/direkt-operations-portal
+        run: |
+          set -euo pipefail
           npm install --global npm@11.16.0
-          npm ci
-          npm update minimatch brace-expansion
+          test "$(npm view minimatch@10.2.5 version)" = "10.2.5"
+          test "$(npm view brace-expansion@5.0.8 version)" = "5.0.8"
+          npm install
           npm ls eslint eslint-config-next minimatch brace-expansion --all --json > "${DIAGNOSTICS_DIR}/resolved-tree.json"
           npm audit --json > "${DIAGNOSTICS_DIR}/npm-audit.json"
+          jq -e '.metadata.vulnerabilities.high == 0 and .metadata.vulnerabilities.critical == 0' "${DIAGNOSTICS_DIR}/npm-audit.json" >/dev/null
 
       - name: Verify unchanged portal lint and production contracts
         shell: bash
@@ -81,7 +104,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Commit verified portal lock refresh and self-remove
+      - name: Commit verified portal security override and self-remove
         shell: bash
         env:
           EXPECTED_BRANCH: ${{ github.event.pull_request.head.ref }}
@@ -89,16 +112,18 @@ jobs:
           set -euo pipefail
           git rm .github/workflows/rc6-portal-eslint-security-finalize.yml
           git diff --check
-          git diff --exit-code -- admin/direkt-operations-portal/package.json || {
-            echo "::error title=Unexpected direct portal dependency change::Only the existing semver-compatible lock graph may change."
+          git diff --exit-code -- admin/direkt-operations-portal/package.json && {
+            echo "::error title=No portal override produced::Expected explicit patched transitive overrides."
             exit 1
           }
           git diff --exit-code -- admin/direkt-operations-portal/package-lock.json && {
-            echo "::error title=No portal lock refresh produced::Expected transitive patched versions."
+            echo "::error title=No portal lock refresh produced::Expected patched transitive versions."
             exit 1
           }
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add admin/direkt-operations-portal/package-lock.json
-          git commit -m "fix(security): refresh portal dependency lock"
+          git add \
+            admin/direkt-operations-portal/package.json \
+            admin/direkt-operations-portal/package-lock.json
+          git commit -m "fix(security): override vulnerable portal glob dependencies"
           git push origin "HEAD:${EXPECTED_BRANCH}"
