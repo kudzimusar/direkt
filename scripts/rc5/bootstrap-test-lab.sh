@@ -198,9 +198,9 @@ gcloud storage buckets add-iam-policy-binding "${bucket_uri}" \
   --role "${results_role}" \
   --quiet >/dev/null
 
+enabled_services="$(gcloud services list --enabled --project "${project_id}" --format='value(config.name)')"
 for service in testing.googleapis.com toolresults.googleapis.com; do
-  state="$(gcloud services describe "${service}" --project "${project_id}" --format='value(state)')"
-  test "${state}" = "ENABLED"
+  grep -Fxq "${service}" <<< "${enabled_services}"
 done
 
 assert_role_permissions() {
