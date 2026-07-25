@@ -1,0 +1,72 @@
+name: DIREKT temporary RC6 ESLint security lock refresh
+
+on:
+  push:
+    branches:
+      - integration/rc6-whatsapp-run-bridge-8fe357e
+    paths:
+      - .github/workflows/rc6-eslint-security-refresh.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: direkt-rc6-eslint-security-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: Resolve patched ESLint graph and remove temporary workflow
+    if: github.repository == 'kudzimusar/direkt'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: integration/rc6-whatsapp-run-bridge-8fe357e
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+
+      - name: Verify exact branch head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          test "$(git branch --show-current)" = "integration/rc6-whatsapp-run-bridge-8fe357e"
+
+      - name: Resolve patched lint toolchain and verify backend
+        shell: bash
+        working-directory: backend/direkt-api
+        run: |
+          set -euo pipefail
+          npm install --global npm@11.16.0
+          test "$(npm view eslint@10.8.0 version)" = "10.8.0"
+          test "$(npm view @eslint/js@10.8.0 version)" = "10.8.0"
+          npm install --save-dev --save-exact eslint@10.8.0 @eslint/js@10.8.0
+          npm audit --audit-level=high
+          npm run format:check
+          npm run lint
+          npm run typecheck
+          npm run build
+
+      - name: Commit lock refresh and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/rc6-eslint-security-refresh.yml
+          git diff --check
+          git diff --exit-code -- backend/direkt-api/package.json backend/direkt-api/package-lock.json && {
+            echo "::error title=No dependency refresh produced::Expected patched package and lockfile changes."
+            exit 1
+          }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/direkt-api/package.json backend/direkt-api/package-lock.json
+          git commit -m "fix(security): update backend ESLint toolchain"
+          git push origin HEAD:integration/rc6-whatsapp-run-bridge-8fe357e
