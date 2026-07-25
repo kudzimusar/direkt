@@ -6,7 +6,7 @@
 
 ## Purpose
 
-The read-only preflight separates owner-controlled Google Cloud resource verification from Firebase Test Lab execution. It must prove that the existing APIs, custom roles, IAM bindings, results bucket and live virtual Android catalog match the reviewed RC5 contract before any matrix is allowed to consume quota or write test results.
+The read-only preflight separates owner-controlled Google Cloud resource verification from Firebase Test Lab execution. It is a metadata/IAM/bucket/catalog inspection only: it must prove that the existing APIs, custom roles, IAM bindings, results bucket and live virtual Android catalog match the reviewed RC5 contract before any matrix is allowed to consume quota or write test results.
 
 ## Exact inspected boundary
 
