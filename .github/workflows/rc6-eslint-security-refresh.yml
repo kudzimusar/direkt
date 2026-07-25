@@ -44,7 +44,8 @@ jobs:
           set -euo pipefail
           mkdir -p "${DIAGNOSTICS_DIR}"
           {
-            echo "SOURCE_SHA=${GITHUB_SHA}"
+            echo "WORKFLOW_SHA=${GITHUB_SHA}"
+            echo "PR_HEAD=${{ github.event.pull_request.head.sha }}"
             echo "MODE=development_toolchain_security_refresh"
             echo "SECRET_VALUES_ACCESSED=false"
             echo "PRODUCTION_AUTHORIZATION=false"
@@ -63,22 +64,72 @@ jobs:
           test "${remote_head}" = "${EXPECTED_HEAD}"
           echo "PASS=exact_pr_head" >> "${DIAGNOSTICS_DIR}/summary.txt"
 
-      - name: Verify patched registry versions
+      - name: Record Node and bundled npm versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "NODE_VERSION=$(node --version)"
+            echo "BUNDLED_NPM_VERSION=$(npm --version)"
+            echo "PASS=runner_tool_versions"
+          } >> "${DIAGNOSTICS_DIR}/summary.txt"
+
+      - name: Verify repository npm CLI pin is published
         shell: bash
         working-directory: backend/direkt-api
         run: |
           set -euo pipefail
+          set +e
+          npm_pin="$(npm view npm@11.16.0 version 2>"${DIAGNOSTICS_DIR}/npm-pin-error.txt")"
+          status=$?
+          set -e
+          echo "NPM_PIN_RESULT=${npm_pin:-unavailable}" >> "${DIAGNOSTICS_DIR}/summary.txt"
+          if [[ "${status}" -ne 0 || "${npm_pin}" != "11.16.0" ]]; then
+            echo "FAIL=npm_pin_lookup_status_${status}" >> "${DIAGNOSTICS_DIR}/summary.txt"
+            exit 1
+          fi
+          echo "PASS=npm_pin_published" >> "${DIAGNOSTICS_DIR}/summary.txt"
+
+      - name: Install repository npm CLI pin
+        shell: bash
+        run: |
+          set -euo pipefail
           npm install --global npm@11.16.0
-          eslint_version="$(npm view eslint@10.8.0 version)"
-          eslint_js_version="$(npm view @eslint/js@10.8.0 version)"
-          test "${eslint_version}" = "10.8.0"
-          test "${eslint_js_version}" = "10.8.0"
-          {
-            echo "NPM_VERSION=$(npm --version)"
-            echo "ESLINT_TARGET=${eslint_version}"
-            echo "ESLINT_JS_TARGET=${eslint_js_version}"
-            echo "PASS=registry_versions"
-          } >> "${DIAGNOSTICS_DIR}/summary.txt"
+          echo "ACTIVE_NPM_VERSION=$(npm --version)" >> "${DIAGNOSTICS_DIR}/summary.txt"
+          test "$(npm --version)" = "11.16.0"
+          echo "PASS=npm_pin_active" >> "${DIAGNOSTICS_DIR}/summary.txt"
+
+      - name: Verify ESLint target is published
+        shell: bash
+        working-directory: backend/direkt-api
+        run: |
+          set -euo pipefail
+          set +e
+          eslint_version="$(npm view eslint@10.8.0 version 2>"${DIAGNOSTICS_DIR}/eslint-version-error.txt")"
+          status=$?
+          set -e
+          echo "ESLINT_TARGET_RESULT=${eslint_version:-unavailable}" >> "${DIAGNOSTICS_DIR}/summary.txt"
+          if [[ "${status}" -ne 0 || "${eslint_version}" != "10.8.0" ]]; then
+            echo "FAIL=eslint_target_lookup_status_${status}" >> "${DIAGNOSTICS_DIR}/summary.txt"
+            exit 1
+          fi
+          echo "PASS=eslint_target_published" >> "${DIAGNOSTICS_DIR}/summary.txt"
+
+      - name: Verify ESLint JS target is published
+        shell: bash
+        working-directory: backend/direkt-api
+        run: |
+          set -euo pipefail
+          set +e
+          eslint_js_version="$(npm view @eslint/js@10.8.0 version 2>"${DIAGNOSTICS_DIR}/eslint-js-version-error.txt")"
+          status=$?
+          set -e
+          echo "ESLINT_JS_TARGET_RESULT=${eslint_js_version:-unavailable}" >> "${DIAGNOSTICS_DIR}/summary.txt"
+          if [[ "${status}" -ne 0 || "${eslint_js_version}" != "10.8.0" ]]; then
+            echo "FAIL=eslint_js_target_lookup_status_${status}" >> "${DIAGNOSTICS_DIR}/summary.txt"
+            exit 1
+          fi
+          echo "PASS=eslint_js_target_published" >> "${DIAGNOSTICS_DIR}/summary.txt"
 
       - name: Resolve patched package and lock graph
         shell: bash
