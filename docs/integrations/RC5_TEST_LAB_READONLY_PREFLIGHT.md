@@ -2,24 +2,27 @@
 
 **Checkpoint state:** RC5 active/resumed; managed matrix not yet authorized  
 **Governing tracker:** Issue #261  
-**Stale bridge:** draft PR #378 must remain unmerged
+**Historical stale bridge:** draft PR #378 must remain unmerged
 
 ## Purpose
 
-The read-only preflight separates owner-controlled Google Cloud resource verification from Firebase Test Lab execution. It is a metadata/IAM/bucket/catalog inspection only: it must prove that the existing APIs, custom roles, IAM bindings, results bucket and live virtual Android catalog match the reviewed RC5 contract before any matrix is allowed to consume quota or write test results.
+The read-only preflight separates owner-controlled Google Cloud resource verification from Firebase Test Lab execution. It is a metadata/IAM/bucket/catalog inspection only: it must prove that the existing APIs, custom roles, IAM bindings, isolated APK-input bucket, append-only results bucket and live virtual Android catalog match the reviewed RC5 contract before any matrix is allowed to consume quota or write test results.
 
 ## Exact inspected boundary
 
 The managed preflight may read only:
 
 - `testing.googleapis.com` and `toolresults.googleapis.com` service state;
-- the `direktTestLabRunner` and `direktTestLabResultsWriter` custom-role definitions;
+- the `direktTestLabRunner`, `direktTestLabResultsWriter` and `direktTestLabInputStager` custom-role definitions;
 - project IAM bindings for the GitHub deployer;
 - absence of prohibited broad and project-scoped Cloud Storage roles;
 - the dedicated `gs://direkt-test-lab-results-264358173369` bucket metadata, uniform access, exactly one 30-day delete lifecycle rule and role-specific IAM allowlist;
-- every bucket-level role granted to the GitHub deployer, which must resolve to the approved results-writer role only with no additional bucket role;
+- the dedicated `gs://direkt-test-lab-inputs-264358173369` bucket metadata, uniform access, exactly one one-day delete lifecycle rule and role-specific IAM allowlist;
+- every bucket-level role granted to the GitHub deployer: results-writer only on the results bucket and input-stager only on the input bucket, with no additional deployer role;
 - the live Firebase Test Lab virtual Android model and version catalogs;
 - the public-safe 2–3 device candidate selected by the source-controlled RC5 matrix policy.
+
+The input-stager role is bucket-scoped and contains only bucket metadata/IAM read plus object create/get. It contains no object list, delete or update authority. The project-scoped runner retains no `storage.*` permission.
 
 ## Prohibited actions
 
@@ -61,6 +64,6 @@ The one-shot bridge publishes a dedicated receipt issue and links it to Issue #2
 
 ## Handoff rule
 
-Only after the exact-main read-only receipt is ready may DIREKT replace stale PR #378 with a synchronized one-shot bridge for the existing managed matrix workflow. Any failed or stale preflight remains permanent evidence and blocks matrix execution. RC5 closes only after a later exact-current-main matrix succeeds with machine-enforced results and sanitized artifacts.
+Only after the exact-main read-only receipt is ready may DIREKT dispatch the synchronized managed matrix. Any failed or stale preflight remains permanent evidence and blocks matrix execution. RC5 closes only after a later exact-current-main matrix succeeds with machine-enforced results and sanitized artifacts.
 
 RC6 remains closed and preserved. UIA remains parked/open. RC7+ and production authorization remain blocked while RC5 is open.
