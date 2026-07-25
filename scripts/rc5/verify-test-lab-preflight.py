@@ -45,15 +45,19 @@ def main() -> int:
         require(lock, needle, "active RC5 lock boundary")
 
     for needle in (
+        "run-name: DIREKT RC5 preflight ${{ inputs.correlation_id }}",
         "workflow_dispatch:",
         "source_sha:",
+        "correlation_id:",
         'SOURCE_SHA: ${{ inputs.source_sha }}',
+        'RC5_PREFLIGHT_CORRELATION: ${{ inputs.correlation_id }}',
         'test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"',
         "google-github-actions/auth@v3",
         "google-github-actions/setup-gcloud@v3",
         "bash scripts/rc5/run-test-lab-preflight.sh",
         "continue-on-error: true",
         "rc5-test-lab-preflight-${{ github.run_id }}",
+        'grep -Fxq "CORRELATION|${RC5_PREFLIGHT_CORRELATION}"',
         "RESOURCE_MUTATION|false",
         "MATRIX_EXECUTED|false",
         "SECRET_VALUES_ACCESSED|false",
@@ -65,6 +69,7 @@ def main() -> int:
         require(workflow, needle, "managed read-only preflight workflow control")
 
     for needle in (
+        "CORRELATION|${correlation_id}",
         "MODE|metadata_iam_catalog_only",
         "RESOURCE_MUTATION|false",
         "MATRIX_EXECUTED|false",
@@ -76,7 +81,10 @@ def main() -> int:
         "verify-no-project-storage-roles.sh",
         "gcloud storage buckets describe",
         "gcloud storage buckets get-iam-policy",
-        "results bucket has exact deployer-only writer-role allowlist",
+        'length == 1 and .[0].action.type == "Delete" and .[0].condition.age == $age',
+        "additional or earlier deletion rule",
+        "actual_deployer_bucket_roles",
+        "no additional deployer role",
         "gcloud firebase test android models list",
         "gcloud firebase test android versions list",
         "select-test-lab-matrix.py",
@@ -108,9 +116,15 @@ def main() -> int:
         "actions: write",
         "issues: write",
         'source_sha="${GITHUB_SHA}"',
+        'correlation_id="rc5-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"',
+        'expected_run_title="DIREKT RC5 preflight ${correlation_id}"',
         'test "${main_sha}" = "${source_sha}"',
+        '"correlation_id":$correlation',
         "rc5-test-lab-preflight.yml/dispatches",
         "event=workflow_dispatch&branch=main",
+        ".display_title == $title",
+        'test "$(jq -r \' .display_title\' <<< "${run_json}")" = "${expected_run_title}"'.replace("' .display_title'", "'.display_title'"),
+        'grep -Fxq "CORRELATION|${correlation_id}"',
         "available_and_schema_validated",
         "RC5 read-only preflight receipt",
         "repos/${repo}/issues/261/comments",
@@ -146,6 +160,10 @@ def main() -> int:
     for needle in (
         "RC5 active/resumed; managed matrix not yet authorized",
         "metadata/IAM/bucket/catalog inspection only",
+        "exactly one 30-day delete lifecycle rule",
+        "no additional bucket role",
+        "unique bridge correlation identifier",
+        "CORRELATION|rc5-<bridge-run-id>-<attempt>",
         "RESOURCE_MUTATION|false",
         "MATRIX_EXECUTED|false",
         "SECRET_VALUES_ACCESSED|false",
@@ -164,7 +182,7 @@ def main() -> int:
     print("resource_mutation=false")
     print("matrix_executed=false")
     print("secret_value_access=false")
-    print("receipt=schema_validated_dedicated_issue")
+    print("receipt=uniquely_correlated_schema_validated_dedicated_issue")
     print("production_authorization=false")
     return 0
 
