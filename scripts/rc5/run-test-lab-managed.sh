@@ -18,7 +18,6 @@ required_env=(
   GITHUB_RUN_ID
   GITHUB_RUN_ATTEMPT
   RUNNER_TEMP
-  GITHUB_ENV
   GITHUB_OUTPUT
   GITHUB_STEP_SUMMARY
 )
@@ -41,8 +40,10 @@ test "${DIREKT_TEST_RUNNER}" = "androidx.test.runner.AndroidJUnitRunner"
 repo_root="$(pwd)"
 android_root="${repo_root}/android/direkt-app"
 permission_manifest="${repo_root}/scripts/rc5/test-lab-runner-permissions.txt"
+append_only_uploader="${repo_root}/scripts/rc5/append-only-storage-upload.sh"
 test -d "${android_root}"
 test -s "${permission_manifest}"
+test -s "${append_only_uploader}"
 test ! -e "${android_root}/app/google-services.json"
 
 pushd "${android_root}" >/dev/null
@@ -119,8 +120,13 @@ test "$(jq -r --arg member "${member}" --arg role "${GCP_TEST_LAB_RESULTS_ROLE}"
 test "$(jq -r --arg member "${member}" '[.bindings[]? | select(any(.members[]?; . == $member)) | .role] | sort | join("\n")' <<< "${bucket_policy}")" = "${GCP_TEST_LAB_RESULTS_ROLE}"
 
 printf '{"kind":"direkt_rc5_storage_preflight","sourceSha":"%s","runAttempt":"%s"}\n' "${SOURCE_SHA}" "${GITHUB_RUN_ATTEMPT}" > "${RUNNER_TEMP}/rc5-storage-preflight.json"
-preflight_object="${GCP_TEST_LAB_RESULTS_BUCKET}/rc5/preflight/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}.json"
-gcloud storage cp "${RUNNER_TEMP}/rc5-storage-preflight.json" "${preflight_object}" --quiet
+bucket_name="${GCP_TEST_LAB_RESULTS_BUCKET#gs://}"
+preflight_object="rc5/preflight/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}.json"
+bash "${append_only_uploader}" \
+  "${GCP_PROJECT_NUMBER}" \
+  "${bucket_name}" \
+  "${preflight_object}" \
+  "${RUNNER_TEMP}/rc5-storage-preflight.json"
 
 python scripts/rc5/select-test-lab-matrix.py --self-test
 gcloud firebase test android models list \
