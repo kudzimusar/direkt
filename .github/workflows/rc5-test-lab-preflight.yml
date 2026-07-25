@@ -40,8 +40,8 @@ jobs:
       GCP_TEST_LAB_RESULTS_RETENTION_DAYS: "30"
       SOURCE_SHA: ${{ inputs.source_sha }}
       RC5_PREFLIGHT_CORRELATION: ${{ inputs.correlation_id }}
-      RC5_PREFLIGHT_RECEIPT: ${{ runner.temp }}/rc5-test-lab-preflight/receipt.txt
-      RC5_PREFLIGHT_MATRIX: ${{ runner.temp }}/rc5-test-lab-preflight/matrix.json
+      RC5_PREFLIGHT_RECEIPT: /tmp/rc5-test-lab-preflight/receipt.txt
+      RC5_PREFLIGHT_MATRIX: /tmp/rc5-test-lab-preflight/matrix.json
 
     steps:
       - name: Validate read-only preflight controls
@@ -103,7 +103,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: rc5-test-lab-preflight-${{ github.run_id }}
-          path: ${{ runner.temp }}/rc5-test-lab-preflight
+          path: /tmp/rc5-test-lab-preflight
           if-no-files-found: error
           retention-days: 30
 
