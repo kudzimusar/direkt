@@ -23,6 +23,8 @@ jobs:
       github.event.pull_request.head.ref == 'integration/rc6-whatsapp-run-bridge-8fe357e'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      DIAGNOSTICS_DIR: ${{ github.workspace }}/artifacts/rc6-eslint-refresh
     steps:
       - uses: actions/checkout@v6
         with:
@@ -36,6 +38,18 @@ jobs:
           cache: npm
           cache-dependency-path: backend/direkt-api/package-lock.json
 
+      - name: Initialize sanitized diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${DIAGNOSTICS_DIR}"
+          {
+            echo "SOURCE_SHA=${GITHUB_SHA}"
+            echo "MODE=development_toolchain_security_refresh"
+            echo "SECRET_VALUES_ACCESSED=false"
+            echo "PRODUCTION_AUTHORIZATION=false"
+          } > "${DIAGNOSTICS_DIR}/summary.txt"
+
       - name: Verify exact PR head
         shell: bash
         env:
@@ -47,21 +61,88 @@ jobs:
           test "${EXPECTED_BRANCH}" = "integration/rc6-whatsapp-run-bridge-8fe357e"
           remote_head="$(git ls-remote origin "refs/heads/${EXPECTED_BRANCH}" | awk '{print $1}')"
           test "${remote_head}" = "${EXPECTED_HEAD}"
+          echo "PASS=exact_pr_head" >> "${DIAGNOSTICS_DIR}/summary.txt"
 
-      - name: Resolve patched lint toolchain and verify backend
+      - name: Verify patched registry versions
         shell: bash
         working-directory: backend/direkt-api
         run: |
           set -euo pipefail
           npm install --global npm@11.16.0
-          test "$(npm view eslint@10.8.0 version)" = "10.8.0"
-          test "$(npm view @eslint/js@10.8.0 version)" = "10.8.0"
+          eslint_version="$(npm view eslint@10.8.0 version)"
+          eslint_js_version="$(npm view @eslint/js@10.8.0 version)"
+          test "${eslint_version}" = "10.8.0"
+          test "${eslint_js_version}" = "10.8.0"
+          {
+            echo "NPM_VERSION=$(npm --version)"
+            echo "ESLINT_TARGET=${eslint_version}"
+            echo "ESLINT_JS_TARGET=${eslint_js_version}"
+            echo "PASS=registry_versions"
+          } >> "${DIAGNOSTICS_DIR}/summary.txt"
+
+      - name: Resolve patched package and lock graph
+        shell: bash
+        working-directory: backend/direkt-api
+        run: |
+          set -euo pipefail
           npm install --save-dev --save-exact eslint@10.8.0 @eslint/js@10.8.0
-          npm audit --audit-level=high
+          npm ls eslint @eslint/js brace-expansion minimatch --all --json > "${DIAGNOSTICS_DIR}/resolved-tree.json"
+          echo "PASS=dependency_resolution" >> "${DIAGNOSTICS_DIR}/summary.txt"
+
+      - name: Audit patched backend graph
+        shell: bash
+        working-directory: backend/direkt-api
+        run: |
+          set -euo pipefail
+          if npm audit --json > "${DIAGNOSTICS_DIR}/npm-audit.json"; then
+            echo "PASS=npm_audit" >> "${DIAGNOSTICS_DIR}/summary.txt"
+          else
+            status=$?
+            echo "FAIL=npm_audit_status_${status}" >> "${DIAGNOSTICS_DIR}/summary.txt"
+            jq '{auditReportVersion, metadata, vulnerabilities}' "${DIAGNOSTICS_DIR}/npm-audit.json" > "${DIAGNOSTICS_DIR}/npm-audit-sanitized.json"
+            exit "${status}"
+          fi
+
+      - name: Verify formatting
+        shell: bash
+        working-directory: backend/direkt-api
+        run: |
+          set -euo pipefail
           npm run format:check
+          echo "PASS=format_check" >> "${DIAGNOSTICS_DIR}/summary.txt"
+
+      - name: Verify ESLint 10 compatibility
+        shell: bash
+        working-directory: backend/direkt-api
+        run: |
+          set -euo pipefail
           npm run lint
+          echo "PASS=lint" >> "${DIAGNOSTICS_DIR}/summary.txt"
+
+      - name: Verify backend types
+        shell: bash
+        working-directory: backend/direkt-api
+        run: |
+          set -euo pipefail
           npm run typecheck
+          echo "PASS=typecheck" >> "${DIAGNOSTICS_DIR}/summary.txt"
+
+      - name: Verify backend build
+        shell: bash
+        working-directory: backend/direkt-api
+        run: |
+          set -euo pipefail
           npm run build
+          echo "PASS=build" >> "${DIAGNOSTICS_DIR}/summary.txt"
+
+      - name: Upload sanitized dependency diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc6-eslint-security-refresh-${{ github.run_id }}
+          path: artifacts/rc6-eslint-refresh
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Commit lock refresh and self-remove
         shell: bash
