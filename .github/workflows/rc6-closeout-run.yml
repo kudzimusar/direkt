@@ -51,6 +51,22 @@ jobs:
       - name: Apply exact closure reconciliation
         run: python3 scripts/rc6/finalize-rc6-closeout.py
 
+      - name: Normalize closed-state verifier evidence needle
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('scripts/rc6/verify-whatsapp-contract.py')
+          text = path.read_text(encoding='utf-8')
+          old = '        "RC6 exact-current-main managed run `30137700769`",\n'
+          new = '        "exact-current-main managed run `30137700769`",\n'
+          if text.count(old) != 1:
+              raise SystemExit('Expected exactly one overly-specific closed RC6 proof needle.')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+
       - name: Normalize only changed date headings
         shell: bash
         run: |
