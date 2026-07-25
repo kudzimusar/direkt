@@ -131,10 +131,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          enabled_services="$(gcloud services list --enabled --project "${GCP_PROJECT_ID}" --format='value(config.name)')"
+          access_token="$(gcloud auth print-access-token)"
           for service in testing.googleapis.com toolresults.googleapis.com; do
-            grep -Fxq "${service}" <<< "${enabled_services}"
+            service_state="$(
+              curl --fail --silent --show-error \
+                --header "Authorization: Bearer ${access_token}" \
+                "https://serviceusage.googleapis.com/v1/projects/${GCP_PROJECT_NUMBER}/services/${service}" \
+                | jq -r '.state'
+            )"
+            test "${service_state}" = "ENABLED"
           done
+          unset access_token
 
           project_policy="$(gcloud projects get-iam-policy "${GCP_PROJECT_ID}" --format=json)"
           member="serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}"
