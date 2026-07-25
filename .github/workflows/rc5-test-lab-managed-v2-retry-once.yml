@@ -1,5 +1,5 @@
 name: DIREKT RC5 Test Lab managed v2 retry bridge
-# Retrigger after create-only evidence upload correction merged to main.
+# Retrigger after isolated APK input bootstrap and exact-main preflight success.
 
 "on":
   push:
