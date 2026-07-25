@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Fail-closed verifier for the RC6 one-shot signed-receipt synthetic canary bridge."""
 
+# Owner confirmed the Meta callback, verify-token, and WABA messages-subscription gate on 2026-07-25.
+
 from __future__ import annotations
 
 import pathlib
