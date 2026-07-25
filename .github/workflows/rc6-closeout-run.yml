@@ -49,6 +49,31 @@ jobs:
       - name: Apply exact closure reconciliation
         run: python3 scripts/rc6/finalize-rc6-closeout.py
 
+      - name: Normalize only changed date headings
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              'PROJECT_STATUS.md': (
+                  '**Updated:** 2026-07-25 (Asia/Tokyo)  \n',
+                  '**Updated:** 2026-07-25 (Asia/Tokyo)\n',
+              ),
+              'docs/integrations/CURRENT_INTEGRATION_STATUS.md': (
+                  '**Authoritative as-of date:** 2026-07-25 (Asia/Tokyo)  \n',
+                  '**Authoritative as-of date:** 2026-07-25 (Asia/Tokyo)\n',
+              ),
+          }
+          for filename, (old, new) in replacements.items():
+              path = Path(filename)
+              text = path.read_text(encoding='utf-8')
+              if text.count(old) != 1:
+                  raise SystemExit(f'{filename}: expected one changed date heading')
+              path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+
       - name: Verify clean patch
         run: git diff --check
 
