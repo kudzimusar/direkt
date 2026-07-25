@@ -6,9 +6,12 @@ project_number="${GCP_PROJECT_NUMBER:-264358173369}"
 deployer_sa="${GCP_DEPLOYER_SERVICE_ACCOUNT:-direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com}"
 runner_role_id="${GCP_TEST_LAB_RUNNER_ROLE_ID:-direktTestLabRunner}"
 results_role_id="${GCP_TEST_LAB_RESULTS_ROLE_ID:-direktTestLabResultsWriter}"
+input_role_id="${GCP_TEST_LAB_INPUT_ROLE_ID:-direktTestLabInputStager}"
 results_bucket="${GCP_TEST_LAB_RESULTS_BUCKET:-gs://direkt-test-lab-results-264358173369}"
-results_location="${GCP_TEST_LAB_RESULTS_LOCATION:-asia-northeast1}"
-retention_days="${GCP_TEST_LAB_RESULTS_RETENTION_DAYS:-30}"
+input_bucket="${GCP_TEST_LAB_INPUT_BUCKET:-gs://direkt-test-lab-inputs-264358173369}"
+bucket_location="${GCP_TEST_LAB_RESULTS_LOCATION:-asia-northeast1}"
+results_retention_days="${GCP_TEST_LAB_RESULTS_RETENTION_DAYS:-30}"
+input_retention_days="${GCP_TEST_LAB_INPUT_RETENTION_DAYS:-1}"
 source_sha="${SOURCE_SHA:-}"
 correlation_id="${RC5_PREFLIGHT_CORRELATION:-}"
 receipt="${RC5_PREFLIGHT_RECEIPT:-}"
@@ -19,9 +22,12 @@ matrix_output="${RC5_PREFLIGHT_MATRIX:-}"
 [[ "${deployer_sa}" == "direkt-github-deployer@${project_id}.iam.gserviceaccount.com" ]]
 [[ "${runner_role_id}" == "direktTestLabRunner" ]]
 [[ "${results_role_id}" == "direktTestLabResultsWriter" ]]
+[[ "${input_role_id}" == "direktTestLabInputStager" ]]
 [[ "${results_bucket}" == "gs://direkt-test-lab-results-${project_number}" ]]
-[[ "${results_location}" == "asia-northeast1" ]]
-[[ "${retention_days}" == "30" ]]
+[[ "${input_bucket}" == "gs://direkt-test-lab-inputs-${project_number}" ]]
+[[ "${bucket_location}" == "asia-northeast1" ]]
+[[ "${results_retention_days}" == "30" ]]
+[[ "${input_retention_days}" == "1" ]]
 [[ "${source_sha}" =~ ^[0-9a-f]{40}$ ]]
 [[ "${correlation_id}" =~ ^rc5-[0-9]+-[1-9][0-9]*$ ]]
 [[ -n "${receipt}" ]]
@@ -68,6 +74,7 @@ workdir = Path(sys.argv[2])
 for source_name, output_name in (
     ("test-lab-runner-permissions.txt", "expected-runner.txt"),
     ("test-lab-results-permissions.txt", "expected-results.txt"),
+    ("test-lab-input-permissions.txt", "expected-input.txt"),
 ):
     match = re.search(
         rf'cat > "\$\{{workdir\}}/{re.escape(source_name)}" <<\'EOF\'\n(.*?)\nEOF',
@@ -107,39 +114,36 @@ unset access_token
 
 runner_role="projects/${project_id}/roles/${runner_role_id}"
 results_role="projects/${project_id}/roles/${results_role_id}"
+input_role="projects/${project_id}/roles/${input_role_id}"
 deployer_member="serviceAccount:${deployer_sa}"
 
-if runner_record="$(gcloud iam roles describe "${runner_role_id}" --project "${project_id}" --format=json 2>/dev/null)"; then
-  jq -r '.includedPermissions[]?' <<< "${runner_record}" | LC_ALL=C sort -u > "${workdir}/actual-runner.txt"
-  if [[ -f "${workdir}/expected-runner.txt" ]] && diff -u "${workdir}/expected-runner.txt" "${workdir}/actual-runner.txt" >/dev/null; then
-    mark_pass "runner custom role has exact source-controlled permission set"
-  else
-    mark_fail "runner custom role permission set drifted"
-  fi
-  if [[ "$(jq -r '.deleted // false' <<< "${runner_record}")" == "false" ]]; then
-    mark_pass "runner custom role is not deleted"
-  else
-    mark_fail "runner custom role is deleted"
-  fi
-else
-  mark_fail "runner custom role is not inspectable"
-fi
+inspect_role() {
+  local role_id="$1"
+  local expected_file="$2"
+  local actual_file="$3"
+  local label="$4"
+  local record
 
-if results_record="$(gcloud iam roles describe "${results_role_id}" --project "${project_id}" --format=json 2>/dev/null)"; then
-  jq -r '.includedPermissions[]?' <<< "${results_record}" | LC_ALL=C sort -u > "${workdir}/actual-results.txt"
-  if [[ -f "${workdir}/expected-results.txt" ]] && diff -u "${workdir}/expected-results.txt" "${workdir}/actual-results.txt" >/dev/null; then
-    mark_pass "results custom role has exact append-only permission set"
+  if record="$(gcloud iam roles describe "${role_id}" --project "${project_id}" --format=json 2>/dev/null)"; then
+    jq -r '.includedPermissions[]?' <<< "${record}" | LC_ALL=C sort -u > "${actual_file}"
+    if [[ -f "${expected_file}" ]] && diff -u "${expected_file}" "${actual_file}" >/dev/null; then
+      mark_pass "${label} custom role has exact source-controlled permission set"
+    else
+      mark_fail "${label} custom role permission set drifted"
+    fi
+    if [[ "$(jq -r '.deleted // false' <<< "${record}")" == "false" ]]; then
+      mark_pass "${label} custom role is not deleted"
+    else
+      mark_fail "${label} custom role is deleted"
+    fi
   else
-    mark_fail "results custom role permission set drifted"
+    mark_fail "${label} custom role is not inspectable"
   fi
-  if [[ "$(jq -r '.deleted // false' <<< "${results_record}")" == "false" ]]; then
-    mark_pass "results custom role is not deleted"
-  else
-    mark_fail "results custom role is deleted"
-  fi
-else
-  mark_fail "results custom role is not inspectable"
-fi
+}
+
+inspect_role "${runner_role_id}" "${workdir}/expected-runner.txt" "${workdir}/actual-runner.txt" "runner"
+inspect_role "${results_role_id}" "${workdir}/expected-results.txt" "${workdir}/actual-results.txt" "results"
+inspect_role "${input_role_id}" "${workdir}/expected-input.txt" "${workdir}/actual-input.txt" "input"
 
 if project_policy="$(gcloud projects get-iam-policy "${project_id}" --format=json 2>/dev/null)"; then
   if [[ "$(jq -r --arg member "${deployer_member}" --arg role "${runner_role}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${project_policy}")" == "1" ]]; then
@@ -147,14 +151,18 @@ if project_policy="$(gcloud projects get-iam-policy "${project_id}" --format=jso
   else
     mark_fail "project deployer runner-role binding missing or duplicated"
   fi
-  if [[ "$(jq -r --arg member "${deployer_member}" --arg role "${results_role}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${project_policy}")" == "0" ]]; then
-    mark_pass "results writer role is absent from project IAM"
-  else
-    mark_fail "results writer role escaped to project IAM"
-  fi
+  for pair in "${results_role}|results writer" "${input_role}|input stager"; do
+    role="${pair%%|*}"
+    label="${pair#*|}"
+    if [[ "$(jq -r --arg member "${deployer_member}" --arg role "${role}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${project_policy}")" == "0" ]]; then
+      mark_pass "${label} role is absent from project IAM"
+    else
+      mark_fail "${label} role escaped to project IAM"
+    fi
+  done
 
   broad_role_found=false
-  for prohibited_role in roles/owner roles/editor roles/cloudtestservice.testAdmin roles/firebase.analyticsViewer roles/storage.admin roles/storage.objectAdmin; do
+  for prohibited_role in roles/owner roles/editor roles/cloudtestservice.testAdmin roles/firebase.analyticsViewer roles/storage.admin roles/storage.objectAdmin roles/storage.objectUser roles/storage.objectViewer; do
     if jq -e --arg member "${deployer_member}" --arg role "${prohibited_role}" '.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)' <<< "${project_policy}" >/dev/null; then
       broad_role_found=true
     fi
@@ -174,40 +182,51 @@ else
   mark_fail "deployer project-scoped Cloud Storage boundary failed"
 fi
 
-if bucket_record="$(gcloud storage buckets describe "${results_bucket}" --project "${project_id}" --format='json(location,uniform_bucket_level_access,lifecycle_config)' 2>/dev/null)"; then
-  if [[ "$(jq -r '.location' <<< "${bucket_record}" | tr '[:upper:]' '[:lower:]')" == "${results_location}" ]]; then
-    mark_pass "results bucket location is ${results_location}"
-  else
-    mark_fail "results bucket location drifted"
-  fi
-  if [[ "$(jq -r '.uniform_bucket_level_access // false' <<< "${bucket_record}")" == "true" ]]; then
-    mark_pass "results bucket uses uniform access"
-  else
-    mark_fail "results bucket uniform access is disabled"
-  fi
-  lifecycle_rules="$(jq -c '.lifecycle_config.rule // []' <<< "${bucket_record}")"
-  if jq -e --argjson age "${retention_days}" 'length == 1 and .[0].action.type == "Delete" and .[0].condition.age == $age' <<< "${lifecycle_rules}" >/dev/null; then
-    mark_pass "results bucket has exactly one ${retention_days}-day delete lifecycle rule"
-  else
-    mark_fail "results bucket lifecycle has an additional or earlier deletion rule"
-  fi
-else
-  mark_fail "results bucket is not inspectable"
-fi
+inspect_bucket() {
+  local bucket_uri="$1"
+  local expected_role="$2"
+  local retention="$3"
+  local label="$4"
+  local record lifecycle_rules policy actual_members expected_members actual_roles expected_roles
 
-if bucket_policy="$(gcloud storage buckets get-iam-policy "${results_bucket}" --format=json 2>/dev/null)"; then
-  actual_results_members="$(jq -c --arg role "${results_role}" '[.bindings[]? | select(.role == $role) | .members[]?] | unique | sort' <<< "${bucket_policy}")"
-  expected_results_members="$(jq -nc --arg member "${deployer_member}" '[$member] | sort')"
-  actual_deployer_bucket_roles="$(jq -c --arg member "${deployer_member}" '[.bindings[]? | select([.members[]? | select(. == $member)] | length > 0) | .role] | unique | sort' <<< "${bucket_policy}")"
-  expected_deployer_bucket_roles="$(jq -nc --arg role "${results_role}" '[$role] | sort')"
-  if [[ "${actual_results_members}" == "${expected_results_members}" && "${actual_deployer_bucket_roles}" == "${expected_deployer_bucket_roles}" ]]; then
-    mark_pass "results bucket has exact deployer-only writer-role allowlist and no additional deployer role"
+  if record="$(gcloud storage buckets describe "${bucket_uri}" --project "${project_id}" --format='json(location,uniform_bucket_level_access,lifecycle_config)' 2>/dev/null)"; then
+    if [[ "$(jq -r '.location' <<< "${record}" | tr '[:upper:]' '[:lower:]')" == "${bucket_location}" ]]; then
+      mark_pass "${label} bucket location is ${bucket_location}"
+    else
+      mark_fail "${label} bucket location drifted"
+    fi
+    if [[ "$(jq -r '.uniform_bucket_level_access // false' <<< "${record}")" == "true" ]]; then
+      mark_pass "${label} bucket uses uniform access"
+    else
+      mark_fail "${label} bucket uniform access is disabled"
+    fi
+    lifecycle_rules="$(jq -c '.lifecycle_config.rule // []' <<< "${record}")"
+    if jq -e --argjson age "${retention}" 'length == 1 and .[0].action.type == "Delete" and .[0].condition.age == $age' <<< "${lifecycle_rules}" >/dev/null; then
+      mark_pass "${label} bucket has exactly one ${retention}-day delete lifecycle rule"
+    else
+      mark_fail "${label} bucket lifecycle drifted"
+    fi
   else
-    mark_fail "results bucket deployer role or writer-role allowlist drifted"
+    mark_fail "${label} bucket is not inspectable"
   fi
-else
-  mark_fail "results bucket IAM policy is not inspectable"
-fi
+
+  if policy="$(gcloud storage buckets get-iam-policy "${bucket_uri}" --format=json 2>/dev/null)"; then
+    actual_members="$(jq -c --arg role "${expected_role}" '[.bindings[]? | select(.role == $role) | .members[]?] | unique | sort' <<< "${policy}")"
+    expected_members="$(jq -nc --arg member "${deployer_member}" '[$member] | sort')"
+    actual_roles="$(jq -c --arg member "${deployer_member}" '[.bindings[]? | select([.members[]? | select(. == $member)] | length > 0) | .role] | unique | sort' <<< "${policy}")"
+    expected_roles="$(jq -nc --arg role "${expected_role}" '[$role] | sort')"
+    if [[ "${actual_members}" == "${expected_members}" && "${actual_roles}" == "${expected_roles}" ]]; then
+      mark_pass "${label} bucket has exact deployer-only role allowlist"
+    else
+      mark_fail "${label} bucket deployer role or role-member allowlist drifted"
+    fi
+  else
+    mark_fail "${label} bucket IAM policy is not inspectable"
+  fi
+}
+
+inspect_bucket "${results_bucket}" "${results_role}" "${results_retention_days}" "results"
+inspect_bucket "${input_bucket}" "${input_role}" "${input_retention_days}" "input"
 
 models_file="${workdir}/models.json"
 versions_file="${workdir}/versions.json"
@@ -243,6 +262,6 @@ if (( failures > 0 )); then
   exit 1
 fi
 
-mark_pass "RC5 Test Lab metadata IAM bucket and catalog boundary is ready"
+mark_pass "RC5 Test Lab metadata IAM input/results buckets and catalog boundary is ready"
 printf 'RESULT|ready\n' >> "${receipt}"
 printf 'FAILURE_COUNT|0\n' >> "${receipt}"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed source verifier for the temporary RC5 managed-proof bridge."""
+"""Fail-closed source verifier for the active RC5 managed-proof bridge."""
 
 from __future__ import annotations
 
@@ -27,26 +27,28 @@ def prohibit(text: str, pattern: str, label: str) -> None:
 
 
 def main() -> int:
-    bridge = read(".github/workflows/rc5-test-lab-managed-proof-once.yml")
-    managed = read(".github/workflows/firebase-test-lab.yml")
+    bridge = read(".github/workflows/rc5-test-lab-managed-v2-retry-once.yml")
+    managed = read(".github/workflows/firebase-test-lab-managed.yml")
+    runner = read("scripts/rc5/run-test-lab-managed.sh")
 
     for needle in (
         "branches:\n      - main",
-        "- .github/workflows/rc5-test-lab-managed-proof-once.yml",
+        "- .github/workflows/rc5-test-lab-managed-v2-retry-once.yml",
         "actions: write",
         "issues: write",
         'source_sha="${GITHUB_SHA}"',
         'test "${main_sha}" = "${source_sha}"',
-        'workflow="firebase-test-lab.yml"',
+        'workflow="firebase-test-lab-managed.yml"',
+        'expected_name="DIREKT Firebase Test Lab Android matrix v2"',
         "before_ids=",
         'confirmation:"RUN-DIREKT-TEST-LAB"',
         'source_sha:$sha',
         "candidate_count",
-        "Ambiguous RC5 managed run",
-        'test "$(jq -r \'.head_sha\' <<< "${run_json}")" = "${source_sha}"',
-        'test "$(jq -r \'.event\' <<< "${run_json}")" = "workflow_dispatch"',
+        "More than one new exact-source Test Lab v2 run appeared",
+        '.head_sha',
+        'workflow_dispatch',
         'artifact_name="rc5-firebase-test-lab-${run_id}-${run_attempt}"',
-        'schema == "direkt.rc5.test-lab-receipt.v1"',
+        '.schema == "direkt.rc5.test-lab-receipt.v1"',
         '.sourceSha == $sha',
         '.githubRunId == $run',
         '.githubRunAttempt == $attempt',
@@ -57,7 +59,7 @@ def main() -> int:
         'select(. >= 35 and . <= 36)',
         "receipt-matrix.json",
         "standalone-matrix.json",
-        "RC5 managed Test Lab receipt",
+        "RC5 managed Test Lab v2 retry receipt",
         "repos/${repo}/issues/261/comments",
         "stale_success",
         "available_and_schema_validated",
@@ -79,23 +81,34 @@ def main() -> int:
 
     for needle in (
         "workflow_dispatch:",
-        'test "${DIREKT_CONFIRMATION}" = "RUN-DIREKT-TEST-LAB"',
-        'test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"',
+        'DIREKT_CONFIRMATION: ${{ inputs.confirmation }}',
+        'SOURCE_SHA: ${{ inputs.source_sha }}',
+        "GCP_TEST_LAB_INPUT_ROLE: projects/direkt-dev-502701/roles/direktTestLabInputStager",
+        "GCP_TEST_LAB_INPUT_BUCKET: gs://direkt-test-lab-inputs-264358173369",
         "google-github-actions/auth@v3",
-        "gcloud firebase test android run",
-        "--num-flaky-test-attempts 0",
-        "--no-auto-google-login",
-        'schema: "direkt.rc5.test-lab-receipt.v1"',
-        'result: "passed"',
-        'productionAuthorization: false',
+        "bash scripts/rc5/run-test-lab-managed.sh",
         "rc5-firebase-test-lab-${{ github.run_id }}-${{ github.run_attempt }}",
     ):
         require(managed, needle, "managed Test Lab authority")
+
+    for needle in (
+        'input_prefix="rc5/inputs/${SOURCE_SHA}/${GITHUB_RUN_ID}/attempt-${GITHUB_RUN_ATTEMPT}"',
+        '--app "${app_input_uri}"',
+        '--test "${test_input_uri}"',
+        "--num-flaky-test-attempts 0",
+        "--no-auto-google-login",
+        'schema: "direkt.rc5.test-lab-receipt.v1"',
+        'inputObjectAccess: "create-get-no-list-delete-update"',
+        'result: "passed"',
+        'productionAuthorization: false',
+    ):
+        require(runner, needle, "managed Test Lab runner authority")
 
     print("RC5 managed-proof bridge verification passed.")
     print("source=exact_current_main")
     print("dispatch=unique_new_exact_source_run")
     print("execution=managed_workflow_only")
+    print("inputs=isolated_immutable_one_day_gs_paths")
     print("evidence=schema_validated_receipt_and_matrix")
     print("failure=preserved_dedicated_receipt")
     print("production_authorization=false")

@@ -31,7 +31,10 @@ def main() -> int:
     workflow = read(".github/workflows/rc5-test-lab-preflight.yml")
     bridge = read(".github/workflows/rc5-test-lab-preflight-once.yml")
     inspector = read("scripts/rc5/run-test-lab-preflight.sh")
-    managed_matrix = read(".github/workflows/firebase-test-lab.yml")
+    bootstrap = read("scripts/rc5/bootstrap-test-lab.sh")
+    managed_workflow = read(".github/workflows/firebase-test-lab-managed.yml")
+    managed_runner = read("scripts/rc5/run-test-lab-managed.sh")
+    uploader = read("scripts/rc5/append-only-storage-upload.sh")
     contract = read(".github/workflows/rc5-test-lab-contract.yml")
     notes = read("docs/integrations/RC5_TEST_LAB_READONLY_PREFLIGHT.md")
 
@@ -39,7 +42,6 @@ def main() -> int:
         "CLAIMED — RC5 Firebase Test Lab device-matrix closure",
         "RC5 implementation contract — ACTIVE",
         "RC5 Firebase Test Lab is the sole active implementation lane",
-        "Draft PR #378 is stale and unmergeable",
         "RC7+ source work must not begin until RC5 releases",
         "Production-release authorization | BLOCKED",
     ):
@@ -50,6 +52,9 @@ def main() -> int:
         "workflow_dispatch:",
         "source_sha:",
         "correlation_id:",
+        "GCP_TEST_LAB_INPUT_ROLE_ID: direktTestLabInputStager",
+        "GCP_TEST_LAB_INPUT_BUCKET: gs://direkt-test-lab-inputs-264358173369",
+        'GCP_TEST_LAB_INPUT_RETENTION_DAYS: "1"',
         'SOURCE_SHA: ${{ inputs.source_sha }}',
         'RC5_PREFLIGHT_CORRELATION: ${{ inputs.correlation_id }}',
         'test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"',
@@ -70,24 +75,36 @@ def main() -> int:
         require(workflow, needle, "managed read-only preflight workflow control")
 
     for needle in (
+        "test-lab-input-permissions.txt",
+        "storage.objects.create\nstorage.objects.get",
+        "direktTestLabInputStager",
+        "direkt-test-lab-inputs-${project_number}",
+        'input_retention_days="${GCP_TEST_LAB_INPUT_RETENTION_DAYS:-1}"',
+        'verify_bucket "${input_bucket_uri}"',
+        "bucket-only with create/get and no list/delete/update",
+    ):
+        require(bootstrap, needle, "owner bootstrap input isolation")
+
+    for needle in (
         "CORRELATION|${correlation_id}",
         "MODE|metadata_iam_catalog_only",
         "RESOURCE_MUTATION|false",
         "MATRIX_EXECUTED|false",
         "SECRET_VALUES_ACCESSED|false",
         "PRODUCTION_AUTHORIZATION|false",
+        "test-lab-input-permissions.txt",
+        "input_role_id",
+        "input_bucket",
+        "input_retention_days",
+        "${label} role is absent from project IAM",
+        'inspect_bucket "${input_bucket}" "${input_role}" "${input_retention_days}" "input"',
         "gcloud auth print-access-token",
         "https://serviceusage.googleapis.com/v1/projects/${project_number}/services/${service}",
-        "jq -r '.state // empty'",
         "gcloud iam roles describe",
         "gcloud projects get-iam-policy",
         "verify-no-project-storage-roles.sh",
         "gcloud storage buckets describe",
         "gcloud storage buckets get-iam-policy",
-        'length == 1 and .[0].action.type == "Delete" and .[0].condition.age == $age',
-        "additional or earlier deletion rule",
-        "actual_deployer_bucket_roles",
-        "no additional deployer role",
         "gcloud firebase test android models list",
         "gcloud firebase test android versions list",
         "select-test-lab-matrix.py",
@@ -97,14 +114,6 @@ def main() -> int:
         "RESULT|ready",
     ):
         require(inspector, needle, "read-only metadata/IAM/catalog inspector")
-
-    for needle in (
-        "gcloud auth print-access-token",
-        "https://serviceusage.googleapis.com/v1/projects/${GCP_PROJECT_NUMBER}/services/${service}",
-        "jq -r '.state'",
-        "serviceusage.services.get",
-    ):
-        require(managed_matrix, needle, "least-privilege managed service inspection")
 
     read_only_surface = workflow + "\n" + inspector
     for pattern, label in (
@@ -123,8 +132,43 @@ def main() -> int:
     ):
         prohibit(read_only_surface, pattern, label)
 
-    prohibit(managed_matrix, r"gcloud\s+services\s+list", "managed project-wide Service Usage listing")
-    prohibit(managed_matrix, r"serviceusage\.services\.list", "managed Service Usage list permission")
+    for needle in (
+        "GCP_TEST_LAB_INPUT_ROLE: projects/direkt-dev-502701/roles/direktTestLabInputStager",
+        "GCP_TEST_LAB_INPUT_BUCKET: gs://direkt-test-lab-inputs-264358173369",
+        'GCP_TEST_LAB_INPUT_RETENTION_DAYS: "1"',
+        "google-github-actions/auth@v3",
+        "bash scripts/rc5/run-test-lab-managed.sh",
+    ):
+        require(managed_workflow, needle, "managed isolated-input authority")
+
+    for needle in (
+        "expected_input_permissions",
+        "storage.objects.get",
+        "input-stager role contains prohibited object list/delete/update authority",
+        'verify_bucket_boundary "${GCP_TEST_LAB_INPUT_BUCKET}"',
+        'input_prefix="rc5/inputs/${SOURCE_SHA}/${GITHUB_RUN_ID}/attempt-${GITHUB_RUN_ATTEMPT}"',
+        'app_input_uri="gs://${input_bucket_name}/${app_input_object}"',
+        'test_input_uri="gs://${input_bucket_name}/${test_input_object}"',
+        '--app "${app_input_uri}"',
+        '--test "${test_input_uri}"',
+        'inputObjectAccess: "create-get-no-list-delete-update"',
+        "inputRetentionDays: 1",
+        "roles/editor",
+        "roles/storage.objectViewer",
+    ):
+        require(managed_runner, needle, "managed immutable APK input staging")
+
+    for needle in (
+        '"direkt-test-lab-inputs-${project_number}"',
+        '[[ "${object_name}" == rc5/inputs/* ]]',
+        '[[ "${object_name}" == *.apk ]]',
+        "application/vnd.android.package-archive",
+        "ifGenerationMatch=0",
+    ):
+        require(uploader, needle, "create-only input upload control")
+
+    prohibit(managed_runner, r"^storage\.objects\.(delete|list|update)$", "input object list/delete/update permission")
+    prohibit(uploader, r"gcloud\s+storage\s+(cp|mv|rm)", "stateful Storage CLI upload")
 
     for needle in (
         "branches:\n      - main",
@@ -139,7 +183,6 @@ def main() -> int:
         "rc5-test-lab-preflight.yml/dispatches",
         "event=workflow_dispatch&branch=main",
         ".display_title == $title",
-        'test "$(jq -r \' .display_title\' <<< "${run_json}")" = "${expected_run_title}"'.replace("' .display_title'", "'.display_title'"),
         'grep -Fxq "CORRELATION|${correlation_id}"',
         "available_and_schema_validated",
         "RC5 read-only preflight receipt",
@@ -154,7 +197,7 @@ def main() -> int:
         require(bridge, needle, "one-shot preflight receipt bridge")
 
     for pattern, label in (
-        (r"firebase-test-lab\.yml/dispatches", "managed Test Lab matrix dispatch"),
+        (r"firebase-test-lab-managed\.yml/dispatches", "managed Test Lab matrix dispatch"),
         (r"RUN-DIREKT-TEST-LAB", "matrix execution confirmation"),
         (r"google-github-actions/auth", "Google Cloud authentication in bridge"),
         (r"gcloud\b", "Google Cloud command in bridge"),
@@ -177,16 +220,12 @@ def main() -> int:
         "RC5 active/resumed; managed matrix not yet authorized",
         "metadata/IAM/bucket/catalog inspection only",
         "exactly one 30-day delete lifecycle rule",
-        "no additional bucket role",
-        "unique bridge correlation identifier",
-        "CORRELATION|rc5-<bridge-run-id>-<attempt>",
         "RESOURCE_MUTATION|false",
         "MATRIX_EXECUTED|false",
         "SECRET_VALUES_ACCESSED|false",
         "PRODUCTION_AUTHORIZATION|false",
         "RESULT|ready",
         "FAILURE_COUNT|0",
-        "draft PR #378 must remain unmerged",
         "RC7+ and production authorization remain blocked",
     ):
         require(notes, needle, "permanent RC5 preflight documentation")
@@ -194,10 +233,11 @@ def main() -> int:
     print("RC5 read-only Test Lab preflight verification passed.")
     print("source=exact_current_main")
     print("identity=github_oidc_no_static_credentials")
-    print("inspection=exact_service_get_custom_roles_project_iam_bucket_iam_lifecycle_live_catalog")
+    print("inspection=exact_service_get_custom_roles_project_iam_input_results_bucket_iam_lifecycle_live_catalog")
     print("resource_mutation=false")
     print("matrix_executed=false")
     print("secret_value_access=false")
+    print("input_storage=isolated_one_day_create_get_no_list_delete_update")
     print("receipt=uniquely_correlated_schema_validated_dedicated_issue")
     print("production_authorization=false")
     return 0

@@ -12,9 +12,25 @@ object_name="$3"
 source_file="$4"
 
 [[ "${project_number}" =~ ^[1-9][0-9]*$ ]]
-test "${bucket_name}" = "direkt-test-lab-results-${project_number}"
-[[ "${object_name}" == rc5/preflight/* ]]
+case "${bucket_name}" in
+  "direkt-test-lab-results-${project_number}")
+    [[ "${object_name}" == rc5/preflight/* ]]
+    ;;
+  "direkt-test-lab-inputs-${project_number}")
+    [[ "${object_name}" == rc5/inputs/* ]]
+    [[ "${object_name}" == *.apk ]]
+    ;;
+  *)
+    echo "RC5 upload target escaped the dedicated results/input buckets." >&2
+    exit 1
+    ;;
+esac
 test -s "${source_file}"
+
+content_type="application/json"
+if [[ "${source_file}" == *.apk ]]; then
+  content_type="application/vnd.android.package-archive"
+fi
 
 access_token="$(gcloud auth print-access-token)"
 response_file="$(mktemp)"
@@ -30,7 +46,7 @@ PY
 curl --fail --silent --show-error \
   --request POST \
   --header "Authorization: Bearer ${access_token}" \
-  --header "Content-Type: application/json" \
+  --header "Content-Type: ${content_type}" \
   --data-binary "@${source_file}" \
   "https://storage.googleapis.com/upload/storage/v1/b/${bucket_name}/o?uploadType=media&name=${encoded_object_name}&ifGenerationMatch=0" \
   > "${response_file}"

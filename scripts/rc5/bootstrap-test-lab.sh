@@ -5,24 +5,31 @@ project_id="${GCP_PROJECT_ID:-direkt-dev-502701}"
 deployer_sa="${GCP_DEPLOYER_SERVICE_ACCOUNT:-direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com}"
 runner_role_id="${GCP_TEST_LAB_RUNNER_ROLE_ID:-direktTestLabRunner}"
 results_role_id="${GCP_TEST_LAB_RESULTS_ROLE_ID:-direktTestLabResultsWriter}"
+input_role_id="${GCP_TEST_LAB_INPUT_ROLE_ID:-direktTestLabInputStager}"
 bucket_location="${GCP_TEST_LAB_RESULTS_LOCATION:-asia-northeast1}"
-retention_days="${GCP_TEST_LAB_RESULTS_RETENTION_DAYS:-30}"
+results_retention_days="${GCP_TEST_LAB_RESULTS_RETENTION_DAYS:-30}"
+input_retention_days="${GCP_TEST_LAB_INPUT_RETENTION_DAYS:-1}"
 
 [[ "${project_id}" == "direkt-dev-502701" ]]
 [[ "${deployer_sa}" == "direkt-github-deployer@${project_id}.iam.gserviceaccount.com" ]]
 [[ "${runner_role_id}" == "direktTestLabRunner" ]]
 [[ "${results_role_id}" == "direktTestLabResultsWriter" ]]
+[[ "${input_role_id}" == "direktTestLabInputStager" ]]
 [[ "${bucket_location}" == "asia-northeast1" ]]
-[[ "${retention_days}" == "30" ]]
+[[ "${results_retention_days}" == "30" ]]
+[[ "${input_retention_days}" == "1" ]]
 
 active_account="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n 1)"
 test -n "${active_account}"
 project_number="$(gcloud projects describe "${project_id}" --format='value(projectNumber)')"
 [[ "${project_number}" =~ ^[0-9]+$ ]]
-bucket_name="direkt-test-lab-results-${project_number}"
-bucket_uri="gs://${bucket_name}"
+results_bucket_name="direkt-test-lab-results-${project_number}"
+results_bucket_uri="gs://${results_bucket_name}"
+input_bucket_name="direkt-test-lab-inputs-${project_number}"
+input_bucket_uri="gs://${input_bucket_name}"
 runner_role="projects/${project_id}/roles/${runner_role_id}"
 results_role="projects/${project_id}/roles/${results_role_id}"
+input_role="projects/${project_id}/roles/${input_role_id}"
 deployer_member="serviceAccount:${deployer_sa}"
 
 gcloud services enable \
@@ -81,10 +88,17 @@ storage.buckets.getIamPolicy
 storage.objects.create
 EOF
 
-# Fail before custom-role mutation if Google currently reports any requested
-# permission as unavailable for a project-level custom role. This prevents
-# copying a permission from a predefined role that is valid only at a parent
-# resource level (for example resourcemanager.projects.list).
+# This role is bound only on the dedicated synthetic APK input bucket. It can
+# create immutable run-scoped APK inputs and read only those bucket objects so
+# Test Lab can validate explicit gs:// app/test references. It cannot list,
+# overwrite, update or delete objects; one-day cleanup remains owner-controlled.
+cat > "${workdir}/test-lab-input-permissions.txt" <<'EOF'
+storage.buckets.get
+storage.buckets.getIamPolicy
+storage.objects.create
+storage.objects.get
+EOF
+
 project_resource="//cloudresourcemanager.googleapis.com/projects/${project_id}"
 gcloud iam list-testable-permissions "${project_resource}" \
   --filter="customRolesSupportLevel!=NOT_SUPPORTED" \
@@ -107,6 +121,7 @@ assert_project_role_permissions_testable() {
 
 assert_project_role_permissions_testable "${workdir}/test-lab-runner-permissions.txt" "direktTestLabRunner"
 assert_project_role_permissions_testable "${workdir}/test-lab-results-permissions.txt" "direktTestLabResultsWriter"
+assert_project_role_permissions_testable "${workdir}/test-lab-input-permissions.txt" "direktTestLabInputStager"
 
 normalize_permissions() {
   LC_ALL=C sort -u "$1" | paste -sd, -
@@ -114,6 +129,7 @@ normalize_permissions() {
 
 runner_permissions="$(normalize_permissions "${workdir}/test-lab-runner-permissions.txt")"
 results_permissions="$(normalize_permissions "${workdir}/test-lab-results-permissions.txt")"
+input_permissions="$(normalize_permissions "${workdir}/test-lab-input-permissions.txt")"
 
 upsert_role() {
   local role_id="$1"
@@ -149,42 +165,61 @@ upsert_role \
 upsert_role \
   "${results_role_id}" \
   "DIREKT Firebase Test Lab Results Writer" \
-  "Read dedicated-bucket metadata/IAM and append new Test Lab result objects; no lifecycle mutation, object read, overwrite or delete." \
+  "Read dedicated results-bucket metadata/IAM and append new Test Lab result objects; no lifecycle mutation, object read, overwrite or delete." \
   "${results_permissions}"
 
-if ! gcloud storage buckets describe "${bucket_uri}" --project "${project_id}" >/dev/null 2>&1; then
-  gcloud storage buckets create "${bucket_uri}" \
+upsert_role \
+  "${input_role_id}" \
+  "DIREKT Firebase Test Lab Input Stager" \
+  "Create and read immutable synthetic APK inputs in the dedicated one-day input bucket; no list, overwrite, update or delete." \
+  "${input_permissions}"
+
+ensure_bucket() {
+  local bucket_uri="$1"
+  if ! gcloud storage buckets describe "${bucket_uri}" --project "${project_id}" >/dev/null 2>&1; then
+    gcloud storage buckets create "${bucket_uri}" \
+      --project "${project_id}" \
+      --location "${bucket_location}" \
+      --uniform-bucket-level-access \
+      --quiet >/dev/null
+  fi
+  gcloud storage buckets update "${bucket_uri}" \
     --project "${project_id}" \
-    --location "${bucket_location}" \
     --uniform-bucket-level-access \
     --quiet >/dev/null
-fi
+}
 
-# Converge both newly created and pre-existing dedicated buckets to the same
-# IAM-only access boundary before verifying or writing managed evidence.
-gcloud storage buckets update "${bucket_uri}" \
-  --project "${project_id}" \
-  --uniform-bucket-level-access \
-  --quiet >/dev/null
+ensure_bucket "${results_bucket_uri}"
+ensure_bucket "${input_bucket_uri}"
 
-bucket_record="$(gcloud storage buckets describe "${bucket_uri}" --project "${project_id}" --format='json(location,uniform_bucket_level_access)')"
-test "$(jq -r '.location' <<< "${bucket_record}" | tr '[:upper:]' '[:lower:]')" = "${bucket_location}"
-test "$(jq -r '.uniform_bucket_level_access' <<< "${bucket_record}")" = "true"
-
-cat > "${workdir}/lifecycle.json" <<EOF
+cat > "${workdir}/results-lifecycle.json" <<EOF
 {
   "rule": [
     {
       "action": {"type": "Delete"},
-      "condition": {"age": ${retention_days}}
+      "condition": {"age": ${results_retention_days}}
+    }
+  ]
+}
+EOF
+cat > "${workdir}/input-lifecycle.json" <<EOF
+{
+  "rule": [
+    {
+      "action": {"type": "Delete"},
+      "condition": {"age": ${input_retention_days}}
     }
   ]
 }
 EOF
 
-gcloud storage buckets update "${bucket_uri}" \
+gcloud storage buckets update "${results_bucket_uri}" \
   --project "${project_id}" \
-  --lifecycle-file "${workdir}/lifecycle.json" \
+  --lifecycle-file "${workdir}/results-lifecycle.json" \
+  --quiet >/dev/null
+gcloud storage buckets update "${input_bucket_uri}" \
+  --project "${project_id}" \
+  --lifecycle-file "${workdir}/input-lifecycle.json" \
   --quiet >/dev/null
 
 gcloud projects add-iam-policy-binding "${project_id}" \
@@ -193,9 +228,13 @@ gcloud projects add-iam-policy-binding "${project_id}" \
   --condition=None \
   --quiet >/dev/null
 
-gcloud storage buckets add-iam-policy-binding "${bucket_uri}" \
+gcloud storage buckets add-iam-policy-binding "${results_bucket_uri}" \
   --member "${deployer_member}" \
   --role "${results_role}" \
+  --quiet >/dev/null
+gcloud storage buckets add-iam-policy-binding "${input_bucket_uri}" \
+  --member "${deployer_member}" \
+  --role "${input_role}" \
   --quiet >/dev/null
 
 enabled_services="$(gcloud services list --enabled --project "${project_id}" --format='value(config.name)')"
@@ -218,10 +257,12 @@ assert_role_permissions() {
 
 assert_role_permissions "${runner_role_id}" "${workdir}/test-lab-runner-permissions.txt"
 assert_role_permissions "${results_role_id}" "${workdir}/test-lab-results-permissions.txt"
+assert_role_permissions "${input_role_id}" "${workdir}/test-lab-input-permissions.txt"
 
 project_policy="$(gcloud projects get-iam-policy "${project_id}" --format=json)"
 test "$(jq -r --arg member "${deployer_member}" --arg role "${runner_role}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${project_policy}")" = "1"
 test "$(jq -r --arg member "${deployer_member}" --arg role "${results_role}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${project_policy}")" = "0"
+test "$(jq -r --arg member "${deployer_member}" --arg role "${input_role}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${project_policy}")" = "0"
 
 for prohibited_role in roles/owner roles/editor roles/cloudtestservice.testAdmin roles/firebase.analyticsViewer roles/storage.admin roles/storage.objectAdmin; do
   if jq -e --arg member "${deployer_member}" --arg role "${prohibited_role}" '.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)' <<< "${project_policy}" >/dev/null; then
@@ -232,17 +273,39 @@ done
 
 bash scripts/rc5/verify-no-project-storage-roles.sh "${project_id}" "${deployer_member}"
 
-bucket_policy="$(gcloud storage buckets get-iam-policy "${bucket_uri}" --format=json)"
-test "$(jq -r --arg member "${deployer_member}" --arg role "${results_role}" '[.bindings[]? | select(.role == $role) | .members[]? | select(. == $member)] | length' <<< "${bucket_policy}")" = "1"
+verify_bucket() {
+  local bucket_uri="$1"
+  local role="$2"
+  local retention="$3"
+  local label="$4"
+  local record policy actual_members expected_members actual_roles expected_roles lifecycle
 
-lifecycle="$(gcloud storage buckets describe "${bucket_uri}" --project "${project_id}" --format='json(lifecycle_config)' | jq -c '.lifecycle_config.rule // []')"
-test "$(jq -r --argjson age "${retention_days}" 'length == 1 and .[0].action.type == "Delete" and .[0].condition.age == $age' <<< "${lifecycle}")" = "true"
+  record="$(gcloud storage buckets describe "${bucket_uri}" --project "${project_id}" --format='json(location,uniform_bucket_level_access,lifecycle_config)')"
+  test "$(jq -r '.location' <<< "${record}" | tr '[:upper:]' '[:lower:]')" = "${bucket_location}"
+  test "$(jq -r '.uniform_bucket_level_access' <<< "${record}")" = "true"
+  lifecycle="$(jq -c '.lifecycle_config.rule // []' <<< "${record}")"
+  test "$(jq -r --argjson age "${retention}" 'length == 1 and .[0].action.type == "Delete" and .[0].condition.age == $age' <<< "${lifecycle}")" = "true"
+
+  policy="$(gcloud storage buckets get-iam-policy "${bucket_uri}" --format=json)"
+  actual_members="$(jq -c --arg role "${role}" '[.bindings[]? | select(.role == $role) | .members[]?] | unique | sort' <<< "${policy}")"
+  expected_members="$(jq -nc --arg member "${deployer_member}" '[$member] | sort')"
+  actual_roles="$(jq -c --arg member "${deployer_member}" '[.bindings[]? | select([.members[]? | select(. == $member)] | length > 0) | .role] | unique | sort' <<< "${policy}")"
+  expected_roles="$(jq -nc --arg role "${role}" '[$role] | sort')"
+  test "${actual_members}" = "${expected_members}"
+  test "${actual_roles}" = "${expected_roles}"
+  printf '%s bucket verified: %s\n' "${label}" "${bucket_uri}"
+}
+
+verify_bucket "${results_bucket_uri}" "${results_role}" "${results_retention_days}" "Results"
+verify_bucket "${input_bucket_uri}" "${input_role}" "${input_retention_days}" "Input"
 
 printf 'RC5 Firebase Test Lab bootstrap verified.\n'
 printf 'Project: %s\n' "${project_id}"
 printf 'Testing APIs: testing.googleapis.com and toolresults.googleapis.com enabled.\n'
 printf 'Runner role: %s (project-applicable Test Lab/Analytics non-Storage execution set plus iam.roles.get and serviceusage.services.get only).\n' "${runner_role}"
-printf 'Results bucket: %s (uniform access, %s-day delete lifecycle).\n' "${bucket_uri}" "${retention_days}"
-printf 'Results role: %s is bucket-only and append-only for result objects; retention is owner-controlled.\n' "${results_role}"
+printf 'Results bucket: %s (uniform access, %s-day delete lifecycle).\n' "${results_bucket_uri}" "${results_retention_days}"
+printf 'Results role: %s is bucket-only and append-only for result objects.\n' "${results_role}"
+printf 'Input bucket: %s (uniform access, %s-day delete lifecycle).\n' "${input_bucket_uri}" "${input_retention_days}"
+printf 'Input role: %s is bucket-only with create/get and no list/delete/update.\n' "${input_role}"
 printf 'GitHub identity: %s via existing Workload Identity Federation; no service-account key created.\n' "${deployer_sa}"
 printf 'No secret, credential, participant data, or production authorization was created by this bootstrap.\n'

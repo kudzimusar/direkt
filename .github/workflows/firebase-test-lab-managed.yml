@@ -36,9 +36,12 @@ jobs:
       GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
       GCP_TEST_LAB_RUNNER_ROLE: projects/direkt-dev-502701/roles/direktTestLabRunner
       GCP_TEST_LAB_RESULTS_ROLE: projects/direkt-dev-502701/roles/direktTestLabResultsWriter
+      GCP_TEST_LAB_INPUT_ROLE: projects/direkt-dev-502701/roles/direktTestLabInputStager
       GCP_TEST_LAB_RESULTS_BUCKET: gs://direkt-test-lab-results-264358173369
+      GCP_TEST_LAB_INPUT_BUCKET: gs://direkt-test-lab-inputs-264358173369
       GCP_TEST_LAB_RESULTS_LOCATION: asia-northeast1
       GCP_TEST_LAB_RESULTS_RETENTION_DAYS: "30"
+      GCP_TEST_LAB_INPUT_RETENTION_DAYS: "1"
       DIREKT_GRADLE_VERSION: "9.4.0"
       DIREKT_TEST_CLASS: com.kudzimusar.direkt.DirektAppSmokeTest
       DIREKT_TEST_PACKAGE: com.kudzimusar.direkt.debug.test
@@ -51,6 +54,8 @@ jobs:
           set -euo pipefail
           test "${DIREKT_CONFIRMATION}" = "RUN-DIREKT-TEST-LAB"
           [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          test "${GCP_TEST_LAB_RESULTS_BUCKET}" = "gs://direkt-test-lab-results-${GCP_PROJECT_NUMBER}"
+          test "${GCP_TEST_LAB_INPUT_BUCKET}" = "gs://direkt-test-lab-inputs-${GCP_PROJECT_NUMBER}"
 
       - name: Check out exact reviewed source
         uses: actions/checkout@v6
