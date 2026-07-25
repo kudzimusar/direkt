@@ -12,7 +12,7 @@ object_name="$3"
 source_file="$4"
 
 [[ "${project_number}" =~ ^[1-9][0-9]*$ ]]
-[[ "${bucket_name}" =~ ^[a-z0-9][a-z0-9._-]*[a-z0-9]$ ]]
+test "${bucket_name}" = "direkt-test-lab-results-${project_number}"
 [[ "${object_name}" == rc5/preflight/* ]]
 test -s "${source_file}"
 
@@ -32,7 +32,7 @@ curl --fail --silent --show-error \
   --header "Authorization: Bearer ${access_token}" \
   --header "Content-Type: application/json" \
   --data-binary "@${source_file}" \
-  "https://storage.googleapis.com/upload/storage/v1/b/${bucket_name}/o?uploadType=media&name=${encoded_object_name}&ifGenerationMatch=0&userProject=${project_number}" \
+  "https://storage.googleapis.com/upload/storage/v1/b/${bucket_name}/o?uploadType=media&name=${encoded_object_name}&ifGenerationMatch=0" \
   > "${response_file}"
 
 returned_name="$(jq -r '.name // empty' "${response_file}")"
