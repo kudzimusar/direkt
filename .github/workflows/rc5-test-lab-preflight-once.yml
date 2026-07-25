@@ -32,12 +32,15 @@ jobs:
           repo="${GITHUB_REPOSITORY}"
           source_sha="${GITHUB_SHA}"
           short_sha="${source_sha:0:12}"
+          correlation_id="rc5-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          expected_run_title="DIREKT RC5 preflight ${correlation_id}"
           [[ "${source_sha}" =~ ^[0-9a-f]{40}$ ]]
+          [[ "${correlation_id}" =~ ^rc5-[0-9]+-[1-9][0-9]*$ ]]
 
           main_sha="$(gh api "repos/${repo}/git/ref/heads/main" --jq '.object.sha')"
           test "${main_sha}" = "${source_sha}"
 
-          payload="$(jq -nc --arg sha "${source_sha}" '{"ref":"main","inputs":{"source_sha":$sha}}')"
+          payload="$(jq -nc --arg sha "${source_sha}" --arg correlation "${correlation_id}" '{"ref":"main","inputs":{"source_sha":$sha,"correlation_id":$correlation}}')"
           gh api --method POST \
             "repos/${repo}/actions/workflows/rc5-test-lab-preflight.yml/dispatches" \
             --input - <<< "${payload}"
@@ -45,12 +48,12 @@ jobs:
           run_id=""
           for _ in $(seq 1 60); do
             runs_json="$(gh api "repos/${repo}/actions/workflows/rc5-test-lab-preflight.yml/runs?event=workflow_dispatch&branch=main&per_page=20")"
-            run_id="$(jq -r --arg sha "${source_sha}" '[.workflow_runs[] | select(.head_sha == $sha)] | sort_by(.created_at) | last | .id // empty' <<< "${runs_json}")"
+            run_id="$(jq -r --arg sha "${source_sha}" --arg title "${expected_run_title}" '[.workflow_runs[] | select(.head_sha == $sha and .display_title == $title)] | sort_by(.created_at) | last | .id // empty' <<< "${runs_json}")"
             [[ -n "${run_id}" ]] && break
             sleep 5
           done
           if [[ -z "${run_id}" ]]; then
-            echo "::error title=RC5 preflight dispatch not observed::No exact-main preflight run was found."
+            echo "::error title=RC5 preflight dispatch not observed::No uniquely correlated exact-main preflight run was found."
             exit 1
           fi
 
@@ -58,6 +61,8 @@ jobs:
           conclusion=""
           for _ in $(seq 1 300); do
             run_json="$(gh api "repos/${repo}/actions/runs/${run_id}")"
+            test "$(jq -r '.display_title' <<< "${run_json}")" = "${expected_run_title}"
+            test "$(jq -r '.head_sha' <<< "${run_json}")" = "${source_sha}"
             status="$(jq -r '.status' <<< "${run_json}")"
             conclusion="$(jq -r '.conclusion // ""' <<< "${run_json}")"
             [[ "${status}" = "completed" ]] && break
@@ -86,6 +91,7 @@ jobs:
             while IFS= read -r line || [[ -n "${line}" ]]; do
               case "${line}" in
                 SOURCE\|*) [[ "${line}" =~ ^SOURCE\|[0-9a-f]{40}$ ]] || exit 1 ;;
+                CORRELATION\|*) [[ "${line}" =~ ^CORRELATION\|rc5-[0-9]+-[1-9][0-9]*$ ]] || exit 1 ;;
                 MODE\|metadata_iam_catalog_only|RESOURCE_MUTATION\|false|MATRIX_EXECUTED\|false|SECRET_VALUES_ACCESSED\|false|PRODUCTION_AUTHORIZATION\|false|RESULT\|ready|RESULT\|not_ready) ;;
                 FAILURE_COUNT\|*) [[ "${line}" =~ ^FAILURE_COUNT\|[0-9]+$ ]] || exit 1 ;;
                 PASS\|*|FAIL\|*) [[ "${line}" =~ ^(PASS|FAIL)\|[-A-Za-z0-9[:space:].:@/()+,=_]+$ ]] || exit 1 ;;
@@ -93,6 +99,7 @@ jobs:
               esac
             done < "${receipt_file}"
             grep -Fxq "SOURCE|${source_sha}" "${receipt_file}"
+            grep -Fxq "CORRELATION|${correlation_id}" "${receipt_file}"
             grep -Fxq "RESOURCE_MUTATION|false" "${receipt_file}"
             grep -Fxq "MATRIX_EXECUTED|false" "${receipt_file}"
             grep -Fxq "SECRET_VALUES_ACCESSED|false" "${receipt_file}"
@@ -121,6 +128,7 @@ jobs:
           ## RC5 Firebase Test Lab read-only infrastructure preflight
 
           - Exact inspected source: \`${source_sha}\`
+          - Correlation: \`${correlation_id}\`
           - Current main at receipt publication: \`${current_main}\`
           - Managed preflight run: \`${run_id}\`
           - Status: \`${status}\`
@@ -149,6 +157,7 @@ jobs:
           RC5 read-only Firebase Test Lab infrastructure preflight receipt.
 
           - Exact inspected source: \`${source_sha}\`
+          - Correlation: \`${correlation_id}\`
           - Current main at publication: \`${current_main}\`
           - Managed run: \`${run_id}\`
           - Status/conclusion: \`${status} / ${conclusion:-not-completed}\`
@@ -177,6 +186,7 @@ jobs:
           {
             echo "### RC5 read-only Test Lab preflight bridge"
             echo "- Source: \`${source_sha}\`"
+            echo "- Correlation: \`${correlation_id}\`"
             echo "- Managed run: \`${run_id}\`"
             echo "- Dedicated receipt: ${receipt_url}"
             echo "- Resource mutation: false"
