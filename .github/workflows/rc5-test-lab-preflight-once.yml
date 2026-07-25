@@ -1,4 +1,5 @@
 name: DIREKT RC5 one-shot read-only Test Lab preflight bridge
+# Trigger exact-main RC5 read-only preflight after workflow installation on the default branch.
 
 on:
   push:
