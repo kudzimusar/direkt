@@ -1,0 +1,41 @@
+name: DIREKT RC7 Google Maps contract
+
+on:
+  pull_request:
+    paths:
+      - "android/direkt-app/**"
+      - "backend/direkt-api/**"
+      - "scripts/rc7/**"
+      - "docs/integrations/**"
+      - "WORKSTREAM_LOCK.md"
+      - ".github/workflows/rc7-maps-contract.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "android/direkt-app/**"
+      - "backend/direkt-api/**"
+      - "scripts/rc7/**"
+      - "docs/integrations/**"
+      - "WORKSTREAM_LOCK.md"
+      - ".github/workflows/rc7-maps-contract.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify RC7 Maps source and privacy contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Verify permanent RC7 contract
+        run: python3 scripts/rc7/verify-maps-contract.py
