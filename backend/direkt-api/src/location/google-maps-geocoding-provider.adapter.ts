@@ -5,24 +5,40 @@ import {
   type NormalizedSearchArea,
 } from './geocoding-provider.port';
 
-interface GoogleAddressComponent {
-  short_name?: string;
-  types?: string[];
-}
-
 interface GoogleGeocodingResult {
-  formatted_address?: string;
-  address_components?: GoogleAddressComponent[];
-  geometry?: {
-    location?: { lat?: number; lng?: number };
-    location_type?: string;
+  formattedAddress?: string;
+  postalAddress?: {
+    regionCode?: string;
   };
+  location?: {
+    latitude?: number;
+    longitude?: number;
+  };
+  granularity?: string;
 }
 
 interface GoogleGeocodingResponse {
-  status?: string;
   results?: GoogleGeocodingResult[];
 }
+
+interface MetadataAccessTokenResponse {
+  access_token?: string;
+  expires_in?: number;
+  token_type?: string;
+}
+
+export interface GoogleMapsAccessTokenProvider {
+  getAccessToken(): Promise<string>;
+}
+
+export const GOOGLE_MAPS_GEOCODING_OAUTH_SCOPE =
+  'https://www.googleapis.com/auth/maps-platform.geocode.address';
+
+const DEFAULT_METADATA_TOKEN_ENDPOINT =
+  'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token';
+const DEFAULT_GEOCODING_ENDPOINT = 'https://geocode.googleapis.com/v4/geocode/address';
+const FIELD_MASK =
+  'results.location,results.granularity,results.formattedAddress,results.postalAddress.regionCode';
 
 const ZAMBIA_BOUNDS = {
   minLatitude: -18.2,
@@ -38,11 +54,102 @@ const PRECISION: Record<string, GeocodingPrecision> = {
   APPROXIMATE: 'approximate',
 };
 
+export class GoogleCloudServiceIdentityAccessTokenProvider implements GoogleMapsAccessTokenProvider {
+  private cachedToken?: { value: string; expiresAtMs: number };
+
+  constructor(
+    private readonly timeoutMs: number,
+    private readonly endpoint = DEFAULT_METADATA_TOKEN_ENDPOINT,
+    private readonly fetchImpl: typeof fetch = fetch,
+  ) {}
+
+  async getAccessToken(): Promise<string> {
+    const now = Date.now();
+    if (this.cachedToken && this.cachedToken.expiresAtMs - now > 60_000) {
+      return this.cachedToken.value;
+    }
+
+    const url = new URL(this.endpoint);
+    if (url.protocol !== 'http:' || url.hostname !== 'metadata.google.internal') {
+      throw new GeocodingProviderError(
+        'request_denied',
+        'Google Maps service identity metadata endpoint is invalid.',
+      );
+    }
+    url.searchParams.set('enforce_scopes', 'true');
+    url.searchParams.set('scopes', GOOGLE_MAPS_GEOCODING_OAUTH_SCOPE);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+    let response: Response;
+    try {
+      response = await this.fetchImpl(url, {
+        method: 'GET',
+        headers: { 'Metadata-Flavor': 'Google', Accept: 'application/json' },
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new GeocodingProviderError(
+          'timeout',
+          'Google Maps service identity token request timed out.',
+        );
+      }
+      throw new GeocodingProviderError(
+        'provider_unavailable',
+        'Google Maps service identity token is unavailable.',
+      );
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!response.ok) {
+      throw new GeocodingProviderError(
+        'request_denied',
+        'Google Maps service identity could not obtain a scoped access token.',
+      );
+    }
+
+    let payload: MetadataAccessTokenResponse;
+    try {
+      payload = (await response.json()) as MetadataAccessTokenResponse;
+    } catch {
+      throw new GeocodingProviderError(
+        'invalid_provider_response',
+        'Google Maps service identity returned an invalid token response.',
+      );
+    }
+
+    const token = payload.access_token?.trim();
+    const expiresIn = payload.expires_in;
+    if (
+      !token ||
+      token.length < 20 ||
+      payload.token_type !== 'Bearer' ||
+      typeof expiresIn !== 'number' ||
+      !Number.isFinite(expiresIn) ||
+      expiresIn < 120
+    ) {
+      throw new GeocodingProviderError(
+        'invalid_provider_response',
+        'Google Maps service identity omitted required token fields.',
+      );
+    }
+
+    this.cachedToken = {
+      value: token,
+      expiresAtMs: now + expiresIn * 1_000,
+    };
+    return token;
+  }
+}
+
 export class GoogleMapsGeocodingProviderAdapter implements GeocodingProviderPort {
   constructor(
-    private readonly apiKey: string,
+    private readonly accessTokenProvider: GoogleMapsAccessTokenProvider,
     private readonly timeoutMs: number,
-    private readonly endpoint = 'https://maps.googleapis.com/maps/api/geocode/json',
+    private readonly endpoint = DEFAULT_GEOCODING_ENDPOINT,
+    private readonly fetchImpl: typeof fetch = fetch,
   ) {}
 
   async normalizeSearchArea(address: string): Promise<NormalizedSearchArea> {
@@ -51,18 +158,24 @@ export class GoogleMapsGeocodingProviderAdapter implements GeocodingProviderPort
       throw new GeocodingProviderError('invalid_input', 'Search area must be 3 to 240 characters.');
     }
 
-    const url = new URL(this.endpoint);
-    url.searchParams.set('address', normalizedInput);
-    url.searchParams.set('components', 'country:ZM');
-    url.searchParams.set('key', this.apiKey);
+    const baseEndpoint = this.endpoint.replace(/\/+$/, '');
+    const encodedAddress = encodeURIComponent(normalizedInput).replace(/%20/g, '+');
+    const url = new URL(`${baseEndpoint}/${encodedAddress}`);
+    url.searchParams.set('regionCode', 'ZM');
+    url.searchParams.set('languageCode', 'en');
 
+    const accessToken = await this.accessTokenProvider.getAccessToken();
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
     let response: Response;
     try {
-      response = await fetch(url, {
+      response = await this.fetchImpl(url, {
         method: 'GET',
-        headers: { Accept: 'application/json' },
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+          'X-Goog-FieldMask': FIELD_MASK,
+        },
         signal: controller.signal,
       });
     } catch (error) {
@@ -77,6 +190,21 @@ export class GoogleMapsGeocodingProviderAdapter implements GeocodingProviderPort
       clearTimeout(timeout);
     }
 
+    if (response.status === 401 || response.status === 403) {
+      throw new GeocodingProviderError(
+        'request_denied',
+        'Google Maps Geocoding denied the bounded OAuth request.',
+      );
+    }
+    if (response.status === 429) {
+      throw new GeocodingProviderError(
+        'quota_exceeded',
+        'Google Maps Geocoding exceeded the bounded quota.',
+      );
+    }
+    if (response.status === 404) {
+      throw new GeocodingProviderError('not_found', 'No matching Zambian search area was found.');
+    }
     if (!response.ok) {
       throw new GeocodingProviderError(
         'provider_unavailable',
@@ -94,36 +222,16 @@ export class GoogleMapsGeocodingProviderAdapter implements GeocodingProviderPort
       );
     }
 
-    if (payload.status === 'ZERO_RESULTS') {
+    const result = payload.results?.[0];
+    if (!result) {
       throw new GeocodingProviderError('not_found', 'No matching Zambian search area was found.');
     }
-    if (payload.status === 'OVER_QUERY_LIMIT') {
-      throw new GeocodingProviderError(
-        'quota_exceeded',
-        'Google Maps Geocoding exceeded the bounded quota.',
-      );
-    }
-    if (payload.status === 'REQUEST_DENIED') {
-      throw new GeocodingProviderError(
-        'request_denied',
-        'Google Maps Geocoding denied the bounded request.',
-      );
-    }
-    if (payload.status !== 'OK') {
-      throw new GeocodingProviderError(
-        'provider_unavailable',
-        'Google Maps Geocoding could not normalize the search area.',
-      );
-    }
 
-    const result = payload.results?.[0];
-    const latitude = result?.geometry?.location?.lat;
-    const longitude = result?.geometry?.location?.lng;
-    const formattedArea = result?.formatted_address?.trim();
-    const countryCode = result?.address_components
-      ?.find((component) => component.types?.includes('country'))
-      ?.short_name?.toUpperCase();
-    const precision = PRECISION[result?.geometry?.location_type ?? ''];
+    const latitude = result.location?.latitude;
+    const longitude = result.location?.longitude;
+    const formattedArea = result.formattedAddress?.trim();
+    const countryCode = result.postalAddress?.regionCode?.toUpperCase();
+    const precision = PRECISION[result.granularity ?? ''];
 
     if (
       typeof latitude !== 'number' ||

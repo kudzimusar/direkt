@@ -3,12 +3,12 @@ import { type DirektEnvironment, environmentSchema } from '../../../src/config/e
 
 const MAPS_CONFIG = {
   GOOGLE_MAPS_BACKEND_MODE: 'google_maps',
-  GOOGLE_MAPS_SERVER_API_KEY: 'synthetic_maps_server_key_1234567890',
+  GOOGLE_MAPS_OAUTH_SCOPE: 'https://www.googleapis.com/auth/maps-platform.geocode.address',
   GOOGLE_MAPS_SYNTHETIC_CANARY_APPROVED: 'true',
 };
 
 describe('RC7 Google Maps environment boundary', () => {
-  it('accepts only an explicitly approved synthetic backend configuration in non-production', () => {
+  it('accepts only an explicitly approved synthetic service-identity OAuth configuration', () => {
     const result = environmentSchema.validate({
       NODE_ENV: 'development',
       DIREKT_DATA_MODE: 'synthetic-only',
@@ -18,7 +18,24 @@ describe('RC7 Google Maps environment boundary', () => {
 
     expect(result.error).toBeUndefined();
     expect(value.GOOGLE_MAPS_BACKEND_MODE).toBe('google_maps');
+    expect(value.GOOGLE_MAPS_OAUTH_SCOPE).toBe(
+      'https://www.googleapis.com/auth/maps-platform.geocode.address',
+    );
+    expect(value.GOOGLE_MAPS_GEOCODING_ENDPOINT).toBe(
+      'https://geocode.googleapis.com/v4/geocode/address',
+    );
     expect(value.GOOGLE_MAPS_SYNTHETIC_CANARY_APPROVED).toBe(true);
+  });
+
+  it('rejects a broad or substituted OAuth scope', () => {
+    const result = environmentSchema.validate({
+      NODE_ENV: 'development',
+      DIREKT_DATA_MODE: 'synthetic-only',
+      ...MAPS_CONFIG,
+      GOOGLE_MAPS_OAUTH_SCOPE: 'https://www.googleapis.com/auth/cloud-platform',
+    });
+
+    expect(result.error?.message).toContain('GOOGLE_MAPS_OAUTH_SCOPE');
   });
 
   it('rejects Maps activation without the explicit synthetic canary latch', () => {

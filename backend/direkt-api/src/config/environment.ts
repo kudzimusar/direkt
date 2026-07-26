@@ -85,7 +85,7 @@ export interface DirektEnvironment {
   WHATSAPP_SYNTHETIC_TEMPLATE_NAME?: string;
   WHATSAPP_SYNTHETIC_TEMPLATE_LANGUAGE: string;
   GOOGLE_MAPS_BACKEND_MODE: GoogleMapsBackendMode;
-  GOOGLE_MAPS_SERVER_API_KEY?: string;
+  GOOGLE_MAPS_OAUTH_SCOPE: string;
   GOOGLE_MAPS_GEOCODING_ENDPOINT: string;
   GOOGLE_MAPS_REQUEST_TIMEOUT_MS: number;
   GOOGLE_MAPS_SYNTHETIC_CANARY_APPROVED: boolean;
@@ -106,7 +106,10 @@ const whatsappAppSecret = Joi.string().trim().min(32).max(512);
 const whatsappRecipient = Joi.string().pattern(/^\+[1-9]\d{7,14}$/);
 const whatsappTemplateName = Joi.string().pattern(/^[a-z][a-z0-9_]{2,79}$/);
 const whatsappTemplateLanguage = Joi.string().pattern(/^[a-z]{2,3}(_[A-Z]{2})?$/);
-const googleMapsEndpoint = Joi.string().uri({ scheme: ['https'] });
+const googleMapsOAuthScope = Joi.string().valid(
+  'https://www.googleapis.com/auth/maps-platform.geocode.address',
+);
+const googleMapsEndpoint = Joi.string().valid('https://geocode.googleapis.com/v4/geocode/address');
 
 export const environmentSchema = Joi.object<DirektEnvironment>({
   NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
@@ -319,13 +322,11 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     then: Joi.valid('disabled').default('disabled'),
     otherwise: Joi.valid('disabled', 'google_maps').default('disabled'),
   }),
-  GOOGLE_MAPS_SERVER_API_KEY: providerApiKey.when('GOOGLE_MAPS_BACKEND_MODE', {
-    is: 'google_maps',
-    then: providerApiKey.required(),
-    otherwise: providerApiKey.optional(),
-  }),
+  GOOGLE_MAPS_OAUTH_SCOPE: googleMapsOAuthScope.default(
+    'https://www.googleapis.com/auth/maps-platform.geocode.address',
+  ),
   GOOGLE_MAPS_GEOCODING_ENDPOINT: googleMapsEndpoint.default(
-    'https://maps.googleapis.com/maps/api/geocode/json',
+    'https://geocode.googleapis.com/v4/geocode/address',
   ),
   GOOGLE_MAPS_REQUEST_TIMEOUT_MS: Joi.number().integer().min(1000).max(15000).default(5000),
   GOOGLE_MAPS_SYNTHETIC_CANARY_APPROVED: Joi.boolean().truthy('true').falsy('false').default(false),

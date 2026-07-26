@@ -11,25 +11,13 @@ set -euo pipefail
 : "${SOURCE_SHA:?}"
 : "${RC7_RECEIPT_PATH:?}"
 
-NETWORK="direkt-maps-egress"
-SUBNET="direkt-maps-egress-${GCP_REGION}"
-SUBNET_RANGE="10.27.0.0/26"
-ROUTER="direkt-maps-router"
-NAT="direkt-maps-nat"
-ADDRESS="direkt-maps-egress-ip"
-BACKEND_KEY_ID="direkt-rc7-backend-${GITHUB_RUN_ID:-manual}-${GITHUB_RUN_ATTEMPT:-1}"
 ANDROID_KEY_ID="direkt-rc7-android-maps"
-BACKEND_SECRET="direkt-google-maps-geocoding-api-key"
 CANARY_JOB="direkt-maps-canary"
 IMAGE_URI="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/direkt-api:rc7-${SOURCE_SHA}"
 ANDROID_PACKAGE="com.kudzimusar.direkt.debug"
 ANDROID_TEST_CLASS="com.kudzimusar.direkt.Rc7MapsRuntimeTest"
-BACKEND_SECRET_VERSION=""
-BACKEND_KEY_PRESENT=false
+OAUTH_SCOPE="https://www.googleapis.com/auth/maps-platform.geocode.address"
 CANARY_JOB_PRESENT=false
-NAT_PRESENT=false
-ROUTER_PRESENT=false
-ADDRESS_PRESENT=false
 MANAGED_RESULT="FAILED"
 
 mkdir -p "$(dirname "${RC7_RECEIPT_PATH}")"
@@ -45,61 +33,19 @@ cleanup() {
   trap - EXIT
   set +e
 
-  cleanup_record() {
-    local label="$1"
-    shift
-    if "$@" >/dev/null 2>&1; then
-      receipt "cleanup.${label}=true"
+  if ${CANARY_JOB_PRESENT}; then
+    if gcloud run jobs delete "${CANARY_JOB}" \
+      --project "${GCP_PROJECT_ID}" \
+      --region "${GCP_REGION}" \
+      --quiet >/dev/null 2>&1; then
+      receipt "cleanup.cloud_run_job_deleted=true"
     else
-      receipt "cleanup.${label}=false"
+      receipt "cleanup.cloud_run_job_deleted=false"
       cleanup_failed=true
     fi
-  }
+  fi
 
-  if ${CANARY_JOB_PRESENT}; then
-    cleanup_record cloud_run_job_deleted \
-      gcloud run jobs delete "${CANARY_JOB}" \
-        --project "${GCP_PROJECT_ID}" \
-        --region "${GCP_REGION}" \
-        --quiet
-  fi
-  if [[ -n "${BACKEND_SECRET_VERSION}" ]]; then
-    cleanup_record backend_secret_version_destroyed \
-      gcloud secrets versions destroy "${BACKEND_SECRET_VERSION}" \
-        --secret "${BACKEND_SECRET}" \
-        --project "${GCP_PROJECT_ID}" \
-        --quiet
-  fi
-  if ${BACKEND_KEY_PRESENT}; then
-    cleanup_record backend_api_key_deleted \
-      gcloud services api-keys delete "${BACKEND_KEY_ID}" \
-        --project "${GCP_PROJECT_ID}" \
-        --location global \
-        --quiet
-  fi
-  if ${NAT_PRESENT}; then
-    cleanup_record cloud_nat_deleted \
-      gcloud compute routers nats delete "${NAT}" \
-        --router "${ROUTER}" \
-        --region "${GCP_REGION}" \
-        --project "${GCP_PROJECT_ID}" \
-        --quiet
-  fi
-  if ${ROUTER_PRESENT}; then
-    cleanup_record cloud_router_deleted \
-      gcloud compute routers delete "${ROUTER}" \
-        --region "${GCP_REGION}" \
-        --project "${GCP_PROJECT_ID}" \
-        --quiet
-  fi
-  if ${ADDRESS_PRESENT}; then
-    cleanup_record static_ip_released \
-      gcloud compute addresses delete "${ADDRESS}" \
-        --region "${GCP_REGION}" \
-        --project "${GCP_PROJECT_ID}" \
-        --quiet
-  fi
-  rm -f "${RUNNER_TEMP}/rc7-android-key.txt" "${RUNNER_TEMP}/rc7-backend-key.txt"
+  rm -f "${RUNNER_TEMP}/rc7-android-key.txt"
 
   if ${cleanup_failed}; then
     MANAGED_RESULT="FAILED"
@@ -117,12 +63,17 @@ cleanup() {
 }
 trap cleanup EXIT
 
-receipt "schema=direkt.rc7.maps-managed-receipt.v1"
+receipt "schema=direkt.rc7.maps-managed-receipt.v2"
 receipt "source_sha=${SOURCE_SHA}"
 receipt "project=${GCP_PROJECT_ID}"
 receipt "testlab_project=${TESTLAB_PROJECT_ID}"
 receipt "android_api=maps-android-backend.googleapis.com"
 receipt "backend_api=geocoding-backend.googleapis.com"
+receipt "backend_authentication=service_identity_oauth"
+receipt "backend_oauth_scope=${OAUTH_SCOPE}"
+receipt "backend_api_key_present=false"
+receipt "backend_secret_value_present=false"
+receipt "backend_cloud_nat_used=false"
 receipt "places_api_enabled_by_rc7=false"
 receipt "routes_api_enabled_by_rc7=false"
 
@@ -131,11 +82,9 @@ required_services=(
   artifactregistry.googleapis.com
   billingbudgets.googleapis.com
   cloudbilling.googleapis.com
-  compute.googleapis.com
   geocoding-backend.googleapis.com
   maps-android-backend.googleapis.com
   run.googleapis.com
-  secretmanager.googleapis.com
   serviceusage.googleapis.com
 )
 enabled_services="$(gcloud services list \
@@ -152,20 +101,27 @@ if grep -Eq '^(places(-backend)?|routes(-backend)?)\.googleapis\.com$' <<< "${en
   exit 1
 fi
 
-bootstrap_secret_json="${RUNNER_TEMP}/rc7-bootstrap-secret.json"
-gcloud secrets describe "${BACKEND_SECRET}" \
-  --project "${GCP_PROJECT_ID}" \
-  --format=json > "${bootstrap_secret_json}"
+billing_account="$(gcloud billing projects describe "${GCP_PROJECT_ID}" \
+  --format='value(billingAccountName)' | sed 's#billingAccounts/##')"
+test -n "${billing_account}"
+budget_json="${RUNNER_TEMP}/rc7-maps-budget.json"
+gcloud billing budgets list \
+  --billing-account "${billing_account}" \
+  --filter='displayName="DIREKT RC7 Maps synthetic"' \
+  --limit 1 \
+  --format=json > "${budget_json}"
 jq -e '
-  .labels["direkt-rc7-bootstrap"] == "ready" and
-  .labels["direkt-rc7-budget"] == "unit1" and
-  .labels["direkt-rc7-quota"] == "60"
-' "${bootstrap_secret_json}" >/dev/null
+  length == 1 and
+  .[0].displayName == "DIREKT RC7 Maps synthetic" and
+  .[0].amount.specifiedAmount.units == "1"
+' "${budget_json}" >/dev/null
+budget_currency="$(jq -r '.[0].amount.specifiedAmount.currencyCode' "${budget_json}")"
+test -n "${budget_currency}"
 receipt "owner_bootstrap_verified=true"
 receipt "budget_alert_present=true"
 receipt "budget_display_name=DIREKT RC7 Maps synthetic"
 receipt "budget_amount=1"
-receipt "budget_currency=account"
+receipt "budget_currency=${budget_currency}"
 
 quota_json="${RUNNER_TEMP}/rc7-geocoding-quota.json"
 gcloud alpha services quota list \
@@ -185,73 +141,6 @@ test "${quota_unit}" = '1/min/{project}'
 receipt "geocoding_quota_metric=${quota_metric}"
 receipt "geocoding_quota_per_minute=60"
 receipt "geocoding_quota_preprovisioned=true"
-
-# The owner bootstrap creates the stable, no-recurring-cost VPC and subnet.
-gcloud compute networks describe "${NETWORK}" \
-  --project "${GCP_PROJECT_ID}" >/dev/null
-gcloud compute networks subnets describe "${SUBNET}" \
-  --project "${GCP_PROJECT_ID}" \
-  --region "${GCP_REGION}" >/dev/null
-actual_range="$(gcloud compute networks subnets describe "${SUBNET}" \
-  --project "${GCP_PROJECT_ID}" \
-  --region "${GCP_REGION}" \
-  --format='value(ipCidrRange)')"
-test "${actual_range}" = "${SUBNET_RANGE}"
-receipt "direct_vpc_subnet=${SUBNET}"
-
-if ! gcloud compute addresses describe "${ADDRESS}" \
-  --project "${GCP_PROJECT_ID}" \
-  --region "${GCP_REGION}" >/dev/null 2>&1; then
-  gcloud compute addresses create "${ADDRESS}" \
-    --project "${GCP_PROJECT_ID}" \
-    --region "${GCP_REGION}" \
-    --network-tier PREMIUM \
-    --quiet
-fi
-ADDRESS_PRESENT=true
-static_ip="$(gcloud compute addresses describe "${ADDRESS}" \
-  --project "${GCP_PROJECT_ID}" \
-  --region "${GCP_REGION}" \
-  --format='value(address)')"
-[[ "${static_ip}" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
-receipt "temporary_static_egress_ip=${static_ip}"
-
-if ! gcloud compute routers describe "${ROUTER}" \
-  --project "${GCP_PROJECT_ID}" \
-  --region "${GCP_REGION}" >/dev/null 2>&1; then
-  gcloud compute routers create "${ROUTER}" \
-    --project "${GCP_PROJECT_ID}" \
-    --region "${GCP_REGION}" \
-    --network "${NETWORK}" \
-    --quiet
-fi
-ROUTER_PRESENT=true
-if gcloud compute routers nats describe "${NAT}" \
-  --router "${ROUTER}" \
-  --project "${GCP_PROJECT_ID}" \
-  --region "${GCP_REGION}" >/dev/null 2>&1; then
-  gcloud compute routers nats update "${NAT}" \
-    --router "${ROUTER}" \
-    --project "${GCP_PROJECT_ID}" \
-    --region "${GCP_REGION}" \
-    --nat-external-ip-pool "${ADDRESS}" \
-    --nat-custom-subnet-ip-ranges "${SUBNET}" \
-    --enable-logging \
-    --log-filter ERRORS_ONLY \
-    --quiet
-else
-  gcloud compute routers nats create "${NAT}" \
-    --router "${ROUTER}" \
-    --project "${GCP_PROJECT_ID}" \
-    --region "${GCP_REGION}" \
-    --nat-external-ip-pool "${ADDRESS}" \
-    --nat-custom-subnet-ip-ranges "${SUBNET}" \
-    --enable-logging \
-    --log-filter ERRORS_ONLY \
-    --quiet
-fi
-NAT_PRESENT=true
-receipt "temporary_cloud_nat_configured=true"
 
 mkdir -p "${HOME}/.android"
 if [[ ! -f "${HOME}/.android/debug.keystore" ]]; then
@@ -315,81 +204,9 @@ chmod 600 "${RUNNER_TEMP}/rc7-android-key.txt"
 [[ "$(wc -c < "${RUNNER_TEMP}/rc7-android-key.txt")" -ge 20 ]]
 receipt "android_key_restricted=true"
 receipt "android_key_persistent_synthetic_debug_only=true"
-
-if gcloud services api-keys describe "${BACKEND_KEY_ID}" \
-  --project "${GCP_PROJECT_ID}" \
-  --location global >/dev/null 2>&1; then
-  gcloud services api-keys update "${BACKEND_KEY_ID}" \
-    --project "${GCP_PROJECT_ID}" \
-    --location global \
-    --display-name 'DIREKT RC7 Backend Geocoding temporary canary' \
-    --allowed-ips "${static_ip}" \
-    --api-target service=geocoding-backend.googleapis.com \
-    --quiet
-else
-  gcloud services api-keys create \
-    --project "${GCP_PROJECT_ID}" \
-    --key-id "${BACKEND_KEY_ID}" \
-    --display-name 'DIREKT RC7 Backend Geocoding temporary canary' \
-    --allowed-ips "${static_ip}" \
-    --api-target service=geocoding-backend.googleapis.com \
-    --quiet
-fi
-BACKEND_KEY_PRESENT=true
-gcloud services api-keys describe "${BACKEND_KEY_ID}" \
-  --project "${GCP_PROJECT_ID}" \
-  --location global \
-  --format=json > "${RUNNER_TEMP}/rc7-backend-key-metadata.json"
-jq -e --arg ip "${static_ip}" \
-  '.restrictions.serverKeyRestrictions.allowedIps == [$ip]' \
-  "${RUNNER_TEMP}/rc7-backend-key-metadata.json" >/dev/null
-jq -e '
-  (.restrictions.apiTargets | length) == 1 and
-  .restrictions.apiTargets[0].service == "geocoding-backend.googleapis.com"
-' "${RUNNER_TEMP}/rc7-backend-key-metadata.json" >/dev/null
-gcloud services api-keys get-key-string "${BACKEND_KEY_ID}" \
-  --project "${GCP_PROJECT_ID}" \
-  --location global \
-  --format='value(keyString)' > "${RUNNER_TEMP}/rc7-backend-key.txt"
-chmod 600 "${RUNNER_TEMP}/rc7-backend-key.txt"
-[[ "$(wc -c < "${RUNNER_TEMP}/rc7-backend-key.txt")" -ge 20 ]]
-receipt "backend_key_ip_restricted=true"
-receipt "backend_key_geocoding_only=true"
-
-secret_policy="$(gcloud secrets get-iam-policy "${BACKEND_SECRET}" \
-  --project "${GCP_PROJECT_ID}" \
-  --format=json)"
-for role in roles/secretmanager.secretVersionManager roles/secretmanager.viewer; do
-  jq -e --arg role "${role}" --arg member "serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}" '
-    .bindings[]?
-    | select(.role == $role)
-    | .members[]?
-    | select(. == $member)
-  ' <<< "${secret_policy}" >/dev/null
-done
-jq -e --arg member "serviceAccount:${GCP_RUNTIME_SERVICE_ACCOUNT}" '
-  .bindings[]?
-  | select(.role == "roles/secretmanager.secretAccessor")
-  | .members[]?
-  | select(. == $member)
-' <<< "${secret_policy}" >/dev/null
-if jq -e '.bindings[]? | select(.role == "roles/secretmanager.admin")' \
-  <<< "${secret_policy}" >/dev/null; then
-  echo "Broad roles/secretmanager.admin is prohibited on the RC7 secret." >&2
-  exit 1
-fi
-version_name="$(gcloud secrets versions add "${BACKEND_SECRET}" \
-  --project "${GCP_PROJECT_ID}" \
-  --data-file "${RUNNER_TEMP}/rc7-backend-key.txt" \
-  --format='value(name)')"
-BACKEND_SECRET_VERSION="${version_name##*/}"
-[[ "${BACKEND_SECRET_VERSION}" =~ ^[1-9][0-9]*$ ]]
-receipt "backend_secret=${BACKEND_SECRET}"
-receipt "backend_secret_numeric_version=${BACKEND_SECRET_VERSION}"
 receipt "credential_propagation_wait_seconds=60"
 sleep 60
 
-rm -f "${RUNNER_TEMP}/rc7-backend-key.txt"
 gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
 docker build \
   --file backend/direkt-api/Dockerfile \
@@ -405,17 +222,13 @@ job_args=(
   --service-account "${GCP_RUNTIME_SERVICE_ACCOUNT}"
   --command node
   --args dist/location/maps-canary.js
-  --network "${NETWORK}"
-  --subnet "${SUBNET}"
-  --vpc-egress all-traffic
   --tasks 1
   --parallelism 1
   --max-retries 0
   --task-timeout 5m
   --cpu 1
   --memory 512Mi
-  --set-env-vars 'NODE_ENV=development,DIREKT_ENVIRONMENT=staging,DIREKT_DATA_MODE=synthetic-only,DIREKT_TRAFFIC_MODE=internal,RATE_LIMITS_ENABLED=false,EVIDENCE_STORAGE_PROVIDER=synthetic,PAYMENT_PROVIDER_MODE=disabled,AI_PROVIDER_MODE=disabled,AI_FALLBACK_PROVIDER=disabled,EMAIL_PROVIDER_MODE=disabled,WHATSAPP_PROVIDER_MODE=disabled,GOOGLE_MAPS_BACKEND_MODE=google_maps,GOOGLE_MAPS_SYNTHETIC_CANARY_APPROVED=true'
-  --set-secrets "GOOGLE_MAPS_SERVER_API_KEY=${BACKEND_SECRET}:${BACKEND_SECRET_VERSION}"
+  --set-env-vars "NODE_ENV=development,DIREKT_ENVIRONMENT=staging,DIREKT_DATA_MODE=synthetic-only,DIREKT_TRAFFIC_MODE=internal,RATE_LIMITS_ENABLED=false,EVIDENCE_STORAGE_PROVIDER=synthetic,PAYMENT_PROVIDER_MODE=disabled,AI_PROVIDER_MODE=disabled,AI_FALLBACK_PROVIDER=disabled,EMAIL_PROVIDER_MODE=disabled,WHATSAPP_PROVIDER_MODE=disabled,GOOGLE_MAPS_BACKEND_MODE=google_maps,GOOGLE_MAPS_OAUTH_SCOPE=${OAUTH_SCOPE},GOOGLE_MAPS_SYNTHETIC_CANARY_APPROVED=true"
   --labels 'direkt-environment=staging,direkt-data-mode=synthetic-only,direkt-integration=maps-rc7'
   --quiet
 )
@@ -427,6 +240,9 @@ else
   gcloud run jobs create "${CANARY_JOB}" "${job_args[@]}"
 fi
 CANARY_JOB_PRESENT=true
+receipt "backend_service_identity=${GCP_RUNTIME_SERVICE_ACCOUNT}"
+receipt "backend_service_identity_oauth_configured=true"
+
 execution_json="${RUNNER_TEMP}/rc7-maps-execution.json"
 execution_stderr="${RUNNER_TEMP}/rc7-maps-execution.stderr"
 execution_details="${RUNNER_TEMP}/rc7-maps-execution-details.json"
@@ -473,18 +289,21 @@ import sys
 
 details_path, logs_path, output_path = map(Path, sys.argv[1:])
 
+
 def load(path: Path, fallback: object) -> object:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return fallback
 
+
 def sanitize(value: object) -> str:
     text = str(value or "").strip()
-    text = re.sub(r"AIza[0-9A-Za-z_-]{20,}", "[REDACTED_GOOGLE_API_KEY]", text)
+    text = re.sub(r"ya29\.[0-9A-Za-z._-]{20,}", "[REDACTED_OAUTH_TOKEN]", text)
     text = re.sub(r"(?i)(Bearer|Authorization:)\s+\S+", r"\1 [REDACTED]", text)
     text = re.sub(r"[0-9A-Za-z_+=/.:-]{80,}", "[REDACTED_LONG_VALUE]", text)
     return text[:1000]
+
 
 details = load(details_path, {})
 logs = load(logs_path, [])
@@ -514,11 +333,12 @@ for entry in logs if isinstance(logs, list) else []:
         app_messages.append(sanitize(payload))
 
 output = {
-    "schema": "direkt.rc7.maps-canary-failure.v1",
+    "schema": "direkt.rc7.maps-canary-failure.v2",
     "rawLogsIncluded": False,
     "credentialIncluded": False,
     "coordinateValuesIncluded": False,
     "formattedAddressIncluded": False,
+    "authentication": "service_identity_oauth",
     "executionName": sanitize(
         details.get("metadata", {}).get("name", "")
         if isinstance(details, dict) and isinstance(details.get("metadata"), dict)
@@ -546,7 +366,7 @@ backend_log="$(gcloud logging read \
   --format='value(textPayload)')"
 test "${backend_log}" = 'RC7_MAPS_CANARY|PASS'
 receipt "backend_geocoding_canary=PASS"
-receipt "backend_static_egress_restriction_proven=true"
+receipt "backend_service_identity_oauth_proven=true"
 receipt "backend_coordinates_logged=false"
 receipt "backend_formatted_address_logged=false"
 

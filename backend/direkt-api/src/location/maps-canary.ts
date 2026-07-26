@@ -1,5 +1,9 @@
 import { environmentSchema } from '../config/environment';
-import { GoogleMapsGeocodingProviderAdapter } from './google-maps-geocoding-provider.adapter';
+import {
+  GOOGLE_MAPS_GEOCODING_OAUTH_SCOPE,
+  GoogleCloudServiceIdentityAccessTokenProvider,
+  GoogleMapsGeocodingProviderAdapter,
+} from './google-maps-geocoding-provider.adapter';
 
 async function main(): Promise<void> {
   const result = environmentSchema.validate(process.env, {
@@ -12,22 +16,20 @@ async function main(): Promise<void> {
   }
 
   const environment = result.value;
-  const apiKey = environment.GOOGLE_MAPS_SERVER_API_KEY;
   if (
     environment.GOOGLE_MAPS_BACKEND_MODE !== 'google_maps' ||
+    environment.GOOGLE_MAPS_OAUTH_SCOPE !== GOOGLE_MAPS_GEOCODING_OAUTH_SCOPE ||
     environment.GOOGLE_MAPS_SYNTHETIC_CANARY_APPROVED !== true ||
     environment.DIREKT_DATA_MODE !== 'synthetic-only' ||
-    environment.NODE_ENV === 'production' ||
-    typeof apiKey !== 'string' ||
-    apiKey.length < 20
+    environment.NODE_ENV === 'production'
   ) {
     throw new Error(
-      'RC7 Maps canary requires an approved synthetic-only non-production configuration.',
+      'RC7 Maps canary requires an approved synthetic-only service-identity OAuth configuration.',
     );
   }
 
   const adapter = new GoogleMapsGeocodingProviderAdapter(
-    apiKey,
+    new GoogleCloudServiceIdentityAccessTokenProvider(environment.GOOGLE_MAPS_REQUEST_TIMEOUT_MS),
     environment.GOOGLE_MAPS_REQUEST_TIMEOUT_MS,
     environment.GOOGLE_MAPS_GEOCODING_ENDPOINT,
   );
@@ -44,12 +46,15 @@ async function main(): Promise<void> {
   console.log(
     JSON.stringify({
       provider: normalized.provider,
+      authentication: 'service_identity_oauth',
+      oauthScope: GOOGLE_MAPS_GEOCODING_OAUTH_SCOPE,
       countryCode: normalized.countryCode,
       precision: normalized.precision,
       coordinateValuesLogged: false,
       formattedAddressLogged: false,
       privateLocationPublished: false,
       persistedByAdapter: false,
+      apiKeyUsed: false,
       productionAuthorization: false,
     }),
   );

@@ -1,6 +1,6 @@
 # DIREKT Current Integration Status Register
 
-**Authoritative as-of date:** 2026-07-26 (Asia/Tokyo)
+**Authoritative as-of date:** 2026-07-27 (Asia/Tokyo)
 **Scope:** repository `kudzimusar/direkt`, managed development/staging evidence, live Supabase verification and owner-configured external services  
 **Purpose:** prevent external provisioning, source integration and runtime activation from being conflated.  
 **Detailed live receipts:** `LIVE_INTEGRATION_LEDGER.md`
@@ -89,7 +89,7 @@ Current managed DIREKT runtime does **not** bind Gemini/Groq as active applicati
 |---|---|---|
 | PostGIS location model | **ACTIVE** | Canonical location/service-area semantics. |
 | Manual area/list fallback | **ACTIVE** | Provider-independent privacy/accessibility fallback. |
-| Google Maps Platform | **IMPLEMENTED_GATED / MANAGED PROOF IN PROGRESS** | RC7 source now includes separate Android/backend switches, privacy-safe native rendering, backend-only Zambia geocoding, reachable bounded discovery normalization, manual/list fallback and permanent non-leakage tests. Restricted credentials, quotas/budget controls and exact-main managed proof remain required before `ACTIVE`. |
+| Google Maps Platform | **IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS** | RC7 preserves the restricted Android key and privacy-safe native rendering, but the backend is now Geocoding API v4 through the assigned Cloud Run service identity with a downscoped address-geocoding OAuth token. The incompatible backend API-key/Public-NAT path is prohibited. Budget/quota controls, exact-main managed proof and terminal cleanup evidence remain required before `ACTIVE`. |
 | Private-coordinate map publication | **DISABLED** | Exact private provider bases must not become public markers/ranking inputs. |
 
 ## Communications and notifications

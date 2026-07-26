@@ -1,7 +1,7 @@
 # DIREKT Live Integration Ledger
 
 **Repository:** `kudzimusar/direkt`  
-**Last reconciled:** 2026-07-26 (Asia/Tokyo)
+**Last reconciled:** 2026-07-27 (Asia/Tokyo)
 **Governing issue:** #261 — Runtime integration closure after W8  
 **Purpose:** Canonical cross-agent source of truth for integration existence, state, evidence, blockers and next actions.
 
@@ -302,7 +302,7 @@ Ledger updated: YES
 |---|---|---|
 | PostGIS | `ACTIVE` | Canonical spatial/service-area model. |
 | Manual area/list fallback | `ACTIVE` | Must remain available if map provider fails. |
-| Google Maps Platform | `IMPLEMENTED_GATED / MANAGED PROOF IN PROGRESS` | RC7 source includes Maps Compose behind an explicit preauthorization synthetic latch, backend-only Zambia geocoding exposed through a bounded public discovery-normalization route, privacy-safe public premises/service-area rendering, manual/list fallback and permanent non-leakage checks. Separate restricted credentials, quotas/budget controls and exact-main managed proof remain pending. |
+| Google Maps Platform | `IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS` | RC7 keeps the package/signing/API-restricted Android key, Maps Compose latch, bounded Zambia normalization, privacy-safe rendering and manual/list fallback. Backend Geocoding now uses v4 with the assigned Cloud Run service identity and a downscoped address-only OAuth token; backend API keys, Maps secret values, Direct VPC egress and Cloud NAT are prohibited. Budget/quota controls and exact-main managed proof remain pending. |
 | Private provider coordinates | `DISABLED FOR PUBLICATION` | Exact private bases must not become public markers/ranking inputs. |
 
 ## API/client contract tooling
