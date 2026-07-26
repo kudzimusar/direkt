@@ -227,7 +227,7 @@ jobs:
             echo '- Participant / production authorization: false'
             echo '- Temporary Cloud Run Job cleanup: enforced'
             if [[ -f "${RC7_RECEIPT_PATH}" ]]; then
-              grep -E '^(owner_bootstrap_verified|backend_authentication|backend_oauth_scope|backend_api_key_present|backend_secret_value_present|backend_cloud_nat_used|backend_geocoding_canary|backend_service_identity_oauth_proven|android_test_lab_map_ready|budget_alert_present|geocoding_quota_per_minute|cleanup\.|cleanup_failed|managed_result)=' "${RC7_RECEIPT_PATH}" | sed 's/^/- `/' | sed 's/$/`/' || true
+              grep -E '^(owner_bootstrap_verified|budget_attestation|budget_checked_at|backend_authentication|backend_oauth_scope|backend_api_key_present|backend_secret_value_present|backend_cloud_nat_used|backend_geocoding_canary|backend_service_identity_oauth_proven|android_test_lab_map_ready|budget_alert_present|geocoding_quota_per_minute|cleanup\.|cleanup_failed|managed_result)=' "${RC7_RECEIPT_PATH}" | sed 's/^/- `/' | sed 's/$/`/' || true
             fi
           } > "${body}"
           gh issue comment 261 --repo "${GITHUB_REPOSITORY}" --body-file "${body}"
