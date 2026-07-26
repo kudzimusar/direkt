@@ -4,6 +4,10 @@
 **Status:** Claimed; corrective source and managed proof in progress  
 **Corrective baseline:** `main@4fa12358269297eb926d45952712eddec5506596`
 
+## Source reconciliation checkpoint
+
+The corrective branch has completed its one-time atomic source reconciliation. The permanent branch no longer contains the temporary reconciler workflow. Environment schema, application adapter, unit tests, managed workflow, bootstrap, contract verifiers, trigger, status register and live ledger now describe the same service-identity OAuth architecture.
+
 ## Scope decision
 
 RC7 activates only:
