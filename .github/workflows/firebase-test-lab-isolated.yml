@@ -1,0 +1,110 @@
+name: DIREKT Firebase Test Lab isolated Android matrix
+
+"on":
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN-DIREKT-ISOLATED-TEST-LAB to continue
+        required: true
+        type: string
+      source_sha:
+        description: Exact reviewed DIREKT commit that must equal current main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: direkt-firebase-test-lab-isolated
+  cancel-in-progress: false
+
+jobs:
+  android-matrix:
+    name: Prove Android instrumentation on isolated Spark Test Lab matrix
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      DIREKT_CONFIRMATION: ${{ inputs.confirmation }}
+      SOURCE_SHA: ${{ inputs.source_sha }}
+      GCP_PROJECT_ID: direkt-testlab-502701-20260726
+      GCP_PROJECT_NUMBER: "482116157386"
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      DIREKT_GRADLE_VERSION: "9.4.0"
+      DIREKT_TEST_CLASS: com.kudzimusar.direkt.DirektAppSmokeTest
+      DIREKT_TEST_PACKAGE: com.kudzimusar.direkt.debug.test
+      DIREKT_TEST_RUNNER: androidx.test.runner.AndroidJUnitRunner
+
+    steps:
+      - name: Validate dispatch and isolated-project controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${DIREKT_CONFIRMATION}" = "RUN-DIREKT-ISOLATED-TEST-LAB"
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          test "${GCP_PROJECT_ID}" = "direkt-testlab-502701-20260726"
+          test "${GCP_PROJECT_NUMBER}" = "482116157386"
+          test "${GCP_DEPLOYER_SERVICE_ACCOUNT}" = "direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com"
+
+      - name: Check out exact reviewed source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify exact source equals current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
+          git fetch origin main --no-tags
+          test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Configure pinned Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ env.DIREKT_GRADLE_VERSION }}
+
+      - name: Authenticate to isolated Google Cloud project through existing GitHub OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Execute bounded isolated managed Test Lab proof
+        id: managed
+        shell: bash
+        run: bash scripts/rc5/run-test-lab-isolated-managed.sh
+
+      - name: Upload sanitized isolated RC5 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc5-isolated-firebase-test-lab-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/rc5-test-lab-matrix.json
+            ${{ runner.temp }}/rc5-test-lab-receipt.json
+            ${{ runner.temp }}/rc5-test-lab-command.log
+          if-no-files-found: warn
+          retention-days: 30

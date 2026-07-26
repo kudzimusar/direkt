@@ -1,0 +1,133 @@
+name: DIREKT RC5 isolated Test Lab preflight once
+
+"on":
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/rc5-test-lab-isolated-preflight-once.yml
+
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+
+concurrency:
+  group: direkt-rc5-isolated-test-lab-preflight-once
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    name: Prove isolated Spark IAM APIs and live device catalog
+    if: github.repository == 'kudzimusar/direkt' && github.ref == 'refs/heads/main'
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GCP_PROJECT_ID: direkt-testlab-502701-20260726
+      GCP_PROJECT_NUMBER: "482116157386"
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      SOURCE_SHA: ${{ github.sha }}
+      RC5_PREFLIGHT_CORRELATION: rc5-isolated-${{ github.run_id }}-${{ github.run_attempt }}
+      RC5_PREFLIGHT_RECEIPT: /tmp/rc5-isolated-test-lab-preflight/receipt.txt
+      RC5_PREFLIGHT_MATRIX: /tmp/rc5-isolated-test-lab-preflight/matrix.json
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Validate exact-main preflight controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          test "${GCP_PROJECT_ID}" = "direkt-testlab-502701-20260726"
+          test "${GCP_PROJECT_NUMBER}" = "482116157386"
+          test "${GCP_DEPLOYER_SERVICE_ACCOUNT}" = "direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com"
+          current_main="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
+          test "${current_main}" = "${SOURCE_SHA}"
+
+      - name: Check out exact preflight source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Verify local preflight source contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n scripts/rc5/run-test-lab-isolated-preflight.sh
+          python3 scripts/rc5/select-test-lab-matrix.py --self-test
+
+      - name: Authenticate to isolated project through existing GitHub OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Execute read-only isolated preflight
+        id: inspect
+        continue-on-error: true
+        shell: bash
+        run: bash scripts/rc5/run-test-lab-isolated-preflight.sh
+
+      - name: Upload sanitized isolated preflight artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc5-isolated-test-lab-preflight-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/rc5-isolated-test-lab-preflight
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish dedicated receipt and enforce readiness
+        if: always()
+        shell: bash
+        env:
+          INSPECT_OUTCOME: ${{ steps.inspect.outcome }}
+        run: |
+          set -euo pipefail
+          test -s "${RC5_PREFLIGHT_RECEIPT}"
+          test -s "${RC5_PREFLIGHT_MATRIX}"
+
+          result="failed"
+          if [[ "${INSPECT_OUTCOME}" = "success" ]] && grep -Fxq 'RESULT|ready' "${RC5_PREFLIGHT_RECEIPT}" && grep -Fxq 'FAILURE_COUNT|0' "${RC5_PREFLIGHT_RECEIPT}"; then
+            result="passed"
+          fi
+
+          short_sha="${SOURCE_SHA:0:12}"
+          issue_title="RC5 isolated Test Lab preflight — ${result} — ${short_sha} — run ${GITHUB_RUN_ID}"
+          receipt_json="$(jq -Rs . < "${RC5_PREFLIGHT_RECEIPT}")"
+          matrix_json="$(jq -c . "${RC5_PREFLIGHT_MATRIX}" | jq -Rs .)"
+          issue_body="$(jq -nr \
+            --arg source "${SOURCE_SHA}" \
+            --arg run "${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}" \
+            --arg project "${GCP_PROJECT_ID}" \
+            --arg outcome "${INSPECT_OUTCOME}" \
+            --arg receipt "$(cat "${RC5_PREFLIGHT_RECEIPT}")" \
+            --arg matrix "$(jq . "${RC5_PREFLIGHT_MATRIX}")" \
+            '"## RC5 isolated Firebase Test Lab preflight\n\n- Exact source: `" + $source + "`\n- GitHub run/attempt: `" + $run + "`\n- Project: `" + $project + "`\n- Step outcome: `" + $outcome + "`\n- Boundary: metadata, IAM and live catalogue inspection only; no matrix execution, participant data or production authorization.\n- Tracker: #261\n\n### Receipt\n\n```text\n" + $receipt + "\n```\n\n### Matrix\n\n```json\n" + $matrix + "\n```"')"
+          receipt_url="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/issues" -f title="${issue_title}" -f body="${issue_body}" --jq '.html_url')"
+
+          tracker_body="RC5 isolated Test Lab preflight completed at \`${SOURCE_SHA}\`: result \`${result}\`, run \`${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}\`, receipt ${receipt_url}. No matrix or production authorization was created."
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/261/comments" -f body="${tracker_body}" >/dev/null
+
+          test "${result}" = "passed"
+          grep -Fxq "SOURCE|${SOURCE_SHA}" "${RC5_PREFLIGHT_RECEIPT}"
+          grep -Fxq 'MODE|isolated_spark_metadata_iam_catalog_only' "${RC5_PREFLIGHT_RECEIPT}"
+          grep -Fxq 'RESOURCE_MUTATION|false' "${RC5_PREFLIGHT_RECEIPT}"
+          grep -Fxq 'MATRIX_EXECUTED|false' "${RC5_PREFLIGHT_RECEIPT}"
+          grep -Fxq 'PRODUCTION_AUTHORIZATION|false' "${RC5_PREFLIGHT_RECEIPT}"
+          test "$(jq -r '.selected' "${RC5_PREFLIGHT_MATRIX}")" = "true"
+          test "$(jq -r '.deviceCount' "${RC5_PREFLIGHT_MATRIX}")" = "3"

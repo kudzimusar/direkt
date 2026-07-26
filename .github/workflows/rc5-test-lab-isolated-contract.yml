@@ -1,0 +1,170 @@
+name: DIREKT RC5 isolated Test Lab contract
+
+"on":
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/firebase-test-lab-isolated.yml
+      - .github/workflows/rc5-test-lab-isolated-preflight-once.yml
+      - .github/workflows/rc5-test-lab-isolated-contract.yml
+      - scripts/rc5/run-test-lab-isolated-preflight.sh
+      - scripts/rc5/run-test-lab-isolated-managed.sh
+      - scripts/rc5/select-test-lab-matrix.py
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/firebase-test-lab-isolated.yml
+      - .github/workflows/rc5-test-lab-isolated-preflight-once.yml
+      - .github/workflows/rc5-test-lab-isolated-contract.yml
+      - scripts/rc5/run-test-lab-isolated-preflight.sh
+      - scripts/rc5/run-test-lab-isolated-managed.sh
+      - scripts/rc5/select-test-lab-matrix.py
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify isolated Spark Test Lab authority and matrix contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Parse permanent workflow YAML
+        shell: bash
+        run: |
+          set -euo pipefail
+          ruby - <<'RUBY'
+          require "yaml"
+          path = ".github/workflows/firebase-test-lab-isolated.yml"
+          doc = YAML.safe_load(File.read(path), aliases: true)
+          raise "workflow document must be a mapping" unless doc.is_a?(Hash)
+          raise "unexpected workflow name" unless doc["name"] == "DIREKT Firebase Test Lab isolated Android matrix"
+          trigger = doc.fetch("on").fetch("workflow_dispatch")
+          inputs = trigger.fetch("inputs")
+          %w[confirmation source_sha].each do |name|
+            input = inputs.fetch(name)
+            raise "#{name} must be required" unless input["required"] == true
+            raise "#{name} must be string" unless input["type"] == "string"
+          end
+          raise "permission drift" unless doc.fetch("permissions") == {"contents" => "read", "id-token" => "write"}
+          jobs = doc.fetch("jobs")
+          raise "unexpected job set" unless jobs.keys == ["android-matrix"]
+          job = jobs.fetch("android-matrix")
+          raise "staging environment required" unless job["environment"] == "staging"
+          raise "timeout drift" unless job["timeout-minutes"] == 55
+          env = job.fetch("env")
+          raise "isolated project drift" unless env["GCP_PROJECT_ID"] == "direkt-testlab-502701-20260726"
+          raise "isolated project number drift" unless env["GCP_PROJECT_NUMBER"] == "482116157386"
+          raise "WIF drift" unless env["GCP_WORKLOAD_IDENTITY_PROVIDER"] == "projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main"
+          raise "deployer drift" unless env["GCP_DEPLOYER_SERVICE_ACCOUNT"] == "direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com"
+          RUBY
+
+      - name: Parse one-shot preflight workflow YAML
+        shell: bash
+        run: |
+          set -euo pipefail
+          ruby - <<'RUBY'
+          require "yaml"
+          path = ".github/workflows/rc5-test-lab-isolated-preflight-once.yml"
+          doc = YAML.safe_load(File.read(path), aliases: true)
+          raise "workflow document must be a mapping" unless doc.is_a?(Hash)
+          raise "unexpected workflow name" unless doc["name"] == "DIREKT RC5 isolated Test Lab preflight once"
+          push = doc.fetch("on").fetch("push")
+          raise "main-only trigger drift" unless push.fetch("branches") == ["main"]
+          raise "path trigger drift" unless push.fetch("paths") == [path]
+          expected = {"contents" => "read", "id-token" => "write", "issues" => "write"}
+          raise "permission drift" unless doc.fetch("permissions") == expected
+          jobs = doc.fetch("jobs")
+          raise "unexpected job set" unless jobs.keys == ["preflight"]
+          job = jobs.fetch("preflight")
+          raise "staging environment required" unless job["environment"] == "staging"
+          env = job.fetch("env")
+          raise "isolated project drift" unless env["GCP_PROJECT_ID"] == "direkt-testlab-502701-20260726"
+          raise "isolated project number drift" unless env["GCP_PROJECT_NUMBER"] == "482116157386"
+          RUBY
+
+      - name: Verify shell syntax and isolated authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          preflight=scripts/rc5/run-test-lab-isolated-preflight.sh
+          managed=scripts/rc5/run-test-lab-isolated-managed.sh
+          workflow=.github/workflows/firebase-test-lab-isolated.yml
+          bridge=.github/workflows/rc5-test-lab-isolated-preflight-once.yml
+          bash -n "${preflight}"
+          bash -n "${managed}"
+          grep -Fq 'direkt-testlab-502701-20260726' "${preflight}" "${managed}" "${workflow}" "${bridge}"
+          grep -Fq '482116157386' "${preflight}" "${managed}" "${workflow}" "${bridge}"
+          grep -Fq 'roles/editor' "${preflight}" "${managed}"
+          grep -Fq 'deployer_roles' "${preflight}"
+          grep -Fq 'roles/owner' "${preflight}" "${managed}"
+          grep -Fq 'firebase-managed-default-bucket' "${preflight}" "${managed}"
+          ! grep -Fq 'direktTestLabRunner' "${preflight}" "${managed}" "${workflow}"
+          ! grep -Fq 'direktTestLabResultsWriter' "${preflight}" "${managed}" "${workflow}"
+          ! grep -Fq 'direktTestLabInputStager' "${preflight}" "${managed}" "${workflow}"
+          ! grep -Fq 'direkt-test-lab-results-' "${preflight}" "${managed}" "${workflow}"
+          ! grep -Fq 'direkt-test-lab-inputs-' "${preflight}" "${managed}" "${workflow}"
+
+      - name: Verify supported local APK and bounded execution controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          managed=scripts/rc5/run-test-lab-isolated-managed.sh
+          grep -Fq -- '--app "${app_apk}"' "${managed}"
+          grep -Fq -- '--test "${test_apk}"' "${managed}"
+          grep -Fq -- '--num-flaky-test-attempts 0' "${managed}"
+          grep -Fq -- '--no-use-orchestrator' "${managed}"
+          grep -Fq -- '--no-record-video' "${managed}"
+          grep -Fq -- '--no-performance-metrics' "${managed}"
+          grep -Fq -- '--no-auto-google-login' "${managed}"
+          grep -Fq 'test "${device_count}" = "3"' "${managed}"
+          grep -Fq 'select(.version == "26")' "${managed}"
+          grep -Fq 'select(.version == "33")' "${managed}"
+          grep -Fq 'select(. >= 35 and . <= 36)' "${managed}"
+          grep -Fq 'productionAuthorization: false' "${managed}"
+          grep -Fq 'participantData: false' "${managed}"
+          grep -Fq 'synthetic-public-safe-only' "${managed}"
+          ! grep -Fq -- '--results-bucket' "${managed}"
+          ! grep -Fq -- '--results-dir' "${managed}"
+          ! grep -Fq 'gs://' "${managed}"
+          ! grep -Fq 'gcloud storage' "${managed}"
+          ! grep -Eq '(set-iam-policy|add-iam-policy-binding|services enable|buckets create|buckets update)' "${managed}"
+
+      - name: Verify preflight is read-only and exact
+        shell: bash
+        run: |
+          set -euo pipefail
+          preflight=scripts/rc5/run-test-lab-isolated-preflight.sh
+          bridge=.github/workflows/rc5-test-lab-isolated-preflight-once.yml
+          grep -Fq 'MODE|isolated_spark_metadata_iam_catalog_only' "${preflight}"
+          grep -Fq 'RESOURCE_MUTATION|false' "${preflight}"
+          grep -Fq 'MATRIX_EXECUTED|false' "${preflight}"
+          grep -Fq 'PARTICIPANT_DATA_ACCESSED|false' "${preflight}"
+          grep -Fq 'PRODUCTION_AUTHORIZATION|false' "${preflight}"
+          grep -Fq 'test "${device_count}"' "${managed:-scripts/rc5/run-test-lab-isolated-managed.sh}"
+          grep -Fq 'RESULT|ready' "${preflight}"
+          grep -Fq 'FAILURE_COUNT|0' "${preflight}"
+          grep -Fq 'google-github-actions/auth@v3' "${bridge}"
+          ! grep -Fq 'firebase test android run' "${preflight}" "${bridge}"
+          ! grep -Fq 'gcloud storage' "${preflight}" "${bridge}"
+          ! grep -Eq '(set-iam-policy|add-iam-policy-binding|services enable|buckets create|buckets update)' "${preflight}" "${bridge}"
+          ! grep -Ei '(private_key|client_secret|access_token[[:space:]]*:)' "${workflow:-.github/workflows/firebase-test-lab-isolated.yml}" "${bridge}"
+
+      - name: Publish contract summary
+        shell: bash
+        run: |
+          {
+            echo '### RC5 isolated Test Lab contract'
+            echo '- Project: dedicated Firebase Spark project only'
+            echo '- Identity: existing GitHub WIF deployer, no key'
+            echo '- Authority: roles/editor isolated to the Test Lab project; no owner'
+            echo '- APK transport: local files through supported gcloud execution'
+            echo '- Results: Firebase-managed default bucket'
+            echo '- Matrix: exactly API 26, API 33 and current API 35/36'
+            echo '- Flaky retries: zero'
+            echo '- Participant/production authorization: false'
+          } >> "${GITHUB_STEP_SUMMARY}"
