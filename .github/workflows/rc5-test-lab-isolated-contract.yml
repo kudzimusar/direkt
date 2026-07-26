@@ -114,9 +114,21 @@ jobs:
         run: |
           set -euo pipefail
           managed=scripts/rc5/run-test-lab-isolated-managed.sh
-          grep -Fxq '  --output "${RUNNER_TEMP}/rc5-test-lab-matrix.json"' "${managed}"
-          grep -Fxq 'device_count="$(jq -r '\'' .deviceCount '\'' "${RUNNER_TEMP}/rc5-test-lab-matrix.json")"' "${managed}" || grep -Fxq 'device_count="$(jq -r '\''.deviceCount'\'' "${RUNNER_TEMP}/rc5-test-lab-matrix.json")"' "${managed}"
-          ! grep -Fq '\ndevice_count=' "${managed}"
+          python3 - "${managed}" <<'PY'
+          from pathlib import Path
+          import sys
+
+          path = Path(sys.argv[1])
+          text = path.read_text(encoding="utf-8")
+          lines = text.splitlines()
+          output_line = '  --output "${RUNNER_TEMP}/rc5-test-lab-matrix.json"'
+          count_line = 'device_count="$(jq -r \'.deviceCount\' "${RUNNER_TEMP}/rc5-test-lab-matrix.json")"'
+          assert output_line in lines, "exact selector output line missing"
+          index = lines.index(output_line)
+          assert index + 1 < len(lines), "device-count assignment missing"
+          assert lines[index + 1] == count_line, "selector output and device-count assignment must be adjacent physical lines"
+          assert r"\ndevice_count=" not in text, "literal newline escape reintroduced"
+          PY
           grep -Fq -- '--app "${app_apk}"' "${managed}"
           grep -Fq -- '--test "${test_apk}"' "${managed}"
           grep -Fq -- '--num-flaky-test-attempts 0' "${managed}"
