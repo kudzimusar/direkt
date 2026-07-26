@@ -1,0 +1,55 @@
+name: DIREKT RC5 Test Lab closure contract
+
+"on":
+  pull_request:
+    branches:
+      - main
+    paths:
+      - WORKSTREAM_LOCK.md
+      - PROJECT_STATUS.md
+      - docs/integrations/**
+      - scripts/rc5/**
+      - .github/workflows/*test-lab*
+  push:
+    branches:
+      - main
+    paths:
+      - WORKSTREAM_LOCK.md
+      - PROJECT_STATUS.md
+      - docs/integrations/**
+      - scripts/rc5/**
+      - .github/workflows/*test-lab*
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify closed isolated Test Lab evidence and permanent controls
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Verify RC5 closure
+        run: python3 scripts/rc5/verify-test-lab-closure.py
+      - name: Parse permanent Test Lab workflows and shell
+        shell: bash
+        run: |
+          set -euo pipefail
+          ruby -e 'require "yaml"; YAML.safe_load(File.read(".github/workflows/firebase-test-lab-isolated.yml"), aliases: true); YAML.safe_load(File.read(".github/workflows/rc5-test-lab-isolated-contract.yml"), aliases: true)'
+          bash -n scripts/rc5/run-test-lab-isolated-managed.sh
+          bash -n scripts/rc5/run-test-lab-isolated-preflight.sh
+      - name: Publish closure summary
+        shell: bash
+        run: |
+          {
+            echo '### RC5 Firebase Test Lab closure'
+            echo '- Exact source: `c3744430a7beb1cd47246d858df9ac1379a068ac`'
+            echo '- Managed run: `30183466799/1`'
+            echo '- Matrix: API 26 / 33 / 36, zero flaky retries'
+            echo '- Project: isolated Spark Test Lab only'
+            echo '- Participant/production authorization: false'
+          } >> "${GITHUB_STEP_SUMMARY}"
