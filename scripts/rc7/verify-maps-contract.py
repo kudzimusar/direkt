@@ -144,7 +144,7 @@ def main() -> int:
     for needle in (
         "workflow_dispatch:",
         "RUN-DIREKT-RC7-MAPS-MANAGED",
-        "refs/heads/main",
+        "branches:\n      - main",
         "test \"$(git rev-parse origin/main)\" = \"${SOURCE_SHA}\"",
         "google-github-actions/auth@v3",
         "direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com",
