@@ -124,13 +124,11 @@ describe('GoogleMapsGeocodingProviderAdapter', () => {
   });
 
   it('distinguishes a bounded quota rejection without reading the provider payload', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        new Response(JSON.stringify({ error: { message: 'secret quota detail' } }), {
-          status: 429,
-        }),
-      );
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: { message: 'secret quota detail' } }), {
+        status: 429,
+      }),
+    );
     const adapter = new GoogleMapsGeocodingProviderAdapter(
       tokenProvider(),
       1_000,
@@ -147,13 +145,11 @@ describe('GoogleMapsGeocodingProviderAdapter', () => {
   });
 
   it('distinguishes a bounded OAuth authorization denial without exposing the payload', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        new Response(JSON.stringify({ error: { message: 'secret denial detail' } }), {
-          status: 403,
-        }),
-      );
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: { message: 'secret denial detail' } }), {
+        status: 403,
+      }),
+    );
     const adapter = new GoogleMapsGeocodingProviderAdapter(
       tokenProvider(),
       1_000,
