@@ -167,6 +167,7 @@ jobs:
             ${{ runner.temp }}/rc7-backend-key-metadata.json
             ${{ runner.temp }}/rc7-geocoding-quota.json
             ${{ runner.temp }}/rc7-maps-execution.json
+            ${{ runner.temp }}/rc7-maps-canary-failure.json
             ${{ runner.temp }}/rc7-maps-test-lab.json
           if-no-files-found: warn
           retention-days: 30
