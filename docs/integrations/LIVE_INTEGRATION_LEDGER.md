@@ -1,7 +1,7 @@
 # DIREKT Live Integration Ledger
 
 **Repository:** `kudzimusar/direkt`  
-**Last reconciled:** 2026-07-25 (Asia/Tokyo)
+**Last reconciled:** 2026-07-26 (Asia/Tokyo)
 **Governing issue:** #261 — Runtime integration closure after W8  
 **Purpose:** Canonical cross-agent source of truth for integration existence, state, evidence, blockers and next actions.
 
@@ -40,7 +40,8 @@ No account, key, secret or dashboard project becomes `ACTIVE` by existence alone
 | Supabase Storage | `ACTIVE` | Private evidence/media/export storage through server-side grants. |
 | Supabase Data API/PostgREST | `QUARANTINED` | Not a privileged browser/client path. |
 | NestJS DIREKT API | `ACTIVE` | IAM-private canonical REST/OpenAPI trust boundary. |
-| Google Cloud project | `ACTIVE` | `direkt-dev-502701`, project number `264358173369`. |
+| Google Cloud application project | `ACTIVE` | `direkt-dev-502701`, project number `264358173369`. |
+| Firebase Test Lab isolated project | `ACTIVE — SYNTHETIC TESTING ONLY` | `direkt-testlab-502701-20260726`, project number `482116157386`, Spark plan/billing disabled; existing GitHub WIF deployer has `roles/editor` only in this empty Test Lab project; no service-account key, participant data or production workloads. |
 | Artifact Registry | `ACTIVE` | Immutable container images. |
 | Cloud Run | `ACTIVE` | Private API/operations plus public synthetic-only browser/BFF runtime. |
 | Secret Manager | `ACTIVE` | Runtime secret authority. |
@@ -185,12 +186,29 @@ No payment provider secret is attached to Cloud Run until adapter/config/runtime
 | FCM | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | RC4 exact-main run `29916381754` on `f05ff19105cb8dc7c4621c044c110b6029f63300` proved synthetic registration, private backend outbox → FCM HTTP v1 → Android foreground/background delivery, sanitized evidence publication and ordered cleanup. Fixed secret `direkt-fcm-canary-token` remains an empty owner-provisioned container between proofs; the temporary numeric token version was destroyed after Cloud Run Job deletion. Participant registration and participant/production push remain disabled. |
 | WhatsApp Cloud API | `CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY` | RC6 exact-current-main run `30137700769` on source `8838b7a6d726a5aed44ce21a39506c1265a98d15` passed transactional outbox → Meta `hello_world` test-template send → authentic signed webhook receipt on retry. The initial pre-provider Google Cloud CLI setup failure remains preserved in Issue #404. Backend-only credentials, send-time synthetic approval/opt-out, hashed opt-out state, bounded retry/idempotency, HMAC verification, durable out-of-order-safe receipts and fail-closed kill switches remain enforced. Participant/production delivery, production phone registration and production templates remain disabled/gated. |
 | Firebase Crashlytics | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | RC3 exact-source managed proof succeeded for `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; bridge run `29885635547` enforced marker-pinned source identity and terminal canary success for fatal delivery, focused input-dispatch ANR, historical `REASON_ANR`, restart pickup and post-ANR Crashlytics/DataTransport delivery. Automatic collection remains default-off; Firebase Analytics and stable participant user IDs are absent; participant/production telemetry remains disabled. |
-| Firebase Test Lab | `ACTIVE RESUMED / NOT CLOSED — IMPLEMENTED_GATED / MANAGED MATRIX PENDING` | RC5 source and local instrumentation are integrated; least-privilege custom roles and dedicated 30-day results bucket are preserved. Final owner-side read-only verification and exact-current-main managed matrix proof remain required. Draft proof bridge #378 remains preserved and gated on verified infrastructure state; no production/participant authorization is created. |
+| Firebase Test Lab | `CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX` | Exact source `c3744430a7beb1cd47246d858df9ac1379a068ac` passed run `30183466799` in isolated Spark project `direkt-testlab-502701-20260726` on `MediumPhone.arm` API 26, 33 and 36 with zero flaky retries. Artifact `8626329335` digest `sha256:03a40951a23c937d8b0fd2990a7d2652afbd1172631c0b480af756aebd92a843` is schema-valid. Firebase-managed results remain synthetic/public-safe; production/participant authorization is false. |
 | Cloudflare Turnstile | `PLANNED / WHERE NEEDED` | Only for reviewed abuse-sensitive public flows with server verification, accessibility fallback and kill switch. |
 | Cloud Tasks / Pub/Sub / Scheduler | `PLANNED ON DEMAND` | Add only when retry/fan-out/scheduling needs justify them. |
 
 Controlled-pilot participant and production FCM delivery remain disabled during RC4. Device-token registration is fail-closed unless a later controlled-pilot authorization explicitly enables the source-controlled registration gate. The 2026-07-22 owner bootstrap created no secret value and verified `roles/secretmanager.secretVersionManager` only for the GitHub deployer and `roles/secretmanager.secretAccessor` only for the runtime identity on the fixed canary secret.
 
+
+### RC5 Firebase Test Lab closure receipt
+
+```text
+Integration: Firebase Test Lab Android device-matrix automation (RC5)
+Previous state: IMPLEMENTED_GATED / MANAGED MATRIX PENDING
+New state: CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX
+Isolated project: direkt-testlab-502701-20260726 (482116157386), Spark plan, billing disabled
+Identity: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com through existing GitHub Workload Identity Federation; roles/editor scoped only to the isolated Test Lab project; no service-account key
+Exact proven source: c3744430a7beb1cd47246d858df9ac1379a068ac
+Managed execution: run 30183466799/1 completed SUCCESS
+Matrix: MediumPhone.arm / API 26, API 33 and API 36; en; portrait; exactly three devices
+Execution controls: flaky retries 0; orchestrator false; video false; performance metrics false; automatic Google login false; five-minute timeout
+Artifact: 8626329335; digest sha256:03a40951a23c937d8b0fd2990a7d2652afbd1172631c0b480af756aebd92a843; schema direkt.rc5.isolated-test-lab-receipt.v1; result passed; exitCode 0; category PASSED
+Data boundary: synthetic-public-safe-only; participantData false; productionAuthorization false; Firebase-managed default results storage inside isolated project
+Historical evidence: failed v2/private-input and selector-newline attempts remain preserved in their GitHub issues and were not rewritten as passes
+```
 
 ### RC6 WhatsApp Cloud API closure receipt
 

@@ -6,14 +6,14 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED — RC5 Firebase Test Lab device-matrix closure |
-| Owner/agent | Active repository agent — Issue #261 runtime integration closure, resumed RC5 Firebase Test Lab checkpoint. |
-| Authorized scope | RC5 only: complete final owner-side read-only verification of the existing least-privilege Test Lab resources, execute the exact-current-main managed Firebase Test Lab matrix through the preserved proof bridge, retain sanitized artifacts/results, reconcile the permanent verifier/status ledger and close RC5 only on machine-enforced success. No UIA source changes, RC6 changes, Maps, payments, generated-client migration, Turnstile, production auth, real-participant activation or production release is authorized in this lane. |
-| Protected surface | Closed RC6 WhatsApp source/workflows and managed evidence run `30137700769`; UIA browser/Android/operations owner-review surfaces and Issue #354; backend/database/OpenAPI trust and authorization boundaries; private API/BFF IAM; operations authorization/private evidence controls; payments; VC1–VC8 Design DNA; Phase 11/12 gates; Android auth/signing/Play/Data Safety; RC0–RC4 closure evidence. |
-| Implementation branch | `integration/rc5-readonly-preflight-498f606` from exact current `main@498f606195edfed75f29535d7b93e8038681287c`. |
-| Stable baseline | RC6 is closed/preserved at `main@498f606195edfed75f29535d7b93e8038681287c`; managed run `30137700769` and initial failure Issue #404 remain preserved, with participant/production WhatsApp disabled. RC5 source PR #377, IAM correction PR #379 and the owner-created least-privilege roles/results bucket remain preserved. Draft PR #378 is stale and unmergeable against current main; it must remain unmerged and be replaced only after the new exact-current-main read-only infrastructure preflight proves `RESULT|ready` with no resource mutation or Test Lab matrix execution. UIA Issue #354 remains parked/open. |
-| Current task | RC5 — execute an exact-current-main read-only Test Lab infrastructure/catalog preflight, publish a sanitized dedicated receipt, and authorize a synchronized managed matrix bridge only if the receipt is ready. |
-| Governing issue | Issue #261 — Runtime integration closure after W8. RC6 is closed at its synthetic-only managed boundary; Issue #354 UIA remains parked/open; RC5 is resumed/open. |
+| Status | RELEASED — RC5 Firebase Test Lab device-matrix closure complete; RC7 not claimed |
+| Owner/agent | No active repository write lane. RC5 is closed and preserved under Issue #261; later RC7+ work requires a new explicit claim. |
+| Authorized scope | No active implementation scope. RC5 closure evidence and permanent isolated Test Lab workflow/verifier are preserved. UIA remains parked; RC7 Maps, payments, generated clients, Turnstile, production auth, real-participant activation and production release are not authorized without a new bounded claim. |
+| Protected surface | Closed RC0–RC6 evidence, including RC5 managed run `30183466799` and RC6 managed run `30137700769`; UIA Issue #354; backend/database/OpenAPI trust boundaries; private API/BFF IAM; payments; VC1–VC8 Design DNA; Phase 11/12 gates; Android auth/signing/Play/Data Safety. |
+| Implementation branch | None — closure reconciliation branch only; no later runtime lane is claimed. |
+| Stable baseline | RC5 is closed at exact source `c3744430a7beb1cd47246d858df9ac1379a068ac` through isolated managed run `30183466799` and schema-valid artifact `8626329335`; failures remain preserved in their issues. RC6 remains closed at run `30137700769`. UIA Issue #354 remains parked/open. Production and participant activation remain disabled. |
+| Current task | None. RC5 closure reconciliation is complete; RC7+ remains blocked until explicitly claimed and re-coordinated. |
+| Governing issue | Issue #261 — Runtime integration closure after W8. RC5 and RC6 are closed at synthetic-only managed boundaries; Issue #354 UIA remains parked/open. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
 
@@ -24,7 +24,7 @@ The following strings are historical closure evidence required by the permanent 
 - Historical lock row: `Status | RELEASED`.
 - W8 — controlled route/deployment cutover completed with a dedicated least-privilege runtime identity.
 - Canonical owner-review host: `https://app.direkt.forum`; historical preview remains `https://direkt.forum/preview/`.
-- W8 implementation claim is **RELEASED**. Current implementation ownership is RC5 under Issue #261 as declared in the Current lock table above.
+- W8 implementation claim is **RELEASED**. No later implementation lane is currently claimed; RC5 closure is preserved below.
 
 ## RC3 implementation contract — CLOSED AND PRESERVED
 
@@ -52,7 +52,7 @@ The following strings are historical closure evidence required by the permanent 
 9. RC4 must not activate Firebase Test Lab, Maps, Analytics or unrelated Firebase products early.
 10. RC4 is `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY`; participant registration and participant/production push remain separately gated.
 
-## RC5 implementation contract — ACTIVE — SOURCE COMPLETE; MANAGED MATRIX PENDING
+## RC5 implementation contract — CLOSED AND PRESERVED
 
 1. Firebase Test Lab is a testing/evidence service only; it does not authorize production release, participant enrollment, production auth, real communications or real private evidence.
 2. The Test Lab workflow must build and test an exact reviewed source SHA that is already merged to `main` for managed proof, while pull-request CI may validate source changes before merge.
@@ -60,10 +60,10 @@ The following strings are historical closure evidence required by the permanent 
 4. The managed matrix must remain small, explicit and cost-bounded, and must use currently supported Firebase Test Lab model/version pairs discovered from the live catalog rather than guessed/stale device identifiers.
 5. Coverage must include the minimum supported Android boundary where feasible, the Android 13 notification-permission era, and a current platform baseline without multiplying redundant devices.
 6. Test APKs, app APKs, result summaries and retained artifacts must contain only synthetic/public-safe data and no production credentials, participant data, raw tokens, private evidence or exact private provider coordinates.
-7. GitHub Actions must authenticate through existing Workload Identity Federation and use the narrowest practical Test Lab/result-storage permissions; project Editor/Owner and long-lived service-account keys are prohibited.
+7. GitHub Actions authenticates through existing Workload Identity Federation. Broad Test Lab authority is confined to the dedicated, empty Spark project `direkt-testlab-502701-20260726`; `roles/editor` is isolated there, `roles/owner` and service-account keys remain prohibited, and the main DIREKT project receives no broadening.
 8. Test results must be machine-enforced: a matrix/infrastructure/test failure cannot be documented as passing, and flaky reruns must not erase the original failed evidence.
 9. Existing Android unit/lint/build, App Distribution, Crashlytics, FCM, signing, Play/Data Safety and cross-client regression gates remain intact.
-10. RC5 remains `IMPLEMENTED_GATED / MANAGED MATRIX PENDING` until final owner-controlled resource verification, exact-current-main managed Test Lab execution, sanitized result/artifact evidence, permanent verifier promotion and status/ledger reconciliation are complete. Draft PR #378 is preserved and may proceed only after the owner-side verification checkpoint passes; it must not merge on assumed or stale infrastructure state.
+10. RC5 is `CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX`: exact source `c3744430a7beb1cd47246d858df9ac1379a068ac` passed run `30183466799` on `MediumPhone.arm` API 26, 33 and 36 with zero flaky retries. Artifact `8626329335` (`sha256:03a40951a23c937d8b0fd2990a7d2652afbd1172631c0b480af756aebd92a843`) is schema-valid. Participant/production authorization remains false; historical failures and superseded v2 infrastructure remain evidence only.
 
 ## UIA owner-review promotion contract — PARKED AND PRESERVED
 
@@ -75,7 +75,7 @@ The following strings are historical closure evidence required by the permanent 
 6. No real participant data, production auth, private evidence activation, real communications, real money movement or Phase 11/12 release authority is introduced by UIA.
 7. Owner-facing evidence must come from production-built or equivalent clean runtime presentation with no Next.js development toolbar, `1 Issue` badge, debug/canary labels or other developer-only UI leakage.
 8. Existing backend, Android, PWA, portal, supply-chain, privacy, authorization and integration regressions remain mandatory; RC5 must not weaken them.
-9. UIA Issue #354 remains open for remaining owner-access/acceptance evidence but is read-only/parked while RC5 owns the single write lane.
+9. UIA Issue #354 remains open and parked. RC5 no longer owns a write lane; UIA or RC7+ requires an explicit new claim before source changes.
 10. UIA closes only after the owner has straightforward current access to the final VC browser, Android and protected operations surfaces and Issue #354 explicitly distinguishes visual/synthetic review, connected development/staging UI testing, real Phase 11 participant UAT and production release.
 
 ## RC6 implementation contract — CLOSED AND PRESERVED
@@ -112,7 +112,7 @@ The following strings are historical closure evidence required by the permanent 
 - RC2 — Sentry for approved NestJS/Next.js surfaces. **Closed — PR #275 source + managed synthetic API/private-portal canary + closure PR #280; participant/production telemetry remains disabled.**
 - RC3 — Firebase Crashlytics Android. **Closed — exact source `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; managed bridge run `29885635547` successful; closure PR #338 merged at `0d7d29313990c37b25bd985588866a85bbe10f83`.**
 - RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary. **CLOSED — exact source `f05ff19105cb8dc7c4621c044c110b6029f63300`; managed run `29916381754` successful; participant/production push disabled.**
-- RC5 — Firebase Test Lab device-matrix automation. **ACTIVE RESUMED / NOT CLOSED — source PR #377 plus IAM correction PR #379 are merged; least-privilege custom roles and dedicated results bucket are preserved; final owner-side verification and exact-current-main managed matrix proof remain required; draft PR #378 is preserved and gated on verified infrastructure state.**
+- RC5 — Firebase Test Lab device-matrix automation. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX — dedicated Spark project `direkt-testlab-502701-20260726`; exact source `c3744430a7beb1cd47246d858df9ac1379a068ac`; managed run `30183466799`; API 26/33/36; zero flaky retries; participant/production authorization false.**
 - UIA — post-VC owner-review promotion. **PARKED / OPEN — PR #385 merged at `fed6db8ab7c479b5e47095b4f0a752514122a4f6`; Issue #354 remains open for remaining owner-access evidence; read-only while RC5 owns the lane.**
 - RC6 — WhatsApp Cloud API application adapter. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY — exact source `8838b7a6d726a5aed44ce21a39506c1265a98d15`; managed run `30137700769` succeeded on retry through outbox → Meta test template → authentic signed webhook receipt; initial failure preserved in Issue #404; production/participant sends remain disabled.**
 - RC7 — Google Maps runtime activation with separate restricted Android/backend credentials, privacy-safe publication semantics, quotas, manual/list fallback and kill switch.
@@ -138,4 +138,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-RC5 Firebase Test Lab is the sole active implementation lane under Issue #261. RC6 is closed and preserved at its synthetic-only managed boundary; its provider, secret, webhook and production-disable controls must not be weakened. PR #378 may proceed only after final owner-side read-only verification confirms the existing least-privilege resources, and RC5 cannot be represented as closed without exact-current-main managed Test Lab proof. UIA Issue #354 remains parked/read-only. RC7+ source work must not begin until RC5 releases or is explicitly re-coordinated.
+No active implementation lane exists. RC5 and RC6 are closed and preserved at synthetic-only managed boundaries. UIA Issue #354 remains parked/read-only. RC7+ source work must not begin until a new explicit bounded claim is recorded; production and participant authorization remain blocked.

@@ -1,6 +1,6 @@
 # RC5 isolated Firebase Test Lab lane
 
-RC5 remains open until a managed Android instrumentation matrix passes on all selected virtual devices with zero flaky retries.
+RC5 is closed at the synthetic-only managed boundary. Exact source `c3744430a7beb1cd47246d858df9ac1379a068ac` passed managed run `30183466799/1` on all three selected virtual devices with zero flaky retries.
 
 ## Isolated project
 
@@ -50,4 +50,4 @@ The managed run must use:
 - synthetic/public-safe data only;
 - production authorization false.
 
-A successful preflight does not close RC5. Closure requires a schema-valid managed receipt with `result: passed`, exit code zero, three selected targets and all enforced runtime controls, followed by regression and documentation reconciliation.
+Canonical closure evidence is Issue #449 and artifact `8626329335` (`sha256:03a40951a23c937d8b0fd2990a7d2652afbd1172631c0b480af756aebd92a843`): schema-valid receipt `result: passed`, exit code zero, category `PASSED`, three selected targets, and all enforced runtime controls. This closure does not authorize participants, production authentication, private evidence, external communications, real payments or production release.
