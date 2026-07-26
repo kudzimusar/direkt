@@ -26,6 +26,8 @@ Publication rules are unchanged:
 
 The permanent RC5 and RC6 verifiers explicitly accept bounded RC7 ownership while continuing to require their original exact source, managed run, artifact and production-disabled closure evidence.
 
+The backend Maps source and tests are formatted through the repository's pinned Prettier toolchain before exact-head verification.
+
 ## Credential boundary
 
 Two credentials are mandatory and may not be reused:
