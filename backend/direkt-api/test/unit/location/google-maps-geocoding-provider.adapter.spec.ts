@@ -14,9 +14,9 @@ function tokenProvider(): GoogleMapsAccessTokenProvider {
 
 function captureFetch(response: Response): {
   fetchMock: typeof fetch;
-  request: { url?: URL; init?: RequestInit };
+  request: { url?: URL; init: RequestInit | undefined };
 } {
-  const request: { url?: URL; init?: RequestInit } = {};
+  const request: { url?: URL; init: RequestInit | undefined } = { init: undefined };
   const fetchMock: typeof fetch = vi.fn(
     async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
       let requestUrl: string;
