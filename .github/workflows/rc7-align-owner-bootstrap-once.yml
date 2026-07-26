@@ -1,5 +1,6 @@
 name: DIREKT RC7 align owner bootstrap once
 
+# One-shot bridge: applies the reviewed bootstrap alignment, verifies it, then deletes itself.
 on:
   push:
     branches:
