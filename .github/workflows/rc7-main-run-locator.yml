@@ -1,0 +1,42 @@
+name: RC7 exact-main run locator
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-main-run-locator.yml"
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+
+jobs:
+  locate:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chore/rc7-main-run-locator'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TARGET_SHA: 1c6acd7972caca838f27b4e5c4a521c92cbfc7c4
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Locate exact-main RC7 workflow run
+        shell: bash
+        run: |
+          set -euo pipefail
+          response="$(gh api --paginate \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${TARGET_SHA}&event=push&per_page=100")"
+          matches="$(jq -c '[.workflow_runs[] | select(.name == "DIREKT RC7 managed Google Maps proof") | {id, run_number, run_attempt, status, conclusion, html_url, head_sha, event, created_at, updated_at}]' <<<"${response}")"
+          count="$(jq 'length' <<<"${matches}")"
+          body="${RUNNER_TEMP}/rc7-main-run-locator.md"
+          {
+            echo '## RC7 exact-main workflow locator'
+            echo
+            echo "- Exact main: \`${TARGET_SHA}\`"
+            echo "- Matching push runs: \`${count}\`"
+            echo
+            echo '```json'
+            jq . <<<"${matches}"
+            echo '```'
+          } >"${body}"
+          gh pr comment "${{ github.event.pull_request.number }}" --repo "${GITHUB_REPOSITORY}" --body-file "${body}"
