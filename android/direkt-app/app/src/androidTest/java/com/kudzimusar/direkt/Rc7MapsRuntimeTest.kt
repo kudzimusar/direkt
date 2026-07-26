@@ -1,14 +1,11 @@
 package com.kudzimusar.direkt
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNode
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performScrollToIndex
 import org.junit.Rule
 import org.junit.Test
 
@@ -19,7 +16,6 @@ class Rc7MapsRuntimeTest {
     @Test
     fun mapViewPreservesPrivacySafeFallbackOrLoadsRestrictedRuntime() {
         composeRule.onNodeWithText("Discover").performClick()
-        composeRule.onNode(hasScrollAction()).performScrollToIndex(4)
         composeRule.onNodeWithText("Map").performScrollTo().performClick()
         composeRule.onNodeWithTag("discovery-map-card").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText(
