@@ -1,0 +1,115 @@
+name: RC7 OAuth source reconciler
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-oauth-source-patcher.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'fix/rc7-service-identity-oauth'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Apply exact RC7 OAuth source reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          def replace(path: str, old: str, new: str, *, count: int = 1) -> None:
+              target = Path(path)
+              text = target.read_text(encoding="utf-8")
+              actual = text.count(old)
+              if actual != count:
+                  raise SystemExit(f"{path}: expected {count} occurrence(s), found {actual}: {old!r}")
+              target.write_text(text.replace(old, new), encoding="utf-8")
+
+          replace(
+              "backend/direkt-api/src/config/environment.ts",
+              "  GOOGLE_MAPS_SERVER_API_KEY?: string;\n",
+              "  GOOGLE_MAPS_OAUTH_SCOPE: string;\n",
+          )
+          replace(
+              "backend/direkt-api/src/config/environment.ts",
+              "const googleMapsEndpoint = Joi.string().uri({ scheme: ['https'] });\n",
+              "const googleMapsOAuthScope = Joi.string().valid(\n"
+              "  'https://www.googleapis.com/auth/maps-platform.geocode.address',\n"
+              ");\n"
+              "const googleMapsEndpoint = Joi.string().valid(\n"
+              "  'https://geocode.googleapis.com/v4/geocode/address',\n"
+              ");\n",
+          )
+          replace(
+              "backend/direkt-api/src/config/environment.ts",
+              "  GOOGLE_MAPS_SERVER_API_KEY: providerApiKey.when('GOOGLE_MAPS_BACKEND_MODE', {\n"
+              "    is: 'google_maps',\n"
+              "    then: providerApiKey.required(),\n"
+              "    otherwise: providerApiKey.optional(),\n"
+              "  }),\n"
+              "  GOOGLE_MAPS_GEOCODING_ENDPOINT: googleMapsEndpoint.default(\n"
+              "    'https://maps.googleapis.com/maps/api/geocode/json',\n"
+              "  ),\n",
+              "  GOOGLE_MAPS_OAUTH_SCOPE: googleMapsOAuthScope.default(\n"
+              "    'https://www.googleapis.com/auth/maps-platform.geocode.address',\n"
+              "  ),\n"
+              "  GOOGLE_MAPS_GEOCODING_ENDPOINT: googleMapsEndpoint.default(\n"
+              "    'https://geocode.googleapis.com/v4/geocode/address',\n"
+              "  ),\n",
+          )
+
+          managed = Path("scripts/rc7/run-maps-managed.sh")
+          managed_text = managed.read_text(encoding="utf-8")
+          if managed_text.count("sanitary_failure") != 4:
+              raise SystemExit("Unexpected RC7 sanitized-failure variable count")
+          managed.write_text(managed_text.replace("sanitary_failure", "sanitized_failure"), encoding="utf-8")
+
+          replace(
+              "docs/integrations/CURRENT_INTEGRATION_STATUS.md",
+              "**Authoritative as-of date:** 2026-07-26 (Asia/Tokyo)",
+              "**Authoritative as-of date:** 2026-07-27 (Asia/Tokyo)",
+          )
+          replace(
+              "docs/integrations/CURRENT_INTEGRATION_STATUS.md",
+              "| Google Maps Platform | **IMPLEMENTED_GATED / MANAGED PROOF IN PROGRESS** | RC7 source now includes separate Android/backend switches, privacy-safe native rendering, backend-only Zambia geocoding, reachable bounded discovery normalization, manual/list fallback and permanent non-leakage tests. Restricted credentials, quotas/budget controls and exact-main managed proof remain required before `ACTIVE`. |",
+              "| Google Maps Platform | **IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS** | RC7 preserves the restricted Android key and privacy-safe native rendering, but the backend is now Geocoding API v4 through the assigned Cloud Run service identity with a downscoped address-geocoding OAuth token. The incompatible backend API-key/Public-NAT path is prohibited. Budget/quota controls, exact-main managed proof and terminal cleanup evidence remain required before `ACTIVE`. |",
+          )
+
+          replace(
+              "docs/integrations/LIVE_INTEGRATION_LEDGER.md",
+              "**Last reconciled:** 2026-07-26 (Asia/Tokyo)",
+              "**Last reconciled:** 2026-07-27 (Asia/Tokyo)",
+          )
+          replace(
+              "docs/integrations/LIVE_INTEGRATION_LEDGER.md",
+              "| Google Maps Platform | `IMPLEMENTED_GATED / MANAGED PROOF IN PROGRESS` | RC7 source includes Maps Compose behind an explicit preauthorization synthetic latch, backend-only Zambia geocoding exposed through a bounded public discovery-normalization route, privacy-safe public premises/service-area rendering, manual/list fallback and permanent non-leakage checks. Separate restricted credentials, quotas/budget controls and exact-main managed proof remain pending. |",
+              "| Google Maps Platform | `IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS` | RC7 keeps the package/signing/API-restricted Android key, Maps Compose latch, bounded Zambia normalization, privacy-safe rendering and manual/list fallback. Backend Geocoding now uses v4 with the assigned Cloud Run service identity and a downscoped address-only OAuth token; backend API keys, Maps secret values, Direct VPC egress and Cloud NAT are prohibited. Budget/quota controls and exact-main managed proof remain pending. |",
+          )
+
+          Path(".github/workflows/rc7-oauth-source-patcher.yml").unlink()
+          PY
+
+          python3 scripts/rc7/verify-maps-contract.py
+          python3 scripts/rc7/verify-managed-workflow-context.py
+          bash -n scripts/rc7/run-maps-managed.sh
+          bash -n scripts/rc7/bootstrap-maps-managed.sh
+
+      - name: Commit reconciled source and remove reconciler
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "direkt-rc7-automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "fix(rc7): reconcile OAuth environment and ledger"
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
