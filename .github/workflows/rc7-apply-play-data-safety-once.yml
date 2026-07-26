@@ -1,6 +1,10 @@
 name: DIREKT RC7 apply Play Data Safety once
 
 on:
+  pull_request:
+    paths:
+      - "scripts/rc7/apply-play-data-safety.py"
+      - ".github/workflows/rc7-apply-play-data-safety-once.yml"
   push:
     branches:
       - integration/runtime-closure-261
