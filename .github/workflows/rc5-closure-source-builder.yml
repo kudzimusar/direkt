@@ -8,7 +8,7 @@ name: DIREKT RC5 branch-only closure builder
       - .github/workflows/rc5-closure-source-builder.yml
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: direkt-rc5-closure-builder-${{ github.event.pull_request.number }}
@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   build:
-    name: Patch closure documents and remove temporary RC5 workflows
+    name: Generate and verify RC5 closure tree
     if: github.repository == 'kudzimusar/direkt' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'docs/rc5-closure'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -25,7 +25,6 @@ jobs:
         with:
           ref: docs/rc5-closure
           fetch-depth: 0
-          persist-credentials: true
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
@@ -50,14 +49,26 @@ jobs:
           bash -n scripts/rc5/run-test-lab-isolated-preflight.sh
           test ! -e .github/workflows/rc5-closure-source-builder.yml
           test ! -e scripts/rc5/apply-rc5-closure.py
-      - name: Commit closure source to branch only
+      - name: Package generated closure tree
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git branch --show-current)" = "docs/rc5-closure"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git diff --cached --check
-          git commit -m "docs(rc5): close isolated Test Lab matrix"
-          git push origin HEAD:docs/rc5-closure
+          mkdir -p "${RUNNER_TEMP}/rc5-closure-tree"
+          cp --parents \
+            WORKSTREAM_LOCK.md \
+            PROJECT_STATUS.md \
+            docs/integrations/CURRENT_INTEGRATION_STATUS.md \
+            docs/integrations/LIVE_INTEGRATION_LEDGER.md \
+            docs/integrations/RC5_ISOLATED_TEST_LAB.md \
+            scripts/rc5/verify-test-lab-closure.py \
+            .github/workflows/rc5-test-lab-closure-contract.yml \
+            "${RUNNER_TEMP}/rc5-closure-tree/"
+          git diff --binary > "${RUNNER_TEMP}/rc5-closure-tree/rc5-closure.patch"
+          git diff --name-status > "${RUNNER_TEMP}/rc5-closure-tree/rc5-closure-name-status.txt"
+      - name: Upload verified generated closure tree
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc5-generated-closure-tree-${{ github.run_id }}
+          path: ${{ runner.temp }}/rc5-closure-tree
+          if-no-files-found: error
+          retention-days: 7
