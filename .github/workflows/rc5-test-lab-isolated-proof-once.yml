@@ -1,5 +1,5 @@
 name: DIREKT RC5 isolated Test Lab managed proof bridge
-# Retrigger after the isolated managed bridge was independently registered.
+# Retrigger after the selector output newline correction merged and passed contract gates.
 
 "on":
   push:
