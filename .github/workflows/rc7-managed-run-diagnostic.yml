@@ -7,6 +7,7 @@ on:
 
 permissions:
   actions: read
+  checks: read
   contents: read
 
 jobs:
@@ -22,7 +23,10 @@ jobs:
         run: |
           set -euo pipefail
           runs_json="${RUNNER_TEMP}/rc7-runs.json"
+          run_json="${RUNNER_TEMP}/rc7-run.json"
           jobs_json="${RUNNER_TEMP}/rc7-jobs.json"
+          checks_json="${RUNNER_TEMP}/rc7-check-runs.json"
+          workflow_json="${RUNNER_TEMP}/rc7-workflow.json"
           receipt="${RUNNER_TEMP}/rc7-managed-run-diagnostic.json"
 
           gh api --paginate \
@@ -44,30 +48,55 @@ jobs:
           fi
 
           run_id="$(jq -r '.id' <<< "${latest}")"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}" > "${run_json}"
           gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?filter=latest&per_page=100" \
             > "${jobs_json}"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/rc7-maps-managed.yml" \
+            > "${workflow_json}"
+
+          check_suite_id="$(jq -r '.check_suite_id // empty' "${run_json}")"
+          if [[ -n "${check_suite_id}" ]]; then
+            gh api "repos/${GITHUB_REPOSITORY}/check-suites/${check_suite_id}/check-runs?per_page=100" \
+              > "${checks_json}"
+          else
+            printf '{"check_runs":[]}' > "${checks_json}"
+          fi
 
           jq -n \
-            --argjson run "${latest}" \
+            --slurpfile run "${run_json}" \
             --slurpfile jobs "${jobs_json}" \
+            --slurpfile checks "${checks_json}" \
+            --slurpfile workflow "${workflow_json}" \
             '{
-              schema: "direkt.rc7.managed-run-diagnostic.v1",
+              schema: "direkt.rc7.managed-run-diagnostic.v2",
               readOnly: true,
               gcpAccess: false,
               secretValuesAccessed: false,
               resourceMutation: false,
+              workflow: {
+                id: $workflow[0].id,
+                name: $workflow[0].name,
+                path: $workflow[0].path,
+                state: $workflow[0].state
+              },
               run: {
-                id: $run.id,
-                runNumber: $run.run_number,
-                runAttempt: $run.run_attempt,
-                status: $run.status,
-                conclusion: $run.conclusion,
-                event: $run.event,
-                headBranch: $run.head_branch,
-                headSha: $run.head_sha,
-                createdAt: $run.created_at,
-                updatedAt: $run.updated_at,
-                htmlUrl: $run.html_url
+                id: $run[0].id,
+                name: $run[0].name,
+                displayTitle: $run[0].display_title,
+                runNumber: $run[0].run_number,
+                runAttempt: $run[0].run_attempt,
+                status: $run[0].status,
+                conclusion: $run[0].conclusion,
+                event: $run[0].event,
+                headBranch: $run[0].head_branch,
+                headSha: $run[0].head_sha,
+                runStartedAt: $run[0].run_started_at,
+                createdAt: $run[0].created_at,
+                updatedAt: $run[0].updated_at,
+                actor: $run[0].actor.login,
+                triggeringActor: $run[0].triggering_actor.login,
+                checkSuiteId: $run[0].check_suite_id,
+                htmlUrl: $run[0].html_url
               },
               jobs: ($jobs[0].jobs | map({
                 id,
@@ -77,6 +106,17 @@ jobs:
                 startedAt: .started_at,
                 completedAt: .completed_at,
                 steps: (.steps | map({name, number, status, conclusion}))
+              })),
+              checkRuns: ($checks[0].check_runs | map({
+                id,
+                name,
+                status,
+                conclusion,
+                detailsUrl: .details_url,
+                output: {
+                  title: .output.title,
+                  summary: .output.summary
+                }
               }))
             }' > "${receipt}"
 
