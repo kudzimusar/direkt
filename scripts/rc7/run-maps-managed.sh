@@ -247,7 +247,7 @@ execution_json="${RUNNER_TEMP}/rc7-maps-execution.json"
 execution_stderr="${RUNNER_TEMP}/rc7-maps-execution.stderr"
 execution_details="${RUNNER_TEMP}/rc7-maps-execution-details.json"
 raw_canary_logs="${RUNNER_TEMP}/rc7-maps-canary-logs.json"
-sanitary_failure="${RUNNER_TEMP}/rc7-maps-canary-failure.json"
+sanitized_failure="${RUNNER_TEMP}/rc7-maps-canary-failure.json"
 set +e
 gcloud run jobs execute "${CANARY_JOB}" \
   --project "${GCP_PROJECT_ID}" \
@@ -279,7 +279,7 @@ if [[ "${execution_code}" -ne 0 ]]; then
     --freshness 30m \
     --limit 20 \
     --format=json > "${raw_canary_logs}" || printf '[]' > "${raw_canary_logs}"
-  python3 - "${execution_details}" "${raw_canary_logs}" "${sanitary_failure}" <<'PYFAILURE'
+  python3 - "${execution_details}" "${raw_canary_logs}" "${sanitized_failure}" <<'PYFAILURE'
 from __future__ import annotations
 
 import json
@@ -353,7 +353,7 @@ output_path.write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
 PYFAILURE
   receipt "backend_geocoding_canary=FAILED"
   receipt "backend_canary_failure_evidence_present=true"
-  cat "${sanitary_failure}" >&2
+  cat "${sanitized_failure}" >&2
   exit "${execution_code}"
 fi
 rm -f "${execution_stderr}"

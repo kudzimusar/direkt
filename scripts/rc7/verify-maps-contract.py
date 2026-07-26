@@ -176,8 +176,8 @@ def main() -> int:
     ):
         require(managed_test, needle, "managed Android map-load assertion")
 
-    require(status, "IMPLEMENTED_GATED / MANAGED PROOF IN PROGRESS", "current Maps state")
-    require(ledger, "IMPLEMENTED_GATED / MANAGED PROOF IN PROGRESS", "live Maps ledger state")
+    require(status, "IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS", "current Maps state")
+    require(ledger, "IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS", "live Maps ledger state")
 
     for needle in (
         "workflow_dispatch:",
