@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reject RC7 workflow startup, CLI drift and interactive gcloud setup."""
+"""Reject RC7 workflow startup, CLI drift and unsafe managed evidence handling."""
 
 from __future__ import annotations
 
@@ -136,6 +136,39 @@ def main() -> int:
                     f"RC7 API-key {label} must retain the explicit global resource location."
                 )
 
+    failure_artifact = "${{ runner.temp }}/rc7-maps-canary-failure.json"
+    require_once(
+        workflow,
+        failure_artifact,
+        "RC7 must upload the sanitized canary failure artifact.",
+    )
+    if "rc7-maps-canary-logs.json" in workflow or "rc7-maps-execution-details.json" in workflow:
+        raise AssertionError("RC7 must never upload raw canary logs or raw execution details.")
+
+    failure_markers = (
+        'sanitized_failure="${RUNNER_TEMP}/rc7-maps-canary-failure.json"',
+        "gcloud run jobs executions describe",
+        'textPayload:\\"RC7_MAPS_CANARY|\\"',
+        'payload.startswith("RC7_MAPS_CANARY|")',
+        '"rawLogsIncluded": False',
+        '"credentialIncluded": False',
+        '"coordinateValuesIncluded": False',
+        '"formattedAddressIncluded": False',
+        'receipt "backend_geocoding_canary=FAILED"',
+        'receipt "backend_canary_failure_evidence_present=true"',
+    )
+    for marker in failure_markers:
+        require_once(
+            managed_script,
+            marker,
+            f"RC7 sanitized canary failure evidence is missing {marker!r}.",
+        )
+
+    if 'cat "${raw_canary_logs}"' in managed_script:
+        raise AssertionError("RC7 must not print raw canary logs.")
+    if 'cat "${execution_details}"' in managed_script:
+        raise AssertionError("RC7 must not print raw execution details.")
+
     print("RC7_MANAGED_WORKFLOW_CONTEXT|PASS")
     print("job_level_runner_context=false")
     print("receipt_path_runtime_initialized=true")
@@ -144,6 +177,8 @@ def main() -> int:
     print("gcloud_alpha_noninteractive=true")
     print("api_key_create_location_argument=false")
     print("api_key_resource_location_preserved=true")
+    print("canary_failure_evidence_sanitized=true")
+    print("raw_canary_logs_uploaded=false")
     print("gcp_authority_changed=false")
     return 0
 
