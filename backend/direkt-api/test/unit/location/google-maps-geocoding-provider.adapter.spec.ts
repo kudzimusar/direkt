@@ -12,6 +12,21 @@ function tokenProvider(): GoogleMapsAccessTokenProvider {
   return { getAccessToken: vi.fn().mockResolvedValue(ACCESS_TOKEN) };
 }
 
+function captureFetch(response: Response): {
+  fetchMock: typeof fetch;
+  request: { url?: URL; init?: RequestInit };
+} {
+  const request: { url?: URL; init?: RequestInit } = {};
+  const fetchMock: typeof fetch = vi.fn(
+    async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+      request.url = new URL(String(input));
+      request.init = init;
+      return response;
+    },
+  );
+  return { fetchMock, request };
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -19,25 +34,22 @@ afterEach(() => {
 
 describe('GoogleCloudServiceIdentityAccessTokenProvider', () => {
   it('requests and caches a narrowly scoped token from the Google metadata service', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({ access_token: ACCESS_TOKEN, expires_in: 3599, token_type: 'Bearer' }),
-          { status: 200, headers: { 'content-type': 'application/json' } },
-        ),
-      );
+    const { fetchMock, request } = captureFetch(
+      new Response(
+        JSON.stringify({ access_token: ACCESS_TOKEN, expires_in: 3599, token_type: 'Bearer' }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    );
     const provider = new GoogleCloudServiceIdentityAccessTokenProvider(1_000, undefined, fetchMock);
 
     await expect(provider.getAccessToken()).resolves.toBe(ACCESS_TOKEN);
     await expect(provider.getAccessToken()).resolves.toBe(ACCESS_TOKEN);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const requestedUrl = new URL(String(fetchMock.mock.calls[0]?.[0]));
-    expect(requestedUrl.hostname).toBe('metadata.google.internal');
-    expect(requestedUrl.searchParams.get('enforce_scopes')).toBe('true');
-    expect(requestedUrl.searchParams.get('scopes')).toBe(GOOGLE_MAPS_GEOCODING_OAUTH_SCOPE);
-    const headers = new Headers(fetchMock.mock.calls[0]?.[1]?.headers);
+    expect(request.url?.hostname).toBe('metadata.google.internal');
+    expect(request.url?.searchParams.get('enforce_scopes')).toBe('true');
+    expect(request.url?.searchParams.get('scopes')).toBe(GOOGLE_MAPS_GEOCODING_OAUTH_SCOPE);
+    const headers = new Headers(request.init?.headers);
     expect(headers.get('Metadata-Flavor')).toBe('Google');
   });
 
@@ -54,7 +66,7 @@ describe('GoogleCloudServiceIdentityAccessTokenProvider', () => {
 
 describe('GoogleMapsGeocodingProviderAdapter', () => {
   it('normalizes a bounded Zambian search area through Geocoding v4 OAuth', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
+    const { fetchMock, request } = captureFetch(
       new Response(
         JSON.stringify({
           results: [
@@ -83,12 +95,11 @@ describe('GoogleMapsGeocodingProviderAdapter', () => {
       privateLocationPublished: false,
       persistedByAdapter: false,
     });
-    const requestedUrl = new URL(String(fetchMock.mock.calls[0]?.[0]));
-    expect(requestedUrl.origin).toBe('https://geocode.googleapis.com');
-    expect(requestedUrl.pathname).toContain('/v4/geocode/address/Cairo+Road%2C+Lusaka');
-    expect(requestedUrl.searchParams.get('regionCode')).toBe('ZM');
-    expect(requestedUrl.searchParams.get('key')).toBeNull();
-    const headers = new Headers(fetchMock.mock.calls[0]?.[1]?.headers);
+    expect(request.url?.origin).toBe('https://geocode.googleapis.com');
+    expect(request.url?.pathname).toContain('/v4/geocode/address/Cairo+Road%2C+Lusaka');
+    expect(request.url?.searchParams.get('regionCode')).toBe('ZM');
+    expect(request.url?.searchParams.get('key')).toBeNull();
+    const headers = new Headers(request.init?.headers);
     expect(headers.get('Authorization')).toBe(`Bearer ${ACCESS_TOKEN}`);
     expect(headers.get('X-Goog-FieldMask')).toBe(
       'results.location,results.granularity,results.formattedAddress,results.postalAddress.regionCode',
