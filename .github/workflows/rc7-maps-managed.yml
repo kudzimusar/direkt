@@ -5,17 +5,21 @@ on:
     paths:
       - ".github/workflows/rc7-maps-managed.yml"
       - "scripts/rc7/run-maps-managed.sh"
+      - "scripts/rc7/bootstrap-maps-managed.sh"
       - "scripts/rc7/verify-maps-contract.py"
       - "android/direkt-app/app/src/androidTest/java/com/kudzimusar/direkt/Rc7MapsRuntimeTest.kt"
       - "docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md"
+      - "docs/integrations/RC7_MAPS_OWNER_BOOTSTRAP.md"
   push:
     branches:
       - main
     paths:
       - ".github/workflows/rc7-maps-managed.yml"
       - "scripts/rc7/run-maps-managed.sh"
+      - "scripts/rc7/bootstrap-maps-managed.sh"
       - "android/direkt-app/app/src/androidTest/java/com/kudzimusar/direkt/Rc7MapsRuntimeTest.kt"
       - "docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md"
+      - "docs/integrations/RC7_MAPS_OWNER_BOOTSTRAP.md"
   workflow_dispatch:
     inputs:
       confirmation:
@@ -48,6 +52,8 @@ jobs:
         run: |
           python3 scripts/rc7/verify-maps-contract.py
           bash -n scripts/rc7/run-maps-managed.sh
+          bash -n scripts/rc7/bootstrap-maps-managed.sh
+          grep -Fq 'RC7_MAPS_BOOTSTRAP|PASS' scripts/rc7/bootstrap-maps-managed.sh
           grep -Fq 'RUN-DIREKT-RC7-MAPS-MANAGED' docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md
           grep -Fq 'DIREKT RC7 managed Google Maps proof' .github/workflows/rc7-maps-managed.yml
 
@@ -109,6 +115,7 @@ jobs:
           grep -Fxq 'CONFIRMATION=RUN-DIREKT-RC7-MAPS-MANAGED' docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md
           python3 scripts/rc7/verify-maps-contract.py
           bash -n scripts/rc7/run-maps-managed.sh
+          bash -n scripts/rc7/bootstrap-maps-managed.sh
           echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
 
       - name: Set up Java 17
@@ -160,11 +167,11 @@ jobs:
           {
             echo '### DIREKT RC7 managed Google Maps proof'
             echo "- Exact current main: \`${SOURCE_SHA:-not-resolved}\`"
+            echo '- Owner bootstrap: empty secret container, budget/quota and time-limited IAM preprovisioned'
             echo '- Android key: package + SHA-1 restricted; Maps SDK for Android only'
             echo '- Backend key: temporary static-IP restricted; Geocoding API only'
             echo '- Backend proof: private Cloud Run Job through Direct VPC egress and Cloud NAT'
             echo '- Android proof: one API 36 Firebase Test Lab instrumentation run, zero flaky retries'
-            echo '- Cost controls: project budget alert plus Geocoding per-minute quota override'
             echo '- Places / Routes: not enabled by RC7'
             echo '- Private provider coordinates: not published or logged'
             echo '- Participant / production authorization: false'
@@ -190,6 +197,7 @@ jobs:
             echo "- Result: **${result}**"
             echo "- Exact current main: \`${source_sha:-not-resolved}\`"
             echo "- Managed run: [${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
+            echo '- Owner bootstrap: preprovisioned and verified; no owner-created key or secret value'
             echo '- Android credential: debug package + signing SHA-1 restricted; Maps SDK for Android only'
             echo '- Backend credential: temporary static-IP restricted; Geocoding API only'
             echo '- Places / Routes: not enabled by RC7'
@@ -197,7 +205,7 @@ jobs:
             echo '- Participant / production authorization: false'
             echo '- Temporary backend credential, secret version, Cloud Run Job, NAT, router and static IP: cleanup enforced'
             if [[ -f "${RC7_RECEIPT_PATH}" ]]; then
-              grep -E '^(backend_geocoding_canary|android_test_lab_map_ready|budget_alert_present|geocoding_quota_per_minute|cleanup\.|managed_result)=' "${RC7_RECEIPT_PATH}" | sed 's/^/- `/' | sed 's/$/`/' || true
+              grep -E '^(owner_bootstrap_verified|backend_geocoding_canary|android_test_lab_map_ready|budget_alert_present|geocoding_quota_per_minute|cleanup\.|cleanup_failed|managed_result)=' "${RC7_RECEIPT_PATH}" | sed 's/^/- `/' | sed 's/$/`/' || true
             fi
           } > "${body}"
           gh issue comment 261 --repo "${GITHUB_REPOSITORY}" --body-file "${body}"
