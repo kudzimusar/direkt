@@ -2,7 +2,7 @@
 
 **Governing issue:** #261  
 **Status:** Claimed; corrective source and managed proof in progress  
-**Corrective baseline:** `main@4fa12358269297eb926d45952712eddec5506596`
+**Corrective baseline:** `main@6378be60199ce567671a4a307dedf5288b8be1ca`
 
 ## Source reconciliation checkpoint
 
@@ -47,6 +47,12 @@ RC7 now rejects that architecture permanently. The backend path contains:
 The first exact-main service-identity run, `30210742617/1` on `1c6acd7972caca838f27b4e5c4a521c92cbfc7c4`, failed before Android key mutation, image build, Cloud Run Job creation or Firebase Test Lab. The GitHub deployer correctly lacked `billing.budgets.list` on the owner billing account.
 
 RC7 does not broaden CI to billing-account viewer. The owner bootstrap directly verifies the real one-unit budget and then writes non-secret project labels for verified amount, currency and UTC check time. The exact-main proof reads only those project labels, rejects an attestation older than eight hours, and permanently prohibits managed `gcloud billing budgets` access.
+
+## Ranked-candidate correction
+
+The next exact-main proof, run `30225624823/1` on `6378be60199ce567671a4a307dedf5288b8be1ca`, passed exact-source checks, WIF, the fresh one-JPY owner budget attestation, quota verification, Android key restriction, immutable image execution and cleanup. The private backend canary then failed with a sanitized `outside_zambia` result before Firebase Test Lab. Artifact `8638498996` has digest `sha256:55c3b9f581ee899b5f1cac7e2a99e5d7851faedb00def2ba887e760e22a8a56a`; `cleanup.cloud_run_job_deleted=true` and `cleanup_failed=false`.
+
+Geocoding v4 `regionCode=ZM` influences ranking but is not a strict country filter. The prior adapter treated `results[0]` as authoritative. The corrective adapter now iterates ranked results, validates every candidate before use, resolves country from `postalAddress.regionCode` or the typed country address component, and selects only the first candidate that also remains within the unchanged Zambia latitude/longitude bounds. Empty results remain `not_found`, structurally malformed-only results remain `invalid_provider_response`, and valid but non-Zambian-only results remain `outside_zambia`. Raw coordinates, formatted addresses, provider payloads and OAuth material are still excluded from logs and evidence.
 
 ## Credential and authentication boundary
 
