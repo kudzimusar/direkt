@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { GeocodingProviderError } from '../../../src/location/geocoding-provider.port';
+import type { GeocodingProviderError } from '../../../src/location/geocoding-provider.port';
 import { GoogleMapsGeocodingProviderAdapter } from '../../../src/location/google-maps-geocoding-provider.adapter';
 
 const API_KEY = 'synthetic_maps_server_key_1234567890';
