@@ -6,7 +6,7 @@
 
 ## Source reconciliation checkpoint
 
-The corrective branch has completed its one-time atomic source reconciliation. The permanent branch no longer contains the temporary reconciler or formatter workflows. Environment schema, application adapter, unit tests, managed workflow, bootstrap, contract verifiers, trigger, status register and live ledger now describe the same service-identity OAuth architecture. All backend TypeScript and test changes have also been normalized by the repository-pinned Prettier toolchain before full exact-head verification.
+The corrective branch has completed its one-time atomic source reconciliation. The permanent branch no longer contains the temporary reconciler, formatter or diagnostic workflows. Environment schema, application adapter, unit tests, managed workflow, bootstrap, contract verifiers, trigger, status register and live ledger now describe the same service-identity OAuth architecture. A clean Node 24 runner using the repository-locked dependencies applied Prettier to the isolated adapter test and then passed both its target check and the complete backend `format:check` command before the temporary tooling was removed.
 
 ## Scope decision
 
