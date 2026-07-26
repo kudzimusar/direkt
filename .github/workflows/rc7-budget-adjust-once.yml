@@ -1,0 +1,121 @@
+name: RC7 one-time budget guardrail adjustment
+
+on:
+  push:
+    branches:
+      - integration/runtime-closure-261
+    paths:
+      - ".github/workflows/rc7-budget-adjust-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  adjust:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: integration/runtime-closure-261
+          fetch-depth: 0
+
+      - name: Set RC7 budget to one dollar
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_exact(path: str, old: str, new: str) -> None:
+              target = Path(path)
+              text = target.read_text(encoding="utf-8")
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"Expected exactly one match in {path}, found {count}: {old!r}")
+              target.write_text(text.replace(old, new), encoding="utf-8")
+
+          bootstrap_old = '''if [[ -z "${budget_name}" ]]; then
+            budget_name="$(gcloud billing budgets create \\
+              --billing-account "${billing_account}" \\
+              --display-name "${BUDGET_DISPLAY_NAME}" \\
+              --budget-amount 25USD \\
+              --calendar-period month \\
+              --filter-projects "projects/${PROJECT_ID}" \\
+              --threshold-rule percent=0.50 \\
+              --threshold-rule percent=0.80 \\
+              --threshold-rule percent=1.00 \\
+              --format='value(name)')"
+          fi
+          test -n "${budget_name}"
+          '''
+          bootstrap_new = '''if [[ -z "${budget_name}" ]]; then
+            budget_name="$(gcloud billing budgets create \\
+              --billing-account "${billing_account}" \\
+              --display-name "${BUDGET_DISPLAY_NAME}" \\
+              --budget-amount 1USD \\
+              --calendar-period month \\
+              --filter-projects "projects/${PROJECT_ID}" \\
+              --threshold-rule percent=0.50 \\
+              --threshold-rule percent=0.80 \\
+              --threshold-rule percent=1.00 \\
+              --format='value(name)')"
+          else
+            gcloud billing budgets update "${budget_name##*/}" \\
+              --billing-account "${billing_account}" \\
+              --budget-amount 1USD \\
+              --quiet >/dev/null
+          fi
+          test -n "${budget_name}"
+          actual_budget_units="$(gcloud billing budgets describe "${budget_name##*/}" \\
+            --billing-account "${billing_account}" \\
+            --format='value(amount.specifiedAmount.units)')"
+          test "${actual_budget_units}" = "1"
+          '''
+          replace_exact("scripts/rc7/bootstrap-maps-managed.sh", bootstrap_old, bootstrap_new)
+
+          replacements = {
+              "scripts/rc7/bootstrap-maps-managed.sh": [
+                  ("direkt-rc7-budget=usd25", "direkt-rc7-budget=usd1"),
+                  ("budget_amount_usd=25", "budget_amount_usd=1"),
+              ],
+              "scripts/rc7/run-maps-managed.sh": [
+                  ('["direkt-rc7-budget"] == "usd25"', '["direkt-rc7-budget"] == "usd1"'),
+                  ("budget_amount_usd=25", "budget_amount_usd=1"),
+              ],
+              "scripts/rc7/verify-maps-contract.py": [
+                  ("budget_amount_usd=25", "budget_amount_usd=1"),
+              ],
+              "docs/integrations/RC7_MAPS_OWNER_BOOTSTRAP.md": [
+                  ("creates or verifies the $25 monthly RC7 budget", "creates or lowers/verifies the $1 monthly RC7 budget"),
+              ],
+          }
+          for path, pairs in replacements.items():
+              for old, new in pairs:
+                  replace_exact(path, old, new)
+          PY
+
+          if grep -RInE '25USD|usd25|budget_amount_usd=25|\$25 monthly RC7' \
+            scripts/rc7 docs/integrations .github/workflows/rc7-maps-*; then
+            echo "Stale RC7 $25 budget reference remains." >&2
+            exit 1
+          fi
+
+          bash -n scripts/rc7/bootstrap-maps-managed.sh
+          bash -n scripts/rc7/run-maps-managed.sh
+          python3 scripts/rc7/verify-maps-contract.py
+
+      - name: Commit exact budget correction and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/rc7-budget-adjust-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/rc7/bootstrap-maps-managed.sh \
+            scripts/rc7/run-maps-managed.sh \
+            scripts/rc7/verify-maps-contract.py \
+            docs/integrations/RC7_MAPS_OWNER_BOOTSTRAP.md \
+            .github/workflows/rc7-budget-adjust-once.yml
+          git commit -m "fix(rc7): cap Maps budget at one dollar"
+          git push origin HEAD:integration/runtime-closure-261
