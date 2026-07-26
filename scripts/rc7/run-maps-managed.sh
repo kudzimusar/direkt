@@ -289,7 +289,6 @@ if gcloud services api-keys describe "${ANDROID_KEY_ID}" \
 else
   gcloud services api-keys create \
     --project "${GCP_PROJECT_ID}" \
-    --location global \
     --key-id "${ANDROID_KEY_ID}" \
     --display-name 'DIREKT RC7 Android Maps synthetic' \
     --allowed-application "sha1_fingerprint=${android_sha1},package_name=${ANDROID_PACKAGE}" \
@@ -330,7 +329,6 @@ if gcloud services api-keys describe "${BACKEND_KEY_ID}" \
 else
   gcloud services api-keys create \
     --project "${GCP_PROJECT_ID}" \
-    --location global \
     --key-id "${BACKEND_KEY_ID}" \
     --display-name 'DIREKT RC7 Backend Geocoding temporary canary' \
     --allowed-ips "${static_ip}" \
