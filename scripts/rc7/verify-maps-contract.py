@@ -45,6 +45,10 @@ def main() -> int:
     models = read("android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt")
     discovery = read("android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt")
     map_card = read("android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/PrivacySafeMapCard.kt")
+    managed_test = read("android/direkt-app/app/src/androidTest/java/com/kudzimusar/direkt/Rc7MapsRuntimeTest.kt")
+    managed_workflow = read(".github/workflows/rc7-maps-managed.yml")
+    managed_script = read("scripts/rc7/run-maps-managed.sh")
+    managed_trigger = read("docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md")
 
     for needle in (
         "CLAIMED — RC7 Google Maps runtime integration",
@@ -126,8 +130,63 @@ def main() -> int:
     ):
         require(map_card + models, needle, "privacy-safe Android map behavior")
     require(models, "provider.operatingModel == PublicOperatingModel.Mobile -> null", "mobile base-marker prohibition")
+    for needle in (
+        "discovery-map-ready",
+        "waitUntil(timeoutMillis = 20_000)",
+        "discovery-map-fallback",
+        "assertDoesNotExist",
+    ):
+        require(managed_test, needle, "managed Android map-load assertion")
+
     require(status, "IMPLEMENTED_GATED / MANAGED PROOF IN PROGRESS", "current Maps integration state")
     require(ledger, "IMPLEMENTED_GATED / MANAGED PROOF IN PROGRESS", "live Maps ledger state")
+
+    for needle in (
+        "workflow_dispatch:",
+        "RUN-DIREKT-RC7-MAPS-MANAGED",
+        "refs/heads/main",
+        "test \"$(git rev-parse origin/main)\" = \"${SOURCE_SHA}\"",
+        "google-github-actions/auth@v3",
+        "direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com",
+        "direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com",
+        "direkt-testlab-502701-20260726",
+        "scripts/rc7/run-maps-managed.sh",
+    ):
+        require(managed_workflow, needle, "exact-main managed Maps workflow")
+
+    for needle in (
+        "direkt-rc7-android-maps",
+        "direkt-rc7-backend-geocoding",
+        "--allowed-application",
+        "package_name=${ANDROID_PACKAGE}",
+        "--allowed-ips",
+        "maps-android-backend.googleapis.com",
+        "geocoding-backend.googleapis.com",
+        "DIREKT RC7 Maps synthetic",
+        "geocoding_quota_per_minute=60",
+        "--network \"${NETWORK}\"",
+        "--subnet \"${SUBNET}\"",
+        "--vpc-egress all-traffic",
+        "--nat-external-ip-pool",
+        "direkt-google-maps-geocoding-api-key",
+        "RC7_MAPS_CANARY|PASS",
+        "MediumPhone.arm,version=36",
+        "--num-flaky-test-attempts 0",
+        "cleanup.backend_api_key_deleted=true",
+        "cleanup.backend_secret_version_destroyed=true",
+        "cleanup.cloud_nat_deleted=true",
+        "cleanup.static_ip_released=true",
+        "production_authorization=false",
+        "private_provider_coordinates_published=false",
+    ):
+        require(managed_script, needle, "least-privilege managed Maps proof")
+    prohibit(managed_script, r"set\s+-[^\n]*x", "shell trace that could expose key material")
+    prohibit(managed_workflow, r"rc7-(android|backend)-key\.txt", "API key value artifact upload")
+    prohibit(managed_script, r"echo[^\n]*(keyString|GOOGLE_MAPS_SERVER_API_KEY|DIREKT_ANDROID_MAPS_API_KEY)", "API key value logging")
+
+    require(managed_trigger, "CONFIRMATION=RUN-DIREKT-RC7-MAPS-MANAGED", "managed proof confirmation")
+    if not any(state in managed_trigger for state in ("STATUS=ARMED", "STATUS=CONSUMED")):
+        raise AssertionError("Managed RC7 trigger must be ARMED before proof or CONSUMED after closure.")
 
     for client_root in ("android", "web", "admin"):
         for path in (ROOT / client_root).rglob("*"):
@@ -144,9 +203,10 @@ def main() -> int:
     prohibit(combined, r"places[_-]backend\.googleapis\.com", "Places API activation")
     prohibit(combined, r"routes[_-]backend\.googleapis\.com", "Routes API activation")
 
-    print("RC7 Google Maps source and privacy contract verification passed.")
+    print("RC7 Google Maps source, privacy and managed-proof contract verification passed.")
     print("android_maps=fail_closed_restricted_key")
     print("backend_geocoding=synthetic_only_server_controlled")
+    print("managed_proof=exact_main_wif_cost_bounded")
     print("manual_list_fallback=preserved")
     print("private_coordinates_public=false")
     print("production_authorization=false")
