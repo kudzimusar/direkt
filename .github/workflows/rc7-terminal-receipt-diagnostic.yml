@@ -1,0 +1,112 @@
+name: DIREKT RC7 terminal-receipt diagnostic
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-terminal-receipt-diagnostic.yml"
+
+permissions:
+  actions: read
+  contents: read
+  issues: read
+
+jobs:
+  diagnostic:
+    name: Read exact-main RC7 terminal receipt
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Inspect latest main run and published receipt
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          runs="${RUNNER_TEMP}/runs.json"
+          jobs="${RUNNER_TEMP}/jobs.json"
+          artifacts="${RUNNER_TEMP}/artifacts.json"
+          comments="${RUNNER_TEMP}/comments.json"
+          output="${RUNNER_TEMP}/rc7-terminal-receipt-diagnostic.json"
+
+          gh api --paginate \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/rc7-maps-managed.yml/runs?branch=main&event=push&per_page=100" \
+            > "${runs}"
+          latest="$(jq -cs '[.[].workflow_runs[]] | sort_by(.created_at) | last' "${runs}")"
+          test -n "${latest}"
+          test "${latest}" != "null"
+          run_id="$(jq -r '.id' <<<"${latest}")"
+
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?filter=latest&per_page=100" > "${jobs}"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100" > "${artifacts}"
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/261/comments?per_page=100" > "${comments}"
+
+          receipt="$(jq -cs '
+            [.[].[]
+              | select(.body | startswith("## RC7 managed Google Maps proof receipt"))]
+            | sort_by(.created_at)
+            | last
+          ' "${comments}")"
+
+          jq -n \
+            --argjson run "${latest}" \
+            --slurpfile jobs "${jobs}" \
+            --slurpfile artifacts "${artifacts}" \
+            --argjson receipt "${receipt:-null}" \
+            '{
+              schema: "direkt.rc7.terminal-receipt-diagnostic.v1",
+              readOnly: true,
+              gcpAccess: false,
+              resourceMutation: false,
+              secretValuesAccessed: false,
+              run: {
+                id: $run.id,
+                runNumber: $run.run_number,
+                runAttempt: $run.run_attempt,
+                event: $run.event,
+                headBranch: $run.head_branch,
+                headSha: $run.head_sha,
+                status: $run.status,
+                conclusion: $run.conclusion,
+                createdAt: $run.created_at,
+                updatedAt: $run.updated_at,
+                htmlUrl: $run.html_url
+              },
+              jobs: ($jobs[0].jobs | map({
+                id,
+                name,
+                status,
+                conclusion,
+                steps: (.steps // [] | map({name, number, status, conclusion}))
+              })),
+              artifacts: ($artifacts[0].artifacts | map({
+                id,
+                name,
+                sizeInBytes: .size_in_bytes,
+                expired,
+                digest,
+                createdAt: .created_at
+              })),
+              issueReceipt: (if $receipt == null then null else {
+                id: $receipt.id,
+                createdAt: $receipt.created_at,
+                updatedAt: $receipt.updated_at,
+                body: $receipt.body
+              } end)
+            }' > "${output}"
+
+          cat "${output}"
+          {
+            echo '### RC7 exact-main terminal receipt diagnostic'
+            echo
+            echo '```json'
+            cat "${output}"
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload sanitized diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc7-terminal-receipt-${{ github.run_id }}
+          path: ${{ runner.temp }}/rc7-terminal-receipt-diagnostic.json
+          if-no-files-found: error
+          retention-days: 1
