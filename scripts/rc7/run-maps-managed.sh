@@ -458,7 +458,7 @@ if [[ "${execution_code}" -ne 0 ]]; then
     printf '{}' > "${execution_details}"
   fi
   gcloud logging read \
-    "resource.type=cloud_run_job AND resource.labels.job_name=${CANARY_JOB} AND (textPayload:"RC7_MAPS_CANARY|" OR jsonPayload.message:"RC7_MAPS_CANARY|")" \
+    "resource.type=\"cloud_run_job\" AND resource.labels.job_name=\"${CANARY_JOB}\" AND (textPayload:\"RC7_MAPS_CANARY|\" OR jsonPayload.message:\"RC7_MAPS_CANARY|\")" \
     --project "${GCP_PROJECT_ID}" \
     --freshness 30m \
     --limit 20 \
