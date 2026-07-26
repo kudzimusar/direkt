@@ -38,6 +38,7 @@ ALLOWED_RELEASE_DIRECT_MODULES = {
     "com.google.firebase:firebase-bom",
     "com.google.firebase:firebase-crashlytics",
     "com.google.firebase:firebase-messaging",
+    "com.google.maps.android:maps-compose",
     "org.jetbrains.kotlin:kotlin-stdlib",
 }
 
@@ -169,6 +170,7 @@ def fallback_declared_modules(gradle: str) -> set[str]:
         "libs.firebase.auth": "com.google.firebase:firebase-auth",
         "libs.firebase.crashlytics": "com.google.firebase:firebase-crashlytics",
         "libs.firebase.messaging": "com.google.firebase:firebase-messaging",
+        "libs.google.maps.compose": "com.google.maps.android:maps-compose",
     }
     modules: set[str] = set()
     dependency_call = re.compile(
@@ -271,7 +273,9 @@ def main() -> None:
         "implementation(libs.firebase.auth)",
         "implementation(libs.firebase.crashlytics)",
         "implementation(libs.firebase.messaging)",
+        "implementation(libs.google.maps.compose)",
         "DIREKT_CRASHLYTICS_CANARY_ENABLED",
+        "DIREKT_MAPS_BUILD_ENABLED",
     ):
         if required not in gradle:
             fail(f"Android release source missing required invariant: {required}")
@@ -316,6 +320,8 @@ def main() -> None:
         fail("Firebase Crashlytics dependency exists but is absent from Data Safety SDK inventory")
     if "Firebase Cloud Messaging" not in sdk_names:
         fail("Firebase Messaging dependency exists but is absent from Data Safety SDK inventory")
+    if "Google Maps SDK for Android" not in sdk_names:
+        fail("Maps Compose dependency exists but Maps SDK is absent from Data Safety SDK inventory")
 
     crashlytics_inventory = next(
         (item for item in data_safety.get("sdk_inventory", []) if item.get("sdk") == "Firebase Crashlytics"),
@@ -340,6 +346,21 @@ def main() -> None:
         fail("FCM Data Safety inventory must not authorize participant registration")
     if messaging_inventory.get("production_push_authorized") is not False:
         fail("FCM Data Safety inventory must not authorize production push")
+
+    maps_inventory = next(
+        (item for item in data_safety.get("sdk_inventory", []) if item.get("sdk") == "Google Maps SDK for Android"),
+        None,
+    )
+    if not isinstance(maps_inventory, dict):
+        fail("Google Maps SDK inventory entry is invalid")
+    if maps_inventory.get("device_location_permission_requested") is not False:
+        fail("RC7 Maps must not request Android device-location permission")
+    if maps_inventory.get("my_location_layer_enabled") is not False:
+        fail("RC7 Maps must keep the Google Maps my-location layer disabled")
+    if maps_inventory.get("participant_or_production_maps_authorized") is not False:
+        fail("RC7 Maps inventory must not authorize participant or production Maps use")
+    if maps_inventory.get("exact_private_provider_coordinates_transmitted") is not False:
+        fail("RC7 Maps must not transmit exact private provider coordinates")
 
     data_entries = data_safety.get("play_data_types", [])
     if not any("Phone number" in item.get("play_category", "") for item in data_entries):
@@ -391,6 +412,10 @@ def main() -> None:
     print("fcm_auto_init_default=false")
     print("fcm_participant_registration_authorized=false")
     print("fcm_production_push_authorized=false")
+    print("maps_sdk_present=true")
+    print("maps_device_location_permission_requested=false")
+    print("maps_exact_private_provider_coordinates_transmitted=false")
+    print("maps_participant_or_production_authorized=false")
     print("account_deletion_end_to_end=false")
     print("synthetic_preview_release_blocker=" + ("true" if synthetic_markers else "false"))
     for marker in synthetic_markers:

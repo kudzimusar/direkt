@@ -1,11 +1,11 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "status": "preauthorization-candidate-requires-final-release-candidate-revalidation",
   "artifact_scope": {
     "application_id": "com.kudzimusar.direkt",
     "release_channel": "preauthorization",
     "version_name": "0.12.0-preauth.1",
-    "note": "This inventory describes the current Android code path, Firebase Authentication usage, RC3 Crashlytics boundary, and RC4 Firebase Cloud Messaging source integration. Crashlytics collection and FCM auto-init are disabled by default. RC4 participant token registration and notification permission prompting remain source-controlled disabled; only an exact-source synthetic managed canary may explicitly obtain a test token and deliver bounded test pushes."
+    "note": "This inventory describes the current Android Firebase Authentication, RC3 Crashlytics, RC4 Firebase Cloud Messaging and RC7 Google Maps SDK source integrations. Crashlytics collection, FCM auto-init and Maps runtime activation are disabled by default. RC7 requests no Android device-location permission, keeps the Maps my-location layer disabled, renders only consented public premises and public service-area geometry, and does not transmit exact private provider coordinates. Only exact-source synthetic managed canaries may explicitly activate these integrations before later participant and production authorization."
   },
   "sdk_inventory": [
     {
@@ -64,6 +64,28 @@
       ],
       "token_handling": "The synthetic token is read from app-private storage, masked, transferred through a one-run Secret Manager secret, used only by the backend FCM HTTP v1 canary job, excluded from logs/artifacts/API responses, and deleted after the run. Participant token registration remains disabled.",
       "sharing_assessment": "synthetic-managed-canary-only during RC4; final Play/Data Safety mapping and consent/notification controls must be revalidated before participant or production push is authorized"
+    },
+    {
+      "sdk": "Google Maps SDK for Android",
+      "dependency": "com.google.maps.android:maps-compose",
+      "active_use": "RC7 source-integrated behind DIREKT_MAPS_BUILD_ENABLED=false by default; synthetic managed map-load proof only until later participant and production authorization.",
+      "automatic_collection": [
+        "request metadata including device/OS/model/form-factor and Maps SDK version information",
+        "stack traces and crash metrics generated inside the Maps SDK",
+        "IP address",
+        "Maps SDK-specific pseudonymous identifier"
+      ],
+      "usage_dependent_processing": [
+        "map interaction events such as panning and zooming when the map camera is used",
+        "public service-area circle centers and consented public-premises marker coordinates required to render the approved synthetic map"
+      ],
+      "device_location_permission_requested": false,
+      "my_location_layer_enabled": false,
+      "exact_private_provider_coordinates_transmitted": false,
+      "participant_or_production_maps_authorized": false,
+      "places_sdk_included": false,
+      "routes_sdk_included": false,
+      "sharing_assessment": "Google Maps Platform service processing only; final Play Data Safety answers must be revalidated against the exact shipped Maps SDK, app configuration, Google disclosures, approved privacy policy and release authorization."
     }
   ],
   "play_data_types": [
@@ -117,10 +139,36 @@
         "fraud prevention, security and compliance"
       ],
       "retention_and_deletion": "Bounded consent/audit history is retained according to the approved policy/legal schedule; final real-data schedule remains subject to qualified review."
+    },
+    {
+      "play_category": "Device or other IDs / Maps SDK pseudonymous identifier and request metadata",
+      "collected": true,
+      "shared": false,
+      "collection_condition": "Only when the RC7 Maps build/runtime switch is explicitly enabled. The Maps SDK automatically processes device/request metadata, IP address, SDK crash metrics and a Maps SDK-specific pseudonymous identifier.",
+      "required_or_optional": "optional because manual area and list discovery remain fully functional when Maps is disabled or unavailable",
+      "purposes": [
+        "app functionality",
+        "analytics",
+        "fraud prevention, security and compliance"
+      ],
+      "retention_and_deletion": "Google-controlled service retention applies. DIREKT does not persist the Maps SDK identifier or raw provider telemetry. Final Play categorization and retention wording require exact-release revalidation."
+    },
+    {
+      "play_category": "App activity / Map interaction events",
+      "collected": true,
+      "shared": false,
+      "collection_condition": "Only when the optional RC7 Google Map is enabled and the user pans or zooms the map. Google documents that Maps SDK camera interactions may be collected to improve Google services.",
+      "required_or_optional": "optional; users can use manual area entry and list discovery without the map",
+      "purposes": [
+        "app functionality",
+        "analytics"
+      ],
+      "retention_and_deletion": "Google-controlled service retention applies. DIREKT does not ingest or persist raw map-interaction telemetry."
     }
   ],
   "not_collected_by_current_android_release_path": [
-    "precise or approximate device location",
+    "precise GPS/device-sensor location and Android fine/coarse/background location permission data",
+    "exact private provider base coordinates through Google Maps or any client-visible map payload",
     "contacts/address book",
     "SMS or call logs",
     "camera/audio capture",
@@ -132,7 +180,8 @@
     "participant or production crash/ANR telemetry while Crashlytics automatic collection remains default-off",
     "participant FCM registration tokens or participant push-delivery metadata while FCM auto-init and participant registration remain disabled",
     "real provider evidence bytes through an Android upload flow",
-    "real enquiry/review/complaint text through the current synthetic preview interaction surfaces"
+    "real enquiry/review/complaint text through the current synthetic preview interaction surfaces",
+    "participant or production Google Maps traffic while DIREKT_MAPS_BUILD_ENABLED remains default-off and RC7 authorization remains synthetic-only"
   ],
   "future_or_blocked_product_data": [
     {
@@ -149,6 +198,11 @@
       "data": "participant FCM registration tokens and push delivery metadata",
       "status": "Firebase Messaging is source-integrated with auto-init disabled and participant registration disabled. RC4 managed synthetic proof does not authorize participant/production push. Separate consent/privacy/release authorization and exact release-candidate revalidation are required before activation.",
       "source_register": "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
+    },
+    {
+      "data": "participant/production Google Maps request metadata, IP address, Maps SDK identifier and map interaction events",
+      "status": "Maps SDK is source-integrated behind a default-off build/runtime switch. RC7 synthetic managed proof does not authorize participant or production Maps processing. The final exact release candidate, privacy notice and Play Data Safety form must be revalidated before activation.",
+      "source_register": "docs/integrations/RC7_GOOGLE_MAPS_IMPLEMENTATION_NOTES.md"
     }
   ],
   "security_answers_candidate": {
@@ -158,5 +212,5 @@
     "independent_security_review": false,
     "notes": "Do not claim optional Play security badges, deletion support, participant crash telemetry, or participant push delivery until evidence and authorization exist."
   },
-  "submission_boundary": "The Play developer is responsible for the final declaration. Revalidate this inventory against the exact release candidate, merged manifest, SDK versions, backend behavior, approved privacy policy, telemetry/messaging configuration and live account-deletion flow before submitting any closed/open/production release."
+  "submission_boundary": "The Play developer is responsible for the final declaration. Revalidate this inventory against the exact release candidate, merged manifest, SDK versions, backend behavior, approved privacy policy, telemetry/messaging/Maps configuration and live account-deletion flow before submitting any closed/open/production release."
 }
