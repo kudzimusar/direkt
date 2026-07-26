@@ -5,6 +5,7 @@ set -euo pipefail
 : "${GCP_PROJECT_NUMBER:?}"
 : "${GCP_REGION:?}"
 : "${GCP_ARTIFACT_REGISTRY:?}"
+: "${GCP_DEPLOYER_SERVICE_ACCOUNT:?}"
 : "${GCP_RUNTIME_SERVICE_ACCOUNT:?}"
 : "${TESTLAB_PROJECT_ID:?}"
 : "${SOURCE_SHA:?}"
@@ -56,22 +57,47 @@ cleanup() {
   }
 
   if ${CANARY_JOB_PRESENT}; then
-    cleanup_record cloud_run_job_deleted       gcloud run jobs delete "${CANARY_JOB}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --quiet
+    cleanup_record cloud_run_job_deleted \
+      gcloud run jobs delete "${CANARY_JOB}" \
+        --project "${GCP_PROJECT_ID}" \
+        --region "${GCP_REGION}" \
+        --quiet
   fi
   if [[ -n "${BACKEND_SECRET_VERSION}" ]]; then
-    cleanup_record backend_secret_version_destroyed       gcloud secrets versions destroy "${BACKEND_SECRET_VERSION}" --secret "${BACKEND_SECRET}" --project "${GCP_PROJECT_ID}" --quiet
+    cleanup_record backend_secret_version_destroyed \
+      gcloud secrets versions destroy "${BACKEND_SECRET_VERSION}" \
+        --secret "${BACKEND_SECRET}" \
+        --project "${GCP_PROJECT_ID}" \
+        --quiet
   fi
   if ${BACKEND_KEY_PRESENT}; then
-    cleanup_record backend_api_key_deleted       gcloud services api-keys delete "${BACKEND_KEY_ID}" --project "${GCP_PROJECT_ID}" --location global --quiet
+    cleanup_record backend_api_key_deleted \
+      gcloud services api-keys delete "${BACKEND_KEY_ID}" \
+        --project "${GCP_PROJECT_ID}" \
+        --location global \
+        --quiet
   fi
   if ${NAT_PRESENT}; then
-    cleanup_record cloud_nat_deleted       gcloud compute routers nats delete "${NAT}" --router "${ROUTER}" --region "${GCP_REGION}" --project "${GCP_PROJECT_ID}" --quiet
+    cleanup_record cloud_nat_deleted \
+      gcloud compute routers nats delete "${NAT}" \
+        --router "${ROUTER}" \
+        --region "${GCP_REGION}" \
+        --project "${GCP_PROJECT_ID}" \
+        --quiet
   fi
   if ${ROUTER_PRESENT}; then
-    cleanup_record cloud_router_deleted       gcloud compute routers delete "${ROUTER}" --region "${GCP_REGION}" --project "${GCP_PROJECT_ID}" --quiet
+    cleanup_record cloud_router_deleted \
+      gcloud compute routers delete "${ROUTER}" \
+        --region "${GCP_REGION}" \
+        --project "${GCP_PROJECT_ID}" \
+        --quiet
   fi
   if ${ADDRESS_PRESENT}; then
-    cleanup_record static_ip_released       gcloud compute addresses delete "${ADDRESS}" --region "${GCP_REGION}" --project "${GCP_PROJECT_ID}" --quiet
+    cleanup_record static_ip_released \
+      gcloud compute addresses delete "${ADDRESS}" \
+        --region "${GCP_REGION}" \
+        --project "${GCP_PROJECT_ID}" \
+        --quiet
   fi
   rm -f "${RUNNER_TEMP}/rc7-android-key.txt" "${RUNNER_TEMP}/rc7-backend-key.txt"
 
@@ -112,30 +138,30 @@ required_services=(
   secretmanager.googleapis.com
   serviceusage.googleapis.com
 )
-gcloud services enable "${required_services[@]}" --project "${GCP_PROJECT_ID}" --quiet
-receipt "required_services_enabled=true"
+enabled_services="$(gcloud services list \
+  --enabled \
+  --project "${GCP_PROJECT_ID}" \
+  --format='value(config.name)')"
+for service in "${required_services[@]}"; do
+  grep -Fxq "${service}" <<< "${enabled_services}"
+done
+receipt "required_services_preprovisioned=true"
 
-if gcloud services list --enabled --project "${GCP_PROJECT_ID}" --format='value(config.name)' | grep -Eq '^(places(-backend)?|routes(-backend)?)\.googleapis\.com$'; then
+if grep -Eq '^(places(-backend)?|routes(-backend)?)\.googleapis\.com$' <<< "${enabled_services}"; then
   echo "RC7 must not enable Places or Routes." >&2
   exit 1
 fi
 
-billing_account="$(gcloud billing projects describe "${GCP_PROJECT_ID}" --format='value(billingAccountName)' | sed 's#billingAccounts/##')"
-test -n "${billing_account}"
-budget_name="$(gcloud billing budgets list --billing-account "${billing_account}" --filter='displayName="DIREKT RC7 Maps synthetic"' --format='value(name)' --limit=1 || true)"
-if [[ -z "${budget_name}" ]]; then
-  budget_name="$(gcloud billing budgets create \
-    --billing-account "${billing_account}" \
-    --display-name "DIREKT RC7 Maps synthetic" \
-    --budget-amount 25USD \
-    --calendar-period month \
-    --filter-projects "projects/${GCP_PROJECT_ID}" \
-    --threshold-rule percent=0.50 \
-    --threshold-rule percent=0.80 \
-    --threshold-rule percent=1.00 \
-    --format='value(name)')"
-fi
-test -n "${budget_name}"
+bootstrap_secret_json="${RUNNER_TEMP}/rc7-bootstrap-secret.json"
+gcloud secrets describe "${BACKEND_SECRET}" \
+  --project "${GCP_PROJECT_ID}" \
+  --format=json > "${bootstrap_secret_json}"
+jq -e '
+  .labels["direkt-rc7-bootstrap"] == "ready" and
+  .labels["direkt-rc7-budget"] == "usd25" and
+  .labels["direkt-rc7-quota"] == "60"
+' "${bootstrap_secret_json}" >/dev/null
+receipt "owner_bootstrap_verified=true"
 receipt "budget_alert_present=true"
 receipt "budget_display_name=DIREKT RC7 Maps synthetic"
 receipt "budget_amount_usd=25"
@@ -155,55 +181,54 @@ quota_pair="$(jq -r '
 IFS=$'\t' read -r quota_metric quota_unit <<< "${quota_pair}"
 test -n "${quota_metric}"
 test "${quota_unit}" = '1/min/{project}'
-if ! gcloud alpha services quota update \
-  --service geocoding-backend.googleapis.com \
-  --consumer "projects/${GCP_PROJECT_NUMBER}" \
-  --metric "${quota_metric}" \
-  --unit "${quota_unit}" \
-  --value 60 \
-  --force \
-  --quiet; then
-  gcloud alpha services quota create \
-    --service geocoding-backend.googleapis.com \
-    --consumer "projects/${GCP_PROJECT_NUMBER}" \
-    --metric "${quota_metric}" \
-    --unit "${quota_unit}" \
-    --value 60 \
-    --force \
-    --quiet
-fi
 receipt "geocoding_quota_metric=${quota_metric}"
 receipt "geocoding_quota_per_minute=60"
+receipt "geocoding_quota_preprovisioned=true"
 
-if ! gcloud compute networks describe "${NETWORK}" --project "${GCP_PROJECT_ID}" >/dev/null 2>&1; then
-  gcloud compute networks create "${NETWORK}" --project "${GCP_PROJECT_ID}" --subnet-mode custom --quiet
-fi
-if ! gcloud compute networks subnets describe "${SUBNET}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" >/dev/null 2>&1; then
-  gcloud compute networks subnets create "${SUBNET}" \
-    --project "${GCP_PROJECT_ID}" \
-    --region "${GCP_REGION}" \
-    --network "${NETWORK}" \
-    --range "${SUBNET_RANGE}" \
-    --enable-private-ip-google-access \
-    --quiet
-fi
-actual_range="$(gcloud compute networks subnets describe "${SUBNET}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format='value(ipCidrRange)')"
+# The owner bootstrap creates the stable, no-recurring-cost VPC and subnet.
+gcloud compute networks describe "${NETWORK}" \
+  --project "${GCP_PROJECT_ID}" >/dev/null
+gcloud compute networks subnets describe "${SUBNET}" \
+  --project "${GCP_PROJECT_ID}" \
+  --region "${GCP_REGION}" >/dev/null
+actual_range="$(gcloud compute networks subnets describe "${SUBNET}" \
+  --project "${GCP_PROJECT_ID}" \
+  --region "${GCP_REGION}" \
+  --format='value(ipCidrRange)')"
 test "${actual_range}" = "${SUBNET_RANGE}"
 receipt "direct_vpc_subnet=${SUBNET}"
 
-if ! gcloud compute addresses describe "${ADDRESS}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" >/dev/null 2>&1; then
-  gcloud compute addresses create "${ADDRESS}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --network-tier PREMIUM --quiet
+if ! gcloud compute addresses describe "${ADDRESS}" \
+  --project "${GCP_PROJECT_ID}" \
+  --region "${GCP_REGION}" >/dev/null 2>&1; then
+  gcloud compute addresses create "${ADDRESS}" \
+    --project "${GCP_PROJECT_ID}" \
+    --region "${GCP_REGION}" \
+    --network-tier PREMIUM \
+    --quiet
 fi
 ADDRESS_PRESENT=true
-static_ip="$(gcloud compute addresses describe "${ADDRESS}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format='value(address)')"
+static_ip="$(gcloud compute addresses describe "${ADDRESS}" \
+  --project "${GCP_PROJECT_ID}" \
+  --region "${GCP_REGION}" \
+  --format='value(address)')"
 [[ "${static_ip}" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
 receipt "temporary_static_egress_ip=${static_ip}"
 
-if ! gcloud compute routers describe "${ROUTER}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" >/dev/null 2>&1; then
-  gcloud compute routers create "${ROUTER}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --network "${NETWORK}" --quiet
+if ! gcloud compute routers describe "${ROUTER}" \
+  --project "${GCP_PROJECT_ID}" \
+  --region "${GCP_REGION}" >/dev/null 2>&1; then
+  gcloud compute routers create "${ROUTER}" \
+    --project "${GCP_PROJECT_ID}" \
+    --region "${GCP_REGION}" \
+    --network "${NETWORK}" \
+    --quiet
 fi
 ROUTER_PRESENT=true
-if gcloud compute routers nats describe "${NAT}" --router "${ROUTER}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" >/dev/null 2>&1; then
+if gcloud compute routers nats describe "${NAT}" \
+  --router "${ROUTER}" \
+  --project "${GCP_PROJECT_ID}" \
+  --region "${GCP_REGION}" >/dev/null 2>&1; then
   gcloud compute routers nats update "${NAT}" \
     --router "${ROUTER}" \
     --project "${GCP_PROJECT_ID}" \
@@ -239,12 +264,20 @@ if [[ ! -f "${HOME}/.android/debug.keystore" ]]; then
     -keysize 2048 \
     -validity 10000 >/dev/null 2>&1
 fi
-android_sha1="$(keytool -list -v -keystore "${HOME}/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android | awk -F': ' '/SHA1:/{print $2; exit}' | tr -d ':')"
+android_sha1="$(keytool -list -v \
+  -keystore "${HOME}/.android/debug.keystore" \
+  -storepass android \
+  -alias androiddebugkey \
+  -keypass android \
+  | awk -F': ' '/SHA1:/{print $2; exit}' \
+  | tr -d ':')"
 [[ "${android_sha1}" =~ ^[0-9A-Fa-f]{40}$ ]]
 receipt "android_package=${ANDROID_PACKAGE}"
 receipt "android_debug_certificate_sha1=${android_sha1^^}"
 
-if gcloud services api-keys describe "${ANDROID_KEY_ID}" --project "${GCP_PROJECT_ID}" --location global >/dev/null 2>&1; then
+if gcloud services api-keys describe "${ANDROID_KEY_ID}" \
+  --project "${GCP_PROJECT_ID}" \
+  --location global >/dev/null 2>&1; then
   gcloud services api-keys update "${ANDROID_KEY_ID}" \
     --project "${GCP_PROJECT_ID}" \
     --location global \
@@ -262,19 +295,30 @@ else
     --api-target service=maps-android-backend.googleapis.com \
     --quiet
 fi
-gcloud services api-keys describe "${ANDROID_KEY_ID}" --project "${GCP_PROJECT_ID}" --location global --format=json > "${RUNNER_TEMP}/rc7-android-key-metadata.json"
+gcloud services api-keys describe "${ANDROID_KEY_ID}" \
+  --project "${GCP_PROJECT_ID}" \
+  --location global \
+  --format=json > "${RUNNER_TEMP}/rc7-android-key-metadata.json"
 jq -e --arg package "${ANDROID_PACKAGE}" --arg sha "${android_sha1^^}" '
   .restrictions.androidKeyRestrictions.allowedApplications
   | any(.packageName == $package and (.sha1Fingerprint | ascii_upcase) == $sha)
 ' "${RUNNER_TEMP}/rc7-android-key-metadata.json" >/dev/null
-jq -e '(.restrictions.apiTargets | length) == 1 and .restrictions.apiTargets[0].service == "maps-android-backend.googleapis.com"' "${RUNNER_TEMP}/rc7-android-key-metadata.json" >/dev/null
-gcloud services api-keys get-key-string "${ANDROID_KEY_ID}" --project "${GCP_PROJECT_ID}" --location global --format='value(keyString)' > "${RUNNER_TEMP}/rc7-android-key.txt"
+jq -e '
+  (.restrictions.apiTargets | length) == 1 and
+  .restrictions.apiTargets[0].service == "maps-android-backend.googleapis.com"
+' "${RUNNER_TEMP}/rc7-android-key-metadata.json" >/dev/null
+gcloud services api-keys get-key-string "${ANDROID_KEY_ID}" \
+  --project "${GCP_PROJECT_ID}" \
+  --location global \
+  --format='value(keyString)' > "${RUNNER_TEMP}/rc7-android-key.txt"
 chmod 600 "${RUNNER_TEMP}/rc7-android-key.txt"
 [[ "$(wc -c < "${RUNNER_TEMP}/rc7-android-key.txt")" -ge 20 ]]
 receipt "android_key_restricted=true"
 receipt "android_key_persistent_synthetic_debug_only=true"
 
-if gcloud services api-keys describe "${BACKEND_KEY_ID}" --project "${GCP_PROJECT_ID}" --location global >/dev/null 2>&1; then
+if gcloud services api-keys describe "${BACKEND_KEY_ID}" \
+  --project "${GCP_PROJECT_ID}" \
+  --location global >/dev/null 2>&1; then
   gcloud services api-keys update "${BACKEND_KEY_ID}" \
     --project "${GCP_PROJECT_ID}" \
     --location global \
@@ -293,26 +337,54 @@ else
     --quiet
 fi
 BACKEND_KEY_PRESENT=true
-gcloud services api-keys describe "${BACKEND_KEY_ID}" --project "${GCP_PROJECT_ID}" --location global --format=json > "${RUNNER_TEMP}/rc7-backend-key-metadata.json"
-jq -e --arg ip "${static_ip}" '.restrictions.serverKeyRestrictions.allowedIps == [$ip]' "${RUNNER_TEMP}/rc7-backend-key-metadata.json" >/dev/null
-jq -e '(.restrictions.apiTargets | length) == 1 and .restrictions.apiTargets[0].service == "geocoding-backend.googleapis.com"' "${RUNNER_TEMP}/rc7-backend-key-metadata.json" >/dev/null
-gcloud services api-keys get-key-string "${BACKEND_KEY_ID}" --project "${GCP_PROJECT_ID}" --location global --format='value(keyString)' > "${RUNNER_TEMP}/rc7-backend-key.txt"
+gcloud services api-keys describe "${BACKEND_KEY_ID}" \
+  --project "${GCP_PROJECT_ID}" \
+  --location global \
+  --format=json > "${RUNNER_TEMP}/rc7-backend-key-metadata.json"
+jq -e --arg ip "${static_ip}" \
+  '.restrictions.serverKeyRestrictions.allowedIps == [$ip]' \
+  "${RUNNER_TEMP}/rc7-backend-key-metadata.json" >/dev/null
+jq -e '
+  (.restrictions.apiTargets | length) == 1 and
+  .restrictions.apiTargets[0].service == "geocoding-backend.googleapis.com"
+' "${RUNNER_TEMP}/rc7-backend-key-metadata.json" >/dev/null
+gcloud services api-keys get-key-string "${BACKEND_KEY_ID}" \
+  --project "${GCP_PROJECT_ID}" \
+  --location global \
+  --format='value(keyString)' > "${RUNNER_TEMP}/rc7-backend-key.txt"
 chmod 600 "${RUNNER_TEMP}/rc7-backend-key.txt"
 [[ "$(wc -c < "${RUNNER_TEMP}/rc7-backend-key.txt")" -ge 20 ]]
 receipt "backend_key_ip_restricted=true"
 receipt "backend_key_geocoding_only=true"
 
-if ! gcloud secrets describe "${BACKEND_SECRET}" --project "${GCP_PROJECT_ID}" >/dev/null 2>&1; then
-  gcloud secrets create "${BACKEND_SECRET}" --project "${GCP_PROJECT_ID}" --replication-policy automatic --quiet
+secret_policy="$(gcloud secrets get-iam-policy "${BACKEND_SECRET}" \
+  --project "${GCP_PROJECT_ID}" \
+  --format=json)"
+for role in roles/secretmanager.secretVersionManager roles/secretmanager.viewer; do
+  jq -e --arg role "${role}" --arg member "serviceAccount:${GCP_DEPLOYER_SERVICE_ACCOUNT}" '
+    .bindings[]?
+    | select(.role == $role)
+    | .members[]?
+    | select(. == $member)
+  ' <<< "${secret_policy}" >/dev/null
+done
+jq -e --arg member "serviceAccount:${GCP_RUNTIME_SERVICE_ACCOUNT}" '
+  .bindings[]?
+  | select(.role == "roles/secretmanager.secretAccessor")
+  | .members[]?
+  | select(. == $member)
+' <<< "${secret_policy}" >/dev/null
+if jq -e '.bindings[]? | select(.role == "roles/secretmanager.admin")' \
+  <<< "${secret_policy}" >/dev/null; then
+  echo "Broad roles/secretmanager.admin is prohibited on the RC7 secret." >&2
+  exit 1
 fi
-version_name="$(gcloud secrets versions add "${BACKEND_SECRET}" --project "${GCP_PROJECT_ID}" --data-file "${RUNNER_TEMP}/rc7-backend-key.txt" --format='value(name)')"
+version_name="$(gcloud secrets versions add "${BACKEND_SECRET}" \
+  --project "${GCP_PROJECT_ID}" \
+  --data-file "${RUNNER_TEMP}/rc7-backend-key.txt" \
+  --format='value(name)')"
 BACKEND_SECRET_VERSION="${version_name##*/}"
 [[ "${BACKEND_SECRET_VERSION}" =~ ^[1-9][0-9]*$ ]]
-gcloud secrets add-iam-policy-binding "${BACKEND_SECRET}" \
-  --project "${GCP_PROJECT_ID}" \
-  --member "serviceAccount:${GCP_RUNTIME_SERVICE_ACCOUNT}" \
-  --role roles/secretmanager.secretAccessor \
-  --quiet >/dev/null
 receipt "backend_secret=${BACKEND_SECRET}"
 receipt "backend_secret_numeric_version=${BACKEND_SECRET_VERSION}"
 receipt "credential_propagation_wait_seconds=60"
@@ -320,7 +392,10 @@ sleep 60
 
 rm -f "${RUNNER_TEMP}/rc7-backend-key.txt"
 gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
-docker build --file backend/direkt-api/Dockerfile --tag "${IMAGE_URI}" backend/direkt-api
+docker build \
+  --file backend/direkt-api/Dockerfile \
+  --tag "${IMAGE_URI}" \
+  backend/direkt-api
 docker push "${IMAGE_URI}"
 receipt "immutable_backend_image=${IMAGE_URI}"
 
@@ -345,13 +420,19 @@ job_args=(
   --labels 'direkt-environment=staging,direkt-data-mode=synthetic-only,direkt-integration=maps-rc7'
   --quiet
 )
-if gcloud run jobs describe "${CANARY_JOB}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" >/dev/null 2>&1; then
+if gcloud run jobs describe "${CANARY_JOB}" \
+  --project "${GCP_PROJECT_ID}" \
+  --region "${GCP_REGION}" >/dev/null 2>&1; then
   gcloud run jobs update "${CANARY_JOB}" "${job_args[@]}"
 else
   gcloud run jobs create "${CANARY_JOB}" "${job_args[@]}"
 fi
 CANARY_JOB_PRESENT=true
-gcloud run jobs execute "${CANARY_JOB}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --wait --format=json > "${RUNNER_TEMP}/rc7-maps-execution.json"
+gcloud run jobs execute "${CANARY_JOB}" \
+  --project "${GCP_PROJECT_ID}" \
+  --region "${GCP_REGION}" \
+  --wait \
+  --format=json > "${RUNNER_TEMP}/rc7-maps-execution.json"
 sleep 8
 backend_log="$(gcloud logging read \
   "resource.type=cloud_run_job AND resource.labels.job_name=${CANARY_JOB} AND textPayload:\"RC7_MAPS_CANARY|PASS\"" \
@@ -369,7 +450,9 @@ pushd android/direkt-app >/dev/null
 DIREKT_MAPS_BUILD_ENABLED=true \
 DIREKT_MAPS_SYNTHETIC_CANARY_APPROVED=true \
 DIREKT_ANDROID_MAPS_API_KEY="$(cat "${RUNNER_TEMP}/rc7-android-key.txt")" \
-gradle --no-daemon --stacktrace :app:assembleDebug :app:assembleDebugAndroidTest
+gradle --no-daemon --stacktrace \
+  :app:assembleDebug \
+  :app:assembleDebugAndroidTest
 popd >/dev/null
 rm -f "${RUNNER_TEMP}/rc7-android-key.txt"
 
