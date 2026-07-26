@@ -12,11 +12,14 @@ async function main(): Promise<void> {
   }
 
   const environment = result.value;
+  const apiKey = environment.GOOGLE_MAPS_SERVER_API_KEY;
   if (
     environment.GOOGLE_MAPS_BACKEND_MODE !== 'google_maps' ||
     environment.GOOGLE_MAPS_SYNTHETIC_CANARY_APPROVED !== true ||
     environment.DIREKT_DATA_MODE !== 'synthetic-only' ||
-    environment.NODE_ENV === 'production'
+    environment.NODE_ENV === 'production' ||
+    typeof apiKey !== 'string' ||
+    apiKey.length < 20
   ) {
     throw new Error(
       'RC7 Maps canary requires an approved synthetic-only non-production configuration.',
@@ -24,7 +27,7 @@ async function main(): Promise<void> {
   }
 
   const adapter = new GoogleMapsGeocodingProviderAdapter(
-    environment.GOOGLE_MAPS_SERVER_API_KEY,
+    apiKey,
     environment.GOOGLE_MAPS_REQUEST_TIMEOUT_MS,
     environment.GOOGLE_MAPS_GEOCODING_ENDPOINT,
   );
