@@ -264,7 +264,7 @@ def main() -> int:
         "roles/secretmanager.secretVersionManager",
         "roles/secretmanager.secretAccessor",
         "temporary_authority_expires_at",
-        "budget_amount_usd=25",
+        "budget_amount_usd=1",
         "geocoding_quota_per_minute=60",
         "places_routes_enabled_by_rc7=false",
     ):

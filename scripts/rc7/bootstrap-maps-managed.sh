@@ -117,15 +117,24 @@ if [[ -z "${budget_name}" ]]; then
   budget_name="$(gcloud billing budgets create \
     --billing-account "${billing_account}" \
     --display-name "${BUDGET_DISPLAY_NAME}" \
-    --budget-amount 25USD \
+    --budget-amount 1USD \
     --calendar-period month \
     --filter-projects "projects/${PROJECT_ID}" \
     --threshold-rule percent=0.50 \
     --threshold-rule percent=0.80 \
     --threshold-rule percent=1.00 \
     --format='value(name)')"
+else
+  gcloud billing budgets update "${budget_name##*/}" \
+    --billing-account "${billing_account}" \
+    --budget-amount 1USD \
+    --quiet >/dev/null
 fi
 test -n "${budget_name}"
+actual_budget_units="$(gcloud billing budgets describe "${budget_name##*/}" \
+  --billing-account "${billing_account}" \
+  --format='value(amount.specifiedAmount.units)')"
+test "${actual_budget_units}" = "1"
 
 quota_json="$(mktemp)"
 trap 'rm -f "${condition_file}" "${quota_json}"' EXIT
@@ -164,7 +173,7 @@ fi
 gcloud secrets update "${SECRET_NAME}" \
   --project "${PROJECT_ID}" \
   --update-labels \
-    direkt-rc7-bootstrap=ready,direkt-rc7-budget=usd25,direkt-rc7-quota=60 \
+    direkt-rc7-bootstrap=ready,direkt-rc7-budget=usd1,direkt-rc7-quota=60 \
   --quiet
 
 secret_policy="$(gcloud secrets get-iam-policy "${SECRET_NAME}" --project "${PROJECT_ID}" --format=json)"
@@ -190,7 +199,7 @@ printf 'network=%s\n' "${NETWORK}"
 printf 'subnet=%s\n' "${SUBNET}"
 printf 'subnet_range=%s\n' "${SUBNET_RANGE}"
 printf 'budget_alert=%s\n' "${BUDGET_DISPLAY_NAME}"
-printf 'budget_amount_usd=25\n'
+printf 'budget_amount_usd=1\n'
 printf 'geocoding_quota_per_minute=60\n'
 printf 'temporary_authority_expires_at=%s\n' "${expires_at}"
 printf 'places_routes_enabled_by_rc7=false\n'
