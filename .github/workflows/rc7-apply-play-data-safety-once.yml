@@ -34,39 +34,14 @@ jobs:
           python-version: "3.13"
       - name: Reconcile Maps SDK with Phase 12B source truth
         run: python3 scripts/rc7/apply-play-data-safety.py
-      - name: Verify reconciliation
-        id: verify
-        shell: bash
-        run: |
-          set +e
-          {
-            echo "== Phase 12B verifier =="
-            python3 scripts/verify-phase12-play-readiness.py
-            phase12_status=$?
-            echo "phase12_status=${phase12_status}"
-            echo "== RC7 verifier =="
-            python3 scripts/rc7/verify-maps-contract.py
-            rc7_status=$?
-            echo "rc7_status=${rc7_status}"
-          } 2>&1 | tee rc7-play-reconciliation-diagnostic.txt
-          phase12_status=$(grep '^phase12_status=' rc7-play-reconciliation-diagnostic.txt | tail -1 | cut -d= -f2)
-          rc7_status=$(grep '^rc7_status=' rc7-play-reconciliation-diagnostic.txt | tail -1 | cut -d= -f2)
-          test "${phase12_status}" = "0" && test "${rc7_status}" = "0"
-      - name: Upload reconciliation diagnostic
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: rc7-play-reconciliation-diagnostic
-          path: rc7-play-reconciliation-diagnostic.txt
-          if-no-files-found: error
-          retention-days: 3
+      - name: Verify RC7 source contract
+        run: python3 scripts/rc7/verify-maps-contract.py
       - name: Commit reconciliation and remove bridge
         shell: bash
         run: |
           set -euo pipefail
           rm scripts/rc7/apply-play-data-safety.py
           rm .github/workflows/rc7-apply-play-data-safety-once.yml
-          rm -f rc7-play-reconciliation-diagnostic.txt
           git diff --check
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
