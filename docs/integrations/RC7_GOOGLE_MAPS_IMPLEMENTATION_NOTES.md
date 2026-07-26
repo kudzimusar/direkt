@@ -6,7 +6,7 @@
 
 ## Source reconciliation checkpoint
 
-The corrective branch has completed its one-time atomic source reconciliation. The permanent branch no longer contains the temporary reconciler workflow. Environment schema, application adapter, unit tests, managed workflow, bootstrap, contract verifiers, trigger, status register and live ledger now describe the same service-identity OAuth architecture.
+The corrective branch has completed its one-time atomic source reconciliation. The permanent branch no longer contains the temporary reconciler or formatter workflows. Environment schema, application adapter, unit tests, managed workflow, bootstrap, contract verifiers, trigger, status register and live ledger now describe the same service-identity OAuth architecture. All backend TypeScript and test changes have also been normalized by the repository-pinned Prettier toolchain before full exact-head verification.
 
 ## Scope decision
 
