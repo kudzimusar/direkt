@@ -7,6 +7,7 @@ on:
       - "scripts/rc7/run-maps-managed.sh"
       - "scripts/rc7/bootstrap-maps-managed.sh"
       - "scripts/rc7/verify-maps-contract.py"
+      - "scripts/rc7/verify-managed-workflow-context.py"
       - "android/direkt-app/app/src/androidTest/java/com/kudzimusar/direkt/Rc7MapsRuntimeTest.kt"
       - "docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md"
       - "docs/integrations/RC7_MAPS_OWNER_BOOTSTRAP.md"
@@ -17,6 +18,7 @@ on:
       - ".github/workflows/rc7-maps-managed.yml"
       - "scripts/rc7/run-maps-managed.sh"
       - "scripts/rc7/bootstrap-maps-managed.sh"
+      - "scripts/rc7/verify-managed-workflow-context.py"
       - "android/direkt-app/app/src/androidTest/java/com/kudzimusar/direkt/Rc7MapsRuntimeTest.kt"
       - "docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md"
       - "docs/integrations/RC7_MAPS_OWNER_BOOTSTRAP.md"
@@ -51,6 +53,7 @@ jobs:
       - name: Verify permanent RC7 source and managed controls
         run: |
           python3 scripts/rc7/verify-maps-contract.py
+          python3 scripts/rc7/verify-managed-workflow-context.py
           bash -n scripts/rc7/run-maps-managed.sh
           bash -n scripts/rc7/bootstrap-maps-managed.sh
           grep -Fq 'RC7_MAPS_BOOTSTRAP|PASS' scripts/rc7/bootstrap-maps-managed.sh
@@ -78,7 +81,6 @@ jobs:
       GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
       TESTLAB_PROJECT_ID: direkt-testlab-502701-20260726
       DIREKT_GRADLE_VERSION: "9.4.0"
-      RC7_RECEIPT_PATH: ${{ runner.temp }}/rc7-maps-managed-receipt.txt
     steps:
       - name: Resolve exact-main execution inputs
         id: controls
@@ -95,6 +97,7 @@ jobs:
           else
             echo "source_sha=${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
           fi
+          echo "RC7_RECEIPT_PATH=${RUNNER_TEMP}/rc7-maps-managed-receipt.txt" >> "${GITHUB_ENV}"
 
       - name: Check out exact reviewed source
         uses: actions/checkout@v6
@@ -114,6 +117,7 @@ jobs:
           grep -Fxq 'STATUS=ARMED' docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md
           grep -Fxq 'CONFIRMATION=RUN-DIREKT-RC7-MAPS-MANAGED' docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md
           python3 scripts/rc7/verify-maps-contract.py
+          python3 scripts/rc7/verify-managed-workflow-context.py
           bash -n scripts/rc7/run-maps-managed.sh
           bash -n scripts/rc7/bootstrap-maps-managed.sh
           echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
