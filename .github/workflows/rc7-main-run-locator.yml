@@ -17,6 +17,8 @@ jobs:
     timeout-minutes: 5
     env:
       TARGET_SHA: 1c6acd7972caca838f27b4e5c4a521c92cbfc7c4
+      TARGET_RUN: "30210742617"
+      TARGET_JOB: "89816438103"
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Locate exact-main RC7 workflow run
@@ -37,6 +39,47 @@ jobs:
             echo
             echo '```json'
             jq . <<<"${matches}"
+            echo '```'
+          } >"${body}"
+          gh pr comment "${{ github.event.pull_request.number }}" --repo "${GITHUB_REPOSITORY}" --body-file "${body}"
+
+      - name: Publish sanitized failure context
+        shell: bash
+        run: |
+          set -euo pipefail
+          raw="${RUNNER_TEMP}/rc7-managed-job.log"
+          gh run view "${TARGET_RUN}" --repo "${GITHUB_REPOSITORY}" --job "${TARGET_JOB}" --log >"${raw}"
+          diagnostic="${RUNNER_TEMP}/rc7-managed-diagnostic.txt"
+          python3 - "${raw}" "${diagnostic}" <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          raw_path, output_path = map(Path, sys.argv[1:])
+          lines = raw_path.read_text(encoding="utf-8", errors="replace").splitlines()
+          pattern = re.compile(r"billing budgets|billing projects|budget|PERMISSION|permission|ERROR|Error|FAILED|RC7|Process completed", re.I)
+          selected: set[int] = set()
+          for index, line in enumerate(lines):
+              if pattern.search(line):
+                  selected.update(range(max(0, index - 2), min(len(lines), index + 3)))
+          rendered = []
+          for index in sorted(selected):
+              text = lines[index]
+              text = re.sub(r"ya29\.[0-9A-Za-z._-]{20,}", "[REDACTED_OAUTH_TOKEN]", text)
+              text = re.sub(r"(?i)(Bearer|Authorization:)\s+\S+", r"\1 [REDACTED]", text)
+              text = re.sub(r"[0-9A-Za-z_+=/.:-]{120,}", "[REDACTED_LONG_VALUE]", text)
+              rendered.append(text[:1200])
+          output_path.write_text("\n".join(rendered[-160:]) + "\n", encoding="utf-8")
+          PY
+          body="${RUNNER_TEMP}/rc7-managed-diagnostic.md"
+          {
+            echo '## RC7 managed failure diagnostic'
+            echo
+            echo "- Run/job: \`${TARGET_RUN}/${TARGET_JOB}\`"
+            echo '- Sanitized matching context only; no credential values.'
+            echo
+            echo '```text'
+            cat "${diagnostic}"
             echo '```'
           } >"${body}"
           gh pr comment "${{ github.event.pull_request.number }}" --repo "${GITHUB_REPOSITORY}" --body-file "${body}"
