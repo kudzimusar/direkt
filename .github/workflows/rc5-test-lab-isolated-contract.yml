@@ -114,6 +114,21 @@ jobs:
         run: |
           set -euo pipefail
           managed=scripts/rc5/run-test-lab-isolated-managed.sh
+          python3 - "${managed}" <<'PY'
+          from pathlib import Path
+          import sys
+
+          path = Path(sys.argv[1])
+          text = path.read_text(encoding="utf-8")
+          lines = text.splitlines()
+          output_line = '  --output "${RUNNER_TEMP}/rc5-test-lab-matrix.json"'
+          count_line = 'device_count="$(jq -r \'.deviceCount\' "${RUNNER_TEMP}/rc5-test-lab-matrix.json")"'
+          assert output_line in lines, "exact selector output line missing"
+          index = lines.index(output_line)
+          assert index + 1 < len(lines), "device-count assignment missing"
+          assert lines[index + 1] == count_line, "selector output and device-count assignment must be adjacent physical lines"
+          assert r"\ndevice_count=" not in text, "literal newline escape reintroduced"
+          PY
           grep -Fq -- '--app "${app_apk}"' "${managed}"
           grep -Fq -- '--test "${test_apk}"' "${managed}"
           grep -Fq -- '--num-flaky-test-attempts 0' "${managed}"
@@ -163,6 +178,7 @@ jobs:
             echo '- Identity: existing GitHub WIF deployer, no key'
             echo '- Authority: roles/editor isolated to the Test Lab project; no owner'
             echo '- APK transport: local files through supported gcloud execution'
+            echo '- Matrix selector output and device-count assignment: separate physical lines'
             echo '- Results: Firebase-managed default bucket'
             echo '- Matrix: exactly API 26, API 33 and current API 35/36'
             echo '- Flaky retries: zero'

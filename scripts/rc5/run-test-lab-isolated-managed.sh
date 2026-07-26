@@ -106,7 +106,8 @@ test "$(jq 'length' "${RUNNER_TEMP}/rc5-test-lab-models.json")" -gt 0
 test "$(jq 'length' "${RUNNER_TEMP}/rc5-test-lab-versions.json")" -gt 0
 python3 scripts/rc5/select-test-lab-matrix.py \
   --models "${RUNNER_TEMP}/rc5-test-lab-models.json" \
-  --output "${RUNNER_TEMP}/rc5-test-lab-matrix.json"\ndevice_count="$(jq -r '.deviceCount' "${RUNNER_TEMP}/rc5-test-lab-matrix.json")"
+  --output "${RUNNER_TEMP}/rc5-test-lab-matrix.json"
+device_count="$(jq -r '.deviceCount' "${RUNNER_TEMP}/rc5-test-lab-matrix.json")"
 test "${device_count}" = "3"
 test "$(jq -r '[.targets[] | select(.version == "26")] | length' "${RUNNER_TEMP}/rc5-test-lab-matrix.json")" = "1"
 test "$(jq -r '[.targets[] | select(.version == "33")] | length' "${RUNNER_TEMP}/rc5-test-lab-matrix.json")" = "1"
