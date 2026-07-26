@@ -156,7 +156,9 @@ def main() -> int:
         "discovery-map-ready",
         "waitUntil(timeoutMillis = 20_000)",
         "discovery-map-fallback",
-        "assertDoesNotExist",
+        "fetchSemanticsNodes()",
+        "assertTrue(",
+        ".isEmpty()",
     ):
         require(managed_test, needle, "managed Android map-load assertion")
 
