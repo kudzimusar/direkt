@@ -1,0 +1,60 @@
+name: DIREKT RC7 fix canary log filter quoting
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-fix-canary-filter-quote.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    name: Correct exact sanitized log filter on isolated branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TARGET_BRANCH: fix/rc7-canary-failure-evidence
+      TARGET_PATH: scripts/rc7/run-maps-managed.sh
+      EXPECTED_BLOB_SHA: 4866a39c80d597e29a4506b999c1f7b0d2d1a3a4
+    steps:
+      - name: Replace only the ambiguous filter line
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          source_json="${RUNNER_TEMP}/source.json"
+          source_file="${RUNNER_TEMP}/source.sh"
+          updated_file="${RUNNER_TEMP}/updated.sh"
+          payload="${RUNNER_TEMP}/payload.json"
+
+          gh api "repos/${GITHUB_REPOSITORY}/contents/${TARGET_PATH}?ref=${TARGET_BRANCH}" > "${source_json}"
+          test "$(jq -r '.sha' "${source_json}")" = "${EXPECTED_BLOB_SHA}"
+          jq -r '.content' "${source_json}" | tr -d '\n' | base64 --decode > "${source_file}"
+
+          python3 - "${source_file}" "${updated_file}" <<'PY'
+          from pathlib import Path
+          import sys
+
+          source = Path(sys.argv[1]).read_text(encoding="utf-8")
+          old = '    "resource.type=cloud_run_job AND resource.labels.job_name=${CANARY_JOB} AND (textPayload:"RC7_MAPS_CANARY|" OR jsonPayload.message:"RC7_MAPS_CANARY|")" \\\n'
+          new = '    "resource.type=\\"cloud_run_job\\" AND resource.labels.job_name=\\"${CANARY_JOB}\\" AND (textPayload:\\"RC7_MAPS_CANARY|\\" OR jsonPayload.message:\\"RC7_MAPS_CANARY|\\")" \\\n'
+          if source.count(old) != 1:
+              raise SystemExit(f"Expected one ambiguous filter, found {source.count(old)}")
+          updated = source.replace(old, new)
+          if updated.count('RC7_MAPS_CANARY|') < 4:
+              raise SystemExit("Canary evidence markers were unexpectedly altered")
+          Path(sys.argv[2]).write_text(updated, encoding="utf-8")
+          PY
+
+          bash -n "${updated_file}"
+          encoded="$(base64 -w 0 "${updated_file}")"
+          jq -n \
+            --arg message 'fix(rc7): quote canary log filter explicitly' \
+            --arg content "${encoded}" \
+            --arg sha "${EXPECTED_BLOB_SHA}" \
+            --arg branch "${TARGET_BRANCH}" \
+            '{message: $message, content: $content, sha: $sha, branch: $branch}' > "${payload}"
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/${TARGET_PATH}" --input "${payload}" \
+            | jq '{commitSha: .commit.sha, contentSha: .content.sha}'
