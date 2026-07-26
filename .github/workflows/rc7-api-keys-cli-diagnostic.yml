@@ -1,0 +1,46 @@
+name: DIREKT RC7 API Keys CLI diagnostic
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-api-keys-cli-diagnostic.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  help:
+    name: Read pinned gcloud API Keys syntax
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Set up exact managed-run Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          version: "568.0.0"
+
+      - name: Capture command synopsis without authentication
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="${RUNNER_TEMP}/rc7-api-keys-cli-syntax.txt"
+          : > "${output}"
+          gcloud version >> "${output}"
+          for command in create describe update delete get-key-string; do
+            {
+              echo
+              echo "### gcloud services api-keys ${command}"
+              gcloud services api-keys "${command}" --help \
+                | sed -n '/SYNOPSIS/,/DESCRIPTION/p' \
+                | head -n 80
+            } >> "${output}"
+          done
+          cat "${output}"
+
+      - name: Upload exact CLI syntax
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc7-api-keys-cli-${{ github.run_id }}
+          path: ${{ runner.temp }}/rc7-api-keys-cli-syntax.txt
+          if-no-files-found: error
+          retention-days: 1
