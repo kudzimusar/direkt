@@ -61,6 +61,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      issues: write
     env:
       GCP_PROJECT_ID: direkt-dev-502701
       GCP_PROJECT_NUMBER: "264358173369"
@@ -169,3 +170,34 @@ jobs:
             echo '- Participant / production authorization: false'
             echo '- Temporary backend key, secret version, Cloud Run Job, NAT, router and static IP: cleanup enforced'
           } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Publish sanitized terminal receipt to Issue 261
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          result="FAILED"
+          if [[ -f "${RC7_RECEIPT_PATH}" ]] && grep -Fxq 'managed_result=PASS' "${RC7_RECEIPT_PATH}"; then
+            result="PASS"
+          fi
+          source_sha="${SOURCE_SHA:-${{ steps.controls.outputs.source_sha }}}"
+          body="${RUNNER_TEMP}/rc7-issue-receipt.md"
+          {
+            echo '## RC7 managed Google Maps proof receipt'
+            echo
+            echo "- Result: **${result}**"
+            echo "- Exact current main: \`${source_sha:-not-resolved}\`"
+            echo "- Managed run: [${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
+            echo '- Android credential: debug package + signing SHA-1 restricted; Maps SDK for Android only'
+            echo '- Backend credential: temporary static-IP restricted; Geocoding API only'
+            echo '- Places / Routes: not enabled by RC7'
+            echo '- Private provider coordinates published or logged: false'
+            echo '- Participant / production authorization: false'
+            echo '- Temporary backend credential, secret version, Cloud Run Job, NAT, router and static IP: cleanup enforced'
+            if [[ -f "${RC7_RECEIPT_PATH}" ]]; then
+              grep -E '^(backend_geocoding_canary|android_test_lab_map_ready|budget_alert_present|geocoding_quota_per_minute|cleanup\.|managed_result)=' "${RC7_RECEIPT_PATH}" | sed 's/^/- `/' | sed 's/$/`/' || true
+            fi
+          } > "${body}"
+          gh issue comment 261 --repo "${GITHUB_REPOSITORY}" --body-file "${body}"
