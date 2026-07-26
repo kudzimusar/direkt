@@ -158,13 +158,14 @@ gcloud secrets describe "${BACKEND_SECRET}" \
   --format=json > "${bootstrap_secret_json}"
 jq -e '
   .labels["direkt-rc7-bootstrap"] == "ready" and
-  .labels["direkt-rc7-budget"] == "usd1" and
+  .labels["direkt-rc7-budget"] == "unit1" and
   .labels["direkt-rc7-quota"] == "60"
 ' "${bootstrap_secret_json}" >/dev/null
 receipt "owner_bootstrap_verified=true"
 receipt "budget_alert_present=true"
 receipt "budget_display_name=DIREKT RC7 Maps synthetic"
-receipt "budget_amount_usd=1"
+receipt "budget_amount=1"
+receipt "budget_currency=account"
 
 quota_json="${RUNNER_TEMP}/rc7-geocoding-quota.json"
 gcloud alpha services quota list \

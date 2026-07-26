@@ -108,6 +108,9 @@ gcloud secrets add-iam-policy-binding "${SECRET_NAME}" \
 
 billing_account="$(gcloud billing projects describe "${PROJECT_ID}" --format='value(billingAccountName)' | sed 's#billingAccounts/##')"
 test -n "${billing_account}"
+billing_currency="$(gcloud billing accounts describe "${billing_account}" --format='value(currencyCode)')"
+test -n "${billing_currency}"
+budget_amount="1"
 budget_name="$(gcloud billing budgets list \
   --billing-account "${billing_account}" \
   --filter="displayName=\"${BUDGET_DISPLAY_NAME}\"" \
@@ -117,7 +120,7 @@ if [[ -z "${budget_name}" ]]; then
   budget_name="$(gcloud billing budgets create \
     --billing-account "${billing_account}" \
     --display-name "${BUDGET_DISPLAY_NAME}" \
-    --budget-amount 1USD \
+    --budget-amount "${budget_amount}" \
     --calendar-period month \
     --filter-projects "projects/${PROJECT_ID}" \
     --threshold-rule percent=0.50 \
@@ -127,7 +130,7 @@ if [[ -z "${budget_name}" ]]; then
 else
   gcloud billing budgets update "${budget_name##*/}" \
     --billing-account "${billing_account}" \
-    --budget-amount 1USD \
+    --budget-amount "${budget_amount}" \
     --quiet >/dev/null
 fi
 test -n "${budget_name}"
@@ -135,6 +138,10 @@ actual_budget_units="$(gcloud billing budgets describe "${budget_name##*/}" \
   --billing-account "${billing_account}" \
   --format='value(amount.specifiedAmount.units)')"
 test "${actual_budget_units}" = "1"
+actual_budget_currency="$(gcloud billing budgets describe "${budget_name##*/}" \
+  --billing-account "${billing_account}" \
+  --format='value(amount.specifiedAmount.currencyCode)')"
+test "${actual_budget_currency}" = "${billing_currency}"
 
 quota_json="$(mktemp)"
 trap 'rm -f "${condition_file}" "${quota_json}"' EXIT
@@ -173,7 +180,7 @@ fi
 gcloud secrets update "${SECRET_NAME}" \
   --project "${PROJECT_ID}" \
   --update-labels \
-    direkt-rc7-bootstrap=ready,direkt-rc7-budget=usd1,direkt-rc7-quota=60 \
+    direkt-rc7-bootstrap=ready,direkt-rc7-budget=unit1,direkt-rc7-quota=60 \
   --quiet
 
 secret_policy="$(gcloud secrets get-iam-policy "${SECRET_NAME}" --project "${PROJECT_ID}" --format=json)"
@@ -199,7 +206,8 @@ printf 'network=%s\n' "${NETWORK}"
 printf 'subnet=%s\n' "${SUBNET}"
 printf 'subnet_range=%s\n' "${SUBNET_RANGE}"
 printf 'budget_alert=%s\n' "${BUDGET_DISPLAY_NAME}"
-printf 'budget_amount_usd=1\n'
+printf 'budget_amount=1\n'
+printf 'budget_currency=%s\n' "${billing_currency}"
 printf 'geocoding_quota_per_minute=60\n'
 printf 'temporary_authority_expires_at=%s\n' "${expires_at}"
 printf 'places_routes_enabled_by_rc7=false\n'

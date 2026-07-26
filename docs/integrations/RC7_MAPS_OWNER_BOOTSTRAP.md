@@ -8,13 +8,13 @@ The bootstrap is source-controlled at `scripts/rc7/bootstrap-maps-managed.sh`. I
 - refuses to continue if Places or Routes is enabled;
 - creates the stable no-recurring-cost RC7 VPC and `/26` Direct VPC subnet;
 - creates the empty `direkt-google-maps-geocoding-api-key` Secret Manager container without adding a secret value;
-- creates or lowers/verifies the $1 monthly RC7 budget with 50%, 80% and 100% thresholds;
+- creates or lowers/verifies a monthly RC7 budget of 1 unit in the billing account’s fixed currency with 50%, 80% and 100% thresholds;
 - sets the Geocoding request ceiling to 60 requests per minute;
 - grants the existing GitHub deployer only time-limited API-key, network, service-viewer and log-viewer authority;
 - grants time-limited secret-version/viewer access to the deployer and time-limited secret accessor access to the private runtime identity;
 - labels the empty secret container as the owner-controlled bootstrap receipt.
 
-The $1 budget is an alerting guardrail, not an automatic billing shutoff. The fail-closed runtime switches, 60-request/minute quota, API/key restrictions and post-proof resource cleanup remain the enforceable cost controls.
+The 1-unit billing-currency budget is an alerting guardrail, not an automatic billing shutoff. The fail-closed runtime switches, 60-request/minute quota, API/key restrictions and post-proof resource cleanup remain the enforceable cost controls.
 
 The temporary IAM condition expires automatically, by default eight hours after execution. The script never creates, reads or prints an API-key value and never creates a secret version.
 
@@ -38,6 +38,6 @@ A valid terminal receipt begins with:
 RC7_MAPS_BOOTSTRAP|PASS
 ```
 
-and includes `secret_value_created=false`, the budget/quota controls, the temporary-authority expiry timestamp, and `production_authorization=false`.
+and includes `secret_value_created=false`, the budget amount, detected billing currency, and quota controls, the temporary-authority expiry timestamp, and `production_authorization=false`.
 
 Do not paste any credential or secret value into GitHub, ChatGPT, the repository, or the Cloud Shell command. The script does not request one.
