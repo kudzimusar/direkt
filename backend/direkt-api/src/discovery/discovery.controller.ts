@@ -19,10 +19,16 @@ import {
 import { PERMISSIONS } from '../authorization/permissions';
 import { PublicRoute } from '../authorization/public.decorator';
 import { RequirePermission } from '../authorization/require-permission.decorator';
+import { LocationService } from '../location/location.service';
 import type { DirektRequest } from '../platform/http/request-context';
 import { DiscoveryAiAssistService } from './discovery-ai-assist.service';
 import { DiscoveryAiAssistRequestDto } from './discovery-ai.dto';
-import { DiscoverySearchDto, HidePublicationDto, RefreshPublicationDto } from './discovery.dto';
+import {
+  DiscoverySearchDto,
+  HidePublicationDto,
+  NormalizeSearchAreaDto,
+  RefreshPublicationDto,
+} from './discovery.dto';
 import { DiscoveryService } from './discovery.service';
 
 @ApiTags('customer discovery')
@@ -31,6 +37,7 @@ export class DiscoveryController {
   constructor(
     private readonly discovery: DiscoveryService,
     private readonly discoveryAssist: DiscoveryAiAssistService,
+    private readonly locations: LocationService,
   ) {}
 
   @Get('public/categories')
@@ -51,6 +58,19 @@ export class DiscoveryController {
   })
   assist(@Body() body: DiscoveryAiAssistRequestDto) {
     return this.discoveryAssist.assist(body);
+  }
+
+  @Post('public/discovery/search-area/normalize')
+  @PublicRoute()
+  @ApiOperation({
+    summary: 'Normalizes a bounded Zambian discovery area without storing private location.',
+  })
+  @ApiOkResponse({
+    description:
+      'Returns a Zambia-bounded search point for discovery only. Manual area search remains available on every failure.',
+  })
+  normalizeSearchArea(@Body() body: NormalizeSearchAreaDto) {
+    return this.locations.normalizeSearchArea(body.area);
   }
 
   @Get('public/providers/search')

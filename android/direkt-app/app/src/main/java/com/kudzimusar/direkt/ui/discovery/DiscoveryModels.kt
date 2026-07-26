@@ -10,6 +10,13 @@ enum class DiscoveryViewMode(val label: String) {
     Map("Map"),
 }
 
+enum class MapRuntimeState {
+    Disabled,
+    Loading,
+    Ready,
+    Failed,
+}
+
 enum class DiscoveryImageMode(val label: String) {
     LowBandwidth("Data saver"),
     Standard("Standard images"),
@@ -34,6 +41,11 @@ data class PublicPremisesPoint(
     val longitude: Double,
 )
 
+data class PublicServiceAreaPreview(
+    val center: PublicPremisesPoint,
+    val radiusKm: Double,
+)
+
 data class PublicImage(
     val lowBandwidthLabel: String?,
     val standardLabel: String?,
@@ -47,6 +59,7 @@ data class SyntheticPublicProvider(
     val operatingModel: PublicOperatingModel,
     val locality: String,
     val serviceAreaLabel: String,
+    val serviceAreaPreview: PublicServiceAreaPreview,
     val publicPremises: PublicPremisesPoint?,
     val distanceKm: Double?,
     val availability: String,
@@ -64,6 +77,18 @@ data class SyntheticPublicProvider(
         distanceKm != null -> "${"%.1f".format(distanceKm)} km from public premises"
         else -> "Distance unavailable"
     }
+}
+
+fun publicMapMarker(provider: SyntheticPublicProvider): PublicPremisesPoint? = when {
+    provider.operatingModel == PublicOperatingModel.Mobile -> null
+    else -> provider.publicPremises
+}
+
+fun mapFallbackMessage(runtimeState: MapRuntimeState): String = when (runtimeState) {
+    MapRuntimeState.Disabled -> "Map display is off. Public area details are shown below."
+    MapRuntimeState.Failed -> "Map provider unavailable. Public area details remain available below."
+    MapRuntimeState.Loading -> "Loading the privacy-safe map."
+    MapRuntimeState.Ready -> "Privacy-safe map loaded."
 }
 
 data class DiscoveryUiState(
@@ -89,6 +114,10 @@ val syntheticDiscoveryProviders = listOf(
         operatingModel = PublicOperatingModel.FixedPremises,
         locality = "Woodlands, Lusaka",
         serviceAreaLabel = "Woodlands and nearby Lusaka neighbourhoods",
+        serviceAreaPreview = PublicServiceAreaPreview(
+            center = PublicPremisesPoint(latitude = -15.421, longitude = 28.335),
+            radiusKm = 4.5,
+        ),
         publicPremises = PublicPremisesPoint(latitude = -15.421, longitude = 28.335),
         distanceKm = 2.4,
         availability = "Available",
@@ -125,6 +154,10 @@ val syntheticDiscoveryProviders = listOf(
         operatingModel = PublicOperatingModel.Mobile,
         locality = "Lusaka Central service area",
         serviceAreaLabel = "Serves central and southern Lusaka",
+        serviceAreaPreview = PublicServiceAreaPreview(
+            center = PublicPremisesPoint(latitude = -15.4167, longitude = 28.3000),
+            radiusKm = 9.0,
+        ),
         publicPremises = null,
         distanceKm = null,
         availability = "Limited",
@@ -146,6 +179,10 @@ val syntheticDiscoveryProviders = listOf(
         operatingModel = PublicOperatingModel.Hybrid,
         locality = "Kabulonga, Lusaka",
         serviceAreaLabel = "Public premises in Kabulonga; mobile service across nearby areas",
+        serviceAreaPreview = PublicServiceAreaPreview(
+            center = PublicPremisesPoint(latitude = -15.420, longitude = 28.350),
+            radiusKm = 7.0,
+        ),
         publicPremises = PublicPremisesPoint(latitude = -15.420, longitude = 28.360),
         distanceKm = 4.8,
         availability = "Available",

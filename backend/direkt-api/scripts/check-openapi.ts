@@ -62,6 +62,7 @@ async function main(): Promise<void> {
     ['/api/v1/operations/interaction-complaints', 'get'],
     ['/api/v1/operations/interaction-complaints/{complaintId}/transitions', 'post'],
     ['/api/v1/public/categories', 'get'],
+    ['/api/v1/public/discovery/search-area/normalize', 'post'],
     ['/api/v1/public/providers/search', 'get'],
     ['/api/v1/public/providers/{publicProviderId}', 'get'],
     ['/api/v1/public/providers/{publicProviderId}/claims', 'get'],
@@ -98,6 +99,7 @@ async function main(): Promise<void> {
   ]);
   const publicOperations = new Set([
     'GET /api/v1/public/categories',
+    'POST /api/v1/public/discovery/search-area/normalize',
     'GET /api/v1/public/providers/search',
     'GET /api/v1/public/providers/{publicProviderId}',
     'GET /api/v1/public/providers/{publicProviderId}/claims',

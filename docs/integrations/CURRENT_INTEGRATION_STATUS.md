@@ -89,7 +89,7 @@ Current managed DIREKT runtime does **not** bind Gemini/Groq as active applicati
 |---|---|---|
 | PostGIS location model | **ACTIVE** | Canonical location/service-area semantics. |
 | Manual area/list fallback | **ACTIVE** | Provider-independent privacy/accessibility fallback. |
-| Google Maps Platform | **EXTERNALLY_PROVISIONED / RUNTIME NOT PROVEN** | RC7 restricted credentials, SDK/server binding, privacy/quotas/fallback/kill switch/non-leakage proof required. |
+| Google Maps Platform | **IMPLEMENTED_GATED / MANAGED PROOF IN PROGRESS** | RC7 source now includes separate Android/backend switches, privacy-safe native rendering, backend-only Zambia geocoding, reachable bounded discovery normalization, manual/list fallback and permanent non-leakage tests. Restricted credentials, quotas/budget controls and exact-main managed proof remain required before `ACTIVE`. |
 | Private-coordinate map publication | **DISABLED** | Exact private provider bases must not become public markers/ranking inputs. |
 
 ## Communications and notifications

@@ -72,6 +72,12 @@ export class DiscoverySearchDto {
   cursor?: string;
 }
 
+export class NormalizeSearchAreaDto {
+  @IsString()
+  @Length(3, 160)
+  area!: string;
+}
+
 export class RefreshPublicationDto {
   @Matches(/^[a-z][a-z0-9_]{2,63}$/)
   categoryKey!: string;

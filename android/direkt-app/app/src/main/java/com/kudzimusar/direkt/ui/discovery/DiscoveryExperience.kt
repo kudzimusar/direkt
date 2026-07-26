@@ -68,7 +68,7 @@ fun CustomerDiscoveryExperience() {
             }
         }
     } else {
-        SyntheticMapCard(providers = providers)
+        PrivacySafeMapCard(providers = providers)
     }
 
     DiscoveryBoundaryCard()

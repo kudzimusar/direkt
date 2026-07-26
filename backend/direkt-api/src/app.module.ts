@@ -11,6 +11,7 @@ import { CommunicationsModule } from './communications/communications.module';
 import { environmentSchema } from './config/environment';
 import { DiscoveryModule } from './discovery/discovery.module';
 import { InteractionModule } from './interaction/interaction.module';
+import { LocationModule } from './location/location.module';
 import { OperationsModule } from './operations/operations.module';
 import { AuditModule } from './platform/audit/audit.module';
 import { DatabaseModule } from './platform/database/database.module';
@@ -43,6 +44,7 @@ import { VerificationEvidenceModule } from './verification-evidence/verification
     HealthModule,
     CommercialModule,
     InteractionModule,
+    LocationModule,
     OperationsModule,
     ProviderModule,
     ProviderWorkspaceModule,

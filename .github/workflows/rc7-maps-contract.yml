@@ -1,0 +1,48 @@
+name: DIREKT RC7 Google Maps contract
+
+on:
+  pull_request:
+    paths:
+      - "android/direkt-app/**"
+      - "backend/direkt-api/**"
+      - "scripts/rc7/**"
+      - "docs/integrations/**"
+      - "WORKSTREAM_LOCK.md"
+      - ".github/workflows/rc7-maps-contract.yml"
+      - ".github/workflows/rc7-maps-managed.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "android/direkt-app/**"
+      - "backend/direkt-api/**"
+      - "scripts/rc7/**"
+      - "docs/integrations/**"
+      - "WORKSTREAM_LOCK.md"
+      - ".github/workflows/rc7-maps-contract.yml"
+      - ".github/workflows/rc7-maps-managed.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify RC7 Maps source, privacy and managed-proof contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Verify permanent RC7 contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/rc7/verify-maps-contract.py
+          bash -n scripts/rc7/bootstrap-maps-managed.sh
+          bash -n scripts/rc7/run-maps-managed.sh
