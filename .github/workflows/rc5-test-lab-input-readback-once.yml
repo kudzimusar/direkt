@@ -1,4 +1,5 @@
 name: DIREKT RC5 one-shot APK input readback diagnostic
+# Retrigger after the read-only OIDC diagnostic was independently registered.
 
 "on":
   push:
