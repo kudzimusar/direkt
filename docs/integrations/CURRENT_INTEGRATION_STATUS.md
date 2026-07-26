@@ -89,7 +89,7 @@ Current managed DIREKT runtime does **not** bind Gemini/Groq as active applicati
 |---|---|---|
 | PostGIS location model | **ACTIVE** | Canonical location/service-area semantics. |
 | Manual area/list fallback | **ACTIVE** | Provider-independent privacy/accessibility fallback. |
-| Google Maps Platform | **IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS** | RC7 preserves the restricted Android key and privacy-safe native rendering, but the backend is now Geocoding API v4 through the assigned Cloud Run service identity with a downscoped address-geocoding OAuth token. The incompatible backend API-key/Public-NAT path is prohibited. Budget/quota controls, exact-main managed proof and terminal cleanup evidence remain required before `ACTIVE`. |
+| Google Maps Platform | **IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS** | RC7 preserves the restricted Android key and privacy-safe native rendering; backend Geocoding uses v4 through the assigned Cloud Run service identity with a downscoped address-only OAuth token. Run `30210742617/1` failed before runtime mutation because CI correctly lacked billing-account budget-list permission. The correction keeps CI out of billing-account IAM and verifies a fresh owner-created project-label budget attestation before quota, backend and Android proof. |
 | Private-coordinate map publication | **DISABLED** | Exact private provider bases must not become public markers/ranking inputs. |
 
 ## Communications and notifications

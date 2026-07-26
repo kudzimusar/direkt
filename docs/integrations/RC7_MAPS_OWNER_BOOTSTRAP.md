@@ -6,7 +6,7 @@ The source-controlled bootstrap is `scripts/rc7/bootstrap-maps-managed.sh`. It p
 
 - enables Maps SDK for Android, Geocoding API v4, API Keys, Cloud Run, service-usage and billing-budget dependencies;
 - refuses to continue if Places or Routes is enabled;
-- creates or lowers/verifies a monthly RC7 budget of 1 unit in the billing account's fixed currency with 50%, 80% and 100% thresholds;
+- creates or lowers/verifies a monthly RC7 budget of 1 unit in the billing account's fixed currency with 50%, 80% and 100% thresholds; then writes fresh non-secret project labels containing the verified amount, currency and UTC check time for the exact-main proof;
 - sets the Geocoding request ceiling to 60 requests per minute;
 - grants the existing GitHub deployer time-limited API-key administration only for the restricted Android synthetic key, plus service-usage and log viewing;
 - grants the assigned Cloud Run runtime service account time-limited `roles/serviceusage.serviceUsageConsumer` authority for the OAuth-authenticated Geocoding v4 canary;
@@ -16,7 +16,7 @@ Backend Geocoding uses the user-managed Cloud Run service identity. The applicat
 
 The 1-unit billing-currency budget is an alerting guardrail, not an automatic billing shutoff. The fail-closed runtime switches, 60-request/minute quota, restricted Android key, downscoped backend OAuth token and post-proof Cloud Run Job deletion are the enforceable controls.
 
-The temporary IAM condition expires automatically, by default eight hours after execution. The bootstrap never creates, reads or prints any credential value.
+The temporary project IAM condition expires automatically, by default eight hours after execution. The GitHub deployer receives no billing-account role. Instead, the owner bootstrap writes a fresh project-label attestation only after directly verifying the real billing-account budget; the managed workflow rejects an attestation older than eight hours. The bootstrap never creates, reads or prints any credential value.
 
 ## Exact Cloud Shell execution
 
@@ -45,6 +45,8 @@ backend_authentication=service_identity_oauth
 backend_api_key_created=false
 backend_secret_value_created=false
 backend_cloud_nat_created=false
+budget_attestation=project_labels
+budget_checked_at=<fresh UTC timestamp>
 production_authorization=false
 ```
 

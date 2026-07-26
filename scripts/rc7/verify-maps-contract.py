@@ -201,6 +201,9 @@ def main() -> int:
         "geocoding-backend.googleapis.com",
         "owner_bootstrap_verified=true",
         "DIREKT RC7 Maps synthetic",
+        "budget_attestation=project_labels",
+        "direkt-rc7-budget-checked-at",
+        "RC7 owner budget attestation is missing or stale.",
         "geocoding_quota_per_minute=60",
         "geocoding_quota_preprovisioned=true",
         f'OAUTH_SCOPE="{OAUTH_SCOPE}"',
@@ -233,6 +236,7 @@ def main() -> int:
         (r"set\s+-[^\n]*x", "shell trace that could expose credentials"),
         (r"gcloud\s+services\s+enable", "runtime API enablement"),
         (r"services\s+quota\s+(create|update)", "runtime quota mutation"),
+        (r"gcloud\s+billing\s+budgets", "managed billing-account budget access"),
     ):
         prohibit(managed_script, pattern, label)
 
@@ -249,6 +253,10 @@ def main() -> int:
         "temporary_authority_expires_at",
         "budget_amount=1",
         "budget_currency",
+        "budget_attestation=project_labels",
+        "budget_checked_at",
+        "gcloud projects update",
+        "direkt-rc7-budget-checked-at",
         "geocoding_quota_per_minute=60",
         "backend_api_key_created=false",
         "backend_secret_value_created=false",
@@ -262,6 +270,7 @@ def main() -> int:
         (r"gcloud\s+compute", "RC7 network resource mutation"),
         (r"gcloud\s+secrets", "RC7 backend secret mutation"),
         (r"api-keys\s+get-key-string", "owner bootstrap API key value read"),
+        (r"roles/billing\.(viewer|admin|costsManager)", "billing-account role grant"),
     ):
         prohibit(owner_bootstrap, pattern, label)
     require(owner_bootstrap_doc, "one serious owner-scoped Cloud Shell action", "owner bootstrap docs")
