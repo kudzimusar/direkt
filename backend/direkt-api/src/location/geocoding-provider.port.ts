@@ -28,6 +28,8 @@ export type GeocodingProviderErrorCode =
   | 'not_found'
   | 'outside_zambia'
   | 'quota_or_denied'
+  | 'quota_exceeded'
+  | 'request_denied'
   | 'timeout'
   | 'provider_unavailable'
   | 'invalid_provider_response';
