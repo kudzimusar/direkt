@@ -42,12 +42,22 @@ def main() -> int:
     manifest = read("android/direkt-app/app/src/main/AndroidManifest.xml")
     build = read("android/direkt-app/app/build.gradle.kts")
     versions = read("android/direkt-app/gradle/libs.versions.toml")
-    models = read("android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt")
-    discovery = read("android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt")
-    map_card = read("android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/PrivacySafeMapCard.kt")
-    managed_test = read("android/direkt-app/app/src/androidTest/java/com/kudzimusar/direkt/Rc7MapsRuntimeTest.kt")
+    models = read(
+        "android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryModels.kt"
+    )
+    discovery = read(
+        "android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/DiscoveryExperience.kt"
+    )
+    map_card = read(
+        "android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/PrivacySafeMapCard.kt"
+    )
+    managed_test = read(
+        "android/direkt-app/app/src/androidTest/java/com/kudzimusar/direkt/Rc7MapsRuntimeTest.kt"
+    )
     managed_workflow = read(".github/workflows/rc7-maps-managed.yml")
     managed_script = read("scripts/rc7/run-maps-managed.sh")
+    owner_bootstrap = read("scripts/rc7/bootstrap-maps-managed.sh")
+    owner_bootstrap_doc = read("docs/integrations/RC7_MAPS_OWNER_BOOTSTRAP.md")
     managed_trigger = read("docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md")
 
     for needle in (
@@ -68,7 +78,11 @@ def main() -> int:
         "explicit synthetic Maps approval latch",
     ):
         require(environment, needle, "fail-closed backend Maps environment")
-    require(env_example, "GOOGLE_MAPS_BACKEND_MODE=disabled", "default-disabled Maps backend")
+    require(
+        env_example,
+        "GOOGLE_MAPS_BACKEND_MODE=disabled",
+        "default-disabled Maps backend",
+    )
     require(module, "DisabledGeocodingProviderAdapter", "disabled provider adapter")
     require(module, "GoogleMapsGeocodingProviderAdapter", "Google provider adapter")
     for needle in (
@@ -115,7 +129,11 @@ def main() -> int:
         require(build, needle, "Android Maps build switch and protected injection")
     require(versions, "com.google.maps.android:maps-compose", "pinned Maps Compose dependency")
     require(manifest, "com.google.android.geo.API_KEY", "Maps SDK manifest metadata")
-    prohibit(manifest, r"ACCESS_(FINE|COARSE|BACKGROUND)_LOCATION", "new Android location permission")
+    prohibit(
+        manifest,
+        r"ACCESS_(FINE|COARSE|BACKGROUND)_LOCATION",
+        "new Android location permission",
+    )
 
     require(discovery, "PrivacySafeMapCard(providers = providers)", "discovery map integration")
     for needle in (
@@ -129,7 +147,11 @@ def main() -> int:
         "Private provider bases never become markers",
     ):
         require(map_card + models, needle, "privacy-safe Android map behavior")
-    require(models, "provider.operatingModel == PublicOperatingModel.Mobile -> null", "mobile base-marker prohibition")
+    require(
+        models,
+        "provider.operatingModel == PublicOperatingModel.Mobile -> null",
+        "mobile base-marker prohibition",
+    )
     for needle in (
         "discovery-map-ready",
         "waitUntil(timeoutMillis = 20_000)",
@@ -138,8 +160,16 @@ def main() -> int:
     ):
         require(managed_test, needle, "managed Android map-load assertion")
 
-    require(status, "IMPLEMENTED_GATED / MANAGED PROOF IN PROGRESS", "current Maps integration state")
-    require(ledger, "IMPLEMENTED_GATED / MANAGED PROOF IN PROGRESS", "live Maps ledger state")
+    require(
+        status,
+        "IMPLEMENTED_GATED / MANAGED PROOF IN PROGRESS",
+        "current Maps integration state",
+    )
+    require(
+        ledger,
+        "IMPLEMENTED_GATED / MANAGED PROOF IN PROGRESS",
+        "live Maps ledger state",
+    )
 
     for needle in (
         "workflow_dispatch:",
@@ -162,8 +192,10 @@ def main() -> int:
         "--allowed-ips",
         "maps-android-backend.googleapis.com",
         "geocoding-backend.googleapis.com",
+        "owner_bootstrap_verified=true",
         "DIREKT RC7 Maps synthetic",
         "geocoding_quota_per_minute=60",
+        "geocoding_quota_preprovisioned=true",
         "--network \"${NETWORK}\"",
         "--subnet \"${SUBNET}\"",
         "--vpc-egress all-traffic",
@@ -181,29 +213,105 @@ def main() -> int:
         "private_provider_coordinates_published=false",
     ):
         require(managed_script, needle, "least-privilege managed Maps proof")
-    prohibit(managed_script, r"set\s+-[^\n]*x", "shell trace that could expose key material")
+
+    prohibit(
+        managed_script,
+        r"set\s+-[^\n]*x",
+        "shell trace that could expose key material",
+    )
+    prohibit(managed_script, r"gcloud\s+services\s+enable", "runtime API enablement")
+    prohibit(
+        managed_script,
+        r"gcloud\s+billing\s+budgets\s+create",
+        "runtime budget mutation",
+    )
+    prohibit(
+        managed_script,
+        r"gcloud\s+secrets\s+create",
+        "runtime secret-container creation",
+    )
+    prohibit(
+        managed_script,
+        r"gcloud\s+secrets\s+add-iam-policy-binding",
+        "runtime secret IAM mutation",
+    )
+    prohibit(
+        managed_script,
+        r"services\s+quota\s+(create|update)",
+        "runtime quota mutation",
+    )
     prohibit(
         managed_script,
         r"networks\s+subnets\s+add-iam-policy-binding",
         "unnecessary persistent subnet IAM mutation",
     )
-    prohibit(managed_workflow, r"rc7-(android|backend)-key\.txt", "API key value artifact upload")
-    prohibit(managed_script, r"echo[^\n]*(keyString|GOOGLE_MAPS_SERVER_API_KEY|DIREKT_ANDROID_MAPS_API_KEY)", "API key value logging")
+    prohibit(
+        managed_workflow,
+        r"rc7-(android|backend)-key\.txt",
+        "API key value artifact upload",
+    )
+    prohibit(
+        managed_script,
+        r"echo[^\n]*(keyString|GOOGLE_MAPS_SERVER_API_KEY|DIREKT_ANDROID_MAPS_API_KEY)",
+        "API key value logging",
+    )
 
-    require(managed_trigger, "CONFIRMATION=RUN-DIREKT-RC7-MAPS-MANAGED", "managed proof confirmation")
-    if not any(state in managed_trigger for state in ("STATUS=ARMED", "STATUS=CONSUMED")):
-        raise AssertionError("Managed RC7 trigger must be ARMED before proof or CONSUMED after closure.")
+    for needle in (
+        "RC7_MAPS_BOOTSTRAP|PASS",
+        "secret_value_created=false",
+        "roles/serviceusage.apiKeysAdmin",
+        "roles/compute.networkAdmin",
+        "roles/secretmanager.secretVersionManager",
+        "roles/secretmanager.secretAccessor",
+        "temporary_authority_expires_at",
+        "budget_amount_usd=25",
+        "geocoding_quota_per_minute=60",
+        "places_routes_enabled_by_rc7=false",
+    ):
+        require(owner_bootstrap, needle, "owner-scoped Maps bootstrap")
+    prohibit(
+        owner_bootstrap,
+        r"api-keys\s+get-key-string",
+        "owner bootstrap API key value read",
+    )
+    prohibit(
+        owner_bootstrap,
+        r"secrets\s+versions\s+add",
+        "owner bootstrap secret value creation",
+    )
+    require(
+        owner_bootstrap_doc,
+        "one serious owner-scoped Cloud Shell action",
+        "owner bootstrap documentation",
+    )
+
+    require(
+        managed_trigger,
+        "CONFIRMATION=RUN-DIREKT-RC7-MAPS-MANAGED",
+        "managed proof confirmation",
+    )
+    if not any(
+        state in managed_trigger for state in ("STATUS=ARMED", "STATUS=CONSUMED")
+    ):
+        raise AssertionError(
+            "Managed RC7 trigger must be ARMED before proof or CONSUMED after closure."
+        )
 
     for client_root in ("android", "web", "admin"):
         for path in (ROOT / client_root).rglob("*"):
-            if not path.is_file() or any(part in {"build", ".next", "node_modules", "test", "androidTest"} for part in path.parts):
+            if not path.is_file() or any(
+                part in {"build", ".next", "node_modules", "test", "androidTest"}
+                for part in path.parts
+            ):
                 continue
             try:
                 text = path.read_text(encoding="utf-8")
             except UnicodeDecodeError:
                 continue
             if "GOOGLE_MAPS_SERVER_API_KEY" in text:
-                raise AssertionError(f"Server Maps credential reference entered client tree: {path.relative_to(ROOT)}")
+                raise AssertionError(
+                    f"Server Maps credential reference entered client tree: {path.relative_to(ROOT)}"
+                )
 
     combined = environment + env_example + build + versions + module + adapter + map_card
     prohibit(combined, r"places[_-]backend\.googleapis\.com", "Places API activation")
@@ -212,6 +320,7 @@ def main() -> int:
     print("RC7 Google Maps source, privacy and managed-proof contract verification passed.")
     print("android_maps=fail_closed_restricted_key")
     print("backend_geocoding=synthetic_only_server_controlled")
+    print("owner_bootstrap=no_secret_value_time_limited_authority")
     print("managed_proof=exact_main_wif_cost_bounded")
     print("manual_list_fallback=preserved")
     print("private_coordinates_public=false")
