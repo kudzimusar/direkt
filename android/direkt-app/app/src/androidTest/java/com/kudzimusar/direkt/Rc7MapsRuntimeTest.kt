@@ -1,7 +1,9 @@
 package com.kudzimusar.direkt
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.fetchSemanticsNodes
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -25,6 +27,13 @@ class Rc7MapsRuntimeTest {
 
         if (BuildConfig.DIREKT_MAPS_ENABLED) {
             composeRule.onNodeWithTag("discovery-google-map").assertIsDisplayed()
+            composeRule.waitUntil(timeoutMillis = 20_000) {
+                composeRule.onAllNodesWithTag("discovery-map-ready")
+                    .fetchSemanticsNodes()
+                    .isNotEmpty()
+            }
+            composeRule.onNodeWithTag("discovery-map-ready").assertIsDisplayed()
+            composeRule.onNodeWithTag("discovery-map-fallback").assertDoesNotExist()
         } else {
             composeRule.onNodeWithTag("discovery-map-fallback").assertIsDisplayed()
             composeRule.onNodeWithText(
