@@ -1,0 +1,39 @@
+name: DIREKT RC7 preserve RC6 closure once
+
+on:
+  push:
+    branches:
+      - integration/runtime-closure-261
+    paths:
+      - "scripts/rc7/apply-rc6-compat.py"
+      - ".github/workflows/rc7-apply-rc6-compat-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: integration/runtime-closure-261
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - run: python3 scripts/rc7/apply-rc6-compat.py
+      - name: Commit compatibility update and remove bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm scripts/rc7/apply-rc6-compat.py
+          rm .github/workflows/rc7-apply-rc6-compat-once.yml
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "test(rc7): preserve RC6 closure under Maps lane"
+          git push origin HEAD:integration/runtime-closure-261
