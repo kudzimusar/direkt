@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reject RC7 workflow startup contexts and interactive gcloud component setup."""
+"""Reject RC7 workflow startup, CLI drift and interactive gcloud setup."""
 
 from __future__ import annotations
 
@@ -8,17 +8,36 @@ import re
 
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = ROOT / ".github/workflows/rc7-maps-managed.yml"
+MANAGED_SCRIPT = ROOT / "scripts/rc7/run-maps-managed.sh"
 
 
-def require_once(workflow: str, value: str, message: str) -> int:
-    count = workflow.count(value)
+def require_once(content: str, value: str, message: str) -> int:
+    count = content.count(value)
     if count != 1:
         raise AssertionError(f"{message} Expected exactly once, found {count}.")
-    return workflow.find(value)
+    return content.find(value)
+
+
+def command_blocks(script: str, command: str) -> list[str]:
+    lines = script.splitlines()
+    blocks: list[str] = []
+    for index, line in enumerate(lines):
+        if command not in line:
+            continue
+        block = [line]
+        cursor = index
+        while block[-1].rstrip().endswith("\\"):
+            cursor += 1
+            if cursor >= len(lines):
+                raise AssertionError(f"Unterminated shell command: {command}")
+            block.append(lines[cursor])
+        blocks.append("\n".join(block))
+    return blocks
 
 
 def main() -> int:
     workflow = WORKFLOW.read_text(encoding="utf-8")
+    managed_script = MANAGED_SCRIPT.read_text(encoding="utf-8")
 
     forbidden_job_env = re.compile(
         r"^\s{6}RC7_RECEIPT_PATH:\s*\$\{\{\s*runner\.temp\s*\}\}\s*$",
@@ -53,6 +72,22 @@ def main() -> int:
         'CLOUDSDK_CORE_DISABLE_PROMPTS: "1"',
         "RC7 must disable Cloud SDK prompts in the managed job.",
     )
+    require_once(
+        workflow,
+        'DIREKT_GCLOUD_VERSION: "568.0.0"',
+        "RC7 must pin the reviewed Cloud SDK version.",
+    )
+    require_once(
+        workflow,
+        "version: ${{ env.DIREKT_GCLOUD_VERSION }}",
+        "RC7 setup-gcloud must consume the reviewed Cloud SDK pin.",
+    )
+
+    setup_gcloud = require_once(
+        workflow,
+        "- name: Set up pinned Google Cloud CLI",
+        "RC7 must identify the pinned Cloud SDK setup step.",
+    )
     alpha_step = require_once(
         workflow,
         "- name: Install matching gcloud alpha component noninteractively",
@@ -63,19 +98,52 @@ def main() -> int:
         "run: gcloud components install alpha --quiet",
         "RC7 alpha component installation must be noninteractive.",
     )
-    setup_gcloud = workflow.find("- name: Set up Google Cloud CLI")
     managed_execution = workflow.find("- name: Execute bounded managed proof")
     if not (0 <= setup_gcloud < alpha_step <= alpha_command < managed_execution):
         raise AssertionError(
-            "RC7 must install the matching alpha component after setup-gcloud and "
-            "before the managed proof script executes."
+            "RC7 must install the matching alpha component after pinned setup-gcloud "
+            "and before the managed proof script executes."
         )
+
+    create_blocks = command_blocks(managed_script, "gcloud services api-keys create")
+    if len(create_blocks) != 2:
+        raise AssertionError(
+            f"RC7 must contain exactly two API-key create commands, found {len(create_blocks)}."
+        )
+    for block in create_blocks:
+        if "--location" in block:
+            raise AssertionError(
+                "Cloud SDK 568 API-key create does not accept --location; resource location "
+                "is selected by the create endpoint."
+            )
+        for required in ("--project", "--key-id", "--api-target", "--quiet"):
+            if required not in block:
+                raise AssertionError(f"RC7 API-key create command is missing {required}.")
+
+    located_commands = {
+        "describe": "gcloud services api-keys describe",
+        "update": "gcloud services api-keys update",
+        "delete": "gcloud services api-keys delete",
+        "get-key-string": "gcloud services api-keys get-key-string",
+    }
+    for label, command in located_commands.items():
+        blocks = command_blocks(managed_script, command)
+        if not blocks:
+            raise AssertionError(f"RC7 API-key {label} command is missing.")
+        for block in blocks:
+            if "--location global" not in block:
+                raise AssertionError(
+                    f"RC7 API-key {label} must retain the explicit global resource location."
+                )
 
     print("RC7_MANAGED_WORKFLOW_CONTEXT|PASS")
     print("job_level_runner_context=false")
     print("receipt_path_runtime_initialized=true")
     print("cloudsdk_prompts_disabled=true")
+    print("gcloud_version_pinned=568.0.0")
     print("gcloud_alpha_noninteractive=true")
+    print("api_key_create_location_argument=false")
+    print("api_key_resource_location_preserved=true")
     print("gcp_authority_changed=false")
     return 0
 
