@@ -69,7 +69,7 @@ jobs:
 
           managed = Path("scripts/rc7/run-maps-managed.sh")
           managed_text = managed.read_text(encoding="utf-8")
-          if managed_text.count("sanitary_failure") != 4:
+          if managed_text.count("sanitary_failure") != 3:
               raise SystemExit("Unexpected RC7 sanitized-failure variable count")
           managed.write_text(managed_text.replace("sanitary_failure", "sanitized_failure"), encoding="utf-8")
 
