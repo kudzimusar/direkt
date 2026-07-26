@@ -3,10 +3,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
+
 def read(path: str) -> str:
     target = ROOT / path
     assert target.is_file(), f"missing {path}"
     return target.read_text(encoding="utf-8")
+
 
 lock = read("WORKSTREAM_LOCK.md")
 status = read("PROJECT_STATUS.md")
@@ -24,8 +26,16 @@ for text in (lock, status, register, ledger, doc):
 
 assert "RC5 implementation contract — CLOSED AND PRESERVED" in lock
 assert "CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX" in lock
-assert "No active implementation lane exists" in lock
-assert "RC7+ source work must not begin until a new explicit bounded claim" in lock
+released_handoff = (
+    "No active implementation lane exists" in lock
+    and "RC7+ source work must not begin until a new explicit bounded claim" in lock
+)
+rc7_handoff = (
+    "CLAIMED — RC7 Google Maps runtime integration" in lock
+    and "RC7 implementation contract — CLAIMED" in lock
+    and "RC7 is the sole active repository write lane" in lock
+)
+assert released_handoff or rc7_handoff, "RC5 closure must remain valid in released or bounded RC7 state"
 assert "Firebase Test Lab | **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX**" in register
 assert "Firebase Test Lab | `CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX`" in ledger
 assert "8626329335" in register and "8626329335" in ledger
