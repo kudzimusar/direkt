@@ -1,9 +1,9 @@
 name: DIREKT RC5 branch-only closure builder
 
 "on":
-  push:
+  pull_request:
     branches:
-      - docs/rc5-closure
+      - main
     paths:
       - .github/workflows/rc5-closure-source-builder.yml
 
@@ -11,13 +11,13 @@ permissions:
   contents: write
 
 concurrency:
-  group: direkt-rc5-closure-builder
+  group: direkt-rc5-closure-builder-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
 jobs:
   build:
     name: Patch closure documents and remove temporary RC5 workflows
-    if: github.repository == 'kudzimusar/direkt' && github.ref == 'refs/heads/docs/rc5-closure'
+    if: github.repository == 'kudzimusar/direkt' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'docs/rc5-closure'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -25,6 +25,7 @@ jobs:
         with:
           ref: docs/rc5-closure
           fetch-depth: 0
+          persist-credentials: true
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
@@ -32,11 +33,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "${GITHUB_REF}" = "refs/heads/docs/rc5-closure"
+          test "${GITHUB_HEAD_REF}" = "docs/rc5-closure"
           test "$(git branch --show-current)" = "docs/rc5-closure"
+          git fetch origin main --no-tags
           test "$(git rev-parse origin/main)" = "c3744430a7beb1cd47246d858df9ac1379a068ac"
       - name: Apply deterministic RC5 closure reconciliation
-        run: python3 scripts/rc5/apply-rc5-closure.py
+        shell: bash
+        run: GITHUB_REF=refs/heads/docs/rc5-closure python3 scripts/rc5/apply-rc5-closure.py
       - name: Verify generated closure source
         shell: bash
         run: |
