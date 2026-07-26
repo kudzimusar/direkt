@@ -1,4 +1,5 @@
 name: DIREKT RC5 isolated Test Lab preflight once
+# Retrigger after the isolated preflight workflow was independently registered.
 
 "on":
   push:
