@@ -114,6 +114,9 @@ jobs:
         run: |
           set -euo pipefail
           managed=scripts/rc5/run-test-lab-isolated-managed.sh
+          grep -Fxq '  --output "${RUNNER_TEMP}/rc5-test-lab-matrix.json"' "${managed}"
+          grep -Fxq 'device_count="$(jq -r '\'' .deviceCount '\'' "${RUNNER_TEMP}/rc5-test-lab-matrix.json")"' "${managed}" || grep -Fxq 'device_count="$(jq -r '\''.deviceCount'\'' "${RUNNER_TEMP}/rc5-test-lab-matrix.json")"' "${managed}"
+          ! grep -Fq '\ndevice_count=' "${managed}"
           grep -Fq -- '--app "${app_apk}"' "${managed}"
           grep -Fq -- '--test "${test_apk}"' "${managed}"
           grep -Fq -- '--num-flaky-test-attempts 0' "${managed}"
@@ -163,6 +166,7 @@ jobs:
             echo '- Identity: existing GitHub WIF deployer, no key'
             echo '- Authority: roles/editor isolated to the Test Lab project; no owner'
             echo '- APK transport: local files through supported gcloud execution'
+            echo '- Matrix selector output and device-count assignment: separate physical lines'
             echo '- Results: Firebase-managed default bucket'
             echo '- Matrix: exactly API 26, API 33 and current API 35/36'
             echo '- Flaky retries: zero'
