@@ -1,6 +1,9 @@
 name: DIREKT RC7 Maps infrastructure preflight once
 
 on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-maps-infra-preflight-once.yml"
   push:
     branches:
       - integration/runtime-closure-261
@@ -27,10 +30,11 @@ jobs:
       GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
       GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
       GCP_RUNTIME_SERVICE_ACCOUNT: direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com
+      EXPECTED_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: integration/runtime-closure-261
+          ref: ${{ env.EXPECTED_SOURCE_SHA }}
           fetch-depth: 0
 
       - name: Verify bounded RC7 source contract
@@ -38,7 +42,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/rc7/verify-maps-contract.py
-          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          test "$(git rev-parse HEAD)" = "${EXPECTED_SOURCE_SHA}"
 
       - name: Authenticate through existing GitHub WIF
         uses: google-github-actions/auth@v3
