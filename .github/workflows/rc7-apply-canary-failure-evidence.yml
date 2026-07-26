@@ -1,0 +1,184 @@
+name: DIREKT RC7 apply canary failure evidence
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-apply-canary-failure-evidence.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    name: Patch sanitized canary failure evidence on isolated branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TARGET_BRANCH: fix/rc7-canary-failure-evidence
+      TARGET_PATH: scripts/rc7/run-maps-managed.sh
+      EXPECTED_BLOB_SHA: 7d0666e61aec834237a93ad33f18c7ffced0bf1e
+    steps:
+      - name: Add bounded execution diagnostics without changing canary behavior
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          source_json="${RUNNER_TEMP}/source.json"
+          source_file="${RUNNER_TEMP}/run-maps-managed.sh"
+          updated_file="${RUNNER_TEMP}/run-maps-managed.updated.sh"
+          payload="${RUNNER_TEMP}/payload.json"
+
+          gh api \
+            "repos/${GITHUB_REPOSITORY}/contents/${TARGET_PATH}?ref=${TARGET_BRANCH}" \
+            > "${source_json}"
+          test "$(jq -r '.sha' "${source_json}")" = "${EXPECTED_BLOB_SHA}"
+          jq -r '.content' "${source_json}" | tr -d '\n' | base64 --decode > "${source_file}"
+
+          python3 - "${source_file}" "${updated_file}" <<'PY'
+          from pathlib import Path
+          import sys
+
+          source = Path(sys.argv[1]).read_text(encoding="utf-8")
+          old = '''gcloud run jobs execute "${CANARY_JOB}" \\
+            --project "${GCP_PROJECT_ID}" \\
+            --region "${GCP_REGION}" \\
+            --wait \\
+            --format=json > "${RUNNER_TEMP}/rc7-maps-execution.json"
+          sleep 8
+          '''
+          new = '''execution_json="${RUNNER_TEMP}/rc7-maps-execution.json"
+          execution_stderr="${RUNNER_TEMP}/rc7-maps-execution.stderr"
+          execution_details="${RUNNER_TEMP}/rc7-maps-execution-details.json"
+          raw_canary_logs="${RUNNER_TEMP}/rc7-maps-canary-logs.json"
+          sanitized_failure="${RUNNER_TEMP}/rc7-maps-canary-failure.json"
+          set +e
+          gcloud run jobs execute "${CANARY_JOB}" \\
+            --project "${GCP_PROJECT_ID}" \\
+            --region "${GCP_REGION}" \\
+            --wait \\
+            --format=json > "${execution_json}" 2> "${execution_stderr}"
+          execution_code=$?
+          set -e
+          if [[ "${execution_code}" -ne 0 ]]; then
+            sleep 8
+            execution_name="$(gcloud run jobs executions list \\
+              --job "${CANARY_JOB}" \\
+              --project "${GCP_PROJECT_ID}" \\
+              --region "${GCP_REGION}" \\
+              --limit 1 \\
+              --sort-by='~metadata.creationTimestamp' \\
+              --format='value(metadata.name)' || true)"
+            if [[ -n "${execution_name}" ]]; then
+              gcloud run jobs executions describe "${execution_name}" \\
+                --project "${GCP_PROJECT_ID}" \\
+                --region "${GCP_REGION}" \\
+                --format=json > "${execution_details}" || printf '{}' > "${execution_details}"
+            else
+              printf '{}' > "${execution_details}"
+            fi
+            gcloud logging read \\
+              "resource.type=cloud_run_job AND resource.labels.job_name=${CANARY_JOB} AND (textPayload:\"RC7_MAPS_CANARY|\" OR jsonPayload.message:\"RC7_MAPS_CANARY|\")" \\
+              --project "${GCP_PROJECT_ID}" \\
+              --freshness 30m \\
+              --limit 20 \\
+              --format=json > "${raw_canary_logs}" || printf '[]' > "${raw_canary_logs}"
+            python3 - "${execution_details}" "${raw_canary_logs}" "${sanitized_failure}" <<'PYFAILURE'
+          from __future__ import annotations
+
+          import json
+          from pathlib import Path
+          import re
+          import sys
+
+          details_path, logs_path, output_path = map(Path, sys.argv[1:])
+
+          def load(path: Path, fallback: object) -> object:
+              try:
+                  return json.loads(path.read_text(encoding="utf-8"))
+              except (OSError, json.JSONDecodeError):
+                  return fallback
+
+          def sanitize(value: object) -> str:
+              text = str(value or "").strip()
+              text = re.sub(r"AIza[0-9A-Za-z_-]{20,}", "[REDACTED_GOOGLE_API_KEY]", text)
+              text = re.sub(r"(?i)(Bearer|Authorization:)\\s+\\S+", r"\\1 [REDACTED]", text)
+              text = re.sub(r"[0-9A-Za-z_+=/.:-]{80,}", "[REDACTED_LONG_VALUE]", text)
+              return text[:1000]
+
+          details = load(details_path, {})
+          logs = load(logs_path, [])
+          status = details.get("status", {}) if isinstance(details, dict) else {}
+          conditions = []
+          for condition in status.get("conditions", []) if isinstance(status, dict) else []:
+              if not isinstance(condition, dict):
+                  continue
+              conditions.append(
+                  {
+                      "type": sanitize(condition.get("type")),
+                      "status": sanitize(condition.get("status")),
+                      "reason": sanitize(condition.get("reason")),
+                      "message": sanitize(condition.get("message")),
+                  }
+              )
+
+          app_messages = []
+          for entry in logs if isinstance(logs, list) else []:
+              if not isinstance(entry, dict):
+                  continue
+              payload = entry.get("textPayload")
+              if not isinstance(payload, str):
+                  json_payload = entry.get("jsonPayload", {})
+                  payload = json_payload.get("message") if isinstance(json_payload, dict) else None
+              if isinstance(payload, str) and payload.startswith("RC7_MAPS_CANARY|"):
+                  app_messages.append(sanitize(payload))
+
+          output = {
+              "schema": "direkt.rc7.maps-canary-failure.v1",
+              "rawLogsIncluded": False,
+              "credentialIncluded": False,
+              "coordinateValuesIncluded": False,
+              "formattedAddressIncluded": False,
+              "executionName": sanitize(
+                  details.get("metadata", {}).get("name", "")
+                  if isinstance(details, dict) and isinstance(details.get("metadata"), dict)
+                  else ""
+              ),
+              "failedCount": status.get("failedCount") if isinstance(status, dict) else None,
+              "cancelledCount": status.get("cancelledCount") if isinstance(status, dict) else None,
+              "conditions": conditions,
+              "appMessages": app_messages,
+          }
+          output_path.write_text(json.dumps(output, indent=2) + "\\n", encoding="utf-8")
+          PYFAILURE
+            receipt "backend_geocoding_canary=FAILED"
+            receipt "backend_canary_failure_evidence_present=true"
+            cat "${sanitized_failure}" >&2
+            exit "${execution_code}"
+          fi
+          rm -f "${execution_stderr}"
+          sleep 8
+          '''
+          if source.count(old) != 1:
+              raise SystemExit(f"Expected one execution block, found {source.count(old)}")
+          updated = source.replace(old, new)
+          if updated.count('backend_canary_failure_evidence_present=true') != 1:
+              raise SystemExit("Failure evidence receipt marker missing or duplicated")
+          if 'raw_canary_logs' not in updated or 'rawLogsIncluded": False' not in updated:
+              raise SystemExit("Sanitized failure boundary was not installed")
+          Path(sys.argv[2]).write_text(updated, encoding="utf-8")
+          PY
+
+          bash -n "${updated_file}"
+          encoded="$(base64 -w 0 "${updated_file}")"
+          jq -n \
+            --arg message 'test(rc7): preserve sanitized canary failure evidence' \
+            --arg content "${encoded}" \
+            --arg sha "${EXPECTED_BLOB_SHA}" \
+            --arg branch "${TARGET_BRANCH}" \
+            '{message: $message, content: $content, sha: $sha, branch: $branch}' \
+            > "${payload}"
+          gh api --method PUT \
+            "repos/${GITHUB_REPOSITORY}/contents/${TARGET_PATH}" \
+            --input "${payload}" \
+            | jq '{commitSha: .commit.sha, contentSha: .content.sha}'
