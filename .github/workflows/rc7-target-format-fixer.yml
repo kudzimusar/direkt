@@ -1,0 +1,51 @@
+name: RC7 verified target formatter
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-target-format-fixer.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'fix/rc7-service-identity-oauth'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend/direkt-api
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+
+      - run: npm ci --ignore-scripts
+
+      - name: Format and verify the isolated failing test
+        run: |
+          npx prettier --write test/unit/location/google-maps-geocoding-provider.adapter.spec.ts
+          npx prettier --check test/unit/location/google-maps-geocoding-provider.adapter.spec.ts
+          npm run format:check
+
+      - name: Commit verified formatting and remove temporary diagnostics
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/rc7-format-diagnostic.yml
+          rm -f .github/workflows/rc7-target-format-fixer.yml
+          git config user.name "direkt-rc7-automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "style(rc7): verify Google Maps adapter tests"
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
