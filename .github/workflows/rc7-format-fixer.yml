@@ -1,0 +1,47 @@
+name: RC7 pinned backend formatter
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-format-fixer.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'fix/rc7-service-identity-oauth'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend/direkt-api
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+
+      - run: npm ci --ignore-scripts
+
+      - name: Apply repository-pinned Prettier
+        run: npm run format
+
+      - name: Commit deterministic formatting and remove formatter
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/rc7-format-fixer.yml
+          git config user.name "direkt-rc7-automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "style(rc7): apply pinned backend formatting"
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
