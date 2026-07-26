@@ -34,10 +34,27 @@ The Phase 12B SDK and Play Data Safety source inventory now explicitly records t
 
 Two credentials are mandatory and may not be reused:
 
-1. Android Maps key — injected only at protected build time, restricted to approved DIREKT package/signing-certificate pairs and Maps SDK for Android.
-2. Backend Maps key — Secret Manager/runtime only, restricted to Geocoding API and to approved server egress when static egress exists.
+1. Android Maps key — injected only at protected build time, restricted to the synthetic debug package/signing-certificate pair and Maps SDK for Android.
+2. Backend Maps key — Secret Manager/runtime only, restricted to Geocoding API and a temporary static Cloud NAT egress IP for the bounded managed canary.
+
+The backend key, secret version, Cloud Run Job, NAT, router and static address are deleted after proof. The Android debug key remains package/certificate/API restricted for synthetic internal builds and is not a production credential.
 
 Both switches default disabled. Production and controlled-pilot participant use remain disabled during RC7.
+
+## Managed proof
+
+The repository-controlled exact-main workflow performs one armed synthetic-only run after merge. It:
+
+- confirms the reviewed SHA equals current `main` and authenticates through the existing GitHub Workload Identity Federation identity;
+- enables only Maps SDK for Android and Geocoding API dependencies, never Places or Routes;
+- creates separate application/API-restricted Android and backend keys;
+- sends the private backend canary through Direct VPC egress, a `/26` subnet, Cloud NAT and a temporary static IP;
+- proves a Zambia-bounded Geocoding response without logging coordinates or formatted addresses;
+- builds a Maps-enabled preauthorization APK and requires the `discovery-map-ready` state on one API 36 Firebase Test Lab device with zero flaky retries;
+- retains a project budget alert and a Geocoding per-minute quota override;
+- cleans temporary backend credentials and recurring-cost networking resources after the run.
+
+The trigger must be changed from `STATUS=ARMED` to `STATUS=CONSUMED` in the closure change so later main pushes cannot repeat the infrastructure mutation automatically.
 
 ## Failure and fallback
 
@@ -47,7 +64,7 @@ Backend Geocoding has bounded input, Zambia constraints, timeout, filtered outpu
 
 ## Cost controls
 
-Managed activation must verify API restrictions, quota ceilings, budget alerts and rotation instructions. Places and Routes are excluded, so their usage quota remains zero through RC7.
+Managed activation verifies API restrictions, a Geocoding request ceiling, a project budget alert and credential cleanup/rotation behavior. Places and Routes are excluded, so RC7 creates no quota or credential surface for them.
 
 ## Authorization boundary
 
