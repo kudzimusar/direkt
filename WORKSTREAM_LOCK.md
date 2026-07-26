@@ -6,14 +6,14 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | RELEASED — RC5 Firebase Test Lab device-matrix closure complete; RC7 not claimed |
-| Owner/agent | No active repository write lane. RC5 is closed and preserved under Issue #261; later RC7+ work requires a new explicit claim. |
-| Authorized scope | No active implementation scope. RC5 closure evidence and permanent isolated Test Lab workflow/verifier are preserved. UIA remains parked; RC7 Maps, payments, generated clients, Turnstile, production auth, real-participant activation and production release are not authorized without a new bounded claim. |
-| Protected surface | Closed RC0–RC6 evidence, including RC5 managed run `30183466799` and RC6 managed run `30137700769`; UIA Issue #354; backend/database/OpenAPI trust boundaries; private API/BFF IAM; payments; VC1–VC8 Design DNA; Phase 11/12 gates; Android auth/signing/Play/Data Safety. |
-| Implementation branch | None — closure reconciliation branch only; no later runtime lane is claimed. |
-| Stable baseline | RC5 is closed at exact source `c3744430a7beb1cd47246d858df9ac1379a068ac` through isolated managed run `30183466799` and schema-valid artifact `8626329335`; failures remain preserved in their issues. RC6 remains closed at run `30137700769`. UIA Issue #354 remains parked/open. Production and participant activation remain disabled. |
-| Current task | None. RC5 closure reconciliation is complete; RC7+ remains blocked until explicitly claimed and re-coordinated. |
-| Governing issue | Issue #261 — Runtime integration closure after W8. RC5 and RC6 are closed at synthetic-only managed boundaries; Issue #354 UIA remains parked/open. |
+| Status | CLAIMED — RC7 Google Maps runtime integration |
+| Owner/agent | Active repository agent — Issue #261 RC7 Maps checkpoint. |
+| Authorized scope | Audit the existing PostGIS/discovery location boundary; activate only Maps SDK for Android and backend Geocoding needed for the reviewed RC7 flow; implement separate restricted credentials, privacy-safe map rendering, sanitized backend normalization, quotas, kill switch, manual/list fallback, managed synthetic evidence and exact-head regressions. Places and Routes remain excluded unless a separate reviewed need is proven. |
+| Protected surface | Closed RC0–RC6 evidence, including RC5 managed run `30183466799` and RC6 managed run `30137700769`; UIA Issue #354; exact-private-coordinate non-publication; backend/database/OpenAPI trust boundaries; private API/BFF IAM; payments; VC1–VC8 Design DNA; Phase 11/12 gates; Android auth/signing/Play/Data Safety. |
+| Implementation branch | `integration/runtime-closure-261`, fast-forwarded from exact `main@10cc243c1d051422b37e2f7481bba1dca4a2f5ed`. |
+| Stable baseline | RC5 is closed at exact source `c3744430a7beb1cd47246d858df9ac1379a068ac` through isolated managed run `30183466799` and schema-valid artifact `8626329335`; RC6 is closed at run `30137700769`. UIA Issue #354 remains parked/open. Production and participant activation remain disabled. |
+| Current task | RC7 — implement and prove privacy-safe Google Maps Android rendering plus backend-controlled Geocoding with separate credentials, bounded quotas, fallback and kill switch. |
+| Governing issue | Issue #261 — Runtime integration closure after W8. RC7 is the sole active bounded write lane; Issue #354 UIA remains parked/read-only. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
 
@@ -91,6 +91,19 @@ The following strings are historical closure evidence required by the permanent 
 9. Production/participant WhatsApp delivery remains disabled until business/phone/template/provider/legal/privacy approvals and later release authorization are explicitly evidenced.
 10. RC6 is `CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY`: exact-current-main managed run `30137700769` on source `8838b7a6d726a5aed44ce21a39506c1265a98d15` passed the private outbox → Meta `hello_world` test-template send → authentic signed webhook receipt path on retry. The initial pre-provider Google Cloud CLI setup failure remains preserved in Issue #404. Existing RC0–RC5, UIA, backend/database/OpenAPI, Android/PWA/portal, payment, privacy, authorization and production-release gates remain regression-protected; production/participant WhatsApp delivery remains disabled.
 
+## RC7 implementation contract — CLAIMED
+
+1. RC7 activates only the APIs justified by the current product flow: Maps SDK for Android for map display and backend Geocoding for bounded search-area/address normalization. Places and Routes remain disabled because the existing manual area input and PostGIS distance/service-area logic already satisfy the reviewed flow.
+2. Android and backend use separate credentials. The Android key is restricted to DIREKT package/signing-certificate pairs and Maps SDK for Android; the backend key is server-only and restricted to Geocoding plus the approved runtime network boundary when static egress is available.
+3. Exact private provider bases never become public markers, polygons, distance origins, ranking inputs, logs, telemetry or provider payloads. Only consented public premises and privacy-approved service-area geometry may render.
+4. Mobile providers render public service areas without a base marker. Fixed-premises markers require a consented public premises point. Hybrid providers may show the consented public premises and the separate public service area.
+5. Manual area and list discovery remain fully functional and are never treated as lower trust. RC7 adds no background-location permission and cannot make device location a prerequisite for discovery, authentication, verification or service access.
+6. Android Maps and backend Geocoding default disabled. Explicit source-controlled switches, valid protected credentials and synthetic-only non-production data are required for managed proof; provider outage, map-load failure or denied location capability must fall back safely.
+7. Backend Geocoding accepts bounded search-area input, constrains results to Zambia, filters provider responses and never exposes or logs credentials, raw provider payloads, unnecessary coordinate precision or unrestricted free text.
+8. Quotas, budget alerts, per-request timeout, bounded result count and rotation instructions are required. Routes and Places costs cannot be incurred because those APIs are not enabled or accepted by either credential.
+9. Managed closure must prove exact reviewed source, restricted key/API metadata, backend synthetic Geocoding, Android map load and privacy-safe marker/service-area semantics while preserving the original failure evidence if any attempt fails.
+10. RC7 does not authorize participant Maps usage, private-location publication, production authentication, real communications, real money, Phase 11 exit or Phase 12 release.
+
 ## Runtime integration closure contract
 
 1. Close one bounded integration checkpoint at a time; do not batch unrelated SDK/provider activation.
@@ -113,9 +126,9 @@ The following strings are historical closure evidence required by the permanent 
 - RC3 — Firebase Crashlytics Android. **Closed — exact source `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; managed bridge run `29885635547` successful; closure PR #338 merged at `0d7d29313990c37b25bd985588866a85bbe10f83`.**
 - RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary. **CLOSED — exact source `f05ff19105cb8dc7c4621c044c110b6029f63300`; managed run `29916381754` successful; participant/production push disabled.**
 - RC5 — Firebase Test Lab device-matrix automation. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX — dedicated Spark project `direkt-testlab-502701-20260726`; exact source `c3744430a7beb1cd47246d858df9ac1379a068ac`; managed run `30183466799`; API 26/33/36; zero flaky retries; participant/production authorization false.**
-- UIA — post-VC owner-review promotion. **PARKED / OPEN — PR #385 merged at `fed6db8ab7c479b5e47095b4f0a752514122a4f6`; Issue #354 remains open for remaining owner-access evidence; read-only while RC5 owns the lane.**
+- UIA — post-VC owner-review promotion. **PARKED / OPEN — PR #385 merged at `fed6db8ab7c479b5e47095b4f0a752514122a4f6`; Issue #354 remains open for remaining owner-access evidence; read-only during RC7.**
 - RC6 — WhatsApp Cloud API application adapter. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY — exact source `8838b7a6d726a5aed44ce21a39506c1265a98d15`; managed run `30137700769` succeeded on retry through outbox → Meta test template → authentic signed webhook receipt; initial failure preserved in Issue #404; production/participant sends remain disabled.**
-- RC7 — Google Maps runtime activation with separate restricted Android/backend credentials, privacy-safe publication semantics, quotas, manual/list fallback and kill switch.
+- RC7 — Google Maps runtime activation with separate restricted Android/backend credentials, privacy-safe publication semantics, quotas, manual/list fallback and kill switch. **CLAIMED — implementation and managed evidence in progress.**
 - RC8 — sandbox-only payment-provider adapter closure/reconciliation for already proven MTN, DPO, Stripe and PayPal rails; Airtel remains provider-pending and Flutterwave deferred; real money remains disabled.
 - RC9 — OpenAPI-generated Kotlin and TypeScript client adoption/decision after backend integration/API shape stabilizes; migrate incrementally with cross-client regressions.
 - RC10 — Turnstile threat-model decision; implement only if a reviewed public abuse-sensitive flow requires it, otherwise close as not currently justified.
@@ -138,4 +151,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-No active implementation lane exists. RC5 and RC6 are closed and preserved at synthetic-only managed boundaries. UIA Issue #354 remains parked/read-only. RC7+ source work must not begin until a new explicit bounded claim is recorded; production and participant authorization remain blocked.
+RC7 is the sole active repository write lane on `integration/runtime-closure-261`. RC0–RC6 evidence remains immutable/regression-protected, UIA Issue #354 remains parked/read-only, and RC8+ source work must not begin until RC7 is closed or explicitly transitioned. Production and participant authorization remain blocked.
