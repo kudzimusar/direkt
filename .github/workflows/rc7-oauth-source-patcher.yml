@@ -74,6 +74,13 @@ jobs:
           managed.write_text(managed_text.replace("sanitary_failure", "sanitized_failure"), encoding="utf-8")
 
           replace(
+              "scripts/rc7/verify-maps-contract.py",
+              '"IMPLEMENTED_GATED / MANAGED PROOF IN PROGRESS"',
+              '"IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS"',
+              count=2,
+          )
+
+          replace(
               "docs/integrations/CURRENT_INTEGRATION_STATUS.md",
               "**Authoritative as-of date:** 2026-07-26 (Asia/Tokyo)",
               "**Authoritative as-of date:** 2026-07-27 (Asia/Tokyo)",
