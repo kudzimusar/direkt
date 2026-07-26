@@ -1,10 +1,7 @@
 export const GEOCODING_PROVIDER = Symbol('DIREKT_GEOCODING_PROVIDER');
 
 export type GeocodingPrecision =
-  | 'rooftop'
-  | 'range_interpolated'
-  | 'geometric_center'
-  | 'approximate';
+  'rooftop' | 'range_interpolated' | 'geometric_center' | 'approximate';
 
 export interface SearchAreaPoint {
   latitude: number;

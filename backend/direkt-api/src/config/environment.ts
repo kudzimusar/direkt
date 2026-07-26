@@ -328,10 +328,7 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     'https://maps.googleapis.com/maps/api/geocode/json',
   ),
   GOOGLE_MAPS_REQUEST_TIMEOUT_MS: Joi.number().integer().min(1000).max(15000).default(5000),
-  GOOGLE_MAPS_SYNTHETIC_CANARY_APPROVED: Joi.boolean()
-    .truthy('true')
-    .falsy('false')
-    .default(false),
+  GOOGLE_MAPS_SYNTHETIC_CANARY_APPROVED: Joi.boolean().truthy('true').falsy('false').default(false),
 }).custom((value: DirektEnvironment, helpers) => {
   if (
     value.EVIDENCE_STORAGE_PROVIDER === 'supabase' &&
@@ -366,7 +363,8 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
   }
   if (value.NODE_ENV === 'production' && value.GOOGLE_MAPS_BACKEND_MODE !== 'disabled') {
     return helpers.message({
-      custom: 'Production Google Maps backend mode must remain disabled until later participant and release gates.',
+      custom:
+        'Production Google Maps backend mode must remain disabled until later participant and release gates.',
     });
   }
   if (value.AI_PROVIDER_MODE !== 'disabled' && value.DIREKT_DATA_MODE !== 'synthetic-only') {
@@ -428,7 +426,8 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     }
     if (!value.GOOGLE_MAPS_SYNTHETIC_CANARY_APPROVED) {
       return helpers.message({
-        custom: 'Google Maps backend activation requires the explicit synthetic Maps approval latch.',
+        custom:
+          'Google Maps backend activation requires the explicit synthetic Maps approval latch.',
       });
     }
   }

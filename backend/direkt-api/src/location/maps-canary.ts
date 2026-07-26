@@ -18,7 +18,9 @@ async function main(): Promise<void> {
     environment.DIREKT_DATA_MODE !== 'synthetic-only' ||
     environment.NODE_ENV === 'production'
   ) {
-    throw new Error('RC7 Maps canary requires an approved synthetic-only non-production configuration.');
+    throw new Error(
+      'RC7 Maps canary requires an approved synthetic-only non-production configuration.',
+    );
   }
 
   const adapter = new GoogleMapsGeocodingProviderAdapter(

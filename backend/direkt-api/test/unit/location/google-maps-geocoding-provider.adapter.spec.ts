@@ -71,7 +71,9 @@ describe('GoogleMapsGeocodingProviderAdapter', () => {
     );
     const adapter = new GoogleMapsGeocodingProviderAdapter(API_KEY, 1_000);
 
-    await expect(adapter.normalizeSearchArea('Outside')).rejects.toMatchObject<GeocodingProviderError>({
+    await expect(
+      adapter.normalizeSearchArea('Outside'),
+    ).rejects.toMatchObject<GeocodingProviderError>({
       code: 'outside_zambia',
     });
   });
@@ -80,14 +82,19 @@ describe('GoogleMapsGeocodingProviderAdapter', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ status: 'OVER_QUERY_LIMIT', error_message: 'secret detail' }), {
-          status: 200,
-        }),
+        new Response(
+          JSON.stringify({ status: 'OVER_QUERY_LIMIT', error_message: 'secret detail' }),
+          {
+            status: 200,
+          },
+        ),
       ),
     );
     const adapter = new GoogleMapsGeocodingProviderAdapter(API_KEY, 1_000);
 
-    await expect(adapter.normalizeSearchArea('Lusaka')).rejects.toMatchObject<GeocodingProviderError>({
+    await expect(
+      adapter.normalizeSearchArea('Lusaka'),
+    ).rejects.toMatchObject<GeocodingProviderError>({
       code: 'quota_or_denied',
     });
   });
@@ -97,7 +104,9 @@ describe('GoogleMapsGeocodingProviderAdapter', () => {
     vi.stubGlobal('fetch', fetchMock);
     const adapter = new GoogleMapsGeocodingProviderAdapter(API_KEY, 1_000);
 
-    await expect(adapter.normalizeSearchArea('x'.repeat(241))).rejects.toMatchObject<GeocodingProviderError>({
+    await expect(
+      adapter.normalizeSearchArea('x'.repeat(241)),
+    ).rejects.toMatchObject<GeocodingProviderError>({
       code: 'invalid_input',
     });
     expect(fetchMock).not.toHaveBeenCalled();
