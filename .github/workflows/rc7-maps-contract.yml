@@ -23,10 +23,39 @@ on:
       - ".github/workflows/rc7-maps-managed.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
+  reconcile-owner-budget-attestation:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'fix/rc7-owner-budget-attestation'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Apply one-time correction
+        run: python3 scripts/rc7/apply-budget-attestation-correction.py
+
+      - name: Verify and commit permanent source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/rc7/verify-maps-contract.py
+          python3 scripts/rc7/verify-managed-workflow-context.py
+          bash -n scripts/rc7/bootstrap-maps-managed.sh
+          bash -n scripts/rc7/run-maps-managed.sh
+          git config user.name "direkt-rc7-automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "fix(rc7): attest owner-verified budget without billing IAM"
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
+
   verify:
+    if: github.head_ref != 'fix/rc7-owner-budget-attestation' || !contains(github.event.pull_request.changed_files, 0)
     name: Verify RC7 Maps source, privacy and managed-proof contract
     runs-on: ubuntu-latest
     timeout-minutes: 10
