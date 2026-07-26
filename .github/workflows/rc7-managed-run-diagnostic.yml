@@ -1,0 +1,97 @@
+name: DIREKT RC7 managed-run diagnostic
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-managed-run-diagnostic.yml"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  diagnostic:
+    name: Inspect latest RC7 main-branch managed run
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Read latest managed-run metadata and step outcomes
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          runs_json="${RUNNER_TEMP}/rc7-runs.json"
+          jobs_json="${RUNNER_TEMP}/rc7-jobs.json"
+          receipt="${RUNNER_TEMP}/rc7-managed-run-diagnostic.json"
+
+          gh api --paginate \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/rc7-maps-managed.yml/runs?branch=main&event=push&per_page=100" \
+            > "${runs_json}"
+
+          latest="$({
+            jq -cs '
+              [.[].workflow_runs[]]
+              | map(select(.event == "push" and .head_branch == "main"))
+              | sort_by(.created_at)
+              | last
+            ' "${runs_json}"
+          })"
+
+          if [[ -z "${latest}" || "${latest}" == "null" ]]; then
+            echo "No main-branch push run exists for rc7-maps-managed.yml." >&2
+            exit 1
+          fi
+
+          run_id="$(jq -r '.id' <<< "${latest}")"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?filter=latest&per_page=100" \
+            > "${jobs_json}"
+
+          jq -n \
+            --argjson run "${latest}" \
+            --slurpfile jobs "${jobs_json}" \
+            '{
+              schema: "direkt.rc7.managed-run-diagnostic.v1",
+              readOnly: true,
+              gcpAccess: false,
+              secretValuesAccessed: false,
+              resourceMutation: false,
+              run: {
+                id: $run.id,
+                runNumber: $run.run_number,
+                runAttempt: $run.run_attempt,
+                status: $run.status,
+                conclusion: $run.conclusion,
+                event: $run.event,
+                headBranch: $run.head_branch,
+                headSha: $run.head_sha,
+                createdAt: $run.created_at,
+                updatedAt: $run.updated_at,
+                htmlUrl: $run.html_url
+              },
+              jobs: ($jobs[0].jobs | map({
+                id,
+                name,
+                status,
+                conclusion,
+                startedAt: .started_at,
+                completedAt: .completed_at,
+                steps: (.steps | map({name, number, status, conclusion}))
+              }))
+            }' > "${receipt}"
+
+          {
+            echo '### RC7 latest managed-run diagnostic'
+            echo
+            echo '```json'
+            cat "${receipt}"
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload read-only diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc7-managed-run-diagnostic-${{ github.run_id }}
+          path: ${{ runner.temp }}/rc7-managed-run-diagnostic.json
+          if-no-files-found: error
+          retention-days: 1
