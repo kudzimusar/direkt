@@ -97,10 +97,16 @@ export class GoogleMapsGeocodingProviderAdapter implements GeocodingProviderPort
     if (payload.status === 'ZERO_RESULTS') {
       throw new GeocodingProviderError('not_found', 'No matching Zambian search area was found.');
     }
-    if (payload.status === 'OVER_QUERY_LIMIT' || payload.status === 'REQUEST_DENIED') {
+    if (payload.status === 'OVER_QUERY_LIMIT') {
       throw new GeocodingProviderError(
-        'quota_or_denied',
-        'Google Maps Geocoding rejected the bounded request.',
+        'quota_exceeded',
+        'Google Maps Geocoding exceeded the bounded quota.',
+      );
+    }
+    if (payload.status === 'REQUEST_DENIED') {
+      throw new GeocodingProviderError(
+        'request_denied',
+        'Google Maps Geocoding denied the bounded request.',
       );
     }
     if (payload.status !== 'OK') {

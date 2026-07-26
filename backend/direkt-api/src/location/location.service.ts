@@ -35,6 +35,8 @@ export class LocationService {
             });
           case 'disabled':
           case 'quota_or_denied':
+          case 'quota_exceeded':
+          case 'request_denied':
           case 'timeout':
           case 'provider_unavailable':
           case 'invalid_provider_response':

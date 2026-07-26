@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reject RC7 workflow startup, CLI drift and unsafe managed evidence handling."""
+"""Reject RC7 workflow, CLI, evidence and managed-canary contract drift."""
 
 from __future__ import annotations
 
@@ -9,6 +9,12 @@ import re
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = ROOT / ".github/workflows/rc7-maps-managed.yml"
 MANAGED_SCRIPT = ROOT / "scripts/rc7/run-maps-managed.sh"
+GEOCODING_PORT = ROOT / "backend/direkt-api/src/location/geocoding-provider.port.ts"
+GEOCODING_ADAPTER = ROOT / "backend/direkt-api/src/location/google-maps-geocoding-provider.adapter.ts"
+LOCATION_SERVICE = ROOT / "backend/direkt-api/src/location/location.service.ts"
+GEOCODING_TEST = (
+    ROOT / "backend/direkt-api/test/unit/location/google-maps-geocoding-provider.adapter.spec.ts"
+)
 
 
 def require_once(content: str, value: str, message: str) -> int:
@@ -16,6 +22,11 @@ def require_once(content: str, value: str, message: str) -> int:
     if count != 1:
         raise AssertionError(f"{message} Expected exactly once, found {count}.")
     return content.find(value)
+
+
+def require_present(content: str, value: str, message: str) -> None:
+    if value not in content:
+        raise AssertionError(f"{message} Missing {value!r}.")
 
 
 def command_blocks(script: str, command: str) -> list[str]:
@@ -38,6 +49,10 @@ def command_blocks(script: str, command: str) -> list[str]:
 def main() -> int:
     workflow = WORKFLOW.read_text(encoding="utf-8")
     managed_script = MANAGED_SCRIPT.read_text(encoding="utf-8")
+    geocoding_port = GEOCODING_PORT.read_text(encoding="utf-8")
+    geocoding_adapter = GEOCODING_ADAPTER.read_text(encoding="utf-8")
+    location_service = LOCATION_SERVICE.read_text(encoding="utf-8")
+    geocoding_test = GEOCODING_TEST.read_text(encoding="utf-8")
 
     forbidden_job_env = re.compile(
         r"^\s{6}RC7_RECEIPT_PATH:\s*\$\{\{\s*runner\.temp\s*\}\}\s*$",
@@ -169,6 +184,36 @@ def main() -> int:
     if 'cat "${execution_details}"' in managed_script:
         raise AssertionError("RC7 must not print raw execution details.")
 
+    for code in ("'quota_exceeded'", "'request_denied'"):
+        require_present(geocoding_port, code, "RC7 provider error contract drifted.")
+        require_present(geocoding_adapter, code, "RC7 adapter rejection contract drifted.")
+        require_present(location_service, f"case {code}:", "RC7 fallback mapping drifted.")
+        require_present(geocoding_test, f"code: {code}", "RC7 adapter regression coverage drifted.")
+
+    rejection_contract = (
+        ("OVER_QUERY_LIMIT", "Google Maps Geocoding exceeded the bounded quota."),
+        ("REQUEST_DENIED", "Google Maps Geocoding denied the bounded request."),
+    )
+    for provider_status, safe_message in rejection_contract:
+        require_present(
+            geocoding_adapter,
+            f"payload.status === '{provider_status}'",
+            "RC7 bounded provider-status distinction drifted.",
+        )
+        require_present(
+            geocoding_adapter,
+            safe_message,
+            "RC7 safe provider rejection message drifted.",
+        )
+        require_present(
+            geocoding_test,
+            safe_message,
+            "RC7 safe rejection regression coverage drifted.",
+        )
+
+    if "error_message" in geocoding_adapter:
+        raise AssertionError("RC7 adapter must not read or expose Google's raw error_message.")
+
     print("RC7_MANAGED_WORKFLOW_CONTEXT|PASS")
     print("job_level_runner_context=false")
     print("receipt_path_runtime_initialized=true")
@@ -179,6 +224,8 @@ def main() -> int:
     print("api_key_resource_location_preserved=true")
     print("canary_failure_evidence_sanitized=true")
     print("raw_canary_logs_uploaded=false")
+    print("provider_rejection_status_distinguished=true")
+    print("provider_raw_error_exposed=false")
     print("gcp_authority_changed=false")
     return 0
 
