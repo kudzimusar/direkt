@@ -37,7 +37,7 @@ Two credentials are mandatory and may not be reused:
 1. Android Maps key — injected only at protected build time, restricted to the synthetic debug package/signing-certificate pair and Maps SDK for Android.
 2. Backend Maps key — Secret Manager/runtime only, restricted to Geocoding API and a temporary static Cloud NAT egress IP for the bounded managed canary.
 
-The backend key, secret version, Cloud Run Job, NAT, router and static address are deleted after proof. The Android debug key remains package/certificate/API restricted for synthetic internal builds and is not a production credential.
+The backend key, secret version, Cloud Run Job, NAT, router and static address are deleted after proof. Cleanup is machine-enforced: any failed deletion records `false`, changes the terminal result to failed and keeps the managed workflow red. Temporary backend key IDs include the workflow run and attempt so a retry cannot collide with a soft-deleted key. The Android debug key remains package/certificate/API restricted for synthetic internal builds and is not a production credential.
 
 Both switches default disabled. Production and controlled-pilot participant use remain disabled during RC7.
 
@@ -46,12 +46,14 @@ Both switches default disabled. Production and controlled-pilot participant use 
 The repository-controlled exact-main workflow performs one armed synthetic-only run after merge. It:
 
 - confirms the reviewed SHA equals current `main` and authenticates through the existing GitHub Workload Identity Federation identity;
-- enables only Maps SDK for Android and Geocoding API dependencies, never Places or Routes;
+- enables only Maps SDK for Android and Geocoding API dependencies, and positively rejects fully qualified Places or Routes services;
 - creates separate application/API-restricted Android and backend keys;
 - sends the private backend canary through Direct VPC egress, a `/26` subnet, Cloud NAT and a temporary static IP;
 - proves a Zambia-bounded Geocoding response without logging coordinates or formatted addresses;
 - builds a Maps-enabled preauthorization APK and requires the `discovery-map-ready` state on one API 36 Firebase Test Lab device with zero flaky retries;
 - retains a project budget alert and a Geocoding per-minute quota override;
+- allows a bounded key-restriction propagation interval before runtime proof;
+- publishes a sanitized terminal PASS/FAIL receipt to Issue #261;
 - cleans temporary backend credentials and recurring-cost networking resources after the run.
 
 The trigger must be changed from `STATUS=ARMED` to `STATUS=CONSUMED` in the closure change so later main pushes cannot repeat the infrastructure mutation automatically.
