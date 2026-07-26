@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Inspect latest main run and published receipt
+      - name: Inspect latest main run, receipt and sanitized failure lines
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -26,6 +26,9 @@ jobs:
           jobs="${RUNNER_TEMP}/jobs.json"
           artifacts="${RUNNER_TEMP}/artifacts.json"
           comments="${RUNNER_TEMP}/comments.json"
+          logs_zip="${RUNNER_TEMP}/run-logs.zip"
+          logs_dir="${RUNNER_TEMP}/run-logs"
+          failure_lines="${RUNNER_TEMP}/failure-lines.txt"
           output="${RUNNER_TEMP}/rc7-terminal-receipt-diagnostic.json"
 
           gh api --paginate \
@@ -47,13 +50,37 @@ jobs:
             | last
           ' "${comments}")"
 
+          logs_state="unavailable"
+          mkdir -p "${logs_dir}"
+          set +e
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/logs" > "${logs_zip}"
+          logs_code=$?
+          set -e
+          if [[ ${logs_code} -eq 0 ]] && unzip -tq "${logs_zip}" >/dev/null 2>&1; then
+            logs_state="available"
+            unzip -q "${logs_zip}" -d "${logs_dir}"
+            grep -R -n -C 3 -E -i \
+              '##\[error\]|ERROR:|PERMISSION_DENIED|INVALID_ARGUMENT|FAILED|not found|not enabled|quota|budget|denied|forbidden' \
+              "${logs_dir}" \
+              | sed -E \
+                  -e 's/AIza[0-9A-Za-z_-]{20,}/[REDACTED_GOOGLE_API_KEY]/g' \
+                  -e 's/(Bearer|Authorization:)[[:space:]]+[^[:space:]]+/\1 [REDACTED]/gi' \
+                  -e 's/[0-9A-Za-z_+=\/.:-]{80,}/[REDACTED_LONG_VALUE]/g' \
+              | tail -n 120 \
+              > "${failure_lines}" || true
+          else
+            printf 'logs_api_exit=%s\n' "${logs_code}" > "${failure_lines}"
+          fi
+
           jq -n \
             --argjson run "${latest}" \
             --slurpfile jobs "${jobs}" \
             --slurpfile artifacts "${artifacts}" \
             --argjson receipt "${receipt:-null}" \
+            --arg logsState "${logs_state}" \
+            --rawfile failureLines "${failure_lines}" \
             '{
-              schema: "direkt.rc7.terminal-receipt-diagnostic.v1",
+              schema: "direkt.rc7.terminal-receipt-diagnostic.v2",
               readOnly: true,
               gcpAccess: false,
               resourceMutation: false,
@@ -91,7 +118,11 @@ jobs:
                 createdAt: $receipt.created_at,
                 updatedAt: $receipt.updated_at,
                 body: $receipt.body
-              } end)
+              } end),
+              sanitizedRunLogs: {
+                state: $logsState,
+                failureLines: ($failureLines | split("\n") | map(select(length > 0)))
+              }
             }' > "${output}"
 
           cat "${output}"
