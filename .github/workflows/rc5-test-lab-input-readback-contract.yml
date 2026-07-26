@@ -1,0 +1,89 @@
+name: DIREKT RC5 APK input readback contract
+
+"on":
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/rc5-test-lab-input-readback-once.yml
+      - .github/workflows/rc5-test-lab-input-readback-contract.yml
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/rc5-test-lab-input-readback-once.yml
+      - .github/workflows/rc5-test-lab-input-readback-contract.yml
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify read-only OIDC APK readback contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Parse workflow YAML and require bounded authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          ruby - <<'RUBY'
+          require "yaml"
+          path = ".github/workflows/rc5-test-lab-input-readback-once.yml"
+          doc = YAML.safe_load(File.read(path), aliases: true)
+          raise "workflow document must be a mapping" unless doc.is_a?(Hash)
+          raise "unexpected workflow name" unless doc["name"] == "DIREKT RC5 one-shot APK input readback diagnostic"
+          trigger = doc.fetch("on").fetch("push")
+          raise "main-only trigger drift" unless trigger.fetch("branches") == ["main"]
+          raise "path trigger drift" unless trigger.fetch("paths") == [path]
+          permissions = doc.fetch("permissions")
+          expected = {"contents" => "read", "id-token" => "write", "issues" => "write"}
+          raise "permission drift" unless permissions == expected
+          jobs = doc.fetch("jobs")
+          raise "unexpected job set" unless jobs.keys == ["probe"]
+          job = jobs.fetch("probe")
+          raise "staging environment required" unless job["environment"] == "staging"
+          raise "timeout drift" unless job["timeout-minutes"] == 15
+          env = job.fetch("env")
+          raise "project drift" unless env["GCP_PROJECT_ID"] == "direkt-dev-502701"
+          raise "deployer drift" unless env["GCP_DEPLOYER_SERVICE_ACCOUNT"] == "direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com"
+          raise "input bucket drift" unless env["RC5_INPUT_BUCKET"] == "direkt-test-lab-inputs-264358173369"
+          raise "target source drift" unless env["RC5_TARGET_SOURCE"] == "e54a1415f77305de02be6980284a2c11de1bc1ba"
+          raise "target run drift" unless env["RC5_TARGET_RUN_ID"] == "30166272597"
+          RUBY
+
+      - name: Verify read-only data-plane probe controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          workflow=.github/workflows/rc5-test-lab-input-readback-once.yml
+          grep -Fq 'google-github-actions/auth@v3' "${workflow}"
+          grep -Fq 'workload_identity_provider:' "${workflow}"
+          grep -Fq 'gcloud auth print-access-token' "${workflow}"
+          grep -Fq 'https://storage.googleapis.com/storage/v1/b/${RC5_INPUT_BUCKET}/o/${encoded_name}?alt=media' "${workflow}"
+          grep -Fq 'sha256sum "${output_file}"' "${workflow}"
+          grep -Fq 'RESULT|ready' "${workflow}"
+          grep -Fq 'RESOURCE_MUTATION|false' "${workflow}"
+          grep -Fq 'MATRIX_EXECUTED|false' "${workflow}"
+          grep -Fq 'PRODUCTION_AUTHORIZATION|false' "${workflow}"
+          grep -Fq '9639b899cc97a76f0eac975fed3f3058ab3ecb2a3c5cd4aaa4558e00d8a801d6' "${workflow}"
+          grep -Fq '069e66f1916dd105616ffd0a91f2075d08c320653477f1fef1671483e42b8511' "${workflow}"
+          ! grep -Fq 'upload/storage' "${workflow}"
+          ! grep -Fq 'gcloud storage' "${workflow}"
+          ! grep -Fq 'firebase test android run' "${workflow}"
+          ! grep -Eq '(set-iam-policy|add-iam-policy-binding|buckets update|buckets create)' "${workflow}"
+          ! grep -Ei '(private_key|client_secret|access_token[[:space:]]*:)' "${workflow}"
+
+      - name: Publish contract summary
+        shell: bash
+        run: |
+          {
+            echo '### RC5 APK input readback contract'
+            echo '- Exact main and target objects pinned'
+            echo '- Existing GitHub OIDC deployer identity only'
+            echo '- Cloud Storage object GET and SHA-256 verification only'
+            echo '- No upload, IAM mutation, bucket mutation or Test Lab execution'
+            echo '- Participant/production authorization: false'
+          } >> "${GITHUB_STEP_SUMMARY}"

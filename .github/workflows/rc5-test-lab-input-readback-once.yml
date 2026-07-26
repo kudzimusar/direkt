@@ -1,0 +1,175 @@
+name: DIREKT RC5 one-shot APK input readback diagnostic
+
+"on":
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/rc5-test-lab-input-readback-once.yml
+
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+
+concurrency:
+  group: direkt-rc5-test-lab-input-readback-once
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    name: Prove deployer data-plane read access without Test Lab execution
+    if: github.repository == 'kudzimusar/direkt' && github.ref == 'refs/heads/main'
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_PROJECT_NUMBER: "264358173369"
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      RC5_INPUT_BUCKET: direkt-test-lab-inputs-264358173369
+      RC5_TARGET_SOURCE: e54a1415f77305de02be6980284a2c11de1bc1ba
+      RC5_TARGET_RUN_ID: "30166272597"
+      RC5_TARGET_ATTEMPT: "1"
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Validate exact-main diagnostic controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${GITHUB_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          test "${GCP_PROJECT_ID}" = "direkt-dev-502701"
+          test "${GCP_PROJECT_NUMBER}" = "264358173369"
+          test "${RC5_INPUT_BUCKET}" = "direkt-test-lab-inputs-${GCP_PROJECT_NUMBER}"
+          test "${RC5_TARGET_SOURCE}" = "e54a1415f77305de02be6980284a2c11de1bc1ba"
+          test "${RC5_TARGET_RUN_ID}" = "30166272597"
+          test "${RC5_TARGET_ATTEMPT}" = "1"
+          current_main="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
+          test "${current_main}" = "${GITHUB_SHA}"
+
+      - name: Check out exact diagnostic source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Authenticate as the existing GitHub deployer through OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Read and hash both immutable APK objects
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          app_sha="9639b899cc97a76f0eac975fed3f3058ab3ecb2a3c5cd4aaa4558e00d8a801d6"
+          test_sha="069e66f1916dd105616ffd0a91f2075d08c320653477f1fef1671483e42b8511"
+          prefix="rc5/inputs/${RC5_TARGET_SOURCE}/${RC5_TARGET_RUN_ID}/attempt-${RC5_TARGET_ATTEMPT}"
+          app_object="${prefix}/app-${app_sha}.apk"
+          test_object="${prefix}/test-${test_sha}.apk"
+
+          receipt_file="$(mktemp)"
+          work_dir="$(mktemp -d)"
+          trap 'rm -rf "${work_dir}" "${receipt_file}"; unset access_token' EXIT
+
+          printf '%s\n' \
+            "SOURCE|${GITHUB_SHA}" \
+            "TARGET_SOURCE|${RC5_TARGET_SOURCE}" \
+            "TARGET_RUN|${RC5_TARGET_RUN_ID}/${RC5_TARGET_ATTEMPT}" \
+            "MODE|oidc_object_readback_only" \
+            "RESOURCE_MUTATION|false" \
+            "MATRIX_EXECUTED|false" \
+            "PRODUCTION_AUTHORIZATION|false" \
+            > "${receipt_file}"
+
+          access_token="$(gcloud auth print-access-token)"
+          overall="passed"
+
+          probe_object() {
+            local label="$1"
+            local object_name="$2"
+            local expected_sha="$3"
+            local encoded_name output_file actual_sha
+
+            encoded_name="$(python - "${object_name}" <<'PY'
+          import sys
+          from urllib.parse import quote
+          print(quote(sys.argv[1], safe=""))
+          PY
+            )"
+            output_file="${work_dir}/${label}.apk"
+
+            if ! curl --fail --silent --show-error \
+              --header "Authorization: Bearer ${access_token}" \
+              "https://storage.googleapis.com/storage/v1/b/${RC5_INPUT_BUCKET}/o/${encoded_name}?alt=media" \
+              > "${output_file}"; then
+              printf 'FAIL|%s object data could not be read by deployer OIDC identity\n' "${label}" >> "${receipt_file}"
+              overall="failed"
+              return
+            fi
+
+            test -s "${output_file}"
+            actual_sha="$(sha256sum "${output_file}" | awk '{print $1}')"
+            if [[ "${actual_sha}" != "${expected_sha}" ]]; then
+              printf 'FAIL|%s object SHA-256 mismatch\n' "${label}" >> "${receipt_file}"
+              overall="failed"
+              return
+            fi
+
+            printf 'PASS|%s object data read and SHA-256 verified\n' "${label}" >> "${receipt_file}"
+          }
+
+          probe_object app "${app_object}" "${app_sha}"
+          probe_object test "${test_object}" "${test_sha}"
+
+          if [[ "${overall}" = "passed" ]]; then
+            printf '%s\n' 'RESULT|ready' 'FAILURE_COUNT|0' >> "${receipt_file}"
+          else
+            failure_count="$(grep -c '^FAIL|' "${receipt_file}" || true)"
+            printf '%s\n' 'RESULT|not_ready' "FAILURE_COUNT|${failure_count}" >> "${receipt_file}"
+          fi
+
+          short_sha="${GITHUB_SHA:0:12}"
+          issue_title="RC5 APK input readback receipt — ${overall} — ${short_sha} — target ${RC5_TARGET_RUN_ID}"
+          issue_body="$(cat <<EOF
+          ## RC5 APK input data-plane readback diagnostic
+
+          - Exact diagnostic source: \`${GITHUB_SHA}\`
+          - Target APK source: \`${RC5_TARGET_SOURCE}\`
+          - Target managed run/attempt: \`${RC5_TARGET_RUN_ID}/${RC5_TARGET_ATTEMPT}\`
+          - Identity: \`${GCP_DEPLOYER_SERVICE_ACCOUNT}\` through existing GitHub OIDC/WIF
+          - Boundary: read and SHA-256 verification only; no upload, IAM mutation, bucket mutation, Test Lab matrix, secret access, participant data, or production authorization.
+          - Tracker: #261
+
+          \`\`\`text
+          $(cat "${receipt_file}")
+          \`\`\`
+          EOF
+          )"
+          receipt_url="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/issues" -f title="${issue_title}" -f body="${issue_body}" --jq '.html_url')"
+
+          tracker_body="$(cat <<EOF
+          RC5 APK input readback diagnostic completed.
+
+          - Diagnostic source: \`${GITHUB_SHA}\`
+          - Target managed run/attempt: \`${RC5_TARGET_RUN_ID}/${RC5_TARGET_ATTEMPT}\`
+          - Result: \`${overall}\`
+          - Dedicated receipt: ${receipt_url}
+          - Boundary: read-only OIDC object data probe; no matrix execution or production authorization.
+          EOF
+          )"
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/261/comments" -f body="${tracker_body}" >/dev/null
+
+          cat "${receipt_file}"
+          test "${overall}" = "passed"
