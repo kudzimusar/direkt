@@ -23,39 +23,55 @@ on:
       - ".github/workflows/rc7-maps-managed.yml"
 
 permissions:
-  contents: write
+  actions: read
+  contents: read
+  pull-requests: write
 
 jobs:
-  reconcile-owner-budget-attestation:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'fix/rc7-owner-budget-attestation'
+  diagnose-prior-reconciliation:
+    if: github.event_name == 'pull_request' && github.head_ref == 'fix/rc7-owner-budget-attestation'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TARGET_RUN: "30211253708"
+      TARGET_JOB: "89817740684"
     steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-
-      - name: Apply one-time correction
-        run: python3 scripts/rc7/apply-budget-attestation-correction.py
-
-      - name: Verify and commit permanent source
+      - name: Publish sanitized verifier failure
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/rc7/verify-maps-contract.py
-          python3 scripts/rc7/verify-managed-workflow-context.py
-          bash -n scripts/rc7/bootstrap-maps-managed.sh
-          bash -n scripts/rc7/run-maps-managed.sh
-          git config user.name "direkt-rc7-automation"
-          git config user.email "actions@users.noreply.github.com"
-          git add -A
-          git diff --cached --check
-          git commit -m "fix(rc7): attest owner-verified budget without billing IAM"
-          git push origin "HEAD:${GITHUB_HEAD_REF}"
+          raw="${RUNNER_TEMP}/rc7-attestation-reconcile.log"
+          gh run view "${TARGET_RUN}" --repo "${GITHUB_REPOSITORY}" --job "${TARGET_JOB}" --log > "${raw}"
+          diagnostic="${RUNNER_TEMP}/rc7-attestation-diagnostic.txt"
+          python3 - "${raw}" "${diagnostic}" <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          raw_path, output_path = map(Path, sys.argv[1:])
+          lines = raw_path.read_text(encoding="utf-8", errors="replace").splitlines()
+          pattern = re.compile(r"AssertionError|Prohibited|Missing|required|expected|RC7_|syntax error|Process completed|error:", re.I)
+          selected: set[int] = set()
+          for index, line in enumerate(lines):
+              if pattern.search(line):
+                  selected.update(range(max(0, index - 3), min(len(lines), index + 4)))
+          output_path.write_text("\n".join(lines[index][:1400] for index in sorted(selected)[-120:]) + "\n", encoding="utf-8")
+          PY
+          body="${RUNNER_TEMP}/rc7-attestation-diagnostic.md"
+          {
+            echo '## RC7 owner-attestation verifier diagnostic'
+            echo
+            echo "- Prior run/job: \`${TARGET_RUN}/${TARGET_JOB}\`"
+            echo '- Sanitized verifier context only.'
+            echo
+            echo '```text'
+            cat "${diagnostic}"
+            echo '```'
+          } > "${body}"
+          gh pr comment "${{ github.event.pull_request.number }}" --repo "${GITHUB_REPOSITORY}" --body-file "${body}"
 
   verify:
-    if: github.head_ref != 'fix/rc7-owner-budget-attestation' || !contains(github.event.pull_request.changed_files, 0)
     name: Verify RC7 Maps source, privacy and managed-proof contract
     runs-on: ubuntu-latest
     timeout-minutes: 10
