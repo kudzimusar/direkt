@@ -28,6 +28,8 @@ The permanent RC5 and RC6 verifiers explicitly accept bounded RC7 ownership whil
 
 The backend Maps source and tests are formatted through the repository's pinned Prettier toolchain before exact-head verification.
 
+The Phase 12B SDK and Play Data Safety source inventory now explicitly records the optional Maps SDK processing boundary, default-off activation, absence of Android device-location permissions, disabled my-location layer and prohibition on exact private provider coordinates. Final Play submission answers still require exact-release revalidation.
+
 ## Credential boundary
 
 Two credentials are mandatory and may not be reused:
