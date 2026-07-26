@@ -75,23 +75,44 @@ describe('GoogleMapsGeocodingProviderAdapter', () => {
     });
   });
 
-  it('fails closed on quota denial without exposing the provider payload', async () => {
+  it('distinguishes a bounded quota rejection without exposing the provider payload', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
         new Response(
-          JSON.stringify({ status: 'OVER_QUERY_LIMIT', error_message: 'secret detail' }),
-          {
-            status: 200,
-          },
+          JSON.stringify({ status: 'OVER_QUERY_LIMIT', error_message: 'secret quota detail' }),
+          { status: 200 },
         ),
       ),
     );
     const adapter = new GoogleMapsGeocodingProviderAdapter(API_KEY, 1_000);
 
-    await expect(adapter.normalizeSearchArea('Lusaka')).rejects.toMatchObject({
-      code: 'quota_or_denied',
+    const result = adapter.normalizeSearchArea('Lusaka');
+    await expect(result).rejects.toMatchObject({
+      code: 'quota_exceeded',
+      message: 'Google Maps Geocoding exceeded the bounded quota.',
     });
+    await expect(result).rejects.not.toThrow('secret quota detail');
+  });
+
+  it('distinguishes a bounded authorization denial without exposing the provider payload', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({ status: 'REQUEST_DENIED', error_message: 'secret denial detail' }),
+          { status: 200 },
+        ),
+      ),
+    );
+    const adapter = new GoogleMapsGeocodingProviderAdapter(API_KEY, 1_000);
+
+    const result = adapter.normalizeSearchArea('Lusaka');
+    await expect(result).rejects.toMatchObject({
+      code: 'request_denied',
+      message: 'Google Maps Geocoding denied the bounded request.',
+    });
+    await expect(result).rejects.not.toThrow('secret denial detail');
   });
 
   it('rejects unbounded input before calling Google', async () => {
