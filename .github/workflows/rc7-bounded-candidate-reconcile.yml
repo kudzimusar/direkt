@@ -1,0 +1,87 @@
+name: RC7 bounded candidate source reconciler
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-bounded-candidate-reconcile.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'fix/rc7-select-bounded-geocode-result'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/rc7-select-bounded-geocode-result
+          fetch-depth: 0
+      - name: Reconcile permanent RC7 evidence and contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              target = Path(path)
+              text = target.read_text(encoding='utf-8')
+              if new in text:
+                  return
+              if old not in text:
+                  raise SystemExit(f'missing expected source in {path}')
+              target.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          replace_once(
+              'scripts/rc7/verify-maps-contract.py',
+              '    adapter = read("backend/direkt-api/src/location/google-maps-geocoding-provider.adapter.ts")\n    canary = read("backend/direkt-api/src/location/maps-canary.ts")',
+              '    adapter = read("backend/direkt-api/src/location/google-maps-geocoding-provider.adapter.ts")\n    adapter_test = read(\n        "backend/direkt-api/test/unit/location/google-maps-geocoding-provider.adapter.spec.ts"\n    )\n    canary = read("backend/direkt-api/src/location/maps-canary.ts")',
+          )
+          replace_once(
+              'scripts/rc7/verify-maps-contract.py',
+              '        "regionCode",\n        "ZAMBIA_BOUNDS",',
+              '        "regionCode",\n        "addressComponents",\n        "for (const result of results)",\n        "component.types?.includes(\'country\')",\n        "sawStructurallyValidCandidate",\n        "ZAMBIA_BOUNDS",',
+          )
+          replace_once(
+              'scripts/rc7/verify-maps-contract.py',
+              '    prohibit(adapter, r"console\\.(log|error|warn)", "raw Geocoding response logging")\n\n    for needle in (\n        "RC7_MAPS_CANARY|PASS",',
+              '    prohibit(adapter, r"console\\.(log|error|warn)", "raw Geocoding response logging")\n    for needle in (\n        "selects the first independently bounded Zambian candidate",\n        "uses the country address component",\n        "rejects provider candidates outside Zambia",\n        "rejects a successful response containing only malformed candidates",\n    ):\n        require(adapter_test, needle, "bounded ranked-candidate regression coverage")\n\n    for needle in (\n        "RC7_MAPS_CANARY|PASS",',
+          )
+
+          old_status = '| Google Maps Platform | **IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS** | RC7 preserves the restricted Android key and privacy-safe native rendering; backend Geocoding uses v4 through the assigned Cloud Run service identity with a downscoped address-only OAuth token. Run `30210742617/1` failed before runtime mutation because CI correctly lacked billing-account budget-list permission. The correction keeps CI out of billing-account IAM and verifies a fresh owner-created project-label budget attestation before quota, backend and Android proof. |'
+          new_status = '| Google Maps Platform | **IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS** | RC7 preserves the restricted Android key and privacy-safe native rendering; backend Geocoding uses v4 through the assigned Cloud Run service identity with a downscoped address-only OAuth token. Run `30210742617/1` exposed the billing-account boundary and was corrected without granting CI billing IAM. Exact-main run `30225624823/1` then proved WIF, fresh `1 JPY` owner budget attestation, quota, Android key restriction, immutable image, OAuth execution and cleanup, but the canary rejected the leading ranked result as outside Zambia before Test Lab. The corrective adapter now selects only the first structurally valid candidate that independently satisfies both a `ZM` country signal and the unchanged Zambia coordinate bounds. |'
+          replace_once('docs/integrations/CURRENT_INTEGRATION_STATUS.md', old_status, new_status)
+
+          old_ledger = '| Google Maps Platform | `IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS` | RC7 keeps the restricted Android key, Maps Compose latch, bounded Zambia normalization, privacy-safe rendering and manual/list fallback. Backend Geocoding uses v4 service-identity OAuth; backend keys, Maps secrets, Direct VPC egress and Cloud NAT are prohibited. Exact-main run `30210742617/1` failed before runtime mutation because the deployer lacked billing-account budget-list permission. The pending correction uses a fresh owner-verified project-label budget attestation without granting CI a billing-account role. |'
+          new_ledger = '| Google Maps Platform | `IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS` | RC7 keeps the restricted Android key, Maps Compose latch, bounded Zambia normalization, privacy-safe rendering and manual/list fallback. Backend Geocoding uses v4 service-identity OAuth; backend keys, Maps secrets, Direct VPC egress and Cloud NAT are prohibited. Run `30210742617/1` exposed the billing-account boundary and was corrected without granting CI billing IAM. Exact-main run `30225624823/1` proved WIF, fresh owner budget attestation, quota, key restriction, immutable image, OAuth execution and cleanup, then failed before Test Lab because result zero was outside Zambia. The corrective adapter iterates ranked results and accepts only a structurally valid candidate with an independent `ZM` country signal and coordinates inside the unchanged Zambia bounds. Artifact `8638498996`, digest `sha256:55c3b9f581ee899b5f1cac7e2a99e5d7851faedb00def2ba887e760e22a8a56a`; Cloud Run Job cleanup passed. |'
+          replace_once('docs/integrations/LIVE_INTEGRATION_LEDGER.md', old_ledger, new_ledger)
+
+          notes = Path('docs/integrations/RC7_GOOGLE_MAPS_IMPLEMENTATION_NOTES.md')
+          text = notes.read_text(encoding='utf-8')
+          text = text.replace(
+              '**Corrective baseline:** `main@4fa12358269297eb926d45952712eddec5506596`',
+              '**Corrective baseline:** `main@6378be60199ce567671a4a307dedf5288b8be1ca`',
+              1,
+          )
+          marker = '## Credential and authentication boundary\n'
+          section = '''## Ranked-candidate correction\n\nThe next exact-main proof, run `30225624823/1` on `6378be60199ce567671a4a307dedf5288b8be1ca`, passed exact-source checks, WIF, the fresh one-JPY owner budget attestation, quota verification, Android key restriction, immutable image execution and cleanup. The private backend canary then failed with a sanitized `outside_zambia` result before Firebase Test Lab. Artifact `8638498996` has digest `sha256:55c3b9f581ee899b5f1cac7e2a99e5d7851faedb00def2ba887e760e22a8a56a`; `cleanup.cloud_run_job_deleted=true` and `cleanup_failed=false`.\n\nGeocoding v4 `regionCode=ZM` influences ranking but is not a strict country filter. The prior adapter treated `results[0]` as authoritative. The corrective adapter now iterates ranked results, validates every candidate before use, resolves country from `postalAddress.regionCode` or the typed country address component, and selects only the first candidate that also remains within the unchanged Zambia latitude/longitude bounds. Empty results remain `not_found`, structurally malformed-only results remain `invalid_provider_response`, and valid but non-Zambian-only results remain `outside_zambia`. Raw coordinates, formatted addresses, provider payloads and OAuth material are still excluded from logs and evidence.\n\n'''
+          if section not in text:
+              if marker not in text:
+                  raise SystemExit('missing implementation-note insertion marker')
+              text = text.replace(marker, section + marker, 1)
+          notes.write_text(text, encoding='utf-8')
+          PY
+
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          if git diff --quiet; then
+            exit 0
+          fi
+          git add scripts/rc7/verify-maps-contract.py \
+            docs/integrations/CURRENT_INTEGRATION_STATUS.md \
+            docs/integrations/LIVE_INTEGRATION_LEDGER.md \
+            docs/integrations/RC7_GOOGLE_MAPS_IMPLEMENTATION_NOTES.md
+          git commit -m 'docs(rc7): record bounded candidate managed failure'
+          git push origin HEAD:fix/rc7-select-bounded-geocode-result
