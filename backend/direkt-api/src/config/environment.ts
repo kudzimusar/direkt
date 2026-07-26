@@ -109,9 +109,7 @@ const whatsappTemplateLanguage = Joi.string().pattern(/^[a-z]{2,3}(_[A-Z]{2})?$/
 const googleMapsOAuthScope = Joi.string().valid(
   'https://www.googleapis.com/auth/maps-platform.geocode.address',
 );
-const googleMapsEndpoint = Joi.string().valid(
-  'https://geocode.googleapis.com/v4/geocode/address',
-);
+const googleMapsEndpoint = Joi.string().valid('https://geocode.googleapis.com/v4/geocode/address');
 
 export const environmentSchema = Joi.object<DirektEnvironment>({
   NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),

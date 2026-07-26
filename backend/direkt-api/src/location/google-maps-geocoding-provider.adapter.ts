@@ -54,9 +54,7 @@ const PRECISION: Record<string, GeocodingPrecision> = {
   APPROXIMATE: 'approximate',
 };
 
-export class GoogleCloudServiceIdentityAccessTokenProvider
-  implements GoogleMapsAccessTokenProvider
-{
+export class GoogleCloudServiceIdentityAccessTokenProvider implements GoogleMapsAccessTokenProvider {
   private cachedToken?: { value: string; expiresAtMs: number };
 
   constructor(

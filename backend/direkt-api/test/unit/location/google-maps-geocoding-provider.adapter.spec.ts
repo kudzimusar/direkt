@@ -19,17 +19,15 @@ afterEach(() => {
 
 describe('GoogleCloudServiceIdentityAccessTokenProvider', () => {
   it('requests and caches a narrowly scoped token from the Google metadata service', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({ access_token: ACCESS_TOKEN, expires_in: 3599, token_type: 'Bearer' }),
-        { status: 200, headers: { 'content-type': 'application/json' } },
-      ),
-    );
-    const provider = new GoogleCloudServiceIdentityAccessTokenProvider(
-      1_000,
-      undefined,
-      fetchMock,
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ access_token: ACCESS_TOKEN, expires_in: 3599, token_type: 'Bearer' }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      );
+    const provider = new GoogleCloudServiceIdentityAccessTokenProvider(1_000, undefined, fetchMock);
 
     await expect(provider.getAccessToken()).resolves.toBe(ACCESS_TOKEN);
     await expect(provider.getAccessToken()).resolves.toBe(ACCESS_TOKEN);
@@ -72,12 +70,7 @@ describe('GoogleMapsGeocodingProviderAdapter', () => {
       ),
     );
     const tokens = tokenProvider();
-    const adapter = new GoogleMapsGeocodingProviderAdapter(
-      tokens,
-      1_000,
-      undefined,
-      fetchMock,
-    );
+    const adapter = new GoogleMapsGeocodingProviderAdapter(tokens, 1_000, undefined, fetchMock);
 
     const result = await adapter.normalizeSearchArea('  Cairo Road, Lusaka  ');
 
@@ -131,9 +124,13 @@ describe('GoogleMapsGeocodingProviderAdapter', () => {
   });
 
   it('distinguishes a bounded quota rejection without reading the provider payload', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ error: { message: 'secret quota detail' } }), { status: 429 }),
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ error: { message: 'secret quota detail' } }), {
+          status: 429,
+        }),
+      );
     const adapter = new GoogleMapsGeocodingProviderAdapter(
       tokenProvider(),
       1_000,
@@ -150,9 +147,13 @@ describe('GoogleMapsGeocodingProviderAdapter', () => {
   });
 
   it('distinguishes a bounded OAuth authorization denial without exposing the payload', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ error: { message: 'secret denial detail' } }), { status: 403 }),
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ error: { message: 'secret denial detail' } }), {
+          status: 403,
+        }),
+      );
     const adapter = new GoogleMapsGeocodingProviderAdapter(
       tokenProvider(),
       1_000,
@@ -169,7 +170,9 @@ describe('GoogleMapsGeocodingProviderAdapter', () => {
   });
 
   it('treats an empty successful response as not found', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ results: [] }), { status: 200 }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ results: [] }), { status: 200 }));
     const adapter = new GoogleMapsGeocodingProviderAdapter(
       tokenProvider(),
       1_000,
@@ -185,12 +188,7 @@ describe('GoogleMapsGeocodingProviderAdapter', () => {
   it('rejects unbounded input before requesting a token or calling Google', async () => {
     const fetchMock = vi.fn();
     const tokens = tokenProvider();
-    const adapter = new GoogleMapsGeocodingProviderAdapter(
-      tokens,
-      1_000,
-      undefined,
-      fetchMock,
-    );
+    const adapter = new GoogleMapsGeocodingProviderAdapter(tokens, 1_000, undefined, fetchMock);
 
     await expect(adapter.normalizeSearchArea('x'.repeat(241))).rejects.toMatchObject({
       code: 'invalid_input',
