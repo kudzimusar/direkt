@@ -1,0 +1,62 @@
+name: RC7 exact-main run locator 2
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-main-run-locator-2.yml"
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+
+jobs:
+  locate:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chore/rc7-main-run-locator-2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TARGET_SHA: 6378be60199ce567671a4a307dedf5288b8be1ca
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Locate exact-main RC7 workflow run
+        shell: bash
+        run: |
+          set -euo pipefail
+          match=''
+          for _ in $(seq 1 60); do
+            response="$(gh api --paginate \
+              -H 'Accept: application/vnd.github+json' \
+              "/repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${TARGET_SHA}&event=push&per_page=100")"
+            match="$(jq -c '[.workflow_runs[] | select(.name == "DIREKT RC7 managed Google Maps proof") | {id, run_number, run_attempt, status, conclusion, html_url, head_sha, event, created_at, updated_at}] | first // empty' <<<"${response}")"
+            if [[ -n "${match}" ]]; then
+              break
+            fi
+            sleep 5
+          done
+          test -n "${match}"
+          run_id="$(jq -r '.id' <<<"${match}")"
+          jobs="$(gh api -H 'Accept: application/vnd.github+json' "/repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?per_page=100" | jq -c '[.jobs[] | {id,name,status,conclusion,started_at,completed_at}]')"
+          artifacts="$(gh api -H 'Accept: application/vnd.github+json' "/repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100" | jq -c '[.artifacts[] | {id,name,size_in_bytes,expired,created_at,updated_at}]')"
+          body="${RUNNER_TEMP}/rc7-main-run-locator.md"
+          {
+            echo '## RC7 exact-main workflow locator'
+            echo
+            echo "- Exact main: \`${TARGET_SHA}\`"
+            echo
+            echo '### Run'
+            echo '```json'
+            jq . <<<"${match}"
+            echo '```'
+            echo
+            echo '### Jobs'
+            echo '```json'
+            jq . <<<"${jobs}"
+            echo '```'
+            echo
+            echo '### Artifacts'
+            echo '```json'
+            jq . <<<"${artifacts}"
+            echo '```'
+          } >"${body}"
+          gh pr comment "${{ github.event.pull_request.number }}" --repo "${GITHUB_REPOSITORY}" --body-file "${body}"
