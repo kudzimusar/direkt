@@ -1,0 +1,162 @@
+name: DIREKT RC7 exact-terminal watch
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-exact-terminal-watch.yml"
+
+permissions:
+  actions: read
+  contents: read
+  issues: read
+
+jobs:
+  watch:
+    name: Watch exact-main RC7 managed terminal
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      TARGET_SHA: ef0f6b4c558782540f933b0d5edae311735ac520
+    steps:
+      - name: Wait for exact RC7 run and collect sanitized terminal evidence
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          output="${RUNNER_TEMP}/rc7-exact-terminal-watch.json"
+          runs="${RUNNER_TEMP}/runs.json"
+          run_json="${RUNNER_TEMP}/run.json"
+          jobs="${RUNNER_TEMP}/jobs.json"
+          artifacts="${RUNNER_TEMP}/artifacts.json"
+          comments="${RUNNER_TEMP}/comments.json"
+          logs_zip="${RUNNER_TEMP}/logs.zip"
+          logs_dir="${RUNNER_TEMP}/logs"
+          managed_step="${RUNNER_TEMP}/managed-step-sanitized.txt"
+
+          run_id=""
+          for _ in $(seq 1 210); do
+            gh api --paginate \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/rc7-maps-managed.yml/runs?branch=main&event=push&per_page=100" \
+              > "${runs}"
+            run_id="$(jq -csr --arg sha "${TARGET_SHA}" '
+              [.[].workflow_runs[] | select(.head_sha == $sha and .event == "push")]
+              | sort_by(.created_at)
+              | last
+              | .id // empty
+            ' "${runs}")"
+            [[ -n "${run_id}" ]] && break
+            sleep 20
+          done
+          test -n "${run_id}"
+
+          for _ in $(seq 1 210); do
+            gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}" > "${run_json}"
+            status="$(jq -r '.status' "${run_json}")"
+            [[ "${status}" == "completed" ]] && break
+            sleep 20
+          done
+          test "$(jq -r '.status' "${run_json}")" = "completed"
+
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?filter=latest&per_page=100" > "${jobs}"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100" > "${artifacts}"
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/261/comments?per_page=100" > "${comments}"
+
+          receipt="$(jq -cs --arg sha "${TARGET_SHA}" '
+            [.[].[]
+              | select(.body | startswith("## RC7 managed Google Maps proof receipt"))
+              | select(.body | contains($sha))]
+            | sort_by(.created_at)
+            | last
+          ' "${comments}")"
+
+          redact() {
+            sed -E \
+              -e 's/AIza[0-9A-Za-z_-]{20,}/[REDACTED_GOOGLE_API_KEY]/g' \
+              -e 's/(Bearer|Authorization:)[[:space:]]+[^[:space:]]+/\1 [REDACTED]/gi' \
+              -e 's/(GOOGLE_MAPS_SERVER_API_KEY|DIREKT_ANDROID_MAPS_API_KEY|keyString)=([^[:space:]]+)/\1=[REDACTED]/g' \
+              -e 's/[0-9A-Za-z_+=\/.:-]{80,}/[REDACTED_LONG_VALUE]/g'
+          }
+
+          : > "${managed_step}"
+          mkdir -p "${logs_dir}"
+          conclusion="$(jq -r '.conclusion' "${run_json}")"
+          if [[ "${conclusion}" != "success" ]]; then
+            set +e
+            gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/logs" > "${logs_zip}"
+            logs_code=$?
+            set -e
+            if [[ ${logs_code} -eq 0 ]] && unzip -tq "${logs_zip}" >/dev/null 2>&1; then
+              unzip -q "${logs_zip}" -d "${logs_dir}"
+              step_file="$(find "${logs_dir}" -type f -name '*Execute bounded managed proof.txt' -print -quit)"
+              if [[ -n "${step_file}" ]]; then
+                nl -ba "${step_file}" | redact > "${managed_step}"
+              else
+                printf 'managed_step_log_not_found\n' > "${managed_step}"
+              fi
+            else
+              printf 'logs_api_exit=%s\n' "${logs_code}" > "${managed_step}"
+            fi
+          fi
+
+          jq -n \
+            --slurpfile run "${run_json}" \
+            --slurpfile jobs "${jobs}" \
+            --slurpfile artifacts "${artifacts}" \
+            --argjson receipt "${receipt:-null}" \
+            --rawfile managedStep "${managed_step}" \
+            '{
+              schema: "direkt.rc7.exact-terminal-watch.v1",
+              targetSha: $run[0].head_sha,
+              readOnly: true,
+              gcpAccess: false,
+              resourceMutation: false,
+              secretValuesAccessed: false,
+              run: {
+                id: $run[0].id,
+                runNumber: $run[0].run_number,
+                runAttempt: $run[0].run_attempt,
+                status: $run[0].status,
+                conclusion: $run[0].conclusion,
+                event: $run[0].event,
+                headBranch: $run[0].head_branch,
+                headSha: $run[0].head_sha,
+                createdAt: $run[0].created_at,
+                updatedAt: $run[0].updated_at,
+                htmlUrl: $run[0].html_url
+              },
+              jobs: ($jobs[0].jobs | map({
+                id,
+                name,
+                status,
+                conclusion,
+                steps: (.steps // [] | map({name, number, status, conclusion}))
+              })),
+              artifacts: ($artifacts[0].artifacts | map({
+                id,
+                name,
+                sizeInBytes: .size_in_bytes,
+                expired,
+                digest,
+                createdAt: .created_at
+              })),
+              issueReceipt: (if $receipt == null then null else {
+                id: $receipt.id,
+                createdAt: $receipt.created_at,
+                updatedAt: $receipt.updated_at,
+                body: $receipt.body
+              } end),
+              sanitizedManagedStep: ($managedStep | split("\n") | map(select(length > 0)))
+            }' > "${output}"
+
+          cat "${output}"
+
+      - name: Upload exact terminal watch receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc7-exact-terminal-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/rc7-exact-terminal-watch.json
+            ${{ runner.temp }}/managed-step-sanitized.txt
+          if-no-files-found: error
+          retention-days: 1
