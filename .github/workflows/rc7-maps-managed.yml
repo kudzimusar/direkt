@@ -81,6 +81,7 @@ jobs:
       GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
       TESTLAB_PROJECT_ID: direkt-testlab-502701-20260726
       DIREKT_GRADLE_VERSION: "9.4.0"
+      CLOUDSDK_CORE_DISABLE_PROMPTS: "1"
     steps:
       - name: Resolve exact-main execution inputs
         id: controls
@@ -144,6 +145,10 @@ jobs:
         uses: google-github-actions/setup-gcloud@v3
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Install matching gcloud alpha component noninteractively
+        shell: bash
+        run: gcloud components install alpha --quiet
 
       - name: Execute bounded managed proof
         shell: bash
