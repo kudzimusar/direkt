@@ -44,5 +44,6 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/rc7/verify-maps-contract.py
+          python3 scripts/rc7/verify-managed-workflow-context.py
           bash -n scripts/rc7/bootstrap-maps-managed.sh
           bash -n scripts/rc7/run-maps-managed.sh
