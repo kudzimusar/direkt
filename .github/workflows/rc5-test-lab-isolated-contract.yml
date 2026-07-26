@@ -6,28 +6,34 @@ name: DIREKT RC5 isolated Test Lab contract
       - main
     paths:
       - .github/workflows/firebase-test-lab-isolated.yml
-      - .github/workflows/rc5-test-lab-isolated-preflight-once.yml
       - .github/workflows/rc5-test-lab-isolated-contract.yml
+      - .github/workflows/rc5-test-lab-closure-contract.yml
       - scripts/rc5/run-test-lab-isolated-preflight.sh
       - scripts/rc5/run-test-lab-isolated-managed.sh
       - scripts/rc5/select-test-lab-matrix.py
+      - scripts/rc5/verify-test-lab-closure.py
+      - docs/integrations/RC5_ISOLATED_TEST_LAB.md
+      - WORKSTREAM_LOCK.md
   push:
     branches:
       - main
     paths:
       - .github/workflows/firebase-test-lab-isolated.yml
-      - .github/workflows/rc5-test-lab-isolated-preflight-once.yml
       - .github/workflows/rc5-test-lab-isolated-contract.yml
+      - .github/workflows/rc5-test-lab-closure-contract.yml
       - scripts/rc5/run-test-lab-isolated-preflight.sh
       - scripts/rc5/run-test-lab-isolated-managed.sh
       - scripts/rc5/select-test-lab-matrix.py
+      - scripts/rc5/verify-test-lab-closure.py
+      - docs/integrations/RC5_ISOLATED_TEST_LAB.md
+      - WORKSTREAM_LOCK.md
 
 permissions:
   contents: read
 
 jobs:
   verify:
-    name: Verify isolated Spark Test Lab authority and matrix contract
+    name: Verify isolated Spark Test Lab authority and closed matrix contract
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -63,42 +69,17 @@ jobs:
           raise "deployer drift" unless env["GCP_DEPLOYER_SERVICE_ACCOUNT"] == "direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com"
           RUBY
 
-      - name: Parse one-shot preflight workflow YAML
-        shell: bash
-        run: |
-          set -euo pipefail
-          ruby - <<'RUBY'
-          require "yaml"
-          path = ".github/workflows/rc5-test-lab-isolated-preflight-once.yml"
-          doc = YAML.safe_load(File.read(path), aliases: true)
-          raise "workflow document must be a mapping" unless doc.is_a?(Hash)
-          raise "unexpected workflow name" unless doc["name"] == "DIREKT RC5 isolated Test Lab preflight once"
-          push = doc.fetch("on").fetch("push")
-          raise "main-only trigger drift" unless push.fetch("branches") == ["main"]
-          raise "path trigger drift" unless push.fetch("paths") == [path]
-          expected = {"contents" => "read", "id-token" => "write", "issues" => "write"}
-          raise "permission drift" unless doc.fetch("permissions") == expected
-          jobs = doc.fetch("jobs")
-          raise "unexpected job set" unless jobs.keys == ["preflight"]
-          job = jobs.fetch("preflight")
-          raise "staging environment required" unless job["environment"] == "staging"
-          env = job.fetch("env")
-          raise "isolated project drift" unless env["GCP_PROJECT_ID"] == "direkt-testlab-502701-20260726"
-          raise "isolated project number drift" unless env["GCP_PROJECT_NUMBER"] == "482116157386"
-          RUBY
-
-      - name: Verify shell syntax and isolated authority
+      - name: Verify permanent shell and isolated authority
         shell: bash
         run: |
           set -euo pipefail
           preflight=scripts/rc5/run-test-lab-isolated-preflight.sh
           managed=scripts/rc5/run-test-lab-isolated-managed.sh
           workflow=.github/workflows/firebase-test-lab-isolated.yml
-          bridge=.github/workflows/rc5-test-lab-isolated-preflight-once.yml
           bash -n "${preflight}"
           bash -n "${managed}"
-          grep -Fq 'direkt-testlab-502701-20260726' "${preflight}" "${managed}" "${workflow}" "${bridge}"
-          grep -Fq '482116157386' "${preflight}" "${managed}" "${workflow}" "${bridge}"
+          grep -Fq 'direkt-testlab-502701-20260726' "${preflight}" "${managed}" "${workflow}"
+          grep -Fq '482116157386' "${preflight}" "${managed}" "${workflow}"
           grep -Fq 'roles/editor' "${preflight}" "${managed}"
           grep -Fq 'deployer_roles' "${preflight}"
           grep -Fq 'roles/owner' "${preflight}" "${managed}"
@@ -149,25 +130,30 @@ jobs:
           ! grep -Fq 'gcloud storage' "${managed}"
           ! grep -Eq '(set-iam-policy|add-iam-policy-binding|services enable|buckets create|buckets update)' "${managed}"
 
-      - name: Verify preflight is read-only and exact
+      - name: Verify permanent preflight remains read-only
         shell: bash
         run: |
           set -euo pipefail
           preflight=scripts/rc5/run-test-lab-isolated-preflight.sh
-          bridge=.github/workflows/rc5-test-lab-isolated-preflight-once.yml
           grep -Fq 'MODE|isolated_spark_metadata_iam_catalog_only' "${preflight}"
           grep -Fq 'RESOURCE_MUTATION|false' "${preflight}"
           grep -Fq 'MATRIX_EXECUTED|false' "${preflight}"
           grep -Fq 'PARTICIPANT_DATA_ACCESSED|false' "${preflight}"
           grep -Fq 'PRODUCTION_AUTHORIZATION|false' "${preflight}"
-          grep -Fq 'test "${device_count}"' "${managed:-scripts/rc5/run-test-lab-isolated-managed.sh}"
           grep -Fq 'RESULT|ready' "${preflight}"
           grep -Fq 'FAILURE_COUNT|0' "${preflight}"
-          grep -Fq 'google-github-actions/auth@v3' "${bridge}"
-          ! grep -Fq 'firebase test android run' "${preflight}" "${bridge}"
-          ! grep -Fq 'gcloud storage' "${preflight}" "${bridge}"
-          ! grep -Eq '(set-iam-policy|add-iam-policy-binding|services enable|buckets create|buckets update)' "${preflight}" "${bridge}"
-          ! grep -Ei '(private_key|client_secret|access_token[[:space:]]*:)' "${workflow:-.github/workflows/firebase-test-lab-isolated.yml}" "${bridge}"
+          ! grep -Fq 'firebase test android run' "${preflight}"
+          ! grep -Fq 'gcloud storage' "${preflight}"
+          ! grep -Eq '(set-iam-policy|add-iam-policy-binding|services enable|buckets create|buckets update)' "${preflight}"
+
+      - name: Verify closure evidence and temporary bridges are absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/rc5/verify-test-lab-closure.py
+          test ! -e .github/workflows/rc5-test-lab-isolated-preflight-once.yml
+          test ! -e .github/workflows/rc5-test-lab-isolated-proof-once.yml
+          test ! -e .github/workflows/rc5-test-lab-isolated-proof-contract.yml
 
       - name: Publish contract summary
         shell: bash
@@ -178,9 +164,8 @@ jobs:
             echo '- Identity: existing GitHub WIF deployer, no key'
             echo '- Authority: roles/editor isolated to the Test Lab project; no owner'
             echo '- APK transport: local files through supported gcloud execution'
-            echo '- Matrix selector output and device-count assignment: separate physical lines'
             echo '- Results: Firebase-managed default bucket'
-            echo '- Matrix: exactly API 26, API 33 and current API 35/36'
-            echo '- Flaky retries: zero'
+            echo '- Matrix: API 26 / 33 / 36, zero flaky retries'
+            echo '- Managed closure: run `30183466799/1`'
             echo '- Participant/production authorization: false'
           } >> "${GITHUB_STEP_SUMMARY}"
