@@ -9,6 +9,7 @@ export type AiFallbackProviderMode = 'disabled' | 'groq';
 export type AiUseCaseMode = 'disabled' | 'synthetic';
 export type EmailProviderMode = 'disabled' | 'resend';
 export type WhatsAppProviderMode = 'disabled' | 'meta_cloud';
+export type GoogleMapsBackendMode = 'disabled' | 'google_maps';
 export type DirektTrafficMode = 'disabled' | 'internal' | 'synthetic-public' | 'controlled-pilot';
 export type DirektDataMode = 'synthetic-only' | 'controlled-pilot' | 'production';
 export type DirektDeploymentEnvironment =
@@ -83,6 +84,11 @@ export interface DirektEnvironment {
   WHATSAPP_SYNTHETIC_RECIPIENT?: string;
   WHATSAPP_SYNTHETIC_TEMPLATE_NAME?: string;
   WHATSAPP_SYNTHETIC_TEMPLATE_LANGUAGE: string;
+  GOOGLE_MAPS_BACKEND_MODE: GoogleMapsBackendMode;
+  GOOGLE_MAPS_SERVER_API_KEY?: string;
+  GOOGLE_MAPS_GEOCODING_ENDPOINT: string;
+  GOOGLE_MAPS_REQUEST_TIMEOUT_MS: number;
+  GOOGLE_MAPS_SYNTHETIC_CANARY_APPROVED: boolean;
 }
 
 const databaseUrlSchema = Joi.string().uri({ scheme: ['postgresql', 'postgres'] });
@@ -100,6 +106,7 @@ const whatsappAppSecret = Joi.string().trim().min(32).max(512);
 const whatsappRecipient = Joi.string().pattern(/^\+[1-9]\d{7,14}$/);
 const whatsappTemplateName = Joi.string().pattern(/^[a-z][a-z0-9_]{2,79}$/);
 const whatsappTemplateLanguage = Joi.string().pattern(/^[a-z]{2,3}(_[A-Z]{2})?$/);
+const googleMapsEndpoint = Joi.string().uri({ scheme: ['https'] });
 
 export const environmentSchema = Joi.object<DirektEnvironment>({
   NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
@@ -307,6 +314,24 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     otherwise: whatsappTemplateName.optional(),
   }),
   WHATSAPP_SYNTHETIC_TEMPLATE_LANGUAGE: whatsappTemplateLanguage.default('en_US'),
+  GOOGLE_MAPS_BACKEND_MODE: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.valid('disabled').default('disabled'),
+    otherwise: Joi.valid('disabled', 'google_maps').default('disabled'),
+  }),
+  GOOGLE_MAPS_SERVER_API_KEY: providerApiKey.when('GOOGLE_MAPS_BACKEND_MODE', {
+    is: 'google_maps',
+    then: providerApiKey.required(),
+    otherwise: providerApiKey.optional(),
+  }),
+  GOOGLE_MAPS_GEOCODING_ENDPOINT: googleMapsEndpoint.default(
+    'https://maps.googleapis.com/maps/api/geocode/json',
+  ),
+  GOOGLE_MAPS_REQUEST_TIMEOUT_MS: Joi.number().integer().min(1000).max(15000).default(5000),
+  GOOGLE_MAPS_SYNTHETIC_CANARY_APPROVED: Joi.boolean()
+    .truthy('true')
+    .falsy('false')
+    .default(false),
 }).custom((value: DirektEnvironment, helpers) => {
   if (
     value.EVIDENCE_STORAGE_PROVIDER === 'supabase' &&
@@ -337,6 +362,11 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     return helpers.message({
       custom:
         'Production WhatsApp provider mode must remain disabled until later provider/legal/privacy and release gates.',
+    });
+  }
+  if (value.NODE_ENV === 'production' && value.GOOGLE_MAPS_BACKEND_MODE !== 'disabled') {
+    return helpers.message({
+      custom: 'Production Google Maps backend mode must remain disabled until later participant and release gates.',
     });
   }
   if (value.AI_PROVIDER_MODE !== 'disabled' && value.DIREKT_DATA_MODE !== 'synthetic-only') {
@@ -387,6 +417,18 @@ export const environmentSchema = Joi.object<DirektEnvironment>({
     if (!value.WHATSAPP_SYNTHETIC_SEND_APPROVED) {
       return helpers.message({
         custom: 'WhatsApp provider activation requires the explicit synthetic-send approval latch.',
+      });
+    }
+  }
+  if (value.GOOGLE_MAPS_BACKEND_MODE !== 'disabled') {
+    if (value.DIREKT_DATA_MODE !== 'synthetic-only') {
+      return helpers.message({
+        custom: 'Google Maps backend activation currently permits synthetic-only data mode.',
+      });
+    }
+    if (!value.GOOGLE_MAPS_SYNTHETIC_CANARY_APPROVED) {
+      return helpers.message({
+        custom: 'Google Maps backend activation requires the explicit synthetic Maps approval latch.',
       });
     }
   }

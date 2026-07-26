@@ -21,6 +21,17 @@ fun strictBooleanProvider(name: String) =
 
 val crashlyticsBuildEnabled = strictBooleanProvider("DIREKT_CRASHLYTICS_BUILD_ENABLED").get()
 val crashlyticsCanaryEnabled = strictBooleanProvider("DIREKT_CRASHLYTICS_CANARY_ENABLED").get()
+val mapsBuildEnabled = strictBooleanProvider("DIREKT_MAPS_BUILD_ENABLED").get()
+val androidMapsApiKey = providers.gradleProperty("DIREKT_ANDROID_MAPS_API_KEY")
+    .orElse(providers.environmentVariable("DIREKT_ANDROID_MAPS_API_KEY"))
+    .orElse("")
+    .get()
+
+if (mapsBuildEnabled) {
+    require(androidMapsApiKey.length in 20..512) {
+        "DIREKT_MAPS_BUILD_ENABLED=true requires a protected DIREKT_ANDROID_MAPS_API_KEY"
+    }
+}
 
 if (crashlyticsBuildEnabled) {
     require(file("google-services.json").isFile) {
@@ -225,6 +236,9 @@ android {
         buildConfigField("boolean", "DIREKT_CRASHLYTICS_CANARY_ENABLED", crashlyticsCanaryEnabled.toString())
         buildConfigField("String", "DIREKT_CRASHLYTICS_SOURCE_SHA", quotedBuildConfig(crashlyticsSourceSha))
         buildConfigField("String", "DIREKT_CRASHLYTICS_DATA_MODE", quotedBuildConfig(crashlyticsDataMode))
+        buildConfigField("boolean", "DIREKT_MAPS_ENABLED", mapsBuildEnabled.toString())
+        manifestPlaceholders["direktMapsApiKey"] =
+            if (mapsBuildEnabled) androidMapsApiKey else "DIREKT_MAPS_DISABLED"
     }
 
     buildTypes {
@@ -304,6 +318,7 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.messaging)
+    implementation(libs.google.maps.compose)
 
     testImplementation(libs.junit)
 

@@ -97,4 +97,33 @@ class DiscoveryModelsTest {
         assertTrue(claims.all { it.validUntilLabel.startsWith("Current until") })
         assertTrue(claims.none { it.statement.equals("Verified provider", ignoreCase = true) })
     }
+
+
+    @Test
+    fun `mobile provider publishes a service area but never a base marker`() {
+        val mobile = syntheticDiscoveryProviders.first {
+            it.operatingModel == PublicOperatingModel.Mobile
+        }
+
+        assertTrue(mobile.serviceAreaPreview.radiusKm > 0)
+        assertNull(publicMapMarker(mobile))
+        assertFalse(mobile.containsPrivateCoordinates)
+    }
+
+    @Test
+    fun `fixed and hybrid map markers are consented public premises only`() {
+        val providers = syntheticDiscoveryProviders.filter {
+            it.operatingModel != PublicOperatingModel.Mobile
+        }
+
+        assertTrue(providers.all { publicMapMarker(it) == it.publicPremises })
+        assertTrue(providers.all { it.serviceAreaPreview.radiusKm > 0 })
+    }
+
+    @Test
+    fun `map failure preserves explicit manual and list fallback`() {
+        assertTrue(mapFallbackMessage(MapRuntimeState.Disabled).contains("shown below"))
+        assertTrue(mapFallbackMessage(MapRuntimeState.Failed).contains("remain available"))
+    }
+
 }
