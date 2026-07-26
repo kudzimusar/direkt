@@ -25,6 +25,7 @@ gcloud services enable \
   artifactregistry.googleapis.com \
   billingbudgets.googleapis.com \
   cloudbilling.googleapis.com \
+  cloudresourcemanager.googleapis.com \
   geocoding-backend.googleapis.com \
   maps-android-backend.googleapis.com \
   run.googleapis.com \
@@ -99,6 +100,12 @@ actual_budget_currency="$(gcloud billing budgets describe "${budget_name##*/}" \
   --billing-account "${billing_account}" \
   --format='value(amount.specifiedAmount.currencyCode)')"
 test "${actual_budget_currency}" = "${billing_currency}"
+budget_checked_at="$(date -u '+%Y%m%dt%H%M%Sz')"
+budget_currency_label="$(tr '[:upper:]' '[:lower:]' <<< "${billing_currency}")"
+[[ "${budget_currency_label}" =~ ^[a-z]{3}$ ]]
+gcloud projects update "${PROJECT_ID}" \
+  --update-labels "direkt-rc7-budget-checked-at=${budget_checked_at},direkt-rc7-budget-amount=1,direkt-rc7-budget-currency=${budget_currency_label}" \
+  --quiet >/dev/null
 
 gcloud alpha services quota list \
   --service geocoding-backend.googleapis.com \
@@ -145,6 +152,8 @@ printf 'runtime_service_usage_authority=temporary\n'
 printf 'budget_alert=%s\n' "${BUDGET_DISPLAY_NAME}"
 printf 'budget_amount=1\n'
 printf 'budget_currency=%s\n' "${billing_currency}"
+printf 'budget_attestation=project_labels\n'
+printf 'budget_checked_at=%s\n' "${budget_checked_at}"
 printf 'geocoding_quota_per_minute=60\n'
 printf 'temporary_authority_expires_at=%s\n' "${expires_at}"
 printf 'places_routes_enabled_by_rc7=false\n'

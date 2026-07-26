@@ -82,6 +82,7 @@ required_services=(
   artifactregistry.googleapis.com
   billingbudgets.googleapis.com
   cloudbilling.googleapis.com
+  cloudresourcemanager.googleapis.com
   geocoding-backend.googleapis.com
   maps-android-backend.googleapis.com
   run.googleapis.com
@@ -101,26 +102,36 @@ if grep -Eq '^(places(-backend)?|routes(-backend)?)\.googleapis\.com$' <<< "${en
   exit 1
 fi
 
-billing_account="$(gcloud billing projects describe "${GCP_PROJECT_ID}" \
-  --format='value(billingAccountName)' | sed 's#billingAccounts/##')"
-test -n "${billing_account}"
 budget_json="${RUNNER_TEMP}/rc7-maps-budget.json"
-gcloud billing budgets list \
-  --billing-account "${billing_account}" \
-  --filter='displayName="DIREKT RC7 Maps synthetic"' \
-  --limit 1 \
-  --format=json > "${budget_json}"
-jq -e '
-  length == 1 and
-  .[0].displayName == "DIREKT RC7 Maps synthetic" and
-  .[0].amount.specifiedAmount.units == "1"
-' "${budget_json}" >/dev/null
-budget_currency="$(jq -r '.[0].amount.specifiedAmount.currencyCode' "${budget_json}")"
-test -n "${budget_currency}"
+project_json="$(gcloud projects describe "${GCP_PROJECT_ID}" --format=json)"
+budget_checked_at="$(jq -r '.labels["direkt-rc7-budget-checked-at"] // empty' <<< "${project_json}")"
+budget_amount="$(jq -r '.labels["direkt-rc7-budget-amount"] // empty' <<< "${project_json}")"
+budget_currency_label="$(jq -r '.labels["direkt-rc7-budget-currency"] // empty' <<< "${project_json}")"
+[[ "${budget_checked_at}" =~ ^[0-9]{8}t[0-9]{6}z$ ]]
+test "${budget_amount}" = "1"
+[[ "${budget_currency_label}" =~ ^[a-z]{3}$ ]]
+python3 - "${budget_checked_at}" <<'PYBUDGET'
+from datetime import datetime, timezone
+import sys
+
+checked_at = datetime.strptime(sys.argv[1], "%Y%m%dt%H%M%Sz").replace(tzinfo=timezone.utc)
+age_seconds = (datetime.now(timezone.utc) - checked_at).total_seconds()
+if age_seconds < -300 or age_seconds > 8 * 60 * 60:
+    raise SystemExit("RC7 owner budget attestation is missing or stale.")
+PYBUDGET
+budget_currency="${budget_currency_label^^}"
+jq -n \
+  --arg checkedAt "${budget_checked_at}" \
+  --arg amount "${budget_amount}" \
+  --arg currency "${budget_currency}" \
+  '{attestation: "project_labels", checkedAt: $checkedAt, amount: $amount, currency: $currency}' \
+  > "${budget_json}"
 receipt "owner_bootstrap_verified=true"
+receipt "budget_attestation=project_labels"
+receipt "budget_checked_at=${budget_checked_at}"
 receipt "budget_alert_present=true"
 receipt "budget_display_name=DIREKT RC7 Maps synthetic"
-receipt "budget_amount=1"
+receipt "budget_amount=${budget_amount}"
 receipt "budget_currency=${budget_currency}"
 
 quota_json="${RUNNER_TEMP}/rc7-geocoding-quota.json"

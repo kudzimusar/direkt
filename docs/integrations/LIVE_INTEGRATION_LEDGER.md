@@ -302,7 +302,7 @@ Ledger updated: YES
 |---|---|---|
 | PostGIS | `ACTIVE` | Canonical spatial/service-area model. |
 | Manual area/list fallback | `ACTIVE` | Must remain available if map provider fails. |
-| Google Maps Platform | `IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS` | RC7 keeps the package/signing/API-restricted Android key, Maps Compose latch, bounded Zambia normalization, privacy-safe rendering and manual/list fallback. Backend Geocoding now uses v4 with the assigned Cloud Run service identity and a downscoped address-only OAuth token; backend API keys, Maps secret values, Direct VPC egress and Cloud NAT are prohibited. Budget/quota controls and exact-main managed proof remain pending. |
+| Google Maps Platform | `IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS` | RC7 keeps the restricted Android key, Maps Compose latch, bounded Zambia normalization, privacy-safe rendering and manual/list fallback. Backend Geocoding uses v4 service-identity OAuth; backend keys, Maps secrets, Direct VPC egress and Cloud NAT are prohibited. Exact-main run `30210742617/1` failed before runtime mutation because the deployer lacked billing-account budget-list permission. The pending correction uses a fresh owner-verified project-label budget attestation without granting CI a billing-account role. |
 | Private provider coordinates | `DISABLED FOR PUBLICATION` | Exact private bases must not become public markers/ranking inputs. |
 
 ## API/client contract tooling

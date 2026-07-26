@@ -42,6 +42,12 @@ RC7 now rejects that architecture permanently. The backend path contains:
 - no Cloud Router, Cloud NAT or static egress address;
 - no IP-based backend credential restriction.
 
+## Owner-budget attestation correction
+
+The first exact-main service-identity run, `30210742617/1` on `1c6acd7972caca838f27b4e5c4a521c92cbfc7c4`, failed before Android key mutation, image build, Cloud Run Job creation or Firebase Test Lab. The GitHub deployer correctly lacked `billing.budgets.list` on the owner billing account.
+
+RC7 does not broaden CI to billing-account viewer. The owner bootstrap directly verifies the real one-unit budget and then writes non-secret project labels for verified amount, currency and UTC check time. The exact-main proof reads only those project labels, rejects an attestation older than eight hours, and permanently prohibits managed `gcloud billing budgets` access.
+
 ## Credential and authentication boundary
 
 Android and backend authentication remain separate:

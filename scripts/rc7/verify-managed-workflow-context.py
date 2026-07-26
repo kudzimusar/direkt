@@ -146,8 +146,16 @@ def main() -> int:
         (r"gcloud\s+secrets", "Backend Maps secret mutation must not return."),
         (r"--set-secrets", "Backend secret binding must not return."),
         (r"--vpc-egress", "Forced VPC egress must not return."),
+        (r"gcloud\s+billing\s+budgets", "Managed CI must not require billing-account budget access."),
     ):
         prohibit(managed_script, pattern, message)
+
+    for marker in (
+        "direkt-rc7-budget-checked-at",
+        "budget_attestation=project_labels",
+        "RC7 owner budget attestation is missing or stale.",
+    ):
+        require_present(managed_script, marker, "Fresh owner budget attestation drifted.")
 
     failure_artifact = "${{ runner.temp }}/rc7-maps-canary-failure.json"
     require_once(workflow, failure_artifact, "RC7 must upload the sanitized canary failure artifact.")
