@@ -5,7 +5,7 @@ import {
 } from './geocoding-provider.port';
 
 export class DisabledGeocodingProviderAdapter implements GeocodingProviderPort {
-  normalizeSearchArea(_address: string): Promise<NormalizedSearchArea> {
+  normalizeSearchArea(): Promise<NormalizedSearchArea> {
     return Promise.reject(
       new GeocodingProviderError(
         'disabled',
