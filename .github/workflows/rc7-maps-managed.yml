@@ -1,0 +1,171 @@
+name: DIREKT RC7 managed Google Maps proof
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-maps-managed.yml"
+      - "scripts/rc7/run-maps-managed.sh"
+      - "scripts/rc7/verify-maps-contract.py"
+      - "android/direkt-app/app/src/androidTest/java/com/kudzimusar/direkt/Rc7MapsRuntimeTest.kt"
+      - "docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/rc7-maps-managed.yml"
+      - "scripts/rc7/run-maps-managed.sh"
+      - "android/direkt-app/app/src/androidTest/java/com/kudzimusar/direkt/Rc7MapsRuntimeTest.kt"
+      - "docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md"
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN-DIREKT-RC7-MAPS-MANAGED
+        required: true
+        type: string
+      source_sha:
+        description: Exact reviewed commit that must equal current main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-rc7-maps-managed
+  cancel-in-progress: false
+
+jobs:
+  contract:
+    name: Verify managed Maps workflow contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Verify permanent RC7 source and managed controls
+        run: |
+          python3 scripts/rc7/verify-maps-contract.py
+          bash -n scripts/rc7/run-maps-managed.sh
+          grep -Fq 'RUN-DIREKT-RC7-MAPS-MANAGED' docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md
+          grep -Fq 'DIREKT RC7 managed Google Maps proof' .github/workflows/rc7-maps-managed.yml
+
+  managed:
+    name: Provision and prove privacy-safe Maps runtime
+    if: github.event_name != 'pull_request'
+    needs: contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    environment: staging
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_PROJECT_NUMBER: "264358173369"
+      GCP_REGION: asia-northeast1
+      GCP_ARTIFACT_REGISTRY: direkt-containers
+      GCP_RUNTIME_SERVICE_ACCOUNT: direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      TESTLAB_PROJECT_ID: direkt-testlab-502701-20260726
+      DIREKT_GRADLE_VERSION: "9.4.0"
+      RC7_RECEIPT_PATH: ${{ runner.temp }}/rc7-maps-managed-receipt.txt
+    steps:
+      - name: Resolve exact-main execution inputs
+        id: controls
+        shell: bash
+        env:
+          DISPATCH_CONFIRMATION: ${{ inputs.confirmation }}
+          DISPATCH_SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]]; then
+            test "${DISPATCH_CONFIRMATION}" = "RUN-DIREKT-RC7-MAPS-MANAGED"
+            [[ "${DISPATCH_SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
+            echo "source_sha=${DISPATCH_SOURCE_SHA}" >> "${GITHUB_OUTPUT}"
+          else
+            grep -Fxq 'STATUS=ARMED' docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md
+            grep -Fxq 'CONFIRMATION=RUN-DIREKT-RC7-MAPS-MANAGED' docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md
+            echo "source_sha=${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Check out exact reviewed source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.controls.outputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify exact source equals current main
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ steps.controls.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
+          git fetch origin main --no-tags
+          test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"
+          python3 scripts/rc7/verify-maps-contract.py
+          bash -n scripts/rc7/run-maps-managed.sh
+          echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Configure pinned Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ env.DIREKT_GRADLE_VERSION }}
+
+      - name: Authenticate through existing GitHub WIF
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Execute bounded managed proof
+        shell: bash
+        run: bash scripts/rc7/run-maps-managed.sh
+
+      - name: Upload sanitized RC7 managed evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc7-maps-managed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/rc7-maps-managed-receipt.txt
+            ${{ runner.temp }}/rc7-android-key-metadata.json
+            ${{ runner.temp }}/rc7-backend-key-metadata.json
+            ${{ runner.temp }}/rc7-geocoding-quota.json
+            ${{ runner.temp }}/rc7-maps-execution.json
+            ${{ runner.temp }}/rc7-maps-test-lab.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Publish managed proof summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '### DIREKT RC7 managed Google Maps proof'
+            echo "- Exact current main: \`${SOURCE_SHA}\`"
+            echo '- Android key: package + SHA-1 restricted; Maps SDK for Android only'
+            echo '- Backend key: temporary static-IP restricted; Geocoding API only'
+            echo '- Backend proof: private Cloud Run Job through Direct VPC egress and Cloud NAT'
+            echo '- Android proof: one API 36 Firebase Test Lab instrumentation run, zero flaky retries'
+            echo '- Cost controls: project budget alert plus Geocoding per-minute quota override'
+            echo '- Places / Routes: not enabled by RC7'
+            echo '- Private provider coordinates: not published or logged'
+            echo '- Participant / production authorization: false'
+            echo '- Temporary backend key, secret version, Cloud Run Job, NAT, router and static IP: cleanup enforced'
+          } >> "${GITHUB_STEP_SUMMARY}"
