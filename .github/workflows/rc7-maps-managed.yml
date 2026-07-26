@@ -86,8 +86,6 @@ jobs:
             [[ "${DISPATCH_SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
             echo "source_sha=${DISPATCH_SOURCE_SHA}" >> "${GITHUB_OUTPUT}"
           else
-            grep -Fxq 'STATUS=ARMED' docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md
-            grep -Fxq 'CONFIRMATION=RUN-DIREKT-RC7-MAPS-MANAGED' docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md
             echo "source_sha=${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
           fi
 
@@ -97,7 +95,7 @@ jobs:
           ref: ${{ steps.controls.outputs.source_sha }}
           fetch-depth: 0
 
-      - name: Verify exact source equals current main
+      - name: Verify exact source equals current main and trigger is armed
         shell: bash
         env:
           SOURCE_SHA: ${{ steps.controls.outputs.source_sha }}
@@ -106,6 +104,8 @@ jobs:
           test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
           git fetch origin main --no-tags
           test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"
+          grep -Fxq 'STATUS=ARMED' docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md
+          grep -Fxq 'CONFIRMATION=RUN-DIREKT-RC7-MAPS-MANAGED' docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md
           python3 scripts/rc7/verify-maps-contract.py
           bash -n scripts/rc7/run-maps-managed.sh
           echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
@@ -158,7 +158,7 @@ jobs:
         run: |
           {
             echo '### DIREKT RC7 managed Google Maps proof'
-            echo "- Exact current main: \`${SOURCE_SHA}\`"
+            echo "- Exact current main: \`${SOURCE_SHA:-not-resolved}\`"
             echo '- Android key: package + SHA-1 restricted; Maps SDK for Android only'
             echo '- Backend key: temporary static-IP restricted; Geocoding API only'
             echo '- Backend proof: private Cloud Run Job through Direct VPC egress and Cloud NAT'
