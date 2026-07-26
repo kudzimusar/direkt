@@ -1,0 +1,68 @@
+name: DIREKT RC7 apply API-key create syntax fix
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-apply-api-key-create-fix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    name: Patch exact RC7 create calls on isolated fix branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TARGET_BRANCH: fix/rc7-api-key-create-location
+      TARGET_PATH: scripts/rc7/run-maps-managed.sh
+      EXPECTED_BLOB_SHA: 68376319f6193cb142ff480539d8000dbc2b383f
+    steps:
+      - name: Replace only unsupported create-location arguments
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          source_json="${RUNNER_TEMP}/source.json"
+          source_file="${RUNNER_TEMP}/run-maps-managed.sh"
+          updated_file="${RUNNER_TEMP}/run-maps-managed.updated.sh"
+          payload="${RUNNER_TEMP}/payload.json"
+
+          gh api \
+            "repos/${GITHUB_REPOSITORY}/contents/${TARGET_PATH}?ref=${TARGET_BRANCH}" \
+            > "${source_json}"
+          test "$(jq -r '.sha' "${source_json}")" = "${EXPECTED_BLOB_SHA}"
+          jq -r '.content' "${source_json}" | tr -d '\n' | base64 --decode > "${source_file}"
+
+          python3 - "${source_file}" "${updated_file}" <<'PY'
+          from pathlib import Path
+          import sys
+
+          source = Path(sys.argv[1]).read_text(encoding="utf-8")
+          needle = '    --location global \\\n    --key-id'
+          replacement = '    --key-id'
+          count = source.count(needle)
+          if count != 2:
+              raise SystemExit(f"Expected exactly two create-location arguments, found {count}")
+          updated = source.replace(needle, replacement)
+          if updated.count('gcloud services api-keys create \\\n') != 2:
+              raise SystemExit("Expected exactly two API-key create commands")
+          if updated.count('gcloud services api-keys describe') < 2:
+              raise SystemExit("Describe commands were unexpectedly altered")
+          Path(sys.argv[2]).write_text(updated, encoding="utf-8")
+          PY
+
+          bash -n "${updated_file}"
+          encoded="$(base64 -w 0 "${updated_file}")"
+          jq -n \
+            --arg message 'fix(rc7): align API-key create syntax with gcloud 568' \
+            --arg content "${encoded}" \
+            --arg sha "${EXPECTED_BLOB_SHA}" \
+            --arg branch "${TARGET_BRANCH}" \
+            '{message: $message, content: $content, sha: $sha, branch: $branch}' \
+            > "${payload}"
+          gh api --method PUT \
+            "repos/${GITHUB_REPOSITORY}/contents/${TARGET_PATH}" \
+            --input "${payload}" \
+            | jq '{commitSha: .commit.sha, contentSha: .content.sha}'
