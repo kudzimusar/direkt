@@ -5,11 +5,17 @@ import {
   type NormalizedSearchArea,
 } from './geocoding-provider.port';
 
+interface GoogleAddressComponent {
+  shortText?: string;
+  types?: string[];
+}
+
 interface GoogleGeocodingResult {
   formattedAddress?: string;
   postalAddress?: {
     regionCode?: string;
   };
+  addressComponents?: GoogleAddressComponent[];
   location?: {
     latitude?: number;
     longitude?: number;
@@ -38,7 +44,7 @@ const DEFAULT_METADATA_TOKEN_ENDPOINT =
   'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token';
 const DEFAULT_GEOCODING_ENDPOINT = 'https://geocode.googleapis.com/v4/geocode/address';
 const FIELD_MASK =
-  'results.location,results.granularity,results.formattedAddress,results.postalAddress.regionCode';
+  'results.location,results.granularity,results.formattedAddress,results.postalAddress.regionCode,results.addressComponents.shortText,results.addressComponents.types';
 
 const ZAMBIA_BOUNDS = {
   minLatitude: -18.2,
@@ -222,54 +228,83 @@ export class GoogleMapsGeocodingProviderAdapter implements GeocodingProviderPort
       );
     }
 
-    const result = payload.results?.[0];
-    if (!result) {
+    const results = payload.results ?? [];
+    if (results.length === 0) {
       throw new GeocodingProviderError('not_found', 'No matching Zambian search area was found.');
     }
 
-    const latitude = result.location?.latitude;
-    const longitude = result.location?.longitude;
-    const formattedArea = result.formattedAddress?.trim();
-    const countryCode = result.postalAddress?.regionCode?.toUpperCase();
-    const precision = PRECISION[result.granularity ?? ''];
+    let sawStructurallyValidCandidate = false;
+    let selected:
+      | {
+          formattedArea: string;
+          latitude: number;
+          longitude: number;
+          precision: GeocodingPrecision;
+        }
+      | undefined;
 
-    if (
-      typeof latitude !== 'number' ||
-      !Number.isFinite(latitude) ||
-      typeof longitude !== 'number' ||
-      !Number.isFinite(longitude) ||
-      !formattedArea ||
-      formattedArea.length > 240 ||
-      !precision
-    ) {
+    for (const result of results) {
+      const latitude = result.location?.latitude;
+      const longitude = result.location?.longitude;
+      const formattedArea = result.formattedAddress?.trim();
+      const precision = PRECISION[result.granularity ?? ''];
+
+      if (
+        typeof latitude !== 'number' ||
+        !Number.isFinite(latitude) ||
+        typeof longitude !== 'number' ||
+        !Number.isFinite(longitude) ||
+        !formattedArea ||
+        formattedArea.length > 240 ||
+        !precision
+      ) {
+        continue;
+      }
+
+      sawStructurallyValidCandidate = true;
+      const countryCode =
+        result.postalAddress?.regionCode?.trim().toUpperCase() ??
+        result.addressComponents
+          ?.find((component) => component.types?.includes('country'))
+          ?.shortText?.trim()
+          .toUpperCase();
+      const insideZambia =
+        countryCode === 'ZM' &&
+        latitude >= ZAMBIA_BOUNDS.minLatitude &&
+        latitude <= ZAMBIA_BOUNDS.maxLatitude &&
+        longitude >= ZAMBIA_BOUNDS.minLongitude &&
+        longitude <= ZAMBIA_BOUNDS.maxLongitude;
+
+      if (!insideZambia) {
+        continue;
+      }
+
+      selected = { formattedArea, latitude, longitude, precision };
+      break;
+    }
+
+    if (!selected) {
+      if (sawStructurallyValidCandidate) {
+        throw new GeocodingProviderError(
+          'outside_zambia',
+          'The normalized search area is outside Zambia.',
+        );
+      }
       throw new GeocodingProviderError(
         'invalid_provider_response',
         'Google Maps Geocoding omitted required bounded fields.',
       );
     }
 
-    const insideZambia =
-      countryCode === 'ZM' &&
-      latitude >= ZAMBIA_BOUNDS.minLatitude &&
-      latitude <= ZAMBIA_BOUNDS.maxLatitude &&
-      longitude >= ZAMBIA_BOUNDS.minLongitude &&
-      longitude <= ZAMBIA_BOUNDS.maxLongitude;
-    if (!insideZambia) {
-      throw new GeocodingProviderError(
-        'outside_zambia',
-        'The normalized search area is outside Zambia.',
-      );
-    }
-
     return {
       provider: 'google_maps',
-      formattedArea,
+      formattedArea: selected.formattedArea,
       countryCode: 'ZM',
       point: {
-        latitude: Number(latitude.toFixed(5)),
-        longitude: Number(longitude.toFixed(5)),
+        latitude: Number(selected.latitude.toFixed(5)),
+        longitude: Number(selected.longitude.toFixed(5)),
       },
-      precision,
+      precision: selected.precision,
       privateLocationPublished: false,
       persistedByAdapter: false,
     };

@@ -110,11 +110,84 @@ describe('GoogleMapsGeocodingProviderAdapter', () => {
     const headers = new Headers(request.init?.headers);
     expect(headers.get('Authorization')).toBe(`Bearer ${ACCESS_TOKEN}`);
     expect(headers.get('X-Goog-FieldMask')).toBe(
-      'results.location,results.granularity,results.formattedAddress,results.postalAddress.regionCode',
+      'results.location,results.granularity,results.formattedAddress,results.postalAddress.regionCode,results.addressComponents.shortText,results.addressComponents.types',
     );
   });
 
-  it('rejects a provider result outside Zambia', async () => {
+  it('selects the first independently bounded Zambian candidate instead of trusting result zero', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          results: [
+            {
+              formattedAddress: 'Cairo Road outside Zambia',
+              postalAddress: { regionCode: 'ZW' },
+              location: { latitude: -17.8, longitude: 31.0 },
+              granularity: 'APPROXIMATE',
+            },
+            {
+              formattedAddress: 'Cairo Road, Lusaka, Zambia',
+              postalAddress: { regionCode: 'ZM' },
+              location: { latitude: -15.4167, longitude: 28.2833 },
+              granularity: 'GEOMETRIC_CENTER',
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+    const adapter = new GoogleMapsGeocodingProviderAdapter(
+      tokenProvider(),
+      1_000,
+      undefined,
+      fetchMock,
+    );
+
+    await expect(adapter.normalizeSearchArea('Cairo Road, Lusaka, Zambia')).resolves.toEqual({
+      provider: 'google_maps',
+      formattedArea: 'Cairo Road, Lusaka, Zambia',
+      countryCode: 'ZM',
+      point: { latitude: -15.4167, longitude: 28.2833 },
+      precision: 'geometric_center',
+      privateLocationPublished: false,
+      persistedByAdapter: false,
+    });
+  });
+
+  it('uses the country address component when postalAddress regionCode is omitted', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          results: [
+            {
+              formattedAddress: 'Lusaka, Zambia',
+              addressComponents: [
+                { shortText: 'Lusaka', types: ['locality', 'political'] },
+                { shortText: 'ZM', types: ['country', 'political'] },
+              ],
+              location: { latitude: -15.3875, longitude: 28.3228 },
+              granularity: 'APPROXIMATE',
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+    const adapter = new GoogleMapsGeocodingProviderAdapter(
+      tokenProvider(),
+      1_000,
+      undefined,
+      fetchMock,
+    );
+
+    await expect(adapter.normalizeSearchArea('Lusaka')).resolves.toMatchObject({
+      countryCode: 'ZM',
+      formattedArea: 'Lusaka, Zambia',
+      point: { latitude: -15.3875, longitude: 28.3228 },
+    });
+  });
+
+  it('rejects provider candidates outside Zambia', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -123,6 +196,12 @@ describe('GoogleMapsGeocodingProviderAdapter', () => {
               formattedAddress: 'Outside result',
               postalAddress: { regionCode: 'ZW' },
               location: { latitude: -17.8, longitude: 31.0 },
+              granularity: 'APPROXIMATE',
+            },
+            {
+              formattedAddress: 'Second outside result',
+              postalAddress: { regionCode: 'MW' },
+              location: { latitude: -13.9, longitude: 33.8 },
               granularity: 'APPROXIMATE',
             },
           ],
@@ -139,6 +218,33 @@ describe('GoogleMapsGeocodingProviderAdapter', () => {
 
     await expect(adapter.normalizeSearchArea('Outside')).rejects.toMatchObject({
       code: 'outside_zambia',
+    });
+  });
+
+  it('rejects a successful response containing only malformed candidates', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          results: [
+            {
+              formattedAddress: 'Missing coordinates',
+              postalAddress: { regionCode: 'ZM' },
+              granularity: 'APPROXIMATE',
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+    const adapter = new GoogleMapsGeocodingProviderAdapter(
+      tokenProvider(),
+      1_000,
+      undefined,
+      fetchMock,
+    );
+
+    await expect(adapter.normalizeSearchArea('Lusaka')).rejects.toMatchObject({
+      code: 'invalid_provider_response',
     });
   });
 

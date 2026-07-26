@@ -40,6 +40,9 @@ def main() -> int:
     status = read("docs/integrations/CURRENT_INTEGRATION_STATUS.md")
     ledger = read("docs/integrations/LIVE_INTEGRATION_LEDGER.md")
     adapter = read("backend/direkt-api/src/location/google-maps-geocoding-provider.adapter.ts")
+    adapter_test = read(
+        "backend/direkt-api/test/unit/location/google-maps-geocoding-provider.adapter.spec.ts"
+    )
     canary = read("backend/direkt-api/src/location/maps-canary.ts")
     manifest = read("android/direkt-app/app/src/main/AndroidManifest.xml")
     build = read("android/direkt-app/app/build.gradle.kts")
@@ -114,6 +117,10 @@ def main() -> int:
         "Authorization: `Bearer ${accessToken}`",
         "X-Goog-FieldMask",
         "regionCode",
+        "addressComponents",
+        "for (const result of results)",
+        "component.types?.includes('country')",
+        "sawStructurallyValidCandidate",
         "ZAMBIA_BOUNDS",
         "privateLocationPublished: false",
         "persistedByAdapter: false",
@@ -125,6 +132,13 @@ def main() -> int:
     prohibit(adapter, r"maps\.googleapis\.com/maps/api/geocode", "legacy Geocoding v3 endpoint")
     prohibit(adapter, r"searchParams\.set\(['\"]key", "backend API key query parameter")
     prohibit(adapter, r"console\.(log|error|warn)", "raw Geocoding response logging")
+    for needle in (
+        "selects the first independently bounded Zambian candidate",
+        "uses the country address component",
+        "rejects provider candidates outside Zambia",
+        "rejects a successful response containing only malformed candidates",
+    ):
+        require(adapter_test, needle, "bounded ranked-candidate regression coverage")
 
     for needle in (
         "RC7_MAPS_CANARY|PASS",
