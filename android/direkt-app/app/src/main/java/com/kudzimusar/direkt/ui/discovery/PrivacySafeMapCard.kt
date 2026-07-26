@@ -136,12 +136,14 @@ fun PrivacySafeMapCard(providers: List<SyntheticPublicProvider>) {
                         }
                     }
                 }
-                Text(
-                    "Map loaded. List view remains the accessible and low-bandwidth equivalent.",
-                    modifier = Modifier.testTag("discovery-map-ready"),
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.SemiBold,
-                )
+                if (runtimeState == MapRuntimeState.Ready) {
+                    Text(
+                        "Map loaded. List view remains the accessible and low-bandwidth equivalent.",
+                        modifier = Modifier.testTag("discovery-map-ready"),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
                 PublicMapTextEquivalent(providers)
             }
         }

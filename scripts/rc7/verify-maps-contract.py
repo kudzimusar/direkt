@@ -31,6 +31,12 @@ def main() -> int:
     environment = read("backend/direkt-api/src/config/environment.ts")
     env_example = read("backend/direkt-api/.env.example")
     module = read("backend/direkt-api/src/location/location.module.ts")
+    service = read("backend/direkt-api/src/location/location.service.ts")
+    discovery_module = read("backend/direkt-api/src/discovery/discovery.module.ts")
+    discovery_controller = read("backend/direkt-api/src/discovery/discovery.controller.ts")
+    discovery_dto = read("backend/direkt-api/src/discovery/discovery.dto.ts")
+    status = read("docs/integrations/CURRENT_INTEGRATION_STATUS.md")
+    ledger = read("docs/integrations/LIVE_INTEGRATION_LEDGER.md")
     adapter = read("backend/direkt-api/src/location/google-maps-geocoding-provider.adapter.ts")
     canary = read("backend/direkt-api/src/location/maps-canary.ts")
     manifest = read("android/direkt-app/app/src/main/AndroidManifest.xml")
@@ -61,6 +67,19 @@ def main() -> int:
     require(env_example, "GOOGLE_MAPS_BACKEND_MODE=disabled", "default-disabled Maps backend")
     require(module, "DisabledGeocodingProviderAdapter", "disabled provider adapter")
     require(module, "GoogleMapsGeocodingProviderAdapter", "Google provider adapter")
+    for needle in (
+        "LocationModule",
+        "LocationService",
+        "public/discovery/search-area/normalize",
+        "NormalizeSearchAreaDto",
+        "manualFallbackAvailable: true",
+        "privateLocationPublished: false",
+    ):
+        require(
+            discovery_module + discovery_controller + discovery_dto + service,
+            needle,
+            "reachable sanitized discovery-normalization boundary",
+        )
 
     for needle in (
         "components', 'country:ZM'",
@@ -83,6 +102,8 @@ def main() -> int:
 
     for needle in (
         "DIREKT_MAPS_BUILD_ENABLED",
+        "DIREKT_MAPS_SYNTHETIC_CANARY_APPROVED",
+        "RC7 Maps activation is allowed only in preauthorization builds",
         "DIREKT_ANDROID_MAPS_API_KEY",
         "DIREKT_MAPS_ENABLED",
         "direktMapsApiKey",
@@ -96,6 +117,7 @@ def main() -> int:
     for needle in (
         "BuildConfig.DIREKT_MAPS_ENABLED",
         "MapRuntimeState.Failed",
+        "runtimeState == MapRuntimeState.Ready",
         "discovery-map-fallback",
         "publicMapMarker(provider)",
         "serviceAreaPreview",
@@ -104,6 +126,8 @@ def main() -> int:
     ):
         require(map_card + models, needle, "privacy-safe Android map behavior")
     require(models, "provider.operatingModel == PublicOperatingModel.Mobile -> null", "mobile base-marker prohibition")
+    require(status, "IMPLEMENTED_GATED / MANAGED PROOF IN PROGRESS", "current Maps integration state")
+    require(ledger, "IMPLEMENTED_GATED / MANAGED PROOF IN PROGRESS", "live Maps ledger state")
 
     for client_root in ("android", "web", "admin"):
         for path in (ROOT / client_root).rglob("*"):

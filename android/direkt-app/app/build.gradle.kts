@@ -22,16 +22,12 @@ fun strictBooleanProvider(name: String) =
 val crashlyticsBuildEnabled = strictBooleanProvider("DIREKT_CRASHLYTICS_BUILD_ENABLED").get()
 val crashlyticsCanaryEnabled = strictBooleanProvider("DIREKT_CRASHLYTICS_CANARY_ENABLED").get()
 val mapsBuildEnabled = strictBooleanProvider("DIREKT_MAPS_BUILD_ENABLED").get()
+val mapsSyntheticCanaryApproved =
+    strictBooleanProvider("DIREKT_MAPS_SYNTHETIC_CANARY_APPROVED").get()
 val androidMapsApiKey = providers.gradleProperty("DIREKT_ANDROID_MAPS_API_KEY")
     .orElse(providers.environmentVariable("DIREKT_ANDROID_MAPS_API_KEY"))
     .orElse("")
     .get()
-
-if (mapsBuildEnabled) {
-    require(androidMapsApiKey.length in 20..512) {
-        "DIREKT_MAPS_BUILD_ENABLED=true requires a protected DIREKT_ANDROID_MAPS_API_KEY"
-    }
-}
 
 if (crashlyticsBuildEnabled) {
     require(file("google-services.json").isFile) {
@@ -101,6 +97,21 @@ require(releaseChannel != "release-candidate" || "rc" in releaseVersionName) {
 }
 require(releaseChannel != "production" || ("preauth" !in releaseVersionName && "rc" !in releaseVersionName)) {
     "Production builds must not carry preauthorization or release-candidate labels"
+}
+
+if (mapsBuildEnabled) {
+    require(releaseChannel == "preauthorization") {
+        "RC7 Maps activation is allowed only in preauthorization builds"
+    }
+    require(mapsSyntheticCanaryApproved) {
+        "DIREKT_MAPS_BUILD_ENABLED=true requires DIREKT_MAPS_SYNTHETIC_CANARY_APPROVED=true"
+    }
+    require(androidMapsApiKey.length in 20..512) {
+        "DIREKT_MAPS_BUILD_ENABLED=true requires a protected DIREKT_ANDROID_MAPS_API_KEY"
+    }
+}
+require(!mapsSyntheticCanaryApproved || mapsBuildEnabled) {
+    "DIREKT_MAPS_SYNTHETIC_CANARY_APPROVED=true requires DIREKT_MAPS_BUILD_ENABLED=true"
 }
 
 val releaseSigningEnabled = providers.environmentVariable("DIREKT_RELEASE_SIGNING_ENABLED")
@@ -237,6 +248,11 @@ android {
         buildConfigField("String", "DIREKT_CRASHLYTICS_SOURCE_SHA", quotedBuildConfig(crashlyticsSourceSha))
         buildConfigField("String", "DIREKT_CRASHLYTICS_DATA_MODE", quotedBuildConfig(crashlyticsDataMode))
         buildConfigField("boolean", "DIREKT_MAPS_ENABLED", mapsBuildEnabled.toString())
+        buildConfigField(
+            "boolean",
+            "DIREKT_MAPS_SYNTHETIC_CANARY_APPROVED",
+            mapsSyntheticCanaryApproved.toString(),
+        )
         manifestPlaceholders["direktMapsApiKey"] =
             if (mapsBuildEnabled) androidMapsApiKey else "DIREKT_MAPS_DISABLED"
     }
