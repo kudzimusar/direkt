@@ -156,7 +156,7 @@ def main() -> int:
 
     for needle in (
         "direkt-rc7-android-maps",
-        "direkt-rc7-backend-geocoding",
+        "direkt-rc7-backend-${GITHUB_RUN_ID",
         "--allowed-application",
         "package_name=${ANDROID_PACKAGE}",
         "--allowed-ips",
@@ -172,15 +172,21 @@ def main() -> int:
         "RC7_MAPS_CANARY|PASS",
         "MediumPhone.arm,version=36",
         "--num-flaky-test-attempts 0",
-        "cleanup.backend_api_key_deleted=true",
-        "cleanup.backend_secret_version_destroyed=true",
-        "cleanup.cloud_nat_deleted=true",
-        "cleanup.static_ip_released=true",
+        "cleanup_record backend_api_key_deleted",
+        "cleanup_record backend_secret_version_destroyed",
+        "cleanup_record cloud_nat_deleted",
+        "cleanup_record static_ip_released",
+        "cleanup_failed=${cleanup_failed}",
         "production_authorization=false",
         "private_provider_coordinates_published=false",
     ):
         require(managed_script, needle, "least-privilege managed Maps proof")
     prohibit(managed_script, r"set\s+-[^\n]*x", "shell trace that could expose key material")
+    prohibit(
+        managed_script,
+        r"networks\s+subnets\s+add-iam-policy-binding",
+        "unnecessary persistent subnet IAM mutation",
+    )
     prohibit(managed_workflow, r"rc7-(android|backend)-key\.txt", "API key value artifact upload")
     prohibit(managed_script, r"echo[^\n]*(keyString|GOOGLE_MAPS_SERVER_API_KEY|DIREKT_ANDROID_MAPS_API_KEY)", "API key value logging")
 

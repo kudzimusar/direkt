@@ -16,7 +16,7 @@ SUBNET_RANGE="10.27.0.0/26"
 ROUTER="direkt-maps-router"
 NAT="direkt-maps-nat"
 ADDRESS="direkt-maps-egress-ip"
-BACKEND_KEY_ID="direkt-rc7-backend-geocoding"
+BACKEND_KEY_ID="direkt-rc7-backend-${GITHUB_RUN_ID:-manual}-${GITHUB_RUN_ATTEMPT:-1}"
 ANDROID_KEY_ID="direkt-rc7-android-maps"
 BACKEND_SECRET="direkt-google-maps-geocoding-api-key"
 CANARY_JOB="direkt-maps-canary"
@@ -40,35 +40,48 @@ receipt() {
 
 cleanup() {
   local exit_code=$?
+  local cleanup_failed=false
   trap - EXIT
   set +e
 
+  cleanup_record() {
+    local label="$1"
+    shift
+    if "$@" >/dev/null 2>&1; then
+      receipt "cleanup.${label}=true"
+    else
+      receipt "cleanup.${label}=false"
+      cleanup_failed=true
+    fi
+  }
+
   if ${CANARY_JOB_PRESENT}; then
-    gcloud run jobs delete "${CANARY_JOB}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --quiet >/dev/null 2>&1
-    receipt "cleanup.cloud_run_job_deleted=true"
+    cleanup_record cloud_run_job_deleted       gcloud run jobs delete "${CANARY_JOB}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --quiet
   fi
   if [[ -n "${BACKEND_SECRET_VERSION}" ]]; then
-    gcloud secrets versions destroy "${BACKEND_SECRET_VERSION}" --secret "${BACKEND_SECRET}" --project "${GCP_PROJECT_ID}" --quiet >/dev/null 2>&1
-    receipt "cleanup.backend_secret_version_destroyed=true"
+    cleanup_record backend_secret_version_destroyed       gcloud secrets versions destroy "${BACKEND_SECRET_VERSION}" --secret "${BACKEND_SECRET}" --project "${GCP_PROJECT_ID}" --quiet
   fi
   if ${BACKEND_KEY_PRESENT}; then
-    gcloud services api-keys delete "${BACKEND_KEY_ID}" --project "${GCP_PROJECT_ID}" --location global --quiet >/dev/null 2>&1
-    receipt "cleanup.backend_api_key_deleted=true"
+    cleanup_record backend_api_key_deleted       gcloud services api-keys delete "${BACKEND_KEY_ID}" --project "${GCP_PROJECT_ID}" --location global --quiet
   fi
   if ${NAT_PRESENT}; then
-    gcloud compute routers nats delete "${NAT}" --router "${ROUTER}" --region "${GCP_REGION}" --project "${GCP_PROJECT_ID}" --quiet >/dev/null 2>&1
-    receipt "cleanup.cloud_nat_deleted=true"
+    cleanup_record cloud_nat_deleted       gcloud compute routers nats delete "${NAT}" --router "${ROUTER}" --region "${GCP_REGION}" --project "${GCP_PROJECT_ID}" --quiet
   fi
   if ${ROUTER_PRESENT}; then
-    gcloud compute routers delete "${ROUTER}" --region "${GCP_REGION}" --project "${GCP_PROJECT_ID}" --quiet >/dev/null 2>&1
-    receipt "cleanup.cloud_router_deleted=true"
+    cleanup_record cloud_router_deleted       gcloud compute routers delete "${ROUTER}" --region "${GCP_REGION}" --project "${GCP_PROJECT_ID}" --quiet
   fi
   if ${ADDRESS_PRESENT}; then
-    gcloud compute addresses delete "${ADDRESS}" --region "${GCP_REGION}" --project "${GCP_PROJECT_ID}" --quiet >/dev/null 2>&1
-    receipt "cleanup.static_ip_released=true"
+    cleanup_record static_ip_released       gcloud compute addresses delete "${ADDRESS}" --region "${GCP_REGION}" --project "${GCP_PROJECT_ID}" --quiet
   fi
   rm -f "${RUNNER_TEMP}/rc7-android-key.txt" "${RUNNER_TEMP}/rc7-backend-key.txt"
 
+  if ${cleanup_failed}; then
+    MANAGED_RESULT="FAILED"
+    if [[ "${exit_code}" -eq 0 ]]; then
+      exit_code=1
+    fi
+  fi
+  receipt "cleanup_failed=${cleanup_failed}"
   receipt "managed_result=${MANAGED_RESULT}"
   receipt "production_authorization=false"
   receipt "participant_data=false"
@@ -102,7 +115,7 @@ required_services=(
 gcloud services enable "${required_services[@]}" --project "${GCP_PROJECT_ID}" --quiet
 receipt "required_services_enabled=true"
 
-if gcloud services list --enabled --project "${GCP_PROJECT_ID}" --format='value(config.name)' | grep -Eq '^(places|places-backend|places.googleapis.com|routes|routes-backend|routes.googleapis.com)$'; then
+if gcloud services list --enabled --project "${GCP_PROJECT_ID}" --format='value(config.name)' | grep -Eq '^(places(-backend)?|routes(-backend)?)\.googleapis\.com$'; then
   echo "RC7 must not enable Places or Routes." >&2
   exit 1
 fi
@@ -176,12 +189,6 @@ if ! gcloud compute networks subnets describe "${SUBNET}" --project "${GCP_PROJE
 fi
 actual_range="$(gcloud compute networks subnets describe "${SUBNET}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format='value(ipCidrRange)')"
 test "${actual_range}" = "${SUBNET_RANGE}"
-gcloud compute networks subnets add-iam-policy-binding "${SUBNET}" \
-  --project "${GCP_PROJECT_ID}" \
-  --region "${GCP_REGION}" \
-  --member "serviceAccount:service-${GCP_PROJECT_NUMBER}@serverless-robot-prod.iam.gserviceaccount.com" \
-  --role roles/compute.networkUser \
-  --quiet >/dev/null
 receipt "direct_vpc_subnet=${SUBNET}"
 
 if ! gcloud compute addresses describe "${ADDRESS}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" >/dev/null 2>&1; then
@@ -308,6 +315,8 @@ gcloud secrets add-iam-policy-binding "${BACKEND_SECRET}" \
   --quiet >/dev/null
 receipt "backend_secret=${BACKEND_SECRET}"
 receipt "backend_secret_numeric_version=${BACKEND_SECRET_VERSION}"
+receipt "credential_propagation_wait_seconds=60"
+sleep 60
 
 rm -f "${RUNNER_TEMP}/rc7-backend-key.txt"
 gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
