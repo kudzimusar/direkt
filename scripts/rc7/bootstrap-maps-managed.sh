@@ -103,7 +103,8 @@ test "${actual_budget_currency}" = "${billing_currency}"
 budget_checked_at="$(date -u '+%Y%m%dt%H%M%Sz')"
 budget_currency_label="$(tr '[:upper:]' '[:lower:]' <<< "${billing_currency}")"
 [[ "${budget_currency_label}" =~ ^[a-z]{3}$ ]]
-gcloud projects update "${PROJECT_ID}" \
+# gcloud projects update --update-labels is exposed through the alpha track in Cloud Shell.
+gcloud alpha projects update "${PROJECT_ID}" \
   --update-labels "direkt-rc7-budget-checked-at=${budget_checked_at},direkt-rc7-budget-amount=1,direkt-rc7-budget-currency=${budget_currency_label}" \
   --quiet >/dev/null
 
