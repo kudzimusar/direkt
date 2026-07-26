@@ -1,36 +1,34 @@
 # RC7 Google Maps owner bootstrap
 
-RC7 requires **one serious owner-scoped Cloud Shell action** before the source PR is merged. This mirrors the established RC6 Secret Manager boundary: GitHub automation may add and destroy a secret version, but it must not create secret containers or grant itself IAM.
+RC7 requires **one serious owner-scoped Cloud Shell action** before the corrective source PR is merged. GitHub automation must not grant itself IAM, enable APIs, create budget controls or alter quotas.
 
-The bootstrap is source-controlled at `scripts/rc7/bootstrap-maps-managed.sh`. It performs only the infrastructure preparation that requires owner authority:
+The source-controlled bootstrap is `scripts/rc7/bootstrap-maps-managed.sh`. It performs only the owner-authorized preparation needed by the exact-main synthetic proof:
 
-- enables Maps SDK for Android, Geocoding, API Keys, Compute, Cloud Run, Secret Manager and billing-budget APIs;
+- enables Maps SDK for Android, Geocoding API v4, API Keys, Cloud Run, service-usage and billing-budget dependencies;
 - refuses to continue if Places or Routes is enabled;
-- creates the stable no-recurring-cost RC7 VPC and `/26` Direct VPC subnet;
-- creates the empty `direkt-google-maps-geocoding-api-key` Secret Manager container without adding a secret value;
-- creates or lowers/verifies a monthly RC7 budget of 1 unit in the billing account’s fixed currency with 50%, 80% and 100% thresholds;
+- creates or lowers/verifies a monthly RC7 budget of 1 unit in the billing account's fixed currency with 50%, 80% and 100% thresholds;
 - sets the Geocoding request ceiling to 60 requests per minute;
-- grants the existing GitHub deployer only time-limited API-key, network, service-viewer and log-viewer authority;
-- grants time-limited secret-version/viewer access to the deployer and time-limited secret accessor access to the private runtime identity;
-- labels the empty secret container as the owner-controlled bootstrap receipt.
+- grants the existing GitHub deployer time-limited API-key administration only for the restricted Android synthetic key, plus service-usage and log viewing;
+- grants the assigned Cloud Run runtime service account time-limited `roles/serviceusage.serviceUsageConsumer` authority for the OAuth-authenticated Geocoding v4 canary;
+- creates no backend Maps API key, Secret Manager value, VPC, subnet, router, Cloud NAT gateway or static egress address.
 
-The bootstrap intentionally omits a hard-coded currency suffix. Google Cloud applies the billing account’s fixed currency, then the script verifies that both the amount and detected currency match the created or updated budget.
+Backend Geocoding uses the user-managed Cloud Run service identity. The application requests an OAuth access token from the Google metadata server with `enforce_scopes=true` and the single scope `https://www.googleapis.com/auth/maps-platform.geocode.address`.
 
-The 1-unit billing-currency budget is an alerting guardrail, not an automatic billing shutoff. The fail-closed runtime switches, 60-request/minute quota, API/key restrictions and post-proof resource cleanup remain the enforceable cost controls.
+The 1-unit billing-currency budget is an alerting guardrail, not an automatic billing shutoff. The fail-closed runtime switches, 60-request/minute quota, restricted Android key, downscoped backend OAuth token and post-proof Cloud Run Job deletion are the enforceable controls.
 
-The temporary IAM condition expires automatically, by default eight hours after execution. The script never creates, reads or prints an API-key value and never creates a secret version.
+The temporary IAM condition expires automatically, by default eight hours after execution. The bootstrap never creates, reads or prints any credential value.
 
 ## Exact Cloud Shell execution
 
-From an authenticated Google Cloud Shell with owner-equivalent authority for `direkt-dev-502701`, run:
+From an authenticated Google Cloud Shell with owner-equivalent authority for `direkt-dev-502701`, run the corrective branch exactly:
 
 ```bash
 set -euo pipefail
 rm -rf ~/direkt-rc7-bootstrap
 git clone https://github.com/kudzimusar/direkt.git ~/direkt-rc7-bootstrap
 cd ~/direkt-rc7-bootstrap
-git fetch origin integration/runtime-closure-261
-git checkout --detach origin/integration/runtime-closure-261
+git fetch origin fix/rc7-service-identity-oauth
+git checkout --detach origin/fix/rc7-service-identity-oauth
 bash scripts/rc7/bootstrap-maps-managed.sh
 ```
 
@@ -40,6 +38,14 @@ A valid terminal receipt begins with:
 RC7_MAPS_BOOTSTRAP|PASS
 ```
 
-and includes `secret_value_created=false`, the budget amount, detected billing currency, and quota controls, the temporary-authority expiry timestamp, and `production_authorization=false`.
+It must also include:
 
-Do not paste any credential or secret value into GitHub, ChatGPT, the repository, or the Cloud Shell command. The script does not request one.
+```text
+backend_authentication=service_identity_oauth
+backend_api_key_created=false
+backend_secret_value_created=false
+backend_cloud_nat_created=false
+production_authorization=false
+```
+
+Do not paste any credential or secret value into GitHub, ChatGPT, the repository or the Cloud Shell command. The script does not request one.
