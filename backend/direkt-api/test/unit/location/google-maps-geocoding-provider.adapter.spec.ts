@@ -19,7 +19,15 @@ function captureFetch(response: Response): {
   const request: { url?: URL; init?: RequestInit } = {};
   const fetchMock: typeof fetch = vi.fn(
     async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-      request.url = new URL(String(input));
+      let requestUrl: string;
+      if (typeof input === 'string') {
+        requestUrl = input;
+      } else if (input instanceof URL) {
+        requestUrl = input.href;
+      } else {
+        requestUrl = input.url;
+      }
+      request.url = new URL(requestUrl);
       request.init = init;
       return response;
     },
