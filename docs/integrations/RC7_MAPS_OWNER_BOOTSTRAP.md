@@ -14,6 +14,8 @@ The bootstrap is source-controlled at `scripts/rc7/bootstrap-maps-managed.sh`. I
 - grants time-limited secret-version/viewer access to the deployer and time-limited secret accessor access to the private runtime identity;
 - labels the empty secret container as the owner-controlled bootstrap receipt.
 
+The bootstrap intentionally omits a hard-coded currency suffix. Google Cloud applies the billing account’s fixed currency, then the script verifies that both the amount and detected currency match the created or updated budget.
+
 The 1-unit billing-currency budget is an alerting guardrail, not an automatic billing shutoff. The fail-closed runtime switches, 60-request/minute quota, API/key restrictions and post-proof resource cleanup remain the enforceable cost controls.
 
 The temporary IAM condition expires automatically, by default eight hours after execution. The script never creates, reads or prints an API-key value and never creates a secret version.
