@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { GeocodingProviderError } from '../../../src/location/geocoding-provider.port';
 import { GoogleMapsGeocodingProviderAdapter } from '../../../src/location/google-maps-geocoding-provider.adapter';
 
 const API_KEY = 'synthetic_maps_server_key_1234567890';
@@ -71,9 +70,7 @@ describe('GoogleMapsGeocodingProviderAdapter', () => {
     );
     const adapter = new GoogleMapsGeocodingProviderAdapter(API_KEY, 1_000);
 
-    await expect(
-      adapter.normalizeSearchArea('Outside'),
-    ).rejects.toMatchObject<GeocodingProviderError>({
+    await expect(adapter.normalizeSearchArea('Outside')).rejects.toMatchObject({
       code: 'outside_zambia',
     });
   });
@@ -92,9 +89,7 @@ describe('GoogleMapsGeocodingProviderAdapter', () => {
     );
     const adapter = new GoogleMapsGeocodingProviderAdapter(API_KEY, 1_000);
 
-    await expect(
-      adapter.normalizeSearchArea('Lusaka'),
-    ).rejects.toMatchObject<GeocodingProviderError>({
+    await expect(adapter.normalizeSearchArea('Lusaka')).rejects.toMatchObject({
       code: 'quota_or_denied',
     });
   });
@@ -104,9 +99,7 @@ describe('GoogleMapsGeocodingProviderAdapter', () => {
     vi.stubGlobal('fetch', fetchMock);
     const adapter = new GoogleMapsGeocodingProviderAdapter(API_KEY, 1_000);
 
-    await expect(
-      adapter.normalizeSearchArea('x'.repeat(241)),
-    ).rejects.toMatchObject<GeocodingProviderError>({
+    await expect(adapter.normalizeSearchArea('x'.repeat(241))).rejects.toMatchObject({
       code: 'invalid_input',
     });
     expect(fetchMock).not.toHaveBeenCalled();
