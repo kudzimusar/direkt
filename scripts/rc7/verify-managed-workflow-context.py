@@ -172,11 +172,15 @@ def main() -> int:
         "--no-build-cache",
         'receipt "android_clean_build=true"',
         'receipt "android_build_cache_enabled=false"',
-        "certificateFormatValid:",
+        "certificateDigestCount:",
+        "acceptedSignerLabelForms:",
+        "rawStdoutIncluded:",
         "rawStderrIncluded:",
+        "Signer (?:#[0-9]+|\\([^)]*\\)) certificate SHA-1 digest",
+        'receipt "android_apk_certificate_digest_count=${certificate_digest_count}"',
         'receipt "android_apk_certificate_format_valid=${apk_certificate_format_valid}"',
         'receipt "android_apk_certificate_matches_key=${certificate_matches}"',
-        'if [[ "${apksigner_code}" -ne 0 ]] || ! ${apk_certificate_format_valid} || ! ${certificate_matches}; then',
+        'if [[ "${apksigner_code}" -ne 0 ]] || [[ "${certificate_digest_count}" -ne 1 ]] || ! ${apk_certificate_format_valid} || ! ${certificate_matches}; then',
         "*/\\1/p'",
     ):
         require_present(managed_script, marker, "Deterministic APK certificate evidence drifted.")
@@ -184,10 +188,11 @@ def main() -> int:
         '> "${RUNNER_TEMP}/rc7-android-apk-certificate.json"'
     )
     certificate_failure_check = managed_script.find(
-        'if [[ "${apksigner_code}" -ne 0 ]] || ! ${apk_certificate_format_valid} || ! ${certificate_matches}; then'
+        'if [[ "${apksigner_code}" -ne 0 ]] || [[ "${certificate_digest_count}" -ne 1 ]] || ! ${apk_certificate_format_valid} || ! ${certificate_matches}; then'
     )
     if not (0 <= certificate_artifact_write < certificate_failure_check):
         raise AssertionError("APK certificate evidence must be written before fail-closed validation.")
+    prohibit(managed_script, r'cat "\$\{apksigner_stdout\}"', "Raw apksigner stdout must not be printed.")
     prohibit(managed_script, r'cat "\$\{apksigner_stderr\}"', "Raw apksigner stderr must not be printed.")
 
     for marker in (
@@ -265,6 +270,8 @@ def main() -> int:
     print("final_apk_certificate_verified=true")
     print("clean_no_cache_apk_build=true")
     print("certificate_evidence_written_before_failure=true")
+    print("numbered_and_sdk_range_signer_labels_supported=true")
+    print("unique_certificate_digest_required=true")
     print("raw_canary_logs_uploaded=false")
     print("provider_rejection_status_distinguished=true")
     print("provider_raw_error_exposed=false")
