@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
-      SOURCE_JOB_ID: "89900521280"
+      SOURCE_JOB_ID: "89901614493"
     steps:
       - name: Print bounded RC8 closure failure
         shell: bash
@@ -24,4 +24,4 @@ jobs:
           set -euo pipefail
           raw="${RUNNER_TEMP}/rc8-closure.log"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
-          tail -n 45 "${raw}"
+          tail -n 55 "${raw}"
