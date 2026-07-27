@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
-      SOURCE_JOB_ID: "89977389076"
+      SOURCE_JOB_ID: "89979032933"
     steps:
       - name: Print bounded runtime failure
         shell: bash
@@ -26,4 +26,4 @@ jobs:
           clean="${RUNNER_TEMP}/rc9-runtime-clean.log"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
           sed -r 's/\x1B\[[0-9;]*[mK]//g; s/^.*Z //' "${raw}" > "${clean}"
-          grep -nE '(^e: |error:|Caused by:|What went wrong|Execution failed|Could not resolve|Unresolved reference|Compilation error|FAILURE:|Process completed|Lint found|Fatal error)' "${clean}" | head -n 260
+          grep -nE '(^e: |error:|Caused by:|What went wrong|Execution failed|Could not resolve|Unresolved reference|Compilation error|FAILURE:|Process completed|Lint found|Fatal error|Type mismatch|Cannot access)' "${clean}" | head -n 300
