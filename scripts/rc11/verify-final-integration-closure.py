@@ -10,6 +10,7 @@ LEDGER = ROOT / "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
 PLAN = ROOT / "docs/integrations/RUNTIME_INTEGRATION_CLOSURE_PLAN.md"
 INDEX = ROOT / "docs/integrations/RC11_MANAGED_EVIDENCE_INDEX.md"
 RECORD = ROOT / "docs/integrations/RC11_RECONCILIATION_RECORD.md"
+CLOSURE = ROOT / "docs/integrations/RC11_CLOSURE_RECEIPT.md"
 
 
 def require(path: Path, needle: str) -> None:
@@ -18,27 +19,26 @@ def require(path: Path, needle: str) -> None:
         raise SystemExit(f"RC11 contract missing {needle!r} in {path.relative_to(ROOT)}")
 
 
-for path in (LOCK, PROJECT, STATUS, LEDGER, PLAN, INDEX, RECORD):
+for path in (LOCK, PROJECT, STATUS, LEDGER, PLAN, INDEX, RECORD, CLOSURE):
     if not path.is_file():
         raise SystemExit(f"RC11 contract missing file {path.relative_to(ROOT)}")
 
 for needle in (
-    "CLAIMED — RC11 FINAL INTEGRATION CLOSURE",
-    "RC11 implementation contract — CLAIMED",
-    "RC11A combined regression",
-    "RC11B managed evidence index",
-    "RC11C ledger/status reconciliation",
-    "RC11D closure/handoff",
-    "No new provider activation or participant processing",
+    "RELEASED — RC11 CLOSED AND PRESERVED",
+    "RC11 implementation contract — CLOSED AND PRESERVED",
+    "RC11A requires the combined",
+    "RC11B maintains one managed evidence index",
+    "RC11C reconciles the live ledger",
+    "RC11D requires a dedicated exact-head closure receipt",
+    "The repository write lane is RELEASED",
 ):
     require(LOCK, needle)
 
-require(PROJECT, "Active repository write lane:** RC11 final integration closure")
-require(PROJECT, "RC1–RC10 are closed")
-require(PROJECT, "RC11 final reconciliation is implemented")
-require(STATUS, "RC11 IMPLEMENTED — FINAL RECONCILIATION / REGRESSION PENDING")
+require(PROJECT, "Active repository write lane:** none; RC0–RC11 are closed")
+require(PROJECT, "runtime integration closure — **RC0–RC11 are closed")
+require(STATUS, "CLOSED — FINAL INTEGRATION RECONCILIATION / LANE RELEASED")
 require(LEDGER, "RC11 final integration reconciliation")
-require(LEDGER, "New state: IMPLEMENTED — EXACT-HEAD REGRESSION AND CLOSEOUT PENDING")
+require(LEDGER, "New state: CLOSED — FINAL INTEGRATION RECONCILIATION / LANE RELEASED")
 
 for needle in (
     "combined Android/backend/database/OpenAPI/web/portal integration regression",
@@ -49,7 +49,7 @@ for needle in (
     require(PLAN, needle)
 
 for needle in (
-    "RC11B COMPLETE / RC11A AND RC11D EXACT-HEAD CLOSURE PENDING",
+    "CLOSED — RC11A–RC11D COMPLETE / LANE RELEASED",
     "direkt-resend-canary-ct9mp",
     "29885635547",
     "29916381754",
@@ -66,7 +66,7 @@ for needle in (
     require(INDEX, needle)
 
 for needle in (
-    "IMPLEMENTED — EXACT-HEAD REGRESSION AND CLOSEOUT PENDING",
+    "CLOSED — FINAL INTEGRATION RECONCILIATION / LANE RELEASED",
     "RC11A — combined regression",
     "RC11B — evidence index",
     "RC11C — ledger and status reconciliation",
@@ -76,8 +76,20 @@ for needle in (
 ):
     require(RECORD, needle)
 
+for needle in (
+    "State:** CLOSED — FINAL INTEGRATION RECONCILIATION / LANE RELEASED",
+    "Implementation PR/head:** #505 / `66626d315a8d132dbf8f34749a2679e42c609d7c`",
+    "Implementation merge:** `87f567fccfa92244c7951432436c7163c71d5fc7`",
+    "30283944687",
+    "30283948914",
+    "30283946774",
+    "Phase 11C–11J execution preparation",
+):
+    require(CLOSURE, needle)
+
 print("RC11_FINAL_INTEGRATION_CONTRACT|PASS")
-print("state=implemented_regression_pending")
+print("state=closed")
+print("workstream_lane=released")
 print("managed_evidence_index=reconciled")
 print("blocked_provider_states=preserved")
 print("false_active_claims=false")

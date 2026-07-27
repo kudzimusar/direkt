@@ -1,13 +1,13 @@
 # RC11 Final Integration Reconciliation Record
 
-**State:** IMPLEMENTED — EXACT-HEAD REGRESSION AND CLOSEOUT PENDING  
-**Governing issue:** #261  
-**Claim merge:** `7f0b6b76a78572b6bb90694814037c370935e3b9`  
+**State:** CLOSED — FINAL INTEGRATION RECONCILIATION / LANE RELEASED
+**Governing issue:** #261
+**Claim merge:** `7f0b6b76a78572b6bb90694814037c370935e3b9`
 **Production authorization:** false
 
 ## RC11A — combined regression
 
-The preserved combined baseline passed on the RC11 claim head `16b3a411b3eb089b6b8ab166683b782c647d5ab9`. The final reconciliation head must independently pass the applicable permanent matrix before RC11 can close.
+The preserved combined baseline passed on the RC11 claim head `16b3a411b3eb089b6b8ab166683b782c647d5ab9`. The exact final reconciliation head `66626d315a8d132dbf8f34749a2679e42c609d7c` passed the applicable permanent matrix before merge `87f567fccfa92244c7951432436c7163c71d5fc7`.
 
 Required final evidence includes:
 

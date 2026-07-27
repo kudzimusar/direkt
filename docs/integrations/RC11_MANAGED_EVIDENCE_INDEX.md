@@ -1,8 +1,8 @@
 # RC11 Managed Integration Evidence Index
 
-**Governing issue:** #261  
-**Claim merge:** `7f0b6b76a78572b6bb90694814037c370935e3b9`  
-**State:** RC11B COMPLETE / RC11A AND RC11D EXACT-HEAD CLOSURE PENDING  
+**Governing issue:** #261
+**Claim merge:** `7f0b6b76a78572b6bb90694814037c370935e3b9`
+**State:** CLOSED — RC11A–RC11D COMPLETE / LANE RELEASED
 **Production authorization:** false
 
 ## Purpose
@@ -43,7 +43,7 @@ The RC11 claim exact head `16b3a411b3eb089b6b8ab166683b782c647d5ab9` passed the 
 - RC9: `30282893411`;
 - RC10: `30282893358`.
 
-RC11 closure still requires the permanent verifier and applicable full matrix to pass on the exact final reconciliation head.
+RC11 closure is bound to PR #505 exact head `66626d315a8d132dbf8f34749a2679e42c609d7c`, whose applicable permanent matrix passed before merge `87f567fccfa92244c7951432436c7163c71d5fc7`.
 
 ## Truthful non-active and blocked states
 
