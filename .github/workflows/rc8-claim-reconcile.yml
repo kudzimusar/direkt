@@ -1,0 +1,51 @@
+name: RC8 claim reconciler
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc8-claim-reconcile.yml"
+      - "scripts/rc8/patch-claim-rc8.py"
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'claim/rc8-sandbox-payments'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: claim/rc8-sandbox-payments
+          fetch-depth: 0
+      - name: Claim bounded RC8 lane and validate preserved closures
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -f scripts/rc8/patch-claim-rc8.py ]]; then
+            echo 'RC8 claim source already reconciled.'
+            exit 0
+          fi
+          python3 scripts/rc8/patch-claim-rc8.py
+          python3 scripts/rc5/verify-test-lab-closure.py
+          python3 scripts/rc6/verify-whatsapp-contract.py
+          python3 scripts/rc7/verify-maps-contract.py
+          python3 -m py_compile \
+            scripts/rc5/verify-test-lab-closure.py \
+            scripts/rc6/verify-whatsapp-contract.py \
+            scripts/rc7/verify-maps-contract.py
+          sed -i 's/[[:space:]]\+$//' WORKSTREAM_LOCK.md PROJECT_STATUS.md
+          rm scripts/rc8/patch-claim-rc8.py
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            WORKSTREAM_LOCK.md \
+            PROJECT_STATUS.md \
+            scripts/rc5/verify-test-lab-closure.py \
+            scripts/rc6/verify-whatsapp-contract.py \
+            scripts/rc7/verify-maps-contract.py \
+            scripts/rc8/patch-claim-rc8.py
+          git diff --cached --check
+          git commit -m 'chore(rc8): claim sandbox payment runtime closure'
+          git push origin HEAD:claim/rc8-sandbox-payments
