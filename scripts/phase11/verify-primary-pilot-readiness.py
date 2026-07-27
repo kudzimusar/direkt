@@ -13,6 +13,7 @@ BLOCKERS = ROOT / "docs/phase11/PHASE11_REAL_ENTRY_BLOCKER_REGISTER_2026-07-28.m
 FINDINGS = ROOT / "docs/phase11/PHASE11_FINDINGS_AND_CORRECTIONS_REGISTER.md"
 DECISION = ROOT / "docs/phase11/PHASE11_11J_DECISION_TEMPLATE.md"
 ENVIRONMENT = ROOT / "backend/direkt-api/src/config/environment.ts"
+RECEIPT = ROOT / "docs/phase11/PHASE11_PRIMARY_PILOT_READINESS_RECEIPT.md"
 
 
 def require(path: Path, needle: str) -> None:
@@ -38,20 +39,20 @@ for path in (
     FINDINGS,
     DECISION,
     ENVIRONMENT,
+    RECEIPT,
 ):
     if not path.is_file():
         raise SystemExit(f"Phase 11 readiness missing file {path.relative_to(ROOT)}")
 
 for needle in (
-    "CLAIMED — PHASE 11C–11J EXECUTION READINESS",
-    "Phase 11C–11J execution-readiness contract — CLAIMED",
-    "No real participant recruitment, data processing or provider activation",
-    "PRIMARY-PILOT evidence register remains empty",
+    "Phase 11C–11J execution-readiness contract — CLOSED AND PRESERVED",
+    "This lane creates execution instruments only",
+    "PRIMARY_PILOT_EVIDENCE_REGISTER.md` remains explicitly empty",
+    "PR #508 exact head `ae4fcb0350be4023f82e2be8df88c18cca583695`",
 ):
     require(LOCK, needle)
 
-require(PROJECT, "Active repository write lane:** Phase 11C–11J execution readiness")
-require(PROJECT, "EXECUTION READY / REAL ENTRY BLOCKED / NO PRIMARY-PILOT EVIDENCE")
+require(PROJECT, "CLOSED AND PRESERVED — EXECUTION READY / REAL ENTRY BLOCKED / NO PRIMARY-PILOT EVIDENCE")
 require(CONTROL, "Primary-pilot execution-readiness package")
 require(CONTROL, "NO PRIMARY-PILOT EVIDENCE RECORDED")
 
@@ -127,8 +128,22 @@ for workflow in (ROOT / ".github" / "workflows").glob("*.yml"):
     reject(workflow, "PILOT_ENTRY_APPROVED: true")
     reject(workflow, 'PILOT_ENTRY_APPROVED: "true"')
 
+for needle in (
+    "State:** CLOSED — EXECUTION READY / REAL ENTRY BLOCKED / NO PRIMARY-PILOT EVIDENCE",
+    "Implementation PR/head:** #508 / `ae4fcb0350be4023f82e2be8df88c18cca583695`",
+    "Implementation merge:** `2bf58c2c5df40aa76742730ec4a49644c2506a89`",
+    "PRIMARY-PILOT evidence count:** 0",
+    "30287771078",
+    "30287771096",
+    "30287771050",
+    "Wave 0 real-entry evidence reconciliation",
+):
+    require(RECEIPT, needle)
+
 print("PHASE11_PRIMARY_PILOT_READINESS|PASS")
-print("state=execution_ready_real_entry_blocked")
+print("state=closed_execution_ready_real_entry_blocked")
+print("readiness_closure_preserved=true")
+print("later_lane_ownership_not_asserted=true")
 print("primary_pilot_evidence_count=0")
 print("pilot_entry_approved=false")
 print("participant_processing=false")

@@ -6,14 +6,14 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED — PHASE 11C–11J EXECUTION READINESS |
-| Owner/agent | Active repository agent — Issue #112 Phase 11 primary-pilot readiness. |
-| Authorized scope | Build the canonical 11C–11J wave protocol, blocker/evidence registers, metrics, stop rules, correction intake and exit-decision instruments. No real participant recruitment, data processing or provider activation. |
+| Status | RELEASED — PHASE 11C–11J READINESS CLOSED AND PRESERVED |
+| Owner/agent | None. Phase 11C–11J execution readiness is closed; Issue #112 remains open for real entry and participant-backed evidence. |
+| Authorized scope | No active repository write scope. A new explicit claim is required for Wave 0 real-entry evidence reconciliation or any later source change. |
 | Protected surface | Closed RC0–RC11 evidence, canonical OpenAPI authorization/privacy checks, Android auth/session and Firebase controls, customer/provider web BFF/private Cloud Run IAM, operations portal, RC8 payment boundaries, UIA Issue #354, VC1–VC8 Design DNA and Phase 11/12 gates. |
-| Implementation branch | `phase11/primary-pilot-readiness`, based on readiness claim merge `main@e79d8c4794c27ee16deaefdb56856d97cd5933a5`. |
-| Stable baseline | `main@e79d8c4794c27ee16deaefdb56856d97cd5933a5` contains closed RC0–RC11 evidence and the formal Phase 11C–11J readiness claim. |
-| Current task | Phase 11C–11J execution-readiness package implemented; exact-head regression, status promotion and handoff remain pending. `PILOT_ENTRY_APPROVED` remains false and the PRIMARY-PILOT evidence register remains empty. |
-| Governing issue | Issue #112 — Phase 11 controlled Zambia pilot and primary validation. Issue #261 remains closed; UIA Issue #354 remains separately open. |
+| Implementation branch | None. Phase 11 readiness PR #508 merged at `2bf58c2c5df40aa76742730ec4a49644c2506a89`. |
+| Stable baseline | `main@2bf58c2c5df40aa76742730ec4a49644c2506a89` contains the reviewed Phase 11C–11J execution-readiness package and closed RC0–RC11 evidence. |
+| Current task | None. Wave 0 real-entry evidence reconciliation is next but unclaimed. `PILOT_ENTRY_APPROVED` remains false and PRIMARY-PILOT evidence count remains 0. |
+| Governing issue | Issue #112 remains open for external entry gates, Wave 0 authorization, real 11C–11H evidence, 11I corrections and 11J decision. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
 
@@ -156,7 +156,7 @@ The following strings are historical closure evidence required by the permanent 
 9. RC11D requires a dedicated exact-head closure receipt, permanent verifier, Issue #261 completion and released lane.
 10. RC11 is `CLOSED — FINAL INTEGRATION RECONCILIATION / LANE RELEASED`: PR #505 exact head `66626d315a8d132dbf8f34749a2679e42c609d7c` passed the complete combined matrix and squash-merged at `87f567fccfa92244c7951432436c7163c71d5fc7`. The clean handoff names Phase 11C–11J execution preparation as next, while real pilot activity remains prohibited until the Phase 11 entry checklist is genuinely satisfied.
 
-## Phase 11C–11J execution-readiness contract — CLAIMED
+## Phase 11C–11J execution-readiness contract — CLOSED AND PRESERVED
 
 1. This lane creates execution instruments only; it does not authorize participant recruitment, admission, data processing, external communication, provider activation, payment or production traffic.
 2. `PILOT_ENTRY_APPROVED` remains false and fail-closed. No workflow, deployment or documentation change may set it true in this lane.
@@ -167,7 +167,7 @@ The following strings are historical closure evidence required by the permanent 
 7. Immediate stop rules protect consent, authorization, private evidence, exact private coordinates, participant safety, credentials, data integrity, unsupported trust claims and real-money boundaries.
 8. Every 11I correction uses canonical production code, forward-only migrations, backend authorization, OpenAPI/client boundaries and full regression; pilot-only shortcuts are prohibited.
 9. The 11J instrument must require exactly one evidence-backed STOP, REPEAT, NARROW or PROCEED decision and must keep Phase 12 authorization false unless separately approved.
-10. Closure requires authoritative status reconciliation, permanent verifier success, exact-head regression and an Issue #112 handoff that clearly states execution ready but real entry blocked.
+10. The readiness package is `CLOSED — EXECUTION READY / REAL ENTRY BLOCKED / NO PRIMARY-PILOT EVIDENCE`: PR #508 exact head `ae4fcb0350be4023f82e2be8df88c18cca583695` passed the complete preserved matrix and squash-merged at `2bf58c2c5df40aa76742730ec4a49644c2506a89`. Issue #112 remains open; Wave 0 real-entry evidence reconciliation requires a new explicit claim.
 
 ## Runtime integration closure contract
 
@@ -216,4 +216,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-The repository write lane is CLAIMED for Phase 11C–11J execution readiness only. RC0–RC11 evidence remains immutable/regression-protected. Real participants, real participant data, real money and production authorization remain blocked until the explicit Phase 11 entry checklist is satisfied.
+The repository write lane is RELEASED. RC0–RC11 and Phase 11C–11J readiness evidence remain immutable/regression-protected. Wave 0 real-entry evidence reconciliation requires a new explicit claim. Real participants, real participant data, real money and production authorization remain blocked until the explicit Phase 11 entry checklist is satisfied.

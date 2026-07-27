@@ -1,6 +1,6 @@
 # Phase 11 Controlled Pilot Execution and Entry Control
 
-**Status:** PRIMARY-PILOT EXECUTION READINESS IMPLEMENTED — REAL PARTICIPANT PILOT STILL EXTERNALLY BLOCKED
+**Status:** PRIMARY-PILOT EXECUTION READINESS CLOSED AND PRESERVED — REAL PARTICIPANT PILOT STILL EXTERNALLY BLOCKED
 **Governing issue:** #112
 **Stable predecessor:** `369fc72581b3ed27920b8fc949e32cfedf1ad8d9`
 **Current promoted synthetic implementation baseline:** `7b886b9bee91c1337f4e4ad43f71afa4389644de`
@@ -261,6 +261,8 @@ The repository now contains one canonical preparation package for the real evide
 - `PHASE11_11J_DECISION_TEMPLATE.md` — evidence-backed STOP / REPEAT / NARROW / PROCEED decision instrument.
 
 This package makes execution operationally ready but does not start 11C, create participant evidence or change the real-entry decision. The primary evidence count remains zero. `PILOT_ENTRY_APPROVED=true` remains prohibited until every applicable hard gate is supported by actual evidence and explicit owner authorization.
+
+The exact package is bound to PR #508 head `ae4fcb0350be4023f82e2be8df88c18cca583695`, merged at `2bf58c2c5df40aa76742730ec4a49644c2506a89`, with the complete regression matrix recorded in `PHASE11_PRIMARY_PILOT_READINESS_RECEIPT.md`. The repository readiness lane is released; Issue #112 remains open for real-entry evidence and execution.
 
 ## Phase 12 boundary
 
