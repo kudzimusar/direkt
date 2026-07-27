@@ -35,7 +35,10 @@ jobs:
           start = text.index('old_ledger = ')
           end = text.index('\nnew_ledger =', start)
           live = '| Google Maps Platform | `IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS` | RC7 keeps the restricted Android key, Maps Compose latch, bounded Zambia normalization, privacy-safe rendering and manual/list fallback. Backend Geocoding uses v4 service-identity OAuth; backend keys, Maps secrets, Direct VPC egress and Cloud NAT are prohibited. Run `30210742617/1` exposed the billing-account boundary and was corrected without granting CI billing IAM. Run `30225624823/1` exposed ranked-result selection and was corrected. Exact-main run `30226241329/1` then passed the backend Geocoding v4 OAuth canary and all budget/quota/key/image controls, but one API 36 instrumentation test failed in matrix `matrix-3gndt2ks91n33`. Artifact `8638705116`, digest `sha256:49fbc387d06eeb7061ca1c8923a313c8dff22f534e2940398f7d4df26d55233c`; backend PASS and Cloud Run Job cleanup passed. The next proof verifies the final APK signing certificate against the restricted Android key and emits only bounded Tool Results test-case evidence; fallback remains a failure. |'
-          path.write_text(text[:start] + f'old_ledger = {live!r}' + text[end:], encoding='utf-8')
+          text = text[:start] + f'old_ledger = {live!r}' + text[end:]
+          text = text.replace("        '\"certificateFormatValid\"',", '        "certificateFormatValid:",')
+          text = text.replace("        '\"rawStderrIncluded\"',", '        "rawStderrIncluded:",')
+          path.write_text(text, encoding='utf-8')
           PY
 
           run_stage() {
