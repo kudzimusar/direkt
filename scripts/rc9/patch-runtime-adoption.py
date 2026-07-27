@@ -44,7 +44,7 @@ replace_once(
         buildConfig = true
     }
 
-    sourceSets["main"].java.srcDir(
+    sourceSets["main"].kotlin.srcDir(
         rootProject.file("../../clients/generated/kotlin/src/main/kotlin"),
     )
 
