@@ -1,0 +1,43 @@
+name: DIREKT functional web container context
+
+on:
+  pull_request:
+    paths:
+      - "web/direkt-app/**"
+      - "clients/generated/typescript/**"
+      - "scripts/w8-managed-cutover-prepare.sh"
+      - ".github/workflows/functional-pwa-container-context.yml"
+  push:
+    branches: [main]
+    paths:
+      - "web/direkt-app/**"
+      - "clients/generated/typescript/**"
+      - "scripts/w8-managed-cutover-prepare.sh"
+
+permissions:
+  contents: read
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+      - name: Verify repository-context ownership
+        run: |
+          set -euo pipefail
+          grep -Fq 'docker build -f web/direkt-app/Dockerfile -t "${WEB_IMAGE_URI}" .' scripts/w8-managed-cutover-prepare.sh
+          grep -Fq 'COPY clients/generated/typescript/ /srv/direkt/clients/generated/typescript/' web/direkt-app/Dockerfile
+          ! grep -R --line-number --fixed-strings 'AuthenticatedSessionResponseDto' web/direkt-app/clients 2>/dev/null
+      - name: Build production web image
+        run: |
+          set -euo pipefail
+          docker build \
+            --file web/direkt-app/Dockerfile \
+            --tag direkt-functional-web:container-context \
+            .
+      - name: Verify non-root runtime image
+        run: |
+          set -euo pipefail
+          test "$(docker image inspect direkt-functional-web:container-context --format '{{.Config.User}}')" = "node"
+          test "$(docker image inspect direkt-functional-web:container-context --format '{{json .Config.Cmd}}')" = '["node","server.js"]'
