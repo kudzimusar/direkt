@@ -10,9 +10,9 @@ This file prevents overlapping writes in the single-lane build process.
 | Owner/agent | Active repository agent — Issue #261 RC11 final integration closure. |
 | Authorized scope | RC11A combined regression, RC11B managed evidence index, RC11C ledger/status reconciliation and RC11D closure/handoff only. No new provider activation or participant processing. |
 | Protected surface | Closed RC0–RC10 evidence, canonical OpenAPI authorization/privacy checks, Android auth/session and Firebase controls, customer/provider web BFF/private Cloud Run IAM, operations portal, RC8 payment boundaries, UIA Issue #354, VC1–VC8 Design DNA and Phase 11/12 gates. |
-| Implementation branch | `chore/rc11-final-integration-closure`, based on `main@feead13e1650e8326f86c372ab4be2b8c9bf544b`. |
-| Stable baseline | `main@feead13e1650e8326f86c372ab4be2b8c9bf544b` contains closed RC0–RC10 evidence and the RC10 closeout receipt. |
-| Current task | RC11A–RC11D — prove combined regressions, index managed evidence, reconcile truthful statuses and hand off cleanly to Phase 11 real-pilot preparation. |
+| Implementation branch | `docs/rc11-final-integration-closure`, based on RC11 claim merge `main@7f0b6b76a78572b6bb90694814037c370935e3b9`. |
+| Stable baseline | `main@7f0b6b76a78572b6bb90694814037c370935e3b9` contains the reviewed RC11 claim and immutable RC0–RC10 closure evidence. |
+| Current task | RC11A–RC11C reconciliation implemented; exact-head regression and RC11D closure/handoff remain pending. |
 | Governing issue | Issue #261 — Runtime integration closure after W8. RC11 is the sole active repository write lane; UIA Issue #354 remains parked/read-only. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
@@ -143,6 +143,19 @@ The following strings are historical closure evidence required by the permanent 
 9. Exact-head evidence must include backend formatting/lint/type/tests/build/OpenAPI, abuse-policy tests, RC5–RC10 permanent contracts, PWA/W7/W8, runtime audit, supply-chain and documentation gates as applicable.
 10. RC10 is `CLOSED — NOT CURRENTLY REQUIRED / TURNSTILE NOT ACTIVE`: PR #502 exact head `cdab6622e0cc06e35cddca2bb5bc8ea70c027b38` passed the complete backend, container, generated-client, PWA/W7/W8, runtime-audit, recovery, staging, Phase 11 synthetic, RC5–RC10 and documentation matrix, then squash-merged at `620a99ba5465ad38ce012df0a8fa15e458de6505`. The three public POST helper gaps are protected by the existing fail-closed database rate limiter; no Turnstile credential, widget, package or runtime binding exists. RC11 remains unclaimed.
 
+## RC11 implementation contract — CLAIMED
+
+1. RC11 is reconciliation and closure only; it may not activate a new provider, SDK, participant channel, production environment or real-money path.
+2. RC11A requires the combined Android, backend, database, OpenAPI, generated-client, customer/provider PWA, operations portal and integration-runtime regression matrix on one exact head.
+3. RC11B maintains one managed evidence index that records exact source, run, artifact and boundary where available without inventing identifiers.
+4. RC11C reconciles the live ledger and current integration register while preserving `PENDING_PROVIDER`, `BLOCKED`, `DISABLED`, `IMPLEMENTED_GATED`, `SANDBOX_PROVEN` and `EXTERNALLY_PROVISIONED` distinctions.
+5. Synthetic, sandbox and managed-canary evidence may never be relabelled as PRIMARY-PILOT or production evidence.
+6. Client applications retain no provider, database, payment or telemetry-admin credentials; backend authorization remains authoritative.
+7. Payment cannot create trust, verification, publication or ranking authority; AI cannot become consequential authority.
+8. Real participants, production authentication, participant communications/telemetry/Maps, production AI, real money and Phase 12 release remain blocked.
+9. RC11D requires a dedicated exact-head closure receipt, permanent verifier, Issue #261 completion and released lane.
+10. The clean handoff names Phase 11C–11J execution preparation as next, but real pilot activity remains prohibited until the Phase 11 entry checklist is genuinely satisfied.
+
 ## Runtime integration closure contract
 
 1. Close one bounded integration checkpoint at a time; do not batch unrelated SDK/provider activation.
@@ -171,7 +184,7 @@ The following strings are historical closure evidence required by the permanent 
 - RC8 — sandbox-only payment-provider adapter closure/reconciliation. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY — exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3`; run `30241092949/1`; artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`); MTN/Stripe/PayPal proved privately; DPO runtime-unbound, Airtel provider-pending, Flutterwave deferred; application runtime and real money disabled.**
 - RC9 — OpenAPI-generated Kotlin and TypeScript client adoption/decision. **CLOSED — deterministic generation, Android Firebase-session exchange adoption and server-only BFF type adoption merged through PR #497 at `70de95c73128e921cd4d7c667de0e5a442a9e0c0`; exact-head matrix passed on `04ef57f31414ec5165e353abba74afb8dfdcc901`; no production/participant or privileged direct-access change.**
 - RC10 — Turnstile threat-model decision. **CLOSED — NOT CURRENTLY REQUIRED / TURNSTILE NOT ACTIVE — PR #502 exact head `cdab6622e0cc06e35cddca2bb5bc8ea70c027b38`, merge `620a99ba5465ad38ce012df0a8fa15e458de6505`; first-party rate-limit gaps closed; production authorization false.**
-- RC11 — combined integration regression, managed evidence index, live ledger/status reconciliation and lane release. **CLAIMED — RC11A–RC11D IN PROGRESS from `main@feead13e1650e8326f86c372ab4be2b8c9bf544b`.**
+- RC11 — combined integration regression, managed evidence index, live ledger/status reconciliation and lane release. **IMPLEMENTED — RC11A–RC11C RECONCILED / EXACT-HEAD REGRESSION AND RC11D CLOSEOUT PENDING.**
 
 ## Persistent stop conditions
 
