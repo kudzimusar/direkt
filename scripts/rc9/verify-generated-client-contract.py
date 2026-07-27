@@ -60,7 +60,7 @@ for needle in (
     "Firebase-to-DIREKT session exchange",
     "server-only BFF",
     "byte-for-byte drift",
-    "No generated browser transport is approved",
+    "A generated browser transport is not approved",
     "Production authorization",
     "False.",
 ):
