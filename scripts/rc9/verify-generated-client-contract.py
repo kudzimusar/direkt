@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify the permanent RC9 generated-client architecture and claim contract."""
+"""Verify the permanent RC9 generated-client architecture and closure contract."""
 
 from pathlib import Path
 
@@ -10,6 +10,7 @@ STATUS = ROOT / "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
 LEDGER = ROOT / "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
 PLAN = ROOT / "docs/integrations/RUNTIME_INTEGRATION_CLOSURE_PLAN.md"
 IMPLEMENTATION = ROOT / "docs/integrations/RC9_GENERATED_CLIENTS_IMPLEMENTATION.md"
+CLOSURE = ROOT / "docs/integrations/RC9_CLOSURE_RECEIPT.md"
 BACKEND_PACKAGE = ROOT / "backend/direkt-api/package.json"
 OPENAPI_GENERATOR = ROOT / "backend/direkt-api/scripts/generate-openapi.ts"
 OPENAPI_CHECK = ROOT / "backend/direkt-api/scripts/check-openapi.ts"
@@ -60,6 +61,7 @@ for path in (
     LEDGER,
     PLAN,
     IMPLEMENTATION,
+    CLOSURE,
     BACKEND_PACKAGE,
     OPENAPI_GENERATOR,
     OPENAPI_CHECK,
@@ -79,33 +81,33 @@ for path in (
     if not path.is_file():
         raise SystemExit(f"RC9 contract missing file {path.relative_to(ROOT)}")
 
-require(LOCK, "CLAIMED — RC9 OpenAPI-generated client adoption")
-require(LOCK, "RC9 implementation contract — CLAIMED")
-require(LOCK, "RC9 is the sole active repository write lane")
+require(LOCK, "RELEASED — RC9 CLOSED AND PRESERVED")
+require(LOCK, "RC9 implementation contract — CLOSED AND PRESERVED")
+require(LOCK, "The repository write lane is RELEASED")
+require(LOCK, "RC10 is next but remains unclaimed")
 require(LOCK, "RC8 implementation contract — CLOSED AND PRESERVED")
-require(LOCK, "030cd577e179863b70f24d99ab237e74660b4325")
-require(PROJECT, "Active repository write lane:** RC9 OpenAPI-generated Kotlin/TypeScript client adoption")
-require(PROJECT, "RC9 is the sole active repository lane")
+require(LOCK, "70de95c73128e921cd4d7c667de0e5a442a9e0c0")
+require(PROJECT, "Active repository write lane:** none")
+require(PROJECT, "RC1–RC9 are closed")
+require(PROJECT, "RC10 is next but unclaimed")
 require(STATUS, "Fully generated Kotlin/TypeScript client packages")
-require_any(
-    STATUS,
-    (
-        "RC9A IMPLEMENTED / RUNTIME UNWIRED / REGRESSION PENDING",
-        "RC9B/C IMPLEMENTED / BOUNDED RUNTIME ADOPTION / REGRESSION PENDING",
-        "RC9 CLOSED",
-    ),
-    "RC9 state",
-)
-require(STATUS, "RC9 generated Kotlin/TypeScript clients")
-require_any(
-    LEDGER,
-    (
-        "RC9 OpenAPI generated Kotlin/TypeScript client adoption — **RC9A IMPLEMENTED / RUNTIME UNWIRED / EXACT-HEAD REGRESSION PENDING**",
-        "RC9 OpenAPI generated Kotlin/TypeScript client adoption — **RC9B/C IMPLEMENTED / BOUNDED RUNTIME ADOPTION / EXACT-HEAD REGRESSION PENDING**",
-        "RC9 OpenAPI generated Kotlin/TypeScript client adoption — **CLOSED**",
-    ),
-    "RC9 ledger state",
-)
+require(STATUS, "RC9 CLOSED — DETERMINISTIC / BOUNDED RUNTIME ADOPTION")
+require(STATUS, "RC9 generated Kotlin/TypeScript clients — **CLOSED")
+require(LEDGER, "RC9 OpenAPI generated Kotlin/TypeScript client adoption — **CLOSED")
+require(LEDGER, "### RC9 generated-client closure receipt")
+for needle in (
+    "State:** CLOSED — DETERMINISTIC GENERATED CLIENTS / BOUNDED RUNTIME ADOPTION",
+    "Implementation PR:** #497",
+    "04ef57f31414ec5165e353abba74afb8dfdcc901",
+    "70de95c73128e921cd4d7c667de0e5a442a9e0c0",
+    "30273733920",
+    "30273729323",
+    "30273725051",
+    "browser-direct private API: false",
+    "production authentication/release authorization: false",
+    "RC10 is next but unclaimed",
+):
+    require(CLOSURE, needle)
 
 require(PLAN, "decide generator/versioning strategy")
 require(PLAN, "generated code deterministic and CI drift-controlled")
@@ -220,6 +222,10 @@ require(WORKFLOW, '"web/direkt-app/**"')
 
 print("RC9_GENERATED_CLIENT_CONTRACT|PASS")
 print("claim_base=030cd577e179863b70f24d99ab237e74660b4325")
+print("implementation_merge=70de95c73128e921cd4d7c667de0e5a442a9e0c0")
+print("closure_state=closed")
+print("workstream_lane=released")
+print("rc10_claimed=false")
 print("generator_version=7.22.0")
 print("generator_strategy_pinned=true")
 print("kotlin_runtime_migration_pending=false")

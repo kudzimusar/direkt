@@ -5,7 +5,7 @@
 **VC1–VC8 promotion:** PR #270 merged at `c7f5985bc20372b4761e063dc3a66ecc736556e2`
 **Visual Completion issue:** #259 — CLOSED/COMPLETED
 **Runtime integration tracker:** #261
-**Active repository write lane:** RC9 OpenAPI-generated Kotlin/TypeScript client adoption under Issue #261; RC1–RC8 remain closed
+**Active repository write lane:** none — RC1–RC9 are closed under Issue #261; RC10 is next but unclaimed
 
 ## 1. Programme state
 
@@ -19,7 +19,7 @@ DIREKT’s current repository state is:
 - functional customer/provider web/PWA W0–W8 — **closed**;
 - VC0 preparation/control — **closed**;
 - VC1–VC8 world-class product/AI modernization — **complete and merged**;
-- runtime integration closure — **RC1–RC8 are closed at synthetic-only managed boundaries; RC9 is claimed and RC9A deterministic generated source is implemented but runtime-unwired, using canonical OpenAPI `1ea6b983c49c95db88db1a1432d9e6e0078fe124a3196f00c485b86dbe2db519` and pinned generator JAR `3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329`**.
+- runtime integration closure — **RC1–RC9 are closed at their documented bounded boundaries. RC9 deterministic Kotlin/TypeScript generation and bounded Android/server-only BFF adoption merged at `main@70de95c73128e921cd4d7c667de0e5a442a9e0c0`, using canonical OpenAPI `1c13b69a34c30b84347b02ecddcf4f5b55c21e1958f036d4dc29c9106784e063` and pinned generator JAR `3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329`**.
 
 VC1–VC8 completion does not replace or weaken the remaining Phase 11 real-world evidence, privacy/legal, payment, external-communications or production-release gates.
 
@@ -171,6 +171,7 @@ Important distinctions:
 - RC5 Firebase Test Lab is **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX**: isolated project `direkt-testlab-502701-20260726`, exact source `c3744430a7beb1cd47246d858df9ac1379a068ac`, run `30183466799`, API 26/33/36 and zero flaky retries;
 - RC7 Google Maps is **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY** at source `47285575862cbf08845eaeabe093afea1ea79bd1`, run `30234521983/1`, artifact `8641270327` (`sha256:24da53c0bd6fa885fa4a6814f70af090096192e6c5b7a03c89fba51416877fde`); participant/production Maps and private-coordinate publication remain disabled; other integrations still require their own runtime evidence before being represented as active;
 - RC8 sandbox payments are **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY** at source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3`, run `30241092949/1`, artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`): MTN success, Stripe unpaid Checkout, PayPal unapproved order, immutable reconciliation and cleanup passed; application provider registration, DPO/Airtel/Flutterwave runtime binding, participant use and real money remain disabled;
+- RC9 generated clients are **CLOSED — DETERMINISTIC / BOUNDED RUNTIME ADOPTION** at implementation merge `70de95c73128e921cd4d7c667de0e5a442a9e0c0`: Kotlin and TypeScript generation are checksum-pinned and byte-drift enforced; Android uses the generated Firebase-session exchange behind a DIREKT-owned safe wrapper; the web uses generated auth types only behind the server-side BFF; direct browser/private API, privileged credentials, participant activation and production authority remain false;
 - payment rails may be sandbox-proven while real money remains disabled;
 - an account, API key, secret or provider dashboard entry alone is never `ACTIVE` runtime evidence.
 
@@ -206,8 +207,8 @@ VC1–VC8 completion does not clear:
 
 ## 9. Next execution rule
 
-VC1–VC8 and RC1–RC8 are closed at their documented boundaries. RC8 closed on exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3` through run `30241092949/1` and artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`).
+VC1–VC8 and RC1–RC9 are closed at their documented boundaries. RC8 closed on exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3` through run `30241092949/1` and artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`). RC9 implementation PR #497 passed its complete exact-head matrix on `04ef57f31414ec5165e353abba74afb8dfdcc901` and squash-merged to `main@70de95c73128e921cd4d7c667de0e5a442a9e0c0`.
 
-RC9 is the sole active repository lane. RC9A deterministic source generation, immutable receipt, standalone compilation and byte-for-byte drift enforcement are implemented on PR #496 but remain regression/review pending and runtime-unwired. After RC9A merges, the approved order remains one incremental Kotlin auth/session slice, then TypeScript contract adoption only behind the server-side BFF, followed by cross-client closure. RC8 remains closed and does not authorize application payment-provider activation, participant payment data, production credentials/endpoints, real money, customer-to-provider payments, escrow, wallets or payouts.
+No repository write lane is active. RC10 Turnstile threat-model work is next in sequence but unclaimed and must begin only through a new lock from current `main`. RC8 remains closed and does not authorize application payment-provider activation, participant payment data, production credentials/endpoints, real money, customer-to-provider payments, escrow, wallets or payouts. RC9 does not authorize browser-direct private API access, privileged client credentials, participant/production auth or release.
 
 This project status records repository/product completion truth only and does not imply production authorization beyond the explicitly evidenced integration and release boundaries.

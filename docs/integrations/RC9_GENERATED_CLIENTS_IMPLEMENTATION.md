@@ -4,7 +4,7 @@
 **Claim base:** `main@030cd577e179863b70f24d99ab237e74660b4325`  
 **RC9A merge:** `main@e43efc5050a792a902a1ca94113854541380b56e`  
 **Runtime-adoption PR:** #497  
-**State:** RC9B/RC9C IMPLEMENTED / EXACT-HEAD REGRESSION PENDING / BOUNDED RUNTIME ADOPTION
+**State:** RC9 CLOSED — DETERMINISTIC GENERATED CLIENTS / BOUNDED RUNTIME ADOPTION
 
 ## Purpose
 
@@ -116,18 +116,11 @@ Generated imports remain prohibited throughout Android and web runtime source ex
 
 The permanent verifier ignores compiler/build artifacts such as `.tsbuildinfo`, `.next`, `build`, `dist`, coverage and dependency directories, but scans authored source fail-closed.
 
-## RC9D closure sequence
+## RC9D closure evidence
 
-RC9 closes only after:
+RC9 implementation PR #497 passed its complete exact-head matrix on `04ef57f31414ec5165e353abba74afb8dfdcc901` and squash-merged at `main@70de95c73128e921cd4d7c667de0e5a442a9e0c0`. The permanent RC9 contract and deterministic-generation workflows passed alongside Android CI/instrumentation, Android performance, backend/OpenAPI, web/PWA/W7, supply-chain, runtime audit, Phase 10–12 and RC5–RC7 preservation gates. The authoritative receipt is recorded in `RC9_CLOSURE_RECEIPT.md` and `LIVE_INTEGRATION_LEDGER.md`.
 
-1. canonical OpenAPI and generator drift checks pass;
-2. generated Kotlin produces real `.class` output and generated TypeScript passes strict typechecking;
-3. Android unit, lint, desugaring and APK/release-readiness gates pass;
-4. web type, auth, generated-adapter, PWA and cross-client gates pass;
-5. backend, operations, runtime-audit, supply-chain, Phase 10–12 and RC5–RC9 regressions pass on the exact PR head;
-6. PR #497 merges;
-7. the merged exact-main source is verified;
-8. status, ledger, lock and Issue #261 evidence are reconciled and the lane is released or explicitly transitioned to RC10.
+The repository lane is released after the RC9D closeout merge. RC10 is next but unclaimed; it must begin from current `main` through a new explicit claim.
 
 ## Stop conditions
 
