@@ -19,7 +19,7 @@ DIREKT’s current repository state is:
 - functional customer/provider web/PWA W0–W8 — **closed**;
 - VC0 preparation/control — **closed**;
 - VC1–VC8 world-class product/AI modernization — **complete and merged**;
-- runtime integration closure — **RC1–RC8 are closed at synthetic-only managed boundaries; RC8 exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3` passed managed run `30241092949/1` with artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`)**.
+- runtime integration closure — **RC1–RC8 are closed at synthetic-only managed boundaries; RC9 is claimed and RC9A deterministic generated source is implemented but runtime-unwired, using canonical OpenAPI `1ea6b983c49c95db88db1a1432d9e6e0078fe124a3196f00c485b86dbe2db519` and pinned generator JAR `3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329`**.
 
 VC1–VC8 completion does not replace or weaken the remaining Phase 11 real-world evidence, privacy/legal, payment, external-communications or production-release gates.
 
@@ -208,6 +208,6 @@ VC1–VC8 completion does not clear:
 
 VC1–VC8 and RC1–RC8 are closed at their documented boundaries. RC8 closed on exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3` through run `30241092949/1` and artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`).
 
-RC9 is now the sole active repository lane. The approved order is: (1) deterministic OpenAPI artifact and pinned generator/drift control; (2) one incremental Kotlin auth/session migration preserving current Android behavior; (3) TypeScript generated contract adoption only behind the reviewed server-side BFF; (4) full backend/Android/web/portal/security regression and status reconciliation. RC8 remains closed and does not authorize application payment-provider activation, participant payment data, production credentials/endpoints, real money, customer-to-provider payments, escrow, wallets or payouts.
+RC9 is the sole active repository lane. RC9A deterministic source generation, immutable receipt, standalone compilation and byte-for-byte drift enforcement are implemented on PR #496 but remain regression/review pending and runtime-unwired. After RC9A merges, the approved order remains one incremental Kotlin auth/session slice, then TypeScript contract adoption only behind the server-side BFF, followed by cross-client closure. RC8 remains closed and does not authorize application payment-provider activation, participant payment data, production credentials/endpoints, real money, customer-to-provider payments, escrow, wallets or payouts.
 
 This project status records repository/product completion truth only and does not imply production authorization beyond the explicitly evidenced integration and release boundaries.

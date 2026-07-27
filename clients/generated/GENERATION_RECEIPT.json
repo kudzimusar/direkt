@@ -1,0 +1,36 @@
+{
+  "canonicalOpenApi": {
+    "path": "backend/direkt-api/artifacts/openapi.json",
+    "sha256": "1ea6b983c49c95db88db1a1432d9e6e0078fe124a3196f00c485b86dbe2db519"
+  },
+  "config": {
+    "kotlinSha256": "85d89ee639cae5b245d28dc65d57c95447b2b4198332ccd7801465fed577d7d4",
+    "typescriptSha256": "72f32726ebe2d4ac92e319af3856633e77cd9612ecdeccd8bd36207db554de50"
+  },
+  "generator": {
+    "name": "OpenAPI Generator CLI",
+    "sha256": "3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329",
+    "version": "7.22.0"
+  },
+  "outputs": {
+    "kotlin": {
+      "generator": "kotlin",
+      "library": "jvm-retrofit2",
+      "runtimeWired": false,
+      "serializationLibrary": "kotlinx_serialization",
+      "sourceFiles": 109,
+      "treeSha256": "ab6cd201e8a74df0c31319e882e3b419617a1539518f7151fa71ffe695c440c1"
+    },
+    "typescript": {
+      "generator": "typescript-fetch",
+      "runtimeWired": false,
+      "serverBffOnly": true,
+      "sourceFiles": 96,
+      "treeSha256": "19aa7625ac7e338d01e9947dfaad8d5660cbe17ab9bdc912fb36e04fb659276f"
+    }
+  },
+  "participantData": false,
+  "privilegedClientCredentials": false,
+  "productionAuthorization": false,
+  "schemaVersion": 1
+}

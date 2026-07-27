@@ -158,7 +158,7 @@ Clients never decide payment success. Payment state cannot create verification/p
 | OpenAPI | **ACTIVE** | Canonical backend contract generated/drift-checked in CI. |
 | Android API boundary | **ACTIVE implementation** | Backend API only; no privileged direct Supabase path. |
 | TypeScript/PWA API boundary | **ACTIVE reviewed BFF architecture** | Canonical API remains IAM-private. |
-| Fully generated Kotlin/TypeScript client packages | **RC9 CLAIMED / DETERMINISTIC FOUNDATION PENDING** | Pin OpenAPI Generator 7.22.0, add reproducible drift control, migrate one Kotlin auth/session slice, and adopt TypeScript contract types only behind the server-side BFF. No generated runtime client is active yet. |
+| Fully generated Kotlin/TypeScript client packages | **RC9A IMPLEMENTED / RUNTIME UNWIRED / REGRESSION PENDING** | Generator 7.22.0 JAR `3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329` produces committed source from canonical OpenAPI `1ea6b983c49c95db88db1a1432d9e6e0078fe124a3196f00c485b86dbe2db519` with byte-for-byte drift enforcement and standalone Kotlin/TypeScript compilation. Android and BFF runtime imports remain false; RC9B/RC9C are separate. |
 
 ## Runtime integration sequence
 
@@ -172,7 +172,7 @@ Clients never decide payment success. Payment state cannot create verification/p
 8. RC6 WhatsApp Cloud API application adapter — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**; exact-current-main run `30137700769` on `8838b7a6d726a5aed44ce21a39506c1265a98d15` passed outbox → Meta `hello_world` test-template send → authentic signed webhook receipt on retry; first-attempt setup failure remains preserved in Issue #404. Production phone/templates and participant/live WhatsApp traffic remain disabled/gated.
 9. RC7 Google Maps runtime.
 10. RC8 sandbox payment adapters/reconciliation.
-11. RC9 generated Kotlin/TypeScript clients — **CLAIMED / RC9A deterministic generation first**.
+11. RC9 generated Kotlin/TypeScript clients — **RC9A IMPLEMENTED / EXACT-HEAD REGRESSION PENDING / RUNTIME UNWIRED**.
 12. RC10 Turnstile threat-model decision.
 13. RC11 combined integration regression/evidence index/lane release.
 
