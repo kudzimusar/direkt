@@ -104,21 +104,23 @@ jobs:
       - name: Post managed receipt to Issue 354
         run: |
           set -euo pipefail
-          gh issue comment 354 --repo "${GITHUB_REPOSITORY}" --body "## UIA exact-current-main refresh passed
-
-Managed source: \`${SOURCE_SHA}\`
-
-- Browser/PWA: \`${WEB_RUN_ID}\` — passed
-- Internal Android: \`${ANDROID_RUN_ID}\` — passed
-- IAM-private operations: \`${OPERATIONS_RUN_ID}\` — passed
-- Canonical host: \`${CANONICAL_RUN_ID}\` — passed
-- Browser: https://app.direkt.forum
-- Android group: \`direkt-internal-testers\`
-- Operations: \`direkt-operations-portal-staging\`
-- Real participant UAT: not run
-- Production release: not authorized
-
-The bridge is publishing permanent closeout branch \`${CLOSEOUT_BRANCH}\`."
+          body="$(printf '%s\n' \
+            '## UIA exact-current-main refresh passed' \
+            '' \
+            "Managed source: \`${SOURCE_SHA}\`" \
+            '' \
+            "- Browser/PWA: \`${WEB_RUN_ID}\` — passed" \
+            "- Internal Android: \`${ANDROID_RUN_ID}\` — passed" \
+            "- IAM-private operations: \`${OPERATIONS_RUN_ID}\` — passed" \
+            "- Canonical host: \`${CANONICAL_RUN_ID}\` — passed" \
+            '- Browser: https://app.direkt.forum' \
+            '- Android group: `direkt-internal-testers`' \
+            '- Operations: `direkt-operations-portal-staging`' \
+            '- Real participant UAT: not run' \
+            '- Production release: not authorized' \
+            '' \
+            "The bridge is publishing permanent closeout branch \`${CLOSEOUT_BRANCH}\`.")"
+          gh issue comment 354 --repo "${GITHUB_REPOSITORY}" --body "${body}"
       - name: Publish clean permanent closeout branch
         run: |
           set -euo pipefail
