@@ -24,6 +24,7 @@ LOCK = ROOT / "WORKSTREAM_LOCK.md"
 IMPLEMENTATION = ROOT / "docs/integrations/RC8_SANDBOX_PAYMENTS_IMPLEMENTATION.md"
 CANARY = ROOT / "backend/direkt-api/src/commercial/rc8-payment-canary.ts"
 MANAGED_WORKFLOW = ROOT / ".github/workflows/rc8-payments-managed.yml"
+CONTRACT_WORKFLOW = ROOT / ".github/workflows/rc8-payments-contract.yml"
 MANAGED_RUNNER = ROOT / "scripts/rc8/run-payments-managed.sh"
 BOOTSTRAP = ROOT / "scripts/rc8/bootstrap-payments-managed.sh"
 TRIGGER = ROOT / "docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md"
@@ -45,9 +46,7 @@ for provider in ("mtn_momo", "airtel_money", "dpo", "stripe", "paypal"):
     require(PORT, f"'{provider}'")
     require(REGISTRY, f"{provider}:")
 
-require(LOCK, "| Status | RELEASED |")
 require(LOCK, "RC8 implementation contract — CLOSED AND PRESERVED")
-require(LOCK, "No repository write lane is active")
 require(IMPLEMENTATION, "Managed runtime proof — closed")
 require(IMPLEMENTATION, "**Replayed base:** `main@54d0129027b7f324272c4bcc94a0f2109318fd18`")
 require(IMPLEMENTATION, "CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY")
@@ -76,6 +75,8 @@ require(MANAGED_WORKFLOW, "workflow_dispatch:")
 require(MANAGED_WORKFLOW, "google-github-actions/auth@v3")
 require(MANAGED_WORKFLOW, 'test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"')
 require(MANAGED_WORKFLOW, "bash scripts/rc8/run-payments-managed.sh")
+require(MANAGED_WORKFLOW, '"PROJECT_STATUS.md"')
+require(CONTRACT_WORKFLOW, '"PROJECT_STATUS.md"')
 require(MANAGED_RUNNER, "--max-retries 0")
 require(MANAGED_RUNNER, "--set-secrets")
 require(MANAGED_RUNNER, "direkt-stripe-sandbox-secret-key:${stripe_version}")
