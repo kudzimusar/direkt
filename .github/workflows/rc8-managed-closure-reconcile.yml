@@ -1,0 +1,111 @@
+name: RC8 managed closure reconciler
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc8-managed-closure-reconcile.yml"
+      - "scripts/rc8/patch-rc8-managed-closure.py"
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'docs/rc8-managed-closure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: docs/rc8-managed-closure
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Apply and validate RC8 closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/rc8/patch-rc8-managed-closure.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''# Keep the managed exact-source step fail-closed: a future manual execution still requires an explicit rearm commit.
+          replace_once(
+              workflow,
+              "          grep -Fxq 'STATUS=CONSUMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md\n          grep -Fxq 'CONFIRMATION=RUN-DIREKT-RC8-PAYMENTS-MANAGED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md\n          python3 scripts/rc8/verify-payments-contract.py",
+              "          grep -Fxq 'STATUS=CONSUMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md\n          grep -Fxq 'CONFIRMATION=RUN-DIREKT-RC8-PAYMENTS-MANAGED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md\n          python3 scripts/rc8/verify-payments-contract.py",
+          )
+          # The exact-source managed step contains the second occurrence; restore its ARMED precondition so consumed source cannot execute.
+          text = (ROOT / workflow).read_text(encoding="utf-8")
+          needle = "grep -Fxq 'STATUS=CONSUMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md"
+          positions = [i for i in range(len(text)) if text.startswith(needle, i)]
+          if len(positions) != 2:
+              raise AssertionError(f"{workflow}: expected two consumed trigger checks, found {len(positions)}")
+          second = positions[1]
+          text = text[:second] + "grep -Fxq 'STATUS=ARMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md" + text[second + len(needle):]
+          (ROOT / workflow).write_text(text, encoding="utf-8")
+          '''
+          new = '''# Keep the manual managed path fail-closed: the first trigger check is now CONSUMED for the PR contract, while the exact-source execution check remains ARMED and therefore requires an explicit reviewed rearm commit.
+          workflow_text = (ROOT / workflow).read_text(encoding="utf-8")
+          if workflow_text.count("grep -Fxq 'STATUS=CONSUMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md") != 1:
+              raise AssertionError(f"{workflow}: expected one consumed PR-contract trigger check")
+          if workflow_text.count("grep -Fxq 'STATUS=ARMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md") != 1:
+              raise AssertionError(f"{workflow}: expected one fail-closed manual execution trigger check")
+          '''
+          if old not in text:
+              raise SystemExit('closure patch workflow guard block not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          python3 scripts/rc8/patch-rc8-managed-closure.py
+          python3 scripts/rc8/verify-payments-contract.py
+          python3 scripts/rc5/verify-test-lab-closure.py
+          python3 scripts/rc6/verify-whatsapp-contract.py
+          python3 scripts/rc7/verify-maps-contract.py
+          python3 -m py_compile \
+            scripts/rc8/verify-payments-contract.py \
+            scripts/rc5/verify-test-lab-closure.py \
+            scripts/rc6/verify-whatsapp-contract.py \
+            scripts/rc7/verify-maps-contract.py
+          bash -n scripts/rc8/run-payments-managed.sh
+          bash -n scripts/rc8/bootstrap-payments-managed.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          workflow = Path('.github/workflows/rc8-payments-managed.yml').read_text(encoding='utf-8')
+          assert '  push:\n' not in workflow
+          assert "grep -Fxq 'STATUS=CONSUMED'" in workflow
+          assert "if: github.event_name == 'workflow_dispatch'" in workflow
+          trigger = Path('docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md').read_text(encoding='utf-8')
+          assert 'STATUS=CONSUMED' in trigger
+          assert 'MANAGED_RUN=30241092949/1' in trigger
+          lock = Path('WORKSTREAM_LOCK.md').read_text(encoding='utf-8')
+          assert '| Status | RELEASED |' in lock
+          assert 'RC8 implementation contract — CLOSED AND PRESERVED' in lock
+          print('RC8_MANAGED_CLOSURE_RECONCILE|PASS')
+          PY
+          sed -i 's/[[:space:]]\+$//' \
+            WORKSTREAM_LOCK.md \
+            PROJECT_STATUS.md \
+            docs/integrations/CURRENT_INTEGRATION_STATUS.md \
+            docs/integrations/LIVE_INTEGRATION_LEDGER.md \
+            docs/integrations/RC8_SANDBOX_PAYMENTS_IMPLEMENTATION.md \
+            docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md
+          rm \
+            scripts/rc8/patch-rc8-managed-closure.py \
+            .github/workflows/rc8-managed-closure-reconcile.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            .github/workflows/rc8-payments-managed.yml \
+            .github/workflows/rc8-managed-closure-reconcile.yml \
+            WORKSTREAM_LOCK.md \
+            PROJECT_STATUS.md \
+            docs/integrations/CURRENT_INTEGRATION_STATUS.md \
+            docs/integrations/LIVE_INTEGRATION_LEDGER.md \
+            docs/integrations/RC8_SANDBOX_PAYMENTS_IMPLEMENTATION.md \
+            docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md \
+            scripts/rc8/verify-payments-contract.py \
+            scripts/rc8/patch-rc8-managed-closure.py
+          git diff --cached --check
+          git commit -m 'docs(rc8): close managed sandbox payment checkpoint'
+          git push origin HEAD:docs/rc8-managed-closure
