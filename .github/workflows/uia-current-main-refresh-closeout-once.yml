@@ -1,8 +1,8 @@
-name: DIREKT UIA corrected-main closeout once
-# Explicit synchronize trigger after PR creation.
+name: DIREKT UIA corrected-main promotion bridge
 
 on:
-  pull_request:
+  push:
+    branches: [main]
     paths:
       - ".github/workflows/uia-current-main-refresh-closeout-once.yml"
       - "scripts/uia/publish-current-main-refresh-closeout.py"
@@ -13,18 +13,18 @@ permissions:
   issues: write
 
 concurrency:
-  group: direkt-uia-corrected-main-closeout-once
+  group: direkt-uia-corrected-main-promotion-bridge
   cancel-in-progress: false
 
 jobs:
   closeout:
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chore/uia-current-main-refresh-closeout'
     runs-on: ubuntu-latest
     timeout-minutes: 110
     env:
       GH_TOKEN: ${{ github.token }}
-      SOURCE_SHA: a7d1a383fb1d0737d014cd8e13fc3fa263596e65
-      PR_NUMBER: ${{ github.event.pull_request.number }}
+      SOURCE_SHA: ${{ github.sha }}
+      PR_NUMBER: "517"
+      CLOSEOUT_BRANCH: chore/uia-current-main-refresh-final
       WEB_WORKFLOW: functional-pwa-w8-managed-cutover.yml
       ANDROID_WORKFLOW: firebase-internal-distribution.yml
       OPERATIONS_WORKFLOW: cloud-run-staging-deploy-v2.yml
@@ -32,12 +32,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: chore/uia-current-main-refresh-closeout
+          ref: ${{ github.sha }}
           fetch-depth: 0
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - name: Verify source claim and preserved boundaries
+      - name: Verify exact main claim and preserved boundaries
         run: |
           set -euo pipefail
           git fetch origin main --no-tags
@@ -118,15 +118,16 @@ Managed source: \`${SOURCE_SHA}\`
 - Real participant UAT: not run
 - Production release: not authorized
 
-PR #${PR_NUMBER} contains the permanent receipt and released lock."
-      - name: Commit closeout and remove one-shot controls
+The bridge is publishing permanent closeout branch \`${CLOSEOUT_BRANCH}\`."
+      - name: Publish clean permanent closeout branch
         run: |
           set -euo pipefail
           rm scripts/uia/publish-current-main-refresh-closeout.py
           rm .github/workflows/uia-current-main-refresh-closeout-once.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git switch -c "${CLOSEOUT_BRANCH}"
           git add WORKSTREAM_LOCK.md PROJECT_STATUS.md docs/design/UIA_CURRENT_MAIN_OWNER_REVIEW_RECEIPT.md scripts/uia/verify-current-main-owner-review.py .github/workflows/uia-current-main-owner-review-contract.yml scripts/uia/publish-current-main-refresh-closeout.py .github/workflows/uia-current-main-refresh-closeout-once.yml
           git diff --cached --check
           git commit -m 'docs(uia): close current-main owner review'
-          git push origin HEAD:chore/uia-current-main-refresh-closeout
+          git push origin HEAD:"${CLOSEOUT_BRANCH}"
