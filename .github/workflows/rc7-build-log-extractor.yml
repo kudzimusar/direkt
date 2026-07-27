@@ -1,0 +1,41 @@
+name: RC7 Android build log extractor
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-build-log-extractor.yml"
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+
+jobs:
+  extract:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chore/rc7-main-run-locator-4'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_JOB_ID: "89862262967"
+    steps:
+      - name: Extract bounded Android build failure context
+        shell: bash
+        run: |
+          set -euo pipefail
+          raw="${RUNNER_TEMP}/job.log"
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
+          body="${RUNNER_TEMP}/bounded.md"
+          {
+            echo '## RC7 bounded Android build/certificate log extraction'
+            echo
+            echo "- Exact-main runtime job: \`${SOURCE_JOB_ID}\`"
+            echo '- Raw job log is not attached; only bounded matching lines are shown.'
+            echo
+            echo '```text'
+            grep -n -E 'BUILD (SUCCESSFUL|FAILED)|FAILURE:|What went wrong|Execution failed|apksigner|certificate|android-apk|No such file|not found|Process completed with exit code|rc7-maps-test-lab|Firebase Test Lab|instrumentation' "${raw}" \
+              | sed -E 's/(AIza[0-9A-Za-z_-]{20,})/[REDACTED_API_KEY]/g; s/(ya29\.[0-9A-Za-z._-]{20,})/[REDACTED_OAUTH_TOKEN]/g; s/[0-9A-Za-z_+=\/.:-]{120,}/[REDACTED_LONG_VALUE]/g' \
+              | tail -n 160 || true
+            echo '```'
+          } > "${body}"
+          gh pr comment "${{ github.event.pull_request.number }}" --repo "${GITHUB_REPOSITORY}" --body-file "${body}"
