@@ -115,7 +115,7 @@ for needle in (
     "TEMPLATE ONLY / NO 11J DECISION",
     "STOP / REPEAT / NARROW / PROCEED",
     "Phase 12 production authorization: FALSE",
-    "Synthetic, sandbox, secondary or managed-canary evidence",
+    "synthetic, sandbox, secondary or managed-canary evidence",
 ):
     require(DECISION, needle)
 
