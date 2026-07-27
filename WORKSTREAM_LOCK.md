@@ -11,7 +11,7 @@ This file prevents overlapping writes in the single-lane build process.
 | Authorized scope | No active repository write scope. A new explicit claim is required for Wave 0 real-entry evidence reconciliation or any later source change. |
 | Protected surface | Closed RC0–RC11 evidence, canonical OpenAPI authorization/privacy checks, Android auth/session and Firebase controls, customer/provider web BFF/private Cloud Run IAM, operations portal, RC8 payment boundaries, UIA Issue #354, VC1–VC8 Design DNA and Phase 11/12 gates. |
 | Implementation branch | None. Phase 11 readiness PR #508 merged at `2bf58c2c5df40aa76742730ec4a49644c2506a89`. |
-| Stable baseline | `main@2bf58c2c5df40aa76742730ec4a49644c2506a89` contains the reviewed Phase 11C–11J execution-readiness package and closed RC0–RC11 evidence. |
+| Stable baseline | `main@1c32171ddc46c8f5c0e8176b2be14c4d4f4d355c` contains the reviewed Phase 11C–11J readiness package, its exact closeout receipt and closed RC0–RC11 evidence. |
 | Current task | None. Wave 0 real-entry evidence reconciliation is next but unclaimed. `PILOT_ENTRY_APPROVED` remains false and PRIMARY-PILOT evidence count remains 0. |
 | Governing issue | Issue #112 remains open for external entry gates, Wave 0 authorization, real 11C–11H evidence, 11I corrections and 11J decision. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |

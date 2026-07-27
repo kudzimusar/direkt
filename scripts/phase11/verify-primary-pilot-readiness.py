@@ -132,6 +132,8 @@ for needle in (
     "State:** CLOSED — EXECUTION READY / REAL ENTRY BLOCKED / NO PRIMARY-PILOT EVIDENCE",
     "Implementation PR/head:** #508 / `ae4fcb0350be4023f82e2be8df88c18cca583695`",
     "Implementation merge:** `2bf58c2c5df40aa76742730ec4a49644c2506a89`",
+    "Closeout PR/head:** #509 / `311937bc08770c3ab664f15b1896fc4d5ec2f40a`",
+    "Closeout merge:** `1c32171ddc46c8f5c0e8176b2be14c4d4f4d355c`",
     "PRIMARY-PILOT evidence count:** 0",
     "30287771078",
     "30287771096",
