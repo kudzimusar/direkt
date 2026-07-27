@@ -5,7 +5,7 @@
 **VC1–VC8 promotion:** PR #270 merged at `c7f5985bc20372b4761e063dc3a66ecc736556e2`
 **Visual Completion issue:** #259 — CLOSED/COMPLETED
 **Runtime integration tracker:** #261
-**Active repository write lane:** none — RC1–RC9 are closed under Issue #261; RC10 is next but unclaimed
+**Active repository write lane:** RC10 Turnstile threat-model decision under Issue #261; RC1–RC9 remain closed
 
 ## 1. Programme state
 
@@ -19,7 +19,7 @@ DIREKT’s current repository state is:
 - functional customer/provider web/PWA W0–W8 — **closed**;
 - VC0 preparation/control — **closed**;
 - VC1–VC8 world-class product/AI modernization — **complete and merged**;
-- runtime integration closure — **RC1–RC9 are closed at their documented bounded boundaries. RC9 deterministic Kotlin/TypeScript generation and bounded Android/server-only BFF adoption merged at `main@70de95c73128e921cd4d7c667de0e5a442a9e0c0`, using canonical OpenAPI `1c13b69a34c30b84347b02ecddcf4f5b55c21e1958f036d4dc29c9106784e063` and pinned generator JAR `3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329`**.
+- runtime integration closure — **RC1–RC9 are closed at their documented bounded boundaries. RC10 is claimed from `main@c1960e7bf38a81ad48c8046dd90cd008ede7bb6e` for the conditional Turnstile threat-model decision; no Turnstile runtime is active.**
 
 VC1–VC8 completion does not replace or weaken the remaining Phase 11 real-world evidence, privacy/legal, payment, external-communications or production-release gates.
 
@@ -209,6 +209,6 @@ VC1–VC8 completion does not clear:
 
 VC1–VC8 and RC1–RC9 are closed at their documented boundaries. RC8 closed on exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3` through run `30241092949/1` and artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`). RC9 implementation PR #497 passed its complete exact-head matrix on `04ef57f31414ec5165e353abba74afb8dfdcc901` and squash-merged to `main@70de95c73128e921cd4d7c667de0e5a442a9e0c0`.
 
-No repository write lane is active. RC10 Turnstile threat-model work is next in sequence but unclaimed and must begin only through a new lock from current `main`. RC8 remains closed and does not authorize application payment-provider activation, participant payment data, production credentials/endpoints, real money, customer-to-provider payments, escrow, wallets or payouts. RC9 does not authorize browser-direct private API access, privileged client credentials, participant/production auth or release.
+RC10 is the sole active repository write lane. It must inventory public abuse-sensitive flows and either implement a narrowly justified server-verified browser challenge or record `NOT CURRENTLY REQUIRED` with re-evaluation triggers. RC8 and RC9 boundaries remain unchanged; no participant, production, privileged-direct-access, payment-provider or real-money activation is authorized.
 
 This project status records repository/product completion truth only and does not imply production authorization beyond the explicitly evidenced integration and release boundaries.

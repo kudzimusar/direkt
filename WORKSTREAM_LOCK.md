@@ -6,14 +6,14 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | RELEASED — RC9 CLOSED AND PRESERVED |
-| Owner/agent | None. RC9 is closed under Issue #261; RC10 is next but remains unclaimed. |
-| Authorized scope | No active repository write lane. Any RC10 Turnstile decision or later integration work requires a new explicit claim from current `main`. |
-| Protected surface | Closed RC0–RC9 evidence, including RC5 run `30183466799`, RC6 run `30137700769`, RC7 run `30234521983/1`, RC8 run `30241092949/1`, RC9 exact-head matrix on `04ef57f31414ec5165e353abba74afb8dfdcc901` and implementation merge `70de95c73128e921cd4d7c667de0e5a442a9e0c0`; canonical OpenAPI authorization/privacy checks; Android auth/session storage, signing, Maps/FCM/Crashlytics and Play/Data Safety; customer/provider web BFF/private Cloud Run IAM; operations portal; UIA Issue #354; VC1–VC8 Design DNA; Phase 11/12 gates. |
-| Implementation branch | None. PR #497 and RC9D closeout PR #498 are merged; no repository write lane is active. |
-| Stable baseline | `main@957b19192443b2511f1bf784595591b25b5e7a2e` contains the complete RC9 implementation and closeout receipt. OpenAPI Generator `7.22.0` remains checksum-pinned; canonical OpenAPI SHA-256 is `1c13b69a34c30b84347b02ecddcf4f5b55c21e1958f036d4dc29c9106784e063`; generated Kotlin/TypeScript trees remain deterministic and bounded runtime adoption is enforced. |
-| Current task | None. RC9 is complete and preserved; RC10 remains unclaimed and requires a new explicit claim from current `main`. |
-| Governing issue | Issue #261 — Runtime integration closure after W8. RC9 is closed; UIA Issue #354 remains parked/read-only; RC10 is unclaimed. |
+| Status | CLAIMED — RC10 TURNSTILE THREAT-MODEL DECISION |
+| Owner/agent | Active repository agent — Issue #261 RC10 abuse-control checkpoint. |
+| Authorized scope | Audit every public mutating or provider-cost-bearing flow and either implement Turnstile on one specifically justified browser flow or close it as `NOT CURRENTLY REQUIRED`. Existing fail-closed rate limits may be strengthened. Global CAPTCHA installation, Android challenges and unrelated provider activation are prohibited. |
+| Protected surface | Closed RC0–RC9 evidence, canonical OpenAPI authorization/privacy checks, Android auth/session and Firebase controls, customer/provider web BFF/private Cloud Run IAM, operations portal, RC8 payment boundaries, UIA Issue #354, VC1–VC8 Design DNA and Phase 11/12 gates. |
+| Implementation branch | `feat/rc10-turnstile-decision`, based on `main@c1960e7bf38a81ad48c8046dd90cd008ede7bb6e`. |
+| Stable baseline | `main@c1960e7bf38a81ad48c8046dd90cd008ede7bb6e` contains RC0–RC9 closure, the RC9D exact-main receipt and no active Turnstile runtime. |
+| Current task | RC10A — complete the public-flow threat model, close uncovered rate-limit gaps, make the conditional Turnstile decision and prove it through exact-head regression. |
+| Governing issue | Issue #261 — Runtime integration closure after W8. RC10 is the sole active repository write lane; UIA Issue #354 remains parked/read-only. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
 
@@ -129,6 +129,19 @@ The following strings are historical closure evidence required by the permanent 
 8. Additive API changes remain backward compatible; breaking changes require `/api/v2`. Unknown/new response fields must not crash released clients, and enum evolution requires an explicit safe policy.
 9. Cross-client evidence must include backend OpenAPI, generator drift, Android unit/lint/build/instrumentation and functional web type/security/build regressions before migration promotion.
 10. RC9 is `CLOSED — DETERMINISTIC GENERATED CLIENTS / BOUNDED RUNTIME ADOPTION`: PR #497 exact head `04ef57f31414ec5165e353abba74afb8dfdcc901` passed the complete backend, Android, web/PWA, W7, security, runtime-audit, Phase 10–12 and RC5–RC9 matrix, then squash-merged at `70de95c73128e921cd4d7c667de0e5a442a9e0c0`. Generated imports remain limited to the reviewed Android auth wrapper and server-only BFF type adapter. No production, participant, privileged direct-access, provider-secret, payment-provider or real-money authorization changed.
+
+## RC10 implementation contract — CLAIMED
+
+1. Turnstile is conditional abuse control, not a completeness checkbox. It may be introduced only for a specifically reviewed browser-accessible public flow whose risk is not adequately controlled by authentication, admission gates, quotas and rate limiting.
+2. RC10 inventories all public mutating or provider-cost-bearing routes, including challenge issuance/verification, public Help, discovery assistance, discovery-area normalization and public discovery reads.
+3. Database-backed rate limiting remains backend authoritative, fail-closed and keyed by an HMAC of the network subject. Raw IP addresses, challenge tokens and provider payloads must not be stored in durable rate-limit evidence.
+4. If Turnstile is justified, verification is server-side with hostname/action binding, expiry and replay resistance; the secret remains server-only; the browser token is short-lived, single-use and never logged; accessibility fallback and a kill switch are mandatory.
+5. Turnstile must not become authentication, identity, verification, trust, payment, publication or authorization authority. It must not be installed globally or required by Android/native flows.
+6. If no current flow justifies Turnstile, RC10 closes as `NOT CURRENTLY REQUIRED` with a written threat model and explicit re-evaluation triggers. Any uncovered first-party rate-limit gap must still be repaired.
+7. No Cloudflare Turnstile widget, site key, secret, package or runtime binding is provisioned merely to close RC10.
+8. Real participants, production authentication, production communications, real money and production release remain separately blocked.
+9. Exact-head evidence must include backend formatting/lint/type/tests/build/OpenAPI, abuse-policy tests, RC5–RC10 permanent contracts, PWA/W7/W8, runtime audit, supply-chain and documentation gates as applicable.
+10. RC10 closes only after project status, live ledger, current integration register, permanent verifier, dedicated decision receipt and Issue #261 agree; RC11 remains unclaimed until then.
 
 ## Runtime integration closure contract
 

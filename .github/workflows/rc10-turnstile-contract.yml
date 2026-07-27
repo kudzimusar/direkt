@@ -1,0 +1,35 @@
+name: DIREKT RC10 Turnstile decision contract
+
+on:
+  pull_request:
+    paths:
+      - "WORKSTREAM_LOCK.md"
+      - "PROJECT_STATUS.md"
+      - "docs/integrations/**"
+      - "scripts/rc9/**"
+      - "scripts/rc10/**"
+      - "backend/direkt-api/src/platform/security/**"
+      - "backend/direkt-api/src/auth/**"
+      - "backend/direkt-api/src/discovery/**"
+      - "backend/direkt-api/src/ai/**"
+      - "backend/direkt-api/src/interaction/**"
+      - "backend/direkt-api/package.json"
+      - ".github/workflows/rc10-turnstile-contract.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Verify RC9 preservation and RC10 decision boundary
+        run: |
+          python3 scripts/rc9/verify-generated-client-contract.py
+          python3 scripts/rc10/verify-turnstile-decision.py
+          python3 scripts/rc8/verify-payments-contract.py
