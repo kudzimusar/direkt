@@ -5,6 +5,9 @@ on:
     paths:
       - ".github/workflows/rc10-implementation-reconcile.yml"
       - "scripts/rc10/patch-implementation.py"
+      - "backend/direkt-api/src/platform/security/abuse-control.policies.ts"
+      - "backend/direkt-api/test/unit/platform/security/abuse-control.policies.spec.ts"
+      - "docs/integrations/RC10_TURNSTILE_DECISION.md"
 
 permissions:
   contents: write
