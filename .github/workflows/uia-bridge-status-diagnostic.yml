@@ -14,13 +14,23 @@ jobs:
   inspect:
     if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chore/uia-bridge-diagnostic'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     env:
       GH_TOKEN: ${{ github.token }}
       SOURCE_SHA: 9c7d2613121771c4beabb5fff2a7bb0b3361702c
       WORKFLOW: uia-current-main-refresh-closeout-once.yml
     steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+      - name: Lint exact promotion bridge
+        run: |
+          set -euo pipefail
+          go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 \
+            -color \
+            ".github/workflows/${WORKFLOW}"
       - name: Report exact bridge validation details
+        if: always()
         run: |
           set -euo pipefail
           runs="$(gh run list --repo "${GITHUB_REPOSITORY}" --workflow "${WORKFLOW}" --branch main --limit 20 --json databaseId,displayTitle,event,headSha,status,conclusion,createdAt,updatedAt,url)"
@@ -29,18 +39,7 @@ jobs:
           run_id="$(jq -r --arg sha "${SOURCE_SHA}" '[.[] | select(.headSha == $sha)] | sort_by(.createdAt) | last | .databaseId // empty' <<< "${runs}")"
           [[ "${run_id}" =~ ^[0-9]+$ ]]
           echo "BRIDGE_RUN_ID=${run_id}"
-          echo '=== RUN METADATA ==='
           gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}" \
             --jq '{id,name,path,event,status,conclusion,head_sha,run_attempt,created_at,updated_at,html_url}'
-          echo '=== BRIDGE JOBS ==='
           gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?per_page=100" \
             --jq '.jobs[] | {id,name,status,conclusion,started_at,completed_at,html_url}' || true
-          echo '=== CHECK RUNS ==='
-          check_ids="$(gh api "/repos/${GITHUB_REPOSITORY}/commits/${SOURCE_SHA}/check-runs?per_page=100" --jq '.check_runs[] | select(.name | contains("UIA") or contains("corrected-main") or contains("promotion bridge")) | .id')"
-          gh api "/repos/${GITHUB_REPOSITORY}/commits/${SOURCE_SHA}/check-runs?per_page=100" \
-            --jq '.check_runs[] | select(.name | contains("UIA") or contains("corrected-main") or contains("promotion bridge")) | {id,name,status,conclusion,details_url,output}' || true
-          echo '=== ANNOTATIONS ==='
-          for check_id in ${check_ids}; do
-            gh api "/repos/${GITHUB_REPOSITORY}/check-runs/${check_id}/annotations?per_page=100" \
-              --jq '.[] | {path,start_line,end_line,annotation_level,message,title,raw_details}' || true
-          done
