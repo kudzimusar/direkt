@@ -1,0 +1,30 @@
+name: RC9A generator audit receipt
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc9a-audit-receipt.yml"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  extract:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/rc9a-deterministic-generated-clients'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_JOB_ID: "89922503654"
+    steps:
+      - name: Print bounded audit receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          raw="${RUNNER_TEMP}/rc9a-audit.log"
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
+          sed -r 's/\x1B\[[0-9;]*[mK]//g' "${raw}" \
+            | grep -E '([0-9a-f]{64}  .*/openapi-generator-cli-7\.22\.0\.jar|^.*(openapi_version|path_count|operation_count|schema_count|tags|auth_operation|firebase_exchange_operation_id|firebase_exchange_tags|kotlin_file_count|kotlin_bytes|typescript_file_count|typescript_bytes)=)' \
+            | sed -E 's/^.*Z //' \
+            | tail -n 120
