@@ -14,6 +14,7 @@
     "start": "node dist/main.js",
     "start:dev": "ts-node --transpile-only src/main.ts",
     "canary:maps": "node dist/location/maps-canary.js",
+    "canary:payments": "node dist/commercial/rc8-payment-canary.js",
     "format": "prettier --write \"{src,scripts,test}/**/*.ts\" \"*.{json,js,mjs}\"",
     "format:check": "prettier --check \"{src,scripts,test}/**/*.ts\" \"*.{json,js,mjs}\"",
     "lint": "eslint src scripts test --max-warnings=0",
