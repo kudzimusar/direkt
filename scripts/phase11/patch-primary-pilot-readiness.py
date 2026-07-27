@@ -10,6 +10,12 @@ def replace(path: Path, old: str, new: str) -> None:
         raise SystemExit(f"Phase 11 readiness patch missing text in {path.relative_to(ROOT)}: {old}")
     path.write_text(text.replace(old, new, 1), encoding="utf-8")
 
+
+def normalize(path: Path) -> None:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    path.write_text("\n".join(line.rstrip() for line in lines) + "\n", encoding="utf-8")
+
+
 lock = ROOT / "WORKSTREAM_LOCK.md"
 replace(
     lock,
@@ -71,7 +77,7 @@ control = ROOT / "docs/phase11/PHASE11_EXECUTION_AND_ENTRY_CONTROL.md"
 replace(
     control,
     "**Status:** SYNTHETIC FUNCTIONAL READINESS COMPLETE — REAL PARTICIPANT PILOT STILL EXTERNALLY BLOCKED  ",
-    "**Status:** PRIMARY-PILOT EXECUTION READINESS IMPLEMENTED — REAL PARTICIPANT PILOT STILL EXTERNALLY BLOCKED  ",
+    "**Status:** PRIMARY-PILOT EXECUTION READINESS IMPLEMENTED — REAL PARTICIPANT PILOT STILL EXTERNALLY BLOCKED",
 )
 replace(
     control,
@@ -91,5 +97,8 @@ This package makes execution operationally ready but does not start 11C, create 
 
 ## Phase 12 boundary""",
 )
+
+for target in (lock, project, control):
+    normalize(target)
 
 print("PHASE11_PRIMARY_PILOT_READINESS_PATCH|PASS")
