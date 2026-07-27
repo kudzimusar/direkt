@@ -30,32 +30,21 @@ jobs:
           from pathlib import Path
           path = Path('scripts/rc8/patch-rc8-managed-closure.py')
           text = path.read_text(encoding='utf-8')
-          old = '''# Keep the managed exact-source step fail-closed: a future manual execution still requires an explicit rearm commit.
-          replace_once(
-              workflow,
-              "          grep -Fxq 'STATUS=CONSUMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md\n          grep -Fxq 'CONFIRMATION=RUN-DIREKT-RC8-PAYMENTS-MANAGED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md\n          python3 scripts/rc8/verify-payments-contract.py",
-              "          grep -Fxq 'STATUS=CONSUMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md\n          grep -Fxq 'CONFIRMATION=RUN-DIREKT-RC8-PAYMENTS-MANAGED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md\n          python3 scripts/rc8/verify-payments-contract.py",
-          )
-          # The exact-source managed step contains the second occurrence; restore its ARMED precondition so consumed source cannot execute.
-          text = (ROOT / workflow).read_text(encoding="utf-8")
-          needle = "grep -Fxq 'STATUS=CONSUMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md"
-          positions = [i for i in range(len(text)) if text.startswith(needle, i)]
-          if len(positions) != 2:
-              raise AssertionError(f"{workflow}: expected two consumed trigger checks, found {len(positions)}")
-          second = positions[1]
-          text = text[:second] + "grep -Fxq 'STATUS=ARMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md" + text[second + len(needle):]
-          (ROOT / workflow).write_text(text, encoding="utf-8")
-          '''
-          new = '''# Keep the manual managed path fail-closed: the first trigger check is now CONSUMED for the PR contract, while the exact-source execution check remains ARMED and therefore requires an explicit reviewed rearm commit.
+          start_marker = '# Keep the managed exact-source step fail-closed:'
+          end_marker = '# Permanent verifier: enforce closure, consumed trigger, immutable receipt, and no automatic execution.'
+          start = text.find(start_marker)
+          end = text.find(end_marker)
+          if start < 0 or end < 0 or end <= start:
+              raise SystemExit('closure patch workflow guard markers not found')
+          replacement = '''# Keep the manual managed path fail-closed: the first trigger check is now CONSUMED for the PR contract, while the exact-source execution check remains ARMED and therefore requires an explicit reviewed rearm commit.
           workflow_text = (ROOT / workflow).read_text(encoding="utf-8")
           if workflow_text.count("grep -Fxq 'STATUS=CONSUMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md") != 1:
               raise AssertionError(f"{workflow}: expected one consumed PR-contract trigger check")
           if workflow_text.count("grep -Fxq 'STATUS=ARMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md") != 1:
               raise AssertionError(f"{workflow}: expected one fail-closed manual execution trigger check")
+
           '''
-          if old not in text:
-              raise SystemExit('closure patch workflow guard block not found')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          path.write_text(text[:start] + replacement + text[end:], encoding='utf-8')
           PY
           python3 scripts/rc8/patch-rc8-managed-closure.py
           python3 scripts/rc8/verify-payments-contract.py
@@ -92,12 +81,14 @@ jobs:
             docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md
           rm \
             scripts/rc8/patch-rc8-managed-closure.py \
-            .github/workflows/rc8-managed-closure-reconcile.yml
+            .github/workflows/rc8-managed-closure-reconcile.yml \
+            .github/workflows/rc8-closure-log.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add \
             .github/workflows/rc8-payments-managed.yml \
             .github/workflows/rc8-managed-closure-reconcile.yml \
+            .github/workflows/rc8-closure-log.yml \
             WORKSTREAM_LOCK.md \
             PROJECT_STATUS.md \
             docs/integrations/CURRENT_INTEGRATION_STATUS.md \
