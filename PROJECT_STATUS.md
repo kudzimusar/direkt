@@ -5,7 +5,7 @@
 **VC1–VC8 promotion:** PR #270 merged at `c7f5985bc20372b4761e063dc3a66ecc736556e2`
 **Visual Completion issue:** #259 — CLOSED/COMPLETED
 **Runtime integration tracker:** #261
-**Active repository write lane:** none; Phase 11C–11J readiness is closed and Wave 0 real-entry evidence reconciliation is next but unclaimed
+**Active repository write lane:** Phase 11 Wave 0 finishing-line reconciliation under Issue #112
 
 ## 1. Programme state
 
