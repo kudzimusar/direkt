@@ -44,7 +44,9 @@ replace_once(
         buildConfig = true
     }
 
-    sourceSets["main"].java.srcDir("../../../clients/generated/kotlin/src/main/kotlin")
+    sourceSets["main"].java.srcDir(
+        rootProject.file("../../clients/generated/kotlin/src/main/kotlin"),
+    )
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
