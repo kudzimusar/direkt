@@ -1,0 +1,36 @@
+name: UIA promotion bridge status diagnostic
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/uia-bridge-status-diagnostic.yml"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  inspect:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chore/uia-bridge-diagnostic'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: 9c7d2613121771c4beabb5fff2a7bb0b3361702c
+      WORKFLOW: uia-current-main-refresh-closeout-once.yml
+    steps:
+      - name: Report exact bridge run and jobs
+        run: |
+          set -euo pipefail
+          runs="$(gh run list --repo "${GITHUB_REPOSITORY}" --workflow "${WORKFLOW}" --branch main --limit 20 --json databaseId,displayTitle,event,headSha,status,conclusion,createdAt,updatedAt,url)"
+          echo '=== MATCHING BRIDGE RUNS ==='
+          jq --arg sha "${SOURCE_SHA}" '[.[] | select(.headSha == $sha)]' <<< "${runs}"
+          run_id="$(jq -r --arg sha "${SOURCE_SHA}" '[.[] | select(.headSha == $sha)] | sort_by(.createdAt) | last | .databaseId // empty' <<< "${runs}")"
+          if [[ ! "${run_id}" =~ ^[0-9]+$ ]]; then
+            echo "No bridge run found for ${SOURCE_SHA}" >&2
+            exit 1
+          fi
+          echo "BRIDGE_RUN_ID=${run_id}"
+          echo '=== BRIDGE JOBS ==='
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?per_page=100" \
+            --jq '.jobs[] | {id,name,status,conclusion,started_at,completed_at,html_url}'
