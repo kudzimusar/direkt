@@ -1,9 +1,10 @@
 # RC9 OpenAPI-Generated Kotlin and TypeScript Clients
 
-**Governing issue:** #261
-**Claim base:** `main@030cd577e179863b70f24d99ab237e74660b4325`
-**Branch:** `feat/rc9a-deterministic-generated-clients`
-**State:** RC9A IMPLEMENTED / EXACT-HEAD REGRESSION PENDING / RUNTIME UNWIRED
+**Governing issue:** #261  
+**Claim base:** `main@030cd577e179863b70f24d99ab237e74660b4325`  
+**RC9A merge:** `main@e43efc5050a792a902a1ca94113854541380b56e`  
+**Runtime-adoption PR:** #497  
+**State:** RC9B/RC9C IMPLEMENTED / EXACT-HEAD REGRESSION PENDING / BOUNDED RUNTIME ADOPTION
 
 ## Purpose
 
@@ -11,30 +12,11 @@ RC9 makes the canonical NestJS OpenAPI contract consumable by Android and TypeSc
 
 Generated code is a contract implementation aid. It does not become a new authority boundary and does not authorize production, participant data, privileged direct access, payment-provider activation or real money.
 
-## Current-source audit
+## Canonical generated foundation
 
-### Canonical backend contract
+OpenAPI Generator `7.22.0` is locally and CI pinned to the official JAR SHA-256:
 
-- `backend/direkt-api/scripts/generate-openapi.ts` creates `backend/direkt-api/artifacts/openapi.json` from the configured NestJS application.
-- `backend/direkt-api/scripts/check-openapi.ts` validates OpenAPI 3, required operations, bearer security, public/private route separation, deferred domains and prohibited sensitive/payment-provider fields.
-- Backend CI generates and uploads the checked OpenAPI artifact. RC9A now derives committed Kotlin and TypeScript source trees from that exact document and fails on byte-for-byte regeneration drift.
-
-### Android
-
-- Android remains a native Jetpack Compose application under `android/direkt-app`.
-- The current Firebase-to-DIREKT exchange uses `HttpsURLConnection` and manual `JSONObject` request/response handling in `PilotAuthenticationCoordinator`.
-- Session material remains encrypted through the existing Android Keystore-backed store; Firebase phone auth proves possession only; DIREKT backend authorization remains authoritative.
-- No Retrofit/OkHttp/Kotlin serialization client stack is currently declared in the app dependency graph.
-
-### TypeScript web/PWA
-
-- `web/direkt-app` has manually maintained contract types and server-only API wrappers.
-- Authenticated traffic flows through Next.js route handlers/server code using a Cloud Run infrastructure identity token plus the DIREKT session token.
-- The private API origin and infrastructure token must remain server-only. RC9 must not generate or adopt browser-direct authenticated transport.
-
-## Generator decision
-
-RC9 pins OpenAPI Generator `7.22.0`.
+`3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329`
 
 Generation rules:
 
@@ -43,85 +25,109 @@ Generation rules:
 - `hideGenerationTimestamp=true`;
 - canonical checked OpenAPI input only;
 - deterministic output paths and package names;
-- byte-for-byte regeneration drift gate;
+- byte-for-byte drift verification;
 - no generated secrets, environment URLs or privileged credentials;
 - generated output reviewed like source code and kept mechanically reproducible.
 
-### Kotlin target
+The current generated receipt records:
+
+- canonical OpenAPI SHA-256: `1c13b69a34c30b84347b02ecddcf4f5b55c21e1958f036d4dc29c9106784e063`;
+- Kotlin: `111` source files, tree SHA-256 `ba3e4b7ab4f2eeaf3fafd96bdf2bbbddfd2feb8ebbbe71f4f309c825eb7991cc`;
+- TypeScript: `98` source files, tree SHA-256 `04cecfb32400eac04d5818ee1bb22e8394d822e2d350c8cfcc4f3a64eee982fe`;
+- participant data: false;
+- privileged client credentials: false;
+- production authorization: false.
+
+The immutable RC9A receipt deliberately retains `runtimeWired=false` for both output trees because it describes deterministic generation, not later application imports. The permanent RC9 verifiers separately enforce the two bounded runtime adoption points described below.
+
+## RC9B — Android Kotlin auth/session slice
+
+### Generator and dependency decision
 
 - generator: `kotlin`;
 - library: `jvm-retrofit2`;
 - serialization: `kotlinx_serialization`;
 - package root: `com.kudzimusar.direkt.generated.api`;
-- first migration slice: Firebase-to-DIREKT session exchange only;
-- current UI, consent, timeout, fail-closed configuration, secure session storage and generic user-facing errors remain unchanged.
+- migration slice: Firebase-to-DIREKT session exchange only.
 
-DIREKT-owned wrapper/interceptor code remains responsible for API base URL validation, request identifiers, idempotency, authorization headers, timeout policy and error normalization.
+Android now compiles the generated Kotlin tree and replaces only the former manual `HttpsURLConnection`/`JSONObject` exchange implementation with `GeneratedPilotSessionExchangeClient`, a DIREKT-owned wrapper around the generated `AuthenticationApi`.
 
-### TypeScript target
+The wrapper preserves:
 
-TypeScript generation initially supplies canonical models and operation typing for server-only BFF wrappers. The existing BFF transport remains DIREKT-owned because it performs Cloud Run IAM authentication, session propagation, origin confinement, timeout, redirect rejection and safe problem-detail handling.
+- HTTPS-only origin validation;
+- 10-second connect, read and write timeouts;
+- redirects and SSL redirects disabled;
+- automatic retries disabled;
+- consent and notice-version propagation;
+- generic user-facing rejection/failure semantics;
+- Firebase sign-out after exchange;
+- the existing Android Keystore-backed encrypted session store;
+- existing push-token registration after successful DIREKT session creation;
+- Android API 23 support through core-library desugaring.
 
-A generated browser transport is not approved. TypeScript adoption must remain server-only for authenticated routes and must not expose `DIREKT_API_BASE_URL`, infrastructure tokens or refresh/session material to browser bundles.
+Generated transport defaults do not decide authorization, trust, payment, retry, idempotency or offline success. DIREKT-owned code remains authoritative for those policies.
 
-## Incremental sequence
+### Android Play/Data Safety reconciliation
 
-### RC9A — deterministic foundation
+The reviewed RC9 release runtime additions are inventoried in the permanent Phase 12B gate:
 
-1. generate and validate canonical OpenAPI;
-2. pin OpenAPI Generator 7.22.0 and configuration;
-3. generate Kotlin and TypeScript outputs into controlled directories;
-4. add byte-for-byte drift verification;
-5. compile/typecheck generated outputs without wiring runtime behavior;
-6. preserve RC0–RC8 and all current application regressions.
+- Retrofit;
+- Kotlin serialization converter;
+- scalar converter;
+- Kotlin serialization JSON;
+- the generated client compile-time OkHttp logging dependency.
 
-### RC9A deterministic foundation receipt
+The generated default BODY logger is not activated: the Android wrapper supplies its own safe `OkHttpClient.Builder` and does not call the generated logger hook. The Phase 12B validator positively checks that HTTP body logging is inactive, HTTPS-only confinement remains present, redirects/retries remain disabled, and the transport targets only the private DIREKT API rather than a third-party, browser-direct, database or provider endpoint.
 
-RC9A is source/build foundation only and remains runtime-unwired.
+### Focused Android regression
 
-- OpenAPI Generator CLI: `7.22.0`;
-- official Maven JAR SHA-256: `3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329`;
-- canonical OpenAPI SHA-256: `1ea6b983c49c95db88db1a1432d9e6e0078fe124a3196f00c485b86dbe2db519`;
-- canonical surface: OpenAPI 3.0.0, 135 paths, 148 operations and 74 schemas;
-- Firebase exchange operation: `AuthController_exchangeFirebaseSession`, tag `authentication`;
-- Kotlin source: `109` files, tree SHA-256 `ab6cd201e8a74df0c31319e882e3b419617a1539518f7151fa71ffe695c440c1`;
-- TypeScript source: `96` files, tree SHA-256 `19aa7625ac7e338d01e9947dfaad8d5660cbe17ab9bdc912fb36e04fb659276f`;
-- committed output: generated source only; generator-owned wrappers, publishing tasks, docs and tests are excluded;
-- Kotlin compile harness: Kotlin 2.2.20, serialization 1.9.0, OkHttp logging 5.1.0 and Retrofit 3.0.0;
-- TypeScript compile harness: strict/no-emit through the web workspace's pinned TypeScript compiler;
-- drift gate: regenerate the checked canonical spec and compare source plus immutable receipt byte-for-byte;
-- Android runtime import: false;
-- browser/BFF runtime import: false;
-- participant data, privileged client credentials and production authorization: false.
+`GeneratedPilotSessionExchangeClientTest` covers:
 
-RC9A does not replace the current Android `HttpsURLConnection` session path or the server-side BFF transport. Those migrations remain separate reviewed RC9B/RC9C slices.
+- rejection of non-HTTPS, user-info and query-bearing origins;
+- normalization of an approved HTTPS origin;
+- request mapping for the Firebase ID token, approved notice version, affirmative consent and bounded device label;
+- preservation of the reviewed generic rejection message.
 
-### RC9B — Kotlin auth/session slice
+## RC9C — TypeScript server-only BFF contract adoption
 
-1. generate the auth exchange request/response contract;
-2. introduce the reviewed Retrofit/OkHttp/Kotlin serialization dependency set;
-3. wrap generated APIs behind a DIREKT-owned auth transport boundary;
-4. replace only manual exchange serialization/parsing;
-5. preserve Firebase sign-out, secure storage, push registration and existing UI result semantics;
-6. prove unit, lint, build and instrumentation behavior.
+Generated TypeScript request/response types are consumed only through `web/direkt-app/lib/server/generated-auth-contracts.ts`.
 
-### RC9C — TypeScript contract adoption
+The existing DIREKT-owned BFF fetch wrapper remains responsible for:
 
-1. consume generated types in the server-only public/auth BFF wrappers where they remove duplicated manual contracts;
-2. retain the current DIREKT-owned fetch wrappers and Cloud Run IAM/session behavior;
-3. prevent generated runtime modules from entering client components;
-4. typecheck/build and run public/auth/customer/provider/commercial BFF regressions.
+- private Cloud Run origin confinement;
+- Cloud Run infrastructure identity authentication;
+- DIREKT session-token propagation;
+- idempotency headers;
+- timeout handling;
+- `cache: "no-store"`;
+- redirect rejection;
+- safe problem-detail/error normalization.
 
-### RC9D — cross-client closure
+A generated browser transport is not approved. Generated transport runtime modules do not enter client components, and the private API origin, infrastructure token, refresh token and privileged credentials remain server-only.
 
-- canonical spec hash and generator receipt;
-- zero generated drift;
-- backend OpenAPI/authorization checks;
-- Android unit/lint/build/instrumentation;
-- web type/security/BFF/build checks;
-- operations and integration regressions;
-- documentation/status/ledger reconciliation;
-- lane release or explicit transition to RC10.
+The BFF adapter now normalizes both generated `Date` values and raw JSON `date-time` strings before returning the existing DIREKT session contract. Focused verification rejects invalid date-time values and asserts that the adapter imports generated types only, not generated browser transport code.
+
+## Permanent bounded-import contract
+
+Generated imports remain prohibited throughout Android and web runtime source except for exactly these reviewed points:
+
+1. Android `GeneratedPilotSessionExchangeClient.kt`;
+2. server-only BFF `generated-auth-contracts.ts`.
+
+The permanent verifier ignores compiler/build artifacts such as `.tsbuildinfo`, `.next`, `build`, `dist`, coverage and dependency directories, but scans authored source fail-closed.
+
+## RC9D closure sequence
+
+RC9 closes only after:
+
+1. canonical OpenAPI and generator drift checks pass;
+2. generated Kotlin produces real `.class` output and generated TypeScript passes strict typechecking;
+3. Android unit, lint, desugaring and APK/release-readiness gates pass;
+4. web type, auth, generated-adapter, PWA and cross-client gates pass;
+5. backend, operations, runtime-audit, supply-chain, Phase 10–12 and RC5–RC9 regressions pass on the exact PR head;
+6. PR #497 merges;
+7. the merged exact-main source is verified;
+8. status, ledger, lock and Issue #261 evidence are reconciled and the lane is released or explicitly transitioned to RC10.
 
 ## Stop conditions
 
@@ -134,8 +140,8 @@ Stop rather than merge if RC9 would:
 - break Android API 23 support, signing, Firebase, Maps, FCM, Crashlytics or secure session storage;
 - weaken offline/failure semantics or claim a mutation succeeded without backend confirmation;
 - accept generated drift or unpinned generator/tool dependencies;
-- perform a broad client rewrite before the first incremental slice is proven.
+- perform a broad client rewrite beyond the approved first slice.
 
 ## Production authorization
 
-False. RC9 is source/build tooling and bounded client migration only. It does not clear Phase 11 real evidence, 11J, legal/privacy gates, production credentials, participant traffic, real communications, real money or formal Phase 12 release.
+False. RC9 is deterministic contract tooling and bounded client migration only. It does not clear Phase 11 real evidence, 11J, legal/privacy gates, production credentials, participant traffic, real communications, real money or formal Phase 12 release.

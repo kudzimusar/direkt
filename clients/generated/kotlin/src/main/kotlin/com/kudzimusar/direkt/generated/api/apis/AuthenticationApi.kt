@@ -7,6 +7,7 @@ import okhttp3.RequestBody
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+import com.kudzimusar.direkt.generated.api.models.AuthenticatedSessionResponseDto
 import com.kudzimusar.direkt.generated.api.models.FirebaseSessionExchangeDto
 import com.kudzimusar.direkt.generated.api.models.RequestChallengeDto
 import com.kudzimusar.direkt.generated.api.models.RevokeSessionDto
@@ -23,10 +24,10 @@ interface AuthenticationApi {
      *  - 401: The Firebase token or external identity binding is invalid or unsafe.
      *
      * @param firebaseSessionExchangeDto
-     * @return [Call]<[Unit]>
+     * @return [Call]<[AuthenticatedSessionResponseDto]>
      */
     @POST("api/v1/auth/firebase/exchange")
-    fun authControllerExchangeFirebaseSession(@Body firebaseSessionExchangeDto: FirebaseSessionExchangeDto): Call<Unit>
+    fun authControllerExchangeFirebaseSession(@Body firebaseSessionExchangeDto: FirebaseSessionExchangeDto): Call<AuthenticatedSessionResponseDto>
 
     /**
      * GET api/v1/auth/sessions

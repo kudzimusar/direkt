@@ -17,13 +17,14 @@
     "verify:static": "node scripts/verify-static-contract.mjs",
     "verify:discovery": "node scripts/verify-discovery-contract.mjs",
     "verify:auth": "node scripts/verify-auth-contract.mjs",
+    "verify:generated-auth": "node --experimental-strip-types scripts/verify-generated-auth-adapter.mjs",
     "verify:customer": "node scripts/verify-customer-contract.mjs",
     "verify:provider": "node scripts/verify-provider-contract.mjs",
     "verify:commercial": "node scripts/verify-commercial-contract.mjs",
     "verify:w7": "node scripts/verify-w7-regression.mjs",
     "verify:w8": "node scripts/verify-w8-cutover.mjs",
     "verify:vc8": "node scripts/verify-vc8-quality.mjs",
-    "verify": "npm run typecheck && npm run verify:static && npm run verify:discovery && npm run verify:auth && npm run verify:customer && npm run verify:provider && npm run verify:commercial && npm run verify:w7 && npm run verify:w8 && npm run verify:vc8 && npm run build"
+    "verify": "npm run typecheck && npm run verify:static && npm run verify:discovery && npm run verify:auth && npm run verify:generated-auth && npm run verify:customer && npm run verify:provider && npm run verify:commercial && npm run verify:w7 && npm run verify:w8 && npm run verify:vc8 && npm run build"
   },
   "dependencies": {
     "next": "16.2.10",

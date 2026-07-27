@@ -14,6 +14,11 @@
 
 import * as runtime from '../runtime';
 import {
+    type AuthenticatedSessionResponseDto,
+    AuthenticatedSessionResponseDtoFromJSON,
+    AuthenticatedSessionResponseDtoToJSON,
+} from '../models/AuthenticatedSessionResponseDto';
+import {
     type FirebaseSessionExchangeDto,
     FirebaseSessionExchangeDtoFromJSON,
     FirebaseSessionExchangeDtoToJSON,
@@ -82,11 +87,11 @@ export interface AuthenticationApiInterface {
      * @throws {RequiredError}
      * @memberof AuthenticationApiInterface
      */
-    authControllerExchangeFirebaseSessionRaw(requestParameters: AuthControllerExchangeFirebaseSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>>;
+    authControllerExchangeFirebaseSessionRaw(requestParameters: AuthControllerExchangeFirebaseSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuthenticatedSessionResponseDto>>;
 
     /**
      */
-    authControllerExchangeFirebaseSession(requestParameters: AuthControllerExchangeFirebaseSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void>;
+    authControllerExchangeFirebaseSession(requestParameters: AuthControllerExchangeFirebaseSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuthenticatedSessionResponseDto>;
 
     /**
      * Creates request options for authControllerListSessions without sending the request
@@ -250,17 +255,18 @@ export class AuthenticationApi extends runtime.BaseAPI implements Authentication
 
     /**
      */
-    async authControllerExchangeFirebaseSessionRaw(requestParameters: AuthControllerExchangeFirebaseSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async authControllerExchangeFirebaseSessionRaw(requestParameters: AuthControllerExchangeFirebaseSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuthenticatedSessionResponseDto>> {
         const requestOptions = await this.authControllerExchangeFirebaseSessionRequestOpts(requestParameters);
         const response = await this.request(requestOptions, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => AuthenticatedSessionResponseDtoFromJSON(jsonValue));
     }
 
     /**
      */
-    async authControllerExchangeFirebaseSession(requestParameters: AuthControllerExchangeFirebaseSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.authControllerExchangeFirebaseSessionRaw(requestParameters, initOverrides);
+    async authControllerExchangeFirebaseSession(requestParameters: AuthControllerExchangeFirebaseSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuthenticatedSessionResponseDto> {
+        const response = await this.authControllerExchangeFirebaseSessionRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**

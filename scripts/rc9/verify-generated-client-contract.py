@@ -16,9 +16,20 @@ OPENAPI_CHECK = ROOT / "backend/direkt-api/scripts/check-openapi.ts"
 BACKEND_WORKFLOW = ROOT / ".github/workflows/backend-ci.yml"
 ANDROID_BUILD = ROOT / "android/direkt-app/app/build.gradle.kts"
 ANDROID_AUTH = ROOT / "android/direkt-app/app/src/main/java/com/kudzimusar/direkt/auth/PilotAuthenticationCoordinator.kt"
+ANDROID_GENERATED_AUTH = (
+    ROOT
+    / "android/direkt-app/app/src/main/java/com/kudzimusar/direkt/auth/GeneratedPilotSessionExchangeClient.kt"
+)
+ANDROID_GENERATED_AUTH_TEST = (
+    ROOT
+    / "android/direkt-app/app/src/test/java/com/kudzimusar/direkt/auth/GeneratedPilotSessionExchangeClientTest.kt"
+)
 WEB_PACKAGE = ROOT / "web/direkt-app/package.json"
 WEB_PUBLIC_CLIENT = ROOT / "web/direkt-app/lib/server/direkt-api-client.ts"
 WEB_AUTH_CLIENT = ROOT / "web/direkt-app/lib/server/direkt-auth-api.ts"
+WEB_GENERATED_CONTRACTS = ROOT / "web/direkt-app/lib/server/generated-auth-contracts.ts"
+WEB_WIRE_DATETIME = ROOT / "web/direkt-app/lib/server/wire-date-time.ts"
+WEB_GENERATED_CONTRACT_TEST = ROOT / "web/direkt-app/scripts/verify-generated-auth-adapter.mjs"
 WORKFLOW = ROOT / ".github/workflows/rc9-generated-clients-contract.yml"
 
 
@@ -42,6 +53,32 @@ def reject(path: Path, needle: str) -> None:
         raise SystemExit(f"RC9 contract prohibits {needle!r} in {path.relative_to(ROOT)}")
 
 
+for path in (
+    LOCK,
+    PROJECT,
+    STATUS,
+    LEDGER,
+    PLAN,
+    IMPLEMENTATION,
+    BACKEND_PACKAGE,
+    OPENAPI_GENERATOR,
+    OPENAPI_CHECK,
+    BACKEND_WORKFLOW,
+    ANDROID_BUILD,
+    ANDROID_AUTH,
+    ANDROID_GENERATED_AUTH,
+    ANDROID_GENERATED_AUTH_TEST,
+    WEB_PACKAGE,
+    WEB_PUBLIC_CLIENT,
+    WEB_AUTH_CLIENT,
+    WEB_GENERATED_CONTRACTS,
+    WEB_WIRE_DATETIME,
+    WEB_GENERATED_CONTRACT_TEST,
+    WORKFLOW,
+):
+    if not path.is_file():
+        raise SystemExit(f"RC9 contract missing file {path.relative_to(ROOT)}")
+
 require(LOCK, "CLAIMED — RC9 OpenAPI-generated client adoption")
 require(LOCK, "RC9 implementation contract — CLAIMED")
 require(LOCK, "RC9 is the sole active repository write lane")
@@ -53,17 +90,19 @@ require(STATUS, "Fully generated Kotlin/TypeScript client packages")
 require_any(
     STATUS,
     (
-        "RC9 CLAIMED / DETERMINISTIC FOUNDATION PENDING",
         "RC9A IMPLEMENTED / RUNTIME UNWIRED / REGRESSION PENDING",
+        "RC9B/C IMPLEMENTED / BOUNDED RUNTIME ADOPTION / REGRESSION PENDING",
+        "RC9 CLOSED",
     ),
-    "RC9 foundation state",
+    "RC9 state",
 )
 require(STATUS, "RC9 generated Kotlin/TypeScript clients")
 require_any(
     LEDGER,
     (
-        "RC9 OpenAPI generated Kotlin/TypeScript client adoption decision/migration — **CLAIMED**",
         "RC9 OpenAPI generated Kotlin/TypeScript client adoption — **RC9A IMPLEMENTED / RUNTIME UNWIRED / EXACT-HEAD REGRESSION PENDING**",
+        "RC9 OpenAPI generated Kotlin/TypeScript client adoption — **RC9B/C IMPLEMENTED / BOUNDED RUNTIME ADOPTION / EXACT-HEAD REGRESSION PENDING**",
+        "RC9 OpenAPI generated Kotlin/TypeScript client adoption — **CLOSED**",
     ),
     "RC9 ledger state",
 )
@@ -103,15 +142,40 @@ require(BACKEND_WORKFLOW, "npm run openapi:check")
 require(BACKEND_WORKFLOW, "backend/direkt-api/artifacts/openapi.json")
 
 require(ANDROID_BUILD, 'buildConfigField("String", "DIREKT_PILOT_API_BASE_URL"')
-require(ANDROID_AUTH, "HttpsURLConnection")
-require(ANDROID_AUTH, "JSONObject")
-require(ANDROID_AUTH, "/api/v1/auth/firebase/exchange")
+require(ANDROID_BUILD, 'sourceSets["main"].kotlin.srcDir')
+require(ANDROID_BUILD, "isCoreLibraryDesugaringEnabled = true")
+require(ANDROID_BUILD, "implementation(libs.retrofit.core)")
+require(ANDROID_BUILD, "implementation(libs.retrofit.kotlinx.serialization)")
+require(ANDROID_BUILD, "coreLibraryDesugaring(libs.desugar.jdk.libs)")
+require(ANDROID_AUTH, "sessionExchangeClient.exchange")
 require(ANDROID_AUTH, "PilotSessionStore")
 require(ANDROID_AUTH, "PushRegistrationCoordinator")
+reject(ANDROID_AUTH, "HttpsURLConnection")
+reject(ANDROID_AUTH, "JSONObject")
 reject(ANDROID_BUILD, "openapi-generator")
-reject(ANDROID_BUILD, "retrofit")
+for needle in (
+    "AuthenticationApi",
+    "FirebaseSessionExchangeDto",
+    "AuthenticatedSessionResponseDto",
+    "connectTimeout(10, TimeUnit.SECONDS)",
+    "readTimeout(10, TimeUnit.SECONDS)",
+    "writeTimeout(10, TimeUnit.SECONDS)",
+    "followRedirects(false)",
+    "followSslRedirects(false)",
+    "retryOnConnectionFailure(false)",
+    "DIREKT API base URL must use HTTPS",
+):
+    require(ANDROID_GENERATED_AUTH, needle)
+for needle in (
+    "rejects non-HTTPS base URLs",
+    "maps the approved request and preserves rejection semantics",
+    "consentAccepted",
+    "noticeVersion",
+):
+    require(ANDROID_GENERATED_AUTH_TEST, needle)
 
 require(WEB_PACKAGE, '"next": "16.2.10"')
+require(WEB_PACKAGE, '"verify:generated-auth"')
 require(WEB_PUBLIC_CLIENT, "getCloudRunIdentityToken")
 require(WEB_PUBLIC_CLIENT, 'headers["X-Serverless-Authorization"]')
 require(WEB_PUBLIC_CLIENT, 'cache: "no-store"')
@@ -120,9 +184,27 @@ require(WEB_AUTH_CLIENT, "getCloudRunIdentityToken")
 require(WEB_AUTH_CLIENT, 'headers.authorization = `Bearer ${options.accessToken}`')
 require(WEB_AUTH_CLIENT, 'headers["idempotency-key"]')
 require(WEB_AUTH_CLIENT, "response.status >= 500 ? undefined : problem")
+require(WEB_AUTH_CLIENT, "toDirektAuthenticatedSession")
+require(WEB_GENERATED_CONTRACTS, "AuthenticatedSessionResponseDto")
+require(WEB_GENERATED_CONTRACTS, "FirebaseSessionExchangeDto")
+require(WEB_GENERATED_CONTRACTS, "normalizeWireDateTime")
+require(WEB_WIRE_DATETIME, "value instanceof Date")
+require(WEB_WIRE_DATETIME, "new Date(value)")
+require(WEB_GENERATED_CONTRACT_TEST, "normalizes raw JSON date-time strings")
+require(WEB_GENERATED_CONTRACT_TEST, "rejects invalid date-time values")
 reject(WEB_PACKAGE, "@supabase")
+reject(WEB_PUBLIC_CLIENT, "clients/generated/typescript")
 
-for path in (ANDROID_BUILD, ANDROID_AUTH, WEB_PACKAGE, WEB_PUBLIC_CLIENT, WEB_AUTH_CLIENT):
+for path in (
+    ANDROID_BUILD,
+    ANDROID_AUTH,
+    ANDROID_GENERATED_AUTH,
+    WEB_PACKAGE,
+    WEB_PUBLIC_CLIENT,
+    WEB_AUTH_CLIENT,
+    WEB_GENERATED_CONTRACTS,
+    WEB_WIRE_DATETIME,
+):
     reject(path, "DATABASE_URL")
     reject(path, "service_role")
     reject(path, "paymentProviderSecret")
@@ -140,8 +222,9 @@ print("RC9_GENERATED_CLIENT_CONTRACT|PASS")
 print("claim_base=030cd577e179863b70f24d99ab237e74660b4325")
 print("generator_version=7.22.0")
 print("generator_strategy_pinned=true")
-print("kotlin_runtime_migration_pending=true")
-print("typescript_bff_contract_adoption_pending=true")
+print("kotlin_runtime_migration_pending=false")
+print("typescript_bff_contract_adoption_pending=false")
+print("bounded_generated_imports=true")
 print("browser_direct_private_api=false")
 print("privileged_client_credentials=false")
 print("production_authorization=false")

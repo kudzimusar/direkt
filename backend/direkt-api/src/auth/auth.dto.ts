@@ -65,6 +65,43 @@ export class FirebaseSessionExchangeDto {
   deviceLabel?: string;
 }
 
+export class AuthenticatedSessionContactDto {
+  @ApiProperty({ enum: ['email', 'phone'] })
+  channel!: ContactChannel;
+
+  @ApiProperty({ example: '+260•••••1234' })
+  displayHint!: string;
+
+  @ApiProperty({ example: true, enum: [true] })
+  verified!: true;
+}
+
+export class AuthenticatedSessionResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  identityId!: string;
+
+  @ApiProperty({ format: 'uuid' })
+  sessionId!: string;
+
+  @ApiProperty({ description: 'Short-lived DIREKT bearer access token.' })
+  accessToken!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  accessTokenExpiresAt!: string;
+
+  @ApiProperty({ description: 'Opaque rotating refresh token.' })
+  refreshToken!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  refreshTokenExpiresAt!: string;
+
+  @ApiProperty({ enum: ['Bearer'] })
+  tokenType!: 'Bearer';
+
+  @ApiProperty({ type: AuthenticatedSessionContactDto })
+  contact!: AuthenticatedSessionContactDto;
+}
+
 export class RotateSessionDto {
   @ApiProperty({ description: 'Opaque rotating refresh token.' })
   @IsString()

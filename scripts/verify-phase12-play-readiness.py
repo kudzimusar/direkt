@@ -21,6 +21,7 @@ PLAY = ROOT / "docs" / "phase12" / "play"
 SOURCE_MANIFEST = ROOT / "android" / "direkt-app" / "app" / "src" / "main" / "AndroidManifest.xml"
 BUILD_GRADLE = ROOT / "android" / "direkt-app" / "app" / "build.gradle.kts"
 VERSION_FILE = ROOT / "android" / "direkt-app" / "release" / "version.properties"
+GENERATED_AUTH_CLIENT = ROOT / "android" / "direkt-app" / "app" / "src" / "main" / "java" / "com" / "kudzimusar" / "direkt" / "auth" / "GeneratedPilotSessionExchangeClient.kt"
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
 
 ALLOWED_RELEASE_DIRECT_MODULES = {
@@ -39,7 +40,12 @@ ALLOWED_RELEASE_DIRECT_MODULES = {
     "com.google.firebase:firebase-crashlytics",
     "com.google.firebase:firebase-messaging",
     "com.google.maps.android:maps-compose",
+    "com.squareup.okhttp3:logging-interceptor",
+    "com.squareup.retrofit2:converter-kotlinx-serialization",
+    "com.squareup.retrofit2:converter-scalars",
+    "com.squareup.retrofit2:retrofit",
     "org.jetbrains.kotlin:kotlin-stdlib",
+    "org.jetbrains.kotlinx:kotlinx-serialization-json",
 }
 
 PROHIBITED_STORE_CLAIMS = {
@@ -171,6 +177,11 @@ def fallback_declared_modules(gradle: str) -> set[str]:
         "libs.firebase.crashlytics": "com.google.firebase:firebase-crashlytics",
         "libs.firebase.messaging": "com.google.firebase:firebase-messaging",
         "libs.google.maps.compose": "com.google.maps.android:maps-compose",
+        "libs.kotlinx.serialization.json": "org.jetbrains.kotlinx:kotlinx-serialization-json",
+        "libs.retrofit.core": "com.squareup.retrofit2:retrofit",
+        "libs.retrofit.kotlinx.serialization": "com.squareup.retrofit2:converter-kotlinx-serialization",
+        "libs.retrofit.scalars": "com.squareup.retrofit2:converter-scalars",
+        "libs.okhttp.logging": "com.squareup.okhttp3:logging-interceptor",
     }
     modules: set[str] = set()
     dependency_call = re.compile(
@@ -274,6 +285,12 @@ def main() -> None:
         "implementation(libs.firebase.crashlytics)",
         "implementation(libs.firebase.messaging)",
         "implementation(libs.google.maps.compose)",
+        "implementation(libs.kotlinx.serialization.json)",
+        "implementation(libs.retrofit.core)",
+        "implementation(libs.retrofit.kotlinx.serialization)",
+        "implementation(libs.retrofit.scalars)",
+        "implementation(libs.okhttp.logging)",
+        "sourceSets[\"main\"].kotlin.srcDir",
         "DIREKT_CRASHLYTICS_CANARY_ENABLED",
         "DIREKT_MAPS_BUILD_ENABLED",
     ):
@@ -322,6 +339,8 @@ def main() -> None:
         fail("Firebase Messaging dependency exists but is absent from Data Safety SDK inventory")
     if "Google Maps SDK for Android" not in sdk_names:
         fail("Maps Compose dependency exists but Maps SDK is absent from Data Safety SDK inventory")
+    if "DIREKT generated Retrofit transport" not in sdk_names:
+        fail("RC9 Retrofit/serialization dependencies exist but the generated transport is absent from the Data Safety SDK inventory")
 
     crashlytics_inventory = next(
         (item for item in data_safety.get("sdk_inventory", []) if item.get("sdk") == "Firebase Crashlytics"),
@@ -361,6 +380,46 @@ def main() -> None:
         fail("RC7 Maps inventory must not authorize participant or production Maps use")
     if maps_inventory.get("exact_private_provider_coordinates_transmitted") is not False:
         fail("RC7 Maps must not transmit exact private provider coordinates")
+
+    generated_auth = GENERATED_AUTH_CLIENT.read_text(encoding="utf-8")
+    for required in (
+        "okHttpClientBuilder = safeHttpClient",
+        "followRedirects(false)",
+        "followSslRedirects(false)",
+        "retryOnConnectionFailure(false)",
+        "DIREKT API base URL must use HTTPS",
+    ):
+        if required not in generated_auth:
+            fail(f"RC9 Android generated transport boundary missing: {required}")
+    if ".setLogger(" in generated_auth or "HttpLoggingInterceptor" in generated_auth:
+        fail("RC9 Android wrapper must not activate generated HTTP body logging")
+
+    transport_inventory = next(
+        (item for item in data_safety.get("sdk_inventory", []) if item.get("sdk") == "DIREKT generated Retrofit transport"),
+        None,
+    )
+    if not isinstance(transport_inventory, dict):
+        fail("RC9 generated transport SDK inventory entry is invalid")
+    expected_transport_dependencies = {
+        "com.squareup.okhttp3:logging-interceptor",
+        "com.squareup.retrofit2:converter-kotlinx-serialization",
+        "com.squareup.retrofit2:converter-scalars",
+        "com.squareup.retrofit2:retrofit",
+        "org.jetbrains.kotlinx:kotlinx-serialization-json",
+    }
+    if set(transport_inventory.get("dependencies", [])) != expected_transport_dependencies:
+        fail("RC9 generated transport Data Safety dependency inventory is incomplete")
+    for key, expected in (
+        ("http_body_logging_active", False),
+        ("generated_default_logger_bypassed_by_direkt_owned_client", True),
+        ("automatic_retries", False),
+        ("redirects", False),
+        ("https_only", True),
+        ("third_party_endpoint", False),
+        ("browser_or_provider_direct_access", False),
+    ):
+        if transport_inventory.get(key) is not expected:
+            fail(f"RC9 generated transport inventory must record {key}={str(expected).lower()}")
 
     data_entries = data_safety.get("play_data_types", [])
     if not any("Phone number" in item.get("play_category", "") for item in data_entries):
@@ -416,6 +475,11 @@ def main() -> None:
     print("maps_device_location_permission_requested=false")
     print("maps_exact_private_provider_coordinates_transmitted=false")
     print("maps_participant_or_production_authorized=false")
+    print("rc9_generated_transport_inventory_present=true")
+    print("rc9_http_body_logging_active=false")
+    print("rc9_automatic_retries=false")
+    print("rc9_redirects=false")
+    print("rc9_https_only=true")
     print("account_deletion_end_to_end=false")
     print("synthetic_preview_release_blocker=" + ("true" if synthetic_markers else "false"))
     for marker in synthetic_markers:
