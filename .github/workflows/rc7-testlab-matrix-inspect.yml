@@ -1,0 +1,78 @@
+name: RC7 Test Lab matrix inspector
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-testlab-matrix-inspect.yml"
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+jobs:
+  inspect:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chore/rc7-main-run-locator-3'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TESTLAB_PROJECT_ID: direkt-testlab-502701-20260726
+      MATRIX_ID: matrix-3gndt2ks91n33
+    steps:
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+          service_account: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          version: 568.0.0
+      - name: Inspect exact synthetic matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud firebase test android matrices describe "${MATRIX_ID}" \
+            --project "${TESTLAB_PROJECT_ID}" \
+            --format=json > "${RUNNER_TEMP}/matrix.json"
+          jq '{
+            testMatrixId,
+            state,
+            outcomeSummary,
+            invalidMatrixDetails,
+            clientInfo: {name: .clientInfo.name},
+            testExecutions: [
+              .testExecutions[]? | {
+                id,
+                state,
+                testDetails,
+                testSpecification: {
+                  testTimeout: .testSpecification.testTimeout,
+                  autoGoogleLogin: .testSpecification.autoGoogleLogin,
+                  disablePerformanceMetrics: .testSpecification.disablePerformanceMetrics
+                },
+                environment: {
+                  androidDevice: .environmentMatrix.androidDeviceList.androidDevices[0]
+                },
+                toolExecution: {
+                  toolResultsExecution: .toolExecution.toolResultsExecution,
+                  outcome: .toolExecution.outcome,
+                  testTiming: .toolExecution.testTiming,
+                  testIssues: .toolExecution.testIssues
+                }
+              }
+            ]
+          }' "${RUNNER_TEMP}/matrix.json" > "${RUNNER_TEMP}/sanitized.json"
+          body="${RUNNER_TEMP}/rc7-testlab-matrix.md"
+          {
+            echo '## RC7 exact Test Lab matrix inspection'
+            echo
+            echo '- Matrix: `matrix-3gndt2ks91n33`'
+            echo '- Project: `direkt-testlab-502701-20260726`'
+            echo
+            echo '```json'
+            cat "${RUNNER_TEMP}/sanitized.json"
+            echo '```'
+          } > "${body}"
+          gh pr comment "${{ github.event.pull_request.number }}" --repo "${GITHUB_REPOSITORY}" --body-file "${body}"
