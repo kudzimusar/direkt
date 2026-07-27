@@ -62,6 +62,79 @@ jobs:
           path.write_text(text.replace(old_workflow_patch, new_workflow_patch, 1), encoding='utf-8')
           PY
           python3 scripts/rc8/patch-rc8-managed-closure.py
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              target = Path(path)
+              text = target.read_text(encoding='utf-8')
+              if text.count(old) != 1:
+                  raise SystemExit(f'{path}: historical handoff marker mismatch: {old!r}')
+              target.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          rc5 = 'scripts/rc5/verify-test-lab-closure.py'
+          replace_once(
+              rc5,
+              '''assert released_handoff or rc7_handoff or rc7_closed_handoff or rc8_active_handoff, (
+              "RC5 closure must remain valid with no active lane, bounded RC7 active, RC7 closed/released, or bounded RC8 active"
+          )''',
+              '''rc8_closed_handoff = (
+              "| Status | RELEASED |" in lock
+              and "RC8 implementation contract — CLOSED AND PRESERVED" in lock
+              and "No repository write lane is active" in lock
+          )
+          assert released_handoff or rc7_handoff or rc7_closed_handoff or rc8_active_handoff or rc8_closed_handoff, (
+              "RC5 closure must remain valid with no active lane, bounded RC7 active, RC7 closed/released, bounded RC8 active, or RC8 closed/released"
+          )''',
+          )
+
+          rc6 = 'scripts/rc6/verify-whatsapp-contract.py'
+          replace_once(
+              rc6,
+              '''    supported_states = (
+                  all(needle in lock for needle in active_lock_needles),''',
+              '''    rc8_closed_lock_needles = (
+                  "| Status | RELEASED |",
+                  "RC5 implementation contract — CLOSED AND PRESERVED",
+                  "RC6 implementation contract — CLOSED AND PRESERVED",
+                  "exact-current-main managed run `30137700769`",
+                  "RC7 implementation contract — CLOSED AND PRESERVED",
+                  "RC8 implementation contract — CLOSED AND PRESERVED",
+                  "No repository write lane is active",
+                  "production/participant WhatsApp delivery remains disabled",
+              )
+              supported_states = (
+                  all(needle in lock for needle in active_lock_needles),''',
+          )
+          replace_once(
+              rc6,
+              '''        all(needle in lock for needle in rc8_active_lock_needles),
+              )''',
+              '''        all(needle in lock for needle in rc8_active_lock_needles),
+                  all(needle in lock for needle in rc8_closed_lock_needles),
+              )''',
+          )
+          replace_once(
+              rc6,
+              '''"RC6 lock must be exactly one supported state: active RC6, RC5 resumed, no active lane before RC7, bounded RC7 active, RC7 closed/released, or bounded RC8 active."''',
+              '''"RC6 lock must be exactly one supported state: active RC6, RC5 resumed, no active lane before RC7, bounded RC7 active, RC7 closed/released, bounded RC8 active, or RC8 closed/released."''',
+          )
+
+          rc7 = 'scripts/rc7/verify-maps-contract.py'
+          replace_once(
+              rc7,
+              '''    if not (rc7_released or rc8_active):
+                  raise AssertionError("RC7 closure must remain preserved with the lane released or bounded RC8 active.")''',
+              '''    rc8_closed = (
+                  "| Status | RELEASED |" in lock
+                  and "RC8 implementation contract — CLOSED AND PRESERVED" in lock
+                  and "No repository write lane is active" in lock
+              )
+              if not (rc7_released or rc8_active or rc8_closed):
+                  raise AssertionError("RC7 closure must remain preserved with the lane released, bounded RC8 active, or RC8 closed/released.")''',
+          )
+          print('RC5_RC6_RC7_RC8_CLOSED_HANDOFFS|PASS')
+          PY
           python3 scripts/rc8/verify-payments-contract.py
           python3 scripts/rc5/verify-test-lab-closure.py
           python3 scripts/rc6/verify-whatsapp-contract.py
@@ -111,6 +184,9 @@ jobs:
             docs/integrations/LIVE_INTEGRATION_LEDGER.md \
             docs/integrations/RC8_SANDBOX_PAYMENTS_IMPLEMENTATION.md \
             docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md \
+            scripts/rc5/verify-test-lab-closure.py \
+            scripts/rc6/verify-whatsapp-contract.py \
+            scripts/rc7/verify-maps-contract.py \
             scripts/rc8/verify-payments-contract.py \
             scripts/rc8/patch-rc8-managed-closure.py
           git diff --cached --check
