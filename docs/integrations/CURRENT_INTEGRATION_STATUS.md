@@ -29,7 +29,7 @@ No integration becomes ACTIVE merely because an account, DNS record, API key, SD
 | Cloudflare DNS | **ACTIVE** | Authoritative DNS edge. |
 | GitHub Pages | **ACTIVE public static origin** | Documentation and synthetic/non-sensitive preview content. |
 | Cloudflare Email Routing | **EXTERNALLY_PROVISIONED** | Role/support aliases; not outbound application delivery. |
-| Cloudflare Turnstile | **PLANNED / NOT ACTIVE** | RC10 threat-model decision only. |
+| Cloudflare Turnstile | **RC10 CLAIMED — THREAT MODEL / NOT ACTIVE** | Conditional decision only. No site key, secret, widget, package or runtime binding is approved before a specific public-flow threat model justifies it. |
 
 ## Core data/backend infrastructure
 
