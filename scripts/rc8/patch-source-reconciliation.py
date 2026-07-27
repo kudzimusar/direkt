@@ -40,7 +40,7 @@ replace_once(
 replace_once(
     verifier,
     'for provider in ("mtn_momo", "airtel_money", "dpo", "stripe", "paypal"):\n    require(PORT, f"\'{provider}\'")\n    require(REGISTRY, f"{provider}:")\n\n',
-    f'''for provider in ("mtn_momo", "airtel_money", "dpo", "stripe", "paypal"):\n    require(PORT, f"'{{provider}}'")\n    require(REGISTRY, f"{{provider}}:")\n\nrequire(LOCK, "CLAIMED — RC8 sandbox payment runtime closure")\nrequire(LOCK, "RC8 implementation contract — CLAIMED")\nrequire(LOCK, "RC8 is the sole active repository write lane")\nrequire(IMPLEMENTATION, "SOURCE CHECKPOINT READY FOR PROMOTION")\nrequire(IMPLEMENTATION, "Replayed base: `main@{BASE}`")\nrequire(IMPLEMENTATION, "runtime binding and managed sandbox evidence remain pending")\n\n''',
+    f'''for provider in ("mtn_momo", "airtel_money", "dpo", "stripe", "paypal"):\n    require(PORT, f"'{{provider}}'")\n    require(REGISTRY, f"{{provider}}:")\n\nrequire(LOCK, "CLAIMED — RC8 sandbox payment runtime closure")\nrequire(LOCK, "RC8 implementation contract — CLAIMED")\nrequire(LOCK, "RC8 is the sole active repository write lane")\nrequire(IMPLEMENTATION, "SOURCE CHECKPOINT READY FOR PROMOTION")\nrequire(IMPLEMENTATION, "**Replayed base:** `main@{BASE}`")\nrequire(IMPLEMENTATION, "runtime binding and managed sandbox evidence remain pending")\n\n''',
 )
 replace_once(
     verifier,
