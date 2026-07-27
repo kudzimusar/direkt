@@ -182,8 +182,10 @@ def main() -> int:
     )
     for needle in (
         "discovery-map-ready",
-        "waitUntil(timeoutMillis = 20_000)",
+        "waitUntil(timeoutMillis = 25_000)",
         "discovery-map-fallback",
+        "discovery-map-loading",
+        "RC7 Maps runtime did not reach Ready",
         "fetchSemanticsNodes()",
         "assertTrue(",
         ".isEmpty()",
@@ -229,6 +231,10 @@ def main() -> int:
         "RC7_MAPS_CANARY|PASS",
         "MediumPhone.arm,version=36",
         "--num-flaky-test-attempts 0",
+        "apksigner",
+        "android_apk_certificate_matches_key=true",
+        "collect-testlab-failure.py",
+        "android_test_lab_failure_evidence_present=true",
         "cleanup.cloud_run_job_deleted",
         "cleanup_failed=${cleanup_failed}",
         "production_authorization=false",

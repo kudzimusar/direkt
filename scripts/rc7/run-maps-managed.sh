@@ -395,6 +395,25 @@ app_apk="android/direkt-app/app/build/outputs/apk/debug/app-debug.apk"
 test_apk="android/direkt-app/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk"
 test -f "${app_apk}"
 test -f "${test_apk}"
+apksigner_bin="$(find "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+test -x "${apksigner_bin}"
+apk_certificate_sha1="$("${apksigner_bin}" verify --print-certs "${app_apk}" \
+  | awk -F': ' '/Signer #1 certificate SHA-1 digest:/{print $2; exit}' \
+  | tr -d ':' \
+  | tr '[:lower:]' '[:upper:]')"
+[[ "${apk_certificate_sha1}" =~ ^[0-9A-F]{40}$ ]]
+test "${apk_certificate_sha1}" = "${android_sha1^^}"
+jq -n \
+  --arg packageName "${ANDROID_PACKAGE}" \
+  --arg certificateSha1 "${apk_certificate_sha1}" \
+  '{packageName: $packageName, certificateSha1: $certificateSha1, matchesRestrictedKey: true}' \
+  > "${RUNNER_TEMP}/rc7-android-apk-certificate.json"
+receipt "android_apk_certificate_sha1=${apk_certificate_sha1}"
+receipt "android_apk_certificate_matches_key=true"
+
+testlab_stderr="${RUNNER_TEMP}/rc7-maps-test-lab.stderr"
+testlab_failure="${RUNNER_TEMP}/rc7-maps-test-lab-failure.json"
+set +e
 gcloud firebase test android run \
   --project "${TESTLAB_PROJECT_ID}" \
   --type instrumentation \
@@ -409,7 +428,27 @@ gcloud firebase test android run \
   --no-performance-metrics \
   --no-auto-google-login \
   --client-details matrixLabel="DIREKT RC7 Maps ${SOURCE_SHA}" \
-  --format=json > "${RUNNER_TEMP}/rc7-maps-test-lab.json"
+  --format=json > "${RUNNER_TEMP}/rc7-maps-test-lab.json" 2> "${testlab_stderr}"
+testlab_code=$?
+set -e
+if [[ "${testlab_code}" -ne 0 ]]; then
+  matrix_id="$(sed -n 's/.*Test \[\(matrix-[^]]*\)\].*//p' "${testlab_stderr}" | tail -n 1)"
+  receipt "android_test_lab_map_ready=FAILED"
+  receipt "android_test_lab_matrix_id=${matrix_id:-unavailable}"
+  if [[ -n "${matrix_id}" ]]; then
+    python3 scripts/rc7/collect-testlab-failure.py \
+      --project "${TESTLAB_PROJECT_ID}" \
+      --matrix "${matrix_id}" \
+      --output "${testlab_failure}"
+    receipt "android_test_lab_failure_evidence_present=true"
+  else
+    jq -n '{schema: "direkt.rc7.testlab-failure.v1", rawLogsIncluded: false, credentialIncluded: false, apiKeyIncluded: false, coordinateValuesIncluded: false, participantDataIncluded: false, matrixId: "unavailable", diagnostic: "matrix_id_unavailable"}' > "${testlab_failure}"
+    receipt "android_test_lab_failure_evidence_present=false"
+  fi
+  cat "${testlab_failure}" >&2
+  exit "${testlab_code}"
+fi
+rm -f "${testlab_stderr}"
 receipt "android_test_lab_map_ready=PASS"
 receipt "android_test_device=MediumPhone.arm_api36"
 receipt "android_flaky_retries=0"
