@@ -30,6 +30,16 @@ WEB_GENERATED_ADAPTER = WEB_SOURCE / "lib/server/generated-auth-contracts.ts"
 EXPECTED_VERSION = "7.22.0"
 EXPECTED_JAR_SHA256 = "3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329"
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
+IGNORED_RUNTIME_ARTIFACT_PARTS = frozenset({"node_modules", ".next", "coverage", "dist", "build"})
+IGNORED_RUNTIME_ARTIFACT_SUFFIXES = frozenset({
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".jar",
+    ".class",
+    ".tsbuildinfo",
+})
 
 
 def sha256(path: Path) -> str:
@@ -68,7 +78,12 @@ def reject_tree(
 ) -> None:
     allowed = {path.resolve() for path in allowed_paths}
     for path in root.rglob("*"):
-        if not path.is_file() or path.suffix.lower() in {".png", ".jpg", ".jpeg", ".gif", ".jar"}:
+        if not path.is_file():
+            continue
+        relative = path.relative_to(root)
+        if any(part in IGNORED_RUNTIME_ARTIFACT_PARTS for part in relative.parts):
+            continue
+        if path.suffix.lower() in IGNORED_RUNTIME_ARTIFACT_SUFFIXES:
             continue
         content = path.read_text(encoding="utf-8", errors="ignore")
         for pattern in patterns:
