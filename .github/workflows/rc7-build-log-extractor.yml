@@ -38,4 +38,5 @@ jobs:
               | tail -n 160 || true
             echo '```'
           } > "${body}"
+          cat "${body}"
           gh pr comment "${{ github.event.pull_request.number }}" --repo "${GITHUB_REPOSITORY}" --body-file "${body}"
