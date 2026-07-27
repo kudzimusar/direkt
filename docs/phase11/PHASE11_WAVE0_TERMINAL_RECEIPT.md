@@ -6,6 +6,8 @@
 **Claim merge:** `6b9e7cabeebd5ade9b998b8a54bcd2c888e6bfe4`
 **Implementation PR/head:** #512 / `1befa902def70d2c997aaba260e0d8e2a5d4b12d`
 **Implementation merge:** `f561658d140aaf214fa6eaca99c80bcc98ee284f`
+**Closeout PR/head:** #513 / `1e4291ef669ca01eb4f639b2f1734a85d8448a63`
+**Closeout merge:** `632dd0bdbb2a3b8c24bd285918deff3e54bd3ba9`
 **Technical evidence SHA-256:** `7480a398c6ed7a612ce1c2e44706221f1722e626a2841fe0598662d62471bdf9`
 **`PILOT_ENTRY_APPROVED`:** false
 **PRIMARY-PILOT evidence count:** 0
