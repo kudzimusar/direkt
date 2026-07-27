@@ -1,0 +1,28 @@
+name: UIA RC9 failure log
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/uia-rc9-failure-log.yml"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  extract:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chore/uia-current-main-refresh'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_JOB_ID: "90132053067"
+    steps:
+      - name: Print RC9 failure tail
+        run: |
+          set -euo pipefail
+          raw="${RUNNER_TEMP}/rc9.log"
+          clean="${RUNNER_TEMP}/rc9-clean.log"
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
+          sed -r 's/\x1B\[[0-9;]*[mK]//g; s/^.*Z //' "${raw}" > "${clean}"
+          tail -n 60 "${clean}"
