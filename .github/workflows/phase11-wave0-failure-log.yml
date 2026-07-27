@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
-      SOURCE_JOB_ID: "90115878402"
+      SOURCE_JOB_ID: "90116043084"
     steps:
       - name: Print failure tail
         run: |
@@ -25,4 +25,4 @@ jobs:
           clean="${RUNNER_TEMP}/wave0-clean.log"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
           sed -r 's/\x1B\[[0-9;]*[mK]//g; s/^.*Z //' "${raw}" > "${clean}"
-          tail -n 120 "${clean}"
+          tail -n 40 "${clean}"
