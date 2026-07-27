@@ -23,5 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           raw="${RUNNER_TEMP}/rc9-runtime.log"
+          clean="${RUNNER_TEMP}/rc9-runtime-clean.log"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
-          tail -n 180 "${raw}"
+          sed -r 's/\x1B\[[0-9;]*[mK]//g; s/^.*Z //' "${raw}" > "${clean}"
+          grep -nE '(^e: |error:|Caused by:|What went wrong|Execution failed|Could not resolve|Unresolved reference|Compilation error|FAILURE:|Process completed)' "${clean}" | head -n 240
