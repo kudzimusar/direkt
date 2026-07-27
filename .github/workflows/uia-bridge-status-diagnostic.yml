@@ -16,18 +16,18 @@ jobs:
     timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
-      SOURCE_SHA: bb84968453b891dd511faddc093a8874fce8abc4
-      WORKFLOW: uia-current-main-refresh-closeout-once.yml
+      SOURCE_JOB_ID: "90138169078"
     steps:
-      - name: Report corrected bridge run and jobs
+      - name: Print closeout publisher failure tail
         run: |
           set -euo pipefail
-          runs="$(gh run list --repo "${GITHUB_REPOSITORY}" --workflow "${WORKFLOW}" --branch main --limit 20 --json databaseId,displayTitle,event,headSha,status,conclusion,createdAt,updatedAt,url)"
-          echo '=== MATCHING BRIDGE RUNS ==='
-          jq --arg sha "${SOURCE_SHA}" '[.[] | select(.headSha == $sha)]' <<< "${runs}"
-          run_id="$(jq -r --arg sha "${SOURCE_SHA}" '[.[] | select(.headSha == $sha)] | sort_by(.createdAt) | last | .databaseId // empty' <<< "${runs}")"
-          [[ "${run_id}" =~ ^[0-9]+$ ]]
-          echo "BRIDGE_RUN_ID=${run_id}"
-          echo '=== BRIDGE JOBS ==='
-          gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?per_page=100" \
-            --jq '.jobs[] | {id,name,status,conclusion,started_at,completed_at,html_url}'
+          raw="${RUNNER_TEMP}/uia-closeout.log"
+          clean="${RUNNER_TEMP}/uia-closeout-clean.log"
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
+          sed -r 's/\x1B\[[0-9;]*[mK]//g; s/^.*Z //' "${raw}" > "${clean}"
+          echo '=== MANAGED RUN IDENTITIES ==='
+          grep -E 'DIREKT functional web W8 managed public cutover|DIREKT Firebase internal Android distribution|DIREKT controlled Cloud Run staging|canonical domain' "${clean}" | grep -E '· [0-9]+' | sort -u || true
+          echo '=== PUBLISHER FAILURE ==='
+          grep -n -E 'UIA closeout|missing expected|Traceback|error|Error|failed|failure|exit code' "${clean}" | tail -n 120 || true
+          echo '=== FINAL TAIL ==='
+          tail -n 90 "${clean}"
