@@ -5,6 +5,7 @@ on:
     paths:
       - ".github/workflows/rc7-maps-managed.yml"
       - "scripts/rc7/run-maps-managed.sh"
+      - "scripts/rc7/collect-testlab-failure.py"
       - "scripts/rc7/bootstrap-maps-managed.sh"
       - "scripts/rc7/verify-maps-contract.py"
       - "scripts/rc7/verify-managed-workflow-context.py"
@@ -13,6 +14,7 @@ on:
       - "backend/direkt-api/test/unit/location/**"
       - "backend/direkt-api/test/unit/config/environment-maps.spec.ts"
       - "android/direkt-app/app/src/androidTest/java/com/kudzimusar/direkt/Rc7MapsRuntimeTest.kt"
+      - "android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/PrivacySafeMapCard.kt"
       - "docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md"
       - "docs/integrations/RC7_MAPS_OWNER_BOOTSTRAP.md"
   push:
@@ -21,6 +23,7 @@ on:
     paths:
       - ".github/workflows/rc7-maps-managed.yml"
       - "scripts/rc7/run-maps-managed.sh"
+      - "scripts/rc7/collect-testlab-failure.py"
       - "scripts/rc7/bootstrap-maps-managed.sh"
       - "scripts/rc7/verify-maps-contract.py"
       - "scripts/rc7/verify-managed-workflow-context.py"
@@ -29,6 +32,7 @@ on:
       - "backend/direkt-api/test/unit/location/**"
       - "backend/direkt-api/test/unit/config/environment-maps.spec.ts"
       - "android/direkt-app/app/src/androidTest/java/com/kudzimusar/direkt/Rc7MapsRuntimeTest.kt"
+      - "android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/PrivacySafeMapCard.kt"
       - "docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md"
       - "docs/integrations/RC7_MAPS_OWNER_BOOTSTRAP.md"
   workflow_dispatch:
@@ -63,6 +67,7 @@ jobs:
         run: |
           python3 scripts/rc7/verify-maps-contract.py
           python3 scripts/rc7/verify-managed-workflow-context.py
+          python3 -m py_compile scripts/rc7/collect-testlab-failure.py
           bash -n scripts/rc7/run-maps-managed.sh
           bash -n scripts/rc7/bootstrap-maps-managed.sh
           grep -Fq 'RC7_MAPS_BOOTSTRAP|PASS' scripts/rc7/bootstrap-maps-managed.sh
@@ -129,6 +134,7 @@ jobs:
           grep -Fxq 'CONFIRMATION=RUN-DIREKT-RC7-MAPS-MANAGED' docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md
           python3 scripts/rc7/verify-maps-contract.py
           python3 scripts/rc7/verify-managed-workflow-context.py
+          python3 -m py_compile scripts/rc7/collect-testlab-failure.py
           bash -n scripts/rc7/run-maps-managed.sh
           bash -n scripts/rc7/bootstrap-maps-managed.sh
           echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
@@ -173,11 +179,13 @@ jobs:
           path: |
             ${{ runner.temp }}/rc7-maps-managed-receipt.txt
             ${{ runner.temp }}/rc7-android-key-metadata.json
+            ${{ runner.temp }}/rc7-android-apk-certificate.json
             ${{ runner.temp }}/rc7-geocoding-quota.json
             ${{ runner.temp }}/rc7-maps-budget.json
             ${{ runner.temp }}/rc7-maps-execution.json
             ${{ runner.temp }}/rc7-maps-canary-failure.json
             ${{ runner.temp }}/rc7-maps-test-lab.json
+            ${{ runner.temp }}/rc7-maps-test-lab-failure.json
           if-no-files-found: warn
           retention-days: 30
 
@@ -189,10 +197,11 @@ jobs:
             echo '### DIREKT RC7 managed Google Maps proof'
             echo "- Exact current main: \`${SOURCE_SHA:-not-resolved}\`"
             echo '- Owner bootstrap: budget/quota and time-limited least-privilege IAM only'
-            echo '- Android key: package + SHA-1 restricted; Maps SDK for Android only'
+            echo '- Android key: package + final APK SHA-1 restricted; Maps SDK for Android only'
             echo '- Backend auth: Cloud Run user-managed service identity with downscoped Geocoding v4 OAuth'
             echo '- Backend API key / secret / Cloud NAT: not used'
             echo '- Android proof: one API 36 Firebase Test Lab instrumentation run, zero flaky retries'
+            echo '- Test Lab failure evidence: bounded Testing/Tool Results fields only; no raw logs or opaque outputs'
             echo '- Places / Routes: not enabled by RC7'
             echo '- Private provider coordinates: not published or logged'
             echo '- Participant / production authorization: false'
@@ -219,7 +228,7 @@ jobs:
             echo "- Exact current main: \`${source_sha:-not-resolved}\`"
             echo "- Managed run: [${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
             echo '- Owner bootstrap: budget/quota plus temporary least-privilege IAM; no backend credential value'
-            echo '- Android credential: debug package + signing SHA-1 restricted; Maps SDK for Android only'
+            echo '- Android credential: debug package + final APK signing SHA-1 restricted; Maps SDK for Android only'
             echo '- Backend authentication: user-managed Cloud Run service identity + downscoped Geocoding v4 OAuth'
             echo '- Backend API key / Secret Manager value / Cloud NAT: absent'
             echo '- Places / Routes: not enabled by RC7'
@@ -227,48 +236,7 @@ jobs:
             echo '- Participant / production authorization: false'
             echo '- Temporary Cloud Run Job cleanup: enforced'
             if [[ -f "${RC7_RECEIPT_PATH}" ]]; then
-              grep -E '^(owner_bootstrap_verified|budget_attestation|budget_checked_at|backend_authentication|backend_oauth_scope|backend_api_key_present|backend_secret_value_present|backend_cloud_nat_used|backend_geocoding_canary|backend_service_identity_oauth_proven|android_test_lab_map_ready|budget_alert_present|geocoding_quota_per_minute|cleanup\.|cleanup_failed|managed_result)=' "${RC7_RECEIPT_PATH}" | sed 's/^/- `/' | sed 's/$/`/' || true
+              grep -E '^(owner_bootstrap_verified|budget_attestation|budget_checked_at|backend_authentication|backend_oauth_scope|backend_api_key_present|backend_secret_value_present|backend_cloud_nat_used|backend_geocoding_canary|backend_service_identity_oauth_proven|android_apk_certificate_matches_key|android_test_lab_map_ready|android_test_lab_matrix_id|android_test_lab_failure_evidence_present|budget_alert_present|geocoding_quota_per_minute|cleanup\.|cleanup_failed|managed_result)=' "${RC7_RECEIPT_PATH}" | sed 's/^/- `/' | sed 's/$/`/' || true
             fi
           } > "${body}"
           gh issue comment 261 --repo "${GITHUB_REPOSITORY}" --body-file "${body}"
-
-  reconcile_testlab_evidence:
-    name: Reconcile RC7 Test Lab evidence source
-    if: github.event_name == 'pull_request' && github.head_ref == 'fix/rc7-testlab-failure-evidence'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: fix/rc7-testlab-failure-evidence
-          fetch-depth: 0
-      - name: Apply reviewed permanent source and remove bridge
-        shell: bash
-        run: |
-          set -euo pipefail
-          {
-            python3 scripts/rc7/reconcile-testlab-evidence.py
-            python3 -m py_compile scripts/rc7/collect-testlab-failure.py
-            bash -n scripts/rc7/run-maps-managed.sh
-            python3 scripts/rc7/verify-maps-contract.py
-            python3 scripts/rc7/verify-managed-workflow-context.py
-          } > "${RUNNER_TEMP}/rc7-reconcile.log" 2>&1
-          cat "${RUNNER_TEMP}/rc7-reconcile.log"
-          git checkout -- .github/workflows/rc7-maps-managed.yml .github/workflows/rc7-testlab-evidence-reconcile.yml
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add \
-            android/direkt-app/app/src/androidTest/java/com/kudzimusar/direkt/Rc7MapsRuntimeTest.kt \
-            android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/PrivacySafeMapCard.kt \
-            scripts/rc7/collect-testlab-failure.py \
-            scripts/rc7/run-maps-managed.sh \
-            scripts/rc7/verify-maps-contract.py \
-            scripts/rc7/verify-managed-workflow-context.py \
-            scripts/rc7/reconcile-testlab-evidence.py \
-            docs/integrations/CURRENT_INTEGRATION_STATUS.md \
-            docs/integrations/LIVE_INTEGRATION_LEDGER.md \
-            docs/integrations/RC7_GOOGLE_MAPS_IMPLEMENTATION_NOTES.md
-          git commit -m 'fix(rc7): preserve bounded Test Lab failure evidence'
-          git push origin HEAD:fix/rc7-testlab-failure-evidence
