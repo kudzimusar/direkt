@@ -287,7 +287,6 @@ async function main(): Promise<void> {
     {
       baseUrl: 'https://sandbox.momodeveloper.mtn.com',
       targetEnvironment: 'sandbox',
-      callbackUrl: requireEnvironment('RC8_MTN_CALLBACK_URL'),
       timeoutMs: 10000,
     },
   );

@@ -28,12 +28,14 @@ const initiationInput: SandboxPaymentInitiationInput = {
   businessFlow: 'provider_subscription',
   paymentMethod: {
     kind: 'mobile_money',
-    accountReference: '260971000001',
+    accountReference: '46733123470',
     accountReferenceIsSynthetic: true,
   },
 };
 
-function createAdapter(): MtnMomoSandboxPaymentProviderAdapter {
+function createAdapter(
+  configuration: { callbackUrl?: string } = { callbackUrl: CALLBACK_URL },
+): MtnMomoSandboxPaymentProviderAdapter {
   return new MtnMomoSandboxPaymentProviderAdapter(
     { ...sandboxPaymentProviderDescriptor('mtn_momo'), runtimeEnabled: true },
     {
@@ -44,7 +46,7 @@ function createAdapter(): MtnMomoSandboxPaymentProviderAdapter {
     {
       baseUrl: 'https://sandbox.momodeveloper.mtn.com',
       targetEnvironment: 'sandbox',
-      callbackUrl: CALLBACK_URL,
+      ...(configuration.callbackUrl ? { callbackUrl: configuration.callbackUrl } : {}),
       timeoutMs: 5000,
     },
   );
@@ -108,10 +110,26 @@ describe('MtnMomoSandboxPaymentProviderAdapter', () => {
       amount: '1.00',
       currency: 'EUR',
       externalId: 'RC8-MTN-0001',
-      payer: { partyIdType: 'MSISDN', partyId: '260971000001' },
+      payer: { partyIdType: 'MSISDN', partyId: '46733123470' },
     });
     expect(JSON.stringify(body)).not.toContain('synthetic-api-key');
     expect(JSON.stringify(body)).not.toContain('synthetic-subscription-key');
+  });
+
+  it('supports status-polling-only initiation without a callback header', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(tokenResponse())
+      .mockResolvedValueOnce(new Response(null, { status: 202 }));
+
+    await expect(createAdapter({}).initiate(initiationInput, boundary)).resolves.toMatchObject({
+      status: 'processing',
+      providerReference: PAYMENT_INTENT_ID,
+    });
+
+    const requestHeaders = fetchMock.mock.calls[1]?.[1]?.headers as Record<string, string>;
+    expect(requestHeaders).not.toHaveProperty('X-Callback-Url');
+    expect(requestHeaders['X-Reference-Id']).toBe(PAYMENT_INTENT_ID);
   });
 
   it('independently verifies a successful status with exact amount and currency', async () => {
@@ -191,7 +209,7 @@ describe('MtnMomoSandboxPaymentProviderAdapter', () => {
           ...initiationInput,
           paymentMethod: {
             kind: 'mobile_money',
-            accountReference: '260971000001',
+            accountReference: '46733123470',
             accountReferenceIsSynthetic: false,
           },
         },

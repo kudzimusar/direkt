@@ -28,7 +28,7 @@ export interface MtnMomoSandboxCredentials {
 export interface MtnMomoSandboxConfiguration {
   baseUrl: typeof MTN_SANDBOX_BASE_URL;
   targetEnvironment: 'sandbox';
-  callbackUrl: string;
+  callbackUrl?: string;
   timeoutMs: number;
 }
 
@@ -55,9 +55,11 @@ export class MtnMomoSandboxPaymentProviderAdapter implements SandboxPaymentProvi
     if (configuration.baseUrl !== MTN_SANDBOX_BASE_URL) {
       throw new Error('MTN MoMo sandbox base URL must match the approved provider host.');
     }
-    const callbackUrl = new URL(configuration.callbackUrl);
-    if (callbackUrl.protocol !== 'https:' || callbackUrl.username || callbackUrl.password) {
-      throw new Error('MTN MoMo callback URL must be credential-free HTTPS.');
+    if (configuration.callbackUrl) {
+      const callbackUrl = new URL(configuration.callbackUrl);
+      if (callbackUrl.protocol !== 'https:' || callbackUrl.username || callbackUrl.password) {
+        throw new Error('MTN MoMo callback URL must be credential-free HTTPS.');
+      }
     }
     if (!Number.isInteger(configuration.timeoutMs) || configuration.timeoutMs < 1000) {
       throw new Error('MTN MoMo timeout must be at least 1000 milliseconds.');
@@ -88,7 +90,9 @@ export class MtnMomoSandboxPaymentProviderAdapter implements SandboxPaymentProvi
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
           'Ocp-Apim-Subscription-Key': this.credentials.collectionSubscriptionKey,
-          'X-Callback-Url': this.configuration.callbackUrl,
+          ...(this.configuration.callbackUrl
+            ? { 'X-Callback-Url': this.configuration.callbackUrl }
+            : {}),
           'X-Reference-Id': input.paymentIntentId,
           'X-Target-Environment': this.configuration.targetEnvironment,
         },

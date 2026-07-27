@@ -198,6 +198,12 @@ The reviewed runtime slice is source-controlled on `feat/rc8-managed-sandbox-pro
 
 DPO remains runtime-unbound because no DIREKT private sandbox credential exists. Airtel remains provider-pending. Flutterwave remains deferred/excluded. No PayPal capture, browser approval, real money, participant data, production endpoint, customer-to-provider payment, escrow, wallet, payout or direct ledger mutation is authorized.
 
+### Preserved exact-main managed attempt 2
+
+Exact-main run `30238926656/2` reached the private Cloud Run Job after the owner least-privilege secret bootstrap. It failed before Stripe, PayPal or reconciliation because MTN returned HTTP 500 during Request to Pay. Artifact `8642921752` (`sha256:f78da1c133b7d7dfa0e8397657052bc178250dbe7322c2e5a5404234ba9e80d6`) preserves the sanitized failure receipt. The temporary job was deleted; cleanup succeeded; real money, participant data, production authorization and customer-to-provider payments remained false.
+
+The correction removes the artificial callback-host dependency from this polling-only canary and uses the exact previously successful MTN sandbox payer `46733123470`. The reusable adapter still includes `X-Callback-Url` when a reviewed matching callback URL is configured, while the managed proof relies on independent status polling as the payment-truth boundary.
+
 ## Merge and runtime gates
 
 The source checkpoint is merged. The managed proof may execute only after the runtime-source exact head passes all applicable repository regressions and the following controls remain enforced:
