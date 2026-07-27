@@ -63,8 +63,8 @@ for needle in (
     "at most 8 providers",
     "at most 20 customers",
     "Only observations from approved, consenting participants",
-    "Payment status must not affect verification, publication or ranking",
-    "Synthetic, secondary or sandbox evidence",
+    "do not change verification, publication or ranking based on willingness to pay",
+    "synthetic, secondary or sandbox evidence",
 ):
     require(PROTOCOL, needle)
 
