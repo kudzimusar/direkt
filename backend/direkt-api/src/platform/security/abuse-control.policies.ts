@@ -36,6 +36,27 @@ const POLICIES: readonly AbuseControlPolicy[] = [
     windowSeconds: 60,
   },
   {
+    key: 'public_discovery_assist',
+    method: 'POST',
+    pathPattern: /^\/api\/v1\/public\/discovery\/assist$/,
+    requestLimit: 30,
+    windowSeconds: 300,
+  },
+  {
+    key: 'public_search_area_normalize',
+    method: 'POST',
+    pathPattern: /^\/api\/v1\/public\/discovery\/search-area\/normalize$/,
+    requestLimit: 20,
+    windowSeconds: 300,
+  },
+  {
+    key: 'public_support_assist',
+    method: 'POST',
+    pathPattern: /^\/api\/v1\/public\/support\/assist$/,
+    requestLimit: 30,
+    windowSeconds: 300,
+  },
+  {
     key: 'public_discovery_search',
     method: 'GET',
     pathPattern: /^\/api\/v1\/public\/providers\/search$/,

@@ -29,7 +29,7 @@ No integration becomes ACTIVE merely because an account, DNS record, API key, SD
 | Cloudflare DNS | **ACTIVE** | Authoritative DNS edge. |
 | GitHub Pages | **ACTIVE public static origin** | Documentation and synthetic/non-sensitive preview content. |
 | Cloudflare Email Routing | **EXTERNALLY_PROVISIONED** | Role/support aliases; not outbound application delivery. |
-| Cloudflare Turnstile | **RC10 CLAIMED — THREAT MODEL / NOT ACTIVE** | Conditional decision only. No site key, secret, widget, package or runtime binding is approved before a specific public-flow threat model justifies it. |
+| Cloudflare Turnstile | **RC10 IMPLEMENTED — NOT CURRENTLY REQUIRED / NOT ACTIVE / REGRESSION PENDING** | The reviewed threat model found no current anonymous browser flow with residual risk that justifies a challenge. Public discovery assistance, public Help and search-area normalization now have explicit fail-closed database rate limits. No site key, secret, widget, package or runtime binding exists. |
 
 ## Core data/backend infrastructure
 
