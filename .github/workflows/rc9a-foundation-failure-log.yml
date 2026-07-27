@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
-      SOURCE_JOB_ID: "89963893547"
+      SOURCE_JOB_ID: "89964567600"
     steps:
       - name: Print bounded foundation failure
         shell: bash
@@ -26,4 +26,4 @@ jobs:
           clean="${RUNNER_TEMP}/rc9a-foundation-clean.log"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
           sed -r 's/\x1B\[[0-9;]*[mK]//g; s/^.*Z //' "${raw}" > "${clean}"
-          grep -E '(##\[error\]|Process completed|AssertionError|Traceback|RC9 contract missing|RC9A_|BUILD FAILED|FAILED|error:|trailing whitespace|new blank line|fatal:)' "${clean}" | tail -n 160
+          awk '$0 == "RC9A_GENERATED_CLIENTS|WRITE|PASS" {capture=1} capture {print}' "${clean}" | tail -n 220
