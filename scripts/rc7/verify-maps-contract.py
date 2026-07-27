@@ -236,6 +236,10 @@ def main() -> int:
         "android_build_cache_enabled=false",
         "apksigner",
         "certificateDigestCount",
+        "provisionalCertificateSha1",
+        "finalRestrictionCertificateSha1",
+        "prebuildCertificateMatchesApk",
+        "finalRestrictionMatchesApk",
         "digestFieldPattern",
         "presentationPrefixIndependent",
         "parsedStreams",
@@ -249,8 +253,14 @@ def main() -> int:
         'r"certificate SHA-1 digest:\\s*([0-9A-Fa-f:]+)"',
         'receipt "android_apk_certificate_digest_count=${certificate_digest_count}"',
         'receipt "android_apk_certificate_format_valid=${apk_certificate_format_valid}"',
-        'receipt "android_apk_certificate_matches_key=${certificate_matches}"',
-        'if [[ "${apksigner_code}" -ne 0 ]] || [[ "${certificate_digest_count}" -ne 1 ]] || ! ${apk_certificate_format_valid} || ! ${certificate_matches}; then',
+        'receipt "android_prebuild_certificate_matches_apk=${prebuild_certificate_matches_apk}"',
+        'receipt "android_apk_certificate_matches_key=true"',
+        'receipt "android_key_restricted_to_final_apk=true"',
+        'receipt "final_credential_propagation_wait_seconds=60"',
+        '--allowed-application "sha1_fingerprint=${apk_certificate_sha1},package_name=${ANDROID_PACKAGE}"',
+        'write_certificate_artifact false',
+        'write_certificate_artifact true',
+        'if [[ "${apksigner_code}" -ne 0 ]] || [[ "${certificate_digest_count}" -ne 1 ]] || ! ${apk_certificate_format_valid}; then',
         "collect-testlab-failure.py",
         "android_test_lab_failure_evidence_present=true",
         "cleanup.cloud_run_job_deleted",
@@ -278,6 +288,12 @@ def main() -> int:
     ):
         prohibit(managed_script, pattern, label)
 
+    provisional_index = managed_script.find('sha1_fingerprint=${android_sha1}')
+    final_index = managed_script.find('sha1_fingerprint=${apk_certificate_sha1}')
+    testlab_index = managed_script.find('gcloud firebase test android run')
+    if not (0 <= provisional_index < final_index < testlab_index):
+        raise AssertionError("The Android Maps key must be re-restricted to the final APK before Test Lab.")
+    prohibit(managed_script, r'! \${prebuild_certificate_matches_apk}', "A provisional certificate mismatch must not block final restriction.")
     prohibit(managed_script, r'cat "\$\{apksigner_stdout\}"', "Raw apksigner stdout must not be printed.")
     prohibit(managed_script, r'cat "\$\{apksigner_stderr\}"', "Raw apksigner stderr must not be printed.")
     require(managed_script, "*/\\1/p'", "Test Lab matrix backreference")

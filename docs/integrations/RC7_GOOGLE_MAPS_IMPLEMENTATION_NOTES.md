@@ -2,7 +2,7 @@
 
 **Governing issue:** #261  
 **Status:** Claimed; corrective source and managed proof in progress  
-**Corrective baseline:** `main@e5c93419da91bc2276c0d02fa87568ac0e75b22f`
+**Corrective baseline:** `main@bcb30008c245a6a10ae3348b831259cef6dee441`
 
 ## Source reconciliation checkpoint
 
@@ -83,6 +83,12 @@ The corrected extractor parses both private signer stdout and stderr through the
 Exact-main run `30231201667/1` on `e5c93419da91bc2276c0d02fa87568ac0e75b22f` passed backend service-identity OAuth, the fresh one-JPY budget attestation, quota, restricted Android key metadata, clean no-build-cache APK creation and Cloud Run cleanup. Artifact `8640205143` has digest `sha256:c545c1e4e49ba54d2269882af5a3cae0f8366e699b34b639f9f4dca7a9a853da`. Both private signer streams were parsed, but the remaining signer-prefix/start-of-line constraint returned zero digests; Test Lab correctly did not start.
 
 AOSP's `ApkSignerTool.printCertificate` emits the stable field `<name> certificate SHA-1 digest: <hex>`. The corrected parser matches the exact `certificate SHA-1 digest:` field anywhere in either private stream, independent of the presentation prefix. It does not match `public key SHA-1 digest`. Matches are normalized and deduplicated, and exactly one digest must equal the Android key restriction. Raw signer streams remain ephemeral, unprinted and unuploaded.
+
+## Final APK key-restriction correction
+
+Exact-main run `30231743285/1` on `bcb30008c245a6a10ae3348b831259cef6dee441` passed backend OAuth, the fresh one-JPY budget attestation, quota, clean no-build-cache packaging and semantic certificate extraction. Artifact `8640363497` has digest `sha256:dfb312b7bebb8bbb2d6b45e2bd2d008fb04fa1475f6cfc73eaf4353f88bc9d83`. The final APK contained one valid SHA-1 certificate, but it differed from the provisional keystore fingerprint used to restrict the key before build; Test Lab correctly did not start and Cloud Run cleanup passed.
+
+The corrected sequence retains a provisional package+certificate restriction only while the synthetic key value is retrieved and embedded. After the clean build, it extracts the actual APK certificate, updates the same key to exactly that package+certificate pair, verifies the API-key metadata and sole Maps SDK target, writes final sanitized evidence, waits 60 seconds for propagation, and only then starts Test Lab. A provisional mismatch is diagnostic rather than authoritative; the verified final APK restriction is the trust boundary. The key value never changes and is never uploaded.
 
 ## Credential and authentication boundary
 
