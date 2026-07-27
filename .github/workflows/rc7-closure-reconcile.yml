@@ -41,6 +41,16 @@ jobs:
               exit "${code}"
             fi
           }
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/rc7/patch-close-rc7.py')
+          text = path.read_text(encoding='utf-8')
+          old = '    "STATUS=ARMED",\n    "STATUS=CONSUMED",'
+          new = '    "\\nSTATUS=ARMED\\n",\n    "\\nSTATUS=CONSUMED\\n",'
+          if old not in text:
+              raise SystemExit('missing broad trigger replacement')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
           run_stage patch python3 scripts/rc7/patch-close-rc7.py
           run_stage contract python3 scripts/rc7/verify-maps-contract.py
           run_stage context python3 scripts/rc7/verify-managed-workflow-context.py
