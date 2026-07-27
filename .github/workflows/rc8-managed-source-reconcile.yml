@@ -40,13 +40,19 @@ jobs:
           text = path.read_text(encoding='utf-8')
           invalid = 'require(MANAGED_WORKFLOW, "test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"")'
           valid = 'require(MANAGED_WORKFLOW, \'test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"\')'
-          stale = 'require(IMPLEMENTATION, "SOURCE CHECKPOINT READY FOR PROMOTION")'
-          current = 'require(IMPLEMENTATION, "Managed runtime proof — armed")'
-          if invalid not in text:
-              raise SystemExit('missing generated exact-main verifier line')
-          if stale not in text:
-              raise SystemExit('missing stale RC8 source-state verifier line')
-          text = text.replace(invalid, valid, 1).replace(stale, current, 1)
+          stale_state = 'require(IMPLEMENTATION, "SOURCE CHECKPOINT READY FOR PROMOTION")'
+          current_state = 'require(IMPLEMENTATION, "Managed runtime proof — armed")'
+          stale_secret = 'require(LEDGER, "No payment provider secret is attached to Cloud Run")'
+          current_secret = 'require(LEDGER, "No payment provider secret is attached to the API service or public application runtime")'
+          replacements = (
+              (invalid, valid, 'generated exact-main verifier line'),
+              (stale_state, current_state, 'stale RC8 source-state verifier line'),
+              (stale_secret, current_secret, 'stale Cloud Run secret verifier line'),
+          )
+          for old, new, label in replacements:
+              if old not in text:
+                  raise SystemExit(f'missing {label}')
+              text = text.replace(old, new, 1)
           path.write_text(text, encoding='utf-8')
           PY
           pushd backend/direkt-api >/dev/null
