@@ -1,11 +1,11 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "status": "preauthorization-candidate-requires-final-release-candidate-revalidation",
   "artifact_scope": {
     "application_id": "com.kudzimusar.direkt",
     "release_channel": "preauthorization",
     "version_name": "0.12.0-preauth.1",
-    "note": "This inventory describes the current Android Firebase Authentication, RC3 Crashlytics, RC4 Firebase Cloud Messaging and RC7 Google Maps SDK source integrations. Crashlytics collection, FCM auto-init and Maps runtime activation are disabled by default. RC7 requests no Android device-location permission, keeps the Maps my-location layer disabled, renders only consented public premises and public service-area geometry, and does not transmit exact private provider coordinates. Only exact-source synthetic managed canaries may explicitly activate these integrations before later participant and production authorization."
+    "note": "This inventory describes the current Android Firebase Authentication, RC3 Crashlytics, RC4 Firebase Cloud Messaging, RC7 Google Maps SDK and RC9 generated Retrofit/Kotlin serialization transport source integrations. Crashlytics collection, FCM auto-init and Maps runtime activation are disabled by default. RC9 uses the generated client only for the Firebase-to-DIREKT session exchange behind a DIREKT-owned HTTPS-only, no-redirect, no-retry OkHttp wrapper; generated HTTP body logging is not activated. Only exact-source synthetic managed canaries may explicitly activate provider integrations before later participant and production authorization."
   },
   "sdk_inventory": [
     {
@@ -86,6 +86,30 @@
       "places_sdk_included": false,
       "routes_sdk_included": false,
       "sharing_assessment": "Google Maps Platform service processing only; final Play Data Safety answers must be revalidated against the exact shipped Maps SDK, app configuration, Google disclosures, approved privacy policy and release authorization."
+    },
+    {
+      "sdk": "DIREKT generated Retrofit transport",
+      "dependencies": [
+        "com.squareup.okhttp3:logging-interceptor",
+        "com.squareup.retrofit2:converter-kotlinx-serialization",
+        "com.squareup.retrofit2:converter-scalars",
+        "com.squareup.retrofit2:retrofit",
+        "org.jetbrains.kotlinx:kotlinx-serialization-json"
+      ],
+      "active_use": "RC9 bounded Firebase-to-DIREKT session exchange only; generated request/response models run behind the DIREKT-owned Android wrapper.",
+      "automatic_collection": [],
+      "application_supplied_processing": [
+        "Firebase ID token, approved notice version, affirmative consent flag and bounded device label sent only to the private DIREKT API",
+        "DIREKT identity/session response parsed into the existing encrypted app-private session store"
+      ],
+      "http_body_logging_active": false,
+      "generated_default_logger_bypassed_by_direkt_owned_client": true,
+      "automatic_retries": false,
+      "redirects": false,
+      "https_only": true,
+      "third_party_endpoint": false,
+      "browser_or_provider_direct_access": false,
+      "sharing_assessment": "No third-party SDK collection or sharing is introduced by these transport/serialization libraries. They carry application-supplied authentication data only to the private DIREKT API; final Play answers remain subject to exact-release revalidation."
     }
   ],
   "play_data_types": [
@@ -181,7 +205,8 @@
     "participant FCM registration tokens or participant push-delivery metadata while FCM auto-init and participant registration remain disabled",
     "real provider evidence bytes through an Android upload flow",
     "real enquiry/review/complaint text through the current synthetic preview interaction surfaces",
-    "participant or production Google Maps traffic while DIREKT_MAPS_BUILD_ENABLED remains default-off and RC7 authorization remains synthetic-only"
+    "participant or production Google Maps traffic while DIREKT_MAPS_BUILD_ENABLED remains default-off and RC7 authorization remains synthetic-only",
+    "authentication/session payloads through HTTP body logging; RC9 supplies a DIREKT-owned OkHttp builder and does not activate the generated default BODY logger"
   ],
   "future_or_blocked_product_data": [
     {
