@@ -30,11 +30,13 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/rc10/patch-closeout.py
+          python3 scripts/rc10/patch-rc9-later-lane.py
           python3 scripts/rc9/verify-generated-client-contract.py
           python3 scripts/rc10/verify-turnstile-decision.py
           python3 scripts/rc8/verify-payments-contract.py
 
           rm scripts/rc10/patch-closeout.py
+          rm scripts/rc10/patch-rc9-later-lane.py
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add \
@@ -44,8 +46,10 @@ jobs:
             docs/integrations/LIVE_INTEGRATION_LEDGER.md \
             docs/integrations/RC10_TURNSTILE_DECISION.md \
             docs/integrations/RC10_CLOSURE_RECEIPT.md \
+            scripts/rc9/verify-generated-client-contract.py \
             scripts/rc10/verify-turnstile-decision.py \
-            scripts/rc10/patch-closeout.py
+            scripts/rc10/patch-closeout.py \
+            scripts/rc10/patch-rc9-later-lane.py
           git diff --cached --check
           git commit -m 'docs(rc10): close checkpoint and release lane'
           git push origin HEAD:docs/rc10-closeout
