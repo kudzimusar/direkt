@@ -23,5 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           raw="${RUNNER_TEMP}/rc9a-foundation.log"
+          clean="${RUNNER_TEMP}/rc9a-foundation-clean.log"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
-          tail -n 90 "${raw}"
+          sed -r 's/\x1B\[[0-9;]*[mK]//g; s/^.*Z //' "${raw}" > "${clean}"
+          grep -E '(##\[error\]|Process completed|AssertionError|Traceback|RC9 contract missing|RC9A_|BUILD FAILED|FAILED|error:|trailing whitespace|new blank line|fatal:)' "${clean}" | tail -n 160
