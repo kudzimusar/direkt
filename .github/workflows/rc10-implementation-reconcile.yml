@@ -36,6 +36,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/rc10/patch-implementation.py
+          sed -i 's#backend/direkt-api/src/platform/security/abuse-control.policies.spec.ts#backend/direkt-api/test/unit/platform/security/abuse-control.policies.spec.ts#' scripts/rc10/verify-turnstile-decision.py
           python3 scripts/rc9/verify-generated-client-contract.py
           python3 scripts/rc10/verify-turnstile-decision.py
           python3 scripts/rc8/verify-payments-contract.py
@@ -45,7 +46,7 @@ jobs:
           npm run format:check
           npm run lint
           npm run typecheck
-          npx vitest run src/platform/security/abuse-control.policies.spec.ts
+          npx vitest run test/unit/platform/security/abuse-control.policies.spec.ts
           npm run build
           cd ../..
 
@@ -59,7 +60,7 @@ jobs:
             docs/integrations/LIVE_INTEGRATION_LEDGER.md \
             docs/integrations/RC10_TURNSTILE_DECISION.md \
             backend/direkt-api/src/platform/security/abuse-control.policies.ts \
-            backend/direkt-api/src/platform/security/abuse-control.policies.spec.ts \
+            backend/direkt-api/test/unit/platform/security/abuse-control.policies.spec.ts \
             scripts/rc10/verify-turnstile-decision.py \
             scripts/rc10/patch-implementation.py
           git diff --cached --check
