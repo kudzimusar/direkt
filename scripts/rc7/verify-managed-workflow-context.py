@@ -174,6 +174,10 @@ def main() -> int:
         'receipt "android_build_cache_enabled=false"',
         "certificateDigestCount:",
         "acceptedSignerLabelForms:",
+        "parsedStreams:",
+        'python3 - "${apksigner_stdout}" "${apksigner_stderr}" "${apk_certificate_digests_file}"',
+        "for path in sys.argv[1:3]",
+        "Path(sys.argv[3]).write_text",
         "rawStdoutIncluded:",
         "rawStderrIncluded:",
         "Signer (?:#[0-9]+|\\([^)]*\\)) certificate SHA-1 digest",
@@ -272,6 +276,7 @@ def main() -> int:
     print("certificate_evidence_written_before_failure=true")
     print("numbered_and_sdk_range_signer_labels_supported=true")
     print("unique_certificate_digest_required=true")
+    print("apksigner_stdout_and_stderr_parsed=true")
     print("raw_canary_logs_uploaded=false")
     print("provider_rejection_status_distinguished=true")
     print("provider_raw_error_exposed=false")
