@@ -68,7 +68,8 @@ for needle in (
 
 require(BACKEND_PACKAGE, '"openapi:generate"')
 require(BACKEND_PACKAGE, '"openapi:check"')
-require(OPENAPI_GENERATOR, "artifacts/openapi.json")
+require(OPENAPI_GENERATOR, "'artifacts'")
+require(OPENAPI_GENERATOR, "'openapi.json'")
 require(OPENAPI_GENERATOR, "JSON.stringify(document, null, 2)")
 require(OPENAPI_CHECK, "Expected an OpenAPI 3.x document")
 require(OPENAPI_CHECK, "Protected operation is missing bearer security")
