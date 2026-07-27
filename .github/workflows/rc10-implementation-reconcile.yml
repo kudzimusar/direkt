@@ -1,0 +1,67 @@
+name: RC10 implementation reconciler
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc10-implementation-reconcile.yml"
+      - "scripts/rc10/patch-implementation.py"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rc10-implementation-reconcile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reconcile:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/rc10-turnstile-decision'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: feat/rc10-turnstile-decision
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - name: Apply and verify RC10 implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/rc10/patch-implementation.py
+          python3 scripts/rc9/verify-generated-client-contract.py
+          python3 scripts/rc10/verify-turnstile-decision.py
+          python3 scripts/rc8/verify-payments-contract.py
+
+          cd backend/direkt-api
+          npm ci --ignore-scripts
+          npm run format:check
+          npm run lint
+          npm run typecheck
+          npx vitest run src/platform/security/abuse-control.policies.spec.ts
+          npm run build
+          cd ../..
+
+          rm scripts/rc10/patch-implementation.py
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            WORKSTREAM_LOCK.md \
+            PROJECT_STATUS.md \
+            docs/integrations/CURRENT_INTEGRATION_STATUS.md \
+            docs/integrations/LIVE_INTEGRATION_LEDGER.md \
+            docs/integrations/RC10_TURNSTILE_DECISION.md \
+            backend/direkt-api/src/platform/security/abuse-control.policies.ts \
+            backend/direkt-api/src/platform/security/abuse-control.policies.spec.ts \
+            scripts/rc10/verify-turnstile-decision.py \
+            scripts/rc10/patch-implementation.py
+          git diff --cached --check
+          git commit -m 'fix(rc10): close public abuse-control gaps'
+          git push origin HEAD:feat/rc10-turnstile-decision
