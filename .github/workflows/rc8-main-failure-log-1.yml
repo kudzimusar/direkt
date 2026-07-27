@@ -1,0 +1,27 @@
+name: RC8 exact-main failure receipt 1
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc8-main-failure-log-1.yml"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  extract:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chore/rc8-main-run-locator-1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_JOB_ID: "89892004833"
+    steps:
+      - name: Print bounded RC8 failure receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          raw="${RUNNER_TEMP}/rc8-main-job.log"
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
+          grep -E '^(.*)(owner_bootstrap_verified|missing_runtime_secret_accessor|secret_values_read_by_deployer|provider_canary|provider_canary_failure_evidence_present|cleanup\.cloud_run_job_deleted|cleanup_failed|managed_result|production_authorization|participant_data|real_money|customer_to_provider_payments)=|RC8 owner bootstrap is required|PERMISSION_DENIED|Permission denied|denied|ERROR:|Process completed with exit code' "${raw}" | tail -n 120 || true
