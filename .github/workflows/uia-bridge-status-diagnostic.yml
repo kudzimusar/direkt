@@ -7,7 +7,6 @@ on:
 
 permissions:
   actions: read
-  checks: read
   contents: read
 
 jobs:
@@ -23,23 +22,22 @@ jobs:
       - uses: actions/checkout@v6
         with:
           ref: ${{ env.SOURCE_SHA }}
-      - name: Lint exact promotion bridge
+      - name: Print exact promotion bridge lint findings
         run: |
           set -euo pipefail
+          set +e
           go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 \
-            -color \
-            ".github/workflows/${WORKFLOW}"
-      - name: Report exact bridge validation details
-        if: always()
+            -no-color \
+            ".github/workflows/${WORKFLOW}" > "${RUNNER_TEMP}/actionlint.txt" 2>&1
+          lint_status=$?
+          set -e
+          echo "ACTIONLINT_STATUS=${lint_status}"
+          cat "${RUNNER_TEMP}/actionlint.txt"
+      - name: Report exact bridge run
         run: |
           set -euo pipefail
           runs="$(gh run list --repo "${GITHUB_REPOSITORY}" --workflow "${WORKFLOW}" --branch main --limit 20 --json databaseId,displayTitle,event,headSha,status,conclusion,createdAt,updatedAt,url)"
-          echo '=== MATCHING BRIDGE RUNS ==='
-          jq --arg sha "${SOURCE_SHA}" '[.[] | select(.headSha == $sha)]' <<< "${runs}"
           run_id="$(jq -r --arg sha "${SOURCE_SHA}" '[.[] | select(.headSha == $sha)] | sort_by(.createdAt) | last | .databaseId // empty' <<< "${runs}")"
           [[ "${run_id}" =~ ^[0-9]+$ ]]
-          echo "BRIDGE_RUN_ID=${run_id}"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}" \
             --jq '{id,name,path,event,status,conclusion,head_sha,run_attempt,created_at,updated_at,html_url}'
-          gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?per_page=100" \
-            --jq '.jobs[] | {id,name,status,conclusion,started_at,completed_at,html_url}' || true
