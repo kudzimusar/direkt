@@ -24,4 +24,4 @@ jobs:
           set -euo pipefail
           raw="${RUNNER_TEMP}/rc8-managed-source.log"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
-          grep -E 'AssertionError|Traceback|error TS|error  |Error:|FAILED|Process completed with exit code|Expected|expected one occurrence|RC8 contract missing|prettier|eslint' "${raw}" | tail -n 160 || true
+          tail -n 120 "${raw}"
