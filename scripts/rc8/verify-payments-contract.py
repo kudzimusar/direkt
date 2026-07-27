@@ -1,0 +1,197 @@
+#!/usr/bin/env python3
+"""Verify the permanent RC8 sandbox-payment safety contract."""
+
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+PORT = ROOT / "backend/direkt-api/src/commercial/sandbox-payment-provider.port.ts"
+REGISTRY = ROOT / "backend/direkt-api/src/commercial/sandbox-payment-provider.registry.ts"
+MTN = ROOT / "backend/direkt-api/src/commercial/mtn-momo-sandbox-payment-provider.adapter.ts"
+STRIPE = ROOT / "backend/direkt-api/src/commercial/stripe-sandbox-payment-provider.adapter.ts"
+PAYPAL = ROOT / "backend/direkt-api/src/commercial/paypal-sandbox-payment-provider.adapter.ts"
+DPO = ROOT / "backend/direkt-api/src/commercial/dpo-sandbox-payment-provider.adapter.ts"
+RECONCILIATION = ROOT / "backend/direkt-api/src/commercial/sandbox-payment-reconciliation.ts"
+FOUNDATION_TEST = ROOT / "backend/direkt-api/test/unit/rc8-sandbox-payment-provider.spec.ts"
+MTN_TEST = ROOT / "backend/direkt-api/test/unit/mtn-momo-sandbox-payment-provider.adapter.spec.ts"
+STRIPE_TEST = ROOT / "backend/direkt-api/test/unit/stripe-sandbox-payment-provider.adapter.spec.ts"
+PAYPAL_TEST = ROOT / "backend/direkt-api/test/unit/paypal-sandbox-payment-provider.adapter.spec.ts"
+DPO_TEST = ROOT / "backend/direkt-api/test/unit/dpo-sandbox-payment-provider.adapter.spec.ts"
+RECONCILIATION_TEST = ROOT / "backend/direkt-api/test/unit/sandbox-payment-reconciliation.spec.ts"
+STATUS = ROOT / "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
+LEDGER = ROOT / "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
+LOCK = ROOT / "WORKSTREAM_LOCK.md"
+IMPLEMENTATION = ROOT / "docs/integrations/RC8_SANDBOX_PAYMENTS_IMPLEMENTATION.md"
+
+
+def require(path: Path, needle: str) -> None:
+    content = path.read_text(encoding="utf-8")
+    if needle not in content:
+        raise SystemExit(f"RC8 contract missing {needle!r} in {path.relative_to(ROOT)}")
+
+
+def reject(path: Path, needle: str) -> None:
+    content = path.read_text(encoding="utf-8")
+    if needle in content:
+        raise SystemExit(f"RC8 contract prohibits {needle!r} in {path.relative_to(ROOT)}")
+
+
+for provider in ("mtn_momo", "airtel_money", "dpo", "stripe", "paypal"):
+    require(PORT, f"'{provider}'")
+    require(REGISTRY, f"{provider}:")
+
+require(LOCK, "CLAIMED — RC8 sandbox payment runtime closure")
+require(LOCK, "RC8 implementation contract — CLAIMED")
+require(LOCK, "RC8 is the sole active repository write lane")
+require(IMPLEMENTATION, "SOURCE CHECKPOINT READY FOR PROMOTION")
+require(IMPLEMENTATION, "**Replayed base:** `main@54d0129027b7f324272c4bcc94a0f2109318fd18`")
+require(IMPLEMENTATION, "runtime binding and managed sandbox evidence remain pending")
+
+require(PORT, "customerToProviderPayments: false")
+require(PORT, "productionMoneyMovement: false")
+require(PORT, "participantDataIncluded: boolean")
+require(PORT, "if (boundary.participantDataIncluded)")
+require(PORT, "credentialSource: 'secret_manager' | 'environment' | 'client'")
+require(PORT, "boundary.credentialSource !== 'secret_manager'")
+require(PORT, "PRODUCTION_ENVIRONMENT_PROHIBITED")
+require(PORT, "REAL_MONEY_PROHIBITED")
+require(PORT, "SANDBOX_RUNTIME_NOT_ENABLED")
+require(PORT, "SYNTHETIC_PAYMENT_METHOD_REQUIRED")
+require(PORT, "completionKind: SandboxPaymentCompletionKind")
+require(PORT, "completeAction?")
+require(PORT, "adjustmentAmountMinor?: number")
+require(REGISTRY, "readiness: 'pending_provider'")
+require(REGISTRY, "runtimeEnabled: false")
+require(REGISTRY, "completionKind: 'server_capture'")
+require(REGISTRY, "direkt-dpo-sandbox-company-token")
+require(FOUNDATION_TEST, "participantDataIncluded: false")
+require(FOUNDATION_TEST, "realMoneyApproved: false")
+require(FOUNDATION_TEST, "keeps sandbox-proven providers source-registered but runtime disabled")
+require(FOUNDATION_TEST, "rejects duplicate provider registration")
+
+require(MTN, "https://sandbox.momodeveloper.mtn.com")
+require(MTN, "/collection/token/")
+require(MTN, "/collection/v1_0/requesttopay")
+require(MTN, "X-Callback-Url")
+require(MTN, "X-Reference-Id")
+require(MTN, "X-Target-Environment")
+require(MTN, "response.status !== 202")
+require(MTN, "independentlyVerified: true")
+require(MTN, "CURRENCY_MISMATCH")
+require(MTN, "AMOUNT_MISMATCH")
+require(MTN, "accountReferenceIsSynthetic")
+require(MTN_TEST, "treats HTTP 202 as processing only")
+require(MTN_TEST, "independently verifies a successful status")
+require(MTN_TEST, "requires a synthetic mobile-money account")
+require(MTN_TEST, "AMOUNT_MISMATCH")
+require(MTN_TEST, "CURRENCY_MISMATCH")
+
+require(STRIPE, "https://api.stripe.com")
+require(STRIPE, "/v1/checkout/sessions")
+require(STRIPE, "sk_test_")
+require(STRIPE, "Idempotency-Key")
+require(STRIPE, "Stripe-Version")
+require(STRIPE, "client_reference_id")
+require(STRIPE, "metadata[direkt_payment_intent_id]")
+require(STRIPE, "payment_status")
+require(STRIPE, "independentlyVerified: true")
+require(STRIPE, "CURRENCY_MISMATCH")
+require(STRIPE, "AMOUNT_MISMATCH")
+require(STRIPE_TEST, "idempotent hosted Checkout Session")
+require(STRIPE_TEST, "complete and paid status")
+require(STRIPE_TEST, "does not treat an open unpaid Checkout Session as payment success")
+require(STRIPE_TEST, "AMOUNT_MISMATCH")
+require(STRIPE_TEST, "CURRENCY_MISMATCH")
+
+require(PAYPAL, "https://api-m.sandbox.paypal.com")
+require(PAYPAL, "/v1/oauth2/token")
+require(PAYPAL, "/v2/checkout/orders")
+require(PAYPAL, "/capture")
+require(PAYPAL, "PayPal-Request-Id")
+require(PAYPAL, "completionKind !== 'server_capture'")
+require(PAYPAL, "independentlyVerified: false")
+require(PAYPAL, "independentlyVerified: true")
+require(PAYPAL, "adjustmentStatus")
+require(PAYPAL, "CURRENCY_MISMATCH")
+require(PAYPAL, "AMOUNT_MISMATCH")
+require(PAYPAL_TEST, "never treats the server capture response as independently verified success")
+require(PAYPAL_TEST, "independently retrieves the order before recognizing successful capture")
+require(PAYPAL_TEST, "explicit accounting adjustment")
+require(PAYPAL_TEST, "AMOUNT_MISMATCH")
+require(PAYPAL_TEST, "CURRENCY_MISMATCH")
+
+require(DPO, "https://secure.3gdirectpay.com/API/v6/")
+require(DPO, "https://secure.3gdirectpay.com/payv2.php")
+require(DPO, "<Request>createToken</Request>")
+require(DPO, "<Request>verifyToken</Request>")
+require(DPO, "<CompanyRefUnique>1</CompanyRefUnique>")
+require(DPO, "TransactionFinalCurrency")
+require(DPO, "TransactionFinalAmount")
+require(DPO, "TransactionApproval")
+require(DPO, "TransactionCompletion")
+require(DPO, "independentlyVerified: true")
+require(DPO, "CURRENCY_MISMATCH")
+require(DPO, "AMOUNT_MISMATCH")
+require(DPO_TEST, "returns only the hosted-payment URL")
+require(DPO_TEST, "independently verifies the token before recognizing payment success")
+require(DPO_TEST, "does not treat hosted-return state as payment success")
+require(DPO_TEST, "AMOUNT_MISMATCH")
+require(DPO_TEST, "CURRENCY_MISMATCH")
+
+require(RECONCILIATION, "provider_payment_observed")
+require(RECONCILIATION, "observationFingerprint")
+require(RECONCILIATION, "priorObservationFingerprints.includes")
+require(RECONCILIATION, "PROVIDER_STATUS_NOT_INDEPENDENTLY_VERIFIED")
+require(RECONCILIATION, "PAYMENT_INVOICE_SCOPE_MISMATCH")
+require(RECONCILIATION, "PAYMENT_INVOICE_STATE_MISMATCH")
+require(RECONCILIATION, "PAYMENT_LEDGER_NET_MISMATCH")
+require(RECONCILIATION, "PROVIDER_ADJUSTMENT_REQUIRES_REVIEW")
+require(RECONCILIATION, "requiresTwoIndependentApprovers: true")
+require(RECONCILIATION, "requesterMayApprove: false")
+require(RECONCILIATION, "directLedgerMutation: false")
+require(RECONCILIATION, "historicalPaymentRewritten: false")
+require(RECONCILIATION, "historicalLedgerRewritten: false")
+require(RECONCILIATION, "invoiceDirectlyRewritten: false")
+require(RECONCILIATION, "input.actorKind !== 'operations'")
+require(RECONCILIATION, "RECONCILIATION_REVISION_CONFLICT")
+require(RECONCILIATION, "sourceCaseMutated: false")
+require(RECONCILIATION_TEST, "balanced ledger posting")
+require(RECONCILIATION_TEST, "deduplicates identical provider facts")
+require(RECONCILIATION_TEST, "opens reconciliation")
+require(RECONCILIATION_TEST, "without rewriting payment history")
+require(RECONCILIATION_TEST, "requiresTwoIndependentApprovers: true")
+require(RECONCILIATION_TEST, "requesterMayApprove: false")
+require(RECONCILIATION_TEST, "operations-only reconciliation resolution")
+require(RECONCILIATION_TEST, "RECONCILIATION_PERMISSION_REQUIRED")
+require(RECONCILIATION_TEST, "RECONCILIATION_REVISION_CONFLICT")
+
+require(STATUS, "Real money movement | **DISABLED**")
+require(LEDGER, "Clients never decide payment success")
+require(LEDGER, "No payment provider secret is attached to Cloud Run")
+
+reject(PORT, "flutterwave")
+reject(REGISTRY, "Flutterwave")
+reject(REGISTRY, "process.env")
+reject(REGISTRY, "fetch(")
+reject(REGISTRY, "axios")
+for adapter in (MTN, STRIPE, PAYPAL, DPO, RECONCILIATION):
+    reject(adapter, "process.env")
+    reject(adapter, "console.")
+    reject(adapter, "latest")
+reject(RECONCILIATION, "UPDATE commercial.")
+reject(RECONCILIATION, "DELETE FROM commercial.")
+reject(RECONCILIATION, "rawPayload: true")
+
+print("RC8_PAYMENT_CONTRACT|PASS")
+print("provider_count=5")
+print("mtn_source_adapter=true")
+print("stripe_source_adapter=true")
+print("paypal_source_adapter=true")
+print("dpo_source_adapter=true")
+print("provider_reconciliation=true")
+print("immutable_adjustments=true")
+print("provider_runtime_binding=false")
+print("sandbox_runtime_enabled=false")
+print("real_money=false")
+print("participant_data=false")
+print("source_checkpoint_replayed=true")
+print("runtime_checkpoint_pending=true")

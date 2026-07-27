@@ -1,0 +1,61 @@
+name: DIREKT RC8 sandbox payments contract
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc8-payments-contract.yml"
+      - "backend/direkt-api/src/commercial/sandbox-payment-provider.*"
+      - "backend/direkt-api/src/commercial/sandbox-payment-reconciliation.ts"
+      - "backend/direkt-api/src/commercial/mtn-momo-sandbox-payment-provider.adapter.ts"
+      - "backend/direkt-api/src/commercial/stripe-sandbox-payment-provider.adapter.ts"
+      - "backend/direkt-api/src/commercial/paypal-sandbox-payment-provider.adapter.ts"
+      - "backend/direkt-api/src/commercial/dpo-sandbox-payment-provider.adapter.ts"
+      - "backend/direkt-api/test/unit/rc8-sandbox-payment-provider.spec.ts"
+      - "backend/direkt-api/test/unit/sandbox-payment-reconciliation.spec.ts"
+      - "backend/direkt-api/test/unit/mtn-momo-sandbox-payment-provider.adapter.spec.ts"
+      - "backend/direkt-api/test/unit/stripe-sandbox-payment-provider.adapter.spec.ts"
+      - "backend/direkt-api/test/unit/paypal-sandbox-payment-provider.adapter.spec.ts"
+      - "backend/direkt-api/test/unit/dpo-sandbox-payment-provider.adapter.spec.ts"
+      - "scripts/rc8/verify-payments-contract.py"
+      - "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
+      - "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
+      - "docs/integrations/RC8_SANDBOX_PAYMENTS_IMPLEMENTATION.md"
+      - "WORKSTREAM_LOCK.md"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/rc8-payments-contract.yml"
+      - "backend/direkt-api/src/commercial/sandbox-payment-provider.*"
+      - "backend/direkt-api/src/commercial/sandbox-payment-reconciliation.ts"
+      - "backend/direkt-api/src/commercial/mtn-momo-sandbox-payment-provider.adapter.ts"
+      - "backend/direkt-api/src/commercial/stripe-sandbox-payment-provider.adapter.ts"
+      - "backend/direkt-api/src/commercial/paypal-sandbox-payment-provider.adapter.ts"
+      - "backend/direkt-api/src/commercial/dpo-sandbox-payment-provider.adapter.ts"
+      - "backend/direkt-api/test/unit/rc8-sandbox-payment-provider.spec.ts"
+      - "backend/direkt-api/test/unit/sandbox-payment-reconciliation.spec.ts"
+      - "backend/direkt-api/test/unit/mtn-momo-sandbox-payment-provider.adapter.spec.ts"
+      - "backend/direkt-api/test/unit/stripe-sandbox-payment-provider.adapter.spec.ts"
+      - "backend/direkt-api/test/unit/paypal-sandbox-payment-provider.adapter.spec.ts"
+      - "backend/direkt-api/test/unit/dpo-sandbox-payment-provider.adapter.spec.ts"
+      - "scripts/rc8/verify-payments-contract.py"
+      - "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
+      - "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
+      - "docs/integrations/RC8_SANDBOX_PAYMENTS_IMPLEMENTATION.md"
+      - "WORKSTREAM_LOCK.md"
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Verify RC8 sandbox payment boundary
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Verify permanent RC8 controls
+        run: python3 scripts/rc8/verify-payments-contract.py
