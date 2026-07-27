@@ -1,9 +1,9 @@
 # Phase 11 Controlled Pilot Execution and Entry Control
 
-**Status:** SYNTHETIC FUNCTIONAL READINESS COMPLETE — REAL PARTICIPANT PILOT STILL EXTERNALLY BLOCKED  
-**Governing issue:** #112  
-**Stable predecessor:** `369fc72581b3ed27920b8fc949e32cfedf1ad8d9`  
-**Current promoted synthetic implementation baseline:** `7b886b9bee91c1337f4e4ad43f71afa4389644de`  
+**Status:** PRIMARY-PILOT EXECUTION READINESS IMPLEMENTED — REAL PARTICIPANT PILOT STILL EXTERNALLY BLOCKED
+**Governing issue:** #112
+**Stable predecessor:** `369fc72581b3ed27920b8fc949e32cfedf1ad8d9`
+**Current promoted synthetic implementation baseline:** `7b886b9bee91c1337f4e4ad43f71afa4389644de`
 **Date (Asia/Tokyo programme timezone):** 2026-07-19
 
 Repository checkpoint dates use the programme operating timezone, `Asia/Tokyo`. GitHub commit metadata is displayed in UTC and may therefore show the previous calendar date for work performed after midnight in Japan.
@@ -248,6 +248,19 @@ The exit record must include:
 - explicit Phase 12 recommendation.
 
 Synthetic functional readiness alone cannot produce the 11J recommendation.
+
+## Primary-pilot execution-readiness package
+
+The repository now contains one canonical preparation package for the real evidence stages:
+
+- `PHASE11C_11J_EXECUTION_PROTOCOL.md` — goals, evidence, metrics and exit conditions for 11C–11J;
+- `PRIMARY_PILOT_EVIDENCE_REGISTER.md` — minimized evidence schema with **NO PRIMARY-PILOT EVIDENCE RECORDED**;
+- `PHASE11_WAVE_RUNBOOK.md` — Wave 0 preflight, participant/operations steps, daily review, stop/pause and end-of-wave controls;
+- `PHASE11_REAL_ENTRY_BLOCKER_REGISTER_2026-07-28.md` — hard and conditional real-entry gates;
+- `PHASE11_FINDINGS_AND_CORRECTIONS_REGISTER.md` — defect/assumption/request/incident classification and canonical 11I correction path;
+- `PHASE11_11J_DECISION_TEMPLATE.md` — evidence-backed STOP / REPEAT / NARROW / PROCEED decision instrument.
+
+This package makes execution operationally ready but does not start 11C, create participant evidence or change the real-entry decision. The primary evidence count remains zero. `PILOT_ENTRY_APPROVED=true` remains prohibited until every applicable hard gate is supported by actual evidence and explicit owner authorization.
 
 ## Phase 12 boundary
 
