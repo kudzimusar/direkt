@@ -1,0 +1,62 @@
+name: RC9A generated template inspection
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc9a-template-inspect.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/rc9a-deterministic-generated-clients'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Generate checked spec and inspect build templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          pushd backend/direkt-api >/dev/null
+          npm ci --ignore-scripts
+          npm run openapi:check
+          popd >/dev/null
+          jar="${RUNNER_TEMP}/openapi-generator-cli-7.22.0.jar"
+          curl --fail --silent --show-error --location \
+            https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/7.22.0/openapi-generator-cli-7.22.0.jar \
+            --output "${jar}"
+          spec="${GITHUB_WORKSPACE}/backend/direkt-api/artifacts/openapi.json"
+          kotlin_out="${RUNNER_TEMP}/kotlin-full"
+          ts_out="${RUNNER_TEMP}/typescript-full"
+          java -jar "${jar}" generate --input-spec "${spec}" --generator-name kotlin --library jvm-retrofit2 --output "${kotlin_out}" \
+            --additional-properties packageName=com.kudzimusar.direkt.generated.api,artifactId=direkt-generated-kotlin,groupId=com.kudzimusar.direkt,serializationLibrary=kotlinx_serialization,hideGenerationTimestamp=true,enumPropertyNaming=UPPERCASE,enumUnknownDefaultCase=true \
+            --global-property apiDocs=false,modelDocs=false,apiTests=false,modelTests=false --skip-validate-spec >/dev/null
+          java -jar "${jar}" generate --input-spec "${spec}" --generator-name typescript-fetch --output "${ts_out}" \
+            --additional-properties npmName=@direkt/generated-api,npmVersion=0.0.0-rc9a,typescriptThreePlus=true,supportsES6=true,withInterfaces=true,hideGenerationTimestamp=true,disallowAdditionalPropertiesIfNotPresent=false,enumUnknownDefaultCase=true \
+            --global-property apiDocs=false,modelDocs=false,apiTests=false,modelTests=false --skip-validate-spec >/dev/null
+          echo '=== KOTLIN BUILD FILES ==='
+          for file in build.gradle settings.gradle gradle.properties; do
+            if [[ -f "${kotlin_out}/${file}" ]]; then
+              echo "--- ${file}"
+              cat "${kotlin_out}/${file}"
+            fi
+          done
+          echo '=== KOTLIN IMPORTS ==='
+          grep -RhoE '^import [^ ]+' "${kotlin_out}/src/main/kotlin" | sort -u
+          echo '=== TYPESCRIPT PACKAGE ==='
+          cat "${ts_out}/package.json"
+          echo '=== TYPESCRIPT CONFIG ==='
+          cat "${ts_out}/tsconfig.json"
+          echo '=== TYPESCRIPT IMPORTS ==='
+          grep -RhoE '^import .* from .*$' "${ts_out}/src" | sort -u | head -n 160
