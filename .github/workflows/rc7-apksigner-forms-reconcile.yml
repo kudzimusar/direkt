@@ -42,6 +42,19 @@ jobs:
             fi
           }
           run_stage patch python3 scripts/rc7/patch-apksigner-signer-forms.py
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/rc7/verify-managed-workflow-context.py')
+          text = path.read_text(encoding='utf-8')
+          old = "        'if [[ \"${apksigner_code}\" -ne 0 ]] || ! ${apk_certificate_format_valid} || ! ${certificate_matches}; then'"
+          new = "        'if [[ \"${apksigner_code}\" -ne 0 ]] || [[ \"${certificate_digest_count}\" -ne 1 ]] || ! ${apk_certificate_format_valid} || ! ${certificate_matches}; then'"
+          search_from = text.index('certificate_failure_check = managed_script.find(')
+          position = text.find(old, search_from)
+          if position < 0:
+              raise SystemExit('missing certificate failure-check lookup')
+          text = text[:position] + new + text[position + len(old):]
+          path.write_text(text, encoding='utf-8')
+          PY
           run_stage shell bash -n scripts/rc7/run-maps-managed.sh
           run_stage contract python3 scripts/rc7/verify-maps-contract.py
           run_stage context python3 scripts/rc7/verify-managed-workflow-context.py
