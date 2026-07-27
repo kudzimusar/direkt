@@ -4,7 +4,6 @@ on:
   pull_request:
     paths:
       - ".github/workflows/rc8-forward-compatible-closure-reconcile.yml"
-      - "scripts/rc8/patch-forward-compatible-closure.py"
 
 permissions:
   contents: write
@@ -22,11 +21,32 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
-      - name: Apply and validate the permanent RC8 correction
+      - name: Publish the forward-compatible RC8 verifier
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/rc8/patch-forward-compatible-closure.py
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/rc8/verify-payments-contract.py')
+          text = path.read_text(encoding='utf-8')
+          replacements = (
+              (
+                  'MANAGED_WORKFLOW = ROOT / ".github/workflows/rc8-payments-managed.yml"\n',
+                  'MANAGED_WORKFLOW = ROOT / ".github/workflows/rc8-payments-managed.yml"\nCONTRACT_WORKFLOW = ROOT / ".github/workflows/rc8-payments-contract.yml"\n',
+              ),
+              ('require(LOCK, "| Status | RELEASED |")\n', ''),
+              ('require(LOCK, "No repository write lane is active")\n', ''),
+              (
+                  'require(MANAGED_WORKFLOW, "bash scripts/rc8/run-payments-managed.sh")\n',
+                  'require(MANAGED_WORKFLOW, "bash scripts/rc8/run-payments-managed.sh")\nrequire(MANAGED_WORKFLOW, \'"PROJECT_STATUS.md"\')\nrequire(CONTRACT_WORKFLOW, \'"PROJECT_STATUS.md"\')\n',
+              ),
+          )
+          for old, new in replacements:
+              if text.count(old) != 1:
+                  raise SystemExit(f'expected one verifier marker: {old!r}')
+              text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
           python3 scripts/rc8/verify-payments-contract.py
           python3 scripts/rc5/verify-test-lab-closure.py
           python3 scripts/rc6/verify-whatsapp-contract.py
@@ -36,8 +56,6 @@ jobs:
             scripts/rc5/verify-test-lab-closure.py \
             scripts/rc6/verify-whatsapp-contract.py \
             scripts/rc7/verify-maps-contract.py
-          bash -n .github/workflows/rc8-payments-contract.yml
-          bash -n .github/workflows/rc8-payments-managed.yml || true
           python3 - <<'PY'
           from pathlib import Path
           lock = Path('WORKSTREAM_LOCK.md')
@@ -50,35 +68,9 @@ jobs:
           PY
           python3 scripts/rc8/verify-payments-contract.py
           git checkout -- WORKSTREAM_LOCK.md
-          python3 - <<'PY'
-          from pathlib import Path
-          for path in (
-              Path('.github/workflows/rc8-payments-contract.yml'),
-              Path('.github/workflows/rc8-payments-managed.yml'),
-          ):
-              text = path.read_text(encoding='utf-8')
-              if '"PROJECT_STATUS.md"' not in text:
-                  raise SystemExit(f'{path}: PROJECT_STATUS.md path trigger missing')
-          verifier = Path('scripts/rc8/verify-payments-contract.py').read_text(encoding='utf-8')
-          for prohibited in (
-              'require(LOCK, "| Status | RELEASED |")',
-              'require(LOCK, "No repository write lane is active")',
-          ):
-              if prohibited in verifier:
-                  raise SystemExit(f'transient lock assertion remains: {prohibited}')
-          print('RC8_FORWARD_COMPATIBLE_CLOSURE_RECONCILE|PASS')
-          PY
-          rm \
-            scripts/rc8/patch-forward-compatible-closure.py \
-            .github/workflows/rc8-forward-compatible-closure-reconcile.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add \
-            scripts/rc8/verify-payments-contract.py \
-            .github/workflows/rc8-payments-contract.yml \
-            .github/workflows/rc8-payments-managed.yml \
-            scripts/rc8/patch-forward-compatible-closure.py \
-            .github/workflows/rc8-forward-compatible-closure-reconcile.yml
+          git add scripts/rc8/verify-payments-contract.py
           git diff --cached --check
           git commit -m 'fix(rc8): preserve closure across later lane claims'
           git push origin HEAD:fix/rc8-forward-compatible-closure-contract
