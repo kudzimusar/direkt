@@ -235,11 +235,15 @@ def main() -> int:
         "android_clean_build=true",
         "android_build_cache_enabled=false",
         "apksigner",
-        "certificateFormatValid",
+        "certificateDigestCount",
+        "acceptedSignerLabelForms",
+        "rawStdoutIncluded",
         "rawStderrIncluded",
+        "Signer (?:#[0-9]+|\\([^)]*\\)) certificate SHA-1 digest",
+        'receipt "android_apk_certificate_digest_count=${certificate_digest_count}"',
         'receipt "android_apk_certificate_format_valid=${apk_certificate_format_valid}"',
         'receipt "android_apk_certificate_matches_key=${certificate_matches}"',
-        'if [[ "${apksigner_code}" -ne 0 ]] || ! ${apk_certificate_format_valid} || ! ${certificate_matches}; then',
+        'if [[ "${apksigner_code}" -ne 0 ]] || [[ "${certificate_digest_count}" -ne 1 ]] || ! ${apk_certificate_format_valid} || ! ${certificate_matches}; then',
         "collect-testlab-failure.py",
         "android_test_lab_failure_evidence_present=true",
         "cleanup.cloud_run_job_deleted",
@@ -267,6 +271,7 @@ def main() -> int:
     ):
         prohibit(managed_script, pattern, label)
 
+    prohibit(managed_script, r'cat "\$\{apksigner_stdout\}"', "Raw apksigner stdout must not be printed.")
     prohibit(managed_script, r'cat "\$\{apksigner_stderr\}"', "Raw apksigner stderr must not be printed.")
     require(managed_script, "*/\\1/p'", "Test Lab matrix backreference")
     prohibit(managed_workflow, r"rc7-(android|backend)-key\.txt", "API key value artifact upload")

@@ -2,7 +2,7 @@
 
 **Governing issue:** #261  
 **Status:** Claimed; corrective source and managed proof in progress  
-**Corrective baseline:** `main@40faf2e8e708994f448a3877cc9475739a0957a4`
+**Corrective baseline:** `main@7c899295b176f767fd3da53f19b029b5582eae8a`
 
 ## Source reconciliation checkpoint
 
@@ -65,6 +65,12 @@ The managed proof now verifies the SHA-1 certificate embedded in the final debug
 Exact-main run `30228282694/1` on `40faf2e8e708994f448a3877cc9475739a0957a4` passed exact-source controls, WIF, the fresh one-JPY budget attestation, quota verification, Android key restriction, immutable backend execution, Geocoding v4 OAuth and Cloud Run cleanup. The Android build then completed successfully with 70 actionable tasks, including 34 restored from Gradle cache, but the script exited before writing the final APK certificate artifact or starting Test Lab. Artifact `8639272798` has digest `sha256:ddc1101960be5ca7d6daaea263a10bad5e25b697886bcf23cb5e2bb79c028323`; `cleanup.cloud_run_job_deleted=true` and `cleanup_failed=false`.
 
 The next proof runs `clean` with `--no-build-cache`, extracts the certificate from the newly packaged APK, writes a sanitized expected/actual certificate receipt before validation, and fails closed on an `apksigner` error, malformed fingerprint or mismatch. Raw `apksigner` stderr is neither printed nor uploaded. The unexecuted Test Lab failure parser is also corrected to retain the real matrix ID through a literal `\1` backreference.
+
+## APK signer-label correction
+
+Exact-main run `30230004924/1` on `7c899295b176f767fd3da53f19b029b5582eae8a` passed backend service-identity OAuth, the fresh one-JPY budget attestation, quota, restricted Android key metadata, clean no-build-cache APK creation and Cloud Run cleanup. Artifact `8639806488` has digest `sha256:6ee216fb0e416c3013c4d26ea9246afaeb9fd663a84de89816689489533111b4`. `apksigner` exited zero, but the v2 parser returned no digest because it matched only `Signer #1`; Test Lab correctly did not start.
+
+Android's `apksigner` output can identify certificate records with a numbered signer label or an SDK-range signer label. The corrected parser accepts both forms, normalizes and deduplicates all SHA-1 records, and requires exactly one unique digest equal to the key restriction. Multiple different digests, malformed output, a signer-tool failure or a mismatch all fail closed after the sanitized v3 certificate artifact is written. Raw signer stdout and stderr are never printed or uploaded.
 
 ## Credential and authentication boundary
 

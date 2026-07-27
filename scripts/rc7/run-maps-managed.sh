@@ -401,16 +401,42 @@ android_sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
 test -n "${android_sdk_root}"
 apksigner_bin="$(find "${android_sdk_root}/build-tools" -type f -name apksigner -perm -u+x | sort -V | tail -n 1)"
 test -x "${apksigner_bin}"
+apksigner_stdout="${RUNNER_TEMP}/rc7-apksigner.stdout"
 apksigner_stderr="${RUNNER_TEMP}/rc7-apksigner.stderr"
+apk_certificate_digests_file="${RUNNER_TEMP}/rc7-apk-certificate-digests.txt"
 set +e
-apksigner_output="$("${apksigner_bin}" verify --print-certs "${app_apk}" 2> "${apksigner_stderr}")"
+"${apksigner_bin}" verify --print-certs "${app_apk}" \
+  > "${apksigner_stdout}" \
+  2> "${apksigner_stderr}"
 apksigner_code=$?
 set -e
-apk_certificate_sha1="$(awk -F': ' '/Signer #1 certificate SHA-1 digest:/{print $2; exit}' <<< "${apksigner_output}" \
-  | tr -d ':' \
-  | tr '[:lower:]' '[:upper:]')"
+python3 - "${apksigner_stdout}" "${apk_certificate_digests_file}" <<'PYCERT'
+from pathlib import Path
+import re
+import sys
+
+source = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
+pattern = re.compile(
+    r"^Signer (?:#[0-9]+|\([^)]*\)) certificate SHA-1 digest:\s*([0-9A-Fa-f:]+)\s*$",
+    flags=re.MULTILINE,
+)
+digests = sorted(
+    {
+        match.replace(":", "").upper()
+        for match in pattern.findall(source)
+        if re.fullmatch(r"[0-9A-Fa-f]{40}|(?:[0-9A-Fa-f]{2}:){19}[0-9A-Fa-f]{2}", match)
+    }
+)
+Path(sys.argv[2]).write_text("\n".join(digests) + ("\n" if digests else ""), encoding="utf-8")
+PYCERT
+mapfile -t apk_certificate_digests < "${apk_certificate_digests_file}"
+certificate_digest_count="${#apk_certificate_digests[@]}"
+apk_certificate_sha1=""
+if [[ "${certificate_digest_count}" -eq 1 ]]; then
+  apk_certificate_sha1="${apk_certificate_digests[0]}"
+fi
 apk_certificate_format_valid=false
-if [[ "${apk_certificate_sha1}" =~ ^[0-9A-F]{40}$ ]]; then
+if [[ "${certificate_digest_count}" -eq 1 && "${apk_certificate_sha1}" =~ ^[0-9A-F]{40}$ ]]; then
   apk_certificate_format_valid=true
 fi
 certificate_matches=false
@@ -422,18 +448,20 @@ jq -n \
   --arg expectedCertificateSha1 "${android_sha1^^}" \
   --arg actualCertificateSha1 "${apk_certificate_sha1}" \
   --argjson apksignerExitCode "${apksigner_code}" \
+  --argjson certificateDigestCount "${certificate_digest_count}" \
   --argjson certificateFormatValid "${apk_certificate_format_valid}" \
   --argjson matchesRestrictedKey "${certificate_matches}" \
-  '{schema: "direkt.rc7.android-apk-certificate.v2", packageName: $packageName, expectedCertificateSha1: $expectedCertificateSha1, actualCertificateSha1: (if $actualCertificateSha1 == "" then null else $actualCertificateSha1 end), apksignerExitCode: $apksignerExitCode, certificateFormatValid: $certificateFormatValid, matchesRestrictedKey: $matchesRestrictedKey, cleanBuild: true, buildCacheEnabled: false, rawStderrIncluded: false}' \
+  '{schema: "direkt.rc7.android-apk-certificate.v3", packageName: $packageName, expectedCertificateSha1: $expectedCertificateSha1, actualCertificateSha1: (if $actualCertificateSha1 == "" then null else $actualCertificateSha1 end), apksignerExitCode: $apksignerExitCode, certificateDigestCount: $certificateDigestCount, certificateFormatValid: $certificateFormatValid, matchesRestrictedKey: $matchesRestrictedKey, acceptedSignerLabelForms: ["numbered", "sdk_range"], cleanBuild: true, buildCacheEnabled: false, rawStdoutIncluded: false, rawStderrIncluded: false}' \
   > "${RUNNER_TEMP}/rc7-android-apk-certificate.json"
 receipt "android_apk_certificate_sha1=${apk_certificate_sha1:-unavailable}"
+receipt "android_apk_certificate_digest_count=${certificate_digest_count}"
 receipt "android_apk_certificate_format_valid=${apk_certificate_format_valid}"
 receipt "android_apk_certificate_matches_key=${certificate_matches}"
-if [[ "${apksigner_code}" -ne 0 ]] || ! ${apk_certificate_format_valid} || ! ${certificate_matches}; then
+if [[ "${apksigner_code}" -ne 0 ]] || [[ "${certificate_digest_count}" -ne 1 ]] || ! ${apk_certificate_format_valid} || ! ${certificate_matches}; then
   cat "${RUNNER_TEMP}/rc7-android-apk-certificate.json" >&2
   exit 1
 fi
-rm -f "${apksigner_stderr}"
+rm -f "${apksigner_stdout}" "${apksigner_stderr}" "${apk_certificate_digests_file}"
 
 testlab_stderr="${RUNNER_TEMP}/rc7-maps-test-lab.stderr"
 testlab_failure="${RUNNER_TEMP}/rc7-maps-test-lab-failure.json"
