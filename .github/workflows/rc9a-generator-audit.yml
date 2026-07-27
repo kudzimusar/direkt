@@ -1,0 +1,116 @@
+name: RC9A generator and OpenAPI audit
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc9a-generator-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/rc9a-deterministic-generated-clients'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/direkt-api/package-lock.json
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Generate and validate canonical OpenAPI
+        working-directory: backend/direkt-api
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npm run openapi:check
+      - name: Resolve pinned generator artifact and canonical operation surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          jar="${RUNNER_TEMP}/openapi-generator-cli-7.22.0.jar"
+          curl --fail --silent --show-error --location \
+            https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/7.22.0/openapi-generator-cli-7.22.0.jar \
+            --output "${jar}"
+          sha256sum "${jar}"
+          java -jar "${jar}" version
+          python3 - <<'PY'
+          from collections import Counter
+          import json
+          from pathlib import Path
+
+          spec_path = Path('backend/direkt-api/artifacts/openapi.json')
+          spec = json.loads(spec_path.read_text(encoding='utf-8'))
+          paths = spec.get('paths', {})
+          schemas = spec.get('components', {}).get('schemas', {})
+          tags = Counter()
+          operations = []
+          for path, item in paths.items():
+              if not isinstance(item, dict):
+                  continue
+              for method, operation in item.items():
+                  if method.lower() not in {'get','post','put','patch','delete','head','options','trace'} or not isinstance(operation, dict):
+                      continue
+                  operation_tags = operation.get('tags') or ['<untagged>']
+                  for tag in operation_tags:
+                      tags[tag] += 1
+                  operations.append((path, method.upper(), operation.get('operationId'), operation_tags))
+
+          print(f'openapi_version={spec.get("openapi")}')
+          print(f'path_count={len(paths)}')
+          print(f'operation_count={len(operations)}')
+          print(f'schema_count={len(schemas)}')
+          print('tags=' + json.dumps(dict(sorted(tags.items())), sort_keys=True))
+          for row in operations:
+              if '/auth/' in row[0] or 'firebase' in row[0]:
+                  print('auth_operation=' + json.dumps(row))
+          target = paths.get('/api/v1/auth/firebase/exchange', {}).get('post')
+          if not target:
+              raise SystemExit('Firebase exchange operation missing from canonical OpenAPI')
+          print('firebase_exchange_operation_id=' + str(target.get('operationId')))
+          print('firebase_exchange_tags=' + json.dumps(target.get('tags') or []))
+          print('firebase_exchange_request=' + json.dumps(target.get('requestBody', {}), sort_keys=True))
+          print('firebase_exchange_responses=' + json.dumps(target.get('responses', {}), sort_keys=True))
+          PY
+      - name: Measure generated output candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          jar="${RUNNER_TEMP}/openapi-generator-cli-7.22.0.jar"
+          spec="${GITHUB_WORKSPACE}/backend/direkt-api/artifacts/openapi.json"
+          kotlin_out="${RUNNER_TEMP}/kotlin-full"
+          ts_out="${RUNNER_TEMP}/typescript-full"
+          java -jar "${jar}" generate \
+            --input-spec "${spec}" \
+            --generator-name kotlin \
+            --library jvm-retrofit2 \
+            --output "${kotlin_out}" \
+            --additional-properties packageName=com.kudzimusar.direkt.generated.api,artifactId=direkt-generated-kotlin,groupId=com.kudzimusar.direkt,serializationLibrary=kotlinx_serialization,hideGenerationTimestamp=true,enumPropertyNaming=UPPERCASE \
+            --global-property apiDocs=false,modelDocs=false,apiTests=false,modelTests=false \
+            --skip-validate-spec
+          java -jar "${jar}" generate \
+            --input-spec "${spec}" \
+            --generator-name typescript-fetch \
+            --output "${ts_out}" \
+            --additional-properties npmName=@direkt/generated-api,npmVersion=0.0.0-rc9a,typescriptThreePlus=true,supportsES6=true,withInterfaces=true,hideGenerationTimestamp=true,disallowAdditionalPropertiesIfNotPresent=false \
+            --global-property apiDocs=false,modelDocs=false,apiTests=false,modelTests=false \
+            --skip-validate-spec
+          echo "kotlin_file_count=$(find "${kotlin_out}" -type f | wc -l | tr -d ' ')"
+          echo "kotlin_bytes=$(du -sb "${kotlin_out}" | cut -f1)"
+          echo "typescript_file_count=$(find "${ts_out}" -type f | wc -l | tr -d ' ')"
+          echo "typescript_bytes=$(du -sb "${ts_out}" | cut -f1)"
+          echo 'kotlin_top_level:'
+          find "${kotlin_out}" -maxdepth 2 -type f -printf '%P\n' | sort | head -n 80
+          echo 'typescript_top_level:'
+          find "${ts_out}" -maxdepth 2 -type f -printf '%P\n' | sort | head -n 80
+          echo 'kotlin_api_files:'
+          find "${kotlin_out}" -type f -path '*/apis/*' -printf '%f\n' | sort
+          echo 'typescript_api_files:'
+          find "${ts_out}" -type f -path '*/apis/*' -printf '%f\n' | sort
