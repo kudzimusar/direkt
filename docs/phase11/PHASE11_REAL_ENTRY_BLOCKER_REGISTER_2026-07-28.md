@@ -29,19 +29,19 @@ Every applicable hard gate must be supported by actual evidence and an accountab
 | P11-G11 | Withdrawal/deletion canary | OPEN | canonical consent revocation, access block, deletion/retention and audit proof | privacy owner | participant processing |
 | P11-G12 | Deployment/source approval | OPEN | immutable source SHA, image/revision, migration checksums and configuration receipt for Wave 1 | product/security owner | wave start |
 | P11-G13 | Support and incident readiness | OPEN for real wave | named Zambia-operating contacts, support hours, escalation path and rehearsal evidence | support/incident owner | wave start |
-| P11-G14 | Critical/high entry defects | OPEN until final review | zero unresolved critical/high defects or explicit authorized stop/narrow decision | product/security/privacy owners | wave start |
+| P11-G14 | Critical/high repository entry defects | CLOSED for `1befa902def70d2c997aaba260e0d8e2a5d4b12d` | exact-head matrix passed; evidence SHA-256 `7480a398c6ed7a612ce1c2e44706221f1722e626a2841fe0598662d62471bdf9` | DIREKT repository owner | no longer blocks repository readiness; P11-G12 still blocks wave start |
 
 ## Conditional blockers
 
 | ID | Gate | Current state | Applies when | Required evidence |
 |---|---|---|---|---|
-| P11-C01 | Zambia field lead | OPEN | any real field-visit or equivalent claim is enabled | named trained field lead, safety protocol, assignment/audit process and owner approval |
+| P11-C01 | Zambia field lead | NOT APPLICABLE to initial no-field-claim wave | any real field-visit or equivalent claim is enabled | named trained field lead, safety protocol, assignment/audit process and owner approval |
 | P11-C02 | Participant Maps/geocoding | DISABLED | Google Maps is used with real participant/location data | privacy/provider approval, restricted credentials, real canary, quotas, fallback and incident plan |
 | P11-C03 | Participant Sentry/Crashlytics | DISABLED | participant telemetry is enabled | privacy approval, PII scrub proof, consent/notice decision, DSN/project boundary and real canary |
 | P11-C04 | Participant email/push/WhatsApp | DISABLED | an external communication channel is used | provider/legal/privacy approval, consent semantics, templates, opt-out, real canary and support ownership |
 | P11-C05 | Production AI | DISABLED | model output is used in the real pilot | approved use case, data classification, DPA/transfer, evaluation, non-authority controls, monitoring and fallback |
 | P11-C06 | Payment provider or real money | DISABLED | any real collection, subscription or processing fee is proposed | legal/commercial/provider approval, runtime proof, refund/dispute controls and release authorization |
-| P11-C07 | Automated registry access | NOT AUTHORIZED | an automated authority/registry lookup is proposed | formal lawful API/access agreement and evidence-handling approval |
+| P11-C07 | Automated registry access | NOT APPLICABLE to initial wave | an automated authority/registry lookup is proposed | formal lawful API/access agreement and evidence-handling approval |
 
 ## Already-decided Wave 1 exclusions
 

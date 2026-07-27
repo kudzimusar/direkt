@@ -1,11 +1,14 @@
 # Phase 11 Wave 0 Terminal Receipt
 
-**State:** IMPLEMENTED — EXACT-HEAD CLOSEOUT PENDING  
-**Decision:** ENTRY_BLOCKED_EXTERNAL  
-**Governing issue:** #112  
-**Claim merge:** `6b9e7cabeebd5ade9b998b8a54bcd2c888e6bfe4`  
-**`PILOT_ENTRY_APPROVED`:** false  
-**PRIMARY-PILOT evidence count:** 0  
+**State:** CLOSED AND PRESERVED — MAXIMUM REPOSITORY COMPLETION
+**Decision:** ENTRY_BLOCKED_EXTERNAL
+**Governing issue:** #112
+**Claim merge:** `6b9e7cabeebd5ade9b998b8a54bcd2c888e6bfe4`
+**Implementation PR/head:** #512 / `1befa902def70d2c997aaba260e0d8e2a5d4b12d`
+**Implementation merge:** `f561658d140aaf214fa6eaca99c80bcc98ee284f`
+**Technical evidence SHA-256:** `7480a398c6ed7a612ce1c2e44706221f1722e626a2841fe0598662d62471bdf9`
+**`PILOT_ENTRY_APPROVED`:** false
+**PRIMARY-PILOT evidence count:** 0
 **Phase 12 authorization:** false
 
 ## Repository finishing-line result
@@ -37,7 +40,7 @@ The repository now has a deterministic finishing-line control package:
 The canonical machine-readable result is in `PHASE11_WAVE0_EVIDENCE_MANIFEST.json`.
 
 - P11-G01 through P11-G13 remain open until their required evidence exists.
-- P11-G14 remains open until the implementation exact-head matrix is bound by closeout.
+- P11-G14 is CLOSED for repository source `1befa902def70d2c997aaba260e0d8e2a5d4b12d` after the complete exact-head matrix passed; this does not close P11-G12 or any external gate.
 - P11-C01 is not applicable to the initial no-field-claim wave.
 - P11-C02 through P11-C06 remain disabled.
 - P11-C07 remains not applicable because automated registry access is excluded.
@@ -46,6 +49,10 @@ The canonical machine-readable result is in `PHASE11_WAVE0_EVIDENCE_MANIFEST.jso
 
 This receipt does not close Phase 11. It does not assert that a real controlled pilot ran, that any participant consented, that any provider submitted real evidence, or that 11C–11H metrics exist. It records the maximum truthful repository completion before external authority and owner evidence.
 
+## Exact-head evidence
+
+The finishing-line implementation passed Wave 0, readiness, RC11, W7 Android/backend/database/OpenAPI, deterministic generated clients, customer/provider PWA, W8, supply-chain, documentation and RC5–RC10 contracts through runs `30307945800, 30307945818, 30307945934, 30307945768, 30307945872, 30307945906, 30307945756, 30307945870, 30307945784, 30307945769, 30307945849, 30307945921, 30307945959, 30307945868, 30307945894, 30307945776, 30307945858, 30307945856`.
+
 ## Closeout rule
 
-The implementation closeout may mark the technical preflight passed and P11-G14 closed for the exact reviewed source. It must keep the terminal decision `ENTRY_BLOCKED_EXTERNAL` unless actual external evidence is supplied, reviewed and entered through the protected manifest process.
+The repository lane is released. The terminal decision remains `ENTRY_BLOCKED_EXTERNAL` unless actual external evidence is supplied, independently reviewed where required and entered through the protected manifest process. A later evidence-reconciliation lane requires a new explicit claim.

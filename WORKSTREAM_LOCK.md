@@ -6,13 +6,13 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED — PHASE 11 WAVE 0 FINISHING-LINE RECONCILIATION |
-| Owner/agent | Active repository agent — Issue #112 Wave 0 finishing-line reconciliation. |
-| Authorized scope | Reconcile every repository-clearable real-entry gate, refresh official-source evidence, create machine-enforced evidence intake/owner decision controls, prove the protected pre-entry environment, and publish the truthful terminal handoff. No participant recruitment, processing, provider activation, real money or production release. |
+| Status | RELEASED — PHASE 11 WAVE 0 FINISHING LINE CLOSED AND PRESERVED |
+| Owner/agent | None. Wave 0 repository finishing-line work is closed; Issue #112 remains open for actual external evidence and participant-backed execution. |
+| Authorized scope | No active repository write scope. A new explicit claim is required to reconcile actual regulator, counsel, owner, provider-console or managed real-environment evidence. |
 | Protected surface | Closed RC0–RC11 evidence, canonical OpenAPI authorization/privacy checks, Android auth/session and Firebase controls, customer/provider web BFF/private Cloud Run IAM, operations portal, RC8 payment boundaries, UIA Issue #354, VC1–VC8 Design DNA and Phase 11/12 gates. |
-| Implementation branch | `phase11/wave0-finishing-line-implementation`, based on claim merge `main@6b9e7cabeebd5ade9b998b8a54bcd2c888e6bfe4`. |
-| Stable baseline | `main@6b9e7cabeebd5ade9b998b8a54bcd2c888e6bfe4` contains the verified Wave 0 claim, reviewed Phase 11C–11J readiness package and closed RC0–RC11 evidence. |
-| Current task | Wave 0 finishing-line controls implemented; exact-head technical preflight, terminal receipt binding and lane release remain pending. Current decision is `ENTRY_BLOCKED_EXTERNAL`; `PILOT_ENTRY_APPROVED` remains false and PRIMARY-PILOT evidence count remains 0. |
+| Implementation branch | None. Wave 0 implementation PR #512 merged at `f561658d140aaf214fa6eaca99c80bcc98ee284f`. |
+| Stable baseline | `main@f561658d140aaf214fa6eaca99c80bcc98ee284f` contains the verified Wave 0 finishing-line controls, technical preflight and closed RC0–RC11/readiness evidence. |
+| Current task | None. Terminal decision is `ENTRY_BLOCKED_EXTERNAL`. P11-G01–P11-G13 remain open, `PILOT_ENTRY_APPROVED` remains false and PRIMARY-PILOT evidence count remains 0. |
 | Governing issue | Issue #112 remains open for external entry gates, Wave 0 authorization, real 11C–11H evidence, 11I corrections and 11J decision. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
@@ -169,7 +169,7 @@ The following strings are historical closure evidence required by the permanent 
 9. The 11J instrument must require exactly one evidence-backed STOP, REPEAT, NARROW or PROCEED decision and must keep Phase 12 authorization false unless separately approved.
 10. The readiness package is `CLOSED — EXECUTION READY / REAL ENTRY BLOCKED / NO PRIMARY-PILOT EVIDENCE`: PR #508 exact head `ae4fcb0350be4023f82e2be8df88c18cca583695` passed the complete preserved matrix and squash-merged at `2bf58c2c5df40aa76742730ec4a49644c2506a89`. Issue #112 remains open; Wave 0 real-entry evidence reconciliation requires a new explicit claim.
 
-## Phase 11 Wave 0 finishing-line contract — CLAIMED
+## Phase 11 Wave 0 finishing-line contract — CLOSED AND PRESERVED
 
 1. This lane may close repository-clearable preparation and verification only; it may not claim that regulator, counsel, provider, owner or participant evidence exists when it has not been supplied.
 2. `PILOT_ENTRY_APPROVED` remains false. No workflow, deployment, source document or local command may set it true in this lane.
@@ -180,7 +180,7 @@ The following strings are historical closure evidence required by the permanent 
 7. Real participant Firebase, invitation, consent, withdrawal, deletion and private-storage canaries remain blocked until legal/privacy/owner gates are actually closed; synthetic negative-path proof may not be relabelled as a real canary.
 8. The terminal Wave 0 decision must be one of `ENTRY_APPROVED`, `ENTRY_BLOCKED_EXTERNAL`, `ENTRY_BLOCKED_TECHNICAL` or `STOP`, with exact unresolved gate IDs and no ambiguous partial activation.
 9. If external evidence is absent, the finishing line for this lane is a verified `ENTRY_BLOCKED_EXTERNAL` receipt and a minimal owner/manual action packet—not false Phase 11 closure.
-10. Closure requires exact-head regression, permanent Wave 0 verifier success, authoritative status/blocker reconciliation, receipt publication, lane release and Issue #112 handoff.
+10. Wave 0 repository finishing-line work is `CLOSED — ENTRY_BLOCKED_EXTERNAL / TECHNICAL PREFLIGHT PASSED`: PR #512 exact head `1befa902def70d2c997aaba260e0d8e2a5d4b12d` passed the complete matrix and squash-merged at `f561658d140aaf214fa6eaca99c80bcc98ee284f`. P11-G14 is closed for that source only; P11-G01–P11-G13 remain open, Issue #112 remains open and any later evidence lane requires a new explicit claim.
 
 ## Runtime integration closure contract
 
@@ -229,4 +229,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-The repository write lane is RELEASED. RC0–RC11 and Phase 11C–11J readiness evidence remain immutable/regression-protected. Wave 0 real-entry evidence reconciliation requires a new explicit claim. Real participants, real participant data, real money and production authorization remain blocked until the explicit Phase 11 entry checklist is satisfied.
+The repository write lane is RELEASED. RC0–RC11, Phase 11C–11J readiness and Wave 0 finishing-line evidence remain immutable/regression-protected. Real participants, participant data, real money and production authorization remain blocked until the explicit Phase 11 entry checklist is satisfied.

@@ -5,7 +5,7 @@
 **VC1–VC8 promotion:** PR #270 merged at `c7f5985bc20372b4761e063dc3a66ecc736556e2`
 **Visual Completion issue:** #259 — CLOSED/COMPLETED
 **Runtime integration tracker:** #261
-**Active repository write lane:** Phase 11 Wave 0 finishing-line reconciliation under Issue #112
+**Active repository write lane:** none; Wave 0 finishing-line controls are closed and actual external-evidence reconciliation is next but unclaimed
 
 ## 1. Programme state
 
@@ -14,7 +14,7 @@ DIREKT’s current repository state is:
 - Phases 0–10 — **complete**;
 - Phase 11 internal/synthetic readiness — **complete**;
 - Phase 11 11C–11J execution-readiness package — **CLOSED AND PRESERVED — EXECUTION READY / REAL ENTRY BLOCKED / NO PRIMARY-PILOT EVIDENCE**;
-- Phase 11 Wave 0 finishing-line controls — **IMPLEMENTED / EXACT-HEAD PREFLIGHT PENDING / ENTRY_BLOCKED_EXTERNAL**;
+- Phase 11 Wave 0 finishing-line controls — **CLOSED AND PRESERVED / TECHNICAL PREFLIGHT PASSED / ENTRY_BLOCKED_EXTERNAL**;
 - repository-clearable Phase 12 preauthorization engineering — **complete**;
 - formal Phase 12 production release — **not authorized**;
 - functional customer/provider web/PWA W0–W8 — **closed**;
@@ -210,6 +210,6 @@ VC1–VC8 completion does not clear:
 
 VC1–VC8 and RC1–RC9 are closed at their documented boundaries. RC8 closed on exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3` through run `30241092949/1` and artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`). RC9 implementation PR #497 passed its complete exact-head matrix on `04ef57f31414ec5165e353abba74afb8dfdcc901` and squash-merged to `main@70de95c73128e921cd4d7c667de0e5a442a9e0c0`.
 
-RC10 is closed on implementation PR #502 exact head `cdab6622e0cc06e35cddca2bb5bc8ea70c027b38`, squash-merged at `620a99ba5465ad38ce012df0a8fa15e458de6505`. RC11 closed through PR #505 exact head `66626d315a8d132dbf8f34749a2679e42c609d7c`, squash-merged at `87f567fccfa92244c7951432436c7163c71d5fc7`. Phase 11C–11J execution readiness implemented through PR #508 exact head `ae4fcb0350be4023f82e2be8df88c18cca583695`, squash-merged at `2bf58c2c5df40aa76742730ec4a49644c2506a89`, and closed through PR #509 exact head `311937bc08770c3ab664f15b1896fc4d5ec2f40a`, squash-merged at `1c32171ddc46c8f5c0e8176b2be14c4d4f4d355c`. Wave 0 is the active lane from claim merge `6b9e7cabeebd5ade9b998b8a54bcd2c888e6bfe4`. The deterministic evidence manifest, official-source research, gate evaluator, technical preflight, owner action packet and blocked terminal receipt are implemented; exact-head proof and closeout remain pending. Real entry and all PRIMARY-PILOT evidence remain externally blocked.
+RC10 is closed on implementation PR #502 exact head `cdab6622e0cc06e35cddca2bb5bc8ea70c027b38`, squash-merged at `620a99ba5465ad38ce012df0a8fa15e458de6505`. RC11 closed through PR #505 exact head `66626d315a8d132dbf8f34749a2679e42c609d7c`, squash-merged at `87f567fccfa92244c7951432436c7163c71d5fc7`. Phase 11C–11J execution readiness implemented through PR #508 exact head `ae4fcb0350be4023f82e2be8df88c18cca583695`, squash-merged at `2bf58c2c5df40aa76742730ec4a49644c2506a89`, and closed through PR #509 exact head `311937bc08770c3ab664f15b1896fc4d5ec2f40a`, squash-merged at `1c32171ddc46c8f5c0e8176b2be14c4d4f4d355c`. Wave 0 finishing-line controls closed through PR #512 exact head `1befa902def70d2c997aaba260e0d8e2a5d4b12d`, squash-merged at `f561658d140aaf214fa6eaca99c80bcc98ee284f`. Technical preflight passed and P11-G14 is closed for that exact source. The lane is released; P11-G01–P11-G13, real entry and all PRIMARY-PILOT evidence remain externally blocked.
 
 This project status records repository/product completion truth only and does not imply production authorization beyond the explicitly evidenced integration and release boundaries.
