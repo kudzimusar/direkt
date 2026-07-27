@@ -27,11 +27,28 @@ jobs:
             echo 'RC7 deterministic certificate source already reconciled.'
             exit 0
           fi
-          python3 scripts/rc7/patch-deterministic-apk-certificate.py
-          bash -n scripts/rc7/run-maps-managed.sh
-          python3 scripts/rc7/verify-maps-contract.py
-          python3 scripts/rc7/verify-managed-workflow-context.py
-          python3 -m py_compile scripts/rc7/collect-testlab-failure.py
+
+          run_stage() {
+            local label="$1"
+            shift
+            local output="${RUNNER_TEMP}/${label}.log"
+            set +e
+            "$@" >"${output}" 2>&1
+            local code=$?
+            set -e
+            if [[ "${code}" -ne 0 ]]; then
+              echo "RC7_RECONCILE_FAILED_STAGE=${label}"
+              tail -n 80 "${output}"
+              exit "${code}"
+            fi
+          }
+
+          run_stage patch python3 scripts/rc7/patch-deterministic-apk-certificate.py
+          run_stage shell bash -n scripts/rc7/run-maps-managed.sh
+          run_stage contract python3 scripts/rc7/verify-maps-contract.py
+          run_stage context python3 scripts/rc7/verify-managed-workflow-context.py
+          run_stage collector python3 -m py_compile scripts/rc7/collect-testlab-failure.py
+
           rm scripts/rc7/patch-deterministic-apk-certificate.py
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
