@@ -1,0 +1,11 @@
+{
+  "npmName": "@direkt/generated-api",
+  "npmVersion": "0.0.0-rc9a",
+  "supportsES6": true,
+  "typescriptThreePlus": true,
+  "withInterfaces": true,
+  "hideGenerationTimestamp": true,
+  "disallowAdditionalPropertiesIfNotPresent": false,
+  "enumUnknownDefaultCase": true,
+  "useSingleRequestParameter": true
+}

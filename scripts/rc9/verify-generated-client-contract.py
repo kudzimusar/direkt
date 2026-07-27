@@ -28,6 +28,14 @@ def require(path: Path, needle: str) -> None:
         raise SystemExit(f"RC9 contract missing {needle!r} in {path.relative_to(ROOT)}")
 
 
+def require_any(path: Path, needles: tuple[str, ...], label: str) -> None:
+    content = path.read_text(encoding="utf-8")
+    if not any(needle in content for needle in needles):
+        raise SystemExit(
+            f"RC9 contract missing a supported {label} in {path.relative_to(ROOT)}: {needles!r}"
+        )
+
+
 def reject(path: Path, needle: str) -> None:
     content = path.read_text(encoding="utf-8")
     if needle in content:
@@ -40,10 +48,25 @@ require(LOCK, "RC9 is the sole active repository write lane")
 require(LOCK, "RC8 implementation contract — CLOSED AND PRESERVED")
 require(LOCK, "030cd577e179863b70f24d99ab237e74660b4325")
 require(PROJECT, "Active repository write lane:** RC9 OpenAPI-generated Kotlin/TypeScript client adoption")
-require(PROJECT, "RC9 is now the sole active repository lane")
-require(STATUS, "RC9 CLAIMED / DETERMINISTIC FOUNDATION PENDING")
-require(STATUS, "RC9 generated Kotlin/TypeScript clients — **CLAIMED")
-require(LEDGER, "RC9 OpenAPI generated Kotlin/TypeScript client adoption decision/migration — **CLAIMED**")
+require(PROJECT, "RC9 is the sole active repository lane")
+require(STATUS, "Fully generated Kotlin/TypeScript client packages")
+require_any(
+    STATUS,
+    (
+        "RC9 CLAIMED / DETERMINISTIC FOUNDATION PENDING",
+        "RC9A IMPLEMENTED / RUNTIME UNWIRED / REGRESSION PENDING",
+    ),
+    "RC9 foundation state",
+)
+require(STATUS, "RC9 generated Kotlin/TypeScript clients")
+require_any(
+    LEDGER,
+    (
+        "RC9 OpenAPI generated Kotlin/TypeScript client adoption decision/migration — **CLAIMED**",
+        "RC9 OpenAPI generated Kotlin/TypeScript client adoption — **RC9A IMPLEMENTED / RUNTIME UNWIRED / EXACT-HEAD REGRESSION PENDING**",
+    ),
+    "RC9 ledger state",
+)
 
 require(PLAN, "decide generator/versioning strategy")
 require(PLAN, "generated code deterministic and CI drift-controlled")
@@ -104,6 +127,7 @@ for path in (ANDROID_BUILD, ANDROID_AUTH, WEB_PACKAGE, WEB_PUBLIC_CLIENT, WEB_AU
     reject(path, "service_role")
     reject(path, "paymentProviderSecret")
 
+require(WORKFLOW, "python3 scripts/rc9/verify-generated-foundation.py")
 require(WORKFLOW, "python3 scripts/rc9/verify-generated-client-contract.py")
 require(WORKFLOW, "python3 scripts/rc8/verify-payments-contract.py")
 require(WORKFLOW, '"PROJECT_STATUS.md"')
@@ -115,7 +139,7 @@ require(WORKFLOW, '"web/direkt-app/**"')
 print("RC9_GENERATED_CLIENT_CONTRACT|PASS")
 print("claim_base=030cd577e179863b70f24d99ab237e74660b4325")
 print("generator_version=7.22.0")
-print("deterministic_generation_pending=true")
+print("generator_strategy_pinned=true")
 print("kotlin_runtime_migration_pending=true")
 print("typescript_bff_contract_adoption_pending=true")
 print("browser_direct_private_api=false")

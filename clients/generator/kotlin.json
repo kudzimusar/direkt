@@ -1,0 +1,10 @@
+{
+  "packageName": "com.kudzimusar.direkt.generated.api",
+  "artifactId": "direkt-generated-kotlin",
+  "groupId": "com.kudzimusar.direkt",
+  "artifactVersion": "0.0.0-rc9a",
+  "serializationLibrary": "kotlinx_serialization",
+  "hideGenerationTimestamp": true,
+  "enumPropertyNaming": "UPPERCASE",
+  "enumUnknownDefaultCase": true
+}

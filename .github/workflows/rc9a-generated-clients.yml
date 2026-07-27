@@ -1,0 +1,122 @@
+name: DIREKT RC9A deterministic generated clients
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/rc9a-generated-clients.yml"
+      - "clients/generator/**"
+      - "clients/generated/**"
+      - "scripts/rc9/**"
+      - "backend/direkt-api/**"
+      - "web/direkt-app/package.json"
+      - "web/direkt-app/package-lock.json"
+      - "android/direkt-app/gradle/**"
+      - "android/direkt-app/gradlew"
+      - "docs/integrations/RC9_GENERATED_CLIENTS_IMPLEMENTATION.md"
+      - "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
+      - "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
+      - "PROJECT_STATUS.md"
+      - "WORKSTREAM_LOCK.md"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/rc9a-generated-clients.yml"
+      - "clients/generator/**"
+      - "clients/generated/**"
+      - "scripts/rc9/**"
+      - "backend/direkt-api/**"
+      - "web/direkt-app/package.json"
+      - "web/direkt-app/package-lock.json"
+      - "android/direkt-app/gradle/**"
+      - "android/direkt-app/gradlew"
+      - "docs/integrations/RC9_GENERATED_CLIENTS_IMPLEMENTATION.md"
+      - "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
+      - "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
+      - "PROJECT_STATUS.md"
+      - "WORKSTREAM_LOCK.md"
+
+permissions:
+  contents: read
+
+jobs:
+  generated-contract:
+    name: Regenerate, compare and compile generated clients
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            backend/direkt-api/package-lock.json
+            web/direkt-app/package-lock.json
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Generate and validate canonical OpenAPI
+        working-directory: backend/direkt-api
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npm run openapi:check
+      - name: Enforce byte-for-byte generated drift
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/rc9/generate-clients.sh --check
+          test "$(find clients/generated/kotlin/src/main/kotlin -type f -name '*.kt' | wc -l | tr -d ' ')" -ge 50
+          test "$(find clients/generated/typescript/src -type f -name '*.ts' | wc -l | tr -d ' ')" -ge 50
+      - name: Compile generated Kotlin contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x android/direkt-app/gradlew
+          android/direkt-app/gradlew \
+            --project-dir clients/generated/kotlin \
+            --no-daemon \
+            --stacktrace \
+            clean compileKotlin
+          if ! find clients/generated/kotlin/build/classes/kotlin/main -type f -name '*.class' -print -quit | grep -q .; then
+            echo 'RC9A Kotlin compile produced no class files.' >&2
+            exit 1
+          fi
+      - name: Typecheck generated TypeScript contract
+        working-directory: web/direkt-app
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          ./node_modules/.bin/tsc \
+            --project ../../clients/generated/typescript/tsconfig.json \
+            --noEmit
+      - name: Verify generated integrity and preserved integration boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/rc9/verify-generated-foundation.py
+          python3 scripts/rc9/verify-generated-client-contract.py
+          python3 scripts/rc8/verify-payments-contract.py
+          python3 scripts/rc7/verify-maps-contract.py
+          python3 scripts/rc6/verify-whatsapp-contract.py
+          python3 scripts/rc5/verify-test-lab-closure.py
+          python3 -m py_compile \
+            scripts/rc9/verify-generated-foundation.py \
+            scripts/rc9/verify-generated-client-contract.py \
+            scripts/rc8/verify-payments-contract.py \
+            scripts/rc7/verify-maps-contract.py \
+            scripts/rc6/verify-whatsapp-contract.py \
+            scripts/rc5/verify-test-lab-closure.py
+      - name: Upload deterministic generation receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc9a-generation-receipt-${{ github.sha }}
+          path: clients/generated/GENERATION_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 30

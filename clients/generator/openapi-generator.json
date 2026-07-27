@@ -1,0 +1,17 @@
+{
+  "version": "7.22.0",
+  "jarUrl": "https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/7.22.0/openapi-generator-cli-7.22.0.jar",
+  "sha256": "3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329",
+  "canonicalSpec": "backend/direkt-api/artifacts/openapi.json",
+  "kotlin": {
+    "generator": "kotlin",
+    "library": "jvm-retrofit2",
+    "config": "clients/generator/kotlin.json",
+    "output": "clients/generated/kotlin/src/main/kotlin"
+  },
+  "typescript": {
+    "generator": "typescript-fetch",
+    "config": "clients/generator/typescript-fetch.json",
+    "output": "clients/generated/typescript/src"
+  }
+}

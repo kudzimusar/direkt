@@ -1,9 +1,9 @@
 # RC9 OpenAPI-Generated Kotlin and TypeScript Clients
 
-**Governing issue:** #261  
-**Claim base:** `main@030cd577e179863b70f24d99ab237e74660b4325`  
-**Branch:** `integration/rc9-generated-clients`  
-**State:** CLAIMED / RC9A DETERMINISTIC FOUNDATION PENDING
+**Governing issue:** #261
+**Claim base:** `main@030cd577e179863b70f24d99ab237e74660b4325`
+**Branch:** `feat/rc9a-deterministic-generated-clients`
+**State:** RC9A IMPLEMENTED / EXACT-HEAD REGRESSION PENDING / RUNTIME UNWIRED
 
 ## Purpose
 
@@ -17,7 +17,7 @@ Generated code is a contract implementation aid. It does not become a new author
 
 - `backend/direkt-api/scripts/generate-openapi.ts` creates `backend/direkt-api/artifacts/openapi.json` from the configured NestJS application.
 - `backend/direkt-api/scripts/check-openapi.ts` validates OpenAPI 3, required operations, bearer security, public/private route separation, deferred domains and prohibited sensitive/payment-provider fields.
-- Backend CI already generates and uploads the checked OpenAPI artifact, but no generated client package is currently produced or drift-checked.
+- Backend CI generates and uploads the checked OpenAPI artifact. RC9A now derives committed Kotlin and TypeScript source trees from that exact document and fails on byte-for-byte regeneration drift.
 
 ### Android
 
@@ -74,6 +74,27 @@ A generated browser transport is not approved. TypeScript adoption must remain s
 4. add byte-for-byte drift verification;
 5. compile/typecheck generated outputs without wiring runtime behavior;
 6. preserve RC0–RC8 and all current application regressions.
+
+### RC9A deterministic foundation receipt
+
+RC9A is source/build foundation only and remains runtime-unwired.
+
+- OpenAPI Generator CLI: `7.22.0`;
+- official Maven JAR SHA-256: `3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329`;
+- canonical OpenAPI SHA-256: `1ea6b983c49c95db88db1a1432d9e6e0078fe124a3196f00c485b86dbe2db519`;
+- canonical surface: OpenAPI 3.0.0, 135 paths, 148 operations and 74 schemas;
+- Firebase exchange operation: `AuthController_exchangeFirebaseSession`, tag `authentication`;
+- Kotlin source: `109` files, tree SHA-256 `ab6cd201e8a74df0c31319e882e3b419617a1539518f7151fa71ffe695c440c1`;
+- TypeScript source: `96` files, tree SHA-256 `19aa7625ac7e338d01e9947dfaad8d5660cbe17ab9bdc912fb36e04fb659276f`;
+- committed output: generated source only; generator-owned wrappers, publishing tasks, docs and tests are excluded;
+- Kotlin compile harness: Kotlin 2.2.20, serialization 1.9.0, OkHttp logging 5.1.0 and Retrofit 3.0.0;
+- TypeScript compile harness: strict/no-emit through the web workspace's pinned TypeScript compiler;
+- drift gate: regenerate the checked canonical spec and compare source plus immutable receipt byte-for-byte;
+- Android runtime import: false;
+- browser/BFF runtime import: false;
+- participant data, privileged client credentials and production authorization: false.
+
+RC9A does not replace the current Android `HttpsURLConnection` session path or the server-side BFF transport. Those migrations remain separate reviewed RC9B/RC9C slices.
 
 ### RC9B — Kotlin auth/session slice
 

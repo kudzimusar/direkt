@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - ".github/workflows/rc9-generated-clients-contract.yml"
+      - "clients/generator/**"
+      - "clients/generated/**"
       - "scripts/rc9/**"
       - "docs/integrations/RC9_GENERATED_CLIENTS_IMPLEMENTATION.md"
       - "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
@@ -21,6 +23,8 @@ on:
       - main
     paths:
       - ".github/workflows/rc9-generated-clients-contract.yml"
+      - "clients/generator/**"
+      - "clients/generated/**"
       - "scripts/rc9/**"
       - "docs/integrations/RC9_GENERATED_CLIENTS_IMPLEMENTATION.md"
       - "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
@@ -49,12 +53,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python3 scripts/rc9/verify-generated-foundation.py
           python3 scripts/rc9/verify-generated-client-contract.py
           python3 scripts/rc8/verify-payments-contract.py
           python3 scripts/rc7/verify-maps-contract.py
           python3 scripts/rc6/verify-whatsapp-contract.py
           python3 scripts/rc5/verify-test-lab-closure.py
           python3 -m py_compile \
+            scripts/rc9/verify-generated-foundation.py \
             scripts/rc9/verify-generated-client-contract.py \
             scripts/rc8/verify-payments-contract.py \
             scripts/rc7/verify-maps-contract.py \
