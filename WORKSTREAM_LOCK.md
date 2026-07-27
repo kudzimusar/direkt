@@ -6,14 +6,14 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | RELEASED — PHASE 11 WAVE 0 FINISHING LINE CLOSED AND PRESERVED |
-| Owner/agent | None. Wave 0 repository finishing-line work is closed; Issue #112 remains open for actual external evidence and participant-backed execution. |
-| Authorized scope | No active repository write scope. A new explicit claim is required to reconcile actual regulator, counsel, owner, provider-console or managed real-environment evidence. |
+| Status | CLAIMED — UIA EXACT-CURRENT-MAIN OWNER-REVIEW REFRESH |
+| Owner/agent | Active repository agent — Issue #354 UIA current-main owner-review refresh. |
+| Authorized scope | Refresh the exact-current-main synthetic owner-review browser/PWA, internal Android and IAM-private operations staging surfaces; verify canonical access; publish evidence; close Issue #354. No participant processing, production auth, private evidence activation, external communications, real money or Phase 12 release. |
 | Protected surface | Closed RC0–RC11 evidence, canonical OpenAPI authorization/privacy checks, Android auth/session and Firebase controls, customer/provider web BFF/private Cloud Run IAM, operations portal, RC8 payment boundaries, UIA Issue #354, VC1–VC8 Design DNA and Phase 11/12 gates. |
-| Implementation branch | None. Wave 0 implementation PR #512 merged at `f561658d140aaf214fa6eaca99c80bcc98ee284f`; closeout PR #513 exact head `1e4291ef669ca01eb4f639b2f1734a85d8448a63` merged at `632dd0bdbb2a3b8c24bd285918deff3e54bd3ba9`. |
+| Implementation branch | `chore/uia-current-main-refresh`, based on the UIA claim merge from exact `main@348aedfdc29d4cc82bcc4296648db844d7fd5e44`. |
 | Stable baseline | `main@632dd0bdbb2a3b8c24bd285918deff3e54bd3ba9` contains the verified Wave 0 finishing-line controls, exact closeout receipt, technical preflight and closed RC0–RC11/readiness evidence. |
-| Current task | None. Terminal decision is `ENTRY_BLOCKED_EXTERNAL`. P11-G01–P11-G13 remain open, `PILOT_ENTRY_APPROVED` remains false and PRIMARY-PILOT evidence count remains 0. |
-| Governing issue | Issue #112 remains open for external entry gates, Wave 0 authorization, real 11C–11H evidence, 11I corrections and 11J decision. |
+| Current task | UIA current-main refresh only. Promote and prove the present synthetic owner-review surfaces, then release the lane. Phase 11 remains `ENTRY_BLOCKED_EXTERNAL`; `PILOT_ENTRY_APPROVED` remains false and PRIMARY-PILOT evidence count remains 0. |
+| Governing issue | Issue #354 governs UIA refresh. Issue #112 remains separately open for external entry gates and real pilot evidence. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
 
@@ -65,7 +65,7 @@ The following strings are historical closure evidence required by the permanent 
 9. Existing Android unit/lint/build, App Distribution, Crashlytics, FCM, signing, Play/Data Safety and cross-client regression gates remain intact.
 10. RC5 is `CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX`: exact source `c3744430a7beb1cd47246d858df9ac1379a068ac` passed run `30183466799` on `MediumPhone.arm` API 26, 33 and 36 with zero flaky retries. Artifact `8626329335` (`sha256:03a40951a23c937d8b0fd2990a7d2652afbd1172631c0b480af756aebd92a843`) is schema-valid. Participant/production authorization remains false; historical failures and superseded v2 infrastructure remain evidence only.
 
-## UIA owner-review promotion contract — PARKED AND PRESERVED
+## UIA owner-review promotion contract — CLAIMED FOR CURRENT-MAIN REFRESH
 
 1. UIA is an acceptance/promotion checkpoint, not a new visual-design phase. The approved VC1–VC8 Structured Trust + Neighbourhood Marketplace + Field Utility direction is preserved.
 2. Every promoted owner-review surface must be tied to an exact merged source on `main`; no stale prototype or pre-VC deployment may be represented as the current product.
@@ -75,7 +75,7 @@ The following strings are historical closure evidence required by the permanent 
 6. No real participant data, production auth, private evidence activation, real communications, real money movement or Phase 11/12 release authority is introduced by UIA.
 7. Owner-facing evidence must come from production-built or equivalent clean runtime presentation with no Next.js development toolbar, `1 Issue` badge, debug/canary labels or other developer-only UI leakage.
 8. Existing backend, Android, PWA, portal, supply-chain, privacy, authorization and integration regressions remain mandatory; RC5 must not weaken them.
-9. UIA Issue #354 remains open and parked. RC5 no longer owns a write lane; UIA or RC7+ requires an explicit new claim before source changes.
+9. UIA Issue #354 is the sole active refresh lane. All RC0–RC11 and Phase 11 evidence remain immutable/regression-protected.
 10. UIA closes only after the owner has straightforward current access to the final VC browser, Android and protected operations surfaces and Issue #354 explicitly distinguishes visual/synthetic review, connected development/staging UI testing, real Phase 11 participant UAT and production release.
 
 ## RC6 implementation contract — CLOSED AND PRESERVED
@@ -204,7 +204,7 @@ The following strings are historical closure evidence required by the permanent 
 - RC3 — Firebase Crashlytics Android. **Closed — exact source `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; managed bridge run `29885635547` successful; closure PR #338 merged at `0d7d29313990c37b25bd985588866a85bbe10f83`.**
 - RC4 — FCM push delivery: server send path, token lifecycle, Android notification handling/permissions, retries and managed canary. **CLOSED — exact source `f05ff19105cb8dc7c4621c044c110b6029f63300`; managed run `29916381754` successful; participant/production push disabled.**
 - RC5 — Firebase Test Lab device-matrix automation. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX — dedicated Spark project `direkt-testlab-502701-20260726`; exact source `c3744430a7beb1cd47246d858df9ac1379a068ac`; managed run `30183466799`; API 26/33/36; zero flaky retries; participant/production authorization false.**
-- UIA — post-VC owner-review promotion. **PARKED / OPEN — PR #385 merged at `fed6db8ab7c479b5e47095b4f0a752514122a4f6`; Issue #354 remains open for remaining owner-access evidence; read-only during RC7.**
+- UIA — post-VC owner-review promotion. **CLAIMED — exact-current-main synthetic browser/PWA, internal Android and IAM-private operations refresh; Issue #354 is the sole active lane.**
 - RC6 — WhatsApp Cloud API application adapter. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY — exact source `8838b7a6d726a5aed44ce21a39506c1265a98d15`; managed run `30137700769` succeeded on retry through outbox → Meta test template → authentic signed webhook receipt; initial failure preserved in Issue #404; production/participant sends remain disabled.**
 - RC7 — Google Maps runtime activation with separate restricted Android/backend credentials, privacy-safe publication semantics, quotas, manual/list fallback and kill switch. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY — exact source `47285575862cbf08845eaeabe093afea1ea79bd1`; run `30234521983/1`; artifact `8641270327` (`sha256:24da53c0bd6fa885fa4a6814f70af090096192e6c5b7a03c89fba51416877fde`); production/participant authorization false.**
 - RC8 — sandbox-only payment-provider adapter closure/reconciliation. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY — exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3`; run `30241092949/1`; artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`); MTN/Stripe/PayPal proved privately; DPO runtime-unbound, Airtel provider-pending, Flutterwave deferred; application runtime and real money disabled.**
@@ -229,4 +229,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-The repository write lane is RELEASED. RC0–RC11, Phase 11C–11J readiness and Wave 0 finishing-line evidence remain immutable/regression-protected. Real participants, participant data, real money and production authorization remain blocked until the explicit Phase 11 entry checklist is satisfied.
+The repository write lane is CLAIMED for UIA current-main owner-review refresh only. RC0–RC11, Phase 11C–11J readiness and Wave 0 finishing-line evidence remain immutable/regression-protected. Real participants, participant data, real money and production authorization remain blocked until the explicit Phase 11 entry checklist is satisfied.
