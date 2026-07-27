@@ -26,4 +26,4 @@ jobs:
           clean="${RUNNER_TEMP}/rc9-runtime-clean.log"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
           sed -r 's/\x1B\[[0-9;]*[mK]//g; s/^.*Z //' "${raw}" > "${clean}"
-          grep -nE '(^e: |error:|Caused by:|What went wrong|Execution failed|Could not resolve|Unresolved reference|Compilation error|FAILURE:|Process completed|Lint found|Fatal error|Type mismatch|Cannot access|RC9 contract missing|RC9A_|TS[0-9]+:|Expected exactly one|fatal:|nothing to commit)' "${clean}" | head -n 420
+          awk '$0 == "RC9A_GENERATED_CLIENTS|DRIFT|PASS" {capture=1} capture {print}' "${clean}" | tail -n 180
