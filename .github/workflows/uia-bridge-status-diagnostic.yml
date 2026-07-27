@@ -19,12 +19,12 @@ jobs:
       SOURCE_SHA: 9c7d2613121771c4beabb5fff2a7bb0b3361702c
       WORKFLOW: uia-current-main-refresh-closeout-once.yml
     steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ env.SOURCE_SHA }}
       - name: Print exact promotion bridge lint findings
         run: |
           set -euo pipefail
+          mkdir -p .github/workflows
+          gh api "/repos/${GITHUB_REPOSITORY}/contents/.github/workflows/${WORKFLOW}?ref=${SOURCE_SHA}" \
+            --jq '.content' | base64 --decode > ".github/workflows/${WORKFLOW}"
           set +e
           go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 \
             -no-color \
