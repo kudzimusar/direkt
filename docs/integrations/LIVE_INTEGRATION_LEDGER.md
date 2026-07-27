@@ -346,7 +346,7 @@ The authoritative sequence is maintained in `WORKSTREAM_LOCK.md` and `RUNTIME_IN
 8. RC6 WhatsApp runtime adapter — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Exact source `8838b7a6d726a5aed44ce21a39506c1265a98d15`; managed run `30137700769` succeeded on retry; initial failure preserved in Issue #404; participant/production delivery disabled.
 9. RC7 Google Maps runtime — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY** through run `30234521983/1`.
 10. RC8 sandbox-only payment adapters/evidence reconciliation — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**; exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3`; run `30241092949/1`; artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`); MTN/Stripe/PayPal and immutable reconciliation passed; DPO/Airtel/Flutterwave and application runtime remain disabled; real money false.
-11. RC9 OpenAPI generated Kotlin/TypeScript client adoption decision/migration.
+11. RC9 OpenAPI generated Kotlin/TypeScript client adoption decision/migration — **CLAIMED** on `main@030cd577e179863b70f24d99ab237e74660b4325`; deterministic generation/drift control precedes any runtime migration; Android auth/session is the first candidate slice; TypeScript remains BFF-only.
 12. RC10 Turnstile only if justified.
 13. RC11 full combined regression and lane release.
 

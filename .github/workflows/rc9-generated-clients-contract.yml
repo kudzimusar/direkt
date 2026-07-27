@@ -1,0 +1,62 @@
+name: DIREKT RC9 generated client contract
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/rc9-generated-clients-contract.yml"
+      - "scripts/rc9/**"
+      - "docs/integrations/RC9_GENERATED_CLIENTS_IMPLEMENTATION.md"
+      - "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
+      - "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
+      - "docs/integrations/RUNTIME_INTEGRATION_CLOSURE_PLAN.md"
+      - "PROJECT_STATUS.md"
+      - "WORKSTREAM_LOCK.md"
+      - "backend/direkt-api/**"
+      - "android/direkt-app/**"
+      - "web/direkt-app/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/rc9-generated-clients-contract.yml"
+      - "scripts/rc9/**"
+      - "docs/integrations/RC9_GENERATED_CLIENTS_IMPLEMENTATION.md"
+      - "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
+      - "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
+      - "docs/integrations/RUNTIME_INTEGRATION_CLOSURE_PLAN.md"
+      - "PROJECT_STATUS.md"
+      - "WORKSTREAM_LOCK.md"
+      - "backend/direkt-api/**"
+      - "android/direkt-app/**"
+      - "web/direkt-app/**"
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Verify RC9 generated-client boundary
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Verify RC9 and preserved runtime contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/rc9/verify-generated-client-contract.py
+          python3 scripts/rc8/verify-payments-contract.py
+          python3 scripts/rc7/verify-maps-contract.py
+          python3 scripts/rc6/verify-whatsapp-contract.py
+          python3 scripts/rc5/verify-test-lab-closure.py
+          python3 -m py_compile \
+            scripts/rc9/verify-generated-client-contract.py \
+            scripts/rc8/verify-payments-contract.py \
+            scripts/rc7/verify-maps-contract.py \
+            scripts/rc6/verify-whatsapp-contract.py \
+            scripts/rc5/verify-test-lab-closure.py

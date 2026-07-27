@@ -78,79 +78,14 @@ def main() -> int:
     managed_workflow = read(".github/workflows/cloud-run-whatsapp-canary.yml")
     bootstrap = read("scripts/rc6/bootstrap-whatsapp-secrets.sh")
 
-    active_lock_needles = (
-        "CLAIMED — RC6 WhatsApp Cloud API",
-        "RC6 implementation contract — ACTIVE OWNER-AUTHORIZED CHECKPOINT",
-        "RC6 under Issue #261 is the sole active implementation lane",
-        "RC5 remains parked/not closed",
-        "Production/participant WhatsApp delivery remains disabled",
-    )
-    rc5_resumed_lock_needles = (
-        "CLAIMED — RC5 Firebase Test Lab device-matrix closure",
+    for needle in (
         "RC6 implementation contract — CLOSED AND PRESERVED",
-        "exact-current-main managed run `30137700769`",
-        "RC5 Firebase Test Lab is the sole active implementation lane",
+        "8838b7a6d726a5aed44ce21a39506c1265a98d15",
+        "30137700769",
+        "RC6 is `CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY`",
         "production/participant WhatsApp delivery remains disabled",
-    )
-    post_rc5_closed_lock_needles = (
-        "RELEASED — RC5 Firebase Test Lab device-matrix closure complete",
-        "RC5 implementation contract — CLOSED AND PRESERVED",
-        "RC6 implementation contract — CLOSED AND PRESERVED",
-        "exact-current-main managed run `30137700769`",
-        "No active implementation lane exists",
-        "production/participant WhatsApp delivery remains disabled",
-    )
-    rc7_active_lock_needles = (
-        "CLAIMED — RC7 Google Maps runtime integration",
-        "RC5 implementation contract — CLOSED AND PRESERVED",
-        "RC6 implementation contract — CLOSED AND PRESERVED",
-        "exact-current-main managed run `30137700769`",
-        "RC7 implementation contract — CLAIMED",
-        "RC7 is the sole active repository write lane",
-        "Production/participant WhatsApp delivery remains disabled",
-    )
-    rc7_closed_lock_needles = (
-        "RELEASED — RC7 Google Maps runtime integration closed",
-        "RC5 implementation contract — CLOSED AND PRESERVED",
-        "RC6 implementation contract — CLOSED AND PRESERVED",
-        "exact-current-main managed run `30137700769`",
-        "RC7 implementation contract — CLOSED AND PRESERVED",
-        "No repository write lane is active",
-        "Production/participant WhatsApp delivery remains disabled",
-    )
-    rc8_active_lock_needles = (
-        "CLAIMED — RC8 sandbox payment runtime closure",
-        "RC5 implementation contract — CLOSED AND PRESERVED",
-        "RC6 implementation contract — CLOSED AND PRESERVED",
-        "exact-current-main managed run `30137700769`",
-        "RC7 implementation contract — CLOSED AND PRESERVED",
-        "RC8 implementation contract — CLAIMED",
-        "RC8 is the sole active repository write lane",
-        "Production/participant WhatsApp delivery remains disabled",
-    )
-    rc8_closed_lock_needles = (
-        "| Status | RELEASED |",
-        "RC5 implementation contract — CLOSED AND PRESERVED",
-        "RC6 implementation contract — CLOSED AND PRESERVED",
-        "exact-current-main managed run `30137700769`",
-        "RC7 implementation contract — CLOSED AND PRESERVED",
-        "RC8 implementation contract — CLOSED AND PRESERVED",
-        "No repository write lane is active",
-        "production/participant WhatsApp delivery remains disabled",
-    )
-    supported_states = (
-        all(needle in lock for needle in active_lock_needles),
-        all(needle in lock for needle in rc5_resumed_lock_needles),
-        all(needle in lock for needle in post_rc5_closed_lock_needles),
-        all(needle in lock for needle in rc7_active_lock_needles),
-        all(needle in lock for needle in rc7_closed_lock_needles),
-        all(needle in lock for needle in rc8_active_lock_needles),
-        all(needle in lock for needle in rc8_closed_lock_needles),
-    )
-    if sum(supported_states) != 1:
-        raise AssertionError(
-            "RC6 lock must be exactly one supported state through RC8 closed/released."
-        )
+    ):
+        require(lock, needle, "immutable RC6 closure receipt")
 
     for needle in (
         "WHATSAPP_PROVIDER_MODE",

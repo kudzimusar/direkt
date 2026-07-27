@@ -26,34 +26,14 @@ for text in (lock, status, register, ledger, doc):
 
 assert "RC5 implementation contract — CLOSED AND PRESERVED" in lock
 assert "CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX" in lock
-released_handoff = (
-    "No active implementation lane exists" in lock
-    and "RC7+ source work must not begin until a new explicit bounded claim" in lock
-)
-rc7_handoff = (
-    "CLAIMED — RC7 Google Maps runtime integration" in lock
-    and "RC7 implementation contract — CLAIMED" in lock
-    and "RC7 is the sole active repository write lane" in lock
-)
-rc7_closed_handoff = (
-    "RELEASED — RC7 Google Maps runtime integration closed" in lock
-    and "RC7 implementation contract — CLOSED AND PRESERVED" in lock
-    and "No repository write lane is active" in lock
-)
-rc8_active_handoff = (
-    "CLAIMED — RC8 sandbox payment runtime closure" in lock
-    and "RC7 implementation contract — CLOSED AND PRESERVED" in lock
-    and "RC8 implementation contract — CLAIMED" in lock
-    and "RC8 is the sole active repository write lane" in lock
-)
-rc8_closed_handoff = (
-    "| Status | RELEASED |" in lock
-    and "RC8 implementation contract — CLOSED AND PRESERVED" in lock
-    and "No repository write lane is active" in lock
-)
-assert released_handoff or rc7_handoff or rc7_closed_handoff or rc8_active_handoff or rc8_closed_handoff, (
-    "RC5 closure must remain valid through RC8 closed/released"
-)
+for needle in (
+    "c3744430a7beb1cd47246d858df9ac1379a068ac",
+    "30183466799",
+    "8626329335",
+    "sha256:03a40951a23c937d8b0fd2990a7d2652afbd1172631c0b480af756aebd92a843",
+    "RC5 is `CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX`",
+):
+    assert needle in lock, f"immutable RC5 closure receipt missing: {needle}"
 assert "Firebase Test Lab | **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX**" in register
 assert "Firebase Test Lab | `CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX`" in ledger
 assert "8626329335" in register and "8626329335" in ledger

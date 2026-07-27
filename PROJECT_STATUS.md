@@ -5,7 +5,7 @@
 **VC1–VC8 promotion:** PR #270 merged at `c7f5985bc20372b4761e063dc3a66ecc736556e2`
 **Visual Completion issue:** #259 — CLOSED/COMPLETED
 **Runtime integration tracker:** #261
-**Active repository write lane:** RELEASED — RC1–RC8 are closed at documented synthetic-only managed boundaries; RC9 is next but unclaimed
+**Active repository write lane:** RC9 OpenAPI-generated Kotlin/TypeScript client adoption under Issue #261; RC1–RC8 remain closed
 
 ## 1. Programme state
 
@@ -208,6 +208,6 @@ VC1–VC8 completion does not clear:
 
 VC1–VC8 and RC1–RC8 are closed at their documented boundaries. RC8 closed on exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3` through run `30241092949/1` and artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`).
 
-No repository write lane is active. RC9 OpenAPI-generated Kotlin and TypeScript client adoption/decision is next in sequence, but it requires a new explicit claim and must preserve all RC0–RC8, Android, backend, web/PWA, operations, supply-chain and release gates. RC8 does not authorize application payment-provider activation, participant payment data, production credentials/endpoints, real money, customer-to-provider payments, escrow, wallets or payouts.
+RC9 is now the sole active repository lane. The approved order is: (1) deterministic OpenAPI artifact and pinned generator/drift control; (2) one incremental Kotlin auth/session migration preserving current Android behavior; (3) TypeScript generated contract adoption only behind the reviewed server-side BFF; (4) full backend/Android/web/portal/security regression and status reconciliation. RC8 remains closed and does not authorize application payment-provider activation, participant payment data, production credentials/endpoints, real money, customer-to-provider payments, escrow, wallets or payouts.
 
 This project status records repository/product completion truth only and does not imply production authorization beyond the explicitly evidenced integration and release boundaries.
