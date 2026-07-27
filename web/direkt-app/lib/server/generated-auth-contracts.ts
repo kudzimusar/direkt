@@ -23,9 +23,9 @@ export function toDirektAuthenticatedSession(value: AuthenticatedSessionResponse
     identityId: value.identityId,
     sessionId: value.sessionId,
     accessToken: value.accessToken,
-    accessTokenExpiresAt: value.accessTokenExpiresAt,
+    accessTokenExpiresAt: value.accessTokenExpiresAt.toISOString(),
     refreshToken: value.refreshToken,
-    refreshTokenExpiresAt: value.refreshTokenExpiresAt,
+    refreshTokenExpiresAt: value.refreshTokenExpiresAt.toISOString(),
     tokenType: "Bearer",
     contact: {
       channel: value.contact.channel,
