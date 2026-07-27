@@ -173,14 +173,17 @@ def main() -> int:
         'receipt "android_clean_build=true"',
         'receipt "android_build_cache_enabled=false"',
         "certificateDigestCount:",
-        "acceptedSignerLabelForms:",
+        "digestFieldPattern:",
+        "presentationPrefixIndependent:",
         "parsedStreams:",
         'python3 - "${apksigner_stdout}" "${apksigner_stderr}" "${apk_certificate_digests_file}"',
         "for path in sys.argv[1:3]",
         "Path(sys.argv[3]).write_text",
+        'r"certificate SHA-1 digest:\\s*([0-9A-Fa-f:]+)"',
+        "flags=re.IGNORECASE",
         "rawStdoutIncluded:",
         "rawStderrIncluded:",
-        "Signer (?:#[0-9]+|\\([^)]*\\)) certificate SHA-1 digest",
+        'r"certificate SHA-1 digest:\\s*([0-9A-Fa-f:]+)"',
         'receipt "android_apk_certificate_digest_count=${certificate_digest_count}"',
         'receipt "android_apk_certificate_format_valid=${apk_certificate_format_valid}"',
         'receipt "android_apk_certificate_matches_key=${certificate_matches}"',
@@ -277,6 +280,8 @@ def main() -> int:
     print("numbered_and_sdk_range_signer_labels_supported=true")
     print("unique_certificate_digest_required=true")
     print("apksigner_stdout_and_stderr_parsed=true")
+    print("certificate_sha1_field_semantic_match=true")
+    print("signer_presentation_prefix_required=false")
     print("raw_canary_logs_uploaded=false")
     print("provider_rejection_status_distinguished=true")
     print("provider_raw_error_exposed=false")
