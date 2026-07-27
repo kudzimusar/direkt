@@ -153,9 +153,9 @@ No usable credentials stored yet because Zambia TEST approval remains pending.
 
 Public DPO sandbox credentials were used for sandbox proof only. No private production DPO merchant credential is provisioned in DIREKT Secret Manager yet.
 
-### Payment runtime closure still required
+### RC8 runtime proof — IMPLEMENTED_GATED / MANAGED PROOF ARMED
 
-The repository payment port remains intentionally synthetic/disabled. Runtime closure must use provider-neutral adapters and keep real money disabled:
+Provider-neutral adapters and immutable reconciliation were merged through PR #454 at `6098b71f89d62fa059de298be11a8d9d8539c25e`. The application payment registry remains intentionally disabled. A one-shot exact-main private Cloud Run Job is armed for the existing MTN MoMo, Stripe and PayPal sandbox credentials; real money remains disabled:
 
 ```text
 PaymentProvider
@@ -174,7 +174,7 @@ Suggested routing intent:
 - DPO: fallback/benchmark/local-card/mobile-money option after commercial onboarding.
 - Flutterwave: deferred.
 
-No payment provider secret is attached to Cloud Run until adapter/config/runtime allowlist and regression gates are reviewed.
+No payment provider secret is attached to the API service or public application runtime. The RC8 proof may attach only pinned numeric MTN, Stripe and PayPal sandbox secret versions to one private temporary Cloud Run Job using the existing runtime service account, followed by enforced job cleanup. DPO, Airtel and Flutterwave remain runtime-unbound.
 
 ## Communications and notifications
 
@@ -334,10 +334,10 @@ The authoritative sequence is maintained in `WORKSTREAM_LOCK.md` and `RUNTIME_IN
 4. RC2 Sentry API/portal — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. PR #275 merged at `15210c5b0bf1832e32f8c33a7618c69f61f65275`; managed API + private portal canary #1 completed successfully. Separate DSN v1 bindings proven; Sentry auth token v2 remained CI/release-only; participant/production telemetry disabled.
 5. RC3 Crashlytics Android — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Exact source `9098f7eb333baf096163f1564b3d8e5e5da3fcf0`; managed bridge run `29885635547` passed marker-pinned exact-source enforcement and terminal fatal+ANR delivery proof. Participant/production telemetry remains disabled.
 6. RC4 FCM — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Exact-main run `29916381754` on `f05ff19105cb8dc7c4621c044c110b6029f63300` passed foreground/background outbox → FCM → Android receipt proof, sanitized evidence and ordered cleanup. Participant registration and participant/production push remain disabled.
-7. RC5 Firebase Test Lab — **ACTIVE RESUMED / NOT CLOSED — IMPLEMENTED_GATED / MANAGED MATRIX PENDING**. Source integration, local instrumentation and least-privilege resources are preserved; final owner-side verification plus exact-current-main managed matrix evidence remain required before closure.
+7. RC5 Firebase Test Lab — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX**. Exact source `c3744430a7beb1cd47246d858df9ac1379a068ac`; run `30183466799`; API 26/33/36; zero flaky retries.
 8. RC6 WhatsApp runtime adapter — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Exact source `8838b7a6d726a5aed44ce21a39506c1265a98d15`; managed run `30137700769` succeeded on retry; initial failure preserved in Issue #404; participant/production delivery disabled.
-9. RC7 Google Maps runtime.
-10. RC8 sandbox-only payment adapters/evidence reconciliation.
+9. RC7 Google Maps runtime — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY** through run `30234521983/1`.
+10. RC8 sandbox-only payment adapters/evidence reconciliation — **IMPLEMENTED_GATED / MANAGED PROOF ARMED**; source merged at `6098b71f89d62fa059de298be11a8d9d8539c25e`; MTN/Stripe/PayPal private proof pending; DPO/Airtel/Flutterwave runtime disabled.
 11. RC9 OpenAPI generated Kotlin/TypeScript client adoption decision/migration.
 12. RC10 Turnstile only if justified.
 13. RC11 full combined regression and lane release.

@@ -3,13 +3,13 @@
 **Governing issue:** #261
 **Branch:** `integration/rc8-sandbox-payments`
 **Replayed base:** `main@54d0129027b7f324272c4bcc94a0f2109318fd18`
-**State:** SOURCE CHECKPOINT READY FOR PROMOTION — runtime binding and managed sandbox evidence remain pending
+**State:** IMPLEMENTED_GATED / MANAGED PROOF ARMED
 
 ## Source replay receipt
 
 RC7 closed through PR #487, and RC8 became the sole bounded repository lane through PR #488. The original PR #454 source checkpoint was replayed losslessly as one commit over `main@54d0129027b7f324272c4bcc94a0f2109318fd18`: all 16 net RC8 files were preserved, while stale pre-RC7 history was removed.
 
-This source checkpoint remains fail-closed. It adds no application registration, runtime credential binding, controller route, webhook endpoint, database executor or managed provider transaction. Runtime binding and managed sandbox evidence remain separate RC8 checkpoints.
+The source checkpoint was promoted through PR #454 at `6098b71f89d62fa059de298be11a8d9d8539c25e`. It remains fail-closed in the application: no provider is registered as runtime-enabled, no API service secret binding, controller route, webhook endpoint or database executor was introduced. Managed proof is isolated to one private temporary Cloud Run Job.
 
 ## Approved RC8 scope
 
@@ -182,9 +182,25 @@ The exact RC8D head passed repository formatting, lint, strict typechecking, rou
 
 RC8D still has no controller route, provider runtime binding, database executor or managed provider transaction. The permanent RC8 contract prevents removal of observation fingerprinting, mismatch queues, immutable history flags, two-person adjustment approval and operations-only reconciliation.
 
+## Managed runtime proof — armed
+
+The reviewed runtime slice is source-controlled on `feat/rc8-managed-sandbox-proof` from `6098b71f89d62fa059de298be11a8d9d8539c25e`. It:
+
+- validates existing Secret Manager containers and pinned numeric versions without reading values through GitHub CI;
+- requires secret-scoped `roles/secretmanager.secretAccessor` only for `direkt-api-runtime`;
+- builds an immutable exact-main backend image;
+- creates one private, synthetic-only Cloud Run Job with zero retries and bounded timeout;
+- activates cloned descriptors only inside the canary process while `PAYMENT_PROVIDER_MODE=disabled` remains true for the application;
+- proves MTN Request to Pay plus independent successful status;
+- proves an unpaid Stripe Checkout and unapproved PayPal order remain `requires_action`;
+- proves append-only success planning, balanced posting, duplicate suppression, mismatch review and immutable two-person refund adjustment planning;
+- emits only sanitized receipts and deletes the temporary job on every outcome.
+
+DPO remains runtime-unbound because no DIREKT private sandbox credential exists. Airtel remains provider-pending. Flutterwave remains deferred/excluded. No PayPal capture, browser approval, real money, participant data, production endpoint, customer-to-provider payment, escrow, wallet, payout or direct ledger mutation is authorized.
+
 ## Merge and runtime gates
 
-The source checkpoint may merge only after the replayed exact head passes all applicable repository regressions and review confirms that no provider is runtime-bound. Before any provider adapter becomes executable, a separate least-privilege change must also prove:
+The source checkpoint is merged. The managed proof may execute only after the runtime-source exact head passes all applicable repository regressions and the following controls remain enforced:
 
 - explicit sandbox target environment;
 - source-controlled provider allowlist;

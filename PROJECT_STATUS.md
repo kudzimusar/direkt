@@ -19,7 +19,7 @@ DIREKT’s current repository state is:
 - functional customer/provider web/PWA W0–W8 — **closed**;
 - VC0 preparation/control — **closed**;
 - VC1–VC8 world-class product/AI modernization — **complete and merged**;
-- runtime integration closure — **RC1–RC7 are closed at synthetic-only managed boundaries; RC8 sandbox payment source promotion and managed evidence are active**.
+- runtime integration closure — **RC1–RC7 are closed at synthetic-only managed boundaries; RC8 source merged at `6098b71f89d62fa059de298be11a8d9d8539c25e` and exact-main managed sandbox evidence is armed**.
 
 VC1–VC8 completion does not replace or weaken the remaining Phase 11 real-world evidence, privacy/legal, payment, external-communications or production-release gates.
 
@@ -207,12 +207,12 @@ VC1–VC8 completion does not clear:
 
 VC1–VC8 and RC1–RC7 are closed at their documented boundaries. RC8 is the sole active repository write lane.
 
-RC8 execution order is:
+RC8 source promotion is complete through PR #454 at `6098b71f89d62fa059de298be11a8d9d8539c25e`. The active completion order is:
 
-1. replay the reviewed PR #454 source checkpoint onto the current RC7-closed `main`;
-2. require the complete exact-head backend, Android, web, portal, integration, supply-chain and documentation regression matrix before source promotion;
-3. bind only reviewed sandbox/test provider credentials through least-privilege server-side controls;
-4. execute bounded synthetic provider and reconciliation evidence with real money, participant data and production authorization false;
-5. close RC8 only after status/ledger reconciliation, trigger consumption, exact-head regressions and workstream release.
+1. verify numeric Secret Manager versions and secret-scoped runtime access for the existing MTN MoMo, Stripe and PayPal sandbox credentials without reading values through CI;
+2. build an immutable exact-main backend image and execute one private synthetic Cloud Run Job;
+3. prove MTN independent success, Stripe unpaid Checkout retrieval, PayPal unapproved-order retrieval, immutable reconciliation, duplicate suppression, mismatch review and two-person adjustment planning;
+4. preserve DPO/Airtel/Flutterwave runtime blocks and keep real money, participant data and production authorization false;
+5. close RC8 only after terminal evidence, status/ledger reconciliation, trigger consumption, exact-head regressions and workstream release.
 
 This project status records repository/product completion truth only and does not imply production authorization beyond the explicitly evidenced integration and release boundaries.

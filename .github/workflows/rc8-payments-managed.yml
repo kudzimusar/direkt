@@ -1,0 +1,209 @@
+name: DIREKT RC8 managed sandbox payment proof
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc8-payments-managed.yml"
+      - "scripts/rc8/run-payments-managed.sh"
+      - "scripts/rc8/bootstrap-payments-managed.sh"
+      - "scripts/rc8/verify-payments-contract.py"
+      - "backend/direkt-api/src/commercial/rc8-payment-canary.ts"
+      - "backend/direkt-api/src/commercial/*sandbox-payment-provider*"
+      - "backend/direkt-api/src/commercial/sandbox-payment-reconciliation.ts"
+      - "backend/direkt-api/test/unit/*sandbox-payment*"
+      - "docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md"
+      - "docs/integrations/RC8_SANDBOX_PAYMENTS_IMPLEMENTATION.md"
+      - "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
+      - "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
+      - "WORKSTREAM_LOCK.md"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/rc8-payments-managed.yml"
+      - "scripts/rc8/run-payments-managed.sh"
+      - "scripts/rc8/bootstrap-payments-managed.sh"
+      - "scripts/rc8/verify-payments-contract.py"
+      - "backend/direkt-api/src/commercial/rc8-payment-canary.ts"
+      - "backend/direkt-api/src/commercial/*sandbox-payment-provider*"
+      - "backend/direkt-api/src/commercial/sandbox-payment-reconciliation.ts"
+      - "backend/direkt-api/test/unit/*sandbox-payment*"
+      - "docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md"
+      - "docs/integrations/RC8_SANDBOX_PAYMENTS_IMPLEMENTATION.md"
+      - "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
+      - "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
+      - "WORKSTREAM_LOCK.md"
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN-DIREKT-RC8-PAYMENTS-MANAGED
+        required: true
+        type: string
+      source_sha:
+        description: Exact reviewed commit that must equal current main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-rc8-payments-managed
+  cancel-in-progress: false
+
+jobs:
+  contract:
+    name: Verify managed RC8 payment workflow contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Verify permanent RC8 source and managed controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/rc8/verify-payments-contract.py
+          python3 -m py_compile scripts/rc8/verify-payments-contract.py
+          bash -n scripts/rc8/run-payments-managed.sh
+          bash -n scripts/rc8/bootstrap-payments-managed.sh
+          grep -Fxq 'STATUS=ARMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md
+          grep -Fxq 'CONFIRMATION=RUN-DIREKT-RC8-PAYMENTS-MANAGED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md
+          grep -Fq 'DIREKT RC8 managed sandbox payment proof' .github/workflows/rc8-payments-managed.yml
+
+  managed:
+    name: Prove private synthetic sandbox payments
+    if: github.event_name != 'pull_request'
+    needs: contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: staging
+    permissions:
+      contents: read
+      id-token: write
+      issues: write
+    env:
+      GCP_PROJECT_ID: direkt-dev-502701
+      GCP_REGION: asia-northeast1
+      GCP_ARTIFACT_REGISTRY: direkt-containers
+      GCP_RUNTIME_SERVICE_ACCOUNT: direkt-api-runtime@direkt-dev-502701.iam.gserviceaccount.com
+      GCP_WORKLOAD_IDENTITY_PROVIDER: projects/264358173369/locations/global/workloadIdentityPools/direkt-github/providers/direkt-main
+      GCP_DEPLOYER_SERVICE_ACCOUNT: direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com
+      DIREKT_GCLOUD_VERSION: "568.0.0"
+      CLOUDSDK_CORE_DISABLE_PROMPTS: "1"
+    steps:
+      - name: Resolve exact-main execution inputs
+        id: controls
+        shell: bash
+        env:
+          DISPATCH_CONFIRMATION: ${{ inputs.confirmation }}
+          DISPATCH_SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]]; then
+            test "${DISPATCH_CONFIRMATION}" = "RUN-DIREKT-RC8-PAYMENTS-MANAGED"
+            [[ "${DISPATCH_SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
+            echo "source_sha=${DISPATCH_SOURCE_SHA}" >> "${GITHUB_OUTPUT}"
+          else
+            echo "source_sha=${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
+          fi
+          echo "RC8_RECEIPT_PATH=${RUNNER_TEMP}/rc8-payments-managed-receipt.txt" >> "${GITHUB_ENV}"
+
+      - name: Check out exact reviewed source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.controls.outputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify exact source equals current main and trigger is armed
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ steps.controls.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
+          git fetch origin main --no-tags
+          test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"
+          grep -Fxq 'STATUS=ARMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md
+          grep -Fxq 'CONFIRMATION=RUN-DIREKT-RC8-PAYMENTS-MANAGED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md
+          python3 scripts/rc8/verify-payments-contract.py
+          bash -n scripts/rc8/run-payments-managed.sh
+          bash -n scripts/rc8/bootstrap-payments-managed.sh
+          echo "SOURCE_SHA=${SOURCE_SHA}" >> "${GITHUB_ENV}"
+
+      - name: Authenticate through existing GitHub WIF
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up pinned Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          version: ${{ env.DIREKT_GCLOUD_VERSION }}
+
+      - name: Execute bounded managed RC8 proof
+        shell: bash
+        run: bash scripts/rc8/run-payments-managed.sh
+
+      - name: Upload sanitized RC8 managed evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc8-payments-managed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/rc8-payments-managed-receipt.txt
+            ${{ runner.temp }}/rc8-payments-canary.json
+            ${{ runner.temp }}/rc8-payments-canary-failure.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Publish managed proof summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '### DIREKT RC8 managed sandbox payment proof'
+            echo "- Exact current main: \`${SOURCE_SHA:-not-resolved}\`"
+            echo '- Runtime: one private Cloud Run Job; application payment provider mode remains disabled'
+            echo '- Providers: MTN MoMo, Stripe and PayPal sandbox/test only'
+            echo '- DPO: runtime-unbound; no DIREKT private sandbox credential'
+            echo '- Airtel: provider-pending; Flutterwave: deferred/excluded'
+            echo '- Payment truth: independent provider verification only; browser redirects never authoritative'
+            echo '- Reconciliation: append-only success, deduplication, mismatch review and two-person refund adjustment planning'
+            echo '- Raw provider payloads / credentials: absent from artifacts'
+            echo '- Participant data / real money / production authorization: false'
+            echo '- Temporary Cloud Run Job: cleanup enforced'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Publish sanitized terminal receipt to Issue 261
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          result="FAILED"
+          if [[ -f "${RC8_RECEIPT_PATH}" ]] && grep -Fxq 'managed_result=PASS' "${RC8_RECEIPT_PATH}"; then
+            result="PASS"
+          fi
+          source_sha="${SOURCE_SHA:-${{ steps.controls.outputs.source_sha }}}"
+          body="${RUNNER_TEMP}/rc8-issue-receipt.md"
+          {
+            echo '## RC8 managed sandbox payment proof receipt'
+            echo
+            echo "- Result: **${result}**"
+            echo "- Exact current main: \`${source_sha:-not-resolved}\`"
+            echo "- Managed run: [${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
+            echo '- Runtime: private Cloud Run Job with numeric Secret Manager versions'
+            echo '- Application payment-provider mode: disabled'
+            echo '- Real money / participant data / production authorization: false'
+            if [[ -f "${RC8_RECEIPT_PATH}" ]]; then
+              grep -E '^(owner_bootstrap_verified|missing_runtime_secret_accessor|secret_values_read_by_deployer|mtn_subscription_version|mtn_user_version|mtn_key_version|stripe_version|paypal_client_id_version|paypal_client_secret_version|provider_canary|mtn_request_to_pay|mtn_independent_status|stripe_unpaid_checkout_verified|paypal_unapproved_order_verified|browser_redirect_creates_payment_truth|reconciliation_transition|reconciliation_balanced_ledger|reconciliation_duplicate|reconciliation_mismatch|reconciliation_adjustment|adjustment_two_person_approval|adjustment_requester_may_approve|historical_payment_rewritten|historical_ledger_rewritten|trust_or_ranking_mutation|dpo_runtime_bound|airtel_runtime_bound|flutterwave_included|cleanup\.|cleanup_failed|managed_result)=' "${RC8_RECEIPT_PATH}" | sed 's/^/- `/' | sed 's/$/`/' || true
+            fi
+          } > "${body}"
+          gh issue comment 261 --repo "${GITHUB_REPOSITORY}" --body-file "${body}"

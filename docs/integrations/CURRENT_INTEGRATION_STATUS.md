@@ -124,13 +124,14 @@ No telemetry provider may receive raw evidence, tokens, cookies, contact data, e
 |---|---|---|
 | Subscription/payment domain | **ACTIVE implementation** | Products, subscriptions, invoices, intents, ledger/reconciliation contracts. |
 | Synthetic payment adapter | **ACTIVE tests only** | Lifecycle/idempotency testing without real money. |
-| MTN MoMo Collections API | **SANDBOX_PROVEN / RUNTIME DISABLED** | OAuth, Request to Pay and authoritative status verification succeeded. |
+| RC8 sandbox provider runtime proof | **IMPLEMENTED_GATED / MANAGED PROOF ARMED** | Source PR #454 merged at `6098b71f89d62fa059de298be11a8d9d8539c25e`. One exact-main private Cloud Run Job is armed for MTN MoMo, Stripe and PayPal using numeric Secret Manager versions; the application registry remains disabled. DPO is runtime-unbound, Airtel provider-pending and Flutterwave excluded. |
+| MTN MoMo Collections API | **SOURCE INTEGRATED / MANAGED PROOF ARMED** | External sandbox proof already succeeded; RC8 now has a fail-closed source adapter and one private exact-main Request-to-Pay/status proof armed. Application runtime remains disabled. |
 | MTN Collection Widget / QR / USSD | **EXTERNALLY_PROVISIONED / RUNTIME DISABLED** | Runtime feature not wired. |
 | Airtel Money Zambia Cash-In API | **PENDING_PROVIDER / DISABLED** | TEST application/Cash-In exists; approval/credentials pending. |
-| DPO Pay / Network | **SANDBOX_PROVEN / RUNTIME DISABLED** | Sandbox create/checkout/verify paid flow succeeded. |
-| Stripe Checkout | **SANDBOX_PROVEN / RUNTIME DISABLED** | Sandbox Checkout/payment verification succeeded. |
+| DPO Pay / Network | **SOURCE INTEGRATED / RUNTIME DISABLED** | External sandbox proof and source adapter exist, but no DIREKT private sandbox credential is provisioned in Secret Manager; RC8 managed runtime binding remains prohibited. |
+| Stripe Checkout | **SOURCE INTEGRATED / MANAGED PROOF ARMED** | External sandbox proof already succeeded; RC8 will create and independently retrieve one unpaid test Checkout without treating browser state as payment truth. Application runtime remains disabled. |
 | Stripe Link | **EXTERNALLY_PROVISIONED / NOT EXPLICITLY PROVEN** | Dedicated Link evidence optional/outstanding. |
-| PayPal | **SANDBOX_PROVEN / RUNTIME DISABLED** | OAuth/order/approval/capture/verification succeeded. |
+| PayPal | **SOURCE INTEGRATED / MANAGED PROOF ARMED** | External sandbox proof already succeeded; RC8 will create and independently retrieve one unapproved sandbox order without capture or browser-authoritative payment truth. Application runtime remains disabled. |
 | Flutterwave | **BLOCKED / DEFERRED** | Zambia onboarding unavailable/deferred. |
 | Real money movement | **DISABLED** | Separate legal/commercial/provider/pilot/release gates required. |
 | Escrow/customer-to-provider payments | **PLANNED LATER / NOT MVP** | Separate legal/regulatory/payout/dispute/KYC architecture required. |
