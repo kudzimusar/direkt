@@ -128,6 +128,16 @@ def main() -> int:
         "RC8 is the sole active repository write lane",
         "Production/participant WhatsApp delivery remains disabled",
     )
+    rc8_closed_lock_needles = (
+        "| Status | RELEASED |",
+        "RC5 implementation contract — CLOSED AND PRESERVED",
+        "RC6 implementation contract — CLOSED AND PRESERVED",
+        "exact-current-main managed run `30137700769`",
+        "RC7 implementation contract — CLOSED AND PRESERVED",
+        "RC8 implementation contract — CLOSED AND PRESERVED",
+        "No repository write lane is active",
+        "production/participant WhatsApp delivery remains disabled",
+    )
     supported_states = (
         all(needle in lock for needle in active_lock_needles),
         all(needle in lock for needle in rc5_resumed_lock_needles),
@@ -135,10 +145,11 @@ def main() -> int:
         all(needle in lock for needle in rc7_active_lock_needles),
         all(needle in lock for needle in rc7_closed_lock_needles),
         all(needle in lock for needle in rc8_active_lock_needles),
+        all(needle in lock for needle in rc8_closed_lock_needles),
     )
     if sum(supported_states) != 1:
         raise AssertionError(
-            "RC6 lock must be exactly one supported state: active RC6, RC5 resumed, no active lane before RC7, bounded RC7 active, RC7 closed/released, or bounded RC8 active."
+            "RC6 lock must be exactly one supported state through RC8 closed/released."
         )
 
     for needle in (

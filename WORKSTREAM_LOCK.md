@@ -6,14 +6,14 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED — RC8 sandbox payment runtime closure |
-| Owner/agent | Active repository agent — Issue #261 RC8 sandbox payments checkpoint. |
-| Authorized scope | Reconcile and promote the existing RC8 sandbox-provider source checkpoint, bind only reviewed provider sandbox credentials through least-privilege server-side controls, execute synthetic managed provider/reconciliation evidence, and close the checkpoint. Real money, participant data, production endpoints, customer-to-provider payments, escrow, wallet/payout authority and payment influence over verification/trust remain prohibited. |
-| Protected surface | Closed RC0–RC7 evidence, including RC5 managed run `30183466799`, RC6 managed run `30137700769` and RC7 managed run `30234521983/1`; UIA Issue #354; backend/database/OpenAPI and commercial ledger trust boundaries; private API/BFF IAM; provider credentials; VC1–VC8 Design DNA; Phase 11/12 gates; Android auth/signing/Play/Data Safety. |
-| Implementation branch | `feat/rc8-managed-sandbox-proof`, based on the merged source checkpoint `main@6098b71f89d62fa059de298be11a8d9d8539c25e`. |
-| Stable baseline | RC5–RC7 remain closed. RC8 source checkpoint PR #454 is merged at `6098b71f89d62fa059de298be11a8d9d8539c25e`; all provider adapters remain application-runtime disabled. UIA Issue #354 remains parked/open. Production, participant and real-money activation remain disabled. |
-| Current task | RC8 — prove MTN MoMo, Stripe and PayPal through one exact-main private synthetic Cloud Run Job, preserve DPO/Airtel/Flutterwave runtime blocks, then reconcile and close the checkpoint. |
-| Governing issue | Issue #261 — Runtime integration closure after W8. RC8 is the sole active bounded write lane; Issue #354 UIA remains parked/read-only. |
+| Status | RELEASED |
+| Owner/agent | None — RC8 is closed; Issue #261 remains the runtime-integration tracker. |
+| Authorized scope | No active write lane. RC8 evidence is immutable/regression-protected. RC9 may begin only through a new explicit claim. Real money, participant data, production endpoints, customer-to-provider payments, escrow, wallet/payout authority and payment influence over verification/trust remain prohibited. |
+| Protected surface | Closed RC0–RC8 evidence, including RC5 run `30183466799`, RC6 run `30137700769`, RC7 run `30234521983/1` and RC8 run `30241092949/1` on `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3`; UIA Issue #354; backend/database/OpenAPI and commercial ledger trust boundaries; private API/BFF IAM; provider credentials; VC1–VC8 Design DNA; Phase 11/12 gates; Android auth/signing/Play/Data Safety. |
+| Implementation branch | None — `docs/rc8-managed-closure` is the bounded closeout branch only. |
+| Stable baseline | RC5–RC8 are closed. RC8 exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3` passed managed run `30241092949/1` with artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`). Application provider registration, participant use, production credentials/endpoints and real-money movement remain disabled. UIA Issue #354 remains parked/open. |
+| Current task | None. RC9 OpenAPI-generated client adoption/decision is next in sequence but is not claimed. |
+| Governing issue | Issue #261 — Runtime integration closure after W8. No active repository lane; Issue #354 UIA remains parked/read-only. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
 
@@ -104,7 +104,7 @@ The following strings are historical closure evidence required by the permanent 
 9. Managed closure is proven on exact source `47285575862cbf08845eaeabe093afea1ea79bd1` through run `30234521983/1`: restricted key/API metadata, backend synthetic Geocoding, final APK restriction, API 36 map readiness and cleanup all passed. Artifact `8641270327` (`sha256:24da53c0bd6fa885fa4a6814f70af090096192e6c5b7a03c89fba51416877fde`) preserves the sanitized receipt; earlier failures remain preserved.
 10. RC7 is `CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY`. It does not authorize participant Maps usage, private-location publication, production authentication, real communications, real money, Phase 11 exit or Phase 12 release.
 
-## RC8 implementation contract — CLAIMED
+## RC8 implementation contract — CLOSED AND PRESERVED
 
 1. RC8 is limited to sandbox adapters, runtime proof and reconciliation for DIREKT-owned provider subscriptions, verification-processing fees and renewal/re-verification fees.
 2. Real money, participant payment data, production provider endpoints or credentials, customer-to-provider service payments, escrow, stored value, wallets and marketplace payouts remain disabled and outside scope.
@@ -115,7 +115,7 @@ The following strings are historical closure evidence required by the permanent 
 7. Refund and accounting-adjustment execution requires two independent approvers, requester exclusion, balanced ledger effects and operations-only revision-checked resolution.
 8. Managed proof may bind only the existing reviewed MTN MoMo, Stripe and PayPal sandbox/test credentials. DPO remains source-integrated and externally sandbox-proven but runtime-unbound because no DIREKT private sandbox credential exists; Airtel remains provider-pending and Flutterwave remains deferred/excluded.
 9. Managed evidence must use bounded synthetic values, sanitized receipts, exact reviewed source, explicit cleanup and no raw provider payload or credential leakage. A failed provider attempt remains preserved and cannot be documented as passing.
-10. RC8 closes only after source promotion, applicable managed sandbox provider and reconciliation proof, status/ledger reconciliation, exact-head regressions, trigger consumption and workstream release. Production and participant authorization remain false.
+10. RC8 is `CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY`: exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3` passed run `30241092949/1` with artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`). MTN independent success, Stripe unpaid Checkout retrieval, PayPal unapproved-order retrieval, immutable reconciliation, duplicate suppression, mismatch review, two-person adjustment planning and temporary-job cleanup all passed. The trigger is consumed; application runtime, production, participant and real-money authorization remain false.
 
 ## Runtime integration closure contract
 
@@ -142,7 +142,7 @@ The following strings are historical closure evidence required by the permanent 
 - UIA — post-VC owner-review promotion. **PARKED / OPEN — PR #385 merged at `fed6db8ab7c479b5e47095b4f0a752514122a4f6`; Issue #354 remains open for remaining owner-access evidence; read-only during RC7.**
 - RC6 — WhatsApp Cloud API application adapter. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY — exact source `8838b7a6d726a5aed44ce21a39506c1265a98d15`; managed run `30137700769` succeeded on retry through outbox → Meta test template → authentic signed webhook receipt; initial failure preserved in Issue #404; production/participant sends remain disabled.**
 - RC7 — Google Maps runtime activation with separate restricted Android/backend credentials, privacy-safe publication semantics, quotas, manual/list fallback and kill switch. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY — exact source `47285575862cbf08845eaeabe093afea1ea79bd1`; run `30234521983/1`; artifact `8641270327` (`sha256:24da53c0bd6fa885fa4a6814f70af090096192e6c5b7a03c89fba51416877fde`); production/participant authorization false.**
-- RC8 — sandbox-only payment-provider adapter closure/reconciliation. **CLAIMED — source checkpoint merged at `6098b71f89d62fa059de298be11a8d9d8539c25e`; exact-main private managed proof is armed for MTN MoMo, Stripe and PayPal; DPO runtime-unbound, Airtel provider-pending, Flutterwave deferred; real money remains disabled.**
+- RC8 — sandbox-only payment-provider adapter closure/reconciliation. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY — exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3`; run `30241092949/1`; artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`); MTN/Stripe/PayPal proved privately; DPO runtime-unbound, Airtel provider-pending, Flutterwave deferred; application runtime and real money disabled.**
 - RC9 — OpenAPI-generated Kotlin and TypeScript client adoption/decision after backend integration/API shape stabilizes; migrate incrementally with cross-client regressions.
 - RC10 — Turnstile threat-model decision; implement only if a reviewed public abuse-sensitive flow requires it, otherwise close as not currently justified.
 - RC11 — combined integration regression, managed evidence index, live ledger/status reconciliation and lane release.
@@ -164,4 +164,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-RC8 is the sole active repository write lane. RC0–RC7 evidence remains immutable/regression-protected, UIA Issue #354 remains parked/read-only, and RC9+ source work must not begin until RC8 is closed or explicitly transitioned. Real-money, participant and production authorization remain blocked.
+No repository write lane is active. RC0–RC8 evidence remains immutable/regression-protected, UIA Issue #354 remains parked/read-only, and RC9 source work requires a new explicit claim. Real-money, participant and production authorization remain blocked.
