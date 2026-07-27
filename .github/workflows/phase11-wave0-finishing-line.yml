@@ -1,0 +1,59 @@
+name: DIREKT Phase 11 Wave 0 finishing line
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "WORKSTREAM_LOCK.md"
+      - "PROJECT_STATUS.md"
+      - "docs/phase11/**"
+      - "scripts/phase11/**"
+      - "scripts/rc11/verify-final-integration-closure.py"
+      - "backend/direkt-api/src/config/environment.ts"
+      - ".github/workflows/phase11-wave0-finishing-line.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "WORKSTREAM_LOCK.md"
+      - "PROJECT_STATUS.md"
+      - "docs/phase11/**"
+      - "scripts/phase11/**"
+      - "scripts/rc11/verify-final-integration-closure.py"
+      - "backend/direkt-api/src/config/environment.ts"
+      - ".github/workflows/phase11-wave0-finishing-line.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: direkt-phase11-wave0-finishing-line-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify fail-closed Wave 0 terminal state
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Preserve RC11 and readiness closures
+        run: |
+          set -euo pipefail
+          python3 scripts/rc11/verify-final-integration-closure.py
+          python3 scripts/phase11/verify-primary-pilot-readiness.py
+      - name: Evaluate Wave 0 gates
+        run: |
+          set -euo pipefail
+          python3 scripts/phase11/evaluate-wave0-gates.py
+      - name: Verify Wave 0 finishing-line package
+        run: |
+          set -euo pipefail
+          python3 scripts/phase11/verify-wave0-finishing-line.py
+      - name: Reject repository mutation
+        run: git diff --exit-code

@@ -264,6 +264,19 @@ This package makes execution operationally ready but does not start 11C, create 
 
 The exact package is bound to PR #508 head `ae4fcb0350be4023f82e2be8df88c18cca583695`, merged at `2bf58c2c5df40aa76742730ec4a49644c2506a89`, with the complete regression matrix recorded in `PHASE11_PRIMARY_PILOT_READINESS_RECEIPT.md`. The repository readiness lane is released; Issue #112 remains open for real-entry evidence and execution.
 
+## Wave 0 finishing-line reconciliation
+
+The repository now also contains a deterministic terminal control package:
+
+- `PHASE11_WAVE0_OFFICIAL_SOURCE_EVIDENCE_2026-07-28.md` — current official-source DPC, Data Protection Act, CCPC and Firebase evidence without false legal authority;
+- `PHASE11_WAVE0_EVIDENCE_MANIFEST.schema.json` and `PHASE11_WAVE0_EVIDENCE_MANIFEST.json` — exact gate inventory, accountable evidence fields and machine-readable terminal state;
+- `PHASE11_WAVE0_OWNER_ACTION_PACKET.md` — only the regulator, counsel, owner and protected-console actions that cannot be completed by repository automation;
+- `PHASE11_WAVE0_TECHNICAL_PREFLIGHT.md` — one exact-head technical acceptance contract;
+- `PHASE11_WAVE0_TERMINAL_RECEIPT.md` — truthful terminal `ENTRY_BLOCKED_EXTERNAL` receipt;
+- `evaluate-wave0-gates.py` and `verify-wave0-finishing-line.py` — fail-closed permanent enforcement.
+
+The current hard-gate result is `ENTRY_BLOCKED_EXTERNAL`. Repository work has not supplied an entity-specific DPC registration outcome, overseas storage/transfer authorization, qualified Zambia legal/consumer review, final approved notice/lifecycle schedule, signed Wave 1 authorization, approved Firebase Zambia console receipt or authorized real-environment canaries. Therefore `PILOT_ENTRY_APPROVED` remains false, PRIMARY-PILOT evidence remains zero and Phase 11 is not closed.
+
 ## Phase 12 boundary
 
 Phase 12 is not authorized merely because Phase 11 synthetic activation is complete. It begins formally only after the actual controlled pilot and global release gates support a `PROCEED` decision.

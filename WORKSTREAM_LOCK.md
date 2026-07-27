@@ -10,9 +10,9 @@ This file prevents overlapping writes in the single-lane build process.
 | Owner/agent | Active repository agent — Issue #112 Wave 0 finishing-line reconciliation. |
 | Authorized scope | Reconcile every repository-clearable real-entry gate, refresh official-source evidence, create machine-enforced evidence intake/owner decision controls, prove the protected pre-entry environment, and publish the truthful terminal handoff. No participant recruitment, processing, provider activation, real money or production release. |
 | Protected surface | Closed RC0–RC11 evidence, canonical OpenAPI authorization/privacy checks, Android auth/session and Firebase controls, customer/provider web BFF/private Cloud Run IAM, operations portal, RC8 payment boundaries, UIA Issue #354, VC1–VC8 Design DNA and Phase 11/12 gates. |
-| Implementation branch | `phase11/wave0-finishing-line`, based on exact `main@b02ae4ea2d6136b2122e978177ccc4957e167f34`. |
-| Stable baseline | `main@b02ae4ea2d6136b2122e978177ccc4957e167f34` contains the reviewed Phase 11C–11J readiness package, exact closeout receipt and closed RC0–RC11 evidence. |
-| Current task | Wave 0 finishing-line reconciliation only. `PILOT_ENTRY_APPROVED` remains false and PRIMARY-PILOT evidence count remains 0 unless actual external authority and owner evidence is supplied and separately approved. |
+| Implementation branch | `phase11/wave0-finishing-line-implementation`, based on claim merge `main@6b9e7cabeebd5ade9b998b8a54bcd2c888e6bfe4`. |
+| Stable baseline | `main@6b9e7cabeebd5ade9b998b8a54bcd2c888e6bfe4` contains the verified Wave 0 claim, reviewed Phase 11C–11J readiness package and closed RC0–RC11 evidence. |
+| Current task | Wave 0 finishing-line controls implemented; exact-head technical preflight, terminal receipt binding and lane release remain pending. Current decision is `ENTRY_BLOCKED_EXTERNAL`; `PILOT_ENTRY_APPROVED` remains false and PRIMARY-PILOT evidence count remains 0. |
 | Governing issue | Issue #112 remains open for external entry gates, Wave 0 authorization, real 11C–11H evidence, 11I corrections and 11J decision. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
