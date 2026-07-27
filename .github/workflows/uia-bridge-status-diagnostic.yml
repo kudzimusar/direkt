@@ -13,31 +13,21 @@ jobs:
   inspect:
     if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chore/uia-bridge-diagnostic'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
-      SOURCE_SHA: 9c7d2613121771c4beabb5fff2a7bb0b3361702c
+      SOURCE_SHA: bb84968453b891dd511faddc093a8874fce8abc4
       WORKFLOW: uia-current-main-refresh-closeout-once.yml
     steps:
-      - name: Print exact promotion bridge lint findings
-        run: |
-          set -euo pipefail
-          mkdir -p .github/workflows
-          gh api "/repos/${GITHUB_REPOSITORY}/contents/.github/workflows/${WORKFLOW}?ref=${SOURCE_SHA}" \
-            --jq '.content' | base64 --decode > ".github/workflows/${WORKFLOW}"
-          set +e
-          go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 \
-            -no-color \
-            ".github/workflows/${WORKFLOW}" > "${RUNNER_TEMP}/actionlint.txt" 2>&1
-          lint_status=$?
-          set -e
-          echo "ACTIONLINT_STATUS=${lint_status}"
-          cat "${RUNNER_TEMP}/actionlint.txt"
-      - name: Report exact bridge run
+      - name: Report corrected bridge run and jobs
         run: |
           set -euo pipefail
           runs="$(gh run list --repo "${GITHUB_REPOSITORY}" --workflow "${WORKFLOW}" --branch main --limit 20 --json databaseId,displayTitle,event,headSha,status,conclusion,createdAt,updatedAt,url)"
+          echo '=== MATCHING BRIDGE RUNS ==='
+          jq --arg sha "${SOURCE_SHA}" '[.[] | select(.headSha == $sha)]' <<< "${runs}"
           run_id="$(jq -r --arg sha "${SOURCE_SHA}" '[.[] | select(.headSha == $sha)] | sort_by(.createdAt) | last | .databaseId // empty' <<< "${runs}")"
           [[ "${run_id}" =~ ^[0-9]+$ ]]
-          gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}" \
-            --jq '{id,name,path,event,status,conclusion,head_sha,run_attempt,created_at,updated_at,html_url}'
+          echo "BRIDGE_RUN_ID=${run_id}"
+          echo '=== BRIDGE JOBS ==='
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?per_page=100" \
+            --jq '.jobs[] | {id,name,status,conclusion,started_at,completed_at,html_url}'
