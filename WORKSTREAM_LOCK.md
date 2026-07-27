@@ -10,9 +10,9 @@ This file prevents overlapping writes in the single-lane build process.
 | Owner/agent | Active repository agent — Issue #261 RC10 abuse-control checkpoint. |
 | Authorized scope | Audit every public mutating or provider-cost-bearing flow and either implement Turnstile on one specifically justified browser flow or close it as `NOT CURRENTLY REQUIRED`. Existing fail-closed rate limits may be strengthened. Global CAPTCHA installation, Android challenges and unrelated provider activation are prohibited. |
 | Protected surface | Closed RC0–RC9 evidence, canonical OpenAPI authorization/privacy checks, Android auth/session and Firebase controls, customer/provider web BFF/private Cloud Run IAM, operations portal, RC8 payment boundaries, UIA Issue #354, VC1–VC8 Design DNA and Phase 11/12 gates. |
-| Implementation branch | `feat/rc10-turnstile-decision`, based on `main@c1960e7bf38a81ad48c8046dd90cd008ede7bb6e`. |
-| Stable baseline | `main@c1960e7bf38a81ad48c8046dd90cd008ede7bb6e` contains RC0–RC9 closure, the RC9D exact-main receipt and no active Turnstile runtime. |
-| Current task | RC10A — complete the public-flow threat model, close uncovered rate-limit gaps, make the conditional Turnstile decision and prove it through exact-head regression. |
+| Implementation branch | `feat/rc10-turnstile-decision`, based on the RC10 claim merge `main@e0ee52564eef16cdec1d8eb0a85f17da456cb5b1`. |
+| Stable baseline | `main@e0ee52564eef16cdec1d8eb0a85f17da456cb5b1` contains RC0–RC9 closure and the formal RC10 conditional-decision claim. No Turnstile runtime is active. |
+| Current task | RC10B — `NOT CURRENTLY REQUIRED` decision and public POST rate-limit coverage are implemented; focused and full exact-head regression remain before closure. |
 | Governing issue | Issue #261 — Runtime integration closure after W8. RC10 is the sole active repository write lane; UIA Issue #354 remains parked/read-only. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |

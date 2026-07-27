@@ -19,7 +19,7 @@ DIREKT’s current repository state is:
 - functional customer/provider web/PWA W0–W8 — **closed**;
 - VC0 preparation/control — **closed**;
 - VC1–VC8 world-class product/AI modernization — **complete and merged**;
-- runtime integration closure — **RC1–RC9 are closed at their documented bounded boundaries. RC10 is claimed from `main@c1960e7bf38a81ad48c8046dd90cd008ede7bb6e` for the conditional Turnstile threat-model decision; no Turnstile runtime is active.**
+- runtime integration closure — **RC1–RC9 are closed at their documented bounded boundaries. RC10 is implemented as `NOT CURRENTLY REQUIRED / TURNSTILE NOT ACTIVE`, with explicit first-party rate limits added for public discovery assistance, public Help and search-area normalization; exact-head regression and closeout remain pending.**
 
 VC1–VC8 completion does not replace or weaken the remaining Phase 11 real-world evidence, privacy/legal, payment, external-communications or production-release gates.
 
@@ -209,6 +209,6 @@ VC1–VC8 completion does not clear:
 
 VC1–VC8 and RC1–RC9 are closed at their documented boundaries. RC8 closed on exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3` through run `30241092949/1` and artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`). RC9 implementation PR #497 passed its complete exact-head matrix on `04ef57f31414ec5165e353abba74afb8dfdcc901` and squash-merged to `main@70de95c73128e921cd4d7c667de0e5a442a9e0c0`.
 
-RC10 is the sole active repository write lane. It must inventory public abuse-sensitive flows and either implement a narrowly justified server-verified browser challenge or record `NOT CURRENTLY REQUIRED` with re-evaluation triggers. RC8 and RC9 boundaries remain unchanged; no participant, production, privileged-direct-access, payment-provider or real-money activation is authorized.
+RC10 is the sole active repository write lane. The threat model records `NOT CURRENTLY REQUIRED`, no Turnstile runtime or credential exists, and the uncovered public POST routes now use the existing fail-closed database abuse-control boundary. RC10 must remain claimed until exact-head regression, receipt reconciliation and closeout pass. RC8 and RC9 boundaries remain unchanged.
 
 This project status records repository/product completion truth only and does not imply production authorization beyond the explicitly evidenced integration and release boundaries.
