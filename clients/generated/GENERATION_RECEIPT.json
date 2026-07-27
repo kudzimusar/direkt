@@ -1,7 +1,7 @@
 {
   "canonicalOpenApi": {
     "path": "backend/direkt-api/artifacts/openapi.json",
-    "sha256": "1ea6b983c49c95db88db1a1432d9e6e0078fe124a3196f00c485b86dbe2db519"
+    "sha256": "1c13b69a34c30b84347b02ecddcf4f5b55c21e1958f036d4dc29c9106784e063"
   },
   "config": {
     "kotlinSha256": "85d89ee639cae5b245d28dc65d57c95447b2b4198332ccd7801465fed577d7d4",
@@ -18,15 +18,15 @@
       "library": "jvm-retrofit2",
       "runtimeWired": false,
       "serializationLibrary": "kotlinx_serialization",
-      "sourceFiles": 109,
-      "treeSha256": "ab6cd201e8a74df0c31319e882e3b419617a1539518f7151fa71ffe695c440c1"
+      "sourceFiles": 111,
+      "treeSha256": "ba3e4b7ab4f2eeaf3fafd96bdf2bbbddfd2feb8ebbbe71f4f309c825eb7991cc"
     },
     "typescript": {
       "generator": "typescript-fetch",
       "runtimeWired": false,
       "serverBffOnly": true,
-      "sourceFiles": 96,
-      "treeSha256": "19aa7625ac7e338d01e9947dfaad8d5660cbe17ab9bdc912fb36e04fb659276f"
+      "sourceFiles": 98,
+      "treeSha256": "04cecfb32400eac04d5818ee1bb22e8394d822e2d350c8cfcc4f3a64eee982fe"
     }
   },
   "participantData": false,

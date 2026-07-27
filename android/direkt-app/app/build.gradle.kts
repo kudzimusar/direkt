@@ -8,6 +8,7 @@ import org.gradle.api.tasks.TaskAction
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 fun strictBooleanProvider(name: String) =
@@ -280,7 +281,12 @@ android {
         buildConfig = true
     }
 
+    sourceSets["main"].kotlin.srcDir(
+        rootProject.file("../../clients/generated/kotlin/src/main/kotlin"),
+    )
+
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -336,7 +342,15 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.google.maps.compose)
 
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.kotlinx.serialization)
+    implementation(libs.retrofit.scalars)
+    implementation(libs.okhttp.logging)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
+
     testImplementation(libs.junit)
+    testImplementation(libs.okhttp.mockwebserver)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.test.ext.junit)

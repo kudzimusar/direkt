@@ -16,6 +16,11 @@ import type {
   SavedProviderView,
 } from "@/lib/contracts/customer";
 import { getCloudRunIdentityToken } from "./cloud-run-identity";
+import {
+  type DirektFirebaseSessionExchangeInput,
+  type GeneratedAuthenticatedSessionResponse,
+  toDirektAuthenticatedSession,
+} from "./generated-auth-contracts";
 import { getDirektWebRuntimeConfig } from "./runtime-config";
 
 export class DirektAuthApiError extends Error {
@@ -55,13 +60,12 @@ export class DirektAuthApi {
     return this.request("/api/v1/auth/challenges/verify", { method: "POST", body: input });
   }
 
-  exchangeFirebase(input: {
-    idToken: string;
-    noticeVersion: string;
-    consentAccepted: true;
-    deviceLabel?: string;
-  }): Promise<DirektAuthenticatedSession> {
-    return this.request("/api/v1/auth/firebase/exchange", { method: "POST", body: input });
+  async exchangeFirebase(input: DirektFirebaseSessionExchangeInput): Promise<DirektAuthenticatedSession> {
+    const response = await this.request<GeneratedAuthenticatedSessionResponse>(
+      "/api/v1/auth/firebase/exchange",
+      { method: "POST", body: input },
+    );
+    return toDirektAuthenticatedSession(response);
   }
 
   rotateSession(refreshToken: string): Promise<DirektRotatedSession> {
