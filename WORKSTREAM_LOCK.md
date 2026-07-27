@@ -6,14 +6,14 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | RELEASED — RC10 CLOSED AND PRESERVED |
-| Owner/agent | None. RC10 is closed; RC11 remains unclaimed. |
-| Authorized scope | No active repository write scope. A new explicit claim is required before RC11 or any other source change. |
+| Status | CLAIMED — RC11 FINAL INTEGRATION CLOSURE |
+| Owner/agent | Active repository agent — Issue #261 RC11 final integration closure. |
+| Authorized scope | RC11A combined regression, RC11B managed evidence index, RC11C ledger/status reconciliation and RC11D closure/handoff only. No new provider activation or participant processing. |
 | Protected surface | Closed RC0–RC10 evidence, canonical OpenAPI authorization/privacy checks, Android auth/session and Firebase controls, customer/provider web BFF/private Cloud Run IAM, operations portal, RC8 payment boundaries, UIA Issue #354, VC1–VC8 Design DNA and Phase 11/12 gates. |
-| Implementation branch | None. RC10 implementation PR #502 merged at `620a99ba5465ad38ce012df0a8fa15e458de6505`. |
-| Stable baseline | `main@620a99ba5465ad38ce012df0a8fa15e458de6505` contains the reviewed RC10 implementation; this closeout preserves that exact bounded result and releases the lane. |
-| Current task | None. RC11 combined integration reconciliation is next but unclaimed. |
-| Governing issue | Issue #261 — Runtime integration closure after W8. RC10 is closed; UIA Issue #354 remains parked/read-only. |
+| Implementation branch | `chore/rc11-final-integration-closure`, based on `main@feead13e1650e8326f86c372ab4be2b8c9bf544b`. |
+| Stable baseline | `main@feead13e1650e8326f86c372ab4be2b8c9bf544b` contains closed RC0–RC10 evidence and the RC10 closeout receipt. |
+| Current task | RC11A–RC11D — prove combined regressions, index managed evidence, reconcile truthful statuses and hand off cleanly to Phase 11 real-pilot preparation. |
+| Governing issue | Issue #261 — Runtime integration closure after W8. RC11 is the sole active repository write lane; UIA Issue #354 remains parked/read-only. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
 
@@ -171,7 +171,7 @@ The following strings are historical closure evidence required by the permanent 
 - RC8 — sandbox-only payment-provider adapter closure/reconciliation. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY — exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3`; run `30241092949/1`; artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`); MTN/Stripe/PayPal proved privately; DPO runtime-unbound, Airtel provider-pending, Flutterwave deferred; application runtime and real money disabled.**
 - RC9 — OpenAPI-generated Kotlin and TypeScript client adoption/decision. **CLOSED — deterministic generation, Android Firebase-session exchange adoption and server-only BFF type adoption merged through PR #497 at `70de95c73128e921cd4d7c667de0e5a442a9e0c0`; exact-head matrix passed on `04ef57f31414ec5165e353abba74afb8dfdcc901`; no production/participant or privileged direct-access change.**
 - RC10 — Turnstile threat-model decision. **CLOSED — NOT CURRENTLY REQUIRED / TURNSTILE NOT ACTIVE — PR #502 exact head `cdab6622e0cc06e35cddca2bb5bc8ea70c027b38`, merge `620a99ba5465ad38ce012df0a8fa15e458de6505`; first-party rate-limit gaps closed; production authorization false.**
-- RC11 — combined integration regression, managed evidence index, live ledger/status reconciliation and lane release. **NEXT BUT UNCLAIMED.**
+- RC11 — combined integration regression, managed evidence index, live ledger/status reconciliation and lane release. **CLAIMED — RC11A–RC11D IN PROGRESS from `main@feead13e1650e8326f86c372ab4be2b8c9bf544b`.**
 
 ## Persistent stop conditions
 
@@ -190,4 +190,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-The repository write lane is RELEASED. RC0–RC10 evidence remains immutable/regression-protected, UIA Issue #354 remains parked/read-only, and RC11 or any later source work must not begin until a new explicit claim is recorded from current `main`. Real-money, participant and production authorization remain blocked.
+The repository write lane is CLAIMED by RC11 final integration closure. RC0–RC10 evidence remains immutable/regression-protected, UIA Issue #354 remains parked/read-only, and no overlapping Phase 11 participant or later source work may begin until RC11 releases or formally hands off the lane. Real-money, participant and production authorization remain blocked.

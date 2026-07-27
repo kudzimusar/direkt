@@ -46,17 +46,12 @@ for path in (
         raise SystemExit(f"RC10 contract missing file {path.relative_to(ROOT)}")
 
 for needle in (
-    "RELEASED — RC10 CLOSED AND PRESERVED",
     "RC10 implementation contract — CLOSED AND PRESERVED",
     "Turnstile is conditional abuse control",
     "CLOSED — NOT CURRENTLY REQUIRED / TURNSTILE NOT ACTIVE",
-    "RC11 remains unclaimed",
-    "The repository write lane is RELEASED",
 ):
     require(LOCK, needle)
-require(PROJECT, "Active repository write lane:** none")
 require(PROJECT, "RC1–RC10 are closed")
-require(PROJECT, "RC11 is next but unclaimed")
 require(STATUS, "RC10 CLOSED — NOT CURRENTLY REQUIRED / NOT ACTIVE")
 require(LEDGER, "RC10 Turnstile closure receipt")
 require(LEDGER, "New state: CLOSED — NOT CURRENTLY REQUIRED / TURNSTILE NOT ACTIVE")
@@ -134,6 +129,6 @@ print("turnstile_runtime_active=false")
 print("turnstile_credentials=false")
 print("global_widget=false")
 print("android_challenge=false")
-print("workstream_lane=released")
-print("rc11_claimed=false")
+print("rc10_closure_preserved=true")
+print("later_lane_ownership_not_asserted=true")
 print("production_authorization=false")
