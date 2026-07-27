@@ -27,8 +27,8 @@ describe('abuseControlPolicy', () => {
       requestLimit: 30,
       windowSeconds: 300,
     },
-  ])('protects $path without a browser challenge', (expected) => {
-    expect(abuseControlPolicy(expected.method, expected.path)).toMatchObject(expected);
+  ])('protects $path without a browser challenge', ({ path, ...expectedPolicy }) => {
+    expect(abuseControlPolicy(expectedPolicy.method, path)).toMatchObject(expectedPolicy);
   });
 
   it('normalizes the request method and leaves unrelated public reads outside the bounded policies', () => {
