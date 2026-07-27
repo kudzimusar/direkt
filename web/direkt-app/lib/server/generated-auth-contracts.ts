@@ -1,6 +1,7 @@
 import type { DirektAuthenticatedSession } from "@/lib/contracts/auth";
 import type { AuthenticatedSessionResponseDto } from "../../../../clients/generated/typescript/src/models/AuthenticatedSessionResponseDto";
 import type { FirebaseSessionExchangeDto } from "../../../../clients/generated/typescript/src/models/FirebaseSessionExchangeDto";
+import { normalizeWireDateTime } from "./wire-date-time";
 
 export type DirektFirebaseSessionExchangeInput = Omit<FirebaseSessionExchangeDto, "consentAccepted"> & {
   consentAccepted: true;
@@ -23,9 +24,9 @@ export function toDirektAuthenticatedSession(value: AuthenticatedSessionResponse
     identityId: value.identityId,
     sessionId: value.sessionId,
     accessToken: value.accessToken,
-    accessTokenExpiresAt: value.accessTokenExpiresAt.toISOString(),
+    accessTokenExpiresAt: normalizeWireDateTime(value.accessTokenExpiresAt),
     refreshToken: value.refreshToken,
-    refreshTokenExpiresAt: value.refreshTokenExpiresAt.toISOString(),
+    refreshTokenExpiresAt: normalizeWireDateTime(value.refreshTokenExpiresAt),
     tokenType: "Bearer",
     contact: {
       channel: value.contact.channel,
