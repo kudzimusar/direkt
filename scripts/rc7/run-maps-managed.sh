@@ -385,31 +385,55 @@ pushd android/direkt-app >/dev/null
 DIREKT_MAPS_BUILD_ENABLED=true \
 DIREKT_MAPS_SYNTHETIC_CANARY_APPROVED=true \
 DIREKT_ANDROID_MAPS_API_KEY="$(cat "${RUNNER_TEMP}/rc7-android-key.txt")" \
-gradle --no-daemon --stacktrace \
+gradle --no-daemon --stacktrace --no-build-cache clean \
   :app:assembleDebug \
   :app:assembleDebugAndroidTest
 popd >/dev/null
 rm -f "${RUNNER_TEMP}/rc7-android-key.txt"
+receipt "android_clean_build=true"
+receipt "android_build_cache_enabled=false"
 
 app_apk="android/direkt-app/app/build/outputs/apk/debug/app-debug.apk"
 test_apk="android/direkt-app/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk"
 test -f "${app_apk}"
 test -f "${test_apk}"
-apksigner_bin="$(find "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+android_sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+test -n "${android_sdk_root}"
+apksigner_bin="$(find "${android_sdk_root}/build-tools" -type f -name apksigner -perm -u+x | sort -V | tail -n 1)"
 test -x "${apksigner_bin}"
-apk_certificate_sha1="$("${apksigner_bin}" verify --print-certs "${app_apk}" \
-  | awk -F': ' '/Signer #1 certificate SHA-1 digest:/{print $2; exit}' \
+apksigner_stderr="${RUNNER_TEMP}/rc7-apksigner.stderr"
+set +e
+apksigner_output="$("${apksigner_bin}" verify --print-certs "${app_apk}" 2> "${apksigner_stderr}")"
+apksigner_code=$?
+set -e
+apk_certificate_sha1="$(awk -F': ' '/Signer #1 certificate SHA-1 digest:/{print $2; exit}' <<< "${apksigner_output}" \
   | tr -d ':' \
   | tr '[:lower:]' '[:upper:]')"
-[[ "${apk_certificate_sha1}" =~ ^[0-9A-F]{40}$ ]]
-test "${apk_certificate_sha1}" = "${android_sha1^^}"
+apk_certificate_format_valid=false
+if [[ "${apk_certificate_sha1}" =~ ^[0-9A-F]{40}$ ]]; then
+  apk_certificate_format_valid=true
+fi
+certificate_matches=false
+if ${apk_certificate_format_valid} && [[ "${apk_certificate_sha1}" = "${android_sha1^^}" ]]; then
+  certificate_matches=true
+fi
 jq -n \
   --arg packageName "${ANDROID_PACKAGE}" \
-  --arg certificateSha1 "${apk_certificate_sha1}" \
-  '{packageName: $packageName, certificateSha1: $certificateSha1, matchesRestrictedKey: true}' \
+  --arg expectedCertificateSha1 "${android_sha1^^}" \
+  --arg actualCertificateSha1 "${apk_certificate_sha1}" \
+  --argjson apksignerExitCode "${apksigner_code}" \
+  --argjson certificateFormatValid "${apk_certificate_format_valid}" \
+  --argjson matchesRestrictedKey "${certificate_matches}" \
+  '{schema: "direkt.rc7.android-apk-certificate.v2", packageName: $packageName, expectedCertificateSha1: $expectedCertificateSha1, actualCertificateSha1: (if $actualCertificateSha1 == "" then null else $actualCertificateSha1 end), apksignerExitCode: $apksignerExitCode, certificateFormatValid: $certificateFormatValid, matchesRestrictedKey: $matchesRestrictedKey, cleanBuild: true, buildCacheEnabled: false, rawStderrIncluded: false}' \
   > "${RUNNER_TEMP}/rc7-android-apk-certificate.json"
-receipt "android_apk_certificate_sha1=${apk_certificate_sha1}"
-receipt "android_apk_certificate_matches_key=true"
+receipt "android_apk_certificate_sha1=${apk_certificate_sha1:-unavailable}"
+receipt "android_apk_certificate_format_valid=${apk_certificate_format_valid}"
+receipt "android_apk_certificate_matches_key=${certificate_matches}"
+if [[ "${apksigner_code}" -ne 0 ]] || ! ${apk_certificate_format_valid} || ! ${certificate_matches}; then
+  cat "${RUNNER_TEMP}/rc7-android-apk-certificate.json" >&2
+  exit 1
+fi
+rm -f "${apksigner_stderr}"
 
 testlab_stderr="${RUNNER_TEMP}/rc7-maps-test-lab.stderr"
 testlab_failure="${RUNNER_TEMP}/rc7-maps-test-lab-failure.json"
@@ -432,7 +456,7 @@ gcloud firebase test android run \
 testlab_code=$?
 set -e
 if [[ "${testlab_code}" -ne 0 ]]; then
-  matrix_id="$(sed -n 's/.*Test \[\(matrix-[^]]*\)\].*//p' "${testlab_stderr}" | tail -n 1)"
+  matrix_id="$(sed -n 's/.*Test \[\(matrix-[^]]*\)\].*/\1/p' "${testlab_stderr}" | tail -n 1)"
   receipt "android_test_lab_map_ready=FAILED"
   receipt "android_test_lab_matrix_id=${matrix_id:-unavailable}"
   if [[ -n "${matrix_id}" ]]; then

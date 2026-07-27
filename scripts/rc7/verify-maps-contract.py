@@ -231,8 +231,15 @@ def main() -> int:
         "RC7_MAPS_CANARY|PASS",
         "MediumPhone.arm,version=36",
         "--num-flaky-test-attempts 0",
+        "--no-build-cache",
+        "android_clean_build=true",
+        "android_build_cache_enabled=false",
         "apksigner",
-        "android_apk_certificate_matches_key=true",
+        "certificateFormatValid",
+        "rawStderrIncluded",
+        'receipt "android_apk_certificate_format_valid=${apk_certificate_format_valid}"',
+        'receipt "android_apk_certificate_matches_key=${certificate_matches}"',
+        'if [[ "${apksigner_code}" -ne 0 ]] || ! ${apk_certificate_format_valid} || ! ${certificate_matches}; then',
         "collect-testlab-failure.py",
         "android_test_lab_failure_evidence_present=true",
         "cleanup.cloud_run_job_deleted",
@@ -260,6 +267,8 @@ def main() -> int:
     ):
         prohibit(managed_script, pattern, label)
 
+    prohibit(managed_script, r'cat "\$\{apksigner_stderr\}"', "Raw apksigner stderr must not be printed.")
+    require(managed_script, "*/\\1/p'", "Test Lab matrix backreference")
     prohibit(managed_workflow, r"rc7-(android|backend)-key\.txt", "API key value artifact upload")
     prohibit(managed_workflow, r"rc7-backend-key-metadata", "backend key metadata artifact")
     prohibit(managed_workflow, r"backend secret version", "backend secret receipt")

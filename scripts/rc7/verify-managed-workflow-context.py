@@ -169,6 +169,28 @@ def main() -> int:
         raise AssertionError("RC7 must never upload raw canary logs or raw execution details.")
 
     for marker in (
+        "--no-build-cache",
+        'receipt "android_clean_build=true"',
+        'receipt "android_build_cache_enabled=false"',
+        "certificateFormatValid:",
+        "rawStderrIncluded:",
+        'receipt "android_apk_certificate_format_valid=${apk_certificate_format_valid}"',
+        'receipt "android_apk_certificate_matches_key=${certificate_matches}"',
+        'if [[ "${apksigner_code}" -ne 0 ]] || ! ${apk_certificate_format_valid} || ! ${certificate_matches}; then',
+        "*/\\1/p'",
+    ):
+        require_present(managed_script, marker, "Deterministic APK certificate evidence drifted.")
+    certificate_artifact_write = managed_script.find(
+        '> "${RUNNER_TEMP}/rc7-android-apk-certificate.json"'
+    )
+    certificate_failure_check = managed_script.find(
+        'if [[ "${apksigner_code}" -ne 0 ]] || ! ${apk_certificate_format_valid} || ! ${certificate_matches}; then'
+    )
+    if not (0 <= certificate_artifact_write < certificate_failure_check):
+        raise AssertionError("APK certificate evidence must be written before fail-closed validation.")
+    prohibit(managed_script, r'cat "\$\{apksigner_stderr\}"', "Raw apksigner stderr must not be printed.")
+
+    for marker in (
         'sanitized_failure="${RUNNER_TEMP}/rc7-maps-canary-failure.json"',
         "gcloud run jobs executions describe",
         'textPayload:\\"RC7_MAPS_CANARY|\\"',
@@ -241,6 +263,8 @@ def main() -> int:
     print("canary_failure_evidence_sanitized=true")
     print("testlab_failure_evidence_sanitized=true")
     print("final_apk_certificate_verified=true")
+    print("clean_no_cache_apk_build=true")
+    print("certificate_evidence_written_before_failure=true")
     print("raw_canary_logs_uploaded=false")
     print("provider_rejection_status_distinguished=true")
     print("provider_raw_error_exposed=false")
