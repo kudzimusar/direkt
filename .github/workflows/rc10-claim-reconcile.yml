@@ -1,0 +1,54 @@
+name: RC10 claim reconciler
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc10-claim-reconcile.yml"
+      - "scripts/rc10/patch-claim.py"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rc10-claim-reconcile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reconcile:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'docs/rc10-claim'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: docs/rc10-claim
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Apply and verify RC10 claim
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/rc10/patch-claim.py
+          python3 scripts/rc9/verify-generated-client-contract.py
+          python3 scripts/rc10/verify-turnstile-decision.py
+          python3 scripts/rc8/verify-payments-contract.py
+
+          rm scripts/rc10/patch-claim.py
+          rm .github/workflows/rc10-claim-reconcile.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            WORKSTREAM_LOCK.md \
+            PROJECT_STATUS.md \
+            docs/integrations/CURRENT_INTEGRATION_STATUS.md \
+            docs/integrations/LIVE_INTEGRATION_LEDGER.md \
+            scripts/rc9/verify-generated-client-contract.py \
+            scripts/rc10/verify-turnstile-decision.py \
+            .github/workflows/rc10-turnstile-contract.yml \
+            scripts/rc10/patch-claim.py \
+            .github/workflows/rc10-claim-reconcile.yml
+          git diff --cached --check
+          git commit -m 'docs(rc10): claim Turnstile decision checkpoint'
+          git push origin HEAD:docs/rc10-claim
