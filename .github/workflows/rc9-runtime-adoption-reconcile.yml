@@ -55,6 +55,7 @@ jobs:
           npm ci --ignore-scripts
           npm run typecheck
           npm run verify:auth
+          npm run verify:generated-auth
           popd >/dev/null
 
           python3 scripts/rc9/verify-generated-foundation.py
@@ -69,8 +70,15 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add \
             android/direkt-app/app/build.gradle.kts \
+            android/direkt-app/app/src/test/java/com/kudzimusar/direkt/auth/GeneratedPilotSessionExchangeClientTest.kt \
+            web/direkt-app/package.json \
             web/direkt-app/lib/server/direkt-auth-api.ts \
+            web/direkt-app/lib/server/generated-auth-contracts.ts \
+            web/direkt-app/lib/server/wire-date-time.ts \
+            web/direkt-app/scripts/verify-generated-auth-adapter.mjs \
             clients/generated \
+            scripts/rc9/verify-generated-foundation.py \
+            scripts/rc9/verify-generated-client-contract.py \
             scripts/rc9/patch-runtime-adoption.py
           git diff --cached --check
           git commit -m 'feat(rc9): wire generated auth contracts'
