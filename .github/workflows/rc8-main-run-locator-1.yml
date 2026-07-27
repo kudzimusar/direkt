@@ -1,0 +1,64 @@
+name: RC8 exact-main run locator 1
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc8-main-run-locator-1.yml"
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+
+jobs:
+  locate:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chore/rc8-main-run-locator-1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      EXACT_MAIN_SHA: 8661f9769f3529fa9bd50464e2a02658db524f52
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Locate and await exact-main RC8 workflow run
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_json=""
+          for _ in $(seq 1 120); do
+            runs="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/workflows/rc8-payments-managed.yml/runs?branch=main&event=push&per_page=30")"
+            run_json="$(jq -c --arg sha "${EXACT_MAIN_SHA}" '[.workflow_runs[] | select(.head_sha == $sha)][0] // empty' <<< "${runs}")"
+            if [[ -n "${run_json}" ]]; then break; fi
+            sleep 10
+          done
+          test -n "${run_json}"
+          run_id="$(jq -r '.id' <<< "${run_json}")"
+          for _ in $(seq 1 240); do
+            run_json="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}")"
+            if [[ "$(jq -r '.status' <<< "${run_json}")" == "completed" ]]; then break; fi
+            sleep 10
+          done
+          test "$(jq -r '.status' <<< "${run_json}")" = "completed"
+          jobs="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?per_page=100")"
+          artifacts="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100")"
+          body="${RUNNER_TEMP}/rc8-locator.md"
+          {
+            echo '## RC8 exact-main workflow locator 1'
+            echo
+            echo "- Exact main: \`${EXACT_MAIN_SHA}\`"
+            echo
+            echo '### Run'
+            echo '```json'
+            jq '{id, run_number, run_attempt, status, conclusion, html_url, head_sha, event, created_at, updated_at}' <<< "${run_json}"
+            echo '```'
+            echo
+            echo '### Jobs'
+            echo '```json'
+            jq '[.jobs[] | {id, name, status, conclusion, started_at, completed_at}]' <<< "${jobs}"
+            echo '```'
+            echo
+            echo '### Artifacts'
+            echo '```json'
+            jq '[.artifacts[] | {id, name, size_in_bytes, expired, created_at, updated_at, digest}]' <<< "${artifacts}"
+            echo '```'
+          } > "${body}"
+          gh pr comment "${{ github.event.pull_request.number }}" --repo "${GITHUB_REPOSITORY}" --body-file "${body}"
