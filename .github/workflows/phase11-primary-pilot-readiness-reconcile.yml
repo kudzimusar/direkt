@@ -5,6 +5,7 @@ on:
     paths:
       - ".github/workflows/phase11-primary-pilot-readiness-reconcile.yml"
       - "scripts/phase11/patch-primary-pilot-readiness.py"
+      - "scripts/phase11/verify-primary-pilot-readiness.py"
 
 permissions:
   contents: write
