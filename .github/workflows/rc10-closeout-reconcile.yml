@@ -1,0 +1,51 @@
+name: RC10 closeout reconciler
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc10-closeout-reconcile.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rc10-closeout-reconcile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reconcile:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'docs/rc10-closeout'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: docs/rc10-closeout
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Apply and verify RC10 closeout
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/rc10/patch-closeout.py
+          python3 scripts/rc9/verify-generated-client-contract.py
+          python3 scripts/rc10/verify-turnstile-decision.py
+          python3 scripts/rc8/verify-payments-contract.py
+
+          rm scripts/rc10/patch-closeout.py
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            WORKSTREAM_LOCK.md \
+            PROJECT_STATUS.md \
+            docs/integrations/CURRENT_INTEGRATION_STATUS.md \
+            docs/integrations/LIVE_INTEGRATION_LEDGER.md \
+            docs/integrations/RC10_TURNSTILE_DECISION.md \
+            docs/integrations/RC10_CLOSURE_RECEIPT.md \
+            scripts/rc10/verify-turnstile-decision.py \
+            scripts/rc10/patch-closeout.py
+          git diff --cached --check
+          git commit -m 'docs(rc10): close checkpoint and release lane'
+          git push origin HEAD:docs/rc10-closeout
