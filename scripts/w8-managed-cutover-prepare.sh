@@ -34,7 +34,9 @@ bind_api_invoker() {
 
 build_image() {
   gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
-  docker build -f web/direkt-app/Dockerfile -t "${WEB_IMAGE_URI}" web/direkt-app
+  # The web project consumes repository-owned generated TypeScript contracts.
+  # Build from the repository root so Docker can preserve that source layout.
+  docker build -f web/direkt-app/Dockerfile -t "${WEB_IMAGE_URI}" .
   docker push "${WEB_IMAGE_URI}"
 }
 
