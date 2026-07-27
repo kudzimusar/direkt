@@ -14,11 +14,23 @@ jobs:
     if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'fix/uia-promotion-bridge-yaml'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      BRANCH: fix/uia-promotion-bridge-yaml
+      WORKFLOW: uia-current-main-refresh-closeout-once.yml
     steps:
-      - uses: actions/checkout@v6
       - name: Validate corrected bridge
         run: |
           set -euo pipefail
+          mkdir -p .github/workflows
+          gh api "/repos/${GITHUB_REPOSITORY}/contents/.github/workflows/${WORKFLOW}?ref=${BRANCH}" \
+            --jq '.content' | base64 --decode > ".github/workflows/${WORKFLOW}"
+          set +e
           go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 \
             -no-color \
-            .github/workflows/uia-current-main-refresh-closeout-once.yml
+            ".github/workflows/${WORKFLOW}" > "${RUNNER_TEMP}/actionlint.txt" 2>&1
+          lint_status=$?
+          set -e
+          echo "ACTIONLINT_STATUS=${lint_status}"
+          cat "${RUNNER_TEMP}/actionlint.txt"
+          exit "${lint_status}"
