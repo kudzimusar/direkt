@@ -16,16 +16,16 @@ jobs:
     timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
-      SOURCE_JOB_ID: "90128240252"
+      SOURCE_JOB_ID: "90128271752"
     steps:
-      - name: Print browser failure identity and errors
+      - name: Print browser image-build failure
         run: |
           set -euo pipefail
-          raw="${RUNNER_TEMP}/uia-refresh.log"
-          clean="${RUNNER_TEMP}/uia-refresh-clean.log"
+          raw="${RUNNER_TEMP}/uia-browser.log"
+          clean="${RUNNER_TEMP}/uia-browser-clean.log"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
           sed -r 's/\x1B\[[0-9;]*[mK]//g; s/^.*Z //' "${raw}" > "${clean}"
-          echo '=== RUN IDENTITIES ==='
-          grep -E 'DIREKT functional web W8 managed public cutover|DIREKT Firebase internal Android distribution|DIREKT controlled Cloud Run staging' "${clean}" | grep -E '· [0-9]+' | sort -u || true
-          echo '=== BROWSER FAILURE CONTEXT ==='
-          grep -n -E 'functional web W8 managed public cutover|Browser=|failure|failed|error|cancelled|conclusion' "${clean}" | tail -n 160 || true
+          echo '=== BUILD FAILURE ==='
+          grep -n -E 'ERROR|Error|error|failed|failure|npm ERR|ELIFECYCLE|Dockerfile|process .* did not complete|exit code' "${clean}" | tail -n 160 || true
+          echo '=== FINAL BUILD TAIL ==='
+          tail -n 120 "${clean}"
