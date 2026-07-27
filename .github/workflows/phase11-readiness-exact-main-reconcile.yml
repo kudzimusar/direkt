@@ -1,0 +1,38 @@
+name: Phase 11 readiness exact-main receipt publisher
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/phase11-readiness-exact-main-reconcile.yml"
+      - "scripts/phase11/patch-readiness-exact-main-receipt.py"
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'docs/phase11-readiness-exact-main-receipt'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: docs/phase11-readiness-exact-main-receipt
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Apply and verify exact-main readiness receipt
+        run: |
+          set -euo pipefail
+          python3 scripts/phase11/patch-readiness-exact-main-receipt.py
+          python3 scripts/rc11/verify-final-integration-closure.py
+          python3 scripts/phase11/verify-primary-pilot-readiness.py
+          grep -Fq 'main@1c32171ddc46c8f5c0e8176b2be14c4d4f4d355c' WORKSTREAM_LOCK.md
+          rm scripts/phase11/patch-readiness-exact-main-receipt.py
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add WORKSTREAM_LOCK.md PROJECT_STATUS.md docs/phase11/PHASE11_PRIMARY_PILOT_READINESS_RECEIPT.md scripts/phase11/verify-primary-pilot-readiness.py scripts/phase11/patch-readiness-exact-main-receipt.py
+          git diff --cached --check
+          git commit -m 'docs(phase11): bind readiness receipt to exact main'
+          git push origin HEAD:docs/phase11-readiness-exact-main-receipt
