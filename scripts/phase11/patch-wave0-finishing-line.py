@@ -64,7 +64,7 @@ blockers = ROOT / "docs/phase11/PHASE11_REAL_ENTRY_BLOCKER_REGISTER_2026-07-28.m
 replace(
     blockers,
     "**`PILOT_ENTRY_APPROVED`:** false",
-    "**`PILOT_ENTRY_APPROVED`:** false  \n**Wave 0 terminal decision:** `ENTRY_BLOCKED_EXTERNAL`  \n**Machine-readable register:** `PHASE11_WAVE0_EVIDENCE_MANIFEST.json`  \n**Official-source refresh:** `PHASE11_WAVE0_OFFICIAL_SOURCE_EVIDENCE_2026-07-28.md`",
+    "**`PILOT_ENTRY_APPROVED`:** false\n**Wave 0 terminal decision:** `ENTRY_BLOCKED_EXTERNAL`\n**Machine-readable register:** `PHASE11_WAVE0_EVIDENCE_MANIFEST.json`\n**Official-source refresh:** `PHASE11_WAVE0_OFFICIAL_SOURCE_EVIDENCE_2026-07-28.md`",
 )
 replace(
     blockers,
