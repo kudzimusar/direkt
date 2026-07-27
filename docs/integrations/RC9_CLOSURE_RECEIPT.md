@@ -8,7 +8,7 @@
 **Implementation PR:** #497
 **Exact implementation head:** `04ef57f31414ec5165e353abba74afb8dfdcc901`
 **Implementation merge:** `70de95c73128e921cd4d7c667de0e5a442a9e0c0`
-**Closeout PR:** CLOSEOUT_PR_PENDING
+**Closeout PR:** #498
 
 ## Deterministic generation receipt
 
