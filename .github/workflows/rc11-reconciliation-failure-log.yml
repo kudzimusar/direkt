@@ -1,0 +1,29 @@
+name: RC11 reconciliation failure log
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc11-reconciliation-failure-log.yml"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  extract:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'docs/rc11-final-integration-closure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_JOB_ID: "90035920846"
+    steps:
+      - name: Print reconciliation failure tail
+        shell: bash
+        run: |
+          set -euo pipefail
+          raw="${RUNNER_TEMP}/rc11.log"
+          clean="${RUNNER_TEMP}/rc11-clean.log"
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
+          sed -r 's/\x1B\[[0-9;]*[mK]//g; s/^.*Z //' "${raw}" > "${clean}"
+          tail -n 100 "${clean}"
