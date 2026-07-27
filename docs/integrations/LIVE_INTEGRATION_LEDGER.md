@@ -153,9 +153,9 @@ No usable credentials stored yet because Zambia TEST approval remains pending.
 
 Public DPO sandbox credentials were used for sandbox proof only. No private production DPO merchant credential is provisioned in DIREKT Secret Manager yet.
 
-### RC8 runtime proof — IMPLEMENTED_GATED / MANAGED PROOF ARMED
+### RC8 runtime proof — CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY
 
-Provider-neutral adapters and immutable reconciliation were merged through PR #454 at `6098b71f89d62fa059de298be11a8d9d8539c25e`. The application payment registry remains intentionally disabled. A one-shot exact-main private Cloud Run Job is armed for the existing MTN MoMo, Stripe and PayPal sandbox credentials; real money remains disabled:
+Provider-neutral adapters and immutable reconciliation were merged through PR #454. Exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3` passed private managed run `30241092949/1` with artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`). MTN Request to Pay/status, Stripe unpaid Checkout retrieval, PayPal unapproved-order retrieval, balanced immutable reconciliation, duplicate suppression, mismatch review, two-person adjustment planning and temporary-job cleanup all passed. The application payment registry and real money remain disabled:
 
 ```text
 PaymentProvider
@@ -166,6 +166,14 @@ PaymentProvider
   |- PayPalPaymentProvider
   `- FlutterwavePaymentProvider (only if onboarding reopens)
 ```
+
+Managed evidence history:
+
+- attempt `30238926656/1` failed before image build/provider mutation because deployer secret metadata access was absent; artifact `8642560395` (`sha256:d64d9d1fc1934448a00c29ee6924ee34442d92a114ebdf2bb46bfb918404912e`);
+- attempt `30238926656/2` reached the private job but MTN returned HTTP 500; artifact `8642921752` (`sha256:f78da1c133b7d7dfa0e8397657052bc178250dbe7322c2e5a5404234ba9e80d6`);
+- terminal run `30241092949/1` passed on `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3`; artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`).
+
+Every attempt preserved sanitized evidence, deleted any temporary job that was created, and kept participant data, production authorization, real money and customer-to-provider payments false.
 
 Suggested routing intent:
 
@@ -337,7 +345,7 @@ The authoritative sequence is maintained in `WORKSTREAM_LOCK.md` and `RUNTIME_IN
 7. RC5 Firebase Test Lab — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX**. Exact source `c3744430a7beb1cd47246d858df9ac1379a068ac`; run `30183466799`; API 26/33/36; zero flaky retries.
 8. RC6 WhatsApp runtime adapter — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Exact source `8838b7a6d726a5aed44ce21a39506c1265a98d15`; managed run `30137700769` succeeded on retry; initial failure preserved in Issue #404; participant/production delivery disabled.
 9. RC7 Google Maps runtime — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY** through run `30234521983/1`.
-10. RC8 sandbox-only payment adapters/evidence reconciliation — **IMPLEMENTED_GATED / MANAGED PROOF ARMED**; source merged at `6098b71f89d62fa059de298be11a8d9d8539c25e`; MTN/Stripe/PayPal private proof pending; DPO/Airtel/Flutterwave runtime disabled.
+10. RC8 sandbox-only payment adapters/evidence reconciliation — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**; exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3`; run `30241092949/1`; artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`); MTN/Stripe/PayPal and immutable reconciliation passed; DPO/Airtel/Flutterwave and application runtime remain disabled; real money false.
 11. RC9 OpenAPI generated Kotlin/TypeScript client adoption decision/migration.
 12. RC10 Turnstile only if justified.
 13. RC11 full combined regression and lane release.

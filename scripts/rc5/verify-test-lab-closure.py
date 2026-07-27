@@ -46,8 +46,13 @@ rc8_active_handoff = (
     and "RC8 implementation contract — CLAIMED" in lock
     and "RC8 is the sole active repository write lane" in lock
 )
-assert released_handoff or rc7_handoff or rc7_closed_handoff or rc8_active_handoff, (
-    "RC5 closure must remain valid with no active lane, bounded RC7 active, RC7 closed/released, or bounded RC8 active"
+rc8_closed_handoff = (
+    "| Status | RELEASED |" in lock
+    and "RC8 implementation contract — CLOSED AND PRESERVED" in lock
+    and "No repository write lane is active" in lock
+)
+assert released_handoff or rc7_handoff or rc7_closed_handoff or rc8_active_handoff or rc8_closed_handoff, (
+    "RC5 closure must remain valid through RC8 closed/released"
 )
 assert "Firebase Test Lab | **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX**" in register
 assert "Firebase Test Lab | `CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX`" in ledger

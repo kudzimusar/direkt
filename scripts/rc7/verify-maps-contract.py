@@ -80,8 +80,13 @@ def main() -> int:
         and "RC8 implementation contract — CLAIMED" in lock
         and "RC8 is the sole active repository write lane" in lock
     )
-    if not (rc7_released or rc8_active):
-        raise AssertionError("RC7 closure must remain preserved with the lane released or bounded RC8 active.")
+    rc8_closed = (
+        "| Status | RELEASED |" in lock
+        and "RC8 implementation contract — CLOSED AND PRESERVED" in lock
+        and "No repository write lane is active" in lock
+    )
+    if not (rc7_released or rc8_active or rc8_closed):
+        raise AssertionError("RC7 closure must remain preserved through RC8 closed/released.")
 
     for needle in (
         "GOOGLE_MAPS_BACKEND_MODE",

@@ -3,7 +3,7 @@
 **Governing issue:** #261
 **Branch:** `integration/rc8-sandbox-payments`
 **Replayed base:** `main@54d0129027b7f324272c4bcc94a0f2109318fd18`
-**State:** IMPLEMENTED_GATED / MANAGED PROOF ARMED
+**State:** CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY
 
 ## Source replay receipt
 
@@ -36,11 +36,11 @@ RC8 does not authorize:
 
 | Provider | RC8 state | Source treatment |
 |---|---|---|
-| MTN MoMo Collections | Sandbox proven | Source adapter implemented and source-tested behind an unbound runtime gate; managed sandbox execution remains pending. |
+| MTN MoMo Collections | Managed sandbox proven | Exact-main run `30241092949/1` proved Request to Pay plus independent success; application runtime remains disabled. |
 | Airtel Money Zambia Cash-In | Provider pending | Registered fail-closed with no usable credential metadata. |
 | DPO Pay by Network | Sandbox proven | Source adapter implemented and source-tested for `createToken`, hosted checkout and independent `verifyToken`; runtime remains unbound. |
-| Stripe Checkout | Sandbox proven | Source adapter implemented and source-tested for test Checkout Session creation and independent server retrieval; runtime remains unbound. |
-| PayPal Orders | Sandbox proven | Source adapter implemented and source-tested for order creation, server capture and independent order retrieval; runtime remains unbound. |
+| Stripe Checkout | Managed sandbox proven | Exact-main run `30241092949/1` proved unpaid Checkout creation plus independent `requires_action` retrieval; application runtime remains disabled. |
+| PayPal Orders | Managed sandbox proven | Exact-main run `30241092949/1` proved unapproved order creation plus independent `requires_action` retrieval without capture; application runtime remains disabled. |
 | Flutterwave | Deferred/blocked | Excluded from the executable RC8 provider catalogue. |
 
 ## RC8A source foundation — green
@@ -182,7 +182,7 @@ The exact RC8D head passed repository formatting, lint, strict typechecking, rou
 
 RC8D still has no controller route, provider runtime binding, database executor or managed provider transaction. The permanent RC8 contract prevents removal of observation fingerprinting, mismatch queues, immutable history flags, two-person adjustment approval and operations-only reconciliation.
 
-## Managed runtime proof — armed
+## Managed runtime proof — closed
 
 The reviewed runtime slice is source-controlled on `feat/rc8-managed-sandbox-proof` from `6098b71f89d62fa059de298be11a8d9d8539c25e`. It:
 
@@ -198,11 +198,32 @@ The reviewed runtime slice is source-controlled on `feat/rc8-managed-sandbox-pro
 
 DPO remains runtime-unbound because no DIREKT private sandbox credential exists. Airtel remains provider-pending. Flutterwave remains deferred/excluded. No PayPal capture, browser approval, real money, participant data, production endpoint, customer-to-provider payment, escrow, wallet, payout or direct ledger mutation is authorized.
 
+### Preserved exact-main managed attempt 1
+
+Exact-main run `30238926656/1` authenticated through WIF but failed before image build or provider mutation because the GitHub deployer lacked secret-container metadata access. Artifact `8642560395` (`sha256:d64d9d1fc1934448a00c29ee6924ee34442d92a114ebdf2bb46bfb918404912e`) preserves the sanitized failure receipt. No temporary provider transaction occurred; cleanup succeeded; real money, participant data, production authorization and customer-to-provider payments remained false.
+
 ### Preserved exact-main managed attempt 2
 
 Exact-main run `30238926656/2` reached the private Cloud Run Job after the owner least-privilege secret bootstrap. It failed before Stripe, PayPal or reconciliation because MTN returned HTTP 500 during Request to Pay. Artifact `8642921752` (`sha256:f78da1c133b7d7dfa0e8397657052bc178250dbe7322c2e5a5404234ba9e80d6`) preserves the sanitized failure receipt. The temporary job was deleted; cleanup succeeded; real money, participant data, production authorization and customer-to-provider payments remained false.
 
 The correction removes the artificial callback-host dependency from this polling-only canary and uses the exact previously successful MTN sandbox payer `46733123470`. The reusable adapter still includes `X-Callback-Url` when a reviewed matching callback URL is configured, while the managed proof relies on independent status polling as the payment-truth boundary.
+
+### Terminal managed closure receipt
+
+Exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3` passed run `30241092949/1`. Artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`) proves:
+
+- least-privilege numeric Secret Manager versions and no deployer secret-value reads;
+- MTN Request to Pay followed by independent authoritative `succeeded` status with transaction id, amount and currency agreement;
+- Stripe unpaid Checkout independently remained `requires_action`, with browser redirect state non-authoritative;
+- PayPal unapproved order independently remained `requires_action`, with no capture and browser approval non-authoritative;
+- append-only transition planning, balanced ledger posting, immutable observation deduplication, mismatch case creation and two-independent-approver adjustment planning;
+- no requester self-approval, direct ledger mutation, historical payment/ledger rewrite or trust/ranking mutation;
+- DPO, Airtel and Flutterwave runtime binding false;
+- provider credentials/raw payloads absent from evidence;
+- temporary Cloud Run Job deleted and `cleanup_failed=false`;
+- `managed_result=PASS`, while production authorization, participant data, real money and customer-to-provider payments remained false.
+
+The one-shot trigger is consumed and automatic main-push execution is removed. RC8 closes without registering a payment provider in the application runtime.
 
 ## Merge and runtime gates
 

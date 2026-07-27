@@ -16,23 +16,6 @@ on:
       - "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
       - "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
       - "WORKSTREAM_LOCK.md"
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/rc8-payments-managed.yml"
-      - "scripts/rc8/run-payments-managed.sh"
-      - "scripts/rc8/bootstrap-payments-managed.sh"
-      - "scripts/rc8/verify-payments-contract.py"
-      - "backend/direkt-api/src/commercial/rc8-payment-canary.ts"
-      - "backend/direkt-api/src/commercial/*sandbox-payment-provider*"
-      - "backend/direkt-api/src/commercial/sandbox-payment-reconciliation.ts"
-      - "backend/direkt-api/test/unit/*sandbox-payment*"
-      - "docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md"
-      - "docs/integrations/RC8_SANDBOX_PAYMENTS_IMPLEMENTATION.md"
-      - "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
-      - "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
-      - "WORKSTREAM_LOCK.md"
   workflow_dispatch:
     inputs:
       confirmation:
@@ -69,13 +52,13 @@ jobs:
           python3 -m py_compile scripts/rc8/verify-payments-contract.py
           bash -n scripts/rc8/run-payments-managed.sh
           bash -n scripts/rc8/bootstrap-payments-managed.sh
-          grep -Fxq 'STATUS=ARMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md
+          grep -Fxq 'STATUS=CONSUMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md
           grep -Fxq 'CONFIRMATION=RUN-DIREKT-RC8-PAYMENTS-MANAGED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md
           grep -Fq 'DIREKT RC8 managed sandbox payment proof' .github/workflows/rc8-payments-managed.yml
 
   managed:
     name: Prove private synthetic sandbox payments
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_dispatch'
     needs: contract
     runs-on: ubuntu-latest
     timeout-minutes: 45

@@ -5,7 +5,7 @@
 **VC1–VC8 promotion:** PR #270 merged at `c7f5985bc20372b4761e063dc3a66ecc736556e2`
 **Visual Completion issue:** #259 — CLOSED/COMPLETED
 **Runtime integration tracker:** #261
-**Active repository write lane:** RC8 sandbox payment runtime closure under Issue #261; RC1–RC7 remain closed at documented synthetic-only managed boundaries
+**Active repository write lane:** RELEASED — RC1–RC8 are closed at documented synthetic-only managed boundaries; RC9 is next but unclaimed
 
 ## 1. Programme state
 
@@ -19,7 +19,7 @@ DIREKT’s current repository state is:
 - functional customer/provider web/PWA W0–W8 — **closed**;
 - VC0 preparation/control — **closed**;
 - VC1–VC8 world-class product/AI modernization — **complete and merged**;
-- runtime integration closure — **RC1–RC7 are closed at synthetic-only managed boundaries; RC8 source merged at `6098b71f89d62fa059de298be11a8d9d8539c25e` and exact-main managed sandbox evidence is armed**.
+- runtime integration closure — **RC1–RC8 are closed at synthetic-only managed boundaries; RC8 exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3` passed managed run `30241092949/1` with artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`)**.
 
 VC1–VC8 completion does not replace or weaken the remaining Phase 11 real-world evidence, privacy/legal, payment, external-communications or production-release gates.
 
@@ -170,6 +170,7 @@ Important distinctions:
 - the provider-neutral AI contract and bounded VC7 use cases are implemented, but external model runtime activation remains per-use-case/fail-closed and restricted-data AI remains disabled;
 - RC5 Firebase Test Lab is **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX**: isolated project `direkt-testlab-502701-20260726`, exact source `c3744430a7beb1cd47246d858df9ac1379a068ac`, run `30183466799`, API 26/33/36 and zero flaky retries;
 - RC7 Google Maps is **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY** at source `47285575862cbf08845eaeabe093afea1ea79bd1`, run `30234521983/1`, artifact `8641270327` (`sha256:24da53c0bd6fa885fa4a6814f70af090096192e6c5b7a03c89fba51416877fde`); participant/production Maps and private-coordinate publication remain disabled; other integrations still require their own runtime evidence before being represented as active;
+- RC8 sandbox payments are **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY** at source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3`, run `30241092949/1`, artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`): MTN success, Stripe unpaid Checkout, PayPal unapproved order, immutable reconciliation and cleanup passed; application provider registration, DPO/Airtel/Flutterwave runtime binding, participant use and real money remain disabled;
 - payment rails may be sandbox-proven while real money remains disabled;
 - an account, API key, secret or provider dashboard entry alone is never `ACTIVE` runtime evidence.
 
@@ -205,14 +206,8 @@ VC1–VC8 completion does not clear:
 
 ## 9. Next execution rule
 
-VC1–VC8 and RC1–RC7 are closed at their documented boundaries. RC8 is the sole active repository write lane.
+VC1–VC8 and RC1–RC8 are closed at their documented boundaries. RC8 closed on exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3` through run `30241092949/1` and artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`).
 
-RC8 source promotion is complete through PR #454 at `6098b71f89d62fa059de298be11a8d9d8539c25e`. The active completion order is:
-
-1. verify numeric Secret Manager versions and secret-scoped runtime access for the existing MTN MoMo, Stripe and PayPal sandbox credentials without reading values through CI;
-2. build an immutable exact-main backend image and execute one private synthetic Cloud Run Job;
-3. prove MTN independent success, Stripe unpaid Checkout retrieval, PayPal unapproved-order retrieval, immutable reconciliation, duplicate suppression, mismatch review and two-person adjustment planning;
-4. preserve DPO/Airtel/Flutterwave runtime blocks and keep real money, participant data and production authorization false;
-5. close RC8 only after terminal evidence, status/ledger reconciliation, trigger consumption, exact-head regressions and workstream release.
+No repository write lane is active. RC9 OpenAPI-generated Kotlin and TypeScript client adoption/decision is next in sequence, but it requires a new explicit claim and must preserve all RC0–RC8, Android, backend, web/PWA, operations, supply-chain and release gates. RC8 does not authorize application payment-provider activation, participant payment data, production credentials/endpoints, real money, customer-to-provider payments, escrow, wallets or payouts.
 
 This project status records repository/product completion truth only and does not imply production authorization beyond the explicitly evidenced integration and release boundaries.
