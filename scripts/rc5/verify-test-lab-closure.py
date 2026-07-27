@@ -35,7 +35,14 @@ rc7_handoff = (
     and "RC7 implementation contract — CLAIMED" in lock
     and "RC7 is the sole active repository write lane" in lock
 )
-assert released_handoff or rc7_handoff, "RC5 closure must remain valid in released or bounded RC7 state"
+rc7_closed_handoff = (
+    "RELEASED — RC7 Google Maps runtime integration closed" in lock
+    and "RC7 implementation contract — CLOSED AND PRESERVED" in lock
+    and "No repository write lane is active" in lock
+)
+assert released_handoff or rc7_handoff or rc7_closed_handoff, (
+    "RC5 closure must remain valid with no active lane, bounded RC7 active, or RC7 closed/released"
+)
 assert "Firebase Test Lab | **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX**" in register
 assert "Firebase Test Lab | `CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX`" in ledger
 assert "8626329335" in register and "8626329335" in ledger

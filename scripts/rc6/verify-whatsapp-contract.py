@@ -109,15 +109,25 @@ def main() -> int:
         "RC7 is the sole active repository write lane",
         "Production/participant WhatsApp delivery remains disabled",
     )
+    rc7_closed_lock_needles = (
+        "RELEASED — RC7 Google Maps runtime integration closed",
+        "RC5 implementation contract — CLOSED AND PRESERVED",
+        "RC6 implementation contract — CLOSED AND PRESERVED",
+        "exact-current-main managed run `30137700769`",
+        "RC7 implementation contract — CLOSED AND PRESERVED",
+        "No repository write lane is active",
+        "Production/participant WhatsApp delivery remains disabled",
+    )
     supported_states = (
         all(needle in lock for needle in active_lock_needles),
         all(needle in lock for needle in rc5_resumed_lock_needles),
         all(needle in lock for needle in post_rc5_closed_lock_needles),
         all(needle in lock for needle in rc7_active_lock_needles),
+        all(needle in lock for needle in rc7_closed_lock_needles),
     )
     if sum(supported_states) != 1:
         raise AssertionError(
-            "RC6 lock must be exactly one supported state: active RC6, closed RC6 with RC5 resumed, closed RC5/RC6 with no active lane, or closed RC5/RC6 with bounded RC7 active."
+            "RC6 lock must be exactly one supported state: active RC6, RC5 resumed, no active lane before RC7, bounded RC7 active, or RC7 closed/released."
         )
 
     for needle in (
