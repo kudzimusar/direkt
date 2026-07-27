@@ -1,4 +1,5 @@
 name: DIREKT UIA corrected-main closeout once
+# Explicit synchronize trigger after PR creation.
 
 on:
   pull_request:
