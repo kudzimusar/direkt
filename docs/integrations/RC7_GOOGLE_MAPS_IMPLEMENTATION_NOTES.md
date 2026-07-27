@@ -1,8 +1,8 @@
 # RC7 Google Maps Runtime Implementation Notes
 
-**Governing issue:** #261  
-**Status:** Claimed; corrective source and managed proof in progress  
-**Corrective baseline:** `main@bcb30008c245a6a10ae3348b831259cef6dee441`
+**Governing issue:** #261
+**Status:** CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY
+**Closure source:** `main@47285575862cbf08845eaeabe093afea1ea79bd1`
 
 ## Source reconciliation checkpoint
 
@@ -89,6 +89,10 @@ AOSP's `ApkSignerTool.printCertificate` emits the stable field `<name> certifica
 Exact-main run `30231743285/1` on `bcb30008c245a6a10ae3348b831259cef6dee441` passed backend OAuth, the fresh one-JPY budget attestation, quota, clean no-build-cache packaging and semantic certificate extraction. Artifact `8640363497` has digest `sha256:dfb312b7bebb8bbb2d6b45e2bd2d008fb04fa1475f6cfc73eaf4353f88bc9d83`. The final APK contained one valid SHA-1 certificate, but it differed from the provisional keystore fingerprint used to restrict the key before build; Test Lab correctly did not start and Cloud Run cleanup passed.
 
 The corrected sequence retains a provisional package+certificate restriction only while the synthetic key value is retrieved and embedded. After the clean build, it extracts the actual APK certificate, updates the same key to exactly that package+certificate pair, verifies the API-key metadata and sole Maps SDK target, writes final sanitized evidence, waits 60 seconds for propagation, and only then starts Test Lab. A provisional mismatch is diagnostic rather than authoritative; the verified final APK restriction is the trust boundary. The key value never changes and is never uploaded.
+
+## Closure receipt
+
+Exact-main managed run `30234521983/1` on `47285575862cbf08845eaeabe093afea1ea79bd1` completed successfully. The contract job and privacy-safe runtime job both passed. Backend service-identity OAuth Geocoding returned `PASS`; the clean APK exposed one valid certificate; the Android key was re-restricted to that final certificate and Maps SDK target; Firebase Test Lab `MediumPhone.arm` API 36 passed 1/1 with zero flaky retries; manual/list fallback remained available; Cloud Run cleanup passed. Artifact `8641270327` has digest `sha256:24da53c0bd6fa885fa4a6814f70af090096192e6c5b7a03c89fba51416877fde`. The trigger is consumed and automatic main-push execution is removed. Production authorization, participant data and private-provider-coordinate publication all remained false.
 
 ## Credential and authentication boundary
 

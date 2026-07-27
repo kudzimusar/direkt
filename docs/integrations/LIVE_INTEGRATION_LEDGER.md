@@ -1,8 +1,8 @@
 # DIREKT Live Integration Ledger
 
-**Repository:** `kudzimusar/direkt`  
+**Repository:** `kudzimusar/direkt`
 **Last reconciled:** 2026-07-27 (Asia/Tokyo)
-**Governing issue:** #261 — Runtime integration closure after W8  
+**Governing issue:** #261 — Runtime integration closure after W8
 **Purpose:** Canonical cross-agent source of truth for integration existence, state, evidence, blockers and next actions.
 
 > Every integration-related PR must update this ledger in the same change whenever provisioning, source integration, secrets, runtime binding, managed evidence, legal/commercial state, fallback/kill-switch or production authorization changes.
@@ -302,7 +302,7 @@ Ledger updated: YES
 |---|---|---|
 | PostGIS | `ACTIVE` | Canonical spatial/service-area model. |
 | Manual area/list fallback | `ACTIVE` | Must remain available if map provider fails. |
-| Google Maps Platform | `IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS` | RC7 keeps the restricted Android key, Maps Compose latch, bounded Zambia normalization, privacy-safe rendering and manual/list fallback. Backend Geocoding uses v4 service-identity OAuth; backend keys, Maps secrets, Direct VPC egress and Cloud NAT remain prohibited. Run `30231743285/1` on `bcb30008c245a6a10ae3348b831259cef6dee441` passed WIF, fresh owner budget attestation, quota, immutable backend OAuth canary, clean no-cache build, semantic certificate parsing and cleanup. Artifact `8640363497`, digest `sha256:dfb312b7bebb8bbb2d6b45e2bd2d008fb04fa1475f6cfc73eaf4353f88bc9d83`, recorded one valid final APK SHA-1 (`73B272B19F9FAAF4EA02DEA0790B96B7675A6490`) that differed from the provisional restriction (`236674CF2789751759438E78E43A63A3584F44E0`); no Test Lab matrix was created. The correction verifies a final package+APK-certificate key restriction before Test Lab. |
+| Google Maps Platform | `ACTIVE — SYNTHETIC-ONLY MANAGED CANARY` | RC7 closed on exact source `47285575862cbf08845eaeabe093afea1ea79bd1` through run `30234521983/1`. WIF, fresh owner budget attestation, 60/min Geocoding quota, immutable backend service-identity OAuth canary, clean no-cache APK build, one valid final APK certificate, exact final Android key restriction, API 36 Test Lab map-ready assertion (1/1, zero flaky retries), and Cloud Run cleanup all passed. Artifact `8641270327`, digest `sha256:24da53c0bd6fa885fa4a6814f70af090096192e6c5b7a03c89fba51416877fde`. Backend keys, Maps secrets, Direct VPC egress, Cloud NAT, Places, Routes, participant use, production authorization and private-coordinate publication remain prohibited/disabled. |
 | Private provider coordinates | `DISABLED FOR PUBLICATION` | Exact private bases must not become public markers/ranking inputs. |
 
 ## API/client contract tooling
