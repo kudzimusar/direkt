@@ -29,10 +29,6 @@ replace(
     "| Implementation branch | `chore/uia-current-main-refresh`, based on the UIA claim merge from exact `main@348aedfdc29d4cc82bcc4296648db844d7fd5e44`. |",
 )
 replace(
-    "| Stable baseline | `main@632dd0bdbb2a3b8c24bd285918deff3e54bd3ba9` contains the verified Wave 0 finishing-line controls, exact closeout receipt, technical preflight and closed RC0–RC11/readiness evidence. |",
-    "| Stable baseline | `main@348aedfdc29d4cc82bcc4296648db844d7fd5e44` contains the exact-main Wave 0 receipt, closed RC0–RC11/readiness evidence and all current product/runtime source. |",
-)
-replace(
     "| Current task | None. Terminal decision is `ENTRY_BLOCKED_EXTERNAL`. P11-G01–P11-G13 remain open, `PILOT_ENTRY_APPROVED` remains false and PRIMARY-PILOT evidence count remains 0. |",
     "| Current task | UIA current-main refresh only. Promote and prove the present synthetic owner-review surfaces, then release the lane. Phase 11 remains `ENTRY_BLOCKED_EXTERNAL`; `PILOT_ENTRY_APPROVED` remains false and PRIMARY-PILOT evidence count remains 0. |",
 )
