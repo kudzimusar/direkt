@@ -26,4 +26,4 @@ jobs:
           clean="${RUNNER_TEMP}/rc9-runtime-clean.log"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
           sed -r 's/\x1B\[[0-9;]*[mK]//g; s/^.*Z //' "${raw}" > "${clean}"
-          tail -n 130 "${clean}"
+          tail -n 55 "${clean}"
