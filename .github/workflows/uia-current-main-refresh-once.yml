@@ -13,11 +13,11 @@ permissions:
 
 concurrency:
   group: direkt-uia-current-main-refresh-once
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   refresh:
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chore/uia-current-main-refresh'
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chore/uia-current-main-refresh' && false
     runs-on: ubuntu-latest
     timeout-minutes: 110
     env:
