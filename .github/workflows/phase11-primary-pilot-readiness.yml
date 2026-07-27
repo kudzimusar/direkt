@@ -1,0 +1,31 @@
+name: DIREKT Phase 11 primary-pilot readiness
+
+on:
+  pull_request:
+    paths:
+      - "WORKSTREAM_LOCK.md"
+      - "PROJECT_STATUS.md"
+      - "docs/phase11/**"
+      - "scripts/phase11/**"
+      - "scripts/rc11/**"
+      - "backend/direkt-api/src/config/environment.ts"
+      - ".github/workflows/phase11-primary-pilot-readiness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Verify preserved integration closure and Phase 11 readiness
+        run: |
+          set -euo pipefail
+          python3 scripts/rc11/verify-final-integration-closure.py
+          python3 scripts/phase11/verify-primary-pilot-readiness.py
