@@ -6,14 +6,14 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED — RC10 TURNSTILE THREAT-MODEL DECISION |
-| Owner/agent | Active repository agent — Issue #261 RC10 abuse-control checkpoint. |
-| Authorized scope | Audit every public mutating or provider-cost-bearing flow and either implement Turnstile on one specifically justified browser flow or close it as `NOT CURRENTLY REQUIRED`. Existing fail-closed rate limits may be strengthened. Global CAPTCHA installation, Android challenges and unrelated provider activation are prohibited. |
-| Protected surface | Closed RC0–RC9 evidence, canonical OpenAPI authorization/privacy checks, Android auth/session and Firebase controls, customer/provider web BFF/private Cloud Run IAM, operations portal, RC8 payment boundaries, UIA Issue #354, VC1–VC8 Design DNA and Phase 11/12 gates. |
-| Implementation branch | `feat/rc10-turnstile-decision`, based on the RC10 claim merge `main@e0ee52564eef16cdec1d8eb0a85f17da456cb5b1`. |
-| Stable baseline | `main@e0ee52564eef16cdec1d8eb0a85f17da456cb5b1` contains RC0–RC9 closure and the formal RC10 conditional-decision claim. No Turnstile runtime is active. |
-| Current task | RC10B — `NOT CURRENTLY REQUIRED` decision and public POST rate-limit coverage are implemented; focused and full exact-head regression remain before closure. |
-| Governing issue | Issue #261 — Runtime integration closure after W8. RC10 is the sole active repository write lane; UIA Issue #354 remains parked/read-only. |
+| Status | RELEASED — RC10 CLOSED AND PRESERVED |
+| Owner/agent | None. RC10 is closed; RC11 remains unclaimed. |
+| Authorized scope | No active repository write scope. A new explicit claim is required before RC11 or any other source change. |
+| Protected surface | Closed RC0–RC10 evidence, canonical OpenAPI authorization/privacy checks, Android auth/session and Firebase controls, customer/provider web BFF/private Cloud Run IAM, operations portal, RC8 payment boundaries, UIA Issue #354, VC1–VC8 Design DNA and Phase 11/12 gates. |
+| Implementation branch | None. RC10 implementation PR #502 merged at `620a99ba5465ad38ce012df0a8fa15e458de6505`. |
+| Stable baseline | `main@620a99ba5465ad38ce012df0a8fa15e458de6505` contains the reviewed RC10 implementation; this closeout preserves that exact bounded result and releases the lane. |
+| Current task | None. RC11 combined integration reconciliation is next but unclaimed. |
+| Governing issue | Issue #261 — Runtime integration closure after W8. RC10 is closed; UIA Issue #354 remains parked/read-only. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
 
@@ -130,7 +130,7 @@ The following strings are historical closure evidence required by the permanent 
 9. Cross-client evidence must include backend OpenAPI, generator drift, Android unit/lint/build/instrumentation and functional web type/security/build regressions before migration promotion.
 10. RC9 is `CLOSED — DETERMINISTIC GENERATED CLIENTS / BOUNDED RUNTIME ADOPTION`: PR #497 exact head `04ef57f31414ec5165e353abba74afb8dfdcc901` passed the complete backend, Android, web/PWA, W7, security, runtime-audit, Phase 10–12 and RC5–RC9 matrix, then squash-merged at `70de95c73128e921cd4d7c667de0e5a442a9e0c0`. Generated imports remain limited to the reviewed Android auth wrapper and server-only BFF type adapter. No production, participant, privileged direct-access, provider-secret, payment-provider or real-money authorization changed.
 
-## RC10 implementation contract — CLAIMED
+## RC10 implementation contract — CLOSED AND PRESERVED
 
 1. Turnstile is conditional abuse control, not a completeness checkbox. It may be introduced only for a specifically reviewed browser-accessible public flow whose risk is not adequately controlled by authentication, admission gates, quotas and rate limiting.
 2. RC10 inventories all public mutating or provider-cost-bearing routes, including challenge issuance/verification, public Help, discovery assistance, discovery-area normalization and public discovery reads.
@@ -141,7 +141,7 @@ The following strings are historical closure evidence required by the permanent 
 7. No Cloudflare Turnstile widget, site key, secret, package or runtime binding is provisioned merely to close RC10.
 8. Real participants, production authentication, production communications, real money and production release remain separately blocked.
 9. Exact-head evidence must include backend formatting/lint/type/tests/build/OpenAPI, abuse-policy tests, RC5–RC10 permanent contracts, PWA/W7/W8, runtime audit, supply-chain and documentation gates as applicable.
-10. RC10 closes only after project status, live ledger, current integration register, permanent verifier, dedicated decision receipt and Issue #261 agree; RC11 remains unclaimed until then.
+10. RC10 is `CLOSED — NOT CURRENTLY REQUIRED / TURNSTILE NOT ACTIVE`: PR #502 exact head `cdab6622e0cc06e35cddca2bb5bc8ea70c027b38` passed the complete backend, container, generated-client, PWA/W7/W8, runtime-audit, recovery, staging, Phase 11 synthetic, RC5–RC10 and documentation matrix, then squash-merged at `620a99ba5465ad38ce012df0a8fa15e458de6505`. The three public POST helper gaps are protected by the existing fail-closed database rate limiter; no Turnstile credential, widget, package or runtime binding exists. RC11 remains unclaimed.
 
 ## Runtime integration closure contract
 
@@ -170,8 +170,8 @@ The following strings are historical closure evidence required by the permanent 
 - RC7 — Google Maps runtime activation with separate restricted Android/backend credentials, privacy-safe publication semantics, quotas, manual/list fallback and kill switch. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY — exact source `47285575862cbf08845eaeabe093afea1ea79bd1`; run `30234521983/1`; artifact `8641270327` (`sha256:24da53c0bd6fa885fa4a6814f70af090096192e6c5b7a03c89fba51416877fde`); production/participant authorization false.**
 - RC8 — sandbox-only payment-provider adapter closure/reconciliation. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY — exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3`; run `30241092949/1`; artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`); MTN/Stripe/PayPal proved privately; DPO runtime-unbound, Airtel provider-pending, Flutterwave deferred; application runtime and real money disabled.**
 - RC9 — OpenAPI-generated Kotlin and TypeScript client adoption/decision. **CLOSED — deterministic generation, Android Firebase-session exchange adoption and server-only BFF type adoption merged through PR #497 at `70de95c73128e921cd4d7c667de0e5a442a9e0c0`; exact-head matrix passed on `04ef57f31414ec5165e353abba74afb8dfdcc901`; no production/participant or privileged direct-access change.**
-- RC10 — Turnstile threat-model decision; implement only if a reviewed public abuse-sensitive flow requires it, otherwise close as not currently justified.
-- RC11 — combined integration regression, managed evidence index, live ledger/status reconciliation and lane release.
+- RC10 — Turnstile threat-model decision. **CLOSED — NOT CURRENTLY REQUIRED / TURNSTILE NOT ACTIVE — PR #502 exact head `cdab6622e0cc06e35cddca2bb5bc8ea70c027b38`, merge `620a99ba5465ad38ce012df0a8fa15e458de6505`; first-party rate-limit gaps closed; production authorization false.**
+- RC11 — combined integration regression, managed evidence index, live ledger/status reconciliation and lane release. **NEXT BUT UNCLAIMED.**
 
 ## Persistent stop conditions
 
@@ -190,4 +190,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-The repository write lane is RELEASED. RC0–RC9 evidence remains immutable/regression-protected, UIA Issue #354 remains parked/read-only, and RC10+ source work must not begin until a new explicit claim is recorded from current `main`. Real-money, participant and production authorization remain blocked.
+The repository write lane is RELEASED. RC0–RC10 evidence remains immutable/regression-protected, UIA Issue #354 remains parked/read-only, and RC11 or any later source work must not begin until a new explicit claim is recorded from current `main`. Real-money, participant and production authorization remain blocked.

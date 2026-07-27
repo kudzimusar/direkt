@@ -347,8 +347,8 @@ The authoritative sequence is maintained in `WORKSTREAM_LOCK.md` and `RUNTIME_IN
 9. RC7 Google Maps runtime — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY** through run `30234521983/1`.
 10. RC8 sandbox-only payment adapters/evidence reconciliation — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**; exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3`; run `30241092949/1`; artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`); MTN/Stripe/PayPal and immutable reconciliation passed; DPO/Airtel/Flutterwave and application runtime remain disabled; real money false.
 11. RC9 OpenAPI generated Kotlin/TypeScript client adoption — **CLOSED — DETERMINISTIC GENERATED CLIENTS / BOUNDED RUNTIME ADOPTION**. Generator `7.22.0` JAR `3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329`; canonical OpenAPI `1c13b69a34c30b84347b02ecddcf4f5b55c21e1958f036d4dc29c9106784e063`; Kotlin `111` files/tree `ba3e4b7ab4f2eeaf3fafd96bdf2bbbddfd2feb8ebbbe71f4f309c825eb7991cc`; TypeScript `98` files/tree `04cecfb32400eac04d5818ee1bb22e8394d822e2d350c8cfcc4f3a64eee982fe`. PR #497 exact head `04ef57f31414ec5165e353abba74afb8dfdcc901` passed the full regression matrix and merged at `70de95c73128e921cd4d7c667de0e5a442a9e0c0`. Android generated imports are confined to the reviewed auth wrapper; TypeScript generated imports are confined to the server-only BFF type adapter. Production/participant authorization and privileged direct access remain false.
-12. RC10 Turnstile decision — **IMPLEMENTED / NOT CURRENTLY REQUIRED / RUNTIME NOT ACTIVE / EXACT-HEAD REGRESSION PENDING** from claim merge `e0ee52564eef16cdec1d8eb0a85f17da456cb5b1`. The threat model and first-party rate-limit closure are recorded in `RC10_TURNSTILE_DECISION.md`; no site key, secret, widget, package or runtime binding exists.
-13. RC11 full combined regression and lane release.
+12. RC10 Turnstile decision — **CLOSED — NOT CURRENTLY REQUIRED / TURNSTILE NOT ACTIVE**. Claim merge `e0ee52564eef16cdec1d8eb0a85f17da456cb5b1`; implementation PR #502 exact head `cdab6622e0cc06e35cddca2bb5bc8ea70c027b38`; squash merge `620a99ba5465ad38ce012df0a8fa15e458de6505`. Public discovery assistance, public Help and search-area normalization use explicit fail-closed database rate limits; no site key, secret, widget, package or runtime binding exists.
+13. RC11 full combined regression and lane release — **NEXT BUT UNCLAIMED**.
 
 Airtel is revisited immediately when provider approval arrives. Flutterwave remains deferred until onboarding reopens.
 
@@ -375,6 +375,29 @@ Privacy/security: browser-direct private API false; privileged client credential
 Fallback/kill switch: existing DIREKT wrappers, BFF boundary, manual/error semantics and fail-closed configuration remain authoritative; generated transport defaults are not authorization, trust, payment, retry, idempotency or offline-success authority
 Known blockers: none for RC9 closure; Phase 11 real evidence, 11J, legal/privacy and production-release gates remain externally open
 Next exact step: RC10 Turnstile threat-model decision, only after a new explicit workstream claim; otherwise close as not currently justified
+Ledger updated: YES
+```
+
+
+### RC10 Turnstile closure receipt
+
+```text
+Integration: Cloudflare Turnstile threat-model decision and public abuse-control closure (RC10)
+Previous state: IMPLEMENTED / NOT CURRENTLY REQUIRED / RUNTIME NOT ACTIVE / EXACT-HEAD REGRESSION PENDING
+New state: CLOSED — NOT CURRENTLY REQUIRED / TURNSTILE NOT ACTIVE
+Claim merge: e0ee52564eef16cdec1d8eb0a85f17da456cb5b1
+Implementation PR/head: #502 / cdab6622e0cc06e35cddca2bb5bc8ea70c027b38
+Implementation merge: 620a99ba5465ad38ce012df0a8fa15e458de6505
+External provisioning: none; no Turnstile site key, secret, widget, package, hostname binding or Cloudflare challenge runtime was created
+Repo/source changes: explicit fail-closed database rate policies and focused tests for public discovery assistance 30/300s, public Help assistance 30/300s and search-area normalization 20/300s; written threat model and re-evaluation triggers
+Secret Manager names/versions: none
+Runtime binding: existing DIREKT abuse-control middleware and security.consume_rate_limit database authority only; Turnstile runtime false
+Exact-head evidence: RC10 30279827057; backend 30279827068; backend container 30279826976; runtime audit 30279831964; deterministic clients 30279826827; RC9 30279829353; W7 30279829473; W8 30279826788; functional PWA 30279829352; PWA 30279826525; recovery 30279826679; staging 30279826805; Phase 11 synthetic 30279829444; RC5 30279829654/30279829433; RC6 30279829956; RC7 30279829618; RC8 30279826638/30279829561; documentation 30279827241
+Privacy/security checks: raw IP addresses are not durable keys; network subjects are HMAC-SHA-256 hashed; protected-route dependency failure returns 503; exhaustion returns 429; no challenge token or new third-party browser data exists
+Fallback/kill switch: first-party rate controls, authenticated scope, provider kill switches, deterministic/manual Help and discovery fallbacks remain authoritative; future Turnstile activation requires a new claim and can be omitted entirely
+Production authorization: NOT AUTHORIZED; real participants, production authentication, external communications, production AI/Maps, payment-provider activation, real money and formal Phase 12 release remain blocked
+Known blockers: none for RC10 bounded closure; Phase 11 real evidence, 11J, legal/privacy and production-release gates remain externally open
+Next exact step: RC11 combined integration regression/evidence index, only after a new explicit claim
 Ledger updated: YES
 ```
 
