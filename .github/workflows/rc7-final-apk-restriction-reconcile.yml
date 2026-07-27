@@ -1,0 +1,62 @@
+name: RC7 final APK key-restriction reconciler
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-final-apk-restriction-reconcile.yml"
+      - "scripts/rc7/patch-final-apk-key-restriction.py"
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'fix/rc7-restrict-key-to-final-apk'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/rc7-restrict-key-to-final-apk
+          fetch-depth: 0
+      - name: Apply and validate permanent final-APK restriction correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -f scripts/rc7/patch-final-apk-key-restriction.py ]]; then
+            echo 'RC7 final-APK restriction source already reconciled.'
+            exit 0
+          fi
+          run_stage() {
+            local label="$1"
+            shift
+            local output="${RUNNER_TEMP}/${label}.log"
+            set +e
+            "$@" >"${output}" 2>&1
+            local code=$?
+            set -e
+            if [[ "${code}" -ne 0 ]]; then
+              echo "RC7_RECONCILE_FAILED_STAGE=${label}"
+              tail -n 120 "${output}"
+              exit "${code}"
+            fi
+          }
+          run_stage patch python3 scripts/rc7/patch-final-apk-key-restriction.py
+          run_stage shell bash -n scripts/rc7/run-maps-managed.sh
+          run_stage contract python3 scripts/rc7/verify-maps-contract.py
+          run_stage context python3 scripts/rc7/verify-managed-workflow-context.py
+          run_stage collector python3 -m py_compile scripts/rc7/collect-testlab-failure.py
+          rm scripts/rc7/patch-final-apk-key-restriction.py
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            scripts/rc7/run-maps-managed.sh \
+            scripts/rc7/verify-maps-contract.py \
+            scripts/rc7/verify-managed-workflow-context.py \
+            docs/integrations/CURRENT_INTEGRATION_STATUS.md \
+            docs/integrations/LIVE_INTEGRATION_LEDGER.md \
+            docs/integrations/RC7_GOOGLE_MAPS_IMPLEMENTATION_NOTES.md \
+            scripts/rc7/patch-final-apk-key-restriction.py
+          git diff --cached --check
+          git commit -m 'fix(rc7): restrict the Maps key to the final APK certificate'
+          git push origin HEAD:fix/rc7-restrict-key-to-final-apk
