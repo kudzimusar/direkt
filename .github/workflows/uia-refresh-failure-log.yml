@@ -18,11 +18,14 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       SOURCE_JOB_ID: "90128240252"
     steps:
-      - name: Print managed refresh failure tail
+      - name: Print browser failure identity and errors
         run: |
           set -euo pipefail
           raw="${RUNNER_TEMP}/uia-refresh.log"
           clean="${RUNNER_TEMP}/uia-refresh-clean.log"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
           sed -r 's/\x1B\[[0-9;]*[mK]//g; s/^.*Z //' "${raw}" > "${clean}"
-          tail -n 45 "${clean}"
+          echo '=== RUN IDENTITIES ==='
+          grep -E 'DIREKT functional PWA W8 managed cutover|DIREKT Firebase internal Android distribution|DIREKT controlled Cloud Run staging' "${clean}" | grep -E '· [0-9]+' | sort -u || true
+          echo '=== BROWSER FAILURE CONTEXT ==='
+          grep -n -E 'functional PWA W8 managed cutover|Browser=|failure|failed|error|cancelled|conclusion' "${clean}" | tail -n 120 || true
