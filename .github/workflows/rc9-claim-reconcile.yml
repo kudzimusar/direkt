@@ -5,6 +5,7 @@ on:
     paths:
       - ".github/workflows/rc9-claim-reconcile.yml"
       - "scripts/rc9/patch-claim-generated-clients.py"
+      - "scripts/rc9/patch-rc7-forward-compatible-closure.py"
 
 permissions:
   contents: write
@@ -27,6 +28,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/rc9/patch-claim-generated-clients.py
+          python3 scripts/rc9/patch-rc7-forward-compatible-closure.py
           python3 scripts/rc9/verify-generated-client-contract.py
           python3 scripts/rc8/verify-payments-contract.py
           python3 scripts/rc7/verify-maps-contract.py
@@ -43,7 +45,9 @@ jobs:
             PROJECT_STATUS.md \
             docs/integrations/CURRENT_INTEGRATION_STATUS.md \
             docs/integrations/LIVE_INTEGRATION_LEDGER.md
-          rm scripts/rc9/patch-claim-generated-clients.py
+          rm \
+            scripts/rc9/patch-claim-generated-clients.py \
+            scripts/rc9/patch-rc7-forward-compatible-closure.py
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add \
@@ -51,7 +55,9 @@ jobs:
             PROJECT_STATUS.md \
             docs/integrations/CURRENT_INTEGRATION_STATUS.md \
             docs/integrations/LIVE_INTEGRATION_LEDGER.md \
-            scripts/rc9/patch-claim-generated-clients.py
+            scripts/rc7/verify-maps-contract.py \
+            scripts/rc9/patch-claim-generated-clients.py \
+            scripts/rc9/patch-rc7-forward-compatible-closure.py
           git diff --cached --check
           git commit -m 'chore(rc9): claim generated-client adoption lane'
           git push origin HEAD:integration/rc9-generated-clients
