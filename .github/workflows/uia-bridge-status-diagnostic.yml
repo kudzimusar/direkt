@@ -18,16 +18,11 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       SOURCE_JOB_ID: "90138169078"
     steps:
-      - name: Print closeout publisher failure tail
+      - name: Print post-patch verifier failure
         run: |
           set -euo pipefail
           raw="${RUNNER_TEMP}/uia-closeout.log"
           clean="${RUNNER_TEMP}/uia-closeout-clean.log"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
           sed -r 's/\x1B\[[0-9;]*[mK]//g; s/^.*Z //' "${raw}" > "${clean}"
-          echo '=== MANAGED RUN IDENTITIES ==='
-          grep -E 'DIREKT functional web W8 managed public cutover|DIREKT Firebase internal Android distribution|DIREKT controlled Cloud Run staging|canonical domain' "${clean}" | grep -E '· [0-9]+' | sort -u || true
-          echo '=== PUBLISHER FAILURE ==='
-          grep -n -E 'UIA closeout|missing expected|Traceback|error|Error|failed|failure|exit code' "${clean}" | tail -n 120 || true
-          echo '=== FINAL TAIL ==='
-          tail -n 90 "${clean}"
+          awk '/UIA_CURRENT_MAIN_REFRESH_CLOSEOUT_PATCH\|PASS/{emit=1} emit' "${clean}" | tail -n 75
