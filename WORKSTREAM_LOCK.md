@@ -6,14 +6,14 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | CLAIMED — RC9 OpenAPI-generated client adoption |
-| Owner/agent | Active repository agent — Issue #261 RC9 generated-client checkpoint. |
-| Authorized scope | Decide and implement deterministic OpenAPI-generated Kotlin and TypeScript contract clients incrementally. Preserve the Android backend-only boundary, the server-side Next.js BFF/private Cloud Run IAM boundary, offline/error semantics and all RC0–RC8 evidence. No privileged direct backend, database, provider-secret, production, participant or real-money activation is authorized. |
-| Protected surface | Closed RC0–RC8 evidence, including RC5 run `30183466799`, RC6 run `30137700769`, RC7 run `30234521983/1` and RC8 run `30241092949/1`; canonical OpenAPI authorization/privacy checks; Android auth/session storage, signing, Maps/FCM/Crashlytics and Play/Data Safety; customer/provider web BFF/private Cloud Run IAM; operations portal; UIA Issue #354; VC1–VC8 Design DNA; Phase 11/12 gates. |
-| Implementation branch | `feat/rc9a-deterministic-generated-clients`, based on the claimed baseline `main@658b72eadbeb2a9308a7b2e59dd7a81524fe0c5a`. |
-| Stable baseline | RC9 claim merged at `main@658b72eadbeb2a9308a7b2e59dd7a81524fe0c5a`; RC0–RC8 remain closed. RC9A generates deterministic standalone Kotlin/TypeScript source from canonical OpenAPI `1ea6b983c49c95db88db1a1432d9e6e0078fe124a3196f00c485b86dbe2db519` with generator JAR `3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329`. Android and BFF runtime wiring remain unchanged. |
-| Current task | RC9A — deterministic generated source, standalone compilation, immutable receipt and drift gate are implemented on PR #496; exact-head regression and review remain before merge. RC9B/RC9C runtime adoption must not begin early. |
-| Governing issue | Issue #261 — Runtime integration closure after W8. RC9 is the sole active bounded repository lane; Issue #354 UIA remains parked/read-only. |
+| Status | RELEASED — RC9 CLOSED AND PRESERVED |
+| Owner/agent | None. RC9 is closed under Issue #261; RC10 is next but remains unclaimed. |
+| Authorized scope | No active repository write lane. Any RC10 Turnstile decision or later integration work requires a new explicit claim from current `main`. |
+| Protected surface | Closed RC0–RC9 evidence, including RC5 run `30183466799`, RC6 run `30137700769`, RC7 run `30234521983/1`, RC8 run `30241092949/1`, RC9 exact-head matrix on `04ef57f31414ec5165e353abba74afb8dfdcc901` and implementation merge `70de95c73128e921cd4d7c667de0e5a442a9e0c0`; canonical OpenAPI authorization/privacy checks; Android auth/session storage, signing, Maps/FCM/Crashlytics and Play/Data Safety; customer/provider web BFF/private Cloud Run IAM; operations portal; UIA Issue #354; VC1–VC8 Design DNA; Phase 11/12 gates. |
+| Implementation branch | None. PR #497 was squash-merged to `main`; RC9D is documentation/receipt closeout only. |
+| Stable baseline | `main@70de95c73128e921cd4d7c667de0e5a442a9e0c0` contains RC9A–RC9C. OpenAPI Generator `7.22.0` remains checksum-pinned; canonical OpenAPI SHA-256 is `1c13b69a34c30b84347b02ecddcf4f5b55c21e1958f036d4dc29c9106784e063`; generated Kotlin/TypeScript trees remain deterministic and bounded runtime adoption is enforced. |
+| Current task | RC9D closeout: reconcile status, ledger, receipt, permanent verifier and release the lane. No RC10 source work is included. |
+| Governing issue | Issue #261 — Runtime integration closure after W8. RC9 is closed; UIA Issue #354 remains parked/read-only; RC10 is unclaimed. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
 
@@ -117,7 +117,7 @@ The following strings are historical closure evidence required by the permanent 
 9. Managed evidence must use bounded synthetic values, sanitized receipts, exact reviewed source, explicit cleanup and no raw provider payload or credential leakage. A failed provider attempt remains preserved and cannot be documented as passing.
 10. RC8 is `CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY`: exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3` passed run `30241092949/1` with artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`). MTN independent success, Stripe unpaid Checkout retrieval, PayPal unapproved-order retrieval, immutable reconciliation, duplicate suppression, mismatch review, two-person adjustment planning and temporary-job cleanup all passed. The trigger is consumed; application runtime, production, participant and real-money authorization remain false.
 
-## RC9 implementation contract — CLAIMED
+## RC9 implementation contract — CLOSED AND PRESERVED
 
 1. The canonical input is the exact backend-generated OpenAPI 3 document after the permanent authorization, privacy, deferred-domain and sensitive-field checks pass.
 2. OpenAPI Generator is pinned to stable version `7.22.0`; generation must run locally/CI without an online generator service and with timestamps hidden.
@@ -128,7 +128,7 @@ The following strings are historical closure evidence required by the permanent 
 7. Generated transport defaults may not become authority for authorization, trust, payment, retry, idempotency or offline-success decisions. DIREKT-owned wrappers/interceptors preserve those policies.
 8. Additive API changes remain backward compatible; breaking changes require `/api/v2`. Unknown/new response fields must not crash released clients, and enum evolution requires an explicit safe policy.
 9. Cross-client evidence must include backend OpenAPI, generator drift, Android unit/lint/build/instrumentation and functional web type/security/build regressions before migration promotion.
-10. RC9 closes only after the generator/versioning decision, deterministic drift proof, the approved incremental Kotlin slice, reviewed TypeScript adoption/decision, documentation reconciliation and exact-head regressions. No production, participant, privileged direct-access or payment authorization changes.
+10. RC9 is `CLOSED — DETERMINISTIC GENERATED CLIENTS / BOUNDED RUNTIME ADOPTION`: PR #497 exact head `04ef57f31414ec5165e353abba74afb8dfdcc901` passed the complete backend, Android, web/PWA, W7, security, runtime-audit, Phase 10–12 and RC5–RC9 matrix, then squash-merged at `70de95c73128e921cd4d7c667de0e5a442a9e0c0`. Generated imports remain limited to the reviewed Android auth wrapper and server-only BFF type adapter. No production, participant, privileged direct-access, provider-secret, payment-provider or real-money authorization changed.
 
 ## Runtime integration closure contract
 
@@ -156,7 +156,7 @@ The following strings are historical closure evidence required by the permanent 
 - RC6 — WhatsApp Cloud API application adapter. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY — exact source `8838b7a6d726a5aed44ce21a39506c1265a98d15`; managed run `30137700769` succeeded on retry through outbox → Meta test template → authentic signed webhook receipt; initial failure preserved in Issue #404; production/participant sends remain disabled.**
 - RC7 — Google Maps runtime activation with separate restricted Android/backend credentials, privacy-safe publication semantics, quotas, manual/list fallback and kill switch. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY — exact source `47285575862cbf08845eaeabe093afea1ea79bd1`; run `30234521983/1`; artifact `8641270327` (`sha256:24da53c0bd6fa885fa4a6814f70af090096192e6c5b7a03c89fba51416877fde`); production/participant authorization false.**
 - RC8 — sandbox-only payment-provider adapter closure/reconciliation. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY — exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3`; run `30241092949/1`; artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`); MTN/Stripe/PayPal proved privately; DPO runtime-unbound, Airtel provider-pending, Flutterwave deferred; application runtime and real money disabled.**
-- RC9 — OpenAPI-generated Kotlin and TypeScript client adoption/decision. **CLAIMED — deterministic generation and incremental migration from `main@030cd577e179863b70f24d99ab237e74660b4325`; no production/participant or privileged direct-access change.**
+- RC9 — OpenAPI-generated Kotlin and TypeScript client adoption/decision. **CLOSED — deterministic generation, Android Firebase-session exchange adoption and server-only BFF type adoption merged through PR #497 at `70de95c73128e921cd4d7c667de0e5a442a9e0c0`; exact-head matrix passed on `04ef57f31414ec5165e353abba74afb8dfdcc901`; no production/participant or privileged direct-access change.**
 - RC10 — Turnstile threat-model decision; implement only if a reviewed public abuse-sensitive flow requires it, otherwise close as not currently justified.
 - RC11 — combined integration regression, managed evidence index, live ledger/status reconciliation and lane release.
 
@@ -177,4 +177,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-RC9 is the sole active repository write lane. RC0–RC8 evidence remains immutable/regression-protected, UIA Issue #354 remains parked/read-only, and RC10+ source work must not begin until RC9 is closed or explicitly transitioned. Real-money, participant and production authorization remain blocked.
+The repository write lane is RELEASED. RC0–RC9 evidence remains immutable/regression-protected, UIA Issue #354 remains parked/read-only, and RC10+ source work must not begin until a new explicit claim is recorded from current `main`. Real-money, participant and production authorization remain blocked.

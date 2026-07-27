@@ -320,8 +320,8 @@ Ledger updated: YES
 | OpenAPI | `ACTIVE` | Canonical backend contract generated/drift-checked in CI. |
 | Android API boundary | `ACTIVE` | Backend API only; no privileged direct Supabase path. |
 | Web/PWA BFF/API boundary | `ACTIVE reviewed architecture` | Canonical API remains IAM-private. |
-| Fully generated Kotlin client | `NOT ADOPTED` | Requires reviewed incremental migration after API shape stabilizes. |
-| Fully generated TypeScript client | `NOT ADOPTED` | Requires reviewed incremental migration after API shape stabilizes. |
+| Fully generated Kotlin client | `CLOSED — BOUNDED RUNTIME ADOPTION` | Deterministic generated tree is committed and byte-drift enforced. Android adopts only the Firebase-to-DIREKT session exchange behind the DIREKT-owned HTTPS-only/no-redirect/no-retry wrapper. |
+| Fully generated TypeScript client | `CLOSED — SERVER-ONLY TYPE ADOPTION` | Deterministic generated tree is committed and strict-typechecked. Generated auth request/response types are consumed only by the server-side BFF adapter; generated browser transport remains prohibited. |
 
 ## Verification authorities / registries
 
@@ -346,11 +346,37 @@ The authoritative sequence is maintained in `WORKSTREAM_LOCK.md` and `RUNTIME_IN
 8. RC6 WhatsApp runtime adapter — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**. Exact source `8838b7a6d726a5aed44ce21a39506c1265a98d15`; managed run `30137700769` succeeded on retry; initial failure preserved in Issue #404; participant/production delivery disabled.
 9. RC7 Google Maps runtime — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY** through run `30234521983/1`.
 10. RC8 sandbox-only payment adapters/evidence reconciliation — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**; exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3`; run `30241092949/1`; artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`); MTN/Stripe/PayPal and immutable reconciliation passed; DPO/Airtel/Flutterwave and application runtime remain disabled; real money false.
-11. RC9 OpenAPI generated Kotlin/TypeScript client adoption — **RC9A IMPLEMENTED / RUNTIME UNWIRED / EXACT-HEAD REGRESSION PENDING** from claimed baseline `main@658b72eadbeb2a9308a7b2e59dd7a81524fe0c5a`; generator `7.22.0` JAR `3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329`; canonical OpenAPI `1ea6b983c49c95db88db1a1432d9e6e0078fe124a3196f00c485b86dbe2db519`; Kotlin `109` files/tree `ab6cd201e8a74df0c31319e882e3b419617a1539518f7151fa71ffe695c440c1`; TypeScript `96` files/tree `19aa7625ac7e338d01e9947dfaad8d5660cbe17ab9bdc912fb36e04fb659276f`; byte-for-byte drift and standalone compile gates active; Android auth/session remains the first later slice and TypeScript remains BFF-only.
+11. RC9 OpenAPI generated Kotlin/TypeScript client adoption — **CLOSED — DETERMINISTIC GENERATED CLIENTS / BOUNDED RUNTIME ADOPTION**. Generator `7.22.0` JAR `3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329`; canonical OpenAPI `1c13b69a34c30b84347b02ecddcf4f5b55c21e1958f036d4dc29c9106784e063`; Kotlin `111` files/tree `ba3e4b7ab4f2eeaf3fafd96bdf2bbbddfd2feb8ebbbe71f4f309c825eb7991cc`; TypeScript `98` files/tree `04cecfb32400eac04d5818ee1bb22e8394d822e2d350c8cfcc4f3a64eee982fe`. PR #497 exact head `04ef57f31414ec5165e353abba74afb8dfdcc901` passed the full regression matrix and merged at `70de95c73128e921cd4d7c667de0e5a442a9e0c0`. Android generated imports are confined to the reviewed auth wrapper; TypeScript generated imports are confined to the server-only BFF type adapter. Production/participant authorization and privileged direct access remain false.
 12. RC10 Turnstile only if justified.
 13. RC11 full combined regression and lane release.
 
 Airtel is revisited immediately when provider approval arrives. Flutterwave remains deferred until onboarding reopens.
+
+### RC9 generated-client closure receipt
+
+```text
+Integration: OpenAPI-generated Kotlin and TypeScript client adoption (RC9)
+Previous state: RC9A deterministic generated source merged; RC9B/RC9C bounded runtime adoption pending
+New state: CLOSED — DETERMINISTIC GENERATED CLIENTS / BOUNDED RUNTIME ADOPTION
+Claim base: 030cd577e179863b70f24d99ab237e74660b4325
+RC9A merge: e43efc5050a792a902a1ca94113854541380b56e
+Implementation PR/head: #497 / 04ef57f31414ec5165e353abba74afb8dfdcc901
+Implementation merge: 70de95c73128e921cd4d7c667de0e5a442a9e0c0
+Generator: OpenAPI Generator 7.22.0; JAR sha256 3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329
+Canonical OpenAPI: sha256 1c13b69a34c30b84347b02ecddcf4f5b55c21e1958f036d4dc29c9106784e063
+Generated output: Kotlin 111 files/tree ba3e4b7ab4f2eeaf3fafd96bdf2bbbddfd2feb8ebbbe71f4f309c825eb7991cc; TypeScript 98 files/tree 04cecfb32400eac04d5818ee1bb22e8394d822e2d350c8cfcc4f3a64eee982fe
+Android adoption: generated AuthenticationApi/request/response used only through GeneratedPilotSessionExchangeClient; HTTPS-only; 10-second timeouts; redirects/retries disabled; consent, sign-out, encrypted session storage, push registration and API 23 preserved
+Web adoption: generated auth request/response types only through server-side generated-auth-contracts adapter; Cloud Run IAM, DIREKT session headers, idempotency, timeout, no-store, redirect rejection and safe errors remain DIREKT-owned
+Focused fixes: raw JSON date-time normalization; invalid date-time rejection; generated-import allowlist limited to the two reviewed adapters; compiler/build artifacts excluded from authored-source scan
+Play/Data Safety: reviewed Retrofit/Kotlin serialization runtime dependencies inventoried; generated BODY logger is not activated because the DIREKT wrapper supplies its own safe OkHttp builder
+Exact-head evidence: RC9 contract 30273733920; deterministic generation 30273733953; Phase 12B 30273729323; Android CI 30273725051; Android performance 30273725145; Backend CI 30273729628; Backend container 30273725018; W7 30273725334; PWA 30273725116 and 30273725164; supply-chain 30273729475; runtime audit 30273725181; Phase 12A 30273725138; Phase 12 final 30273725312; recovery 30273725407; Phase 11 synthetic 30273725194; RC5/RC6/RC7 30273725088/30273725104/30273725384; documentation 30273725186
+Exact-main verification: squash merge commit exists at 70de95c73128e921cd4d7c667de0e5a442a9e0c0 with the reviewed PR content unchanged; relevant workflows are pull-request triggered and produced no separate push runs for the squash commit
+Privacy/security: browser-direct private API false; privileged client credentials false; provider/database/payment secrets false; participant data false; production authorization false; payment-provider/real-money authorization false
+Fallback/kill switch: existing DIREKT wrappers, BFF boundary, manual/error semantics and fail-closed configuration remain authoritative; generated transport defaults are not authorization, trust, payment, retry, idempotency or offline-success authority
+Known blockers: none for RC9 closure; Phase 11 real evidence, 11J, legal/privacy and production-release gates remain externally open
+Next exact step: RC10 Turnstile threat-model decision, only after a new explicit workstream claim; otherwise close as not currently justified
+Ledger updated: YES
+```
 
 ## Evidence / receipt discipline
 

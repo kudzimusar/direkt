@@ -158,7 +158,7 @@ Clients never decide payment success. Payment state cannot create verification/p
 | OpenAPI | **ACTIVE** | Canonical backend contract generated/drift-checked in CI. |
 | Android API boundary | **ACTIVE implementation** | Backend API only; no privileged direct Supabase path. |
 | TypeScript/PWA API boundary | **ACTIVE reviewed BFF architecture** | Canonical API remains IAM-private. |
-| Fully generated Kotlin/TypeScript client packages | **RC9A IMPLEMENTED / RUNTIME UNWIRED / REGRESSION PENDING** | Generator 7.22.0 JAR `3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329` produces committed source from canonical OpenAPI `1ea6b983c49c95db88db1a1432d9e6e0078fe124a3196f00c485b86dbe2db519` with byte-for-byte drift enforcement and standalone Kotlin/TypeScript compilation. Android and BFF runtime imports remain false; RC9B/RC9C are separate. |
+| Fully generated Kotlin/TypeScript client packages | **RC9 CLOSED — DETERMINISTIC / BOUNDED RUNTIME ADOPTION** | Generator 7.22.0 JAR `3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329` produces committed source from canonical OpenAPI `1c13b69a34c30b84347b02ecddcf4f5b55c21e1958f036d4dc29c9106784e063`. Kotlin has 111 files/tree `ba3e4b7ab4f2eeaf3fafd96bdf2bbbddfd2feb8ebbbe71f4f309c825eb7991cc`; TypeScript has 98 files/tree `04cecfb32400eac04d5818ee1bb22e8394d822e2d350c8cfcc4f3a64eee982fe`. Android imports the generated auth/session client only through its reviewed safe wrapper; TypeScript generated auth types remain server-only behind the BFF. |
 
 ## Runtime integration sequence
 
@@ -172,7 +172,7 @@ Clients never decide payment success. Payment state cannot create verification/p
 8. RC6 WhatsApp Cloud API application adapter — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**; exact-current-main run `30137700769` on `8838b7a6d726a5aed44ce21a39506c1265a98d15` passed outbox → Meta `hello_world` test-template send → authentic signed webhook receipt on retry; first-attempt setup failure remains preserved in Issue #404. Production phone/templates and participant/live WhatsApp traffic remain disabled/gated.
 9. RC7 Google Maps runtime.
 10. RC8 sandbox payment adapters/reconciliation.
-11. RC9 generated Kotlin/TypeScript clients — **RC9A IMPLEMENTED / EXACT-HEAD REGRESSION PENDING / RUNTIME UNWIRED**.
+11. RC9 generated Kotlin/TypeScript clients — **CLOSED — DETERMINISTIC / BOUNDED RUNTIME ADOPTION**; PR #497 exact head `04ef57f31414ec5165e353abba74afb8dfdcc901` passed the full matrix and merged at `70de95c73128e921cd4d7c667de0e5a442a9e0c0`.
 12. RC10 Turnstile threat-model decision.
 13. RC11 combined integration regression/evidence index/lane release.
 
