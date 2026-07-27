@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
-      SOURCE_JOB_ID: "89918157475"
+      SOURCE_JOB_ID: "89919176232"
     steps:
       - name: Print bounded failure tail
         shell: bash
@@ -24,4 +24,4 @@ jobs:
           set -euo pipefail
           raw="${RUNNER_TEMP}/rc9-claim.log"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
-          tail -n 70 "${raw}"
+          tail -n 80 "${raw}"
