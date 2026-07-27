@@ -6,6 +6,8 @@ export type DirektFirebaseSessionExchangeInput = Omit<FirebaseSessionExchangeDto
   consentAccepted: true;
 };
 
+export type GeneratedAuthenticatedSessionResponse = AuthenticatedSessionResponseDto;
+
 export function toDirektAuthenticatedSession(value: AuthenticatedSessionResponseDto): DirektAuthenticatedSession {
   if (value.tokenType !== "Bearer") {
     throw new Error("DIREKT auth response returned an unsupported token type");
