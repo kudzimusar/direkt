@@ -1,0 +1,48 @@
+name: RC7 deterministic APK certificate reconciler
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-deterministic-apk-reconcile.yml"
+      - "scripts/rc7/patch-deterministic-apk-certificate.py"
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'fix/rc7-deterministic-apk-certificate'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/rc7-deterministic-apk-certificate
+          fetch-depth: 0
+      - name: Apply and validate permanent RC7 certificate correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -f scripts/rc7/patch-deterministic-apk-certificate.py ]]; then
+            echo 'RC7 deterministic certificate source already reconciled.'
+            exit 0
+          fi
+          python3 scripts/rc7/patch-deterministic-apk-certificate.py
+          bash -n scripts/rc7/run-maps-managed.sh
+          python3 scripts/rc7/verify-maps-contract.py
+          python3 scripts/rc7/verify-managed-workflow-context.py
+          python3 -m py_compile scripts/rc7/collect-testlab-failure.py
+          rm scripts/rc7/patch-deterministic-apk-certificate.py
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            scripts/rc7/run-maps-managed.sh \
+            scripts/rc7/verify-maps-contract.py \
+            scripts/rc7/verify-managed-workflow-context.py \
+            docs/integrations/CURRENT_INTEGRATION_STATUS.md \
+            docs/integrations/LIVE_INTEGRATION_LEDGER.md \
+            docs/integrations/RC7_GOOGLE_MAPS_IMPLEMENTATION_NOTES.md \
+            scripts/rc7/patch-deterministic-apk-certificate.py
+          git diff --cached --check
+          git commit -m 'fix(rc7): make APK certificate proof deterministic'
+          git push origin HEAD:fix/rc7-deterministic-apk-certificate
