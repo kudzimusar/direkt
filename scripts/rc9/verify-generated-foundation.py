@@ -26,6 +26,7 @@ ANDROID_GENERATED_ADAPTER = (
 )
 WEB_SOURCE = ROOT / "web/direkt-app"
 WEB_GENERATED_ADAPTER = WEB_SOURCE / "lib/server/generated-auth-contracts.ts"
+WEB_DOCKERFILE = WEB_SOURCE / "Dockerfile"
 
 EXPECTED_VERSION = "7.22.0"
 EXPECTED_JAR_SHA256 = "3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329"
@@ -104,6 +105,7 @@ for path in (
     GENERATOR_SCRIPT,
     ANDROID_GENERATED_ADAPTER,
     WEB_GENERATED_ADAPTER,
+    WEB_DOCKERFILE,
 ):
     require_file(path)
 if not KOTLIN_SOURCE.is_dir() or not TYPESCRIPT_SOURCE.is_dir():
@@ -204,6 +206,10 @@ for needle in (
 ):
     require_text(ANDROID_GENERATED_ADAPTER, needle)
 
+# The Dockerfile may copy the immutable generated model tree into the build stage
+# so TypeScript can resolve the reviewed server-only adapter. The final runtime
+# stage copies only Next standalone/public/static output and never exposes a
+# generated browser transport or privileged provider credential.
 reject_tree(
     WEB_SOURCE,
     (
@@ -211,7 +217,7 @@ reject_tree(
         "clients/generated/typescript",
     ),
     "web runtime",
-    allowed_paths=frozenset({WEB_GENERATED_ADAPTER}),
+    allowed_paths=frozenset({WEB_GENERATED_ADAPTER, WEB_DOCKERFILE}),
 )
 for needle in (
     "AuthenticatedSessionResponseDto",
@@ -219,6 +225,16 @@ for needle in (
     "normalizeWireDateTime",
 ):
     require_text(WEB_GENERATED_ADAPTER, needle)
+require_text(
+    WEB_DOCKERFILE,
+    "COPY clients/generated/typescript/ /srv/direkt/clients/generated/typescript/",
+)
+for runtime_copy in (
+    "COPY --from=build --chown=node:node /srv/direkt/web/direkt-app/public ./public",
+    "COPY --from=build --chown=node:node /srv/direkt/web/direkt-app/.next/standalone ./",
+    "COPY --from=build --chown=node:node /srv/direkt/web/direkt-app/.next/static ./.next/static",
+):
+    require_text(WEB_DOCKERFILE, runtime_copy)
 
 print("RC9_GENERATED_FOUNDATION|PASS")
 print(f"generator_version={EXPECTED_VERSION}")
@@ -232,6 +248,7 @@ print("foundation_receipt_runtime_wired=false")
 print("bounded_runtime_adoption=true")
 print("android_generated_import_points=1")
 print("typescript_generated_import_points=1")
+print("typescript_container_build_only=true")
 print("browser_direct_private_api=false")
 print("privileged_client_credentials=false")
 print("production_authorization=false")
