@@ -33,14 +33,14 @@ for path in (LOCK, PROJECT, BLOCKERS, OFFICIAL, MANIFEST, SCHEMA, OWNER, PREFLIG
         raise SystemExit(f"Wave 0 finishing line missing file {path.relative_to(ROOT)}")
 
 for needle in (
-    "Phase 11 Wave 0 finishing-line contract — CLAIMED",
+    "Phase 11 Wave 0 finishing-line contract — CLOSED AND PRESERVED",
     "PILOT_ENTRY_APPROVED` remains false",
     "PRIMARY-PILOT evidence and findings remain at zero",
     "ENTRY_BLOCKED_EXTERNAL",
 ):
     require(LOCK, needle)
 
-require(PROJECT, "Active repository write lane:** Phase 11 Wave 0 finishing-line reconciliation")
+require(PROJECT, "Active repository write lane:** none; Wave 0 finishing-line controls are closed")
 
 for needle in (
     "OFFICIAL-SOURCE RESEARCH ONLY",
@@ -62,9 +62,9 @@ for needle in (
     require(OWNER, needle)
 
 for needle in (
-    "IMPLEMENTED — EXACT-HEAD EVIDENCE PENDING",
+    "PASSED — EXACT-HEAD TECHNICAL PREFLIGHT CLOSED",
     "Explicit Wave 1 exclusions",
-    "P11-G14 closed for that exact source only",
+    "P11-G14 is closed for that exact repository source only",
 ):
     require(PREFLIGHT, needle)
 
@@ -73,12 +73,17 @@ for needle in (
     "P11-G01 through P11-G13 remain open",
     "does not close Phase 11",
     "maximum truthful repository completion",
+    "P11-G14 is CLOSED",
 ):
     require(RECEIPT, needle)
 
 manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
 if manifest["decision"] != "ENTRY_BLOCKED_EXTERNAL":
     raise SystemExit("Wave 0 manifest must remain ENTRY_BLOCKED_EXTERNAL without external authority evidence")
+if manifest["technical_preflight"] != "PASSED":
+    raise SystemExit("Wave 0 technical preflight must be PASSED after closeout")
+if next(g for g in manifest["gates"] if g["id"] == "P11-G14")["state"] != "CLOSED":
+    raise SystemExit("Wave 0 P11-G14 must be CLOSED for exact source after closeout")
 if manifest["pilot_entry_approved"] is not False or manifest["primary_pilot_evidence_count"] != 0:
     raise SystemExit("Wave 0 manifest falsely activates pilot or primary evidence")
 

@@ -1,32 +1,336 @@
 {
   "schema_version": 1,
-  "as_of": "2026-07-28T06:35:00+09:00",
-  "source_baseline": "6b9e7cabeebd5ade9b998b8a54bcd2c888e6bfe4",
+  "as_of": "2026-07-28T06:46:00+09:00",
+  "source_baseline": "1befa902def70d2c997aaba260e0d8e2a5d4b12d",
   "pilot_entry_approved": false,
   "primary_pilot_evidence_count": 0,
-  "technical_preflight": "IMPLEMENTED_PENDING_EXACT_HEAD",
+  "technical_preflight": "PASSED",
   "decision": "ENTRY_BLOCKED_EXTERNAL",
   "gates": [
-    {"id":"P11-G01","class":"HARD","state":"OPEN","authority":null,"evidence_reference":null,"evidence_sha256":null,"scope":null,"decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":["participant_processing"]},
-    {"id":"P11-G02","class":"HARD","state":"OPEN","authority":null,"evidence_reference":null,"evidence_sha256":null,"scope":null,"decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":["identity_data","evidence_data","contact_data","location_data"]},
-    {"id":"P11-G03","class":"HARD","state":"OPEN","authority":null,"evidence_reference":null,"evidence_sha256":null,"scope":null,"decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":["recruitment","participant_processing"]},
-    {"id":"P11-G04","class":"HARD","state":"OPEN","authority":null,"evidence_reference":null,"evidence_sha256":null,"scope":null,"decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":["recruitment","public_claims"]},
-    {"id":"P11-G05","class":"HARD","state":"OPEN","authority":null,"evidence_reference":null,"evidence_sha256":null,"scope":null,"decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":["invitation_admission"]},
-    {"id":"P11-G06","class":"HARD","state":"OPEN","authority":null,"evidence_reference":null,"evidence_sha256":null,"scope":null,"decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":["participant_data_lifecycle"]},
-    {"id":"P11-G07","class":"HARD","state":"OPEN","authority":null,"evidence_reference":null,"evidence_sha256":null,"scope":null,"decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":["invitations"]},
-    {"id":"P11-G08","class":"HARD","state":"OPEN","authority":null,"evidence_reference":null,"evidence_sha256":null,"scope":null,"decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":["real_phone_authentication"]},
-    {"id":"P11-G09","class":"HARD","state":"OPEN","authority":null,"evidence_reference":null,"evidence_sha256":null,"scope":null,"decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":["invitations"]},
-    {"id":"P11-G10","class":"HARD","state":"OPEN","authority":null,"evidence_reference":null,"evidence_sha256":null,"scope":null,"decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":["provider_evidence"]},
-    {"id":"P11-G11","class":"HARD","state":"OPEN","authority":null,"evidence_reference":null,"evidence_sha256":null,"scope":null,"decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":["participant_processing"]},
-    {"id":"P11-G12","class":"HARD","state":"OPEN","authority":null,"evidence_reference":null,"evidence_sha256":null,"scope":null,"decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":["wave_start"]},
-    {"id":"P11-G13","class":"HARD","state":"OPEN","authority":null,"evidence_reference":null,"evidence_sha256":null,"scope":null,"decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":["wave_start"]},
-    {"id":"P11-G14","class":"HARD","state":"OPEN","authority":"DIREKT exact-head CI","evidence_reference":"pending implementation exact-head matrix","evidence_sha256":null,"scope":"repository critical/high technical defect review","decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":["wave_start"]},
-    {"id":"P11-C01","class":"CONDITIONAL","state":"NOT_APPLICABLE","authority":"Wave 1 exclusion","evidence_reference":"no-field-claim initial wave","evidence_sha256":null,"scope":"field visits and equivalent field claims excluded","decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":[]},
-    {"id":"P11-C02","class":"CONDITIONAL","state":"DISABLED","authority":"Wave 1 exclusion","evidence_reference":"manual area/list fallback authoritative","evidence_sha256":null,"scope":"participant Maps/geocoding disabled","decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":[]},
-    {"id":"P11-C03","class":"CONDITIONAL","state":"DISABLED","authority":"Wave 1 exclusion","evidence_reference":"participant telemetry excluded","evidence_sha256":null,"scope":"participant Sentry/Crashlytics disabled","decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":[]},
-    {"id":"P11-C04","class":"CONDITIONAL","state":"DISABLED","authority":"Wave 1 exclusion","evidence_reference":"external participant communications excluded","evidence_sha256":null,"scope":"email, push and WhatsApp disabled","decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":[]},
-    {"id":"P11-C05","class":"CONDITIONAL","state":"DISABLED","authority":"Wave 1 exclusion","evidence_reference":"production AI excluded","evidence_sha256":null,"scope":"model output not used in real pilot","decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":[]},
-    {"id":"P11-C06","class":"CONDITIONAL","state":"DISABLED","authority":"Wave 1 exclusion","evidence_reference":"real money excluded","evidence_sha256":null,"scope":"payment provider and real money disabled","decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":[]},
-    {"id":"P11-C07","class":"CONDITIONAL","state":"NOT_APPLICABLE","authority":"Wave 1 exclusion","evidence_reference":"automated registry access excluded","evidence_sha256":null,"scope":"no automated authority lookup","decision_owner":null,"decision_at":null,"independent_reviewer":null,"expires_at":null,"blocks":[]}
+    {
+      "id": "P11-G01",
+      "class": "HARD",
+      "state": "OPEN",
+      "authority": null,
+      "evidence_reference": null,
+      "evidence_sha256": null,
+      "scope": null,
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": [
+        "participant_processing"
+      ]
+    },
+    {
+      "id": "P11-G02",
+      "class": "HARD",
+      "state": "OPEN",
+      "authority": null,
+      "evidence_reference": null,
+      "evidence_sha256": null,
+      "scope": null,
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": [
+        "identity_data",
+        "evidence_data",
+        "contact_data",
+        "location_data"
+      ]
+    },
+    {
+      "id": "P11-G03",
+      "class": "HARD",
+      "state": "OPEN",
+      "authority": null,
+      "evidence_reference": null,
+      "evidence_sha256": null,
+      "scope": null,
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": [
+        "recruitment",
+        "participant_processing"
+      ]
+    },
+    {
+      "id": "P11-G04",
+      "class": "HARD",
+      "state": "OPEN",
+      "authority": null,
+      "evidence_reference": null,
+      "evidence_sha256": null,
+      "scope": null,
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": [
+        "recruitment",
+        "public_claims"
+      ]
+    },
+    {
+      "id": "P11-G05",
+      "class": "HARD",
+      "state": "OPEN",
+      "authority": null,
+      "evidence_reference": null,
+      "evidence_sha256": null,
+      "scope": null,
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": [
+        "invitation_admission"
+      ]
+    },
+    {
+      "id": "P11-G06",
+      "class": "HARD",
+      "state": "OPEN",
+      "authority": null,
+      "evidence_reference": null,
+      "evidence_sha256": null,
+      "scope": null,
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": [
+        "participant_data_lifecycle"
+      ]
+    },
+    {
+      "id": "P11-G07",
+      "class": "HARD",
+      "state": "OPEN",
+      "authority": null,
+      "evidence_reference": null,
+      "evidence_sha256": null,
+      "scope": null,
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": [
+        "invitations"
+      ]
+    },
+    {
+      "id": "P11-G08",
+      "class": "HARD",
+      "state": "OPEN",
+      "authority": null,
+      "evidence_reference": null,
+      "evidence_sha256": null,
+      "scope": null,
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": [
+        "real_phone_authentication"
+      ]
+    },
+    {
+      "id": "P11-G09",
+      "class": "HARD",
+      "state": "OPEN",
+      "authority": null,
+      "evidence_reference": null,
+      "evidence_sha256": null,
+      "scope": null,
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": [
+        "invitations"
+      ]
+    },
+    {
+      "id": "P11-G10",
+      "class": "HARD",
+      "state": "OPEN",
+      "authority": null,
+      "evidence_reference": null,
+      "evidence_sha256": null,
+      "scope": null,
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": [
+        "provider_evidence"
+      ]
+    },
+    {
+      "id": "P11-G11",
+      "class": "HARD",
+      "state": "OPEN",
+      "authority": null,
+      "evidence_reference": null,
+      "evidence_sha256": null,
+      "scope": null,
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": [
+        "participant_processing"
+      ]
+    },
+    {
+      "id": "P11-G12",
+      "class": "HARD",
+      "state": "OPEN",
+      "authority": null,
+      "evidence_reference": null,
+      "evidence_sha256": null,
+      "scope": null,
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": [
+        "wave_start"
+      ]
+    },
+    {
+      "id": "P11-G13",
+      "class": "HARD",
+      "state": "OPEN",
+      "authority": null,
+      "evidence_reference": null,
+      "evidence_sha256": null,
+      "scope": null,
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": [
+        "wave_start"
+      ]
+    },
+    {
+      "id": "P11-G14",
+      "class": "HARD",
+      "state": "CLOSED",
+      "authority": "GitHub Actions exact-head regression matrix",
+      "evidence_reference": "PHASE11_WAVE0_TECHNICAL_PREFLIGHT.md; source 1befa902def70d2c997aaba260e0d8e2a5d4b12d; runs 30307945800, 30307945818, 30307945934, 30307945768, 30307945872, 30307945906, 30307945756, 30307945870, 30307945784, 30307945769, 30307945849, 30307945921, 30307945959, 30307945868, 30307945894, 30307945776, 30307945858, 30307945856",
+      "evidence_sha256": "7480a398c6ed7a612ce1c2e44706221f1722e626a2841fe0598662d62471bdf9",
+      "scope": "repository source 1befa902def70d2c997aaba260e0d8e2a5d4b12d; technical pre-entry controls only; excludes Wave 1 deployment and participant runtime",
+      "decision_owner": "DIREKT repository owner",
+      "decision_at": "2026-07-28T06:46:00+09:00",
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": []
+    },
+    {
+      "id": "P11-C01",
+      "class": "CONDITIONAL",
+      "state": "NOT_APPLICABLE",
+      "authority": "Wave 1 exclusion",
+      "evidence_reference": "no-field-claim initial wave",
+      "evidence_sha256": null,
+      "scope": "field visits and equivalent field claims excluded",
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": []
+    },
+    {
+      "id": "P11-C02",
+      "class": "CONDITIONAL",
+      "state": "DISABLED",
+      "authority": "Wave 1 exclusion",
+      "evidence_reference": "manual area/list fallback authoritative",
+      "evidence_sha256": null,
+      "scope": "participant Maps/geocoding disabled",
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": []
+    },
+    {
+      "id": "P11-C03",
+      "class": "CONDITIONAL",
+      "state": "DISABLED",
+      "authority": "Wave 1 exclusion",
+      "evidence_reference": "participant telemetry excluded",
+      "evidence_sha256": null,
+      "scope": "participant Sentry/Crashlytics disabled",
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": []
+    },
+    {
+      "id": "P11-C04",
+      "class": "CONDITIONAL",
+      "state": "DISABLED",
+      "authority": "Wave 1 exclusion",
+      "evidence_reference": "external participant communications excluded",
+      "evidence_sha256": null,
+      "scope": "email, push and WhatsApp disabled",
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": []
+    },
+    {
+      "id": "P11-C05",
+      "class": "CONDITIONAL",
+      "state": "DISABLED",
+      "authority": "Wave 1 exclusion",
+      "evidence_reference": "production AI excluded",
+      "evidence_sha256": null,
+      "scope": "model output not used in real pilot",
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": []
+    },
+    {
+      "id": "P11-C06",
+      "class": "CONDITIONAL",
+      "state": "DISABLED",
+      "authority": "Wave 1 exclusion",
+      "evidence_reference": "real money excluded",
+      "evidence_sha256": null,
+      "scope": "payment provider and real money disabled",
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": []
+    },
+    {
+      "id": "P11-C07",
+      "class": "CONDITIONAL",
+      "state": "NOT_APPLICABLE",
+      "authority": "Wave 1 exclusion",
+      "evidence_reference": "automated registry access excluded",
+      "evidence_sha256": null,
+      "scope": "no automated authority lookup",
+      "decision_owner": null,
+      "decision_at": null,
+      "independent_reviewer": null,
+      "expires_at": null,
+      "blocks": []
+    }
   ]
 }
