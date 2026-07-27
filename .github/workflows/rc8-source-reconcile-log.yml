@@ -1,0 +1,27 @@
+name: RC8 source reconcile log
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc8-source-reconcile-log.yml"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  extract:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'integration/rc8-sandbox-payments'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_JOB_ID: "89886315446"
+    steps:
+      - name: Print bounded reconciliation failure
+        shell: bash
+        run: |
+          set -euo pipefail
+          raw="${RUNNER_TEMP}/source.log"
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
+          grep -E 'AssertionError|Traceback|expected one occurrence|RC8 contract missing|Process completed with exit code' "${raw}" | tail -n 100 || true
