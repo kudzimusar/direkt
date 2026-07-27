@@ -16,12 +16,16 @@ jobs:
     timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
-      SOURCE_JOB_ID: "89902674510"
     steps:
-      - name: Print bounded RC8 closure failure
+      - name: Print latest bounded RC8 closure failure
         shell: bash
         run: |
           set -euo pipefail
+          runs="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/workflows/rc8-managed-closure-reconcile.yml/runs?branch=docs/rc8-managed-closure&event=pull_request&per_page=20")"
+          run_id="$(jq -r '[.workflow_runs[] | select(.status == "completed" and .conclusion == "failure")][0].id // empty' <<< "${runs}")"
+          test -n "${run_id}"
+          job_id="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?per_page=100" | jq -r '.jobs[] | select(.name == "reconcile") | .id' | head -n 1)"
+          test -n "${job_id}"
           raw="${RUNNER_TEMP}/rc8-closure.log"
-          gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
-          tail -n 70 "${raw}"
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${job_id}/logs" > "${raw}"
+          tail -n 80 "${raw}"
