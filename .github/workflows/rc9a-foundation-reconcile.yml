@@ -5,7 +5,6 @@ on:
     paths:
       - ".github/workflows/rc9a-foundation-reconcile.yml"
       - "scripts/rc9/patch-rc9a-foundation-status.py"
-      - "scripts/rc9/patch-generated-write-layout.py"
       - "scripts/rc9/generate-clients.sh"
       - "clients/generator/**"
       - "clients/generated/kotlin/build.gradle.kts"
@@ -40,8 +39,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/rc9/patch-generated-write-layout.py
-
           pushd backend/direkt-api >/dev/null
           npm ci --ignore-scripts
           npm run openapi:check
@@ -92,9 +89,7 @@ jobs:
             docs/integrations/CURRENT_INTEGRATION_STATUS.md \
             docs/integrations/LIVE_INTEGRATION_LEDGER.md \
             docs/integrations/RC9_GENERATED_CLIENTS_IMPLEMENTATION.md
-          rm \
-            scripts/rc9/patch-rc9a-foundation-status.py \
-            scripts/rc9/patch-generated-write-layout.py
+          rm scripts/rc9/patch-rc9a-foundation-status.py
 
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
@@ -108,8 +103,7 @@ jobs:
             docs/integrations/CURRENT_INTEGRATION_STATUS.md \
             docs/integrations/LIVE_INTEGRATION_LEDGER.md \
             docs/integrations/RC9_GENERATED_CLIENTS_IMPLEMENTATION.md \
-            scripts/rc9/patch-rc9a-foundation-status.py \
-            scripts/rc9/patch-generated-write-layout.py
+            scripts/rc9/patch-rc9a-foundation-status.py
           git diff --cached --check
           git commit -m 'feat(rc9a): generate deterministic Kotlin and TypeScript clients'
           git push origin HEAD:feat/rc9a-deterministic-generated-clients
