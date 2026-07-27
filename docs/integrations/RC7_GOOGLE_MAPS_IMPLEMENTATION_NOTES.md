@@ -2,7 +2,7 @@
 
 **Governing issue:** #261  
 **Status:** Claimed; corrective source and managed proof in progress  
-**Corrective baseline:** `main@7c899295b176f767fd3da53f19b029b5582eae8a`
+**Corrective baseline:** `main@28481cd2d83a32259bd5b30784afefd575a51c58`
 
 ## Source reconciliation checkpoint
 
@@ -71,6 +71,12 @@ The next proof runs `clean` with `--no-build-cache`, extracts the certificate fr
 Exact-main run `30230004924/1` on `7c899295b176f767fd3da53f19b029b5582eae8a` passed backend service-identity OAuth, the fresh one-JPY budget attestation, quota, restricted Android key metadata, clean no-build-cache APK creation and Cloud Run cleanup. Artifact `8639806488` has digest `sha256:6ee216fb0e416c3013c4d26ea9246afaeb9fd663a84de89816689489533111b4`. `apksigner` exited zero, but the v2 parser returned no digest because it matched only `Signer #1`; Test Lab correctly did not start.
 
 Android's `apksigner` output can identify certificate records with a numbered signer label or an SDK-range signer label. The corrected parser accepts both forms, normalizes and deduplicates all SHA-1 records, and requires exactly one unique digest equal to the key restriction. Multiple different digests, malformed output, a signer-tool failure or a mismatch all fail closed after the sanitized v3 certificate artifact is written. Raw signer stdout and stderr are never printed or uploaded.
+
+## APK signer-stream correction
+
+Exact-main run `30230730145/1` on `28481cd2d83a32259bd5b30784afefd575a51c58` passed backend service-identity OAuth, the fresh one-JPY budget attestation, quota, restricted Android key metadata, clean no-build-cache APK creation and Cloud Run cleanup. Artifact `8640052645` has digest `sha256:ec3f89f20a59df2d5d92d40b3429b10c2c3d6684c25a07059489d035e3437e82`. `apksigner` exited zero, but stdout-only parsing returned zero certificate digests; Test Lab correctly did not start.
+
+The corrected extractor parses both private signer stdout and stderr through the same strict numbered/SDK-range SHA-1 pattern, normalizes and deduplicates matches, and still requires exactly one unique digest equal to the Android key restriction. The sanitized artifact records only `parsedStreams: ["stdout", "stderr"]`; raw signer streams remain ephemeral, are never printed and are never uploaded.
 
 ## Credential and authentication boundary
 
