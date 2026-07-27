@@ -57,6 +57,13 @@ jobs:
           run_stage compile python3 -m py_compile scripts/rc7/verify-maps-contract.py scripts/rc7/verify-managed-workflow-context.py
           run_stage managed-shell bash -n scripts/rc7/run-maps-managed.sh
           run_stage bootstrap-shell bash -n scripts/rc7/bootstrap-maps-managed.sh
+          sed -i 's/[[:space:]]\+$//' \
+            WORKSTREAM_LOCK.md \
+            PROJECT_STATUS.md \
+            docs/integrations/CURRENT_INTEGRATION_STATUS.md \
+            docs/integrations/LIVE_INTEGRATION_LEDGER.md \
+            docs/integrations/RC7_GOOGLE_MAPS_IMPLEMENTATION_NOTES.md \
+            docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md
           rm scripts/rc7/patch-close-rc7.py
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
