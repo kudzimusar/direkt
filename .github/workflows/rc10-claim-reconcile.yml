@@ -36,7 +36,7 @@ jobs:
           python3 scripts/rc8/verify-payments-contract.py
 
           rm scripts/rc10/patch-claim.py
-          rm .github/workflows/rc10-claim-reconcile.yml
+          rm .github/workflows/rc10-turnstile-contract.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add \
@@ -46,9 +46,7 @@ jobs:
             docs/integrations/LIVE_INTEGRATION_LEDGER.md \
             scripts/rc9/verify-generated-client-contract.py \
             scripts/rc10/verify-turnstile-decision.py \
-            .github/workflows/rc10-turnstile-contract.yml \
-            scripts/rc10/patch-claim.py \
-            .github/workflows/rc10-claim-reconcile.yml
+            scripts/rc10/patch-claim.py
           git diff --cached --check
           git commit -m 'docs(rc10): claim Turnstile decision checkpoint'
           git push origin HEAD:docs/rc10-claim
