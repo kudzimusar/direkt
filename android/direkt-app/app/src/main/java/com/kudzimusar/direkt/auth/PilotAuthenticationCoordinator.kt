@@ -9,11 +9,8 @@ import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.kudzimusar.direkt.notifications.PushRegistrationCoordinator
-import org.json.JSONObject
-import java.net.URL
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import javax.net.ssl.HttpsURLConnection
 
 internal sealed interface PilotAuthResult {
     data object CodeSent : PilotAuthResult
@@ -34,6 +31,9 @@ internal class PilotAuthenticationCoordinator(
     private val sessionStore = PilotSessionStore(context)
     private val pushRegistrationCoordinator = PushRegistrationCoordinator(context)
     private val executor = Executors.newSingleThreadExecutor()
+    private val sessionExchangeClient: PilotSessionExchangeClient by lazy {
+        GeneratedPilotSessionExchangeClient.fromBaseUrl(configuration.apiBaseUrl)
+    }
     private var verificationId: String? = null
     private var consentAcceptedForVerification = false
 
@@ -179,34 +179,10 @@ internal class PilotAuthenticationCoordinator(
                     if (!consentAcceptedForVerification) {
                         throw IllegalStateException("Pilot notice consent is not active.")
                     }
-                    val endpoint = URL("${configuration.apiBaseUrl}/api/v1/auth/firebase/exchange")
-                    val connection = endpoint.openConnection() as HttpsURLConnection
-                    try {
-                        connection.requestMethod = "POST"
-                        connection.connectTimeout = 10_000
-                        connection.readTimeout = 10_000
-                        connection.doOutput = true
-                        connection.setRequestProperty("Content-Type", "application/json")
-                        connection.setRequestProperty("Accept", "application/json")
-                        val body =
-                            JSONObject()
-                                .put("idToken", idToken)
-                                .put("noticeVersion", configuration.noticeVersion)
-                                .put("consentAccepted", true)
-                                .put("deviceLabel", "Android pilot device")
-                                .toString()
-                        connection.outputStream.use { output ->
-                            output.write(body.toByteArray(Charsets.UTF_8))
-                        }
-                        if (connection.responseCode !in 200..299) {
-                            throw IllegalStateException("Session exchange was rejected.")
-                        }
-                        val responseBody =
-                            connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
-                        parseSession(responseBody)
-                    } finally {
-                        connection.disconnect()
-                    }
+                    sessionExchangeClient.exchange(
+                        idToken = idToken,
+                        noticeVersion = configuration.noticeVersion,
+                    )
                 }
 
             auth.signOut()
@@ -225,18 +201,6 @@ internal class PilotAuthenticationCoordinator(
                 )
             }
         }
-    }
-
-    private fun parseSession(responseBody: String): PilotSession {
-        val json = JSONObject(responseBody)
-        return PilotSession(
-            identityId = json.getString("identityId"),
-            sessionId = json.getString("sessionId"),
-            accessToken = json.getString("accessToken"),
-            accessTokenExpiresAt = json.getString("accessTokenExpiresAt"),
-            refreshToken = json.getString("refreshToken"),
-            refreshTokenExpiresAt = json.getString("refreshTokenExpiresAt"),
-        )
     }
 
     private fun firebaseAuth(): FirebaseAuth {
