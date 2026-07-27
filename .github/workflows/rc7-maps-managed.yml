@@ -253,7 +253,13 @@ jobs:
             exit 0
           fi
           set +e
-          python3 scripts/rc7/reconcile-testlab-evidence.py > "${RUNNER_TEMP}/rc7-reconcile.log" 2>&1
+          {
+            python3 scripts/rc7/reconcile-testlab-evidence.py
+            python3 -m py_compile scripts/rc7/collect-testlab-failure.py
+            bash -n scripts/rc7/run-maps-managed.sh
+            python3 scripts/rc7/verify-maps-contract.py
+            python3 scripts/rc7/verify-managed-workflow-context.py
+          } > "${RUNNER_TEMP}/rc7-reconcile.log" 2>&1
           reconcile_code=$?
           set -e
           if [[ "${reconcile_code}" -ne 0 ]]; then
@@ -266,10 +272,6 @@ jobs:
             exit 0
           fi
           cat "${RUNNER_TEMP}/rc7-reconcile.log"
-          python3 -m py_compile scripts/rc7/collect-testlab-failure.py
-          bash -n scripts/rc7/run-maps-managed.sh
-          python3 scripts/rc7/verify-maps-contract.py
-          python3 scripts/rc7/verify-managed-workflow-context.py
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
