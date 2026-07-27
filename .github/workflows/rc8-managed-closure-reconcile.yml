@@ -49,7 +49,17 @@ jobs:
           new_trigger_patch = 'replace_once(trigger, "STATUS=ARMED\\n", "STATUS=CONSUMED\\n")'
           if old_trigger_patch not in text:
               raise SystemExit('closure trigger state patch not found')
-          path.write_text(text.replace(old_trigger_patch, new_trigger_patch, 1), encoding='utf-8')
+          text = text.replace(old_trigger_patch, new_trigger_patch, 1)
+          old_workflow_patch = '''replace_once(workflow, "grep -Fxq 'STATUS=ARMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md", "grep -Fxq 'STATUS=CONSUMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md")'''
+          new_workflow_patch = '''workflow_path = ROOT / workflow
+          workflow_text = workflow_path.read_text(encoding="utf-8")
+          armed_check = "grep -Fxq 'STATUS=ARMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md"
+          if workflow_text.count(armed_check) != 2:
+              raise AssertionError(f"{workflow}: expected two armed trigger checks before closure")
+          workflow_path.write_text(workflow_text.replace(armed_check, "grep -Fxq 'STATUS=CONSUMED' docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md", 1), encoding="utf-8")'''
+          if old_workflow_patch not in text:
+              raise SystemExit('closure workflow trigger patch not found')
+          path.write_text(text.replace(old_workflow_patch, new_workflow_patch, 1), encoding='utf-8')
           PY
           python3 scripts/rc8/patch-rc8-managed-closure.py
           python3 scripts/rc8/verify-payments-contract.py
@@ -67,7 +77,8 @@ jobs:
           from pathlib import Path
           workflow = Path('.github/workflows/rc8-payments-managed.yml').read_text(encoding='utf-8')
           assert '  push:\n' not in workflow
-          assert "grep -Fxq 'STATUS=CONSUMED'" in workflow
+          assert workflow.count("grep -Fxq 'STATUS=CONSUMED'") == 1
+          assert workflow.count("grep -Fxq 'STATUS=ARMED'") == 1
           assert "if: github.event_name == 'workflow_dispatch'" in workflow
           trigger = Path('docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md').read_text(encoding='utf-8')
           assert 'STATUS=CONSUMED' in trigger
