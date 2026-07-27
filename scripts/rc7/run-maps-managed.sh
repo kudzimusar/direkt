@@ -175,6 +175,7 @@ android_sha1="$(keytool -list -v \
 [[ "${android_sha1}" =~ ^[0-9A-Fa-f]{40}$ ]]
 receipt "android_package=${ANDROID_PACKAGE}"
 receipt "android_debug_certificate_sha1=${android_sha1^^}"
+receipt "android_provisional_certificate_sha1=${android_sha1^^}"
 
 if gcloud services api-keys describe "${ANDROID_KEY_ID}" \
   --project "${GCP_PROJECT_ID}" \
@@ -214,6 +215,7 @@ gcloud services api-keys get-key-string "${ANDROID_KEY_ID}" \
 chmod 600 "${RUNNER_TEMP}/rc7-android-key.txt"
 [[ "$(wc -c < "${RUNNER_TEMP}/rc7-android-key.txt")" -ge 20 ]]
 receipt "android_key_restricted=true"
+receipt "android_key_provisionally_restricted=true"
 receipt "android_key_persistent_synthetic_debug_only=true"
 receipt "credential_propagation_wait_seconds=60"
 sleep 60
@@ -442,29 +444,60 @@ apk_certificate_format_valid=false
 if [[ "${certificate_digest_count}" -eq 1 && "${apk_certificate_sha1}" =~ ^[0-9A-F]{40}$ ]]; then
   apk_certificate_format_valid=true
 fi
-certificate_matches=false
+prebuild_certificate_matches_apk=false
 if ${apk_certificate_format_valid} && [[ "${apk_certificate_sha1}" = "${android_sha1^^}" ]]; then
-  certificate_matches=true
+  prebuild_certificate_matches_apk=true
 fi
-jq -n \
-  --arg packageName "${ANDROID_PACKAGE}" \
-  --arg expectedCertificateSha1 "${android_sha1^^}" \
-  --arg actualCertificateSha1 "${apk_certificate_sha1}" \
-  --argjson apksignerExitCode "${apksigner_code}" \
-  --argjson certificateDigestCount "${certificate_digest_count}" \
-  --argjson certificateFormatValid "${apk_certificate_format_valid}" \
-  --argjson matchesRestrictedKey "${certificate_matches}" \
-  '{schema: "direkt.rc7.android-apk-certificate.v3", packageName: $packageName, expectedCertificateSha1: $expectedCertificateSha1, actualCertificateSha1: (if $actualCertificateSha1 == "" then null else $actualCertificateSha1 end), apksignerExitCode: $apksignerExitCode, certificateDigestCount: $certificateDigestCount, certificateFormatValid: $certificateFormatValid, matchesRestrictedKey: $matchesRestrictedKey, digestFieldPattern: "certificate_sha1_digest", presentationPrefixIndependent: true, parsedStreams: ["stdout", "stderr"], cleanBuild: true, buildCacheEnabled: false, rawStdoutIncluded: false, rawStderrIncluded: false}' \
-  > "${RUNNER_TEMP}/rc7-android-apk-certificate.json"
+write_certificate_artifact() {
+  local final_restriction_matches_apk="$1"
+  jq -n \
+    --arg packageName "${ANDROID_PACKAGE}" \
+    --arg provisionalCertificateSha1 "${android_sha1^^}" \
+    --arg actualCertificateSha1 "${apk_certificate_sha1}" \
+    --arg finalRestrictionCertificateSha1 "${apk_certificate_sha1}" \
+    --argjson apksignerExitCode "${apksigner_code}" \
+    --argjson certificateDigestCount "${certificate_digest_count}" \
+    --argjson certificateFormatValid "${apk_certificate_format_valid}" \
+    --argjson prebuildCertificateMatchesApk "${prebuild_certificate_matches_apk}" \
+    --argjson matchesRestrictedKey "${final_restriction_matches_apk}" \
+    '{schema: "direkt.rc7.android-apk-certificate.v4", packageName: $packageName, provisionalCertificateSha1: $provisionalCertificateSha1, actualCertificateSha1: (if $actualCertificateSha1 == "" then null else $actualCertificateSha1 end), finalRestrictionCertificateSha1: (if $finalRestrictionCertificateSha1 == "" then null else $finalRestrictionCertificateSha1 end), apksignerExitCode: $apksignerExitCode, certificateDigestCount: $certificateDigestCount, certificateFormatValid: $certificateFormatValid, prebuildCertificateMatchesApk: $prebuildCertificateMatchesApk, matchesRestrictedKey: $matchesRestrictedKey, finalRestrictionMatchesApk: $matchesRestrictedKey, digestFieldPattern: "certificate_sha1_digest", presentationPrefixIndependent: true, parsedStreams: ["stdout", "stderr"], cleanBuild: true, buildCacheEnabled: false, rawStdoutIncluded: false, rawStderrIncluded: false}' \
+    > "${RUNNER_TEMP}/rc7-android-apk-certificate.json"
+}
+write_certificate_artifact false
 receipt "android_apk_certificate_sha1=${apk_certificate_sha1:-unavailable}"
 receipt "android_apk_certificate_digest_count=${certificate_digest_count}"
 receipt "android_apk_certificate_format_valid=${apk_certificate_format_valid}"
-receipt "android_apk_certificate_matches_key=${certificate_matches}"
-if [[ "${apksigner_code}" -ne 0 ]] || [[ "${certificate_digest_count}" -ne 1 ]] || ! ${apk_certificate_format_valid} || ! ${certificate_matches}; then
+receipt "android_prebuild_certificate_matches_apk=${prebuild_certificate_matches_apk}"
+if [[ "${apksigner_code}" -ne 0 ]] || [[ "${certificate_digest_count}" -ne 1 ]] || ! ${apk_certificate_format_valid}; then
   cat "${RUNNER_TEMP}/rc7-android-apk-certificate.json" >&2
   exit 1
 fi
+
+gcloud services api-keys update "${ANDROID_KEY_ID}" \
+  --project "${GCP_PROJECT_ID}" \
+  --location global \
+  --display-name 'DIREKT RC7 Android Maps synthetic' \
+  --allowed-application "sha1_fingerprint=${apk_certificate_sha1},package_name=${ANDROID_PACKAGE}" \
+  --api-target service=maps-android-backend.googleapis.com \
+  --quiet
+gcloud services api-keys describe "${ANDROID_KEY_ID}" \
+  --project "${GCP_PROJECT_ID}" \
+  --location global \
+  --format=json > "${RUNNER_TEMP}/rc7-android-key-metadata.json"
+jq -e --arg package "${ANDROID_PACKAGE}" --arg sha "${apk_certificate_sha1}" '
+  .restrictions.androidKeyRestrictions.allowedApplications
+  | length == 1 and any(.packageName == $package and (.sha1Fingerprint | ascii_upcase) == $sha)
+' "${RUNNER_TEMP}/rc7-android-key-metadata.json" >/dev/null
+jq -e '
+  (.restrictions.apiTargets | length) == 1 and
+  .restrictions.apiTargets[0].service == "maps-android-backend.googleapis.com"
+' "${RUNNER_TEMP}/rc7-android-key-metadata.json" >/dev/null
+write_certificate_artifact true
+receipt "android_apk_certificate_matches_key=true"
+receipt "android_key_restricted_to_final_apk=true"
+receipt "final_credential_propagation_wait_seconds=60"
 rm -f "${apksigner_stdout}" "${apksigner_stderr}" "${apk_certificate_digests_file}"
+sleep 60
 
 testlab_stderr="${RUNNER_TEMP}/rc7-maps-test-lab.stderr"
 testlab_failure="${RUNNER_TEMP}/rc7-maps-test-lab-failure.json"
