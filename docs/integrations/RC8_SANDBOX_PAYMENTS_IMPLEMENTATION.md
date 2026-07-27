@@ -1,15 +1,15 @@
 # RC8 Sandbox Payment Adapters and Reconciliation
 
-**Governing issue:** #261  
-**Branch:** `integration/rc8-sandbox-payments`  
-**Base:** `main@b6d4a204ff8493e826f28c7dd27f71c993d213a3`  
-**State:** RC8A foundation green; RC8B MTN green; RC8C Stripe, PayPal and DPO green; RC8D reconciliation source green; RC7 managed proof remains open in parallel
+**Governing issue:** #261
+**Branch:** `integration/rc8-sandbox-payments`
+**Replayed base:** `main@54d0129027b7f324272c4bcc94a0f2109318fd18`
+**State:** SOURCE CHECKPOINT READY FOR PROMOTION — runtime binding and managed sandbox evidence remain pending
 
-## Sequencing exception
+## Source replay receipt
 
-The owner explicitly authorized RC8 source development while RC7 managed Maps proof remains pending. This does not close RC7. RC8 stays isolated from `main` until merging cannot invalidate RC7's exact-main evidence.
+RC7 closed through PR #487, and RC8 became the sole bounded repository lane through PR #488. The original PR #454 source checkpoint was replayed losslessly as one commit over `main@54d0129027b7f324272c4bcc94a0f2109318fd18`: all 16 net RC8 files were preserved, while stale pre-RC7 history was removed.
 
-When RC7 posts a terminal result, the repository must immediately preserve failure evidence and repair it, or promote the PASS and cleanup receipt, consume the RC7 trigger, reconcile the ledger/status documents and then complete the RC8 handoff.
+This source checkpoint remains fail-closed. It adds no application registration, runtime credential binding, controller route, webhook endpoint, database executor or managed provider transaction. Runtime binding and managed sandbox evidence remain separate RC8 checkpoints.
 
 ## Approved RC8 scope
 
@@ -184,7 +184,7 @@ RC8D still has no controller route, provider runtime binding, database executor 
 
 ## Merge and runtime gates
 
-RC8 source may be reviewed and tested in parallel, but no RC8 merge or managed provider execution may invalidate RC7 exact-main proof. Before any provider adapter becomes executable, the change must also prove:
+The source checkpoint may merge only after the replayed exact head passes all applicable repository regressions and review confirms that no provider is runtime-bound. Before any provider adapter becomes executable, a separate least-privilege change must also prove:
 
 - explicit sandbox target environment;
 - source-controlled provider allowlist;

@@ -19,6 +19,8 @@ DPO_TEST = ROOT / "backend/direkt-api/test/unit/dpo-sandbox-payment-provider.ada
 RECONCILIATION_TEST = ROOT / "backend/direkt-api/test/unit/sandbox-payment-reconciliation.spec.ts"
 STATUS = ROOT / "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
 LEDGER = ROOT / "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
+LOCK = ROOT / "WORKSTREAM_LOCK.md"
+IMPLEMENTATION = ROOT / "docs/integrations/RC8_SANDBOX_PAYMENTS_IMPLEMENTATION.md"
 
 
 def require(path: Path, needle: str) -> None:
@@ -36,6 +38,13 @@ def reject(path: Path, needle: str) -> None:
 for provider in ("mtn_momo", "airtel_money", "dpo", "stripe", "paypal"):
     require(PORT, f"'{provider}'")
     require(REGISTRY, f"{provider}:")
+
+require(LOCK, "CLAIMED — RC8 sandbox payment runtime closure")
+require(LOCK, "RC8 implementation contract — CLAIMED")
+require(LOCK, "RC8 is the sole active repository write lane")
+require(IMPLEMENTATION, "SOURCE CHECKPOINT READY FOR PROMOTION")
+require(IMPLEMENTATION, "**Replayed base:** `main@54d0129027b7f324272c4bcc94a0f2109318fd18`")
+require(IMPLEMENTATION, "runtime binding and managed sandbox evidence remain pending")
 
 require(PORT, "customerToProviderPayments: false")
 require(PORT, "productionMoneyMovement: false")
@@ -184,3 +193,5 @@ print("provider_runtime_binding=false")
 print("sandbox_runtime_enabled=false")
 print("real_money=false")
 print("participant_data=false")
+print("source_checkpoint_replayed=true")
+print("runtime_checkpoint_pending=true")
