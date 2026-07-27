@@ -26,16 +26,23 @@ jobs:
           raw="${RUNNER_TEMP}/job.log"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
           body="${RUNNER_TEMP}/bounded.md"
+          sanitize='s/(AIza[0-9A-Za-z_-]{20,})/[REDACTED_API_KEY]/g; s/(ya29\.[0-9A-Za-z._-]{20,})/[REDACTED_OAUTH_TOKEN]/g; s/[0-9A-Za-z_+=\/.:-]{120,}/[REDACTED_LONG_VALUE]/g'
           {
             echo '## RC7 bounded Android build/certificate log extraction'
             echo
             echo "- Exact-main runtime job: \`${SOURCE_JOB_ID}\`"
-            echo '- Raw job log is not attached; only bounded matching lines are shown.'
+            echo '- Raw job log is not attached; only bounded matching lines and the sanitized failure window are shown.'
             echo
+            echo '### Matching lines'
             echo '```text'
             grep -n -E 'BUILD (SUCCESSFUL|FAILED)|FAILURE:|What went wrong|Execution failed|apksigner|certificate|android-apk|No such file|not found|Process completed with exit code|rc7-maps-test-lab|Firebase Test Lab|instrumentation' "${raw}" \
-              | sed -E 's/(AIza[0-9A-Za-z_-]{20,})/[REDACTED_API_KEY]/g; s/(ya29\.[0-9A-Za-z._-]{20,})/[REDACTED_OAUTH_TOKEN]/g; s/[0-9A-Za-z_+=\/.:-]{120,}/[REDACTED_LONG_VALUE]/g' \
+              | sed -E "${sanitize}" \
               | tail -n 160 || true
+            echo '```'
+            echo
+            echo '### Failure window'
+            echo '```text'
+            sed -n '1120,1170p' "${raw}" | sed -E "${sanitize}"
             echo '```'
           } > "${body}"
           cat "${body}"
