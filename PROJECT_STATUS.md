@@ -5,7 +5,7 @@
 **VC1–VC8 promotion:** PR #270 merged at `c7f5985bc20372b4761e063dc3a66ecc736556e2`
 **Visual Completion issue:** #259 — CLOSED/COMPLETED
 **Runtime integration tracker:** #261
-**Active repository write lane:** none; RC1–RC7 are closed at documented synthetic-only managed boundaries
+**Active repository write lane:** RC8 sandbox payment runtime closure under Issue #261; RC1–RC7 remain closed at documented synthetic-only managed boundaries
 
 ## 1. Programme state
 
@@ -19,7 +19,7 @@ DIREKT’s current repository state is:
 - functional customer/provider web/PWA W0–W8 — **closed**;
 - VC0 preparation/control — **closed**;
 - VC1–VC8 world-class product/AI modernization — **complete and merged**;
-- runtime integration closure — **RC1–RC7 are closed at synthetic-only managed boundaries; RC7 Google Maps passed backend OAuth and API 36 map-ready evidence**.
+- runtime integration closure — **RC1–RC7 are closed at synthetic-only managed boundaries; RC8 sandbox payment source promotion and managed evidence are active**.
 
 VC1–VC8 completion does not replace or weaken the remaining Phase 11 real-world evidence, privacy/legal, payment, external-communications or production-release gates.
 
@@ -205,14 +205,14 @@ VC1–VC8 completion does not clear:
 
 ## 9. Next execution rule
 
-VC1–VC8 and RC1–RC7 are closed at their documented boundaries. No active repository write lane exists.
+VC1–VC8 and RC1–RC7 are closed at their documented boundaries. RC8 is the sole active repository write lane.
 
-RC8 sandbox-only payment-provider reconciliation is the next dependency-safe integration checkpoint, but it is not claimed. Before RC8 source changes:
+RC8 execution order is:
 
-1. start from current merged `main`;
-2. recheck RC0–RC7 exact-head evidence and the current integration ledger;
-3. claim a new bounded lane in `WORKSTREAM_LOCK.md`;
-4. keep all real-money movement, escrow and participant/production authorization disabled;
-5. preserve backend-authoritative ledger/webhook reconciliation and all verification/trust separation rules.
+1. replay the reviewed PR #454 source checkpoint onto the current RC7-closed `main`;
+2. require the complete exact-head backend, Android, web, portal, integration, supply-chain and documentation regression matrix before source promotion;
+3. bind only reviewed sandbox/test provider credentials through least-privilege server-side controls;
+4. execute bounded synthetic provider and reconciliation evidence with real money, participant data and production authorization false;
+5. close RC8 only after status/ledger reconciliation, trigger consumption, exact-head regressions and workstream release.
 
 This project status records repository/product completion truth only and does not imply production authorization beyond the explicitly evidenced integration and release boundaries.
