@@ -125,7 +125,7 @@ reject(CONTROL, "PRIMARY-PILOT evidence complete")
 
 for workflow in (ROOT / ".github" / "workflows").glob("*.yml"):
     reject(workflow, "PILOT_ENTRY_APPROVED: true")
-    reject(workflow, "PILOT_ENTRY_APPROVED=true")
+    reject(workflow, 'PILOT_ENTRY_APPROVED: "true"')
 
 print("PHASE11_PRIMARY_PILOT_READINESS|PASS")
 print("state=execution_ready_real_entry_blocked")
