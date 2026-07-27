@@ -6,14 +6,14 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | RELEASED — RC11 CLOSED AND PRESERVED |
-| Owner/agent | None. Runtime integration closure is complete. |
-| Authorized scope | No active repository write scope. A new explicit claim is required for Phase 11C–11J preparation or any later source change. |
+| Status | CLAIMED — PHASE 11C–11J EXECUTION READINESS |
+| Owner/agent | Active repository agent — Issue #112 Phase 11 primary-pilot readiness. |
+| Authorized scope | Build the canonical 11C–11J wave protocol, blocker/evidence registers, metrics, stop rules, correction intake and exit-decision instruments. No real participant recruitment, data processing or provider activation. |
 | Protected surface | Closed RC0–RC10 evidence, canonical OpenAPI authorization/privacy checks, Android auth/session and Firebase controls, customer/provider web BFF/private Cloud Run IAM, operations portal, RC8 payment boundaries, UIA Issue #354, VC1–VC8 Design DNA and Phase 11/12 gates. |
-| Implementation branch | None. RC11 implementation PR #505 merged at `87f567fccfa92244c7951432436c7163c71d5fc7`. |
-| Stable baseline | `main@87f567fccfa92244c7951432436c7163c71d5fc7` contains the reviewed RC11A–RC11C reconciliation and immutable RC0–RC10 closure evidence. |
-| Current task | None. Phase 11C–11J execution preparation is next but unclaimed; real participant execution remains blocked by the Phase 11 entry gates. |
-| Governing issue | Issue #261 — completed by RC11 closure. Phase 11 remains governed by Issue #112; UIA Issue #354 remains separately open. |
+| Implementation branch | `phase11/primary-pilot-readiness`, based on `main@321e74f56e48f239011fe1bba4d430e360709bc4`. |
+| Stable baseline | `main@321e74f56e48f239011fe1bba4d430e360709bc4` contains closed RC0–RC11 evidence and the released integration programme. |
+| Current task | Phase 11C–11J execution-readiness package only. `PILOT_ENTRY_APPROVED` remains false and the PRIMARY-PILOT evidence register remains empty. |
+| Governing issue | Issue #112 — Phase 11 controlled Zambia pilot and primary validation. Issue #261 remains closed; UIA Issue #354 remains separately open. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
 
@@ -203,4 +203,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-The repository write lane is RELEASED. RC0–RC11 evidence remains immutable/regression-protected. Phase 11C–11J preparation or any later source work requires a new explicit claim. Real-money, participant and production authorization remain blocked.
+The repository write lane is CLAIMED for Phase 11C–11J execution readiness only. RC0–RC11 evidence remains immutable/regression-protected. Real participants, real participant data, real money and production authorization remain blocked until the explicit Phase 11 entry checklist is satisfied.

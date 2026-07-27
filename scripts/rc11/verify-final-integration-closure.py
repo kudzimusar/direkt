@@ -24,17 +24,14 @@ for path in (LOCK, PROJECT, STATUS, LEDGER, PLAN, INDEX, RECORD, CLOSURE):
         raise SystemExit(f"RC11 contract missing file {path.relative_to(ROOT)}")
 
 for needle in (
-    "RELEASED — RC11 CLOSED AND PRESERVED",
     "RC11 implementation contract — CLOSED AND PRESERVED",
     "RC11A requires the combined",
     "RC11B maintains one managed evidence index",
     "RC11C reconciles the live ledger",
     "RC11D requires a dedicated exact-head closure receipt",
-    "The repository write lane is RELEASED",
 ):
     require(LOCK, needle)
 
-require(PROJECT, "Active repository write lane:** none; RC0–RC11 are closed")
 require(PROJECT, "runtime integration closure — **RC0–RC11 are closed")
 require(STATUS, "CLOSED — FINAL INTEGRATION RECONCILIATION / LANE RELEASED")
 require(LEDGER, "RC11 final integration reconciliation")
@@ -89,7 +86,8 @@ for needle in (
 
 print("RC11_FINAL_INTEGRATION_CONTRACT|PASS")
 print("state=closed")
-print("workstream_lane=released")
+print("rc11_closure_preserved=true")
+print("later_lane_ownership_not_asserted=true")
 print("managed_evidence_index=reconciled")
 print("blocked_provider_states=preserved")
 print("false_active_claims=false")
