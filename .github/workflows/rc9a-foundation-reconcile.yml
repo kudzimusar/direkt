@@ -5,6 +5,7 @@ on:
     paths:
       - ".github/workflows/rc9a-foundation-reconcile.yml"
       - "scripts/rc9/patch-rc9a-foundation-status.py"
+      - "scripts/rc9/patch-generated-write-layout.py"
       - "scripts/rc9/generate-clients.sh"
       - "clients/generator/**"
       - "clients/generated/kotlin/build.gradle.kts"
@@ -39,12 +40,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python3 scripts/rc9/patch-generated-write-layout.py
+
           pushd backend/direkt-api >/dev/null
           npm ci --ignore-scripts
           npm run openapi:check
           popd >/dev/null
 
           bash scripts/rc9/generate-clients.sh --write
+          test "$(find clients/generated/kotlin/src/main/kotlin -type f -name '*.kt' | wc -l | tr -d ' ')" -ge 50
+          test "$(find clients/generated/typescript/src -type f -name '*.ts' | wc -l | tr -d ' ')" -ge 50
 
           chmod +x android/direkt-app/gradlew
           android/direkt-app/gradlew \
@@ -52,6 +57,10 @@ jobs:
             --no-daemon \
             --stacktrace \
             clean compileKotlin
+          if ! find clients/generated/kotlin/build/classes/kotlin/main -type f -name '*.class' -print -quit | grep -q .; then
+            echo 'RC9A Kotlin compile produced no class files.' >&2
+            exit 1
+          fi
 
           pushd web/direkt-app >/dev/null
           npm ci --ignore-scripts
@@ -83,7 +92,9 @@ jobs:
             docs/integrations/CURRENT_INTEGRATION_STATUS.md \
             docs/integrations/LIVE_INTEGRATION_LEDGER.md \
             docs/integrations/RC9_GENERATED_CLIENTS_IMPLEMENTATION.md
-          rm scripts/rc9/patch-rc9a-foundation-status.py
+          rm \
+            scripts/rc9/patch-rc9a-foundation-status.py \
+            scripts/rc9/patch-generated-write-layout.py
 
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
@@ -91,12 +102,14 @@ jobs:
             clients/generated/kotlin/src \
             clients/generated/typescript/src \
             clients/generated/GENERATION_RECEIPT.json \
+            scripts/rc9/generate-clients.sh \
             WORKSTREAM_LOCK.md \
             PROJECT_STATUS.md \
             docs/integrations/CURRENT_INTEGRATION_STATUS.md \
             docs/integrations/LIVE_INTEGRATION_LEDGER.md \
             docs/integrations/RC9_GENERATED_CLIENTS_IMPLEMENTATION.md \
-            scripts/rc9/patch-rc9a-foundation-status.py
+            scripts/rc9/patch-rc9a-foundation-status.py \
+            scripts/rc9/patch-generated-write-layout.py
           git diff --cached --check
           git commit -m 'feat(rc9a): generate deterministic Kotlin and TypeScript clients'
           git push origin HEAD:feat/rc9a-deterministic-generated-clients
