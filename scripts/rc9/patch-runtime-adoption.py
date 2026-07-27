@@ -114,3 +114,4 @@ replace_once(
 
 print("RC9_RUNTIME_ADOPTION_PATCH|PASS")
 print("focused_adapter_regressions=required")
+print("source_boundary_scan=authored_files_only")
