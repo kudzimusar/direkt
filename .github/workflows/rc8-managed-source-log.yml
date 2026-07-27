@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
-      SOURCE_JOB_ID: "89889696809"
+      SOURCE_JOB_ID: "89890369043"
     steps:
       - name: Print bounded managed-source failure
         shell: bash
@@ -24,4 +24,4 @@ jobs:
           set -euo pipefail
           raw="${RUNNER_TEMP}/rc8-managed-source.log"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
-          tail -n 50 "${raw}"
+          tail -n 80 "${raw}"
