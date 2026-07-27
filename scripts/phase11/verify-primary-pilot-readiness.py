@@ -107,7 +107,7 @@ for needle in (
     "ASSUMPTION",
     "REQUEST",
     "INCIDENT",
-    "No direct database status edits",
+    "direct database status edits as the product fix",
 ):
     require(FINDINGS, needle)
 
