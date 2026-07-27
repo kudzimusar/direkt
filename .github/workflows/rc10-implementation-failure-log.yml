@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
-      SOURCE_JOB_ID: "90020861263"
+      SOURCE_JOB_ID: "90021773805"
     steps:
       - name: Print implementation failure tail
         shell: bash
@@ -26,4 +26,4 @@ jobs:
           clean="${RUNNER_TEMP}/rc10-implementation-clean.log"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
           sed -r 's/\x1B\[[0-9;]*[mK]//g; s/^.*Z //' "${raw}" > "${clean}"
-          tail -n 120 "${clean}"
+          tail -n 140 "${clean}"
