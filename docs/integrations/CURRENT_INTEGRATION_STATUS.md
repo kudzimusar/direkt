@@ -29,7 +29,7 @@ No integration becomes ACTIVE merely because an account, DNS record, API key, SD
 | Cloudflare DNS | **ACTIVE** | Authoritative DNS edge. |
 | GitHub Pages | **ACTIVE public static origin** | Documentation and synthetic/non-sensitive preview content. |
 | Cloudflare Email Routing | **EXTERNALLY_PROVISIONED** | Role/support aliases; not outbound application delivery. |
-| Cloudflare Turnstile | **RC10 IMPLEMENTED — NOT CURRENTLY REQUIRED / NOT ACTIVE / REGRESSION PENDING** | The reviewed threat model found no current anonymous browser flow with residual risk that justifies a challenge. Public discovery assistance, public Help and search-area normalization now have explicit fail-closed database rate limits. No site key, secret, widget, package or runtime binding exists. |
+| Cloudflare Turnstile | **RC10 CLOSED — NOT CURRENTLY REQUIRED / NOT ACTIVE** | PR #502 exact head `cdab6622e0cc06e35cddca2bb5bc8ea70c027b38` passed the complete exact-head matrix and squash-merged at `620a99ba5465ad38ce012df0a8fa15e458de6505`. Public discovery assistance, public Help and search-area normalization use explicit fail-closed database rate limits. No site key, secret, widget, package or runtime binding exists. |
 
 ## Core data/backend infrastructure
 
@@ -173,8 +173,8 @@ Clients never decide payment success. Payment state cannot create verification/p
 9. RC7 Google Maps runtime.
 10. RC8 sandbox payment adapters/reconciliation.
 11. RC9 generated Kotlin/TypeScript clients — **CLOSED — DETERMINISTIC / BOUNDED RUNTIME ADOPTION**; PR #497 exact head `04ef57f31414ec5165e353abba74afb8dfdcc901` passed the full matrix and merged at `70de95c73128e921cd4d7c667de0e5a442a9e0c0`.
-12. RC10 Turnstile threat-model decision.
-13. RC11 combined integration regression/evidence index/lane release.
+12. RC10 Turnstile threat-model decision — **CLOSED — NOT CURRENTLY REQUIRED / TURNSTILE NOT ACTIVE**; PR #502 exact head `cdab6622e0cc06e35cddca2bb5bc8ea70c027b38`, merge `620a99ba5465ad38ce012df0a8fa15e458de6505`; public POST rate-limit gaps closed.
+13. RC11 combined integration regression/evidence index/lane release — **NEXT BUT UNCLAIMED**.
 
 W8 and VC1–VC8 are closed. Runtime integration work does not authorize real participants, production external communications, real money, Phase 11 exit or Phase 12 production release.
 

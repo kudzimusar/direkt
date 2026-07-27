@@ -3,6 +3,9 @@
 **Decision date:** 2026-07-27 (Asia/Tokyo)
 **Governing issue:** #261
 **Claim merge:** `e0ee52564eef16cdec1d8eb0a85f17da456cb5b1`
+**Implementation PR/head:** #502 / `cdab6622e0cc06e35cddca2bb5bc8ea70c027b38`
+**Implementation merge:** `620a99ba5465ad38ce012df0a8fa15e458de6505`
+**Closure state:** `CLOSED — NOT CURRENTLY REQUIRED / TURNSTILE NOT ACTIVE`
 **Decision:** `NOT CURRENTLY REQUIRED`
 **Turnstile runtime:** not active
 **Production authorization:** false
@@ -66,3 +69,19 @@ Any future Turnstile implementation must be limited to the reviewed browser acti
 ## Authorization boundary
 
 RC10 does not authorize real participants, production authentication, real external communications, production AI, production Maps, payment-provider activation, real money, private evidence processing or formal Phase 12 release. Those gates remain unchanged.
+
+
+## Closure evidence
+
+The exact implementation head `cdab6622e0cc06e35cddca2bb5bc8ea70c027b38` passed the complete required matrix before PR #502 was squash-merged at `620a99ba5465ad38ce012df0a8fa15e458de6505`:
+
+- RC10 decision contract `30279827057`;
+- backend CI/container `30279827068`, `30279826976`;
+- runtime audit `30279831964`;
+- deterministic generation and RC9 preservation `30279826827`, `30279829353`;
+- W7/W8 and functional PWA `30279829473`, `30279826788`, `30279829352`, `30279826525`;
+- recovery/staging/Phase 11 synthetic `30279826679`, `30279826805`, `30279829444`;
+- RC5/RC6/RC7/RC8 preservation `30279829654`, `30279829433`, `30279829956`, `30279829618`, `30279826638`, `30279829561`;
+- documentation quality `30279827241`.
+
+RC10 is closed at this bounded decision and first-party abuse-control boundary. The repository write lane is released. RC11 is next but remains unclaimed.
