@@ -34,6 +34,16 @@ jobs:
             exit 0
           fi
           python3 scripts/rc8/patch-managed-proof-source.py
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/rc8/verify-payments-contract.py')
+          text = path.read_text(encoding='utf-8')
+          invalid = 'require(MANAGED_WORKFLOW, "test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"")'
+          valid = 'require(MANAGED_WORKFLOW, \'test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"\')'
+          if invalid not in text:
+              raise SystemExit('missing generated exact-main verifier line')
+          path.write_text(text.replace(invalid, valid, 1), encoding='utf-8')
+          PY
           pushd backend/direkt-api >/dev/null
           npm ci --ignore-scripts
           npx prettier --write src/commercial/rc8-payment-canary.ts package.json
