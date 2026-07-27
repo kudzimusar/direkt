@@ -1,0 +1,29 @@
+name: RC10 closeout failure log
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc10-closeout-failure-log.yml"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  extract:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'docs/rc10-closeout'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_JOB_ID: "90028024663"
+    steps:
+      - name: Print closeout failure tail
+        shell: bash
+        run: |
+          set -euo pipefail
+          raw="${RUNNER_TEMP}/rc10-closeout.log"
+          clean="${RUNNER_TEMP}/rc10-closeout-clean.log"
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
+          sed -r 's/\x1B\[[0-9;]*[mK]//g; s/^.*Z //' "${raw}" > "${clean}"
+          tail -n 140 "${clean}"
