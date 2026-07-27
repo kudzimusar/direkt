@@ -66,11 +66,11 @@ def main() -> int:
     managed_trigger = read("docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md")
 
     for needle in (
-        "CLAIMED — RC7 Google Maps runtime integration",
-        "RC7 implementation contract — CLAIMED",
+        "RELEASED — RC7 Google Maps runtime integration closed",
+        "RC7 implementation contract — CLOSED AND PRESERVED",
         "Places and Routes remain disabled",
         "Exact private provider bases never become public markers",
-        "RC7 is the sole active repository write lane",
+        "No repository write lane is active",
     ):
         require(lock, needle, "RC7 workstream contract")
 
@@ -192,13 +192,13 @@ def main() -> int:
     ):
         require(managed_test, needle, "managed Android map-load assertion")
 
-    require(status, "IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS", "current Maps state")
-    require(ledger, "IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS", "live Maps ledger state")
+    require(status, "ACTIVE — SYNTHETIC-ONLY MANAGED CANARY", "closed Maps state")
+    require(ledger, "ACTIVE — SYNTHETIC-ONLY MANAGED CANARY", "closed Maps ledger state")
 
     for needle in (
         "workflow_dispatch:",
         "RUN-DIREKT-RC7-MAPS-MANAGED",
-        "branches:\n      - main",
+        "if: github.event_name == 'workflow_dispatch'",
         'test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"',
         "google-github-actions/auth@v3",
         "direkt-github-deployer@direkt-dev-502701.iam.gserviceaccount.com",
@@ -337,8 +337,8 @@ def main() -> int:
         "CONFIRMATION=RUN-DIREKT-RC7-MAPS-MANAGED",
         "managed proof confirmation",
     )
-    if not any(state in managed_trigger for state in ("STATUS=ARMED", "STATUS=CONSUMED")):
-        raise AssertionError("Managed RC7 trigger must be ARMED before proof or CONSUMED after closure.")
+    require(managed_trigger, "STATUS=CONSUMED", "consumed managed proof trigger")
+    prohibit(managed_workflow, r"^  push:", "automatic RC7 main-push execution after closure")
 
     for client_root in ("android", "web", "admin"):
         for path in (ROOT / client_root).rglob("*"):
@@ -367,7 +367,7 @@ def main() -> int:
     print("backend_api_key=false")
     print("backend_cloud_nat=false")
     print("owner_bootstrap=no_secret_value_time_limited_authority")
-    print("managed_proof=exact_main_wif_cost_bounded")
+    print("managed_proof=closed_exact_main_wif_cost_bounded")
     print("manual_list_fallback=preserved")
     print("private_coordinates_public=false")
     print("production_authorization=false")

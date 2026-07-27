@@ -1,8 +1,8 @@
 # DIREKT Current Integration Status Register
 
 **Authoritative as-of date:** 2026-07-27 (Asia/Tokyo)
-**Scope:** repository `kudzimusar/direkt`, managed development/staging evidence, live Supabase verification and owner-configured external services  
-**Purpose:** prevent external provisioning, source integration and runtime activation from being conflated.  
+**Scope:** repository `kudzimusar/direkt`, managed development/staging evidence, live Supabase verification and owner-configured external services
+**Purpose:** prevent external provisioning, source integration and runtime activation from being conflated.
 **Detailed live receipts:** `LIVE_INTEGRATION_LEDGER.md`
 
 ## Status vocabulary
@@ -89,7 +89,7 @@ Current managed DIREKT runtime does **not** bind Gemini/Groq as active applicati
 |---|---|---|
 | PostGIS location model | **ACTIVE** | Canonical location/service-area semantics. |
 | Manual area/list fallback | **ACTIVE** | Provider-independent privacy/accessibility fallback. |
-| Google Maps Platform | **IMPLEMENTED_GATED / CORRECTIVE MANAGED PROOF IN PROGRESS** | RC7 preserves the restricted Android key and privacy-safe native rendering; backend Geocoding uses v4 through the assigned Cloud Run service identity with a downscoped address-only OAuth token. Exact-main run `30231743285/1` passed backend OAuth, budget, quota, clean no-cache build and semantic certificate extraction, proving one valid final APK SHA-1. The final APK certificate differed from the provisional build-time restriction, so the run failed closed before Test Lab. The correction re-restricts the same key to the actual packaged APK package+certificate pair, verifies metadata/API target, waits for propagation, and only then starts API 36 Test Lab. |
+| Google Maps Platform | **ACTIVE — SYNTHETIC-ONLY MANAGED CANARY** | RC7 closed on exact source `47285575862cbf08845eaeabe093afea1ea79bd1` through managed run `30234521983/1`. Backend Geocoding v4 passed under the assigned Cloud Run service identity and address-only OAuth scope; the Android key was restricted to the final packaged APK certificate and Maps SDK target; API 36 Test Lab passed 1/1 with zero flaky retries; cleanup passed. Artifact `8641270327` has digest `sha256:24da53c0bd6fa885fa4a6814f70af090096192e6c5b7a03c89fba51416877fde`. Manual/list fallback remains active; production/participant Maps and private-coordinate publication remain disabled. |
 | Private-coordinate map publication | **DISABLED** | Exact private provider bases must not become public markers/ranking inputs. |
 
 ## Communications and notifications

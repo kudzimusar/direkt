@@ -1,11 +1,11 @@
 # DIREKT Project Status
 
-**Updated:** 2026-07-26 (Asia/Tokyo)
-**Stable branch:** `main`  
-**VC1–VC8 promotion:** PR #270 merged at `c7f5985bc20372b4761e063dc3a66ecc736556e2`  
-**Visual Completion issue:** #259 — CLOSED/COMPLETED  
-**Runtime integration tracker:** #261  
-**Active repository write lane:** none; RC5 and RC6 are closed at synthetic-only managed boundaries
+**Updated:** 2026-07-27 (Asia/Tokyo)
+**Stable branch:** `main`
+**VC1–VC8 promotion:** PR #270 merged at `c7f5985bc20372b4761e063dc3a66ecc736556e2`
+**Visual Completion issue:** #259 — CLOSED/COMPLETED
+**Runtime integration tracker:** #261
+**Active repository write lane:** none; RC1–RC7 are closed at documented synthetic-only managed boundaries
 
 ## 1. Programme state
 
@@ -19,7 +19,7 @@ DIREKT’s current repository state is:
 - functional customer/provider web/PWA W0–W8 — **closed**;
 - VC0 preparation/control — **closed**;
 - VC1–VC8 world-class product/AI modernization — **complete and merged**;
-- runtime integration closure — **RC1–RC6 are closed at synthetic-only managed boundaries; RC5 Firebase Test Lab passed the isolated API 26/33/36 managed matrix**.
+- runtime integration closure — **RC1–RC7 are closed at synthetic-only managed boundaries; RC7 Google Maps passed backend OAuth and API 36 map-ready evidence**.
 
 VC1–VC8 completion does not replace or weaken the remaining Phase 11 real-world evidence, privacy/legal, payment, external-communications or production-release gates.
 
@@ -169,7 +169,7 @@ Important distinctions:
 - RC1 Resend, RC4 FCM and RC6 WhatsApp have managed synthetic outbox → provider/device or authentic provider-receipt proof, while real-participant/continuous production communications remain separately gated;
 - the provider-neutral AI contract and bounded VC7 use cases are implemented, but external model runtime activation remains per-use-case/fail-closed and restricted-data AI remains disabled;
 - RC5 Firebase Test Lab is **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED MATRIX**: isolated project `direkt-testlab-502701-20260726`, exact source `c3744430a7beb1cd47246d858df9ac1379a068ac`, run `30183466799`, API 26/33/36 and zero flaky retries;
-- Maps and other externally provisioned integrations require their own runtime evidence before being represented as active;
+- RC7 Google Maps is **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY** at source `47285575862cbf08845eaeabe093afea1ea79bd1`, run `30234521983/1`, artifact `8641270327` (`sha256:24da53c0bd6fa885fa4a6814f70af090096192e6c5b7a03c89fba51416877fde`); participant/production Maps and private-coordinate publication remain disabled; other integrations still require their own runtime evidence before being represented as active;
 - payment rails may be sandbox-proven while real money remains disabled;
 - an account, API key, secret or provider dashboard entry alone is never `ACTIVE` runtime evidence.
 
@@ -205,14 +205,14 @@ VC1–VC8 completion does not clear:
 
 ## 9. Next execution rule
 
-VC1–VC8 and RC1–RC6 are closed at their documented boundaries. No active repository write lane exists.
+VC1–VC8 and RC1–RC7 are closed at their documented boundaries. No active repository write lane exists.
 
-RC7 Google Maps is the next dependency-safe integration checkpoint, but it is **not claimed or started** by RC5 closure. Before RC7 source changes:
+RC8 sandbox-only payment-provider reconciliation is the next dependency-safe integration checkpoint, but it is not claimed. Before RC8 source changes:
 
 1. start from current merged `main`;
-2. recheck RC5/RC6 exact-head evidence and the current integration ledger;
+2. recheck RC0–RC7 exact-head evidence and the current integration ledger;
 3. claim a new bounded lane in `WORKSTREAM_LOCK.md`;
-4. preserve privacy-safe publication, manual/list fallback, quotas, kill switch and private-coordinate non-leakage;
-5. keep participant/production authorization and formal Phase 12 release blocked.
+4. keep all real-money movement, escrow and participant/production authorization disabled;
+5. preserve backend-authoritative ledger/webhook reconciliation and all verification/trust separation rules.
 
 This project status records repository/product completion truth only and does not imply production authorization beyond the explicitly evidenced integration and release boundaries.

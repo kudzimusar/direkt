@@ -53,6 +53,13 @@ def command_blocks(script: str, command: str) -> list[str]:
 
 def main() -> int:
     workflow = WORKFLOW.read_text(encoding="utf-8")
+    if re.search(r"^  push:", workflow, flags=re.MULTILINE):
+        raise AssertionError("Closed RC7 workflow must not run automatically on main pushes.")
+    require_once(
+        workflow,
+        "if: github.event_name == 'workflow_dispatch'",
+        "Closed RC7 managed mutation must be manual-dispatch only.",
+    )
     managed_script = MANAGED_SCRIPT.read_text(encoding="utf-8")
     testlab_collector = TESTLAB_COLLECTOR.read_text(encoding="utf-8")
     geocoding_port = GEOCODING_PORT.read_text(encoding="utf-8")
@@ -279,6 +286,8 @@ def main() -> int:
         raise AssertionError("RC7 adapter must not read or expose Google's raw error payload.")
 
     print("RC7_MANAGED_WORKFLOW_CONTEXT|PASS")
+    print("automatic_main_push=false")
+    print("managed_trigger=consumed")
     print("job_level_runner_context=false")
     print("receipt_path_runtime_initialized=true")
     print("cloudsdk_prompts_disabled=true")
