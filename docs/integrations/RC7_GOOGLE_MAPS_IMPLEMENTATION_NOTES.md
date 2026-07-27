@@ -2,7 +2,7 @@
 
 **Governing issue:** #261  
 **Status:** Claimed; corrective source and managed proof in progress  
-**Corrective baseline:** `main@28481cd2d83a32259bd5b30784afefd575a51c58`
+**Corrective baseline:** `main@e5c93419da91bc2276c0d02fa87568ac0e75b22f`
 
 ## Source reconciliation checkpoint
 
@@ -77,6 +77,12 @@ Android's `apksigner` output can identify certificate records with a numbered si
 Exact-main run `30230730145/1` on `28481cd2d83a32259bd5b30784afefd575a51c58` passed backend service-identity OAuth, the fresh one-JPY budget attestation, quota, restricted Android key metadata, clean no-build-cache APK creation and Cloud Run cleanup. Artifact `8640052645` has digest `sha256:ec3f89f20a59df2d5d92d40b3429b10c2c3d6684c25a07059489d035e3437e82`. `apksigner` exited zero, but stdout-only parsing returned zero certificate digests; Test Lab correctly did not start.
 
 The corrected extractor parses both private signer stdout and stderr through the same strict numbered/SDK-range SHA-1 pattern, normalizes and deduplicates matches, and still requires exactly one unique digest equal to the Android key restriction. The sanitized artifact records only `parsedStreams: ["stdout", "stderr"]`; raw signer streams remain ephemeral, are never printed and are never uploaded.
+
+## Certificate SHA-1 field correction
+
+Exact-main run `30231201667/1` on `e5c93419da91bc2276c0d02fa87568ac0e75b22f` passed backend service-identity OAuth, the fresh one-JPY budget attestation, quota, restricted Android key metadata, clean no-build-cache APK creation and Cloud Run cleanup. Artifact `8640205143` has digest `sha256:c545c1e4e49ba54d2269882af5a3cae0f8366e699b34b639f9f4dca7a9a853da`. Both private signer streams were parsed, but the remaining signer-prefix/start-of-line constraint returned zero digests; Test Lab correctly did not start.
+
+AOSP's `ApkSignerTool.printCertificate` emits the stable field `<name> certificate SHA-1 digest: <hex>`. The corrected parser matches the exact `certificate SHA-1 digest:` field anywhere in either private stream, independent of the presentation prefix. It does not match `public key SHA-1 digest`. Matches are normalized and deduplicated, and exactly one digest must equal the Android key restriction. Raw signer streams remain ephemeral, unprinted and unuploaded.
 
 ## Credential and authentication boundary
 

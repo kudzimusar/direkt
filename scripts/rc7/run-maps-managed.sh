@@ -420,8 +420,8 @@ source = "\n".join(
     for path in sys.argv[1:3]
 )
 pattern = re.compile(
-    r"^Signer (?:#[0-9]+|\([^)]*\)) certificate SHA-1 digest:\s*([0-9A-Fa-f:]+)\s*$",
-    flags=re.MULTILINE,
+    r"certificate SHA-1 digest:\s*([0-9A-Fa-f:]+)",
+    flags=re.IGNORECASE,
 )
 digests = sorted(
     {
@@ -454,7 +454,7 @@ jq -n \
   --argjson certificateDigestCount "${certificate_digest_count}" \
   --argjson certificateFormatValid "${apk_certificate_format_valid}" \
   --argjson matchesRestrictedKey "${certificate_matches}" \
-  '{schema: "direkt.rc7.android-apk-certificate.v3", packageName: $packageName, expectedCertificateSha1: $expectedCertificateSha1, actualCertificateSha1: (if $actualCertificateSha1 == "" then null else $actualCertificateSha1 end), apksignerExitCode: $apksignerExitCode, certificateDigestCount: $certificateDigestCount, certificateFormatValid: $certificateFormatValid, matchesRestrictedKey: $matchesRestrictedKey, acceptedSignerLabelForms: ["numbered", "sdk_range"], parsedStreams: ["stdout", "stderr"], cleanBuild: true, buildCacheEnabled: false, rawStdoutIncluded: false, rawStderrIncluded: false}' \
+  '{schema: "direkt.rc7.android-apk-certificate.v3", packageName: $packageName, expectedCertificateSha1: $expectedCertificateSha1, actualCertificateSha1: (if $actualCertificateSha1 == "" then null else $actualCertificateSha1 end), apksignerExitCode: $apksignerExitCode, certificateDigestCount: $certificateDigestCount, certificateFormatValid: $certificateFormatValid, matchesRestrictedKey: $matchesRestrictedKey, digestFieldPattern: "certificate_sha1_digest", presentationPrefixIndependent: true, parsedStreams: ["stdout", "stderr"], cleanBuild: true, buildCacheEnabled: false, rawStdoutIncluded: false, rawStderrIncluded: false}' \
   > "${RUNNER_TEMP}/rc7-android-apk-certificate.json"
 receipt "android_apk_certificate_sha1=${apk_certificate_sha1:-unavailable}"
 receipt "android_apk_certificate_digest_count=${certificate_digest_count}"
