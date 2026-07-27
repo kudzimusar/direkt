@@ -40,9 +40,14 @@ jobs:
           text = path.read_text(encoding='utf-8')
           invalid = 'require(MANAGED_WORKFLOW, "test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"")'
           valid = 'require(MANAGED_WORKFLOW, \'test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"\')'
+          stale = 'require(IMPLEMENTATION, "SOURCE CHECKPOINT READY FOR PROMOTION")'
+          current = 'require(IMPLEMENTATION, "Managed runtime proof — armed")'
           if invalid not in text:
               raise SystemExit('missing generated exact-main verifier line')
-          path.write_text(text.replace(invalid, valid, 1), encoding='utf-8')
+          if stale not in text:
+              raise SystemExit('missing stale RC8 source-state verifier line')
+          text = text.replace(invalid, valid, 1).replace(stale, current, 1)
+          path.write_text(text, encoding='utf-8')
           PY
           pushd backend/direkt-api >/dev/null
           npm ci --ignore-scripts
