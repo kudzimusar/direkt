@@ -14,6 +14,7 @@ on:
       - "docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md"
       - "docs/integrations/RC8_SANDBOX_PAYMENTS_IMPLEMENTATION.md"
       - "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
+      - "PROJECT_STATUS.md"
       - "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
       - "WORKSTREAM_LOCK.md"
   workflow_dispatch:
