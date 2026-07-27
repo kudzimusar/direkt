@@ -24,4 +24,4 @@ jobs:
           set -euo pipefail
           raw="${RUNNER_TEMP}/rc8-closure.log"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
-          tail -n 140 "${raw}"
+          tail -n 45 "${raw}"
