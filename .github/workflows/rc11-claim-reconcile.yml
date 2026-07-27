@@ -1,0 +1,39 @@
+name: RC11 claim reconciler
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc11-claim-reconcile.yml"
+      - "scripts/rc11/patch-claim.py"
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chore/rc11-final-integration-closure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: chore/rc11-final-integration-closure
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Apply and verify RC11 claim
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/rc11/patch-claim.py
+          python3 scripts/rc8/verify-payments-contract.py
+          python3 scripts/rc9/verify-generated-client-contract.py
+          python3 scripts/rc10/verify-turnstile-decision.py
+          rm scripts/rc11/patch-claim.py
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add WORKSTREAM_LOCK.md scripts/rc11/patch-claim.py
+          git diff --cached --check
+          git commit -m 'chore(rc11): claim final integration closure'
+          git push origin HEAD:chore/rc11-final-integration-closure
