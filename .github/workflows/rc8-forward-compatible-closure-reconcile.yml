@@ -1,0 +1,84 @@
+name: RC8 forward-compatible closure reconciler
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc8-forward-compatible-closure-reconcile.yml"
+      - "scripts/rc8/patch-forward-compatible-closure.py"
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'fix/rc8-forward-compatible-closure-contract'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/rc8-forward-compatible-closure-contract
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Apply and validate the permanent RC8 correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/rc8/patch-forward-compatible-closure.py
+          python3 scripts/rc8/verify-payments-contract.py
+          python3 scripts/rc5/verify-test-lab-closure.py
+          python3 scripts/rc6/verify-whatsapp-contract.py
+          python3 scripts/rc7/verify-maps-contract.py
+          python3 -m py_compile \
+            scripts/rc8/verify-payments-contract.py \
+            scripts/rc5/verify-test-lab-closure.py \
+            scripts/rc6/verify-whatsapp-contract.py \
+            scripts/rc7/verify-maps-contract.py
+          bash -n .github/workflows/rc8-payments-contract.yml
+          bash -n .github/workflows/rc8-payments-managed.yml || true
+          python3 - <<'PY'
+          from pathlib import Path
+          lock = Path('WORKSTREAM_LOCK.md')
+          original = lock.read_text(encoding='utf-8')
+          claimed = original.replace('| Status | RELEASED |', '| Status | CLAIMED — RC9 generated-client adoption |', 1)
+          claimed = claimed.replace('| Current task | None. RC9 OpenAPI-generated client adoption/decision is next in sequence but is not claimed. |', '| Current task | RC9 generated-client adoption audit. |', 1)
+          if claimed == original:
+              raise SystemExit('RC9 claim simulation did not change the lock')
+          lock.write_text(claimed, encoding='utf-8')
+          PY
+          python3 scripts/rc8/verify-payments-contract.py
+          git checkout -- WORKSTREAM_LOCK.md
+          python3 - <<'PY'
+          from pathlib import Path
+          for path in (
+              Path('.github/workflows/rc8-payments-contract.yml'),
+              Path('.github/workflows/rc8-payments-managed.yml'),
+          ):
+              text = path.read_text(encoding='utf-8')
+              if '"PROJECT_STATUS.md"' not in text:
+                  raise SystemExit(f'{path}: PROJECT_STATUS.md path trigger missing')
+          verifier = Path('scripts/rc8/verify-payments-contract.py').read_text(encoding='utf-8')
+          for prohibited in (
+              'require(LOCK, "| Status | RELEASED |")',
+              'require(LOCK, "No repository write lane is active")',
+          ):
+              if prohibited in verifier:
+                  raise SystemExit(f'transient lock assertion remains: {prohibited}')
+          print('RC8_FORWARD_COMPATIBLE_CLOSURE_RECONCILE|PASS')
+          PY
+          rm \
+            scripts/rc8/patch-forward-compatible-closure.py \
+            .github/workflows/rc8-forward-compatible-closure-reconcile.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            scripts/rc8/verify-payments-contract.py \
+            .github/workflows/rc8-payments-contract.yml \
+            .github/workflows/rc8-payments-managed.yml \
+            scripts/rc8/patch-forward-compatible-closure.py \
+            .github/workflows/rc8-forward-compatible-closure-reconcile.yml
+          git diff --cached --check
+          git commit -m 'fix(rc8): preserve closure across later lane claims'
+          git push origin HEAD:fix/rc8-forward-compatible-closure-contract
