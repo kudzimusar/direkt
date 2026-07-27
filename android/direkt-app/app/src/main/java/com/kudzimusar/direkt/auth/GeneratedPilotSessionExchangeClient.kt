@@ -39,18 +39,20 @@ internal class GeneratedPilotSessionExchangeClient(
             throw IllegalStateException("Session exchange was rejected.")
         }
         val session = response.body() ?: throw IllegalStateException("Session exchange returned no body.")
-        require(session.tokenType == "Bearer") { "Session exchange returned an unsupported token type." }
+        require(session.tokenType.value == "Bearer") {
+            "Session exchange returned an unsupported token type."
+        }
         return session.toPilotSession()
     }
 
     private fun AuthenticatedSessionResponseDto.toPilotSession(): PilotSession =
         PilotSession(
-            identityId = identityId,
-            sessionId = sessionId,
+            identityId = identityId.toString(),
+            sessionId = sessionId.toString(),
             accessToken = accessToken,
-            accessTokenExpiresAt = accessTokenExpiresAt,
+            accessTokenExpiresAt = accessTokenExpiresAt.toString(),
             refreshToken = refreshToken,
-            refreshTokenExpiresAt = refreshTokenExpiresAt,
+            refreshTokenExpiresAt = refreshTokenExpiresAt.toString(),
         )
 
     internal companion object {
