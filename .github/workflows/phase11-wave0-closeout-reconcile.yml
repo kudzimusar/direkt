@@ -26,6 +26,9 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/phase11/patch-wave0-finishing-line-closeout.py
+          sed -i 's/[[:space:]]\+$//' \
+            docs/phase11/PHASE11_WAVE0_TECHNICAL_PREFLIGHT.md \
+            docs/phase11/PHASE11_WAVE0_TERMINAL_RECEIPT.md
           python3 scripts/rc11/verify-final-integration-closure.py
           python3 scripts/phase11/verify-primary-pilot-readiness.py
           python3 scripts/phase11/evaluate-wave0-gates.py
