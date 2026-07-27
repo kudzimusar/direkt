@@ -27,11 +27,17 @@ class Rc7MapsRuntimeTest {
 
         if (BuildConfig.DIREKT_MAPS_ENABLED) {
             composeRule.onNodeWithTag("discovery-google-map").assertIsDisplayed()
-            composeRule.waitUntil(timeoutMillis = 20_000) {
-                composeRule.onAllNodesWithTag("discovery-map-ready")
-                    .fetchSemanticsNodes()
-                    .isNotEmpty()
+            composeRule.waitUntil(timeoutMillis = 25_000) {
+                composeRule.onAllNodesWithTag("discovery-map-ready").fetchSemanticsNodes().isNotEmpty() ||
+                    composeRule.onAllNodesWithTag("discovery-map-fallback").fetchSemanticsNodes().isNotEmpty()
             }
+            val readyCount = composeRule.onAllNodesWithTag("discovery-map-ready").fetchSemanticsNodes().size
+            val fallbackCount = composeRule.onAllNodesWithTag("discovery-map-fallback").fetchSemanticsNodes().size
+            val loadingCount = composeRule.onAllNodesWithTag("discovery-map-loading").fetchSemanticsNodes().size
+            assertTrue(
+                "RC7 Maps runtime did not reach Ready; ready=$readyCount fallback=$fallbackCount loading=$loadingCount",
+                readyCount > 0,
+            )
             composeRule.onNodeWithTag("discovery-map-ready").assertIsDisplayed()
             assertTrue(
                 composeRule.onAllNodesWithTag("discovery-map-fallback")

@@ -9,6 +9,7 @@ import re
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = ROOT / ".github/workflows/rc7-maps-managed.yml"
 MANAGED_SCRIPT = ROOT / "scripts/rc7/run-maps-managed.sh"
+TESTLAB_COLLECTOR = ROOT / "scripts/rc7/collect-testlab-failure.py"
 GEOCODING_PORT = ROOT / "backend/direkt-api/src/location/geocoding-provider.port.ts"
 GEOCODING_ADAPTER = ROOT / "backend/direkt-api/src/location/google-maps-geocoding-provider.adapter.ts"
 LOCATION_SERVICE = ROOT / "backend/direkt-api/src/location/location.service.ts"
@@ -53,6 +54,7 @@ def command_blocks(script: str, command: str) -> list[str]:
 def main() -> int:
     workflow = WORKFLOW.read_text(encoding="utf-8")
     managed_script = MANAGED_SCRIPT.read_text(encoding="utf-8")
+    testlab_collector = TESTLAB_COLLECTOR.read_text(encoding="utf-8")
     geocoding_port = GEOCODING_PORT.read_text(encoding="utf-8")
     geocoding_adapter = GEOCODING_ADAPTER.read_text(encoding="utf-8")
     location_service = LOCATION_SERVICE.read_text(encoding="utf-8")
@@ -159,6 +161,10 @@ def main() -> int:
 
     failure_artifact = "${{ runner.temp }}/rc7-maps-canary-failure.json"
     require_once(workflow, failure_artifact, "RC7 must upload the sanitized canary failure artifact.")
+    testlab_failure_artifact = "${{ runner.temp }}/rc7-maps-test-lab-failure.json"
+    require_once(workflow, testlab_failure_artifact, "RC7 must upload sanitized Test Lab failure evidence.")
+    apk_certificate_artifact = "${{ runner.temp }}/rc7-android-apk-certificate.json"
+    require_once(workflow, apk_certificate_artifact, "RC7 must upload the final APK certificate receipt.")
     if "rc7-maps-canary-logs.json" in workflow or "rc7-maps-execution-details.json" in workflow:
         raise AssertionError("RC7 must never upload raw canary logs or raw execution details.")
 
@@ -178,6 +184,19 @@ def main() -> int:
         require_once(managed_script, marker, f"Sanitized failure evidence is missing {marker!r}.")
     prohibit(managed_script, r'cat "\$\{raw_canary_logs\}"', "Raw canary logs must not be printed.")
     prohibit(managed_script, r'cat "\$\{execution_details\}"', "Raw execution details must not be printed.")
+
+    for marker in (
+        "testing.googleapis.com/v1/projects",
+        "toolresults.googleapis.com/toolresults/v1beta3",
+        "rawLogsIncluded",
+        "credentialIncluded",
+        "apiKeyIncluded",
+        "coordinateValuesIncluded",
+        "participantDataIncluded",
+        "stackTraces",
+    ):
+        require_present(testlab_collector, marker, "Bounded Test Lab evidence collector drifted.")
+    prohibit(testlab_collector, r"toolOutputs", "Opaque Test Lab output files must not be collected.")
 
     for marker in (
         "metadata.google.internal",
@@ -220,6 +239,8 @@ def main() -> int:
     print("backend_api_key=false")
     print("backend_cloud_nat=false")
     print("canary_failure_evidence_sanitized=true")
+    print("testlab_failure_evidence_sanitized=true")
+    print("final_apk_certificate_verified=true")
     print("raw_canary_logs_uploaded=false")
     print("provider_rejection_status_distinguished=true")
     print("provider_raw_error_exposed=false")

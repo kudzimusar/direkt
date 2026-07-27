@@ -126,7 +126,8 @@ fun PrivacySafeMapCard(providers: List<SyntheticPublicProvider>) {
                         Card(
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
-                                .padding(12.dp),
+                                .padding(12.dp)
+                                .testTag("discovery-map-loading"),
                         ) {
                             Text(
                                 "Loading privacy-safe map…",

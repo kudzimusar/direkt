@@ -54,6 +54,12 @@ The next exact-main proof, run `30225624823/1` on `6378be60199ce567671a4a307dedf
 
 Geocoding v4 `regionCode=ZM` influences ranking but is not a strict country filter. The prior adapter treated `results[0]` as authoritative. The corrective adapter now iterates ranked results, validates every candidate before use, resolves country from `postalAddress.regionCode` or the typed country address component, and selects only the first candidate that also remains within the unchanged Zambia latitude/longitude bounds. Empty results remain `not_found`, structurally malformed-only results remain `invalid_provider_response`, and valid but non-Zambian-only results remain `outside_zambia`. Raw coordinates, formatted addresses, provider payloads and OAuth material are still excluded from logs and evidence.
 
+## Android Test Lab evidence correction
+
+Exact-main run `30226241329/1` on `58c3b36d15ca8b602ed2365242c93d965a7ff08d` proved the backend service-identity OAuth Geocoding v4 canary, fresh one-JPY owner attestation, quota, Android key restriction, immutable image and cleanup. The remaining result was one failed API 36 instrumentation case in Test Lab matrix `matrix-3gndt2ks91n33`. Artifact `8638705116` has digest `sha256:49fbc387d06eeb7061ca1c8923a313c8dff22f534e2940398f7d4df26d55233c`; `cleanup.cloud_run_job_deleted=true` and `cleanup_failed=false`.
+
+The managed proof now verifies the SHA-1 certificate embedded in the final debug APK and requires it to equal the certificate restriction applied to the synthetic Android key. When Test Lab fails, the authenticated exact-main job queries the Testing and Tool Results APIs and writes a whitelisted receipt containing matrix state, step outcome, test-case identity and bounded stack traces. Raw logs, opaque tool outputs, credentials, API-key values, coordinates and participant data remain excluded. The instrumentation assertion still requires `discovery-map-ready`; a privacy-safe fallback is diagnostic evidence, not a pass.
+
 ## Credential and authentication boundary
 
 Android and backend authentication remain separate:
