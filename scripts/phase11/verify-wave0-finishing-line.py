@@ -41,6 +41,8 @@ for needle in (
     require(LOCK, needle)
 
 require(PROJECT, "Active repository write lane:** none; Wave 0 finishing-line controls are closed")
+require(PROJECT, "closed through PR #513 exact head `1e4291ef669ca01eb4f639b2f1734a85d8448a63`")
+require(LOCK, "Stable baseline | `main@632dd0bdbb2a3b8c24bd285918deff3e54bd3ba9`")
 
 for needle in (
     "OFFICIAL-SOURCE RESEARCH ONLY",
@@ -74,6 +76,8 @@ for needle in (
     "does not close Phase 11",
     "maximum truthful repository completion",
     "P11-G14 is CLOSED",
+    "Closeout PR/head:** #513 / `1e4291ef669ca01eb4f639b2f1734a85d8448a63`",
+    "Closeout merge:** `632dd0bdbb2a3b8c24bd285918deff3e54bd3ba9`",
 ):
     require(RECEIPT, needle)
 

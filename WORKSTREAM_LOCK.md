@@ -10,8 +10,8 @@ This file prevents overlapping writes in the single-lane build process.
 | Owner/agent | None. Wave 0 repository finishing-line work is closed; Issue #112 remains open for actual external evidence and participant-backed execution. |
 | Authorized scope | No active repository write scope. A new explicit claim is required to reconcile actual regulator, counsel, owner, provider-console or managed real-environment evidence. |
 | Protected surface | Closed RC0–RC11 evidence, canonical OpenAPI authorization/privacy checks, Android auth/session and Firebase controls, customer/provider web BFF/private Cloud Run IAM, operations portal, RC8 payment boundaries, UIA Issue #354, VC1–VC8 Design DNA and Phase 11/12 gates. |
-| Implementation branch | None. Wave 0 implementation PR #512 merged at `f561658d140aaf214fa6eaca99c80bcc98ee284f`. |
-| Stable baseline | `main@f561658d140aaf214fa6eaca99c80bcc98ee284f` contains the verified Wave 0 finishing-line controls, technical preflight and closed RC0–RC11/readiness evidence. |
+| Implementation branch | None. Wave 0 implementation PR #512 merged at `f561658d140aaf214fa6eaca99c80bcc98ee284f`; closeout PR #513 exact head `1e4291ef669ca01eb4f639b2f1734a85d8448a63` merged at `632dd0bdbb2a3b8c24bd285918deff3e54bd3ba9`. |
+| Stable baseline | `main@632dd0bdbb2a3b8c24bd285918deff3e54bd3ba9` contains the verified Wave 0 finishing-line controls, exact closeout receipt, technical preflight and closed RC0–RC11/readiness evidence. |
 | Current task | None. Terminal decision is `ENTRY_BLOCKED_EXTERNAL`. P11-G01–P11-G13 remain open, `PILOT_ENTRY_APPROVED` remains false and PRIMARY-PILOT evidence count remains 0. |
 | Governing issue | Issue #112 remains open for external entry gates, Wave 0 authorization, real 11C–11H evidence, 11I corrections and 11J decision. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
