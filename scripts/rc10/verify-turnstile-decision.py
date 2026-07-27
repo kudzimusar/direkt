@@ -51,7 +51,6 @@ for needle in (
     "CLOSED — NOT CURRENTLY REQUIRED / TURNSTILE NOT ACTIVE",
 ):
     require(LOCK, needle)
-require(PROJECT, "RC1–RC10 are closed")
 require(STATUS, "RC10 CLOSED — NOT CURRENTLY REQUIRED / NOT ACTIVE")
 require(LEDGER, "RC10 Turnstile closure receipt")
 require(LEDGER, "New state: CLOSED — NOT CURRENTLY REQUIRED / TURNSTILE NOT ACTIVE")

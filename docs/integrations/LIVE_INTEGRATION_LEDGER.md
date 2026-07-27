@@ -348,7 +348,7 @@ The authoritative sequence is maintained in `WORKSTREAM_LOCK.md` and `RUNTIME_IN
 10. RC8 sandbox-only payment adapters/evidence reconciliation — **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY**; exact source `ccc4e9463d810ddf554182b1607c22d3a7c8c8d3`; run `30241092949/1`; artifact `8643323319` (`sha256:bbb4600eb5a062552947e91c878dd09c6d1e4dc307ae4783c7fa1fb4cf6e4935`); MTN/Stripe/PayPal and immutable reconciliation passed; DPO/Airtel/Flutterwave and application runtime remain disabled; real money false.
 11. RC9 OpenAPI generated Kotlin/TypeScript client adoption — **CLOSED — DETERMINISTIC GENERATED CLIENTS / BOUNDED RUNTIME ADOPTION**. Generator `7.22.0` JAR `3f1e6ce5c6ad4f15242c6170ab43aad4bad771622617eeece4a7d4f72ffaf329`; canonical OpenAPI `1c13b69a34c30b84347b02ecddcf4f5b55c21e1958f036d4dc29c9106784e063`; Kotlin `111` files/tree `ba3e4b7ab4f2eeaf3fafd96bdf2bbbddfd2feb8ebbbe71f4f309c825eb7991cc`; TypeScript `98` files/tree `04cecfb32400eac04d5818ee1bb22e8394d822e2d350c8cfcc4f3a64eee982fe`. PR #497 exact head `04ef57f31414ec5165e353abba74afb8dfdcc901` passed the full regression matrix and merged at `70de95c73128e921cd4d7c667de0e5a442a9e0c0`. Android generated imports are confined to the reviewed auth wrapper; TypeScript generated imports are confined to the server-only BFF type adapter. Production/participant authorization and privileged direct access remain false.
 12. RC10 Turnstile decision — **CLOSED — NOT CURRENTLY REQUIRED / TURNSTILE NOT ACTIVE**. Claim merge `e0ee52564eef16cdec1d8eb0a85f17da456cb5b1`; implementation PR #502 exact head `cdab6622e0cc06e35cddca2bb5bc8ea70c027b38`; squash merge `620a99ba5465ad38ce012df0a8fa15e458de6505`. Public discovery assistance, public Help and search-area normalization use explicit fail-closed database rate limits; no site key, secret, widget, package or runtime binding exists.
-13. RC11 full combined regression and lane release — **IMPLEMENTED — EXACT-HEAD REGRESSION AND CLOSEOUT PENDING**. `RC11_MANAGED_EVIDENCE_INDEX.md` records RC0–RC10 evidence and retained blocked/provider states; the permanent RC11 verifier and exact-head matrix must pass before release.
+13. RC11 full combined regression and lane release — **CLOSED — FINAL INTEGRATION RECONCILIATION / LANE RELEASED**. PR #505 exact head `66626d315a8d132dbf8f34749a2679e42c609d7c` passed the complete matrix and merged at `87f567fccfa92244c7951432436c7163c71d5fc7`; `RC11_MANAGED_EVIDENCE_INDEX.md` and `RC11_CLOSURE_RECEIPT.md` are canonical.
 
 
 ### RC11 final integration reconciliation
@@ -356,7 +356,7 @@ The authoritative sequence is maintained in `WORKSTREAM_LOCK.md` and `RUNTIME_IN
 ```text
 Integration: Final combined runtime-integration reconciliation (RC11)
 Previous state: RC0–RC10 closed; RC11 claimed
-New state: IMPLEMENTED — EXACT-HEAD REGRESSION AND CLOSEOUT PENDING
+New state: CLOSED — FINAL INTEGRATION RECONCILIATION / LANE RELEASED
 Claim merge: 7f0b6b76a78572b6bb90694814037c370935e3b9
 Repo/source changes: canonical managed evidence index, permanent RC11 verifier, live ledger/current status/project status reconciliation and explicit retained blocked/provider states
 Managed evidence: RC0–RC10 exact source/run/artifact identifiers indexed where available; no identifier fabricated for provider-managed evidence without a GitHub run
@@ -364,7 +364,7 @@ Privacy/security: no participant data, provider secret, production credential, e
 Fallback/kill switch: existing provider-specific fail-closed modes and manual fallbacks preserved
 Production authorization: NOT AUTHORIZED
 Known blockers: Phase 11 real entry, DPC/legal/notice/Firebase real canary, PRIMARY-PILOT evidence, participant communications/telemetry/Maps, real money and Phase 12 release
-Next exact step: pass the exact final-head matrix, publish RC11D closure receipt, close Issue #261 and release the lane to Phase 11C–11J execution preparation
+Next exact step: separately claim Phase 11C–11J execution preparation under Issue #112; do not start real participants until every hard entry gate passes
 Ledger updated: YES
 ```
 
