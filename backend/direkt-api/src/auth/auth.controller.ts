@@ -11,6 +11,7 @@ import { PublicRoute } from '../authorization/public.decorator';
 import { RequirePermission } from '../authorization/require-permission.decorator';
 import type { DirektRequest } from '../platform/http/request-context';
 import {
+  AuthenticatedSessionResponseDto,
   FirebaseSessionExchangeDto,
   RequestChallengeDto,
   RevokeSessionDto,
@@ -55,6 +56,7 @@ export class AuthController {
   @ApiOkResponse({
     description:
       'Verifies a recent Firebase phone ID token and exchanges it for a DIREKT rotating session.',
+    type: AuthenticatedSessionResponseDto,
   })
   @ApiUnauthorizedResponse({
     description: 'The Firebase token or external identity binding is invalid or unsafe.',
