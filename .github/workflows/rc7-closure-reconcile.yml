@@ -64,11 +64,11 @@ jobs:
             docs/integrations/LIVE_INTEGRATION_LEDGER.md \
             docs/integrations/RC7_GOOGLE_MAPS_IMPLEMENTATION_NOTES.md \
             docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md
+          git checkout -- .github/workflows/rc7-maps-managed.yml
           rm scripts/rc7/patch-close-rc7.py
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add \
-            .github/workflows/rc7-maps-managed.yml \
             WORKSTREAM_LOCK.md \
             PROJECT_STATUS.md \
             docs/integrations/CURRENT_INTEGRATION_STATUS.md \
