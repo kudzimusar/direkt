@@ -9,6 +9,8 @@
 **Exact implementation head:** `04ef57f31414ec5165e353abba74afb8dfdcc901`
 **Implementation merge:** `70de95c73128e921cd4d7c667de0e5a442a9e0c0`
 **Closeout PR:** #498
+**Closeout merge:** `957b19192443b2511f1bf784595591b25b5e7a2e`
+**Exact-main receipt PR:** #500
 
 ## Deterministic generation receipt
 
@@ -51,7 +53,7 @@ Generated imports remain fail-closed everywhere except the two reviewed adoption
 
 ## Exact-main verification
 
-The reviewed PR content was squash-merged unchanged at `main@70de95c73128e921cd4d7c667de0e5a442a9e0c0`. The relevant workflows are pull-request triggered and therefore produced no separate push runs for the squash commit. RC9D is branched directly from that exact merge and reruns permanent closure contracts against the main-derived source.
+The reviewed PR content was squash-merged unchanged at `main@70de95c73128e921cd4d7c667de0e5a442a9e0c0`. RC9D then closed and released the lane at `main@957b19192443b2511f1bf784595591b25b5e7a2e`. PR #500 binds the released lock and permanent verifier to that exact closeout-main checkpoint.
 
 ## Authorization boundary
 

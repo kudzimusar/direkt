@@ -10,9 +10,9 @@ This file prevents overlapping writes in the single-lane build process.
 | Owner/agent | None. RC9 is closed under Issue #261; RC10 is next but remains unclaimed. |
 | Authorized scope | No active repository write lane. Any RC10 Turnstile decision or later integration work requires a new explicit claim from current `main`. |
 | Protected surface | Closed RC0–RC9 evidence, including RC5 run `30183466799`, RC6 run `30137700769`, RC7 run `30234521983/1`, RC8 run `30241092949/1`, RC9 exact-head matrix on `04ef57f31414ec5165e353abba74afb8dfdcc901` and implementation merge `70de95c73128e921cd4d7c667de0e5a442a9e0c0`; canonical OpenAPI authorization/privacy checks; Android auth/session storage, signing, Maps/FCM/Crashlytics and Play/Data Safety; customer/provider web BFF/private Cloud Run IAM; operations portal; UIA Issue #354; VC1–VC8 Design DNA; Phase 11/12 gates. |
-| Implementation branch | None. PR #497 was squash-merged to `main`; RC9D is documentation/receipt closeout only. |
-| Stable baseline | `main@70de95c73128e921cd4d7c667de0e5a442a9e0c0` contains RC9A–RC9C. OpenAPI Generator `7.22.0` remains checksum-pinned; canonical OpenAPI SHA-256 is `1c13b69a34c30b84347b02ecddcf4f5b55c21e1958f036d4dc29c9106784e063`; generated Kotlin/TypeScript trees remain deterministic and bounded runtime adoption is enforced. |
-| Current task | RC9D closeout: reconcile status, ledger, receipt, permanent verifier and release the lane. No RC10 source work is included. |
+| Implementation branch | None. PR #497 and RC9D closeout PR #498 are merged; no repository write lane is active. |
+| Stable baseline | `main@957b19192443b2511f1bf784595591b25b5e7a2e` contains the complete RC9 implementation and closeout receipt. OpenAPI Generator `7.22.0` remains checksum-pinned; canonical OpenAPI SHA-256 is `1c13b69a34c30b84347b02ecddcf4f5b55c21e1958f036d4dc29c9106784e063`; generated Kotlin/TypeScript trees remain deterministic and bounded runtime adoption is enforced. |
+| Current task | None. RC9 is complete and preserved; RC10 remains unclaimed and requires a new explicit claim from current `main`. |
 | Governing issue | Issue #261 — Runtime integration closure after W8. RC9 is closed; UIA Issue #354 remains parked/read-only; RC10 is unclaimed. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
