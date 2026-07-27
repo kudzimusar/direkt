@@ -44,7 +44,12 @@ jobs:
               raise AssertionError(f"{workflow}: expected one fail-closed manual execution trigger check")
 
           '''
-          path.write_text(text[:start] + replacement + text[end:], encoding='utf-8')
+          text = text[:start] + replacement + text[end:]
+          old_trigger_patch = 'replace_once(trigger, "STATUS=ARMED", "STATUS=CONSUMED")'
+          new_trigger_patch = 'replace_once(trigger, "STATUS=ARMED\\n", "STATUS=CONSUMED\\n")'
+          if old_trigger_patch not in text:
+              raise SystemExit('closure trigger state patch not found')
+          path.write_text(text.replace(old_trigger_patch, new_trigger_patch, 1), encoding='utf-8')
           PY
           python3 scripts/rc8/patch-rc8-managed-closure.py
           python3 scripts/rc8/verify-payments-contract.py
