@@ -4,6 +4,9 @@
 **State:** REAL ENTRY BLOCKED  
 **Governing issue:** #112  
 **`PILOT_ENTRY_APPROVED`:** false
+**Wave 0 terminal decision:** `ENTRY_BLOCKED_EXTERNAL`
+**Machine-readable register:** `PHASE11_WAVE0_EVIDENCE_MANIFEST.json`
+**Official-source refresh:** `PHASE11_WAVE0_OFFICIAL_SOURCE_EVIDENCE_2026-07-28.md`
 
 ## Decision rule
 
@@ -67,4 +70,4 @@ Conditions/expiry:
 Independent review where required:
 ```
 
-No gate may be changed to `CLOSED` using an agent-generated assertion alone.
+No gate may be changed to `CLOSED` using an agent-generated assertion alone. The permanent evaluator requires authority, reference, SHA-256, exact scope, accountable owner and decision time for every closed gate; P11-G03 through P11-G06 additionally require independent review. Until those fields are supported by actual evidence, the terminal decision remains `ENTRY_BLOCKED_EXTERNAL`.
