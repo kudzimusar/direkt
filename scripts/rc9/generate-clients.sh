@@ -97,6 +97,23 @@ fi
 cp -a "${kotlin_full}/src/main/kotlin/." "${normalized_kotlin}/"
 cp -a "${typescript_full}/src/." "${normalized_typescript}/"
 
+# Generator templates contain deterministic but repository-invalid trailing spaces
+# and extra blank lines at EOF. Normalize before hashing, compiling and comparing
+# so the committed tree remains reproducible and passes git diff --check.
+python3 - "${normalized_kotlin}" "${normalized_typescript}" <<'PY'
+from pathlib import Path
+import sys
+
+for root_value in sys.argv[1:]:
+    root = Path(root_value)
+    for path in sorted(candidate for candidate in root.rglob("*") if candidate.is_file()):
+        text = path.read_text(encoding="utf-8")
+        lines = [line.rstrip(" \t") for line in text.splitlines()]
+        while lines and lines[-1] == "":
+            lines.pop()
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+PY
+
 python3 - \
   "${SPEC}" \
   "${KOTLIN_CONFIG}" \
@@ -199,8 +216,8 @@ scan_output "${normalized_typescript}"
 if [[ "${MODE}" == "--write" ]]; then
   rm -rf "${DEST_ROOT}/kotlin/src" "${DEST_ROOT}/typescript/src"
   mkdir -p "$(dirname "${DEST_KOTLIN}")" "$(dirname "${DEST_TYPESCRIPT}")"
-  cp -a "${normalized}/kotlin/src" "${DEST_ROOT}/kotlin/src"
-  cp -a "${normalized}/typescript/src" "${DEST_ROOT}/typescript/src"
+  cp -a "${normalized_kotlin}/." "${DEST_KOTLIN}/"
+  cp -a "${normalized_typescript}/." "${DEST_TYPESCRIPT}/"
   cp "${normalized_receipt}" "${DEST_RECEIPT}"
   echo "RC9A_GENERATED_CLIENTS|WRITE|PASS"
 else
