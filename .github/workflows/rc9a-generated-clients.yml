@@ -68,7 +68,11 @@ jobs:
           npm run openapi:check
       - name: Enforce byte-for-byte generated drift
         shell: bash
-        run: bash scripts/rc9/generate-clients.sh --check
+        run: |
+          set -euo pipefail
+          bash scripts/rc9/generate-clients.sh --check
+          test "$(find clients/generated/kotlin/src/main/kotlin -type f -name '*.kt' | wc -l | tr -d ' ')" -ge 50
+          test "$(find clients/generated/typescript/src -type f -name '*.ts' | wc -l | tr -d ' ')" -ge 50
       - name: Compile generated Kotlin contract
         shell: bash
         run: |
@@ -79,6 +83,10 @@ jobs:
             --no-daemon \
             --stacktrace \
             clean compileKotlin
+          if ! find clients/generated/kotlin/build/classes/kotlin/main -type f -name '*.class' -print -quit | grep -q .; then
+            echo 'RC9A Kotlin compile produced no class files.' >&2
+            exit 1
+          fi
       - name: Typecheck generated TypeScript contract
         working-directory: web/direkt-app
         shell: bash
