@@ -174,7 +174,7 @@ Clients never decide payment success. Payment state cannot create verification/p
 10. RC8 sandbox payment adapters/reconciliation.
 11. RC9 generated Kotlin/TypeScript clients — **CLOSED — DETERMINISTIC / BOUNDED RUNTIME ADOPTION**; PR #497 exact head `04ef57f31414ec5165e353abba74afb8dfdcc901` passed the full matrix and merged at `70de95c73128e921cd4d7c667de0e5a442a9e0c0`.
 12. RC10 Turnstile threat-model decision — **CLOSED — NOT CURRENTLY REQUIRED / TURNSTILE NOT ACTIVE**; PR #502 exact head `cdab6622e0cc06e35cddca2bb5bc8ea70c027b38`, merge `620a99ba5465ad38ce012df0a8fa15e458de6505`; public POST rate-limit gaps closed.
-13. RC11 combined integration regression/evidence index/lane release — **NEXT BUT UNCLAIMED**.
+13. RC11 combined integration regression/evidence index/lane release — **RC11 IMPLEMENTED — FINAL RECONCILIATION / REGRESSION PENDING**; managed evidence index and blocked/provider-state reconciliation are complete, while exact-head matrix, closure receipt and lane release remain pending.
 
 W8 and VC1–VC8 are closed. Runtime integration work does not authorize real participants, production external communications, real money, Phase 11 exit or Phase 12 production release.
 
