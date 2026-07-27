@@ -21,6 +21,11 @@ STATUS = ROOT / "docs/integrations/CURRENT_INTEGRATION_STATUS.md"
 LEDGER = ROOT / "docs/integrations/LIVE_INTEGRATION_LEDGER.md"
 LOCK = ROOT / "WORKSTREAM_LOCK.md"
 IMPLEMENTATION = ROOT / "docs/integrations/RC8_SANDBOX_PAYMENTS_IMPLEMENTATION.md"
+CANARY = ROOT / "backend/direkt-api/src/commercial/rc8-payment-canary.ts"
+MANAGED_WORKFLOW = ROOT / ".github/workflows/rc8-payments-managed.yml"
+MANAGED_RUNNER = ROOT / "scripts/rc8/run-payments-managed.sh"
+BOOTSTRAP = ROOT / "scripts/rc8/bootstrap-payments-managed.sh"
+TRIGGER = ROOT / "docs/integrations/RC8_PAYMENTS_MANAGED_TRIGGER.md"
 
 
 def require(path: Path, needle: str) -> None:
@@ -42,9 +47,43 @@ for provider in ("mtn_momo", "airtel_money", "dpo", "stripe", "paypal"):
 require(LOCK, "CLAIMED — RC8 sandbox payment runtime closure")
 require(LOCK, "RC8 implementation contract — CLAIMED")
 require(LOCK, "RC8 is the sole active repository write lane")
-require(IMPLEMENTATION, "SOURCE CHECKPOINT READY FOR PROMOTION")
+require(IMPLEMENTATION, "Managed runtime proof — armed")
 require(IMPLEMENTATION, "**Replayed base:** `main@54d0129027b7f324272c4bcc94a0f2109318fd18`")
-require(IMPLEMENTATION, "runtime binding and managed sandbox evidence remain pending")
+require(IMPLEMENTATION, "IMPLEMENTED_GATED / MANAGED PROOF ARMED")
+require(IMPLEMENTATION, "private temporary Cloud Run Job")
+require(STATUS, "RC8 sandbox provider runtime proof | **IMPLEMENTED_GATED / MANAGED PROOF ARMED**")
+require(LEDGER, "RC8 runtime proof — IMPLEMENTED_GATED / MANAGED PROOF ARMED")
+require(CANARY, "RC8_PAYMENT_CANARY_APPROVED")
+require(CANARY, "PAYMENT_PROVIDER_MODE !== 'disabled'")
+require(CANARY, "runtimeEnabled: true")
+require(CANARY, "MtnMomoSandboxPaymentProviderAdapter")
+require(CANARY, "StripeSandboxPaymentProviderAdapter")
+require(CANARY, "PayPalSandboxPaymentProviderAdapter")
+require(CANARY, "reconcileSandboxPaymentObservation")
+require(CANARY, "captureAttempted: false")
+require(CANARY, "dpoRuntimeBound: false")
+require(CANARY, "RC8_PAYMENTS_CANARY|PASS")
+require(CANARY, "RC8_PAYMENTS_RECEIPT|")
+reject(CANARY, ".completeAction(")
+require(MANAGED_WORKFLOW, "push:")
+require(MANAGED_WORKFLOW, "branches:\n      - main")
+require(MANAGED_WORKFLOW, "google-github-actions/auth@v3")
+require(MANAGED_WORKFLOW, 'test "$(git rev-parse origin/main)" = "${SOURCE_SHA}"')
+require(MANAGED_WORKFLOW, "bash scripts/rc8/run-payments-managed.sh")
+require(MANAGED_RUNNER, "--max-retries 0")
+require(MANAGED_RUNNER, "--set-secrets")
+require(MANAGED_RUNNER, "direkt-stripe-sandbox-secret-key:${stripe_version}")
+require(MANAGED_RUNNER, "cleanup.cloud_run_job_deleted=true")
+require(MANAGED_RUNNER, "PAYMENT_PROVIDER_MODE=disabled")
+require(MANAGED_RUNNER, "dpo_runtime_bound=false")
+require(BOOTSTRAP, "roles/secretmanager.secretAccessor")
+require(BOOTSTRAP, "roles/secretmanager.viewer")
+require(BOOTSTRAP, "RC8_PAYMENTS_BOOTSTRAP|PASS")
+reject(BOOTSTRAP, "secrets versions access")
+reject(BOOTSTRAP, "secrets versions add")
+reject(BOOTSTRAP, "roles/secretmanager.admin --quiet")
+require(TRIGGER, "STATUS=ARMED")
+require(TRIGGER, "CONFIRMATION=RUN-DIREKT-RC8-PAYMENTS-MANAGED")
 
 require(PORT, "customerToProviderPayments: false")
 require(PORT, "productionMoneyMovement: false")
@@ -166,7 +205,7 @@ require(RECONCILIATION_TEST, "RECONCILIATION_REVISION_CONFLICT")
 
 require(STATUS, "Real money movement | **DISABLED**")
 require(LEDGER, "Clients never decide payment success")
-require(LEDGER, "No payment provider secret is attached to Cloud Run")
+require(LEDGER, "No payment provider secret is attached to the API service or public application runtime")
 
 reject(PORT, "flutterwave")
 reject(REGISTRY, "Flutterwave")
@@ -195,3 +234,6 @@ print("real_money=false")
 print("participant_data=false")
 print("source_checkpoint_replayed=true")
 print("runtime_checkpoint_pending=true")
+print("managed_runtime_source=true")
+print("managed_trigger=armed")
+print("application_provider_mode=disabled")

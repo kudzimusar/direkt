@@ -79,7 +79,9 @@ function requireEnvironment(name: string): string {
   return value;
 }
 
-function approvedDescriptor(key: 'mtn_momo' | 'stripe' | 'paypal'): SandboxPaymentProviderDescriptor {
+function approvedDescriptor(
+  key: 'mtn_momo' | 'stripe' | 'paypal',
+): SandboxPaymentProviderDescriptor {
   const descriptor = sandboxPaymentProviderDescriptor(key);
   return Object.freeze({ ...descriptor, runtimeEnabled: true });
 }
@@ -97,7 +99,9 @@ function boundary(businessFlow: SandboxPaymentBusinessFlow): SandboxPaymentExecu
 }
 
 function externalReference(provider: string): string {
-  const runId = requireEnvironment('RC8_CANARY_RUN_ID').replace(/[^A-Za-z0-9]/g, '').slice(-20);
+  const runId = requireEnvironment('RC8_CANARY_RUN_ID')
+    .replace(/[^A-Za-z0-9]/g, '')
+    .slice(-20);
   if (!runId) {
     throw new Error('RC8 managed canary run id is malformed.');
   }
@@ -196,7 +200,9 @@ function reconciliationInput(
   };
 }
 
-function proveReconciliation(result: SandboxPaymentStatusResult): Rc8PaymentCanaryReceipt['reconciliation'] {
+function proveReconciliation(
+  result: SandboxPaymentStatusResult,
+): Rc8PaymentCanaryReceipt['reconciliation'] {
   const successful = reconcileSandboxPaymentObservation(reconciliationInput(result));
   if (
     successful.outcome !== 'transition_planned' ||
@@ -350,7 +356,9 @@ async function main(): Promise<void> {
     !stripeStatus.independentlyVerified ||
     stripeStatus.providerTransactionId
   ) {
-    throw new Error('Stripe managed sandbox proof incorrectly treated an unpaid Checkout as success.');
+    throw new Error(
+      'Stripe managed sandbox proof incorrectly treated an unpaid Checkout as success.',
+    );
   }
 
   const paypal = new PayPalSandboxPaymentProviderAdapter(
@@ -393,7 +401,9 @@ async function main(): Promise<void> {
     !paypalStatus.independentlyVerified ||
     paypalStatus.providerTransactionId
   ) {
-    throw new Error('PayPal managed sandbox proof incorrectly treated an unapproved order as success.');
+    throw new Error(
+      'PayPal managed sandbox proof incorrectly treated an unapproved order as success.',
+    );
   }
 
   const receipt: Rc8PaymentCanaryReceipt = {
@@ -439,7 +449,8 @@ async function main(): Promise<void> {
 }
 
 function sanitizedError(error: unknown): string {
-  const source = error instanceof Error ? `${error.name}: ${error.message}` : 'Unknown RC8 canary failure.';
+  const source =
+    error instanceof Error ? `${error.name}: ${error.message}` : 'Unknown RC8 canary failure.';
   return source
     .replace(/(Bearer|Basic)\s+\S+/gi, '$1 [REDACTED]')
     .replace(/[A-Za-z0-9_+=/.:-]{80,}/g, '[REDACTED_LONG_VALUE]')
