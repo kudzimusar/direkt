@@ -6,14 +6,14 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | RELEASED — RC7 Google Maps runtime integration closed |
-| Owner/agent | None. RC7 is closed; RC8 requires an explicit new claim. |
-| Authorized scope | No active write lane. Preserve RC0–RC7 evidence and all production/participant stop gates; RC8 sandbox payment work requires a separate explicit claim. |
-| Protected surface | Closed RC0–RC6 evidence, including RC5 managed run `30183466799` and RC6 managed run `30137700769`; UIA Issue #354; exact-private-coordinate non-publication; backend/database/OpenAPI trust boundaries; private API/BFF IAM; payments; VC1–VC8 Design DNA; Phase 11/12 gates; Android auth/signing/Play/Data Safety. |
-| Implementation branch | None after RC7 closure. Exact RC7 source: `47285575862cbf08845eaeabe093afea1ea79bd1`. |
+| Status | CLAIMED — RC8 sandbox payment runtime closure |
+| Owner/agent | Active repository agent — Issue #261 RC8 sandbox payments checkpoint. |
+| Authorized scope | Reconcile and promote the existing RC8 sandbox-provider source checkpoint, bind only reviewed provider sandbox credentials through least-privilege server-side controls, execute synthetic managed provider/reconciliation evidence, and close the checkpoint. Real money, participant data, production endpoints, customer-to-provider payments, escrow, wallet/payout authority and payment influence over verification/trust remain prohibited. |
+| Protected surface | Closed RC0–RC7 evidence, including RC5 managed run `30183466799`, RC6 managed run `30137700769` and RC7 managed run `30234521983/1`; UIA Issue #354; backend/database/OpenAPI and commercial ledger trust boundaries; private API/BFF IAM; provider credentials; VC1–VC8 Design DNA; Phase 11/12 gates; Android auth/signing/Play/Data Safety. |
+| Implementation branch | `integration/rc8-sandbox-payments`, replayed from source checkpoint PR #454 onto the current RC7-closed baseline after this claim merges. |
 | Stable baseline | RC5 and RC6 remain closed. RC7 is closed at exact source `47285575862cbf08845eaeabe093afea1ea79bd1` through managed run `30234521983/1` and artifact `8641270327` (`sha256:24da53c0bd6fa885fa4a6814f70af090096192e6c5b7a03c89fba51416877fde`). UIA Issue #354 remains parked/open. Production and participant activation remain disabled. |
-| Current task | None. RC7 is closed; RC8 is the next dependency-safe checkpoint but is not claimed. |
-| Governing issue | Issue #261 — Runtime integration closure after W8. RC7 is closed; Issue #354 UIA remains parked/read-only. |
+| Current task | RC8 — promote the existing sandbox adapter/reconciliation source checkpoint, then implement least-privilege runtime binding and managed synthetic provider evidence before formal closure. |
+| Governing issue | Issue #261 — Runtime integration closure after W8. RC8 is the sole active bounded write lane; Issue #354 UIA remains parked/read-only. |
 | Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
 | Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
 
@@ -104,6 +104,19 @@ The following strings are historical closure evidence required by the permanent 
 9. Managed closure is proven on exact source `47285575862cbf08845eaeabe093afea1ea79bd1` through run `30234521983/1`: restricted key/API metadata, backend synthetic Geocoding, final APK restriction, API 36 map readiness and cleanup all passed. Artifact `8641270327` (`sha256:24da53c0bd6fa885fa4a6814f70af090096192e6c5b7a03c89fba51416877fde`) preserves the sanitized receipt; earlier failures remain preserved.
 10. RC7 is `CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY`. It does not authorize participant Maps usage, private-location publication, production authentication, real communications, real money, Phase 11 exit or Phase 12 release.
 
+## RC8 implementation contract — CLAIMED
+
+1. RC8 is limited to sandbox adapters, runtime proof and reconciliation for DIREKT-owned provider subscriptions, verification-processing fees and renewal/re-verification fees.
+2. Real money, participant payment data, production provider endpoints or credentials, customer-to-provider service payments, escrow, stored value, wallets and marketplace payouts remain disabled and outside scope.
+3. Source checkpoint PR #454 must be replayed onto current `main@e4011bc789b3464043d7f5078108c1285a561fdf` without overwriting RC0–RC7 closure evidence and must pass the complete exact-head regression matrix before merge.
+4. Provider credentials remain server-side and Secret Manager-backed with least privilege. Android and browser clients never receive credentials or declare payment success.
+5. Success requires independent provider verification plus exact provider reference, transaction identifier where applicable, amount and currency agreement with the backend-owned DIREKT intent and ledger.
+6. Provider observations, payment events, ledger postings, mismatch cases and adjustments remain append-only and idempotent. A mismatch opens reconciliation; it is never silently repaired.
+7. Refund and accounting-adjustment execution requires two independent approvers, requester exclusion, balanced ledger effects and operations-only revision-checked resolution.
+8. MTN MoMo, DPO, Stripe and PayPal may be proven only against reviewed sandbox/test environments. Airtel remains provider-pending and Flutterwave remains deferred/excluded.
+9. Managed evidence must use bounded synthetic values, sanitized receipts, exact reviewed source, explicit cleanup and no raw provider payload or credential leakage. A failed provider attempt remains preserved and cannot be documented as passing.
+10. RC8 closes only after source promotion, applicable managed sandbox provider and reconciliation proof, status/ledger reconciliation, exact-head regressions, trigger consumption and workstream release. Production and participant authorization remain false.
+
 ## Runtime integration closure contract
 
 1. Close one bounded integration checkpoint at a time; do not batch unrelated SDK/provider activation.
@@ -129,7 +142,7 @@ The following strings are historical closure evidence required by the permanent 
 - UIA — post-VC owner-review promotion. **PARKED / OPEN — PR #385 merged at `fed6db8ab7c479b5e47095b4f0a752514122a4f6`; Issue #354 remains open for remaining owner-access evidence; read-only during RC7.**
 - RC6 — WhatsApp Cloud API application adapter. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY — exact source `8838b7a6d726a5aed44ce21a39506c1265a98d15`; managed run `30137700769` succeeded on retry through outbox → Meta test template → authentic signed webhook receipt; initial failure preserved in Issue #404; production/participant sends remain disabled.**
 - RC7 — Google Maps runtime activation with separate restricted Android/backend credentials, privacy-safe publication semantics, quotas, manual/list fallback and kill switch. **CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY — exact source `47285575862cbf08845eaeabe093afea1ea79bd1`; run `30234521983/1`; artifact `8641270327` (`sha256:24da53c0bd6fa885fa4a6814f70af090096192e6c5b7a03c89fba51416877fde`); production/participant authorization false.**
-- RC8 — sandbox-only payment-provider adapter closure/reconciliation for already proven MTN, DPO, Stripe and PayPal rails; Airtel remains provider-pending and Flutterwave deferred; real money remains disabled.
+- RC8 — sandbox-only payment-provider adapter closure/reconciliation for already proven MTN, DPO, Stripe and PayPal rails; Airtel remains provider-pending and Flutterwave deferred; real money remains disabled. **CLAIMED — source checkpoint promotion, bounded runtime binding and managed synthetic evidence in progress.**
 - RC9 — OpenAPI-generated Kotlin and TypeScript client adoption/decision after backend integration/API shape stabilizes; migrate incrementally with cross-client regressions.
 - RC10 — Turnstile threat-model decision; implement only if a reviewed public abuse-sensitive flow requires it, otherwise close as not currently justified.
 - RC11 — combined integration regression, managed evidence index, live ledger/status reconciliation and lane release.
@@ -151,4 +164,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-No repository write lane is active. RC0–RC7 evidence remains immutable/regression-protected, UIA Issue #354 remains parked/read-only, and RC8 source work requires an explicit new claim. Production and participant authorization remain blocked.
+RC8 is the sole active repository write lane. RC0–RC7 evidence remains immutable/regression-protected, UIA Issue #354 remains parked/read-only, and RC9+ source work must not begin until RC8 is closed or explicitly transitioned. Real-money, participant and production authorization remain blocked.

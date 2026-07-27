@@ -66,13 +66,22 @@ def main() -> int:
     managed_trigger = read("docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md")
 
     for needle in (
-        "RELEASED — RC7 Google Maps runtime integration closed",
         "RC7 implementation contract — CLOSED AND PRESERVED",
         "Places and Routes remain disabled",
         "Exact private provider bases never become public markers",
-        "No repository write lane is active",
     ):
         require(lock, needle, "RC7 workstream contract")
+    rc7_released = (
+        "RELEASED — RC7 Google Maps runtime integration closed" in lock
+        and "No repository write lane is active" in lock
+    )
+    rc8_active = (
+        "CLAIMED — RC8 sandbox payment runtime closure" in lock
+        and "RC8 implementation contract — CLAIMED" in lock
+        and "RC8 is the sole active repository write lane" in lock
+    )
+    if not (rc7_released or rc8_active):
+        raise AssertionError("RC7 closure must remain preserved with the lane released or bounded RC8 active.")
 
     for needle in (
         "GOOGLE_MAPS_BACKEND_MODE",
