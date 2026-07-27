@@ -1,0 +1,37 @@
+name: RC9A generated dependency receipt
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc9a-dependency-receipt.yml"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  extract:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/rc9a-deterministic-generated-clients'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_JOB_ID: "89923494047"
+    steps:
+      - name: Print dependency-only receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          raw="${RUNNER_TEMP}/rc9a-template.log"
+          clean="${RUNNER_TEMP}/rc9a-template-clean.log"
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
+          sed -r 's/\x1B\[[0-9;]*[mK]//g; s/^.*Z //' "${raw}" > "${clean}"
+          echo '=== KOTLIN VERSIONS AND DEPENDENCIES ==='
+          awk '/=== KOTLIN BUILD FILES ===/{capture=1} /=== KOTLIN IMPORTS ===/{capture=0} capture' "${clean}" \
+            | grep -E "(gradleVersion|ext\.|implementation|api |testImplementation|jvmTarget|sourceCompatibility|targetCompatibility)" || true
+          echo '=== TYPESCRIPT PACKAGE AND CONFIG ==='
+          awk '/=== TYPESCRIPT PACKAGE ===/{capture=1} /=== TYPESCRIPT IMPORTS ===/{capture=0} capture' "${clean}" \
+            | grep -E '(===|"name"|"version"|"scripts"|"build"|"typescript"|"target"|"module"|"lib"|"strict"|"declaration"|"outDir"|"rootDir"|"dependencies"|"devDependencies")' || true
+          echo '=== EXTERNAL IMPORTS ==='
+          awk '/=== KOTLIN IMPORTS ===/{capture=1} /=== TYPESCRIPT PACKAGE ===/{capture=0} capture' "${clean}" \
+            | grep -E '^import (kotlinx|okhttp3|retrofit2|java\.)' | sort -u || true
