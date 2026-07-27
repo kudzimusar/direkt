@@ -1,0 +1,53 @@
+name: RC7 Test Lab log extractor
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc7-testlab-log-extract.yml"
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+
+jobs:
+  extract:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chore/rc7-main-run-locator-3'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TARGET_JOB_ID: 89856792188
+    steps:
+      - name: Extract sanitized Test Lab failure context
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api -H 'Accept: application/vnd.github+json' "/repos/${GITHUB_REPOSITORY}/actions/jobs/${TARGET_JOB_ID}/logs" > "${RUNNER_TEMP}/job.log"
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          raw = Path('/home/runner/work/_temp/job.log').read_text(encoding='utf-8', errors='replace')
+          ansi = re.compile(r'\x1b\[[0-9;]*m')
+          lines = [ansi.sub('', line) for line in raw.splitlines()]
+          patterns = re.compile(
+              r'(firebase test|matrix|toolresults|test results|outcome|failed|failure|error|assert|'
+              r'Rc7MapsRuntimeTest|discovery-map|instrumentation|MediumPhone|results history|axis_value)',
+              re.IGNORECASE,
+          )
+          selected = [line for line in lines if patterns.search(line)]
+          Path('/home/runner/work/_temp/selected.log').write_text('\n'.join(selected[-240:]), encoding='utf-8')
+          PY
+          body="${RUNNER_TEMP}/rc7-testlab-log.md"
+          {
+            echo '## RC7 Test Lab failure log extraction'
+            echo
+            echo '- Exact-main runtime job: `89856792188`'
+            echo '- Raw job log is not attached; only bounded matching lines are shown.'
+            echo
+            echo '```text'
+            sed -n '1,240p' "${RUNNER_TEMP}/selected.log"
+            echo '```'
+          } > "${body}"
+          gh pr comment "${{ github.event.pull_request.number }}" --repo "${GITHUB_REPOSITORY}" --body-file "${body}"
