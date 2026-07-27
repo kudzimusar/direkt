@@ -1,0 +1,27 @@
+name: RC9 claim failure log
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc9-claim-failure-log.yml"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  extract:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'integration/rc9-generated-clients'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_JOB_ID: "89916992336"
+    steps:
+      - name: Print bounded failure tail
+        shell: bash
+        run: |
+          set -euo pipefail
+          raw="${RUNNER_TEMP}/rc9-claim.log"
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
+          tail -n 70 "${raw}"
