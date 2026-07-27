@@ -1,0 +1,27 @@
+name: RC8 forward-contract failure log
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rc8-forward-failure-log.yml"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  extract:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'fix/rc8-forward-compatible-closure-contract'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_JOB_ID: "89911400495"
+    steps:
+      - name: Print bounded failure tail
+        shell: bash
+        run: |
+          set -euo pipefail
+          raw="${RUNNER_TEMP}/rc8-forward.log"
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
+          tail -n 70 "${raw}"
