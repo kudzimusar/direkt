@@ -17,24 +17,6 @@ on:
       - "android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/PrivacySafeMapCard.kt"
       - "docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md"
       - "docs/integrations/RC7_MAPS_OWNER_BOOTSTRAP.md"
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/rc7-maps-managed.yml"
-      - "scripts/rc7/run-maps-managed.sh"
-      - "scripts/rc7/collect-testlab-failure.py"
-      - "scripts/rc7/bootstrap-maps-managed.sh"
-      - "scripts/rc7/verify-maps-contract.py"
-      - "scripts/rc7/verify-managed-workflow-context.py"
-      - "backend/direkt-api/src/location/**"
-      - "backend/direkt-api/src/config/environment.ts"
-      - "backend/direkt-api/test/unit/location/**"
-      - "backend/direkt-api/test/unit/config/environment-maps.spec.ts"
-      - "android/direkt-app/app/src/androidTest/java/com/kudzimusar/direkt/Rc7MapsRuntimeTest.kt"
-      - "android/direkt-app/app/src/main/java/com/kudzimusar/direkt/ui/discovery/PrivacySafeMapCard.kt"
-      - "docs/integrations/RC7_MAPS_MANAGED_TRIGGER.md"
-      - "docs/integrations/RC7_MAPS_OWNER_BOOTSTRAP.md"
   workflow_dispatch:
     inputs:
       confirmation:
@@ -76,7 +58,7 @@ jobs:
 
   managed:
     name: Prove privacy-safe Maps runtime
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_dispatch'
     needs: contract
     runs-on: ubuntu-latest
     timeout-minutes: 70
