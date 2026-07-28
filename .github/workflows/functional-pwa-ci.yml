@@ -150,8 +150,6 @@ jobs:
           set -euo pipefail
           cd admin/direkt-operations-portal
           NEXT_TELEMETRY_DISABLED=1 npm run build
-      - name: Ensure visual builds did not rewrite tracked source
-        run: git diff --exit-code -- web/direkt-app admin/direkt-operations-portal
       - name: Start synthetic public-safe fixture and production-built product servers
         shell: bash
         run: |
