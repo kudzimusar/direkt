@@ -1,0 +1,42 @@
+name: Phase 11 terminal administrative disposition publisher
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/phase11-terminal-administrative-disposition-once.yml"
+      - "scripts/phase11/publish-terminal-administrative-disposition.py"
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'docs/phase11-terminal-administrative-disposition'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: docs/phase11-terminal-administrative-disposition
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Publish verified non-workflow terminal disposition
+        run: |
+          set -euo pipefail
+          if [[ ! -f scripts/phase11/publish-terminal-administrative-disposition.py ]]; then
+            echo "Phase 11 terminal disposition already published"
+            exit 0
+          fi
+          python3 scripts/phase11/publish-terminal-administrative-disposition.py
+          python3 scripts/phase11/verify-terminal-administrative-disposition.py
+          rm scripts/phase11/publish-terminal-administrative-disposition.py
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add WORKSTREAM_LOCK.md PROJECT_STATUS.md docs/phase11/PHASE11_TERMINAL_ADMINISTRATIVE_DISPOSITION.md scripts/phase11/verify-terminal-administrative-disposition.py scripts/phase11/publish-terminal-administrative-disposition.py
+          git diff --cached --check
+          git commit -m 'docs(phase11): record terminal administrative disposition'
+          git push origin HEAD:docs/phase11-terminal-administrative-disposition
