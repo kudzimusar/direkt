@@ -134,23 +134,24 @@ jobs:
           mkdir -p "${RUNNER_TEMP}/vc8-playwright"
           npm install --prefix "${RUNNER_TEMP}/vc8-playwright" --package-lock=false --no-save playwright@1.55.0
           node "${RUNNER_TEMP}/vc8-playwright/node_modules/playwright/cli.js" install --with-deps chromium
-      - name: Build production-equivalent customer and operations clients
+      - name: Build production-equivalent customer client
         shell: bash
         run: |
           set -euo pipefail
-          (
-            cd web/direkt-app
-            DIREKT_WEB_API_MODE=public \
-              DIREKT_API_BASE_URL=http://127.0.0.1:4100 \
-              DIREKT_WEB_AUTH_MODE=disabled \
-              NEXT_TELEMETRY_DISABLED=1 \
-              npm run build
-          )
-          (
-            cd admin/direkt-operations-portal
-            NEXT_TELEMETRY_DISABLED=1 npm run build
-          )
-          git diff --exit-code -- web/direkt-app admin/direkt-operations-portal
+          cd web/direkt-app
+          DIREKT_WEB_API_MODE=public \
+            DIREKT_API_BASE_URL=http://127.0.0.1:4100 \
+            DIREKT_WEB_AUTH_MODE=disabled \
+            NEXT_TELEMETRY_DISABLED=1 \
+            npm run build
+      - name: Build production-equivalent operations client
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd admin/direkt-operations-portal
+          NEXT_TELEMETRY_DISABLED=1 npm run build
+      - name: Ensure visual builds did not rewrite tracked source
+        run: git diff --exit-code -- web/direkt-app admin/direkt-operations-portal
       - name: Start synthetic public-safe fixture and production-built product servers
         shell: bash
         run: |
