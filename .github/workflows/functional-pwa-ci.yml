@@ -166,7 +166,7 @@ jobs:
           node scripts/vc8/fixture-api.cjs > "${RUNNER_TEMP}/vc8-fixture.log" 2>&1 &
           (
             cd web/direkt-app/.next/standalone
-            NODE_ENV=test \
+            DIREKT_WEB_ALLOW_SYNTHETIC_PUBLIC_RUNTIME=true \
               DIREKT_WEB_API_MODE=public \
               DIREKT_API_BASE_URL=http://127.0.0.1:4100 \
               DIREKT_WEB_AUTH_MODE=disabled \
