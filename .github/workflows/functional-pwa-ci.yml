@@ -165,21 +165,21 @@ jobs:
           set -euo pipefail
           node scripts/vc8/fixture-api.cjs > "${RUNNER_TEMP}/vc8-fixture.log" 2>&1 &
           (
-            cd web/direkt-app
+            cd web/direkt-app/.next/standalone
             DIREKT_WEB_API_MODE=public \
               DIREKT_API_BASE_URL=http://127.0.0.1:4100 \
               DIREKT_WEB_AUTH_MODE=disabled \
               NEXT_TELEMETRY_DISABLED=1 \
               HOSTNAME=127.0.0.1 \
               PORT=3100 \
-              node .next/standalone/server.js
+              node server.js
           ) > "${RUNNER_TEMP}/vc8-web.log" 2>&1 &
           (
-            cd admin/direkt-operations-portal
+            cd admin/direkt-operations-portal/.next/standalone
             NEXT_TELEMETRY_DISABLED=1 \
               HOSTNAME=127.0.0.1 \
               PORT=3200 \
-              node .next/standalone/server.js
+              node server.js
           ) > "${RUNNER_TEMP}/vc8-ops.log" 2>&1 &
           for url in http://127.0.0.1:3100 http://127.0.0.1:3200/operations; do
             for attempt in $(seq 1 60); do
@@ -193,6 +193,17 @@ jobs:
               sleep 2
             done
           done
+      - name: Upload visual server diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-vc8-server-diagnostics-${{ env.SOURCE_SHA }}
+          path: |
+            ${{ runner.temp }}/vc8-fixture.log
+            ${{ runner.temp }}/vc8-web.log
+            ${{ runner.temp }}/vc8-ops.log
+          if-no-files-found: warn
+          retention-days: 14
       - name: Capture exact-head customer, provider, help and operations screenshots
         env:
           PLAYWRIGHT_MODULE: ${{ runner.temp }}/vc8-playwright/node_modules/playwright
