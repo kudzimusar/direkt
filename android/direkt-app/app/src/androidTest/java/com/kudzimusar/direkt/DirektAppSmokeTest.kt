@@ -25,14 +25,14 @@ class DirektAppSmokeTest {
         composeRule.onNodeWithTag("customer-home-find-providers").performScrollTo().assertIsDisplayed()
 
         composeRule.onNodeWithTag("nav-saved").performClick()
-        composeRule.onNodeWithText("Your shortlist").assertIsDisplayed()
+        composeRule.onNodeWithText("Your shortlist").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag("customer-saved").performScrollTo().assertIsDisplayed()
 
         composeRule.onNodeWithTag("nav-enquiries").performClick()
-        composeRule.onNodeWithText("Your service requests").assertIsDisplayed()
+        composeRule.onNodeWithText("Your service requests").performScrollTo().assertIsDisplayed()
 
         composeRule.onNodeWithTag("nav-account").performClick()
-        composeRule.onNodeWithText("Account and privacy").assertIsDisplayed()
+        composeRule.onNodeWithText("Account and privacy").performScrollTo().assertIsDisplayed()
         composeRule.onNode(hasScrollAction()).performScrollToIndex(3)
         composeRule.onNodeWithTag("pilot-auth-card").assertIsDisplayed()
         composeRule.onNodeWithText(
