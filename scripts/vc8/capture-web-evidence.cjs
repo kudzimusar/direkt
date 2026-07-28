@@ -15,6 +15,55 @@ async function captureView(page, view, heading, fileName, fullPage = true) {
   });
 }
 
+async function readCompactLayout(page) {
+  return page.evaluate(() => {
+    const measure = (selector) => {
+      const element = document.querySelector(selector);
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      return {
+        selector,
+        clientWidth: element.clientWidth,
+        scrollWidth: element.scrollWidth,
+        rect: {
+          left: Math.round(rect.left * 100) / 100,
+          right: Math.round(rect.right * 100) / 100,
+          width: Math.round(rect.width * 100) / 100,
+        },
+        computed: {
+          display: style.display,
+          width: style.width,
+          maxWidth: style.maxWidth,
+          minWidth: style.minWidth,
+          overflowX: style.overflowX,
+          boxSizing: style.boxSizing,
+        },
+      };
+    };
+
+    return {
+      innerWidth: window.innerWidth,
+      visualViewportWidth: window.visualViewport?.width ?? null,
+      compactMedia: window.matchMedia('(max-width: 639px)').matches,
+      documentClientWidth: document.documentElement.clientWidth,
+      documentScrollWidth: document.documentElement.scrollWidth,
+      bodyClientWidth: document.body.clientWidth,
+      bodyScrollWidth: document.body.scrollWidth,
+      shell: measure('[data-testid="pwa-shell"]'),
+      contentColumn: measure('.app-content-column'),
+      main: measure('.main-content'),
+      discovery: measure('.marketplace-discovery'),
+      hero: measure('.marketplace-hero'),
+      heroCopy: measure('.marketplace-hero-copy'),
+      searchCard: measure('.marketplace-search-card'),
+      searchMain: measure('.marketplace-search-main'),
+      serviceInput: measure('[data-testid="pwa-home-service-input"]'),
+      submit: measure('[data-testid="pwa-home-find-providers"]'),
+    };
+  });
+}
+
 async function capture() {
   const browser = await chromium.launch({ headless: true });
   try {
@@ -67,9 +116,12 @@ async function capture() {
     const mobile = await browser.newPage({
       viewport: { width: 390, height: 844 },
       isMobile: true,
+      deviceScaleFactor: 1,
     });
     await mobile.goto('http://127.0.0.1:3100', { waitUntil: 'networkidle' });
     await mobile.getByRole('heading', { name: 'What do you need help with?' }).waitFor();
+    const compactLayout = await readCompactLayout(mobile);
+    console.log(`DIREKT_COMPACT_LAYOUT ${JSON.stringify(compactLayout)}`);
     await mobile.screenshot({
       path: path.join(outputDir, 'customer-home-mobile.png'),
       fullPage: false,
@@ -131,6 +183,7 @@ async function capture() {
           buildMode: 'production-built customer and operations clients',
           designDirection:
             'Lively Trust Marketplace — Structured Trust + Neighbourhood Marketplace + Field Utility',
+          compactLayout,
           captures: [
             {
               file: 'customer-discovery-desktop.png',
