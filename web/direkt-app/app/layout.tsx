@@ -14,6 +14,7 @@ import "./provider-ai.css";
 import "./support-ai.css";
 import "./lively-marketplace.css";
 import "./lively-marketplace-home.css";
+import "./lively-marketplace-compact-fixes.css";
 
 export const metadata: Metadata = {
   title: {
