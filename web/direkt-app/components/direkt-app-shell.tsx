@@ -12,6 +12,7 @@ import { ProviderInteractionExperience } from "@/components/provider-interaction
 import { ProviderJourneyExperience } from "@/components/provider-journey-experience";
 import { SupportAssistPanel } from "@/components/support-assist-panel";
 import { DirektIcon } from "@/components/ui/direkt-icon";
+import { DirektNeighbourhoodIllustration } from "@/components/ui/direkt-neighbourhood-illustration";
 import {
   destinationHeading,
   destinationIcon,
@@ -81,7 +82,12 @@ export function DirektAppShell({
   };
 
   return (
-    <div className="app-frame world-class-shell" data-mode={mode}>
+    <div
+      className="app-frame world-class-shell lively-marketplace-shell"
+      data-destination={destination}
+      data-mode={mode}
+      data-testid="pwa-shell"
+    >
       <aside className="desktop-side-nav" aria-label="Primary">
         <Brand />
         <ModeControl
@@ -136,14 +142,17 @@ export function DirektAppShell({
         </header>
         <main id="main-content" className="main-content" tabIndex={-1}>
           {!showDiscovery && (
-            <section className="page-heading" aria-labelledby="page-title">
-              <div>
+            <section className="page-heading lively-page-heading" aria-labelledby="page-title">
+              <div className="page-heading-copy">
                 <p className="eyebrow">
                   {mode === "customer" ? "For you" : "Your business"}
                 </p>
                 <h1 id="page-title">{heading.title}</h1>
                 <p>{heading.summary}</p>
               </div>
+              {mode === "customer" ? (
+                <DirektNeighbourhoodIllustration className="page-heading-art" />
+              ) : null}
             </section>
           )}
           {!showDiscovery && <TrustPrincipleStrip />}
@@ -209,7 +218,9 @@ function TrustPrincipleStrip() {
       className="trust-principle-strip"
       aria-label="DIREKT trust principle"
     >
-      <DirektIcon name="shield" />
+      <span className="trust-principle-icon" aria-hidden="true">
+        <DirektIcon name="shield" />
+      </span>
       <div>
         <strong>Proof before persuasion</strong>
         <p>
@@ -217,6 +228,7 @@ function TrustPrincipleStrip() {
           upgrades a provider&apos;s trust status.
         </p>
       </div>
+      <DirektIcon className="trust-principle-arrow" name="arrow-right" />
     </section>
   );
 }
@@ -312,6 +324,7 @@ function ModeControl({
               type="button"
               className={mode === value ? "active" : ""}
               aria-pressed={mode === value}
+              data-testid={`pwa-mode-${value}`}
               disabled={disabled}
               title={
                 disabled
@@ -351,6 +364,7 @@ function Navigation({
             type="button"
             className={active ? "nav-item active" : "nav-item"}
             aria-current={active ? "page" : undefined}
+            data-testid={`pwa-nav-${item.id}`}
             onClick={() => onNavigate(item.id)}
           >
             <span className="nav-glyph" aria-hidden="true">
