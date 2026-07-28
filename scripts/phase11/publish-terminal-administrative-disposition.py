@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Owner-authored retrigger after wording normalization.
 import os
 from pathlib import Path
 
