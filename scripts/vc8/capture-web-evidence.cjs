@@ -5,13 +5,13 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE);
 const outputDir = process.env.VC8_EVIDENCE_DIR || 'visual-evidence/web';
 fs.mkdirSync(outputDir, { recursive: true });
 
-async function captureView(page, view, heading, fileName) {
+async function captureView(page, view, heading, fileName, fullPage = true) {
   const suffix = view === 'discover' ? '' : `?view=${view}`;
   await page.goto(`http://127.0.0.1:3100/${suffix}`, { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: heading }).first().waitFor();
   await page.screenshot({
     path: path.join(outputDir, fileName),
-    fullPage: true,
+    fullPage,
   });
 }
 
@@ -72,7 +72,7 @@ async function capture() {
     await mobile.getByRole('heading', { name: 'What do you need help with?' }).waitFor();
     await mobile.screenshot({
       path: path.join(outputDir, 'customer-home-mobile.png'),
-      fullPage: true,
+      fullPage: false,
     });
 
     await mobile.getByLabel('Service or problem').fill('leaking pipe');
@@ -80,21 +80,23 @@ async function capture() {
     await mobile.getByText('DIREKT category match').waitFor();
     await mobile.screenshot({
       path: path.join(outputDir, 'customer-ai-fallback-mobile.png'),
-      fullPage: true,
+      fullPage: false,
     });
 
-    await captureView(mobile, 'saved', 'Your shortlist', 'customer-saved-mobile.png');
+    await captureView(mobile, 'saved', 'Your shortlist', 'customer-saved-mobile.png', false);
     await captureView(
       mobile,
       'enquiries',
       'Your service requests',
       'customer-enquiries-mobile.png',
+      false,
     );
     await captureView(
       mobile,
       'account',
       'Account and privacy',
       'customer-account-mobile.png',
+      false,
     );
 
     const tablet = await browser.newPage({ viewport: { width: 820, height: 1180 } });
@@ -102,7 +104,7 @@ async function capture() {
     await tablet.getByRole('heading', { name: 'What do you need help with?' }).waitFor();
     await tablet.screenshot({
       path: path.join(outputDir, 'customer-discovery-tablet.png'),
-      fullPage: true,
+      fullPage: false,
     });
 
     await desktop.goto('http://127.0.0.1:3200/operations', {
@@ -126,6 +128,7 @@ async function capture() {
         {
           sourceSha: process.env.SOURCE_SHA,
           data: 'synthetic/public-safe only',
+          buildMode: 'production-built customer and operations clients',
           designDirection:
             'Lively Trust Marketplace — Structured Trust + Neighbourhood Marketplace + Field Utility',
           captures: [
@@ -162,32 +165,32 @@ async function capture() {
             {
               file: 'customer-home-mobile.png',
               viewport: '390x844',
-              state: 'customer Home',
+              state: 'customer Home viewport',
             },
             {
               file: 'customer-ai-fallback-mobile.png',
               viewport: '390x844',
-              state: 'AI unavailable / deterministic category fallback',
+              state: 'AI unavailable / deterministic category fallback viewport',
             },
             {
               file: 'customer-saved-mobile.png',
               viewport: '390x844',
-              state: 'customer Saved',
+              state: 'customer Saved viewport',
             },
             {
               file: 'customer-enquiries-mobile.png',
               viewport: '390x844',
-              state: 'customer Enquiries',
+              state: 'customer Enquiries viewport',
             },
             {
               file: 'customer-account-mobile.png',
               viewport: '390x844',
-              state: 'customer Account',
+              state: 'customer Account viewport',
             },
             {
               file: 'customer-discovery-tablet.png',
               viewport: '820x1180',
-              state: 'tablet discovery and rail adaptation',
+              state: 'tablet discovery and rail adaptation viewport',
             },
             {
               file: 'operations-mission-control-desktop.png',
