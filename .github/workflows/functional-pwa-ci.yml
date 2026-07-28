@@ -150,6 +150,15 @@ jobs:
           set -euo pipefail
           cd admin/direkt-operations-portal
           NEXT_TELEMETRY_DISABLED=1 npm run build
+      - name: Prepare standalone production assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          for app in web/direkt-app admin/direkt-operations-portal; do
+            mkdir -p "${app}/.next/standalone/.next"
+            cp -R "${app}/.next/static" "${app}/.next/standalone/.next/static"
+            cp -R "${app}/public" "${app}/.next/standalone/public"
+          done
       - name: Start synthetic public-safe fixture and production-built product servers
         shell: bash
         run: |
@@ -161,11 +170,16 @@ jobs:
               DIREKT_API_BASE_URL=http://127.0.0.1:4100 \
               DIREKT_WEB_AUTH_MODE=disabled \
               NEXT_TELEMETRY_DISABLED=1 \
-              npm run start -- --hostname 127.0.0.1 --port 3100
+              HOSTNAME=127.0.0.1 \
+              PORT=3100 \
+              node .next/standalone/server.js
           ) > "${RUNNER_TEMP}/vc8-web.log" 2>&1 &
           (
             cd admin/direkt-operations-portal
-            NEXT_TELEMETRY_DISABLED=1 npm run start -- --hostname 127.0.0.1 --port 3200
+            NEXT_TELEMETRY_DISABLED=1 \
+              HOSTNAME=127.0.0.1 \
+              PORT=3200 \
+              node .next/standalone/server.js
           ) > "${RUNNER_TEMP}/vc8-ops.log" 2>&1 &
           for url in http://127.0.0.1:3100 http://127.0.0.1:3200/operations; do
             for attempt in $(seq 1 60); do
