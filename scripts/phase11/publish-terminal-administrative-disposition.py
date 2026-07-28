@@ -50,7 +50,7 @@ RECEIPT.write_text(f"""# Phase 11 Terminal Administrative Disposition
 
 The owner directed the repository backlog to be cleared. Because the Zambia controlled pilot never received the required external entry evidence and never admitted or processed real participants, the only truthful terminal disposition is to stop the proposed pilot before entry and close the tracking issue as **not planned**.
 
-This is an administrative programme disposition. It is **not** an evidence-backed Phase 11J STOP decision, does not claim that Phase 11 completed, and does not convert synthetic, sandbox, managed-canary or repository-readiness evidence into primary pilot evidence.
+This is an administrative programme disposition. It is not an evidence-backed Phase 11J STOP decision, does not claim that Phase 11 completed, and does not convert synthetic, sandbox, managed-canary or repository-readiness evidence into primary pilot evidence.
 
 ## Preserved facts
 
