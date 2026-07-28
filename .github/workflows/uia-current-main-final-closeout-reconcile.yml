@@ -24,18 +24,22 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - name: Publish and verify permanent UIA closeout
+      - name: Publish verified non-workflow closeout files
         run: |
           set -euo pipefail
+          if [[ ! -f scripts/uia/publish-current-main-final-closeout.py ]]; then
+            echo "UIA non-workflow closeout already published"
+            exit 0
+          fi
           python3 scripts/uia/publish-current-main-final-closeout.py
           python3 scripts/uia/verify-current-main-owner-review.py
           rm scripts/uia/publish-current-main-final-closeout.py
           rm scripts/uia/publish-current-main-refresh-closeout.py
-          rm .github/workflows/uia-current-main-refresh-closeout-once.yml
-          rm .github/workflows/uia-current-main-final-closeout-reconcile.yml
+          rm -f .github/workflows/uia-current-main-owner-review-contract.yml
+          git checkout -- .github/workflows/uia-current-main-refresh-closeout-once.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add WORKSTREAM_LOCK.md PROJECT_STATUS.md docs/design/UIA_CURRENT_MAIN_OWNER_REVIEW_RECEIPT.md scripts/uia/verify-current-main-owner-review.py scripts/phase11/verify-wave0-finishing-line.py .github/workflows/uia-current-main-owner-review-contract.yml scripts/uia/publish-current-main-final-closeout.py scripts/uia/publish-current-main-refresh-closeout.py .github/workflows/uia-current-main-refresh-closeout-once.yml .github/workflows/uia-current-main-final-closeout-reconcile.yml
+          git add WORKSTREAM_LOCK.md PROJECT_STATUS.md docs/design/UIA_CURRENT_MAIN_OWNER_REVIEW_RECEIPT.md scripts/uia/verify-current-main-owner-review.py scripts/phase11/verify-wave0-finishing-line.py scripts/uia/publish-current-main-final-closeout.py scripts/uia/publish-current-main-refresh-closeout.py
           git diff --cached --check
           git commit -m 'docs(uia): close current-main owner review'
           git push origin HEAD:docs/uia-current-main-final-closeout
