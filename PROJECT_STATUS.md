@@ -1,11 +1,11 @@
 # DIREKT Project Status
 
-**Updated:** 2026-07-27 (Asia/Tokyo)
+**Updated:** 2026-07-28 (Asia/Tokyo)
 **Stable branch:** `main`
 **VC1–VC8 promotion:** PR #270 merged at `c7f5985bc20372b4761e063dc3a66ecc736556e2`
 **Visual Completion issue:** #259 — CLOSED/COMPLETED
 **Runtime integration tracker:** #261
-**Active repository write lane:** none; UIA current-main owner review is closed and final Phase 11 disposition is next but unclaimed
+**Active repository write lane:** none; the Phase 11 controlled-pilot tracker is closed not planned before entry and any restart requires a new authorization lane
 
 ## 1. Programme state
 
@@ -15,6 +15,7 @@ DIREKT’s current repository state is:
 - Phase 11 internal/synthetic readiness — **complete**;
 - Phase 11 11C–11J execution-readiness package — **CLOSED AND PRESERVED — EXECUTION READY / REAL ENTRY BLOCKED / NO PRIMARY-PILOT EVIDENCE**;
 - Phase 11 Wave 0 finishing-line controls — **CLOSED AND PRESERVED / TECHNICAL PREFLIGHT PASSED / ENTRY_BLOCKED_EXTERNAL**;
+- Phase 11 controlled Zambia pilot — **NOT RUN / STOPPED BEFORE ENTRY / TRACKER CLOSED NOT PLANNED**;
 - repository-clearable Phase 12 preauthorization engineering — **complete**;
 - formal Phase 12 production release — **not authorized**;
 - functional customer/provider web/PWA W0–W8 — **closed**;
@@ -23,7 +24,7 @@ DIREKT’s current repository state is:
 - UIA current-main owner-review access — **CLOSED AND PRESERVED / SYNTHETIC BROWSER + INTERNAL ANDROID + IAM-PRIVATE OPERATIONS PROVEN**;
 - runtime integration closure — **RC0–RC11 are closed. The final managed evidence index, combined regressions and truthful blocked/provider-state reconciliation are preserved; the repository write lane is released.**
 
-VC1–VC8 completion does not replace or weaken the remaining Phase 11 real-world evidence, privacy/legal, payment, external-communications or production-release gates.
+Administrative closure of Issue #112 does not mean Phase 11 completed. The real controlled pilot did not run, no primary evidence exists, and all privacy/legal/provider/participant/payment/production gates remain mandatory for any future re-entry.
 
 ## 2. Current product truth
 
