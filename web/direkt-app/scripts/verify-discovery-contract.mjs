@@ -98,7 +98,7 @@ const queryFields = [
 ];
 for (const field of queryFields) {
   requireMarker(backendDiscoveryDto, field, `backend discovery query field ${field}`);
-  requireMarker(webQuery, `\"${field}\"`, `web discovery allowlisted query field ${field}`);
+  requireMarker(webQuery, `"${field}"`, `web discovery allowlisted query field ${field}`);
 }
 
 for (const path of [
@@ -139,8 +139,13 @@ for (const marker of [
   requireMarker(cloudRunIdentity, marker, `Cloud Run identity boundary ${marker}`);
 }
 for (const marker of [
-  'apiMode === "public" && process.env.NODE_ENV === "production"',
+  'apiMode === "public"',
+  'process.env.NODE_ENV === "production"',
+  "!syntheticPublicRuntime",
   "public is prohibited in production",
+  "DIREKT_WEB_ALLOW_SYNTHETIC_PUBLIC_RUNTIME",
+  "allowed only in CI",
+  "requires a localhost or 127.0.0.1 API base URL",
   'privateApiInvocationEnabled: apiMode === "authenticated-bff"',
 ]) {
   requireMarker(runtimeConfig, marker, `production fail-closed runtime marker ${marker}`);
@@ -170,6 +175,7 @@ process.stdout.write(
     genericProxy: false,
     privateApiUrlExposedToClient: false,
     productionUnauthenticatedApiMode: false,
+    syntheticPublicVisualRuntimeFailClosed: true,
     upstreamServerErrorDetailRelayed: false,
   })}\n`,
 );
