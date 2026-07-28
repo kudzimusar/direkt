@@ -13,6 +13,7 @@ import "./provider-workspace-world-class.css";
 import "./provider-ai.css";
 import "./support-ai.css";
 import "./lively-marketplace.css";
+import "./lively-marketplace-home.css";
 
 export const metadata: Metadata = {
   title: {
