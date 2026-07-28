@@ -30,6 +30,8 @@ This file prevents overlapping writes in the single-lane build process.
 9. No concept-only rating, insurance, trust score, provider response, setting or generic `Verified` claim was added where canonical data did not support it.
 10. The lane is released. Owner usability feedback may open a new bounded visual-correction issue; it cannot weaken the closed regression, trust, privacy, IAM, participant or production-release boundaries recorded here.
 
+Historical Wave 0 contract marker: Stable baseline | `main@632dd0bdbb2a3b8c24bd285918deff3e54bd3ba9`
+
 ## W8 historical closure receipt — CLOSED AND PRESERVED
 
 The following strings are historical closure evidence required by the permanent W8 cutover verifier; they do not describe current lock ownership:
