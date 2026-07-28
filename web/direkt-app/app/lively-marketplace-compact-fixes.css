@@ -52,15 +52,41 @@
 }
 
 @media (max-width: 639px) {
-  .lively-marketplace-shell .main-content {
-    width: 100%;
+  html,
+  body {
+    max-width: 100%;
     overflow-x: clip;
   }
 
+  .lively-marketplace-shell,
+  .lively-marketplace-shell .app-content-column,
+  .lively-marketplace-shell .main-content {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-inline: 0 !important;
+    overflow-x: clip;
+  }
+
+  .lively-marketplace-shell .main-content {
+    padding-right: 14px !important;
+    padding-left: 14px !important;
+  }
+
+  .lively-marketplace-shell .marketplace-discovery {
+    width: calc(100vw - 28px) !important;
+    max-width: calc(100vw - 28px) !important;
+  }
+
+  .lively-marketplace-shell .marketplace-discovery > * {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
   .lively-marketplace-shell .marketplace-hero {
-    width: 100%;
+    inline-size: 100%;
     overflow: hidden;
     padding: 20px 18px 22px;
+    contain: inline-size;
   }
 
   .lively-marketplace-shell .marketplace-kicker {
@@ -73,6 +99,7 @@
     max-width: 10ch;
     font-size: clamp(2rem, 9vw, 2.35rem);
     line-height: 1.06;
+    overflow-wrap: anywhere;
   }
 
   .lively-marketplace-shell .marketplace-hero-lead {
@@ -81,26 +108,29 @@
     padding-right: 0;
     font-size: 0.98rem;
     line-height: 1.55;
+    overflow-wrap: anywhere;
   }
 
   .lively-marketplace-shell .marketplace-hero::after {
     top: 242px;
-    right: -24px;
-    width: min(52%, 210px);
+    right: -12px;
+    width: min(50%, 190px);
     opacity: 0.88;
   }
 
   .lively-marketplace-shell .marketplace-search-card {
-    width: 100%;
+    inline-size: 100% !important;
     margin-top: 104px;
     padding: 10px;
+    contain: inline-size;
   }
 
   .lively-marketplace-shell .marketplace-search-main,
   .lively-marketplace-shell .marketplace-search-location {
-    width: 100%;
+    inline-size: 100%;
     min-height: 68px;
     padding-inline: 8px;
+    overflow: hidden;
   }
 
   .lively-marketplace-shell .marketplace-search-main label span,
@@ -110,11 +140,12 @@
 
   .lively-marketplace-shell .marketplace-search-main input,
   .lively-marketplace-shell .marketplace-search-location input {
+    inline-size: 100%;
     font-size: 0.95rem;
   }
 
   .lively-marketplace-shell .marketplace-search-submit {
-    width: 100%;
+    inline-size: 100%;
     min-height: 54px;
     margin-top: 8px;
   }
