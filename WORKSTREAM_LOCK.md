@@ -6,16 +6,31 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | ACTIVE — ISSUE #522 LIVELY TRUST MARKETPLACE UI REFRESH |
-| Owner/agent | OpenAI implementation agent under the owner-authorized Issue #522. |
-| Authorized scope | Presentation, component, design-document and regression-test changes for Android and customer/provider PWA Home, Saved, Enquiries and Account. No backend/API/domain/integration/provider/release-authority changes. |
-| Protected surface | Closed RC0–RC11 evidence, canonical OpenAPI authorization/privacy checks, Android auth/session/Firebase controls, customer/provider web BFF/private Cloud Run IAM, provider workspace, operations portal, payment boundaries, UIA Issue #354, existing VC Design DNA and all Phase 11/12 gates. |
-| Implementation branch | `ui/lively-trust-marketplace` — bounded conflict-containment branch from `main@61edb4ecfd83ef7b7b5f89723ce52c9a244a3cad`; the diverged historical `build/android-v1` ref is preserved and is not force-rewritten. |
-| Stable baseline | `main@61edb4ecfd83ef7b7b5f89723ce52c9a244a3cad` is the exact source baseline. Closed integration/readiness evidence remains regression-protected. |
-| Current task | NVR0–NVR8 Android + PWA visual refresh: reconcile design authority, implement the Lively Trust Marketplace tokens/shell/four customer destinations, preserve working behavior, add responsive/native evidence, and close only on exact-head regressions and owner review. |
-| Governing issue | Issue #522. Issue #112 remains closed not planned; Issue #354 and all closed RC/UIA evidence remain preserved. |
-| Formal programme phase | Owner-directed post-VC presentation refinement only. The real Phase 11 pilot was not run and formal Phase 12 production release is not authorized. |
-| Production-release authorization | BLOCKED. This UI work cannot create pilot entry, participant processing, production authentication, real communications, real money, trust authority or production release authorization. |
+| Status | RELEASED — ISSUE #522 LIVELY TRUST MARKETPLACE UI REFRESH COMPLETE |
+| Owner/agent | No active writer. The owner-authorized Issue #522 implementation, visual-evidence review, merge and canonical PWA deployment are closed and preserved. |
+| Authorized scope | CLOSED. Android and customer/provider PWA Home, Saved, Enquiries and Account presentation work may resume only through a new explicit issue and lane claim. |
+| Protected surface | Closed Issue #522 evidence; closed RC0–RC11 evidence; canonical OpenAPI authorization/privacy checks; Android auth/session/Firebase controls; customer/provider web BFF/private Cloud Run IAM; provider workspace; operations portal; payment boundaries; UIA Issue #354; Design DNA; and all Phase 11/12 gates. |
+| Implementation receipts | PR #524 merged the visual refresh at `2825e8837c53bc3eb1263cabc14fd686709eae0c`. PR #525 merged the reviewed-main deployment trigger at `f206ef9ca42e35506e2b0f3c2740e4147d2b1383`. PR #526 merged the canonical deployment receipt at `e8923df1c921b5a2c7638bb6164f066ab9cb562e`. |
+| Stable baseline | `main@e8923df1c921b5a2c7638bb6164f066ab9cb562e` is the exact deployed closure source. Closed integration/readiness evidence remains regression-protected. |
+| Current task | None. Owner testing may record follow-up observations, but any source correction requires a new bounded claim from current `main`. |
+| Governing issue | Issue #522 is complete. Issue #112 remains closed not planned; Issue #354 and all closed RC/UIA evidence remain preserved. |
+| Formal programme phase | Owner-directed post-VC presentation refinement is complete. The real Phase 11 pilot was not run and formal Phase 12 production release is not authorized. |
+| Production-release authorization | BLOCKED. This UI closure does not create pilot entry, participant processing, production authentication, real communications, real money, trust authority or production release authorization. |
+
+## Issue #522 visual-refresh closure receipt — CLOSED AND PRESERVED
+
+1. The approved **Lively Trust Marketplace** direction was implemented across the native Android app and responsive customer/provider PWA without replacing canonical business, authentication, trust, privacy, provider or integration behavior.
+2. The exact reviewed implementation head `baa7abf85375a353f865b28b7412cb19fb5e30ee` passed the material Android, PWA, W4, W7, W8, integration, performance, supply-chain and documentation matrix before PR #524 squash-merged at `2825e8837c53bc3eb1263cabc14fd686709eae0c`.
+3. Exact-head Android evidence was captured by run `30340968088`, artifact `8681151691`, covering customer Home, Saved, Enquiries and Account plus provider regressions.
+4. Exact-head PWA evidence was captured by run `30340968094`, artifact `8681033369`, covering compact customer Home, Saved, Enquiries and Account, tablet discovery, desktop customer/provider and operations regressions.
+5. Screenshot review found and corrected compact PWA horizontal clipping, Android wordmark wrapping and narrow Android illustration/text overlap before merge.
+6. PR #525 made the existing fail-closed W8 deployment workflow run after relevant reviewed changes land on `main`; PR #526 added an exact-source deployment receipt without changing IAM, API, participant or release authority.
+7. Managed deployment run `30343083753` deployed exact source `e8923df1c921b5a2c7638bb6164f066ab9cb562e` and passed the W2–W8 contract, IAM-private API boundary, responsive shell, manifest/service-worker/offline fallback, BFF discovery, synthetic session and browser privacy checks.
+8. Canonical owner-test entries are `https://app.direkt.forum/` and `https://app.direkt.forum/?view=account`; the accepted `?view=discover|saved|enquiries|account` contract remains preserved.
+9. No concept-only rating, insurance, trust score, provider response, setting or generic `Verified` claim was added where canonical data did not support it.
+10. The lane is released. Owner usability feedback may open a new bounded visual-correction issue; it cannot weaken the closed regression, trust, privacy, IAM, participant or production-release boundaries recorded here.
+
+Historical Wave 0 contract marker: Stable baseline | `main@632dd0bdbb2a3b8c24bd285918deff3e54bd3ba9`
 
 ## W8 historical closure receipt — CLOSED AND PRESERVED
 
@@ -229,4 +244,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-The repository write lane is ACTIVE only for the bounded Issue #522 presentation scope on `ui/lively-trust-marketplace`. RC0–RC11, UIA, Phase 11C–11J readiness and Wave 0 finishing-line evidence remain immutable/regression-protected. Real participants, participant data, real money and production authorization remain blocked until the explicit Phase 11 entry checklist is satisfied.
+The repository write lane is RELEASED. Issue #522, RC0–RC11, UIA, Phase 11C–11J readiness and Wave 0 finishing-line evidence remain immutable/regression-protected. Any future visual or functional write lane must be claimed from current `main` and preserve the exact deployed Lively Trust Marketplace closure. Real participants, participant data, real money and production authorization remain blocked until the explicit Phase 11 entry checklist is satisfied.
