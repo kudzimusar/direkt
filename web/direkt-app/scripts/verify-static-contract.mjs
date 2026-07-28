@@ -10,6 +10,7 @@ const requiredFiles = [
   "app/discovery.css",
   "app/account.css",
   "app/lively-marketplace.css",
+  "app/lively-marketplace-home.css",
   "app/providers/[publicProviderId]/page.tsx",
   "app/api/auth/bootstrap/route.ts",
   "app/api/auth/challenge/route.ts",
@@ -75,6 +76,7 @@ if (!iconPurposes.has("any") || !iconPurposes.has("maskable")) {
 
 const css = await readFile(join(root, "app/globals.css"), "utf8");
 const livelyCss = await readFile(join(root, "app/lively-marketplace.css"), "utf8");
+const livelyHomeCss = await readFile(join(root, "app/lively-marketplace-home.css"), "utf8");
 const layout = await readFile(join(root, "app/layout.tsx"), "utf8");
 const page = await readFile(join(root, "app/page.tsx"), "utf8");
 const shell = await readFile(join(root, "components/direkt-app-shell.tsx"), "utf8");
@@ -110,7 +112,15 @@ for (const marker of [
   if (!livelyCss.includes(marker)) throw new Error(`Lively Trust Marketplace marker missing: ${marker}`);
 }
 for (const marker of [
+  ".marketplace-proof-card",
+  ".discovery-advanced-panel",
+  ".compact-section-heading",
+]) {
+  if (!livelyHomeCss.includes(marker)) throw new Error(`Lively Home composition marker missing: ${marker}`);
+}
+for (const marker of [
   'import "./lively-marketplace.css"',
+  'import "./lively-marketplace-home.css"',
   'color: "#F7F9FC"',
   'color: "#0D1320"',
 ]) {
@@ -152,6 +162,7 @@ if (envExample.includes("NEXT_PUBLIC_DIREKT_API_BASE_URL")) throw new Error("Can
 for (const marker of [
   "DIREKT_WEB_AUTH_MODE=disabled",
   "DIREKT_WEB_ALLOW_SYNTHETIC_AUTH=false",
+  "DIREKT_WEB_ALLOW_SYNTHETIC_PUBLIC_RUNTIME=false",
   "DIREKT_WEB_PILOT_NOTICE_VERSION=",
 ]) {
   if (!envExample.includes(marker)) throw new Error(`W3 fail-closed env marker missing: ${marker}`);
@@ -206,6 +217,9 @@ for (const marker of [
   '"disabled" | "synthetic" | "firebase-exchange"',
   "DIREKT_API_BASE_URL",
   "DIREKT_WEB_ALLOW_SYNTHETIC_AUTH",
+  "DIREKT_WEB_ALLOW_SYNTHETIC_PUBLIC_RUNTIME",
+  "allowed only in CI",
+  "requires a localhost or 127.0.0.1 API base URL",
   "must use HTTPS",
   "must not contain embedded credentials",
 ]) {
@@ -223,6 +237,7 @@ process.stdout.write(`${JSON.stringify({
   standaloneContainer: true,
   privilegedBrowserDependencies: false,
   apiBaseUrlPublic: false,
+  syntheticPublicVisualRuntimeFailClosed: true,
   w3AccountSurface: true,
 })}\n`);
 
