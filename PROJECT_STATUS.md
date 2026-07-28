@@ -5,7 +5,7 @@
 **VC1–VC8 promotion:** PR #270 merged at `c7f5985bc20372b4761e063dc3a66ecc736556e2`
 **Visual Completion issue:** #259 — CLOSED/COMPLETED
 **Runtime integration tracker:** #261
-**Active repository write lane:** none; Wave 0 finishing-line controls are closed and actual external-evidence reconciliation is next but unclaimed
+**Active repository write lane:** none; UIA current-main owner review is closed and final Phase 11 disposition is next but unclaimed
 
 ## 1. Programme state
 
@@ -20,6 +20,7 @@ DIREKT’s current repository state is:
 - functional customer/provider web/PWA W0–W8 — **closed**;
 - VC0 preparation/control — **closed**;
 - VC1–VC8 world-class product/AI modernization — **complete and merged**;
+- UIA current-main owner-review access — **CLOSED AND PRESERVED / SYNTHETIC BROWSER + INTERNAL ANDROID + IAM-PRIVATE OPERATIONS PROVEN**;
 - runtime integration closure — **RC0–RC11 are closed. The final managed evidence index, combined regressions and truthful blocked/provider-state reconciliation are preserved; the repository write lane is released.**
 
 VC1–VC8 completion does not replace or weaken the remaining Phase 11 real-world evidence, privacy/legal, payment, external-communications or production-release gates.

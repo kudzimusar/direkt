@@ -40,7 +40,8 @@ for needle in (
 ):
     require(LOCK, needle)
 
-require(PROJECT, "Active repository write lane:** none; Wave 0 finishing-line controls are closed")
+require(PROJECT, "Active repository write lane:** none;")
+require(PROJECT, "Phase 11 Wave 0 finishing-line controls — **CLOSED AND PRESERVED")
 require(PROJECT, "closed through PR #513 exact head `1e4291ef669ca01eb4f639b2f1734a85d8448a63`")
 require(LOCK, "Stable baseline | `main@632dd0bdbb2a3b8c24bd285918deff3e54bd3ba9`")
 

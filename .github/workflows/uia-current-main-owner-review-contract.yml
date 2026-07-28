@@ -1,0 +1,34 @@
+name: DIREKT UIA current-main owner-review contract
+
+on:
+  pull_request:
+    paths:
+      - "WORKSTREAM_LOCK.md"
+      - "PROJECT_STATUS.md"
+      - "docs/design/UIA_CURRENT_MAIN_OWNER_REVIEW_RECEIPT.md"
+      - "scripts/uia/verify-current-main-owner-review.py"
+      - "scripts/phase11/verify-wave0-finishing-line.py"
+      - ".github/workflows/uia-current-main-owner-review-contract.yml"
+  push:
+    branches: [main]
+    paths:
+      - "WORKSTREAM_LOCK.md"
+      - "PROJECT_STATUS.md"
+      - "docs/design/UIA_CURRENT_MAIN_OWNER_REVIEW_RECEIPT.md"
+      - "scripts/uia/verify-current-main-owner-review.py"
+      - "scripts/phase11/verify-wave0-finishing-line.py"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Verify current-main owner-review closure
+        run: python3 scripts/uia/verify-current-main-owner-review.py
