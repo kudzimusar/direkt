@@ -1,0 +1,145 @@
+/*
+ * Compact-width containment and task-first polish for Lively Trust Marketplace.
+ *
+ * This layer fixes visual overflow found by exact-head screenshot review without
+ * changing customer discovery state, BFF boundaries, navigation or trust logic.
+ */
+
+.lively-marketplace-shell,
+.lively-marketplace-shell .app-content-column,
+.lively-marketplace-shell .main-content,
+.lively-marketplace-shell .marketplace-discovery,
+.lively-marketplace-shell .marketplace-hero,
+.lively-marketplace-shell .marketplace-search-card,
+.lively-marketplace-shell .marketplace-search-main,
+.lively-marketplace-shell .marketplace-search-location,
+.lively-marketplace-shell .marketplace-search-main label,
+.lively-marketplace-shell .marketplace-search-location label,
+.lively-marketplace-shell .marketplace-search-main input,
+.lively-marketplace-shell .marketplace-search-location input,
+.lively-marketplace-shell .marketplace-search-submit {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.lively-marketplace-shell {
+  overflow-x: clip;
+}
+
+.lively-marketplace-shell .marketplace-search-main label,
+.lively-marketplace-shell .marketplace-search-location label {
+  flex: 1 1 auto;
+}
+
+.lively-marketplace-shell .marketplace-search-main input,
+.lively-marketplace-shell .marketplace-search-location input {
+  width: 100%;
+  text-overflow: ellipsis;
+}
+
+.lively-marketplace-shell .marketplace-search-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  overflow: hidden;
+  padding-inline: 18px;
+  white-space: normal;
+}
+
+.lively-marketplace-shell .marketplace-search-submit .direkt-icon {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 639px) {
+  .lively-marketplace-shell .main-content {
+    width: 100%;
+    overflow-x: clip;
+  }
+
+  .lively-marketplace-shell .marketplace-hero {
+    width: 100%;
+    overflow: hidden;
+    padding: 20px 18px 22px;
+  }
+
+  .lively-marketplace-shell .marketplace-kicker {
+    width: fit-content;
+    max-width: 100%;
+    margin-bottom: 18px;
+  }
+
+  .lively-marketplace-shell .marketplace-hero h1 {
+    max-width: 10ch;
+    font-size: clamp(2rem, 9vw, 2.35rem);
+    line-height: 1.06;
+  }
+
+  .lively-marketplace-shell .marketplace-hero-lead {
+    max-width: 100%;
+    margin-top: 16px;
+    padding-right: 0;
+    font-size: 0.98rem;
+    line-height: 1.55;
+  }
+
+  .lively-marketplace-shell .marketplace-hero::after {
+    top: 242px;
+    right: -24px;
+    width: min(52%, 210px);
+    opacity: 0.88;
+  }
+
+  .lively-marketplace-shell .marketplace-search-card {
+    width: 100%;
+    margin-top: 104px;
+    padding: 10px;
+  }
+
+  .lively-marketplace-shell .marketplace-search-main,
+  .lively-marketplace-shell .marketplace-search-location {
+    width: 100%;
+    min-height: 68px;
+    padding-inline: 8px;
+  }
+
+  .lively-marketplace-shell .marketplace-search-main label span,
+  .lively-marketplace-shell .marketplace-search-location label span {
+    font-size: 0.68rem;
+  }
+
+  .lively-marketplace-shell .marketplace-search-main input,
+  .lively-marketplace-shell .marketplace-search-location input {
+    font-size: 0.95rem;
+  }
+
+  .lively-marketplace-shell .marketplace-search-submit {
+    width: 100%;
+    min-height: 54px;
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 359px) {
+  .lively-marketplace-shell .top-bar {
+    gap: 8px;
+    padding-inline: 10px;
+  }
+
+  .lively-marketplace-shell .brand {
+    gap: 7px;
+  }
+
+  .lively-marketplace-shell .brand strong {
+    font-size: 14px;
+  }
+
+  .lively-marketplace-shell .segmented-control button {
+    min-width: 66px;
+    padding-inline: 8px;
+  }
+
+  .lively-marketplace-shell .marketplace-hero h1 {
+    font-size: 2rem;
+  }
+}
