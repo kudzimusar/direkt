@@ -1,6 +1,14 @@
 name: DIREKT functional web W8 managed public cutover
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "web/direkt-app/**"
+      - "clients/generated/typescript/**"
+      - "scripts/w8-managed-cutover-*.sh"
+      - ".github/workflows/functional-pwa-w8-managed-cutover.yml"
   workflow_dispatch:
     inputs:
       confirmation:
@@ -37,13 +45,21 @@ jobs:
       GCP_WEB_RUNTIME_SERVICE_ACCOUNT_ID: direkt-cp-web-runtime
       GCP_WEB_RUNTIME_SERVICE_ACCOUNT: direkt-cp-web-runtime@direkt-dev-502701.iam.gserviceaccount.com
     steps:
-      - name: Validate immutable main source
+      - name: Resolve immutable current-main source
         id: source
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_CONFIRMATION: ${{ inputs.confirmation }}
+          DISPATCH_SOURCE_SHA: ${{ inputs.source_sha }}
         run: |
           set -euo pipefail
-          test "${{ inputs.confirmation }}" = "RUN-DIREKT-W8-PUBLIC-WEB"
-          source_sha="${{ inputs.source_sha }}"
+          if [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
+            test "${DISPATCH_CONFIRMATION}" = "RUN-DIREKT-W8-PUBLIC-WEB"
+            source_sha="${DISPATCH_SOURCE_SHA}"
+          else
+            source_sha="${GITHUB_SHA}"
+          fi
           [[ "${source_sha}" =~ ^[0-9a-f]{40}$ ]]
           echo "source_sha=${source_sha}" >> "${GITHUB_OUTPUT}"
 
