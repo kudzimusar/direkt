@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Owner-authored retrigger after wording normalization.
+# Owner-authored retrigger after receipt whitespace normalization.
 import os
 from pathlib import Path
 
@@ -38,13 +38,13 @@ replace(PROJECT, "VC1–VC8 completion does not replace or weaken the remaining 
 RECEIPT.parent.mkdir(parents=True, exist_ok=True)
 RECEIPT.write_text(f"""# Phase 11 Terminal Administrative Disposition
 
-**State:** STOPPED BEFORE ENTRY / TRACKER CLOSED NOT PLANNED  
-**Governing issue:** #112  
-**Disposition PR:** #{PR_NUMBER}  
-**Decision date:** 2026-07-28 (Asia/Tokyo)  
-**Real controlled pilot:** not run  
-**Primary-pilot evidence count:** 0  
-**PILOT_ENTRY_APPROVED:** false  
+**State:** STOPPED BEFORE ENTRY / TRACKER CLOSED NOT PLANNED
+**Governing issue:** #112
+**Disposition PR:** #{PR_NUMBER}
+**Decision date:** 2026-07-28 (Asia/Tokyo)
+**Real controlled pilot:** not run
+**Primary-pilot evidence count:** 0
+**PILOT_ENTRY_APPROVED:** false
 **Phase 12 production authorization:** false
 
 ## Owner direction
