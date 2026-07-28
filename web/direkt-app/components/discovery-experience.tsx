@@ -60,7 +60,8 @@ export function CustomerDiscoveryExperience({
         },
       );
       const body = (await response.json()) as
-        PublicProviderSearchResponse | { title?: string; detail?: string };
+        | PublicProviderSearchResponse
+        | { title?: string; detail?: string };
       if (!response.ok) {
         throw new Error(
           "detail" in body && body.detail
@@ -114,6 +115,7 @@ export function CustomerDiscoveryExperience({
     <section
       className="discovery-experience marketplace-discovery"
       aria-label="Find a provider"
+      data-testid="customer-home"
     >
       <section className="marketplace-hero" aria-labelledby="marketplace-title">
         <div className="marketplace-hero-copy">
@@ -139,6 +141,7 @@ export function CustomerDiscoveryExperience({
                 maxLength={120}
                 placeholder="e.g. leaking sink, electrician, moving help"
                 autoComplete="off"
+                data-testid="pwa-home-service-input"
               />
             </label>
           </div>
@@ -150,8 +153,9 @@ export function CustomerDiscoveryExperience({
                 value={area}
                 onChange={(event) => setArea(event.target.value)}
                 maxLength={160}
-                placeholder="e.g. Kabwata"
+                placeholder="e.g. Kabwata, Roma, City Centre"
                 autoComplete="address-level3"
+                data-testid="pwa-home-area-input"
               />
             </label>
           </div>
@@ -159,12 +163,69 @@ export function CustomerDiscoveryExperience({
             className="marketplace-search-submit"
             type="submit"
             disabled={loading}
+            data-testid="pwa-home-find-providers"
           >
             {loading ? "Searching…" : "Find providers"}
             <DirektIcon name="arrow-right" />
           </button>
         </form>
+      </section>
 
+      {bootstrap.categories.length > 0 && (
+        <section className="category-section" aria-labelledby="category-title">
+          <div className="section-heading-row compact-section-heading">
+            <div>
+              <p className="eyebrow">Popular services</p>
+              <h2 id="category-title">Start with what you need</h2>
+            </div>
+          </div>
+          <div className="category-market-grid">
+            {bootstrap.categories.slice(0, 8).map((item) => (
+              <button
+                className={
+                  category === item.key
+                    ? "category-market-card active"
+                    : "category-market-card"
+                }
+                key={item.key}
+                type="button"
+                aria-pressed={category === item.key}
+                onClick={() =>
+                  chooseCategory(category === item.key ? "" : item.key)
+                }
+              >
+                <span className="category-market-icon">
+                  <DirektIcon name={categoryIcon(item.name)} />
+                </span>
+                <strong>{item.name}</strong>
+                <span>{item.description}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section
+        className="marketplace-proof-card"
+        aria-label="DIREKT trust principle"
+      >
+        <span className="marketplace-proof-icon" aria-hidden="true">
+          <DirektIcon name="shield" />
+        </span>
+        <div>
+          <h2>Proof before persuasion</h2>
+          <p>
+            Trust information is check-specific. A payment or subscription never
+            upgrades a provider&apos;s trust status.
+          </p>
+        </div>
+        <DirektIcon className="marketplace-proof-arrow" name="arrow-right" />
+      </section>
+
+      <section
+        className="discovery-advanced-panel"
+        aria-label="Search guidance and filters"
+      >
         <DiscoveryAiAssistPanel
           need={query}
           area={area}
@@ -215,79 +276,6 @@ export function CustomerDiscoveryExperience({
           sharing precise device location. Private provider base coordinates are
           never published as customer map pins.
         </p>
-      </section>
-
-      {bootstrap.categories.length > 0 && (
-        <section className="category-section" aria-labelledby="category-title">
-          <div className="section-heading-row">
-            <div>
-              <p className="eyebrow">Browse services</p>
-              <h2 id="category-title">Start with what you need</h2>
-              <p>Choose a category, then narrow by area and availability.</p>
-            </div>
-          </div>
-          <div className="category-market-grid">
-            {bootstrap.categories.slice(0, 8).map((item) => (
-              <button
-                className={
-                  category === item.key
-                    ? "category-market-card active"
-                    : "category-market-card"
-                }
-                key={item.key}
-                type="button"
-                aria-pressed={category === item.key}
-                onClick={() =>
-                  chooseCategory(category === item.key ? "" : item.key)
-                }
-              >
-                <span className="category-market-icon">
-                  <DirektIcon name={categoryIcon(item.name)} />
-                </span>
-                <strong>{item.name}</strong>
-                <span>{item.description}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section
-        className="marketplace-confidence-section"
-        aria-label="How DIREKT helps you choose"
-      >
-        <div className="marketplace-confidence-grid">
-          <article className="confidence-card">
-            <DirektIcon name="shield" />
-            <div>
-              <strong>Checks stay specific</strong>
-              <p>
-                See what was checked, when it was checked and the limitation of
-                each result.
-              </p>
-            </div>
-          </article>
-          <article className="confidence-card">
-            <DirektIcon name="location" />
-            <div>
-              <strong>Location without overexposure</strong>
-              <p>
-                Service areas and consented public premises are useful without
-                revealing private provider bases.
-              </p>
-            </div>
-          </article>
-          <article className="confidence-card">
-            <DirektIcon name="messages" />
-            <div>
-              <strong>Keep the interaction accountable</strong>
-              <p>
-                Tracked enquiries preserve context before any consent-aware call
-                or messaging handoff.
-              </p>
-            </div>
-          </article>
-        </div>
       </section>
 
       {error && (
@@ -379,6 +367,44 @@ export function CustomerDiscoveryExperience({
           )}
         </section>
       )}
+
+      <section
+        className="marketplace-confidence-section"
+        aria-label="How DIREKT helps you choose"
+      >
+        <div className="marketplace-confidence-grid">
+          <article className="confidence-card">
+            <DirektIcon name="shield" />
+            <div>
+              <strong>Checks stay specific</strong>
+              <p>
+                See what was checked, when it was checked and the limitation of
+                each result.
+              </p>
+            </div>
+          </article>
+          <article className="confidence-card">
+            <DirektIcon name="location" />
+            <div>
+              <strong>Location without overexposure</strong>
+              <p>
+                Service areas and consented public premises are useful without
+                revealing private provider bases.
+              </p>
+            </div>
+          </article>
+          <article className="confidence-card">
+            <DirektIcon name="messages" />
+            <div>
+              <strong>Keep the interaction accountable</strong>
+              <p>
+                Tracked enquiries preserve context before any consent-aware call
+                or messaging handoff.
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
     </section>
   );
 }
