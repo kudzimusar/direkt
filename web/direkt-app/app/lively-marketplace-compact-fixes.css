@@ -26,6 +26,14 @@
   overflow-x: clip;
 }
 
+.lively-marketplace-shell .marketplace-discovery {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.lively-marketplace-shell .marketplace-discovery > * {
+  min-width: 0;
+}
+
 .lively-marketplace-shell .marketplace-search-main label,
 .lively-marketplace-shell .marketplace-search-location label {
   flex: 1 1 auto;
