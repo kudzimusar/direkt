@@ -18,13 +18,14 @@ for path in (LOCK, PROJECT, RECEIPT):
     if not path.is_file():
         raise SystemExit(f"Phase 11 terminal disposition missing {path.relative_to(ROOT)}")
 
+# The current lock may legitimately describe a later closed workstream. It must
+# remain released and fail-closed; the immutable Phase 11 terminal facts live in
+# the dedicated disposition receipt below rather than being copied into every
+# later lock header.
 for needle in (
-    "RELEASED — PHASE 11 TRACKER CLOSED NOT PLANNED",
-    "P11-G01–P11-G13 remain unsatisfied",
+    "The repository write lane is RELEASED",
     "PILOT_ENTRY_APPROVED` remains false",
-    "PRIMARY-PILOT evidence count remains 0",
-    "The real Phase 11 pilot was not run and is not complete",
-    "No primary pilot evidence or evidence-backed 11J `PROCEED` exists",
+    "Production-release authorization | BLOCKED",
 ):
     require(LOCK, needle)
 
@@ -44,6 +45,8 @@ for needle in (
     "not an evidence-backed Phase 11J STOP decision",
     "new governing issue",
     "Issue #112 may close as **not planned** only",
+    "P11-G01 through P11-G13 remain unsatisfied/open",
+    "No evidence-backed 11J `PROCEED` exists",
 ):
     require(RECEIPT, needle)
 
