@@ -6,16 +6,16 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | RELEASED — UIA CURRENT-MAIN OWNER REVIEW CLOSED AND PRESERVED |
-| Owner/agent | None. UIA current-main owner-review refresh is closed; Issue #112 remains the sole open programme issue. |
-| Authorized scope | No active repository write scope. A new explicit claim is required for actual Phase 11 external evidence, a formal STOP decision, or participant-backed execution. |
+| Status | RELEASED — PHASE 11 TRACKER CLOSED NOT PLANNED / RE-ENTRY REQUIRES NEW AUTHORIZATION |
+| Owner/agent | None. Phase 11 controlled-pilot tracking is closed not planned before participant entry. |
+| Authorized scope | No active repository write scope. Restarting the Zambia pilot requires a new issue, a new explicit claim, fresh owner authorization and satisfaction of every applicable external entry gate. |
 | Protected surface | Closed RC0–RC11 evidence, canonical OpenAPI authorization/privacy checks, Android auth/session and Firebase controls, customer/provider web BFF/private Cloud Run IAM, operations portal, RC8 payment boundaries, UIA Issue #354, VC1–VC8 Design DNA and Phase 11/12 gates. |
-| Implementation branch | None. UIA final closeout PR #520 records managed source `bb84968453b891dd511faddc093a8874fce8abc4` and the four approved owner-review runtimes. |
+| Implementation branch | None. Phase 11 terminal administrative disposition PR #521 closes the tracker without claiming pilot completion. |
 | Stable baseline | `main@632dd0bdbb2a3b8c24bd285918deff3e54bd3ba9` contains the verified Wave 0 finishing-line controls, exact closeout receipt, technical preflight and closed RC0–RC11/readiness evidence. |
-| Current task | None. UIA is closed. Phase 11 remains `ENTRY_BLOCKED_EXTERNAL`; P11-G01–P11-G13 remain open, `PILOT_ENTRY_APPROVED` remains false and PRIMARY-PILOT evidence count remains 0. |
-| Governing issue | Issue #112 remains open for external entry gates and final programme disposition. Issue #354 is closed and preserved. |
-| Formal programme phase | Phase 11 real evidence remains open; formal Phase 12 production release is not authorized. |
-| Production-release authorization | BLOCKED pending real Phase 11 evidence, 11J `PROCEED` and all global release gates. |
+| Current task | None. The proposed controlled pilot is stopped before entry and the tracker is closed not planned. P11-G01–P11-G13 remain unsatisfied, `PILOT_ENTRY_APPROVED` remains false and PRIMARY-PILOT evidence count remains 0. |
+| Governing issue | Issue #112 is closed not planned after the terminal administrative receipt. Any future Zambia pilot requires a new governing issue. Issue #354 remains closed and preserved. |
+| Formal programme phase | The real Phase 11 pilot was not run and is not complete; its tracker is administratively closed not planned. Formal Phase 12 production release is not authorized. |
+| Production-release authorization | BLOCKED. No primary pilot evidence or evidence-backed 11J `PROCEED` exists, and all global release gates remain mandatory. |
 
 ## W8 historical closure receipt — CLOSED AND PRESERVED
 
