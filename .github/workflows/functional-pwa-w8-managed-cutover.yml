@@ -23,6 +23,8 @@ on:
 permissions:
   contents: read
   id-token: write
+  issues: write
+  pull-requests: write
 
 concurrency:
   group: direkt-functional-web-w8-managed-cutover
@@ -173,3 +175,34 @@ jobs:
           path: ${{ runner.temp }}/w8-cutover-evidence.json
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish deployment receipt to the source pull request
+        if: success()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          pr_number="$(
+            gh api \
+              -H "Accept: application/vnd.github+json" \
+              "repos/${GITHUB_REPOSITORY}/commits/${SOURCE_SHA}/pulls" \
+              --jq '.[0].number // empty'
+          )"
+          if [[ -z "${pr_number}" ]]; then
+            echo "No source pull request is associated with ${SOURCE_SHA}; skipping receipt comment."
+            exit 0
+          fi
+          gh pr comment "${pr_number}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --body "$(cat <<EOF
+          ## Canonical PWA deployment — PASS
+
+          - Exact deployed source: \`${SOURCE_SHA}\`
+          - Managed deployment run: [${GITHUB_RUN_ID}](https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})
+          - Canonical customer/provider PWA: https://app.direkt.forum/
+          - Account deep link: https://app.direkt.forum/?view=account
+          - W2–W8 contract, IAM-private API boundary, responsive shell, manifest/service worker/offline fallback, BFF discovery, synthetic session and browser privacy checks: **PASS**
+          - Real participant, production authentication, external payment and formal production-release authorization: **unchanged / not authorized**
+          EOF
+          )"
