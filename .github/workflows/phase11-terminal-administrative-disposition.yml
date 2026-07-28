@@ -1,0 +1,32 @@
+name: DIREKT Phase 11 terminal administrative disposition
+
+on:
+  pull_request:
+    paths:
+      - "WORKSTREAM_LOCK.md"
+      - "PROJECT_STATUS.md"
+      - "docs/phase11/PHASE11_TERMINAL_ADMINISTRATIVE_DISPOSITION.md"
+      - "scripts/phase11/verify-terminal-administrative-disposition.py"
+      - ".github/workflows/phase11-terminal-administrative-disposition.yml"
+  push:
+    branches: [main]
+    paths:
+      - "WORKSTREAM_LOCK.md"
+      - "PROJECT_STATUS.md"
+      - "docs/phase11/PHASE11_TERMINAL_ADMINISTRATIVE_DISPOSITION.md"
+      - "scripts/phase11/verify-terminal-administrative-disposition.py"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Verify truthful terminal disposition
+        run: python3 scripts/phase11/verify-terminal-administrative-disposition.py
