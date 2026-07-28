@@ -21,6 +21,8 @@ The goal was not complete when source code existed. Completion required:
 - verification of the public PWA, BFF/session, private API, PWA/offline and privacy boundaries;
 - an owner test entry.
 
+The repository lane is released only through the companion `WORKSTREAM_LOCK.md` closure receipt; this document does not independently claim write authority.
+
 ## Source and merge receipts
 
 | Receipt | Value |
