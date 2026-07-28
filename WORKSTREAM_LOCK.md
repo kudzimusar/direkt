@@ -6,16 +6,16 @@ This file prevents overlapping writes in the single-lane build process.
 
 | Field | Value |
 |---|---|
-| Status | RELEASED — PHASE 11 TRACKER CLOSED NOT PLANNED / RE-ENTRY REQUIRES NEW AUTHORIZATION |
-| Owner/agent | None. Phase 11 controlled-pilot tracking is closed not planned before participant entry. |
-| Authorized scope | No active repository write scope. Restarting the Zambia pilot requires a new issue, a new explicit claim, fresh owner authorization and satisfaction of every applicable external entry gate. |
-| Protected surface | Closed RC0–RC11 evidence, canonical OpenAPI authorization/privacy checks, Android auth/session and Firebase controls, customer/provider web BFF/private Cloud Run IAM, operations portal, RC8 payment boundaries, UIA Issue #354, VC1–VC8 Design DNA and Phase 11/12 gates. |
-| Implementation branch | None. Phase 11 terminal administrative disposition PR #521 closes the tracker without claiming pilot completion. |
-| Stable baseline | `main@632dd0bdbb2a3b8c24bd285918deff3e54bd3ba9` contains the verified Wave 0 finishing-line controls, exact closeout receipt, technical preflight and closed RC0–RC11/readiness evidence. |
-| Current task | None. The proposed controlled pilot is stopped before entry and the tracker is closed not planned. P11-G01–P11-G13 remain unsatisfied, `PILOT_ENTRY_APPROVED` remains false and PRIMARY-PILOT evidence count remains 0. |
-| Governing issue | Issue #112 is closed not planned after the terminal administrative receipt. Any future Zambia pilot requires a new governing issue. Issue #354 remains closed and preserved. |
-| Formal programme phase | The real Phase 11 pilot was not run and is not complete; its tracker is administratively closed not planned. Formal Phase 12 production release is not authorized. |
-| Production-release authorization | BLOCKED. No primary pilot evidence or evidence-backed 11J `PROCEED` exists, and all global release gates remain mandatory. |
+| Status | ACTIVE — ISSUE #522 LIVELY TRUST MARKETPLACE UI REFRESH |
+| Owner/agent | OpenAI implementation agent under the owner-authorized Issue #522. |
+| Authorized scope | Presentation, component, design-document and regression-test changes for Android and customer/provider PWA Home, Saved, Enquiries and Account. No backend/API/domain/integration/provider/release-authority changes. |
+| Protected surface | Closed RC0–RC11 evidence, canonical OpenAPI authorization/privacy checks, Android auth/session/Firebase controls, customer/provider web BFF/private Cloud Run IAM, provider workspace, operations portal, payment boundaries, UIA Issue #354, existing VC Design DNA and all Phase 11/12 gates. |
+| Implementation branch | `ui/lively-trust-marketplace` — bounded conflict-containment branch from `main@61edb4ecfd83ef7b7b5f89723ce52c9a244a3cad`; the diverged historical `build/android-v1` ref is preserved and is not force-rewritten. |
+| Stable baseline | `main@61edb4ecfd83ef7b7b5f89723ce52c9a244a3cad` is the exact source baseline. Closed integration/readiness evidence remains regression-protected. |
+| Current task | NVR0–NVR8 Android + PWA visual refresh: reconcile design authority, implement the Lively Trust Marketplace tokens/shell/four customer destinations, preserve working behavior, add responsive/native evidence, and close only on exact-head regressions and owner review. |
+| Governing issue | Issue #522. Issue #112 remains closed not planned; Issue #354 and all closed RC/UIA evidence remain preserved. |
+| Formal programme phase | Owner-directed post-VC presentation refinement only. The real Phase 11 pilot was not run and formal Phase 12 production release is not authorized. |
+| Production-release authorization | BLOCKED. This UI work cannot create pilot entry, participant processing, production authentication, real communications, real money, trust authority or production release authorization. |
 
 ## W8 historical closure receipt — CLOSED AND PRESERVED
 
@@ -89,7 +89,7 @@ The following strings are historical closure evidence required by the permanent 
 7. Retries are bounded, observable and fail-closed; provider errors cannot silently become `delivered` or erase original failure evidence.
 8. A kill switch/provider enablement gate must default real/participant delivery off. Synthetic managed proof may run only with bounded synthetic/non-personal data and approved provider state.
 9. Production/participant WhatsApp delivery remains disabled until business/phone/template/provider/legal/privacy approvals and later release authorization are explicitly evidenced.
-10. RC6 is `CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY`: exact-current-main managed run `30137700769` on source `8838b7a6d726a5aed44ce21a39506c1265a98d15` passed the private outbox → Meta `hello_world` test-template send → authentic signed webhook receipt path on retry. The initial pre-provider Google Cloud CLI setup failure remains preserved in Issue #404. Existing RC0–RC5, UIA, backend/database/OpenAPI, Android/PWA/portal, payment, privacy, authorization and production-release gates remain regression-protected; production/participant WhatsApp delivery remains disabled.
+10. RC6 is `CLOSED — ACTIVE SYNTHETIC-ONLY MANAGED CANARY`: exact-current-main managed run `30137700769` on source `8838b7a6d726a5aed44ce21a39506c1265a98d15` passed the private outbox → Meta `hello_world` test-template send → authentic signed webhook receipt path on retry. The initial failure remains preserved in Issue #404. Existing RC0–RC5, UIA, backend/database/OpenAPI, Android/PWA/portal, payment, privacy, authorization and production-release gates remain regression-protected; production/participant WhatsApp delivery remains disabled.
 
 ## RC7 implementation contract — CLOSED AND PRESERVED
 
@@ -229,4 +229,4 @@ Stop rather than merge or activate a later checkpoint if it would:
 
 ## Conflict rule
 
-The repository write lane is RELEASED. RC0–RC11, UIA, Phase 11C–11J readiness and Wave 0 finishing-line evidence remain immutable/regression-protected. Real participants, participant data, real money and production authorization remain blocked until the explicit Phase 11 entry checklist is satisfied.
+The repository write lane is ACTIVE only for the bounded Issue #522 presentation scope on `ui/lively-trust-marketplace`. RC0–RC11, UIA, Phase 11C–11J readiness and Wave 0 finishing-line evidence remain immutable/regression-protected. Real participants, participant data, real money and production authorization remain blocked until the explicit Phase 11 entry checklist is satisfied.
