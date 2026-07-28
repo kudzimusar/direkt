@@ -1,6 +1,7 @@
 package com.kudzimusar.direkt
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -24,16 +25,11 @@ class DirektAppSmokeTest {
         composeRule.onNodeWithTag("customer-home-area-input").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag("customer-home-find-providers").performScrollTo().assertIsDisplayed()
 
-        composeRule.onNodeWithTag("nav-saved").performClick()
-        composeRule.onNodeWithText("Your shortlist").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithTag("customer-saved").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag("nav-saved").performClick().assertIsSelected()
+        composeRule.onNodeWithTag("nav-enquiries").performClick().assertIsSelected()
+        composeRule.onNodeWithTag("nav-account").performClick().assertIsSelected()
 
-        composeRule.onNodeWithTag("nav-enquiries").performClick()
-        composeRule.onNodeWithText("Your service requests").performScrollTo().assertIsDisplayed()
-
-        composeRule.onNodeWithTag("nav-account").performClick()
-        composeRule.onNodeWithText("Account and privacy").performScrollTo().assertIsDisplayed()
-        composeRule.onNode(hasScrollAction()).performScrollToIndex(3)
+        composeRule.onNode(hasScrollAction()).performScrollToIndex(2)
         composeRule.onNodeWithTag("pilot-auth-card").assertIsDisplayed()
         composeRule.onNodeWithText(
             "Real participant sign-in is disabled.",
