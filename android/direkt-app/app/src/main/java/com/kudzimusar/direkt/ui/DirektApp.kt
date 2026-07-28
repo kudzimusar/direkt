@@ -3,6 +3,7 @@ package com.kudzimusar.direkt.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -75,7 +77,7 @@ fun DirektApp(
                         selectedMode = appState.mode,
                         onModeSelected = appState::switchMode,
                     )
-                    Spacer(Modifier.width(12.dp))
+                    Spacer(Modifier.width(6.dp))
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
@@ -169,12 +171,12 @@ fun DirektApp(
 private fun DirektBrand() {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Box(
             modifier = Modifier
-                .size(44.dp)
-                .clip(RoundedCornerShape(14.dp))
+                .size(40.dp)
+                .clip(RoundedCornerShape(13.dp))
                 .background(
                     Brush.linearGradient(
                         listOf(Color(0xFF0B84F3), DirektBlue, DirektIndigo),
@@ -185,15 +187,17 @@ private fun DirektBrand() {
             Text(
                 text = "D",
                 color = Color.White,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
         }
         Text(
             text = "DIREKT",
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             letterSpacing = MaterialTheme.typography.labelSmall.letterSpacing,
+            maxLines = 1,
+            overflow = TextOverflow.Clip,
         )
     }
 }
@@ -216,7 +220,7 @@ private fun CompactModeSelector(
                 val selected = selectedMode == mode
                 Surface(
                     modifier = Modifier
-                        .height(40.dp)
+                        .height(38.dp)
                         .testTag("mode-${mode.name.lowercase()}"),
                     onClick = { onModeSelected(mode) },
                     shape = CircleShape,
@@ -224,12 +228,12 @@ private fun CompactModeSelector(
                     contentColor = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
                 ) {
                     Box(
-                        modifier = Modifier.padding(horizontal = 15.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = mode.label,
-                            style = MaterialTheme.typography.labelLarge,
+                            style = MaterialTheme.typography.labelMedium,
                             maxLines = 1,
                         )
                     }
@@ -254,50 +258,53 @@ private fun PageIntroCard(
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(if (showIllustration) 232.dp else 190.dp)
-                .background(
-                    Brush.linearGradient(
-                        listOf(
-                            DirektBlueSoft.copy(alpha = 0.42f),
-                            MaterialTheme.colorScheme.surface,
-                            DirektOrangeSoft.copy(alpha = 0.5f),
-                        ),
-                    ),
-                )
-                .padding(22.dp),
-        ) {
-            if (showIllustration) {
-                DirektNeighborhoodIllustration(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .width(190.dp)
-                        .alpha(0.94f),
-                )
-            }
-            Column(
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val displayIllustration = showIllustration && maxWidth >= 360.dp
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth(if (showIllustration) 0.68f else 1f)
-                    .align(Alignment.CenterStart),
-                verticalArrangement = Arrangement.spacedBy(9.dp),
+                    .fillMaxWidth()
+                    .heightIn(min = if (displayIllustration) 220.dp else 0.dp)
+                    .background(
+                        Brush.linearGradient(
+                            listOf(
+                                DirektBlueSoft.copy(alpha = 0.42f),
+                                MaterialTheme.colorScheme.surface,
+                                DirektOrangeSoft.copy(alpha = 0.5f),
+                            ),
+                        ),
+                    )
+                    .padding(22.dp),
             ) {
-                Text(
-                    text = eyebrow,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = DirektBlue,
-                )
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = summary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                if (displayIllustration) {
+                    DirektNeighborhoodIllustration(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .width(145.dp)
+                            .alpha(0.86f),
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(if (displayIllustration) 0.64f else 1f)
+                        .align(Alignment.CenterStart),
+                    verticalArrangement = Arrangement.spacedBy(9.dp),
+                ) {
+                    Text(
+                        text = eyebrow,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = DirektBlue,
+                    )
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = summary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }
