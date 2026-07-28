@@ -29,10 +29,30 @@ export function getDirektWebRuntimeConfig(): DirektWebRuntimeConfig {
     );
   }
   const authMode = rawAuthMode as DirektWebAuthMode;
+  const syntheticPublicRuntime =
+    process.env.DIREKT_WEB_ALLOW_SYNTHETIC_PUBLIC_RUNTIME?.trim().toLowerCase() ===
+    "true";
+
+  if (syntheticPublicRuntime) {
+    if (process.env.CI?.trim().toLowerCase() !== "true") {
+      throw new Error(
+        "DIREKT_WEB_ALLOW_SYNTHETIC_PUBLIC_RUNTIME=true is allowed only in CI",
+      );
+    }
+    if (apiMode !== "public" || authMode !== "disabled") {
+      throw new Error(
+        "Synthetic public runtime requires public API mode and disabled participant authentication",
+      );
+    }
+  }
 
   let apiBaseUrl: URL | null = null;
   if (apiMode !== "disabled") {
-    if (apiMode === "public" && process.env.NODE_ENV === "production") {
+    if (
+      apiMode === "public" &&
+      process.env.NODE_ENV === "production" &&
+      !syntheticPublicRuntime
+    ) {
       throw new Error(
         "DIREKT_WEB_API_MODE=public is prohibited in production; use authenticated-bff for the IAM-private API",
       );
@@ -40,7 +60,16 @@ export function getDirektWebRuntimeConfig(): DirektWebRuntimeConfig {
     if (!rawBaseUrl) {
       throw new Error("DIREKT_API_BASE_URL is required when the functional web API mode is enabled");
     }
-    apiBaseUrl = validateServerUrl(rawBaseUrl, "DIREKT_API_BASE_URL");
+    apiBaseUrl = validateServerUrl(
+      rawBaseUrl,
+      "DIREKT_API_BASE_URL",
+      syntheticPublicRuntime,
+    );
+    if (syntheticPublicRuntime && !isLoopback(apiBaseUrl)) {
+      throw new Error(
+        "Synthetic public runtime requires a localhost or 127.0.0.1 API base URL",
+      );
+    }
   }
 
   if (authMode !== "disabled" && apiMode !== "authenticated-bff") {
@@ -90,10 +119,16 @@ export function getPublicRuntimeCapabilities() {
   } as const;
 }
 
-function validateServerUrl(raw: string, name: string): URL {
+function validateServerUrl(
+  raw: string,
+  name: string,
+  allowSyntheticLoopbackHttp = false,
+): URL {
   const url = new URL(raw);
-  const isLocalhost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
-  if (url.protocol !== "https:" && !(process.env.NODE_ENV !== "production" && isLocalhost)) {
+  const loopback = isLoopback(url);
+  const localDevelopment = process.env.NODE_ENV !== "production" && loopback;
+  const syntheticCiLoopback = allowSyntheticLoopbackHttp && loopback;
+  if (url.protocol !== "https:" && !localDevelopment && !syntheticCiLoopback) {
     throw new Error(`${name} must use HTTPS outside local development/test`);
   }
   if (url.username || url.password) {
@@ -108,4 +143,8 @@ function validateOrigin(raw: string): URL {
     throw new Error("DIREKT_WEB_ORIGIN must contain only scheme, host and optional port");
   }
   return origin;
+}
+
+function isLoopback(url: URL): boolean {
+  return url.hostname === "localhost" || url.hostname === "127.0.0.1";
 }

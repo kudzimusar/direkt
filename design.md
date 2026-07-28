@@ -7,7 +7,9 @@ For the world-class modernization programme, read this together with:
 - `docs/product/WORLD_CLASS_PRODUCT_AND_AI_PLAN.md`;
 - `docs/design/VISUAL_COMPLETION_PLAN.md`;
 - `docs/design/DESIGN_SYSTEM.md`;
-- `docs/architecture/AI_PRODUCT_ARCHITECTURE.md`.
+- `docs/architecture/AI_PRODUCT_ARCHITECTURE.md`;
+- `docs/design/LIVELY_TRUST_MARKETPLACE.md` for the owner-approved Issue #522 Android/PWA customer visual refinement;
+- `docs/design/LIVELY_TRUST_MARKETPLACE_IMPLEMENTATION_PLAN.md` for its regression-safe implementation sequence.
 
 ## 1. Design objective
 
@@ -184,6 +186,8 @@ Rules:
 - payment/commercial colours never mimic verification authority;
 - AI assistance uses neutral/informational styling, not trust-success styling;
 - dynamic colour must not weaken state semantics.
+
+For the owner-approved Issue #522 customer Android/PWA refinement, the detailed blue-led semantic palette and dark-theme mapping in `docs/design/LIVELY_TRUST_MARKETPLACE.md` supersede the older green-led customer presentation. This does not redefine provider, operations, trust, commercial or AI authority semantics.
 
 ## 7. Typography and density
 
@@ -517,3 +521,17 @@ Each implemented screen/slice requires:
 - acceptance/regression tests.
 
 A screen is not complete merely because it is functional or attractive. It must remain truthful, accessible, private, resilient and aligned with the approved Design DNA.
+
+## 24. Owner-approved Lively Trust Marketplace refinement
+
+The owner approved the **Lively Trust Marketplace** direction on 2026-07-28 for the customer Android app and responsive customer/provider PWA.
+
+It is a controlled evolution of the approved hybrid:
+
+- Structured Trust remains the information and proof architecture;
+- Neighbourhood Marketplace supplies livelier color, local-service warmth and lightweight illustration;
+- Field Utility preserves efficient actions, lists and provider/operations density.
+
+The detailed palette, typography, component, adaptive-layout and accessibility rules live in `docs/design/LIVELY_TRUST_MARKETPLACE.md`. The safe implementation sequence and test/rollback contract live in `docs/design/LIVELY_TRUST_MARKETPLACE_IMPLEMENTATION_PLAN.md`.
+
+This refinement must preserve the working product. Generated concept screens are composition references and cannot introduce fictional ratings, insurance, trust scores, provider replies, settings or actions. Android remains Material 3/system-native. The PWA remains responsive, installable, keyboard accessible and behind the established BFF/session boundary. Provider, operations, trust, privacy, AI, commercial, offline and release rules in this document remain authoritative.

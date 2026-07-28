@@ -12,6 +12,9 @@ import "./provider-world-class.css";
 import "./provider-workspace-world-class.css";
 import "./provider-ai.css";
 import "./support-ai.css";
+import "./lively-marketplace.css";
+import "./lively-marketplace-home.css";
+import "./lively-marketplace-compact-fixes.css";
 
 export const metadata: Metadata = {
   title: {
@@ -30,8 +33,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F8FAF9" },
-    { media: "(prefers-color-scheme: dark)", color: "#0D1713" },
+    { media: "(prefers-color-scheme: light)", color: "#F7F9FC" },
+    { media: "(prefers-color-scheme: dark)", color: "#0D1320" },
   ],
   colorScheme: "light dark",
   width: "device-width",

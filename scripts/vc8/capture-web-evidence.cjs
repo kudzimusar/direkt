@@ -5,6 +5,65 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE);
 const outputDir = process.env.VC8_EVIDENCE_DIR || 'visual-evidence/web';
 fs.mkdirSync(outputDir, { recursive: true });
 
+async function captureView(page, view, heading, fileName, fullPage = true) {
+  const suffix = view === 'discover' ? '' : `?view=${view}`;
+  await page.goto(`http://127.0.0.1:3100/${suffix}`, { waitUntil: 'networkidle' });
+  await page.getByRole('heading', { name: heading }).first().waitFor();
+  await page.screenshot({
+    path: path.join(outputDir, fileName),
+    fullPage,
+  });
+}
+
+async function readCompactLayout(page) {
+  return page.evaluate(() => {
+    const measure = (selector) => {
+      const element = document.querySelector(selector);
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      return {
+        selector,
+        clientWidth: element.clientWidth,
+        scrollWidth: element.scrollWidth,
+        rect: {
+          left: Math.round(rect.left * 100) / 100,
+          right: Math.round(rect.right * 100) / 100,
+          width: Math.round(rect.width * 100) / 100,
+        },
+        computed: {
+          display: style.display,
+          width: style.width,
+          maxWidth: style.maxWidth,
+          minWidth: style.minWidth,
+          overflowX: style.overflowX,
+          boxSizing: style.boxSizing,
+        },
+      };
+    };
+
+    return {
+      innerWidth: window.innerWidth,
+      visualViewportWidth: window.visualViewport?.width ?? null,
+      compactMedia: window.matchMedia('(max-width: 639px)').matches,
+      documentClientWidth: document.documentElement.clientWidth,
+      documentScrollWidth: document.documentElement.scrollWidth,
+      bodyClientWidth: document.body.clientWidth,
+      bodyScrollWidth: document.body.scrollWidth,
+      shell: measure('[data-testid="pwa-shell"]'),
+      contentColumn: measure('.app-content-column'),
+      main: measure('.main-content'),
+      discovery: measure('.marketplace-discovery'),
+      hero: measure('.marketplace-hero'),
+      heroCopy: measure('.marketplace-hero-copy'),
+      searchCard: measure('.marketplace-search-card'),
+      searchMain: measure('.marketplace-search-main'),
+      serviceInput: measure('[data-testid="pwa-home-service-input"]'),
+      submit: measure('[data-testid="pwa-home-find-providers"]'),
+    };
+  });
+}
+
 async function capture() {
   const browser = await chromium.launch({ headless: true });
   try {
@@ -18,6 +77,20 @@ async function capture() {
       path: path.join(outputDir, 'customer-discovery-desktop.png'),
       fullPage: true,
     });
+
+    await captureView(desktop, 'saved', 'Your shortlist', 'customer-saved-desktop.png');
+    await captureView(
+      desktop,
+      'enquiries',
+      'Your service requests',
+      'customer-enquiries-desktop.png',
+    );
+    await captureView(
+      desktop,
+      'account',
+      'Account and privacy',
+      'customer-account-desktop.png',
+    );
 
     await desktop.goto(
       'http://127.0.0.1:3100/providers/11111111-1111-4111-8111-111111111111',
@@ -43,21 +116,47 @@ async function capture() {
     const mobile = await browser.newPage({
       viewport: { width: 390, height: 844 },
       isMobile: true,
+      deviceScaleFactor: 1,
     });
     await mobile.goto('http://127.0.0.1:3100', { waitUntil: 'networkidle' });
+    await mobile.getByRole('heading', { name: 'What do you need help with?' }).waitFor();
+    const compactLayout = await readCompactLayout(mobile);
+    console.log(`DIREKT_COMPACT_LAYOUT ${JSON.stringify(compactLayout)}`);
+    await mobile.screenshot({
+      path: path.join(outputDir, 'customer-home-mobile.png'),
+      fullPage: false,
+    });
+
     await mobile.getByLabel('Service or problem').fill('leaking pipe');
     await mobile.getByRole('button', { name: 'Help me choose' }).click();
     await mobile.getByText('DIREKT category match').waitFor();
     await mobile.screenshot({
       path: path.join(outputDir, 'customer-ai-fallback-mobile.png'),
-      fullPage: true,
+      fullPage: false,
     });
+
+    await captureView(mobile, 'saved', 'Your shortlist', 'customer-saved-mobile.png', false);
+    await captureView(
+      mobile,
+      'enquiries',
+      'Your service requests',
+      'customer-enquiries-mobile.png',
+      false,
+    );
+    await captureView(
+      mobile,
+      'account',
+      'Account and privacy',
+      'customer-account-mobile.png',
+      false,
+    );
 
     const tablet = await browser.newPage({ viewport: { width: 820, height: 1180 } });
     await tablet.goto('http://127.0.0.1:3100', { waitUntil: 'networkidle' });
+    await tablet.getByRole('heading', { name: 'What do you need help with?' }).waitFor();
     await tablet.screenshot({
       path: path.join(outputDir, 'customer-discovery-tablet.png'),
-      fullPage: true,
+      fullPage: false,
     });
 
     await desktop.goto('http://127.0.0.1:3200/operations', {
@@ -81,13 +180,30 @@ async function capture() {
         {
           sourceSha: process.env.SOURCE_SHA,
           data: 'synthetic/public-safe only',
+          buildMode: 'production-built customer and operations clients',
           designDirection:
-            'Structured Trust + Neighbourhood Marketplace + Field Utility',
+            'Lively Trust Marketplace — Structured Trust + Neighbourhood Marketplace + Field Utility',
+          compactLayout,
           captures: [
             {
               file: 'customer-discovery-desktop.png',
               viewport: '1440x1000',
               state: 'search results',
+            },
+            {
+              file: 'customer-saved-desktop.png',
+              viewport: '1440x1000',
+              state: 'saved providers / truthful account boundary',
+            },
+            {
+              file: 'customer-enquiries-desktop.png',
+              viewport: '1440x1000',
+              state: 'service requests / truthful account boundary',
+            },
+            {
+              file: 'customer-account-desktop.png',
+              viewport: '1440x1000',
+              state: 'account and privacy direct deep link',
             },
             {
               file: 'provider-public-profile-desktop.png',
@@ -100,14 +216,34 @@ async function capture() {
               state: 'deterministic grounded help fallback',
             },
             {
+              file: 'customer-home-mobile.png',
+              viewport: '390x844',
+              state: 'customer Home viewport',
+            },
+            {
               file: 'customer-ai-fallback-mobile.png',
               viewport: '390x844',
-              state: 'AI unavailable / deterministic category fallback',
+              state: 'AI unavailable / deterministic category fallback viewport',
+            },
+            {
+              file: 'customer-saved-mobile.png',
+              viewport: '390x844',
+              state: 'customer Saved viewport',
+            },
+            {
+              file: 'customer-enquiries-mobile.png',
+              viewport: '390x844',
+              state: 'customer Enquiries viewport',
+            },
+            {
+              file: 'customer-account-mobile.png',
+              viewport: '390x844',
+              state: 'customer Account viewport',
             },
             {
               file: 'customer-discovery-tablet.png',
               viewport: '820x1180',
-              state: 'tablet discovery',
+              state: 'tablet discovery and rail adaptation viewport',
             },
             {
               file: 'operations-mission-control-desktop.png',

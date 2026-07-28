@@ -29,6 +29,15 @@ capture_diagnostics() {
   adb exec-out screencap -p > "${diagnostics_dir}/${label}-screen.png" 2>/dev/null || true
 }
 
+capture_screen() {
+  local file="$1"
+  local state="$2"
+  echo "Capturing ${state} -> ${file}"
+  capture_diagnostics "${file%.png}"
+  adb exec-out screencap -p > "${output_dir}/${file}"
+  test -s "${output_dir}/${file}"
+}
+
 on_error() {
   local exit_code=$?
   capture_diagnostics "error"
@@ -121,24 +130,36 @@ if ! find_target_coords "Customer"; then
   print_visible_labels >&2
   exit 1
 fi
-capture_diagnostics "customer-discovery"
-adb exec-out screencap -p > "${output_dir}/android-customer-discovery.png"
+capture_screen "android-customer-discovery.png" "customer Home/Discover"
+
+tap_target "Saved"
+capture_screen "android-customer-saved.png" "customer Saved"
+
+tap_target "Enquiries"
+capture_screen "android-customer-enquiries.png" "customer Enquiries"
+
+tap_target "Account"
+capture_screen "android-customer-account.png" "customer Account and privacy"
 
 tap_target "Provider"
 tap_target "Overview"
-adb exec-out screencap -p > "${output_dir}/android-provider-overview.png"
+capture_screen "android-provider-overview.png" "provider Overview"
 tap_target "Evidence"
-adb exec-out screencap -p > "${output_dir}/android-provider-evidence.png"
+capture_screen "android-provider-evidence.png" "provider Evidence/recovery"
 
 cat > "${output_dir}/metadata.json" <<EOF
 {
   "sourceSha": "${SOURCE_SHA}",
   "data": "synthetic review data only",
   "device": "Pixel 2 class emulator / Android API 35",
+  "designDirection": "Lively Trust Marketplace — Structured Trust + Neighbourhood Marketplace + Field Utility",
   "captures": [
-    {"file":"android-customer-discovery.png","state":"customer discovery"},
-    {"file":"android-provider-overview.png","state":"provider overview"},
-    {"file":"android-provider-evidence.png","state":"provider evidence/recovery"}
+    {"file":"android-customer-discovery.png","state":"customer Home/Discover"},
+    {"file":"android-customer-saved.png","state":"customer Saved"},
+    {"file":"android-customer-enquiries.png","state":"customer Enquiries"},
+    {"file":"android-customer-account.png","state":"customer Account and privacy"},
+    {"file":"android-provider-overview.png","state":"provider Overview"},
+    {"file":"android-provider-evidence.png","state":"provider Evidence/recovery"}
   ]
 }
 EOF

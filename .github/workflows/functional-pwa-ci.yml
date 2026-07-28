@@ -108,9 +108,9 @@ jobs:
         run: git diff --exit-code -- web/direkt-app
 
   visual-evidence:
-    name: Capture synthetic responsive product evidence
+    name: Capture production-built synthetic responsive product evidence
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
         with:
@@ -134,23 +134,60 @@ jobs:
           mkdir -p "${RUNNER_TEMP}/vc8-playwright"
           npm install --prefix "${RUNNER_TEMP}/vc8-playwright" --package-lock=false --no-save playwright@1.55.0
           node "${RUNNER_TEMP}/vc8-playwright/node_modules/playwright/cli.js" install --with-deps chromium
-      - name: Start synthetic public-safe fixture and product servers
+      - name: Build production-equivalent customer client
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd web/direkt-app
+          DIREKT_WEB_API_MODE=public \
+            DIREKT_API_BASE_URL=http://127.0.0.1:4100 \
+            DIREKT_WEB_AUTH_MODE=disabled \
+            NEXT_TELEMETRY_DISABLED=1 \
+            npm run build
+      - name: Build production-equivalent operations client
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd admin/direkt-operations-portal
+          NEXT_TELEMETRY_DISABLED=1 npm run build
+      - name: Prepare standalone production assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          for app in web/direkt-app admin/direkt-operations-portal; do
+            mkdir -p "${app}/.next/standalone/.next"
+            cp -R "${app}/.next/static" "${app}/.next/standalone/.next/static"
+            cp -R "${app}/public" "${app}/.next/standalone/public"
+          done
+      - name: Start synthetic public-safe fixture and production-built product servers
         shell: bash
         run: |
           set -euo pipefail
           node scripts/vc8/fixture-api.cjs > "${RUNNER_TEMP}/vc8-fixture.log" 2>&1 &
           (
-            cd web/direkt-app
-            DIREKT_WEB_API_MODE=public DIREKT_API_BASE_URL=http://127.0.0.1:4100 DIREKT_WEB_AUTH_MODE=disabled NEXT_TELEMETRY_DISABLED=1 npm run dev -- --hostname 127.0.0.1 --port 3100
+            cd web/direkt-app/.next/standalone
+            DIREKT_WEB_ALLOW_SYNTHETIC_PUBLIC_RUNTIME=true \
+              DIREKT_WEB_API_MODE=public \
+              DIREKT_API_BASE_URL=http://127.0.0.1:4100 \
+              DIREKT_WEB_AUTH_MODE=disabled \
+              NEXT_TELEMETRY_DISABLED=1 \
+              HOSTNAME=127.0.0.1 \
+              PORT=3100 \
+              node server.js
           ) > "${RUNNER_TEMP}/vc8-web.log" 2>&1 &
           (
-            cd admin/direkt-operations-portal
-            NEXT_TELEMETRY_DISABLED=1 npm run dev -- --hostname 127.0.0.1 --port 3200
+            cd admin/direkt-operations-portal/.next/standalone
+            NEXT_TELEMETRY_DISABLED=1 \
+              HOSTNAME=127.0.0.1 \
+              PORT=3200 \
+              node server.js
           ) > "${RUNNER_TEMP}/vc8-ops.log" 2>&1 &
           for url in http://127.0.0.1:3100 http://127.0.0.1:3200/operations; do
-            for attempt in $(seq 1 60); do
-              if curl --fail --silent --show-error "$url" >/dev/null; then break; fi
-              if [[ "$attempt" == "60" ]]; then
+            for attempt in $(seq 1 20); do
+              if curl --fail --silent --show-error --connect-timeout 2 --max-time 5 "$url" >/dev/null; then
+                break
+              fi
+              if [[ "$attempt" == "20" ]]; then
                 cat "${RUNNER_TEMP}/vc8-fixture.log" || true
                 cat "${RUNNER_TEMP}/vc8-web.log" || true
                 cat "${RUNNER_TEMP}/vc8-ops.log" || true
@@ -159,6 +196,17 @@ jobs:
               sleep 2
             done
           done
+      - name: Upload visual server diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direkt-vc8-server-diagnostics-${{ env.SOURCE_SHA }}
+          path: |
+            ${{ runner.temp }}/vc8-fixture.log
+            ${{ runner.temp }}/vc8-web.log
+            ${{ runner.temp }}/vc8-ops.log
+          if-no-files-found: warn
+          retention-days: 14
       - name: Capture exact-head customer, provider, help and operations screenshots
         env:
           PLAYWRIGHT_MODULE: ${{ runner.temp }}/vc8-playwright/node_modules/playwright
