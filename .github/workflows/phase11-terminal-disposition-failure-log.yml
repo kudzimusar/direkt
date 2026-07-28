@@ -1,4 +1,4 @@
-name: Phase 11 terminal disposition failure log
+name: Phase 11 terminal disposition wording fix
 
 on:
   pull_request:
@@ -6,23 +6,37 @@ on:
       - ".github/workflows/phase11-terminal-disposition-failure-log.yml"
 
 permissions:
-  actions: read
-  contents: read
+  contents: write
 
 jobs:
-  inspect:
+  fix:
     if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'docs/phase11-terminal-administrative-disposition'
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    env:
-      GH_TOKEN: ${{ github.token }}
-      SOURCE_JOB_ID: "90145409674"
     steps:
-      - name: Print terminal disposition failure
+      - uses: actions/checkout@v6
+        with:
+          ref: docs/phase11-terminal-administrative-disposition
+      - name: Normalize verifier-compatible wording
         run: |
           set -euo pipefail
-          raw="${RUNNER_TEMP}/phase11-terminal.log"
-          clean="${RUNNER_TEMP}/phase11-terminal-clean.log"
-          gh api "/repos/${GITHUB_REPOSITORY}/actions/jobs/${SOURCE_JOB_ID}/logs" > "${raw}"
-          sed -r 's/\x1B\[[0-9;]*[mK]//g; s/^.*Z //' "${raw}" > "${clean}"
-          grep -n -E 'PATCH\|PASS|missing|Traceback|error|Error|failed|failure|exit code|PHASE11_' "${clean}" | tail -n 100 || true
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/phase11/publish-terminal-administrative-disposition.py')
+          text = path.read_text(encoding='utf-8')
+          old = 'It is **not** an evidence-backed Phase 11J STOP decision'
+          new = 'It is not an evidence-backed Phase 11J STOP decision'
+          if old not in text:
+              print('Terminal disposition wording already normalized')
+          else:
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add scripts/phase11/publish-terminal-administrative-disposition.py
+          git diff --cached --check
+          git commit -m 'fix(phase11): normalize terminal disposition wording'
+          git push origin HEAD:docs/phase11-terminal-administrative-disposition
